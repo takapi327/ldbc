@@ -7,8 +7,20 @@
 import ScalaVersions._
 import JavaVersions._
 import BuildSettings._
+import Dependencies._
+
+lazy val CoreProject = LepusSbtProject("Core", "core")
+  .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
+  .settings(libraryDependencies ++= Seq(
+    catsEffect
+  ))
+
+lazy val coreProjects: Seq[ProjectReference] = Seq(
+  CoreProject
+)
 
 lazy val ldbc = project.in(file("."))
-  .settings(scalaVersion := scala3)
+  .settings(scalaVersion := (CoreProject / scalaVersion).value)
   .settings(publish / skip := true)
   .settings(commonSettings: _*)
+  .aggregate(coreProjects: _*)
