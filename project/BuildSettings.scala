@@ -48,14 +48,14 @@ object BuildSettings {
 
   /** These settings are used by all projects. */
   def commonSettings: Seq[Setting[_]] = Def.settings(
-    organization := "com.github.takapi327",
-    startYear := Some(2023),
-    homepage := Some(url(s"https://github.com/takapi327/ldbc")),
-    licenses := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
-    Test / fork := true,
-    run / fork := true,
+    organization  := "com.github.takapi327",
+    startYear     := Some(2023),
+    homepage      := Some(url(s"https://github.com/takapi327/ldbc")),
+    licenses      := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
+    Test / fork   := true,
+    run / fork    := true,
     scalacOptions ++= baseScalaSettings,
-    developers += Developer("takapi327", "Takahiko Tominaga", "t.takapi0327@gmail.com", url("https://github.com/takapi327"))
+    developers    += Developer("takapi327", "Takahiko Tominaga", "t.takapi0327@gmail.com", url("https://github.com/takapi327"))
   )
 
   /** A project that runs in the sbt runtime. */
