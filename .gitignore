@@ -1,0 +1,13 @@
+target/
+.DS_Store
+
+# for the IntelliJ
+.bsp
+.idea
+
+# for the vscode
+.bloop/
+.metals/
+.vscode/
+metals.sbt
+
