@@ -9,6 +9,24 @@ import JavaVersions._
 import BuildSettings._
 import Dependencies._
 
+ThisBuild / crossScalaVersions         := Seq(scala3)
+ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin(java11))
+
+ThisBuild / githubWorkflowAddedJobs ++= Seq(
+  WorkflowJob(
+    "scalafmt",
+    "Scalafmt",
+    githubWorkflowJobSetup.value.toList ::: List(
+      WorkflowStep.Run(
+        List("sbt scalafmtCheck"),
+        name = Some("Scalafmt check"),
+      )
+    ),
+    scalas = List(scala3),
+    javas  = List(JavaSpec.temurin(java11)),
+  )
+)
+
 lazy val CoreProject = LepusSbtProject("Core", "core")
   .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
   .settings(libraryDependencies ++= Seq(
