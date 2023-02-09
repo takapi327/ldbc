@@ -9,4 +9,10 @@ import sbt._
 object Dependencies {
 
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.4.6"
+
+  val specs2Version = "5.2.0"
+  val specs2: Seq[ModuleID] = Seq(
+    "specs2-core",
+    "specs2-junit",
+  ).map("org.specs2" %% _ % specs2Version % Test)
 }

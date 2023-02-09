@@ -31,7 +31,7 @@ lazy val CoreProject = LepusSbtProject("Core", "core")
   .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
   .settings(libraryDependencies ++= Seq(
     catsEffect
-  ))
+  ) ++ specs2)
 
 lazy val coreProjects: Seq[ProjectReference] = Seq(
   CoreProject
