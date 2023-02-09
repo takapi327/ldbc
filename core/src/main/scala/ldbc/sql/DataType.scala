@@ -163,7 +163,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): BitOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): BitOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -213,7 +213,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): TinyintOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): TinyintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -258,7 +258,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): SmallintOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): SmallintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -303,7 +303,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): MediumintOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): MediumintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -348,7 +348,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): IntegerOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): IntegerOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -393,7 +393,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): BigintOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): BigintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -450,7 +450,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): DecimalOpt[T] = this.copy(accuracy, scale, Some(Default.Value(value)))
+    def DEFAULT(value: T): DecimalOpt[T] = this.copy(accuracy, scale, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -502,7 +502,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): FloatOpt[T] = this.copy(accuracy, Some(Default.Value(value)))
+    def DEFAULT(value: T): FloatOpt[T] = this.copy(accuracy, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -554,7 +554,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): CharOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): CharOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
@@ -604,7 +604,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): VarcharOpt[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): VarcharOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
