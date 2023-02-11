@@ -71,7 +71,9 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  sealed trait StringType[T <: Byte | Array[Byte] | String] extends DataType[T]
+  sealed trait StringType[T <: Byte | Array[Byte] | String] extends DataType[T]:
+
+    def character: Option[Character]
 
   /** SQL DataType to represent a string data type with NULL tolerance trait.
     *
@@ -82,12 +84,16 @@ object DataType:
 
     override def isOptional: Boolean = true
 
+    def character: Option[Character]
+
   /** SQL DataType to represent BLOB type of string data trait.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  sealed trait BlobType[T <: Array[Byte]] extends DataType[T]
+  sealed trait BlobType[T <: Array[Byte]] extends DataType[T]:
+
+    def character: Option[Character]
 
   /** Trait for representing BLOB type of string data that is NULL-allowed by SQL DataType.
     *
@@ -508,7 +514,9 @@ object DataType:
       */
     def DEFAULT_NULL: FloatOpt[T] = this.copy(accuracy, Some(Default.Null))
 
-  /** List of String Data Types */
+  /** \====================================== List of String Data Types
+    * \======================================
+    */
 
   /** Model for representing the Char data type, which is the string data of SQL DataType.
     *
@@ -516,15 +524,21 @@ object DataType:
     *   Column character length
     * @param default
     *   SQL Default values
+    * @param character
+    *   Character Set and Collation
     * @tparam T
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class CChar[T <: String](
-    length:  Int,
-    default: Option[Default]
+    length:    Int,
+    default:   Option[Default],
+    character: Option[Character]
   ) extends StringType[T]:
 
-    override def queryString: String = s"CHAR($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String =
+      s"CHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+        s" ${ v.queryString }"
+      )
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -532,6 +546,13 @@ object DataType:
       *   Value set as the default value for DataType
       */
     def DEFAULT(value: T): CChar[T] = this.copy(length, Some(Default.Value(value)))
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): CChar[T] = this.copy(length, default, Some(character))
 
   /** Model for representing the Char data type, which is string data with NULL tolerance for SQL DataType.
     *
@@ -543,11 +564,15 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class CharOpt[T <: Option[String]](
-    length:  Int,
-    default: Option[Default]
+    length:    Int,
+    default:   Option[Default],
+    character: Option[Character]
   ) extends StringOptType[T]:
 
-    override def queryString: String = s"CHAR($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String =
+      s"CHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+        s" ${ v.queryString }"
+      )
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -560,6 +585,13 @@ object DataType:
       */
     def DEFAULT_NULL: CharOpt[T] = this.copy(length, Some(Default.Null))
 
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): CharOpt[T] = this.copy(length, default, Some(character))
+
   /** Model for representing the Varchar data type, which is the string data of SQL DataType.
     *
     * @param length
@@ -570,11 +602,15 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Varchar[T <: String](
-    length:  Int,
-    default: Option[Default]
+    length:    Int,
+    default:   Option[Default],
+    character: Option[Character]
   ) extends StringType[T]:
 
-    override def queryString: String = s"VARCHAR($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String =
+      s"VARCHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+        s" ${ v.queryString }"
+      )
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -582,6 +618,13 @@ object DataType:
       *   Value set as the default value for DataType
       */
     def DEFAULT(value: T): Varchar[T] = this.copy(length, Some(Default.Value(value)))
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): Varchar[T] = this.copy(length, default, Some(character))
 
   /** Model for representing the Varchar data type, which is string data with NULL tolerance for SQL DataType.
     *
@@ -593,11 +636,15 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class VarcharOpt[T <: Option[String]](
-    length:  Int,
-    default: Option[Default]
+    length:    Int,
+    default:   Option[Default],
+    character: Option[Character]
   ) extends StringOptType[T]:
 
-    override def queryString: String = s"VARCHAR($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String =
+      s"VARCHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+        s" ${ v.queryString }"
+      )
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -610,6 +657,13 @@ object DataType:
       */
     def DEFAULT_NULL: VarcharOpt[T] = this.copy(length, Some(Default.Null))
 
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): VarcharOpt[T] = this.copy(length, default, Some(character))
+
   /** Model for representing the Binary data type, which is the string data of SQL DataType.
     *
     * @param length
@@ -617,9 +671,17 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Binary[T <: Array[Byte]](length: Int) extends StringType[T]:
+  private[ldbc] case class Binary[T <: Array[Byte]](length: Int, character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"BINARY($length) $nullType"
+    override def queryString: String =
+      s"BINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): Binary[T] = this.copy(length, Some(character))
 
   /** Model for representing the Binary data type, which is string data with NULL tolerance for SQL DataType.
     *
@@ -628,9 +690,18 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class BinaryOpt[T <: Option[Array[Byte]]](length: Int) extends StringOptType[T]:
+  private[ldbc] case class BinaryOpt[T <: Option[Array[Byte]]](length: Int, character: Option[Character])
+    extends StringOptType[T]:
 
-    override def queryString: String = s"BINARY($length) $nullType"
+    override def queryString: String =
+      s"BINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): BinaryOpt[T] = this.copy(length, Some(character))
 
   /** Model for representing the Varbinary data type, which is the string data of SQL DataType.
     *
@@ -639,9 +710,17 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Varbinary[T <: Array[Byte]](length: Int) extends StringType[T]:
+  private[ldbc] case class Varbinary[T <: Array[Byte]](length: Int, character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"VARBINARY($length) $nullType"
+    override def queryString: String =
+      s"VARBINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): Varbinary[T] = this.copy(length, Some(character))
 
   /** Model for representing the Varbinary data type, which is string data with NULL tolerance for SQL DataType.
     *
@@ -650,27 +729,50 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class VarbinaryOpt[T <: Option[Array[Byte]]](length: Int) extends StringOptType[T]:
+  private[ldbc] case class VarbinaryOpt[T <: Option[Array[Byte]]](length: Int, character: Option[Character])
+    extends StringOptType[T]:
 
-    override def queryString: String = s"VARBINARY($length) $nullType"
+    override def queryString: String =
+      s"VARBINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): VarbinaryOpt[T] = this.copy(length, Some(character))
 
   /** Model for representing the Tinyblob data type, which is the string data of SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Tinyblob[T <: Array[Byte]]() extends BlobType[T]:
+  private[ldbc] case class Tinyblob[T <: Array[Byte]](character: Option[Character]) extends BlobType[T]:
 
-    override def queryString: String = s"TINYBLOB $nullType"
+    override def queryString: String = s"TINYBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): Tinyblob[T] = this.copy(Some(character))
 
   /** Model for representing the Tinyblob data type, which is string data with NULL tolerance for SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class TinyblobOpt[T <: Option[Array[Byte]]]() extends BlobOptType[T]:
+  private[ldbc] case class TinyblobOpt[T <: Option[Array[Byte]]](character: Option[Character]) extends BlobOptType[T]:
 
-    override def queryString: String = s"TINYBLOB $nullType"
+    override def queryString: String = s"TINYBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): TinyblobOpt[T] = this.copy(Some(character))
 
   /** Model for representing the Blob data type, which is the string data of SQL DataType.
     *
@@ -679,9 +781,17 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Blob[T <: Array[Byte]](length: Long) extends BlobType[T]:
+  private[ldbc] case class Blob[T <: Array[Byte]](length: Long, character: Option[Character]) extends BlobType[T]:
 
-    override def queryString: String = s"BLOB($length) $nullType"
+    override def queryString: String =
+      s"BLOB($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): Blob[T] = this.copy(length, Some(character))
 
   /** Model for representing the Blob data type, which is string data with NULL tolerance for SQL DataType.
     *
@@ -690,117 +800,210 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class BlobOpt[T <: Option[Array[Byte]]](length: Long) extends BlobOptType[T]:
+  private[ldbc] case class BlobOpt[T <: Option[Array[Byte]]](length: Long, character: Option[Character])
+    extends BlobOptType[T]:
 
-    override def queryString: String = s"BLOB($length) $nullType"
+    override def queryString: String =
+      s"BLOB($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): BlobOpt[T] = this.copy(length, Some(character))
 
   /** Model for representing the Mediumblob data type, which is the string data of SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Mediumblob[T <: Array[Byte]]() extends BlobType[T]:
+  private[ldbc] case class Mediumblob[T <: Array[Byte]](character: Option[Character]) extends BlobType[T]:
 
-    override def queryString: String = s"MEDIUMBLOB $nullType"
+    override def queryString: String = s"MEDIUMBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): Mediumblob[T] = this.copy(Some(character))
 
   /** Model for representing the Mediumblob data type, which is string data with NULL tolerance for SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class MediumblobOpt[T <: Option[Array[Byte]]]() extends BlobOptType[T]:
+  private[ldbc] case class MediumblobOpt[T <: Option[Array[Byte]]](character: Option[Character]) extends BlobOptType[T]:
 
-    override def queryString: String = s"MEDIUMBLOB $nullType"
+    override def queryString: String = s"MEDIUMBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): MediumblobOpt[T] = this.copy(Some(character))
 
   /** Model for representing the LongBlob data type, which is the string data of SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class LongBlob[T <: Array[Byte]]() extends BlobType[T]:
+  private[ldbc] case class LongBlob[T <: Array[Byte]](character: Option[Character]) extends BlobType[T]:
 
-    override def queryString: String = s"LONGBLOB $nullType"
+    override def queryString: String = s"LONGBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): LongBlob[T] = this.copy(Some(character))
 
   /** Model for representing the LongBlob data type, which is string data with NULL tolerance for SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class LongBlobOpt[T <: Option[Array[Byte]]]() extends BlobOptType[T]:
+  private[ldbc] case class LongBlobOpt[T <: Option[Array[Byte]]](character: Option[Character]) extends BlobOptType[T]:
 
-    override def queryString: String = s"LONGBLOB $nullType"
+    override def queryString: String = s"LONGBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): LongBlobOpt[T] = this.copy(Some(character))
 
   /** Model for representing the TinyText data type, which is the string data of SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class TinyText[T <: String]() extends StringType[T]:
+  private[ldbc] case class TinyText[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"TINYTEXT $nullType"
+    override def queryString: String = s"TINYTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): TinyText[T] = this.copy(Some(character))
 
   /** Model for representing the TinyText data type, which is string data with NULL tolerance for SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class TinyTextOpt[T <: Option[String]]() extends StringOptType[T]:
+  private[ldbc] case class TinyTextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
-    override def queryString: String = s"TINYTEXT $nullType"
+    override def queryString: String = s"TINYTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): TinyTextOpt[T] = this.copy(Some(character))
 
   /** Model for representing the Text data type, which is the string data of SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Text[T <: String]() extends StringType[T]:
+  private[ldbc] case class Text[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"TEXT $nullType"
+    override def queryString: String = s"TEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): Text[T] = this.copy(Some(character))
 
   /** Model for representing the Text data type, which is string data with NULL tolerance for SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class TextOpt[T <: Option[String]]() extends StringOptType[T]:
+  private[ldbc] case class TextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
     override def queryString: String = s"TEXT $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): TextOpt[T] = this.copy(Some(character))
 
   /** Model for representing the MediumText data type, which is the string data of SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class MediumText[T <: String]() extends StringType[T]:
+  private[ldbc] case class MediumText[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"MEDIUMTEXT $nullType"
+    override def queryString: String = s"MEDIUMTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): MediumText[T] = this.copy(Some(character))
 
   /** Model for representing the MediumText data type, which is string data with NULL tolerance for SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class MediumTextOpt[T <: Option[String]]() extends StringOptType[T]:
+  private[ldbc] case class MediumTextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
-    override def queryString: String = s"MEDIUMTEXT $nullType"
+    override def queryString: String = s"MEDIUMTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): MediumTextOpt[T] = this.copy(Some(character))
 
   /** Model for representing the LongText data type, which is the string data of SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class LongText[T <: String]() extends StringType[T]:
+  private[ldbc] case class LongText[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"LONGTEXT $nullType"
+    override def queryString: String = s"LONGTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): LongText[T] = this.copy(Some(character))
 
   /** Model for representing the LongText data type, which is string data with NULL tolerance for SQL DataType.
     *
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class LongTextOpt[T <: Option[String]]() extends StringOptType[T]:
+  private[ldbc] case class LongTextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
-    override def queryString: String = s"LONGTEXT $nullType"
+    override def queryString: String = s"LONGTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+
+    /** Method for setting Character Set and Collation to DataType in SQL.
+      *
+      * @param character
+      *   Character Set and Collation
+      */
+    def CHARACTER_SET(character: Character): LongTextOpt[T] = this.copy(Some(character))
 
   /** List of Date Data Types */
 
