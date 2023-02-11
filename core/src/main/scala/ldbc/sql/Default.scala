@@ -41,5 +41,5 @@ object Default:
     */
   case class TimeStamp(withOn: Boolean) extends Default:
     override def queryString: String =
-      if withOn then "DEFAULT CURRENT_TIMESTAMP"
-      else "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+      if withOn then "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+      else "DEFAULT CURRENT_TIMESTAMP"
