@@ -4,4 +4,4 @@
 
 package ldbc.sql
 
-package object syntax
+package object syntax extends DataTypeConversion
