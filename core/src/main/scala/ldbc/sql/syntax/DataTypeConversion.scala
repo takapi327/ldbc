@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.sql.syntax
 
@@ -9,9 +9,8 @@ import java.time.Year as JYear
 
 import ldbc.sql.DataType.*
 
-/**
- * Trait for converting DataType type to Option type.
- */
+/** Trait for converting DataType type to Option type.
+  */
 private[ldbc] trait DataTypeConversion:
 
   given Conversion[Bit[Byte], BitOpt[Option[Byte]]] =
