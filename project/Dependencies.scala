@@ -15,4 +15,6 @@ object Dependencies {
     "specs2-core",
     "specs2-junit",
   ).map("org.specs2" %% _ % specs2Version % Test)
+
+  val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15" % Test
 }

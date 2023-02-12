@@ -30,7 +30,8 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 lazy val CoreProject = LepusSbtProject("Core", "core")
   .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
   .settings(libraryDependencies ++= Seq(
-    catsEffect
+    catsEffect,
+    scalaTest
   ) ++ specs2)
 
 lazy val coreProjects: Seq[ProjectReference] = Seq(
