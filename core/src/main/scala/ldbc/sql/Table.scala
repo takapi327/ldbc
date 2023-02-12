@@ -21,7 +21,7 @@ private[ldbc] trait Table[F[_], P <: Product] extends Dynamic:
 
   /** Table name
     */
-  protected def name: String
+  private[ldbc] def name: String
 
   /** Methods for statically accessing column information held by a Table.
     *
@@ -90,7 +90,7 @@ object Table extends Dynamic:
     columns: Tuple.Map[mirror.MirroredElemTypes, [T] =>> Column[F, T]]
   ): Table[F, P] = new Table[F, P]:
 
-    override protected def name: String = _name
+    override private[ldbc] def name: String = _name
 
     override def selectDynamic[Tag <: Singleton](
       tag: Tag
