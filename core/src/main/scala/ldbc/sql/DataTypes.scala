@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.sql
 
@@ -12,16 +12,11 @@ import scala.annotation.targetName
 
 import ldbc.sql.DataType.*
 
-/**
- * A set of methods for constructing DataType
- */
+/** A set of methods for constructing DataType
+  */
 object DataTypes:
 
-  /**
-   * ===============================
-   *  List of Numeric Data Types
-   * ===============================
-   */
+  /** ===== List of Numeric Data Types ===== */
 
   inline def BIT[T <: Byte | Short | Int | Long | Float | Double | BigDecimal](inline length: Int): Bit[T] =
     inline if length < 1 || length > 64 then error("The length of the BIT must be in the range 1 to 64.")
@@ -61,11 +56,7 @@ object DataTypes:
     inline if accuracy < 24 || accuracy > 53 then error("The length of the DOUBLE must be in the range 24 to 53.")
     else CFloat(accuracy, None)
 
-  /**
-   * ===============================
-   *  List of String Data Types
-   * ===============================
-   */
+  /** ===== List of String Data Types ===== */
 
   inline def CHAR[T <: String](inline length: Int): CChar[T] =
     inline if length < 0 || length > 255 then error("The length of the CHAR must be in the range 0 to 255.")
@@ -86,7 +77,8 @@ object DataTypes:
   inline def TINYBLOB[T <: Array[Byte]](): Tinyblob[T] = Tinyblob(None)
 
   inline def BLOB[T <: Array[Byte]](inline length: Long): Blob[T] =
-    inline if length < 0 || length > 4294967295L then error("The length of the BLOB must be in the range 0 to 4294967295.")
+    inline if length < 0 || length > 4294967295L then
+      error("The length of the BLOB must be in the range 0 to 4294967295.")
     else Blob(length, None)
 
   inline def MEDIUMBLOB[T <: Array[Byte]](): Mediumblob[T] = Mediumblob(None)
@@ -101,11 +93,7 @@ object DataTypes:
 
   inline def LONGTEXT[T <: String](): LongText[T] = LongText(None)
 
-  /**
-   * ===============================
-   *  List of Date Data Types
-   * ===============================
-   */
+  /** ===== List of Date Data Types ===== */
 
   inline def DATE[T <: LocalDate]: Date[T] = Date(None)
 

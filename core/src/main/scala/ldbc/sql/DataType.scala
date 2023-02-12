@@ -123,7 +123,7 @@ object DataType:
     extends DataType[T]:
     override def isOptional: Boolean = true
 
-  /** List of Numeric Data Types */
+  /** ===== List of Numeric Data Types ===== */
 
   /** Model for representing the Bit data type, which is the numeric data of SQL DataType.
     *
@@ -514,9 +514,7 @@ object DataType:
       */
     def DEFAULT_NULL: FloatOpt[T] = this.copy(accuracy, Some(Default.Null))
 
-  /** \====================================== List of String Data Types
-    * \======================================
-    */
+  /** ===== List of String Data Types ===== */
 
   /** Model for representing the Char data type, which is the string data of SQL DataType.
     *
@@ -1005,7 +1003,7 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): LongTextOpt[T] = this.copy(Some(character))
 
-  /** List of Date Data Types */
+  /** ===== List of Date Data Types ===== */
 
   /** This model is used to represent SQL DataType date data.
     *

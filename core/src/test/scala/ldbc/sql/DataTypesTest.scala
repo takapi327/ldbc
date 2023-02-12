@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.sql
 
@@ -242,8 +242,7 @@ class DataTypesTest extends AnyFlatSpec:
   }
 
   it should "Successful generation of DOUBLE" in {
-    assertCompiles(
-      """
+    assertCompiles("""
       import ldbc.sql.DataType.*
       import ldbc.sql.DataTypes.*
 
@@ -253,8 +252,7 @@ class DataTypesTest extends AnyFlatSpec:
   }
 
   it should "If accuracy is lower than 24 at the time of DOUBLE generation, an error occurs." in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
       import ldbc.sql.DataType.*
       import ldbc.sql.DataTypes.*
 
@@ -263,8 +261,7 @@ class DataTypesTest extends AnyFlatSpec:
   }
 
   it should "If the accuracy at the time of DOUBLE generation is greater than 53, an error occurs." in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
       import ldbc.sql.DataType.*
       import ldbc.sql.DataTypes.*
 
