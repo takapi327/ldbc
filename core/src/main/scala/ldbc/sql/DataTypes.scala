@@ -14,7 +14,7 @@ import ldbc.sql.DataType.*
 
 /** A set of methods for constructing DataType
   */
-object DataTypes:
+trait DataTypes:
 
   /** ===== List of Numeric Data Types ===== */
 
