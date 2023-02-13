@@ -85,7 +85,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of SMALLINT generation is greater than 255, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Smallint[Short] = SMALLINT[Short](256)
@@ -94,7 +94,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of MEDIUMINT" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: Mediumint[Int] = MEDIUMINT[Int](1)
@@ -104,7 +104,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of MEDIUMINT generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Mediumint[Int] = MEDIUMINT[Int](-1)
@@ -113,7 +113,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of MEDIUMINT generation is greater than 255, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Mediumint[Int] = MEDIUMINT[Int](256)
@@ -131,7 +131,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of INT generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Integer[Int] = INT[Int](-1)
@@ -140,7 +140,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of INT generation is greater than 255, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Integer[Int] = INT[Int](256)
@@ -149,7 +149,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of BIGINT" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: Bigint[Long] = BIGINT[Long](1)
@@ -159,7 +159,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of BIGINT generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Bigint[Long] = BIGINT[Long](-1)
@@ -168,7 +168,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of BIGINT generation is greater than 255, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Bigint[Long] = BIGINT[Long](256)
@@ -177,7 +177,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of DECIMAL" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: Decimal[BigDecimal] = DECIMAL[BigDecimal](0, 0)
@@ -187,7 +187,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If accuracy is lower than 0 at the time of DECIMAL generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Decimal[BigDecimal] = DECIMAL[BigDecimal](-1, 0)
@@ -196,7 +196,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the accuracy at the time of DECIMAL generation is greater than 65, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Decimal[BigDecimal] = DECIMAL[BigDecimal](66, 0)
@@ -205,7 +205,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If scale is lower than 0 at the time of DECIMAL generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Decimal[BigDecimal] = DECIMAL[BigDecimal](1, -1)
@@ -214,7 +214,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of FLOAT" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: CFloat[Float] = FLOAT[Float](0)
@@ -224,7 +224,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If accuracy is lower than 0 at the time of FLOAT generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: CFloat[Float] = FLOAT[Float](-1)
@@ -233,7 +233,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the accuracy at the time of FLOAT generation is greater than 24, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: CFloat[Float] = FLOAT[Float](25)
@@ -242,7 +242,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of DOUBLE" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: CFloat[Double] = DOUBLE[Double](24)
@@ -252,7 +252,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If accuracy is lower than 24 at the time of DOUBLE generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: CFloat[Double] = DOUBLE[Double](23)
@@ -261,7 +261,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the accuracy at the time of DOUBLE generation is greater than 53, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: CFloat[Double] = DOUBLE[Double](54)
@@ -270,7 +270,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of CHAR" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: CChar[String] = CHAR[String](0)
@@ -280,7 +280,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of CHAR generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: CChar[String] = CHAR[String](-1)
@@ -297,7 +297,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of VARCHAR" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: Varchar[String] = VARCHAR[String](0)
@@ -307,7 +307,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of VARCHAR generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Varchar[String] = VARCHAR[String](-1)
@@ -316,7 +316,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of VARCHAR generation is greater than 255, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Varchar[String] = VARCHAR[String](256)
@@ -325,7 +325,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of BINARY" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: Binary[Array[Byte]] = BINARY[Array[Byte]](0)
@@ -335,7 +335,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of BINARY generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Binary[Array[Byte]] = BINARY[Array[Byte]](-1)
@@ -344,7 +344,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of BINARY generation is greater than 255, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Binary[Array[Byte]] = BINARY[Array[Byte]](256)
@@ -353,7 +353,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of VARBINARY" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](0)
@@ -363,7 +363,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of VARBINARY generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](-1)
@@ -372,7 +372,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of VARBINARY generation is greater than 255, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](256)
@@ -381,7 +381,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "Successful generation of BLOB" in {
     assertCompiles("""
-                      import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit1: Blob[Array[Byte]] = BLOB[Array[Byte]](0)
@@ -391,7 +391,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If length is lower than 0 at the time of BLOB generation, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Blob[Array[Byte]] = BLOB[Array[Byte]](-1)
@@ -400,7 +400,7 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of BLOB generation is greater than 4294967295L, an error occurs." in {
     assertDoesNotCompile("""
-                            import ldbc.sql.*
+      import ldbc.sql.*
       import ldbc.sql.DataType.*
 
       val bit: Blob[Array[Byte]] = BLOB[Array[Byte]](4294967296L)
