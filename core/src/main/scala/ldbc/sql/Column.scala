@@ -6,6 +6,8 @@ package ldbc.sql
 
 import ldbc.sql.attribute.Attribute
 
+import ldbc.sql.free.Column as FreeColumn
+
 /** Trait for representing SQL Column
   *
   * @tparam F
@@ -13,26 +15,14 @@ import ldbc.sql.attribute.Attribute
   * @tparam T
   *   Scala types that match SQL DataType
   */
-trait Column[F[_], T]:
-
-  /** Column Field Name */
-  def label: String
-
-  /** Column type */
-  def dataType: DataType[T]
-
-  /** Extra attribute of column */
-  def attributes: Seq[Attribute[T]]
-
-  /** Column comment */
-  def comment: Option[String]
+trait Column[F[_], T] extends FreeColumn[T]:
 
   /** Define SQL query string for each Column
     *
     * @return
     *   SQL query string
     */
-  def queryString: String =
+  override def queryString: String =
     s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("") + comment.fold("")(
       str => s" COMMENT '$str'"
     )
