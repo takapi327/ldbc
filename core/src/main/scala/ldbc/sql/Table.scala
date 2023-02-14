@@ -9,6 +9,7 @@ import scala.deriving.Mirror
 import scala.annotation.targetName
 
 import ldbc.sql.interpreter.*
+import ldbc.sql.free.Table as FreeTable
 
 /** Trait for generating SQL table information.
   *
@@ -17,11 +18,7 @@ import ldbc.sql.interpreter.*
   * @tparam P
   *   A class that implements a [[Product]] that is one-to-one with the table definition.
   */
-private[ldbc] trait Table[F[_], P <: Product] extends Dynamic:
-
-  /** Table name
-    */
-  private[ldbc] def name: String
+private[ldbc] trait Table[F[_], P <: Product] extends FreeTable, Dynamic:
 
   /** Methods for statically accessing column information held by a Table.
     *
@@ -45,7 +42,29 @@ private[ldbc] trait Table[F[_], P <: Product] extends Dynamic:
     */
   @targetName("allColumn") def * : List[Column[F, Any]]
 
+  def keys(func: Table[F, P] => Seq[Key]): Table[F, P]
+
 object Table extends Dynamic:
+
+  private case class Impl[F[_], P <: Product, T <: Tuple](
+    name:           String,
+    columns:        Tuple.Map[T, [A] =>> Column[F, A]],
+    keyDefinitions: Seq[Key]
+  ) extends Table[F, P]:
+
+    override def selectDynamic[Tag <: Singleton](
+      tag: Tag
+    )(using
+      mirror: Mirror.ProductOf[P],
+      index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    ): Column[F, Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
+      columns
+        .productElement(index.value)
+        .asInstanceOf[Column[F, Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+
+    @targetName("allColumn") def * : List[Column[F, Any]] = columns.toList.asInstanceOf[List[Column[F, Any]]]
+
+    override def keys(func: Table[F, P] => Seq[Key]): Table[F, P] = this.copy(keyDefinitions = func(this))
 
   /** Methods for static Table construction using Dynamic.
     *
@@ -88,18 +107,4 @@ object Table extends Dynamic:
   )(
     _name:   String,
     columns: Tuple.Map[mirror.MirroredElemTypes, [T] =>> Column[F, T]]
-  ): Table[F, P] = new Table[F, P]:
-
-    override private[ldbc] def name: String = _name
-
-    override def selectDynamic[Tag <: Singleton](
-      tag: Tag
-    )(using
-      mirror: Mirror.ProductOf[P],
-      index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    ): Column[F, Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-      columns
-        .productElement(index.value)
-        .asInstanceOf[Column[F, Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
-
-    @targetName("allColumn") def * : List[Column[F, Any]] = columns.toList.asInstanceOf[List[Column[F, Any]]]
+  ): Table[F, P] = Impl[F, P, mirror.MirroredElemTypes](_name, columns, Seq.empty)
