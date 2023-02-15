@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.sql
 
@@ -8,24 +8,22 @@ import cats.data.NonEmptyList
 
 import ldbc.sql.free.Column
 
-/**
- * Key to be set for the table
- */
+/** Key to be set for the table
+  */
 private[ldbc] trait Key:
 
   /** Unique label for key */
   def label: String
 
   /** Define SQL query string for each Column
-   *
-   * @return
-   * SQL query string
-   */
+    *
+    * @return
+    *   SQL query string
+    */
   def queryString: String
 
-/**
- * Trait for generating SQL keys that will become Indexes
- */
+/** Trait for generating SQL keys that will become Indexes
+  */
 private[ldbc] trait Index extends Key:
 
   /** Value that is the type of Index */
@@ -44,29 +42,29 @@ object Index:
     case BTREE
     case HASH
 
-  /**
-   * Additional indexing options
-   * 
-   * @param keyBlockSize
-   *   Value to specify the size in bytes to be used for the index key block
-   * @param indexType
-   *   Value that is the type of Index
-   * @param parserName
-   *   Value to associate the parser plugin with an index when special handling is required for full-text indexing and search operations
-   * @param comment
-   *   Index comment
-   * @param engineAttribute
-   *   Value to specify the index attribute for the primary storage engines.
-   * @param secondaryEngineAttribute
-   *   Value to specify the index attribute for the secondary storage engines.
-   */
+  /** Additional indexing options
+    *
+    * @param keyBlockSize
+    *   Value to specify the size in bytes to be used for the index key block
+    * @param indexType
+    *   Value that is the type of Index
+    * @param parserName
+    *   Value to associate the parser plugin with an index when special handling is required for full-text indexing and
+    *   search operations
+    * @param comment
+    *   Index comment
+    * @param engineAttribute
+    *   Value to specify the index attribute for the primary storage engines.
+    * @param secondaryEngineAttribute
+    *   Value to specify the index attribute for the secondary storage engines.
+    */
   case class IndexOption(
-    keyBlockSize: Option[1 | 2 | 4 | 8 | 16],
-    indexType: Option[Type],
-    parserName: Option[String],
-    comment: Option[String],
-    engineAttribute: Option[String],
-    secondaryEngineAttribute: Option[String],
+    keyBlockSize:             Option[1 | 2 | 4 | 8 | 16],
+    indexType:                Option[Type],
+    parserName:               Option[String],
+    comment:                  Option[String],
+    engineAttribute:          Option[String],
+    secondaryEngineAttribute: Option[String]
   ):
 
     def queryString: String =
@@ -77,18 +75,17 @@ object Index:
         + engineAttribute.fold("")(engine => s" ENGINE_ATTRIBUTE = '$engine'")
         + secondaryEngineAttribute.fold("")(secondary => s" SECONDARY_ENGINE_ATTRIBUTE = '$secondary'")
 
-/**
- * A model representing SQL Index key information.
- * 
- * @param indexName
- *   Unique name for key
- * @param indexType
- *   Value that is the type of Index
- * @param keyPart
- *   List of columns for which the Index key is set
- * @param indexOption
- *   Additional indexing options
- */
+/** A model representing SQL Index key information.
+  *
+  * @param indexName
+  *   Unique name for key
+  * @param indexType
+  *   Value that is the type of Index
+  * @param keyPart
+  *   List of columns for which the Index key is set
+  * @param indexOption
+  *   Additional indexing options
+  */
 private[ldbc] case class IndexKey(
   indexName:   Option[String],
   indexType:   Option[Index.Type],
@@ -101,20 +98,19 @@ private[ldbc] case class IndexKey(
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${keyPart.map(column => s"`${column.label}`").toList.mkString(", ")})"
+      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
       + indexType.fold("")(index => s" USING $index")
-      + indexOption.fold("")(option => s"${option.queryString}")
+      + indexOption.fold("")(option => s"${ option.queryString }")
 
-/**
- * A model representing SQL Fulltext Index key information.
- * 
- * @param indexName
- *   Unique name for key
- * @param keyPart 
- *   List of columns for which the Index key is set
- * @param indexOption
- *   Additional indexing options
- */
+/** A model representing SQL Fulltext Index key information.
+  *
+  * @param indexName
+  *   Unique name for key
+  * @param keyPart
+  *   List of columns for which the Index key is set
+  * @param indexOption
+  *   Additional indexing options
+  */
 private[ldbc] case class Fulltext(
   indexName:   Option[String],
   keyPart:     NonEmptyList[Column[?]],
@@ -123,22 +119,21 @@ private[ldbc] case class Fulltext(
 
   override def label: String = "FULLTEXT"
 
-  override def queryString: String = 
+  override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${keyPart.map(column => s"`${column.label}`").toList.mkString(", ")})"
-      + indexOption.fold("")(option => s"${option.queryString}")
+      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+      + indexOption.fold("")(option => s"${ option.queryString }")
 
-/**
- * A model representing SQL Primary key information.
- *
- * @param indexType
- *   Value that is the type of Index
- * @param keyPart
- *   List of columns for which the Index key is set
- * @param indexOption
- *   Additional indexing options
- */
+/** A model representing SQL Primary key information.
+  *
+  * @param indexType
+  *   Value that is the type of Index
+  * @param keyPart
+  *   List of columns for which the Index key is set
+  * @param indexOption
+  *   Additional indexing options
+  */
 private[ldbc] case class PrimaryKey(
   indexType:   Option[Index.Type],
   keyPart:     NonEmptyList[Column[?]],
@@ -149,22 +144,21 @@ private[ldbc] case class PrimaryKey(
 
   override def queryString: String =
     label
-      + s" (${keyPart.map(column => s"`${column.label}`").toList.mkString(", ")})"
+      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
       + indexType.fold("")(index => s" USING $index")
-      + indexOption.fold("")(option => s"${option.queryString}")
+      + indexOption.fold("")(option => s"${ option.queryString }")
 
-/**
- * A model representing SQL Unique key information.
- *
- * @param indexName
- *   Unique name for key
- * @param indexType
- *   Value that is the type of Index
- * @param keyPart
- *   List of columns for which the Index key is set
- * @param indexOption
- *   Additional indexing options
- */
+/** A model representing SQL Unique key information.
+  *
+  * @param indexName
+  *   Unique name for key
+  * @param indexType
+  *   Value that is the type of Index
+  * @param keyPart
+  *   List of columns for which the Index key is set
+  * @param indexOption
+  *   Additional indexing options
+  */
 private[ldbc] case class UniqueKey(
   indexName:   Option[String],
   indexType:   Option[Index.Type],
@@ -177,20 +171,19 @@ private[ldbc] case class UniqueKey(
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-    + s" (${keyPart.map(column => s"`${column.label}`").toList.mkString(", ")})"
+      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
       + indexType.fold("")(index => s" USING $index")
-      + indexOption.fold("")(option => s"${option.queryString}")
+      + indexOption.fold("")(option => s"${ option.queryString }")
 
-/**
- * A model representing SQL Foreign key information.
- * 
- * @param indexName
- *   Unique name for key
- * @param colName
- *   List of columns for which the Index key is set
- * @param reference
- *   A model for setting reference options used for foreign key constraints, etc.
- */
+/** A model representing SQL Foreign key information.
+  *
+  * @param indexName
+  *   Unique name for key
+  * @param colName
+  *   List of columns for which the Index key is set
+  * @param reference
+  *   A model for setting reference options used for foreign key constraints, etc.
+  */
 private[ldbc] case class ForeignKey(
   indexName: Option[String],
   colName:   NonEmptyList[Column[?]],
@@ -202,20 +195,19 @@ private[ldbc] case class ForeignKey(
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${colName.map(column => s"`${column.label}`").toList.mkString(", ")})"
-      + s" ${reference.queryString}"
+      + s" (${ colName.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+      + s" ${ reference.queryString }"
 
-/**
- * A model for setting constraints on keys.
- * 
- * @param symbol
- *   Unique name of the constraint
- * @param key
- *   Types of keys for which constraints can be set
- */
+/** A model for setting constraints on keys.
+  *
+  * @param symbol
+  *   Unique name of the constraint
+  * @param key
+  *   Types of keys for which constraints can be set
+  */
 private[ldbc] case class Constraint(
   symbol: String,
-  key: PrimaryKey | UniqueKey | ForeignKey
+  key:    PrimaryKey | UniqueKey | ForeignKey
 ) extends Key:
 
   def label: String = "CONSTRAINT"

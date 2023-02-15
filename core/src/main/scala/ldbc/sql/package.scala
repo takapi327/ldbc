@@ -22,20 +22,20 @@ package object sql extends DataTypes:
   ): Column[F, T] = Column[F, T](label, dataType)
 
   def column[F[_], T](
-    label: String,
+    label:    String,
     dataType: DataType[T],
-    comment: String
+    comment:  String
   ): Column[F, T] = Column[F, T](label, dataType, comment)
 
   def column[F[_], T](
-    label: String,
-    dataType: DataType[T],
+    label:      String,
+    dataType:   DataType[T],
     attributes: Attribute[T]*
   ): Column[F, T] = Column[F, T](label, dataType, attributes: _*)
 
   def column[F[_], T](
-    label: String,
-    dataType: DataType[T],
-    comment: String,
+    label:      String,
+    dataType:   DataType[T],
+    comment:    String,
     attributes: Attribute[T]*
   ): Column[F, T] = Column[F, T](label, dataType, comment, attributes: _*)

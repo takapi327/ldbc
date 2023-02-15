@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.sql.free
 
@@ -8,10 +8,10 @@ import ldbc.sql.DataType
 import ldbc.sql.attribute.Attribute
 
 /** Trait for representing SQL Column
- *
- * @tparam T
- *   Scala types that match SQL DataType
- */
+  *
+  * @tparam T
+  *   Scala types that match SQL DataType
+  */
 private[ldbc] trait Column[T]:
 
   /** Column Field Name */
@@ -27,9 +27,8 @@ private[ldbc] trait Column[T]:
   def comment: Option[String]
 
   /** Define SQL query string for each Column
-   *
-   * @return
-   * SQL query string
-   */
+    *
+    * @return
+    *   SQL query string
+    */
   def queryString: String
-  

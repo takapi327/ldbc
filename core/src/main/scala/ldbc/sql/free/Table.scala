@@ -1,14 +1,13 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.sql.free
 
 import ldbc.sql.Key
 
-/**
- * Trait for generating SQL table information.
- */
+/** Trait for generating SQL table information.
+  */
 private[ldbc] trait Table:
 
   /** Table name */
