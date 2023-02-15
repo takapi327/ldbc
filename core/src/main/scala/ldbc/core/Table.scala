@@ -2,14 +2,14 @@
   * distributed with this source code.
   */
 
-package ldbc.sql
+package ldbc.core
 
 import scala.language.dynamics
 import scala.deriving.Mirror
 import scala.annotation.targetName
 
-import ldbc.sql.interpreter.*
-import ldbc.sql.free.Table as FreeTable
+import ldbc.core.free.Table as FreeTable
+import ldbc.core.interpreter.*
 
 /** Trait for generating SQL table information.
   *
@@ -18,7 +18,7 @@ import ldbc.sql.free.Table as FreeTable
   * @tparam P
   *   A class that implements a [[Product]] that is one-to-one with the table definition.
   */
-private[ldbc] trait Table[F[_], P <: Product] extends FreeTable, Dynamic:
+private[ldbc] trait Table[F[_], P <: Product] extends free.Table, Dynamic:
 
   /** Methods for statically accessing column information held by a Table.
     *

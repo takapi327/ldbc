@@ -2,14 +2,14 @@
   * distributed with this source code.
   */
 
-package ldbc.sql
+package ldbc.core
 
 import java.time.{ LocalTime, LocalDate, LocalDateTime }
 import java.time.Year as JYear
 
 import org.specs2.mutable.Specification
 
-import ldbc.sql.DataType.*
+import ldbc.core.DataType.*
 
 object DataTypeTest extends Specification:
 

@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.attribute
+package ldbc.core.attribute
 
 /** Model for specifying an additional attribute AUTO_INCREMENT for DataType.
   */

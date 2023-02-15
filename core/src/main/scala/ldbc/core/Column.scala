@@ -2,11 +2,9 @@
   * distributed with this source code.
   */
 
-package ldbc.sql
+package ldbc.core
 
-import ldbc.sql.attribute.Attribute
-
-import ldbc.sql.free.Column as FreeColumn
+import ldbc.core.attribute.Attribute
 
 /** Trait for representing SQL Column
   *
@@ -15,7 +13,7 @@ import ldbc.sql.free.Column as FreeColumn
   * @tparam T
   *   Scala types that match SQL DataType
   */
-trait Column[F[_], T] extends FreeColumn[T]:
+trait Column[F[_], T] extends free.Column[T]:
 
   /** Define SQL query string for each Column
     *

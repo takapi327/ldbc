@@ -2,15 +2,15 @@
   * distributed with this source code.
   */
 
-package ldbc.sql
+package ldbc.core
 
 import org.specs2.mutable.Specification
 
 import cats.Id
 
-import ldbc.sql.DataType.*
-import ldbc.sql.Character.*
-import ldbc.sql.attribute.AutoInc
+import ldbc.core.DataType.*
+import ldbc.core.Character.*
+import ldbc.core.attribute.AutoInc
 
 object ColumnTest extends Specification:
 

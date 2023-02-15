@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.attribute
+package ldbc.core.attribute
 
 /** Key to be set for the column
   */

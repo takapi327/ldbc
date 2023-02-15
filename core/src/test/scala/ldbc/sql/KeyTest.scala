@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql
+package ldbc.core
 
 import org.specs2.mutable.Specification
 

@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.interpreter
+package ldbc.core.interpreter
 
 import scala.compiletime.ops.int.S
 

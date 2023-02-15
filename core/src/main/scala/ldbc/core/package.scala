@@ -4,17 +4,17 @@
 
 package ldbc
 
-import ldbc.sql.attribute.Attribute
+import ldbc.core.attribute.Attribute
 
 /** Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
   * might look something like this.
   *
   * example:
   * {{{
-  *   import ldbc.sql.*
+  *   import ldbc.core.*
   * }}}
   */
-package object sql extends DataTypes:
+package object core extends DataTypes:
 
   def column[F[_], T](
     label:    String,

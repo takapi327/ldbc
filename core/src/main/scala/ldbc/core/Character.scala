@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql
+package ldbc.core
 
 /** A model for representing character sets and collations to be set in column definitions for the string data types
   * CHAR, VARCHAR, TEXT, ENUM, SET, and any synonym.

@@ -2,9 +2,9 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.interpreter
+package ldbc.core.interpreter
 
-import ldbc.sql.Column
+import ldbc.core.Column
 
 /** Column Type representing the conversion from Tuple to Tuple Map.
   *

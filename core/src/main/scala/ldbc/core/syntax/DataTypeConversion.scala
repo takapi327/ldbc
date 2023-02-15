@@ -2,12 +2,12 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.syntax
+package ldbc.core.syntax
 
 import java.time.{ Instant, LocalTime, LocalDate, LocalDateTime }
 import java.time.Year as JYear
 
-import ldbc.sql.DataType.*
+import ldbc.core.DataType.*
 
 /** Trait for converting DataType type to Option type.
   */

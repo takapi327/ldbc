@@ -2,10 +2,10 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.free
+package ldbc.core.free
 
-import ldbc.sql.DataType
-import ldbc.sql.attribute.Attribute
+import ldbc.core.DataType
+import ldbc.core.attribute.Attribute
 
 /** Trait for representing SQL Column
   *

@@ -2,9 +2,9 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.free
+package ldbc.core.free
 
-import ldbc.sql.Key
+import ldbc.core.Key
 
 /** Trait for generating SQL table information.
   */
