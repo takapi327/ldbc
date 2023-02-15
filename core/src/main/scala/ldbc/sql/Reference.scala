@@ -21,10 +21,10 @@ import ldbc.sql.free.{ Table, Column }
  *   Reference action on update
  */
 case class Reference(
-  table:     Table,
-  keyPart:   NonEmptyList[Column[?]],
-  onDelete:  Option[Reference.ReferenceOption],
-  onUpdate:  Option[Reference.ReferenceOption]
+  table:    Table,
+  keyPart:  NonEmptyList[Column[?]],
+  onDelete: Option[Reference.ReferenceOption],
+  onUpdate: Option[Reference.ReferenceOption]
 ):
 
   def label: String = "REFERENCES"
@@ -44,5 +44,5 @@ object Reference:
     case SET_DEFAULT extends ReferenceOption("SET DEFAULT")
 
   def apply(table: Table)(columns: Column[?]*): Reference =
-    require(NonEmptyList.fromList(columns.toList).nonEmpty, "")
+    require(NonEmptyList.fromList(columns.toList).nonEmpty, "For Reference settings, at least one COLUMN must always be specified.")
     Reference(table, NonEmptyList.fromListUnsafe(columns.toList), None, None)
