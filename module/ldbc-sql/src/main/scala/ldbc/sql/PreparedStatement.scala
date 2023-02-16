@@ -521,6 +521,21 @@ trait PreparedStatement[F[_]]:
     */
   def setArray(parameterIndex: Int, x: java.sql.Array): F[Unit]
 
+  /** Retrieves a ResultSetMetaData object that contains information about the columns of the ResultSet object that will
+    * be returned when this PreparedStatement object is executed.
+    *
+    * Because a PreparedStatement object is precompiled, it is possible to know about the ResultSet object that it will
+    * return without having to execute it. Consequently, it is possible to invoke the method getMetaData on a
+    * PreparedStatement object rather than waiting to execute it and then invoking the ResultSet.getMetaData method on
+    * the ResultSet object that is returned.
+    *
+    * NOTE: Using this method may be expensive for some drivers due to the lack of underlying DBMS support.
+    *
+    * @return
+    *   the description of a ResultSet object's columns or null if the driver cannot return a ResultSetMetaData object
+    */
+  def getMetaData(): F[ResultSetMetaData[F]]
+
   /** Sets the designated parameter to the given java.net.URL value. The driver converts this to an SQL DATALINK value
     * when it sends it to the database.
     *
@@ -530,6 +545,14 @@ trait PreparedStatement[F[_]]:
     *   the java.net.URL object to be set
     */
   def setURL(parameterIndex: Int, x: java.net.URL): F[Unit]
+
+  /** Retrieves the number, types and properties of this PreparedStatement object's parameters.
+    *
+    * @return
+    *   a ParameterMetaData object that contains information about the number, types and properties for each parameter
+    *   marker of this PreparedStatement object
+    */
+  def getParameterMetaData(): F[ParameterMetaData[F]]
 
   /** Sets the designated parameter to the given [[java.sql.RowId]] object. The driver converts this to a SQL ROWID
     * value when it sends it to the database
@@ -629,6 +652,34 @@ trait PreparedStatement[F[_]]:
     *   a SQLXML object that maps an SQL XML value
     */
   def setSQLXML(parameterIndex: Int, xmlObject: java.sql.SQLXML): F[Unit]
+
+  /** Sets the value of the designated parameter with the given object. If the second argument is an InputStream then
+    * the stream must contain the number of bytes specified by scaleOrLength. If the second argument is a Reader then
+    * the reader must contain the number of characters specified by scaleOrLength. If these conditions are not true the
+    * driver will generate a SQLException when the prepared statement is executed.
+    *
+    * The given Java object will be converted to the given targetSqlType before being sent to the database. If the
+    * object has a custom mapping (is of a class implementing the interface SQLData), the JDBC driver should call the
+    * method SQLData.writeSQL to write it to the SQL data stream. If, on the other hand, the object is of a class
+    * implementing Ref, Blob, Clob, NClob, Struct, java.net.URL, or Array, the driver should pass it to the database as
+    * a value of the corresponding SQL type.
+    *
+    * Note that this method may be used to pass database-specific abstract data types.
+    *
+    * The default implementation will throw SQLFeatureNotSupportedException
+    *
+    * @param parameterIndex
+    *   the first parameter is 1, the second is 2, ...
+    * @param x
+    *   the object containing the input parameter value
+    * @param targetSqlType
+    *   the SQL type to be sent to the database. The scale argument may further qualify this type.
+    * @param scaleOrLength
+    *   for java.sql.JDBCType.DECIMAL or java.sql.JDBCType.NUMERIC types, this is the number of digits after the decimal
+    *   point. For Java Object types InputStream and Reader, this is the length of the data in the stream or reader. For
+    *   all other types, this value will be ignored.
+    */
+  def setObject(parameterIndex: Int, x: Object, targetSqlType: java.sql.SQLType, scaleOrLength: Int): F[Unit]
 
   /** Sets the value of the designated parameter with the given object. If the second argument is an InputStream then
     * the stream must contain the number of bytes specified by scaleOrLength. If the second argument is a Reader then
@@ -774,8 +825,14 @@ object PreparedStatement:
     override def setArray(parameterIndex: Int, x: java.sql.Array): F[Unit] =
       Sync[F].blocking(statement.setArray(parameterIndex, x))
 
+    override def getMetaData(): F[ResultSetMetaData[F]] =
+      Sync[F].blocking(statement.getMetaData).map(ResultSetMetaData(_))
+
     override def setURL(parameterIndex: Int, x: java.net.URL): F[Unit] =
       Sync[F].blocking(statement.setURL(parameterIndex, x))
+
+    override def getParameterMetaData(): F[ParameterMetaData[F]] =
+      Sync[F].blocking(statement.getParameterMetaData).map(ParameterMetaData(_))
 
     override def setRowId(parameterIndex: Int, x: java.sql.RowId): F[Unit] =
       Sync[F].blocking(statement.setRowId(parameterIndex, x))
@@ -798,6 +855,13 @@ object PreparedStatement:
     override def setSQLXML(parameterIndex: Int, xmlObject: java.sql.SQLXML): F[Unit] =
       Sync[F].blocking(statement.setSQLXML(parameterIndex, xmlObject))
 
+    override def setObject(
+      parameterIndex: Int,
+      x:              Object,
+      targetSqlType:  java.sql.SQLType,
+      scaleOrLength:  Int
+    ): F[Unit] =
+      Sync[F].blocking(statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength))
     override def setObject(parameterIndex: Int, x: Object, targetSqlType: Int, scaleOrLength: Int): F[Unit] =
       Sync[F].blocking(statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength))
 
