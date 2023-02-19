@@ -2374,19 +2374,23 @@ trait ResultSet[F[_]]:
 
 object ResultSet:
 
-  enum FetchType(val int: Int):
+  enum FetchType(val code: Int):
     case FETCH_FORWARD extends FetchType(JavaResultSet.FETCH_FORWARD)
     case FETCH_REVERSE extends FetchType(JavaResultSet.FETCH_REVERSE)
     case FETCH_UNKNOWN extends FetchType(JavaResultSet.FETCH_UNKNOWN)
 
-  enum Type(val int: Int):
+  enum Type(val code: Int):
     case TYPE_FORWARD_ONLY       extends Type(JavaResultSet.TYPE_FORWARD_ONLY)
     case TYPE_SCROLL_INSENSITIVE extends Type(JavaResultSet.TYPE_SCROLL_INSENSITIVE)
     case TYPE_SCROLL_SENSITIVE   extends Type(JavaResultSet.TYPE_SCROLL_SENSITIVE)
 
-  enum CONCUR(val int: Int):
-    case CONCUR_READ_ONLY extends CONCUR(JavaResultSet.CONCUR_READ_ONLY)
-    case CONCUR_UPDATABLE extends CONCUR(JavaResultSet.CONCUR_UPDATABLE)
+  enum Concur(val code: Int):
+    case CONCUR_READ_ONLY extends Concur(JavaResultSet.CONCUR_READ_ONLY)
+    case CONCUR_UPDATABLE extends Concur(JavaResultSet.CONCUR_UPDATABLE)
+
+  enum Holdability(val code: Int):
+    case HOLD_CURSORS_OVER_COMMIT extends Holdability(JavaResultSet.HOLD_CURSORS_OVER_COMMIT)
+    case CLOSE_CURSORS_AT_COMMIT extends Holdability(JavaResultSet.CLOSE_CURSORS_AT_COMMIT)
 
   def apply[F[_]: Sync](resultSet: JavaResultSet): ResultSet[F] = new ResultSet[F]:
 
@@ -2496,13 +2500,13 @@ object ResultSet:
     override def previous():          F[Boolean] = Sync[F].blocking(resultSet.previous())
 
     override def setFetchDirection(direction: FetchType): F[Unit] =
-      Sync[F].blocking(resultSet.setFetchDirection(direction.int))
+      Sync[F].blocking(resultSet.setFetchDirection(direction.code))
     override def getFetchDirection(): F[Int] = Sync[F].blocking(resultSet.getFetchDirection)
 
     override def setFetchSize(rows: Int): F[Unit] = Sync[F].blocking(resultSet.setFetchSize(rows))
     override def getFetchSize():          F[Int]  = Sync[F].blocking(resultSet.getFetchSize)
 
-    override def getType(): F[Option[Type]] = Sync[F].blocking(Type.values.find(_.int == resultSet.getType))
+    override def getType(): F[Option[Type]] = Sync[F].blocking(Type.values.find(_.code == resultSet.getType))
 
     override def getConcurrency(): F[Int] = Sync[F].blocking(resultSet.getConcurrency)
 
