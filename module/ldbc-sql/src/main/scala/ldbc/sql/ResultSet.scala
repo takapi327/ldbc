@@ -864,7 +864,8 @@ trait ResultSet[F[_]]:
     * result set.
     *
     * @return
-    *   [[ResultSet.TYPE_FORWARD_ONLY]], [[ResultSet.TYPE_SCROLL_INSENSITIVE]], or [[ResultSet.TYPE_SCROLL_SENSITIVE]]
+    *   [[ResultSet.Type.TYPE_FORWARD_ONLY]], [[ResultSet.Type.TYPE_SCROLL_INSENSITIVE]], or
+    *   [[ResultSet.Type.TYPE_SCROLL_SENSITIVE]]
     */
   def getType(): F[Option[ResultSet.Type]]
 
@@ -872,7 +873,7 @@ trait ResultSet[F[_]]:
     * object that created the result set.
     *
     * @return
-    *   the concurrency type, either [[ResultSet.CONCUR_READ_ONLY]] or [[ResultSet.CONCUR_UPDATABLE]]
+    *   the concurrency type, either [[ResultSet.Concur.CONCUR_READ_ONLY]] or [[ResultSet.Concur.CONCUR_UPDATABLE]]
     */
   def getConcurrency(): F[Int]
 
@@ -1725,7 +1726,7 @@ trait ResultSet[F[_]]:
   /** Retrieves the holdability of this ResultSet object
     *
     * @return
-    *   either ResultSet.HOLD_CURSORS_OVER_COMMIT or ResultSet.CLOSE_CURSORS_AT_COMMIT
+    *   either ResultSet.Holdability.HOLD_CURSORS_OVER_COMMIT or ResultSet.Holdability.CLOSE_CURSORS_AT_COMMIT
     */
   def getHoldability(): F[Int]
 

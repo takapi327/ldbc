@@ -236,10 +236,10 @@ trait Connection[F[_]]:
     * overridden. The holdability of the created result sets can be determined by calling getHoldability.
     *
     * @param resultSetType
-    *   a result set type; one of ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE, or
-    *   ResultSet.TYPE_SCROLL_SENSITIVE
+    *   a result set type; one of ResultSet.Type.TYPE_FORWARD_ONLY, ResultSet.Type.TYPE_SCROLL_INSENSITIVE, or
+    *   ResultSet.Type.TYPE_SCROLL_SENSITIVE
     * @param resultSetConcurrency
-    *   a concurrency type; one of ResultSet.CONCUR_READ_ONLY or ResultSet.CONCUR_UPDATABLE
+    *   a concurrency type; one of ResultSet.Concur.CONCUR_READ_ONLY or ResultSet.Concur.CONCUR_UPDATABLE
     * @return
     *   a new Statement object that will generate ResultSet objects with the given type and concurrency
     */
@@ -252,10 +252,10 @@ trait Connection[F[_]]:
     * @param sql
     *   a String object that is the SQL statement to be sent to the database; may contain one or more '?' IN parameters
     * @param resultSetType
-    *   a result set type; one of ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE, or
-    *   ResultSet.TYPE_SCROLL_SENSITIVE
+    *   a result set type; one of ResultSet.Type.TYPE_FORWARD_ONLY, ResultSet.Type.TYPE_SCROLL_INSENSITIVE, or
+    *   ResultSet.Type.TYPE_SCROLL_SENSITIVE
     * @param resultSetConcurrency
-    *   a concurrency type; one of ResultSet.CONCUR_READ_ONLY or ResultSet.CONCUR_UPDATABLE
+    *   a concurrency type; one of ResultSet.Concur.CONCUR_READ_ONLY or ResultSet.Concur.CONCUR_UPDATABLE
     * @return
     *   a new PreparedStatement object containing the pre-compiled SQL statement that will produce ResultSet objects
     *   with the given type and concurrency
@@ -287,14 +287,16 @@ trait Connection[F[_]]:
     * DatabaseMetaData.getResultSetHoldability.
     *
     * @param holdability
-    *   a ResultSet holdability constant; one of ResultSet.HOLD_CURSORS_OVER_COMMIT or ResultSet.CLOSE_CURSORS_AT_COMMIT
+    *   a ResultSet holdability constant; one of ResultSet.Holdability.HOLD_CURSORS_OVER_COMMIT or
+    *   ResultSet.Holdability.CLOSE_CURSORS_AT_COMMIT
     */
   def setHoldability(holdability: Int): F[Unit]
 
   /** Retrieves the current holdability of ResultSet objects created using this Connection object.
     *
     * @return
-    *   the holdability, one of ResultSet.HOLD_CURSORS_OVER_COMMIT or ResultSet.CLOSE_CURSORS_AT_COMMIT
+    *   the holdability, one of ResultSet.Holdability.HOLD_CURSORS_OVER_COMMIT or
+    *   ResultSet.Holdability.CLOSE_CURSORS_AT_COMMIT
     */
   def getHoldability(): F[Int]
 
@@ -303,13 +305,13 @@ trait Connection[F[_]]:
     * concurrency, and holdability to be overridden.
     *
     * @param resultSetType
-    *   one of the following ResultSet constants: ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE, or
-    *   ResultSet.TYPE_SCROLL_SENSITIVE
+    *   one of the following ResultSet constants: ResultSet.Type.TYPE_FORWARD_ONLY,
+    *   ResultSet.Type.TYPE_SCROLL_INSENSITIVE, or ResultSet.Type.TYPE_SCROLL_SENSITIVE
     * @param resultSetConcurrency
-    *   one of the following ResultSet constants: ResultSet.CONCUR_READ_ONLY or ResultSet.CONCUR_UPDATABLE
+    *   one of the following ResultSet constants: ResultSet.Concur.CONCUR_READ_ONLY or ResultSet.Concur.CONCUR_UPDATABLE
     * @param resultSetHoldability
-    *   one of the following ResultSet constants: ResultSet.HOLD_CURSORS_OVER_COMMIT or
-    *   ResultSet.CLOSE_CURSORS_AT_COMMIT
+    *   one of the following ResultSet constants: ResultSet.Holdability.HOLD_CURSORS_OVER_COMMIT or
+    *   ResultSet.Holdability.CLOSE_CURSORS_AT_COMMIT
     * @return
     *   a new Statement object that will generate ResultSet objects with the given type, concurrency, and holdability
     */
@@ -328,13 +330,13 @@ trait Connection[F[_]]:
     * @param sql
     *   a String object that is the SQL statement to be sent to the database; may contain one or more '?' IN parameters
     * @param resultSetType
-    *   one of the following ResultSet constants: ResultSet.TYPE_FORWARD_ONLY, ResultSet.TYPE_SCROLL_INSENSITIVE, or
-    *   ResultSet.TYPE_SCROLL_SENSITIVE
+    *   one of the following ResultSet constants: ResultSet.Type.TYPE_FORWARD_ONLY,
+    *   ResultSet.Type.TYPE_SCROLL_INSENSITIVE, or ResultSet.Type.TYPE_SCROLL_SENSITIVE
     * @param resultSetConcurrency
-    *   one of the following ResultSet constants: ResultSet.CONCUR_READ_ONLY or ResultSet.CONCUR_UPDATABLE
+    *   one of the following ResultSet constants: ResultSet.Concur.CONCUR_READ_ONLY or ResultSet.Concur.CONCUR_UPDATABLE
     * @param resultSetHoldability
-    *   one of the following ResultSet constants: ResultSet.HOLD_CURSORS_OVER_COMMIT or
-    *   ResultSet.CLOSE_CURSORS_AT_COMMIT
+    *   one of the following ResultSet constants: ResultSet.Holdability.HOLD_CURSORS_OVER_COMMIT or
+    *   ResultSet.Holdability.CLOSE_CURSORS_AT_COMMIT
     * @return
     *   a new PreparedStatement object, containing the pre-compiled SQL statement, that will generate ResultSet objects
     *   with the given type, concurrency, and holdability
