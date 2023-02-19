@@ -2390,7 +2390,7 @@ object ResultSet:
 
   enum Holdability(val code: Int):
     case HOLD_CURSORS_OVER_COMMIT extends Holdability(JavaResultSet.HOLD_CURSORS_OVER_COMMIT)
-    case CLOSE_CURSORS_AT_COMMIT extends Holdability(JavaResultSet.CLOSE_CURSORS_AT_COMMIT)
+    case CLOSE_CURSORS_AT_COMMIT  extends Holdability(JavaResultSet.CLOSE_CURSORS_AT_COMMIT)
 
   def apply[F[_]: Sync](resultSet: JavaResultSet): ResultSet[F] = new ResultSet[F]:
 
