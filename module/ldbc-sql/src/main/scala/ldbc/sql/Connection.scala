@@ -135,7 +135,7 @@ trait Connection[F[_]]:
     *
     * Calling the method close on a Connection object that is already closed is a no-op.
     *
-    * t is strongly recommended that an application explicitly commits or rolls back an active transaction prior to
+    * it is strongly recommended that an application explicitly commits or rolls back an active transaction prior to
     * calling the close method. If the close method is called and there is an active transaction, the results are
     * implementation-defined.
     */
@@ -202,7 +202,7 @@ trait Connection[F[_]]:
     *   Connection.TRANSACTION_SERIALIZABLE. (Note that Connection.TRANSACTION_NONE cannot be used because it specifies
     *   that transactions are not supported.)
     */
-  def setTransactionIsolation(level: Int): F[Unit]
+  def setTransactionIsolation(level: Connection.TransactionIsolation): F[Unit]
 
   /** Retrieves this Connection object's current transaction isolation level.
     *
@@ -679,6 +679,27 @@ trait Connection[F[_]]:
 
 object Connection:
 
+  /** Enum to specify transaction isolation level
+    *
+    *   - TRANSACTION_NONE: Transactions are not supported.
+    *
+    *   - TRANSACTION_READ_UNCOMMITTED: Data with uncommitted changes can be read from other transactions.
+    *
+    *   - TRANSACTION_READ_COMMITTED: Only committed changes can be read from other transactions.
+    *
+    *   - TRANSACTION_REPEATABLE_READ: Ensure that the same query always returns the same results, unaffected by changes
+    *     from other transactions.
+    *
+    *   - TRANSACTION_SERIALIZABLE: Transactions are treated as if they are serialized to each other to guarantee data
+    *     integrity.
+    */
+  enum TransactionIsolation(val code: Int):
+    case TRANSACTION_NONE             extends TransactionIsolation(java.sql.Connection.TRANSACTION_NONE)
+    case TRANSACTION_READ_UNCOMMITTED extends TransactionIsolation(java.sql.Connection.TRANSACTION_READ_UNCOMMITTED)
+    case TRANSACTION_READ_COMMITTED   extends TransactionIsolation(java.sql.Connection.TRANSACTION_READ_COMMITTED)
+    case TRANSACTION_REPEATABLE_READ  extends TransactionIsolation(java.sql.Connection.TRANSACTION_REPEATABLE_READ)
+    case TRANSACTION_SERIALIZABLE     extends TransactionIsolation(java.sql.Connection.TRANSACTION_SERIALIZABLE)
+
   def apply[F[_]: Sync](connection: java.sql.Connection): Connection[F] = new Connection[F]:
 
     override def createStatement(): F[Statement[F]] =
@@ -705,8 +726,8 @@ object Connection:
     override def setCatalog(catalog: String): F[Unit]   = Sync[F].blocking(connection.setCatalog(catalog))
     override def getCatalog():                F[String] = Sync[F].blocking(connection.getCatalog)
 
-    override def setTransactionIsolation(level: Int): F[Unit] =
-      Sync[F].blocking(connection.setTransactionIsolation(level))
+    override def setTransactionIsolation(level: Connection.TransactionIsolation): F[Unit] =
+      Sync[F].blocking(connection.setTransactionIsolation(level.code))
     override def getTransactionIsolation(): F[Int] = Sync[F].blocking(connection.getTransactionIsolation)
 
     override def getWarnings():   F[SQLWarning] = Sync[F].blocking(connection.getWarnings)
