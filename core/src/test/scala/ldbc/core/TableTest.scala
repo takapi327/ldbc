@@ -6,8 +6,6 @@ package ldbc.core
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import ldbc.core.*
-
 class TableTest extends AnyFlatSpec:
 
   it should "Successful generation of Table" in {
@@ -60,45 +58,4 @@ class TableTest extends AnyFlatSpec:
     )
 
     table.id !== Column("name", VARCHAR(255))
-  }
-
-  it should "" in {
-
-    import cats.data.NonEmptyList
-
-    import ldbc.core.attribute.*
-    import ldbc.core.syntax.given
-
-    case class User(
-      id:        Long,
-      name:      String,
-      age:       Option[Int],
-      updatedAt: java.time.LocalDateTime,
-      createdAt: java.time.LocalDateTime
-    )
-
-    case class Country(id: Long)
-
-    val countryTable: Table[Country] = Table[Country]("country")(
-      column("id", BIGINT(64), AutoInc(), Key.Primary())
-    )
-
-    val table: Table[User] = Table[User]("user")(
-      column("id", BIGINT(64), AutoInc(), Key.Unique()),
-      column("name", VARCHAR(255)),
-      column("age", INT(255).DEFAULT_NULL),
-      column("updated_at", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP()),
-      column("created_at", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP(true))
-    ).keys(table =>
-      Seq(
-        PrimaryKey(None, NonEmptyList.of(table.id, table.age), None),
-        IndexKey(Some("index_age"), None, NonEmptyList.one(table.age), None),
-        Constraint("fk_id", ForeignKey(None, NonEmptyList.one(table.id), Reference(countryTable)(countryTable.id)))
-      )
-    )
-
-    val query = CreateTableQueryGenerator.build(table).querySting
-    println(CreateTableQueryGenerator.build(countryTable).querySting)
-    println(query)
-    true
   }

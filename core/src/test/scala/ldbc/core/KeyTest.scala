@@ -6,7 +6,6 @@ package ldbc.core
 
 import org.specs2.mutable.Specification
 
-import cats.Id
 import cats.data.NonEmptyList
 
 object KeyTest extends Specification:
