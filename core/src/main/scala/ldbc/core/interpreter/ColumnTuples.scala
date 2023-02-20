@@ -8,8 +8,8 @@ package ldbc.core.interpreter
   *
   * @tparam Types
   *   Tuple Type
- *  @tparam F
- *    Column Type
+  * @tparam F
+  *   Column Type
   */
 type ColumnTuples[Types <: Tuple, F[_]] = Types match
   case t *: EmptyTuple => F[t]
