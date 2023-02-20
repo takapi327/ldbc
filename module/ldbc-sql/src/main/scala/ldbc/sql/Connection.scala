@@ -583,7 +583,7 @@ trait Connection[F[_]]:
     *   the SQL type name of the SQL structured type that this Struct object maps to. The typeName is the name of a
     *   user-defined type that has been defined for this database. It is the value returned by Struct.getSQLTypeName.
     * @param attributes
-    *   he attributes that populate the returned object
+    *   the attributes that populate the returned object
     * @return
     *   a Struct object that maps to the given SQL type and is populated with the given attributes
     */
