@@ -6,8 +6,6 @@ package ldbc.core
 
 import cats.data.NonEmptyList
 
-import ldbc.core.free.{ Column, Table }
-
 /** A model for setting reference options used for foreign key constraints, etc.
   *
   * @param table
@@ -20,8 +18,8 @@ import ldbc.core.free.{ Column, Table }
   *   Reference action on update
   */
 case class Reference(
-  table:    free.Table,
-  keyPart:  NonEmptyList[free.Column[?]],
+  table:    Table[?],
+  keyPart:  NonEmptyList[Column[?]],
   onDelete: Option[Reference.ReferenceOption],
   onUpdate: Option[Reference.ReferenceOption]
 ):
@@ -42,7 +40,7 @@ object Reference:
     case NO_ACTION   extends ReferenceOption("NO ACTION")
     case SET_DEFAULT extends ReferenceOption("SET DEFAULT")
 
-  def apply(table: free.Table)(columns: free.Column[?]*): Reference =
+  def apply(table: Table[?])(columns: Column[?]*): Reference =
     require(
       NonEmptyList.fromList(columns.toList).nonEmpty,
       "For Reference settings, at least one COLUMN must always be specified."
