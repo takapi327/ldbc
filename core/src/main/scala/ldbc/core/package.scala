@@ -16,26 +16,26 @@ import ldbc.core.attribute.Attribute
   */
 package object core extends DataTypes:
 
-  def column[F[_], T](
+  def column[T](
     label:    String,
     dataType: DataType[T]
-  ): Column[F, T] = Column[F, T](label, dataType)
+  ): Column[T] = Column[T](label, dataType)
 
-  def column[F[_], T](
+  def column[T](
     label:    String,
     dataType: DataType[T],
     comment:  String
-  ): Column[F, T] = Column[F, T](label, dataType, comment)
+  ): Column[T] = Column[T](label, dataType, comment)
 
-  def column[F[_], T](
+  def column[T](
     label:      String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  ): Column[F, T] = Column[F, T](label, dataType, attributes: _*)
+  ): Column[T] = Column[T](label, dataType, attributes: _*)
 
-  def column[F[_], T](
+  def column[T](
     label:      String,
     dataType:   DataType[T],
     comment:    String,
     attributes: Attribute[T]*
-  ): Column[F, T] = Column[F, T](label, dataType, comment, attributes: _*)
+  ): Column[T] = Column[T](label, dataType, comment, attributes: _*)
