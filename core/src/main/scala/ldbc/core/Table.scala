@@ -8,17 +8,20 @@ import scala.language.dynamics
 import scala.deriving.Mirror
 import scala.annotation.targetName
 
-import ldbc.core.free.Table as FreeTable
 import ldbc.core.interpreter.*
 
 /** Trait for generating SQL table information.
   *
-  * @tparam F
-  *   The effect type
   * @tparam P
   *   A class that implements a [[Product]] that is one-to-one with the table definition.
   */
-private[ldbc] trait Table[F[_], P <: Product] extends free.Table, Dynamic:
+private[ldbc] trait Table[P <: Product] extends Dynamic:
+
+  /** Table name */
+  private[ldbc] def name: String
+
+  /** Table Key definitions */
+  private[ldbc] def keyDefinitions: Seq[Key]
 
   /** Methods for statically accessing column information held by a Table.
     *
@@ -36,35 +39,35 @@ private[ldbc] trait Table[F[_], P <: Product] extends free.Table, Dynamic:
   )(using
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Column[F, Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+  ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
 
   /** Method to retrieve an array of column information that a table has.
     */
-  @targetName("allColumn") def * : List[Column[F, Any]]
+  @targetName("allColumn") def * : List[Column[Any]]
 
-  def keys(func: Table[F, P] => Seq[Key]): Table[F, P]
+  def keys(func: Table[P] => Seq[Key]): Table[P]
 
 object Table extends Dynamic:
 
-  private case class Impl[F[_], P <: Product, T <: Tuple](
+  private case class Impl[P <: Product, T <: Tuple](
     name:           String,
-    columns:        Tuple.Map[T, [A] =>> Column[F, A]],
+    columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key]
-  ) extends Table[F, P]:
+  ) extends Table[P]:
 
     override def selectDynamic[Tag <: Singleton](
       tag: Tag
     )(using
       mirror: Mirror.ProductOf[P],
       index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    ): Column[F, Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
+    ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
       columns
         .productElement(index.value)
-        .asInstanceOf[Column[F, Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+        .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
 
-    @targetName("allColumn") def * : List[Column[F, Any]] = columns.toList.asInstanceOf[List[Column[F, Any]]]
+    @targetName("allColumn") def * : List[Column[Any]] = columns.toList.asInstanceOf[List[Column[Any]]]
 
-    override def keys(func: Table[F, P] => Seq[Key]): Table[F, P] = this.copy(keyDefinitions = func(this))
+    override def keys(func: Table[P] => Seq[Key]): Table[P] = this.copy(keyDefinitions = func(this))
 
   /** Methods for static Table construction using Dynamic.
     *
@@ -78,16 +81,14 @@ object Table extends Dynamic:
     *   Table name
     * @param columns
     *   Tuple of columns matching the Product's Elem type
-    * @tparam F
-    *   The effect type
     * @tparam P
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
-  def applyDynamic[F[_], P <: Product](using
+  def applyDynamic[P <: Product](using
     mirror:    Mirror.ProductOf[P],
-    converter: ColumnTupleConverter[mirror.MirroredElemTypes, F]
-  )(nameApply: "apply")(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, F]): Table[F, P] =
-    fromTupleMap[F, P](name, ColumnTupleConverter.convert(columns))
+    converter: ColumnTupleConverter[mirror.MirroredElemTypes, Column]
+  )(nameApply: "apply")(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, Column]): Table[P] =
+    fromTupleMap[P](name, ColumnTupleConverter.convert(columns))
 
   /** Methods for generating a Table from a Column's Tuple Map.
     *
@@ -97,14 +98,12 @@ object Table extends Dynamic:
     *   Table name
     * @param columns
     *   Tuple of columns matching the Product's Elem type
-    * @tparam F
-    *   The effect type
     * @tparam P
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
-  private def fromTupleMap[F[_], P <: Product](using
+  private def fromTupleMap[P <: Product](using
     mirror: Mirror.ProductOf[P]
   )(
     _name:   String,
-    columns: Tuple.Map[mirror.MirroredElemTypes, [T] =>> Column[F, T]]
-  ): Table[F, P] = Impl[F, P, mirror.MirroredElemTypes](_name, columns, Seq.empty)
+    columns: Tuple.Map[mirror.MirroredElemTypes, Column]
+  ): Table[P] = Impl[P, mirror.MirroredElemTypes](_name, columns, Seq.empty)
