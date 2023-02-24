@@ -23,5 +23,4 @@ trait SQLSyntax[F[_]]:
       val expressions = args.iterator
       SQL(strings.mkString("?"), expressions.toSeq)
 
-  extension (sql: SQL[F])
-    def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, DataSource, T]
+  extension (sql: SQL[F]) def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, DataSource, T]
