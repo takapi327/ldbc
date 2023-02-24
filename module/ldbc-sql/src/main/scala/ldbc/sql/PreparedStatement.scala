@@ -182,7 +182,7 @@ trait PreparedStatement[F[_]]:
     * @param x
     *   the parameter value
     */
-  def setBytes(parameterIndex: Int, x: Seq[Byte]): F[Unit]
+  def setBytes(parameterIndex: Int, x: Array[Byte]): F[Unit]
 
   /** Sets the designated parameter to the given java.sql.Date value using the default time zone of the virtual machine
     * that is running the application. The driver converts this to an SQL DATE value when it sends it to the database.
@@ -772,8 +772,8 @@ object PreparedStatement:
     override def setString(parameterIndex: Int, x: String): F[Unit] =
       Sync[F].blocking(statement.setString(parameterIndex, x))
 
-    override def setBytes(parameterIndex: Int, x: Seq[Byte]): F[Unit] =
-      Sync[F].blocking(statement.setBytes(parameterIndex, x.toArray))
+    override def setBytes(parameterIndex: Int, x: Array[Byte]): F[Unit] =
+      Sync[F].blocking(statement.setBytes(parameterIndex, x))
 
     override def setDate(parameterIndex: Int, x: java.sql.Date): F[Unit] =
       Sync[F].blocking(statement.setDate(parameterIndex, x))
