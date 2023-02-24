@@ -4,6 +4,12 @@
 
 package ldbc.sql.dsl
 
+import javax.sql.DataSource
+
+import cats.data.Kleisli
+
+import ldbc.sql.ResultSetConsumer
+
 /** Trait for generating SQL models from string completion knowledge.
   *
   * @tparam F
@@ -16,3 +22,6 @@ trait SQLSyntax[F[_]]:
       val strings     = sc.parts.iterator
       val expressions = args.iterator
       SQL(strings.mkString("?"), expressions.toSeq)
+
+  extension (sql: SQL[F])
+    def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, DataSource, T]
