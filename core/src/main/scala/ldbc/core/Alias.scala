@@ -35,4 +35,4 @@ private[ldbc] trait Alias:
   def AUTO_INCREMENT[T <: Byte | Short | Int | Long]: AutoInc[T] = AutoInc[T]()
 
   def PRIMARY_KEY[T]: Key.Primary[T] = Key.Primary[T]()
-  def UNIQUE_KEY[T]: Key.Unique[T] = Key.Unique[T]()
+  def UNIQUE_KEY[T]:  Key.Unique[T]  = Key.Unique[T]()
