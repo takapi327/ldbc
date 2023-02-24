@@ -14,4 +14,7 @@ import ldbc.core.{ Alias, DataTypes }
   *   import ldbc.sql.*
   * }}}
   */
-package object sql extends Alias, DataTypes
+package object sql extends Alias, DataTypes:
+
+  type Table[P <: Product] = ldbc.core.Table[P]
+  val Table = ldbc.core.Table
