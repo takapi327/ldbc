@@ -4,7 +4,7 @@
 
 package ldbc.core
 
-import ldbc.core.attribute.Attribute
+import ldbc.core.attribute.{ Attribute, AutoInc, Key }
 
 private[ldbc] trait Alias:
 
@@ -31,3 +31,8 @@ private[ldbc] trait Alias:
     comment:    String,
     attributes: Attribute[T]*
   ): Column[T] = Column[T](label, dataType, comment, attributes: _*)
+
+  def AUTO_INCREMENT[T <: Byte | Short | Int | Long]: AutoInc[T] = AutoInc[T]()
+
+  def PRIMARY_KEY[T]: Key.Primary[T] = Key.Primary[T]()
+  def UNIQUE_KEY[T]: Key.Unique[T] = Key.Unique[T]()
