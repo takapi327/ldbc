@@ -87,18 +87,6 @@ object Parameter:
     override def bind(statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
       statement.setObject(index, value)
 
-  given [F[_]]: Parameter[F, Blob] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Blob): F[Unit] =
-      statement.setBlob(index, value)
-
-  given [F[_]]: Parameter[F, Clob] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Clob): F[Unit] =
-      statement.setClob(index, value)
-
-  given [F[_]]: Parameter[F, SqlArray] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: SqlArray): F[Unit] =
-      statement.setArray(index, value)
-
   given [F[_]]: Parameter[F, URL] with
     override def bind(statement: PreparedStatement[F], index: Int, value: URL): F[Unit] =
       statement.setURL(index, value)
