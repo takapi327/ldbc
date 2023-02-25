@@ -32,3 +32,17 @@ package object dsl:
           yield result
         )
       }
+
+      def update(): Kleisli[IO, DataSource, Int] = Kleisli { dataSource =>
+        val acquire: IO[Connection[IO]] = IO.blocking(dataSource.getConnection).map(Connection(_))
+        val release: Connection[IO] => IO[Unit] = connection => connection.close()
+        val resource: Resource[IO, Connection[IO]] = Resource.make(acquire)(release)
+        resource.use(connection =>
+          for
+            statement <- connection.prepareStatement(sql.statement)
+            result    <- sql.params.zipWithIndex.traverse {
+              case (param, index) => param.bind(statement, index + 1)
+            } >> statement.executeUpdate()
+          yield result
+        )
+      }
