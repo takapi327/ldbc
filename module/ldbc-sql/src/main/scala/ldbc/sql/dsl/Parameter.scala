@@ -6,6 +6,8 @@ package ldbc.sql.dsl
 
 import java.net.URL
 import java.sql.{ Blob, Clob, Date, Time, Timestamp, Array as SqlArray }
+import java.util.Date as UtilDate
+import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
 import ldbc.sql.PreparedStatement
 
@@ -30,6 +32,11 @@ trait Parameter[F[_], -T]:
   def bind(statement: PreparedStatement[F], index: Int, value: T): F[Unit]
 
 object Parameter:
+
+  def convert[F[_], A, B](f: B => A)(using parameter: Parameter[F, A]): Parameter[F, B] =
+    new Parameter[F, B]:
+      override def bind(statement: PreparedStatement[F], index: Int, value: B): F[Unit] =
+        parameter.bind(statement, index, f(value))
 
   given [F[_]]: Parameter[F, Boolean] with
     override def bind(statement: PreparedStatement[F], index: Int, value: Boolean): F[Unit] =
@@ -75,6 +82,8 @@ object Parameter:
     override def bind(statement: PreparedStatement[F], index: Int, value: Date): F[Unit] =
       statement.setDate(index, value)
 
+  given [F[_]]: Parameter[F, UtilDate] = Parameter.convert(date => new Timestamp(date.getTime))
+
   given [F[_]]: Parameter[F, Time] with
     override def bind(statement: PreparedStatement[F], index: Int, value: Time): F[Unit] =
       statement.setTime(index, value)
@@ -83,6 +92,16 @@ object Parameter:
     override def bind(statement: PreparedStatement[F], index: Int, value: Timestamp): F[Unit] =
       statement.setTimestamp(index, value)
 
+  given [F[_]]: Parameter[F, Instant] = Parameter.convert(Timestamp.from)
+
+  given [F[_]]: Parameter[F, ZonedDateTime] = Parameter.convert(_.toInstant)
+
+  given [F[_]]: Parameter[F, LocalTime] = Parameter.convert(Time.valueOf)
+
+  given [F[_]]: Parameter[F, LocalDate] = Parameter.convert(Date.valueOf)
+
+  given [F[_]]: Parameter[F, LocalDateTime] = Parameter.convert(ZonedDateTime.of(_, ZoneId.systemDefault()))
+
   given [F[_]]: Parameter[F, Object] with
     override def bind(statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
       statement.setObject(index, value)
@@ -90,3 +109,13 @@ object Parameter:
   given [F[_]]: Parameter[F, URL] with
     override def bind(statement: PreparedStatement[F], index: Int, value: URL): F[Unit] =
       statement.setURL(index, value)
+
+  given [F[_]]: Parameter[F, Null] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
+      statement.setObject(index, value)
+
+  given [F[_], T](using parameter: Parameter[F, T], nullParameter: Parameter[F, Null]): Parameter[F, Option[T]] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: Option[T]): F[Unit] =
+      value match
+        case Some(value) => parameter.bind(statement, index, value)
+        case None        => nullParameter.bind(statement, index, null)
