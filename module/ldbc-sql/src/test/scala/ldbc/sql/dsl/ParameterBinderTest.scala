@@ -275,14 +275,14 @@ object ParameterBinderTest extends Specification:
     }
 
     "If a parameter of type Object is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
-      val javaObject: Object = java.sql.Timestamp.valueOf(java.time.LocalDateTime.now())
+      val javaObject: Object = new java.lang.Object()
       val sql = sql"SELECT object FROM test WHERE object = $javaObject"
 
       sql.statement === "SELECT object FROM test WHERE object = ?" and sql.params.size === 1
     }
 
     "If a parameter of type Object is passed, the bind method of the ParameterBinder calls setObject of PreparedStatement." in {
-      val javaObject: Object = java.sql.Timestamp.valueOf(java.time.LocalDateTime.now())
+      val javaObject: Object = new java.lang.Object()
       val sql = sql"SELECT object FROM test WHERE object = $javaObject"
 
       val statement = mock(classOf[PreparedStatement[Id]])
