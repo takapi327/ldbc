@@ -6,7 +6,8 @@ package ldbc.sql
 
 import java.io.{ InputStream, Reader }
 import java.sql.{ Date, SQLWarning, Time, Timestamp }
-import java.time.LocalDateTime
+import java.util.Date as UtilDate
+import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
 import cats.{ Functor, Monad }
 import cats.implicits.*
@@ -31,6 +32,10 @@ object ResultSetReader:
       override def read(resultSet: ResultSet[F], columnLabel: String): F[T] =
         func(resultSet)(columnLabel)
 
+  given [F[_]: Functor]: Functor[[T] =>> ResultSetReader[F, T]] with
+    override def map[A, B](fa: ResultSetReader[F, A])(f: A => B): ResultSetReader[F, B] =
+      ResultSetReader(resultSet => columnLabel => fa.read(resultSet, columnLabel).map(f))
+
   given [F[_]]: ResultSetReader[F, String]      = ResultSetReader(_.getString)
   given [F[_]]: ResultSetReader[F, Boolean]     = ResultSetReader(_.getBoolean)
   given [F[_]]: ResultSetReader[F, Byte]        = ResultSetReader(_.getByte)
@@ -48,15 +53,28 @@ object ResultSetReader:
   given [F[_]]: ResultSetReader[F, Reader]      = ResultSetReader(_.getCharacterStream)
   given [F[_]]: ResultSetReader[F, BigDecimal]  = ResultSetReader(_.getBigDecimal)
 
-  given [F[_]: Functor](using loader: ResultSetReader[F, Timestamp]): ResultSetReader[F, LocalDateTime] with
+  given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, Instant] =
+    reader.map(_.toInstant)
 
-    override def read(resultSet: ResultSet[F], columnLabel: String): F[LocalDateTime] =
-      loader.read(resultSet, columnLabel).map(_.toLocalDateTime)
+  given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, UtilDate] =
+    reader.map(timestamp => new UtilDate(timestamp.getTime))
 
-  given [F[_]: Monad, A](using loader: ResultSetReader[F, A]): ResultSetReader[F, Option[A]] with
+  given [F[_]: Functor](using reader: ResultSetReader[F, Instant]): ResultSetReader[F, ZonedDateTime] =
+    reader.map(instant => ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()))
+
+  given [F[_]: Functor](using reader: ResultSetReader[F, Time]): ResultSetReader[F, LocalTime] =
+    reader.map(_.toLocalTime)
+
+  given [F[_]: Functor](using reader: ResultSetReader[F, Date]): ResultSetReader[F, LocalDate] =
+    reader.map(_.toLocalDate)
+
+  given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, LocalDateTime] =
+    reader.map(_.toLocalDateTime)
+
+  given [F[_]: Monad, A](using reader: ResultSetReader[F, A]): ResultSetReader[F, Option[A]] with
 
     override def read(resultSet: ResultSet[F], columnLabel: String): F[Option[A]] =
       for
-        result <- loader.read(resultSet, columnLabel)
+        result <- reader.read(resultSet, columnLabel)
         bool   <- resultSet.wasNull()
       yield if bool then None else Some(result)
