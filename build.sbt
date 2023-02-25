@@ -29,14 +29,12 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 
 lazy val LdbcCoreProject = LepusSbtProject("Ldbc-Core", "core")
   .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
-  .settings(libraryDependencies ++= Seq(
-    catsEffect,
-    scalaTest
-  ) ++ specs2)
+  .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
 
 lazy val LdbcSqlProject = LepusSbtProject("Ldbc-Sql", "module/ldbc-sql")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
+    catsEffect,
     mockito
   ) ++ specs2)
   .dependsOn(LdbcCoreProject)
