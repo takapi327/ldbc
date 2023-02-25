@@ -274,6 +274,111 @@ object ParameterBinderTest extends Specification:
       verify(statement, org.mockito.Mockito.times(1)).setTimestamp(1, timestamp)
     }
 
+    "If a parameter of type Instant is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
+      val instant = java.time.Instant.ofEpochMilli(0)
+      val sql     = sql"SELECT instant FROM test WHERE instant = $instant"
+
+      sql.statement === "SELECT instant FROM test WHERE instant = ?" and sql.params.size === 1
+    }
+
+    "If a parameter of type Instant is passed, the bind method of the ParameterBinder calls setTimestamp of PreparedStatement." in {
+      val instant = java.time.Instant.ofEpochMilli(0)
+      val sql     = sql"SELECT instant FROM test WHERE instant = $instant"
+
+      val statement = mock(classOf[PreparedStatement[Id]])
+      when(statement.setTimestamp(1, java.sql.Timestamp.from(instant))).thenReturn(Id(()))
+
+      sql.params.head.bind(statement, 1)
+
+      verify(statement, org.mockito.Mockito.times(1)).setTimestamp(1, java.sql.Timestamp.from(instant))
+    }
+
+    "If a parameter of type ZonedDateTime is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
+      val zonedDateTime =
+        java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(0), java.time.ZoneId.systemDefault)
+      val sql = sql"SELECT zonedDateTime FROM test WHERE zonedDateTime = $zonedDateTime"
+
+      sql.statement === "SELECT zonedDateTime FROM test WHERE zonedDateTime = ?" and sql.params.size === 1
+    }
+
+    "If a parameter of type ZonedDateTime is passed, the bind method of the ParameterBinder calls setTimestamp of PreparedStatement." in {
+      val zonedDateTime =
+        java.time.ZonedDateTime.ofInstant(java.time.Instant.ofEpochMilli(0), java.time.ZoneId.systemDefault)
+      val sql = sql"SELECT zonedDateTime FROM test WHERE zonedDateTime = $zonedDateTime"
+
+      val statement = mock(classOf[PreparedStatement[Id]])
+      when(statement.setTimestamp(1, java.sql.Timestamp.from(zonedDateTime.toInstant))).thenReturn(Id(()))
+
+      sql.params.head.bind(statement, 1)
+
+      verify(statement, org.mockito.Mockito.times(1)).setTimestamp(1, java.sql.Timestamp.from(zonedDateTime.toInstant))
+    }
+
+    "If a parameter of type LocalTime is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
+      val localTime = java.time.LocalTime.now()
+      val sql       = sql"SELECT localTime FROM test WHERE localTime = $localTime"
+
+      sql.statement === "SELECT localTime FROM test WHERE localTime = ?" and sql.params.size === 1
+    }
+
+    "If a parameter of type LocalTime is passed, the bind method of the ParameterBinder calls setTime of PreparedStatement." in {
+      val localTime = java.time.LocalTime.now()
+      val sql       = sql"SELECT localTime FROM test WHERE localTime = $localTime"
+
+      val statement = mock(classOf[PreparedStatement[Id]])
+      when(statement.setTime(1, java.sql.Time.valueOf(localTime))).thenReturn(Id(()))
+
+      sql.params.head.bind(statement, 1)
+
+      verify(statement, org.mockito.Mockito.times(1)).setTime(1, java.sql.Time.valueOf(localTime))
+    }
+
+    "If a parameter of type LocalDate is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
+      val localDate = java.time.LocalDate.now()
+      val sql       = sql"SELECT localDate FROM test WHERE localDate = $localDate"
+
+      sql.statement === "SELECT localDate FROM test WHERE localDate = ?" and sql.params.size === 1
+    }
+
+    "If a parameter of type LocalDate is passed, the bind method of the ParameterBinder calls setDate of PreparedStatement." in {
+      val localDate = java.time.LocalDate.now()
+      val sql       = sql"SELECT localDate FROM test WHERE localDate = $localDate"
+
+      val statement = mock(classOf[PreparedStatement[Id]])
+      when(statement.setDate(1, java.sql.Date.valueOf(localDate))).thenReturn(Id(()))
+
+      sql.params.head.bind(statement, 1)
+
+      verify(statement, org.mockito.Mockito.times(1)).setDate(1, java.sql.Date.valueOf(localDate))
+    }
+
+    "If a parameter of type LocalDateTime is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
+      val localDateTime = java.time.LocalDateTime.now()
+      val sql           = sql"SELECT localDateTime FROM test WHERE localDateTime = $localDateTime"
+
+      sql.statement === "SELECT localDateTime FROM test WHERE localDateTime = ?" and sql.params.size === 1
+    }
+
+    "If a parameter of type LocalDateTime is passed, the bind method of the ParameterBinder calls setTimestamp of PreparedStatement." in {
+      val localDateTime = java.time.LocalDateTime.now()
+      val sql           = sql"SELECT localDateTime FROM test WHERE localDateTime = $localDateTime"
+
+      val statement = mock(classOf[PreparedStatement[Id]])
+      when(
+        statement.setTimestamp(
+          1,
+          java.sql.Timestamp.from(java.time.ZonedDateTime.of(localDateTime, java.time.ZoneId.systemDefault()).toInstant)
+        )
+      ).thenReturn(Id(()))
+
+      sql.params.head.bind(statement, 1)
+
+      verify(statement, org.mockito.Mockito.times(1)).setTimestamp(
+        1,
+        java.sql.Timestamp.from(java.time.ZonedDateTime.of(localDateTime, java.time.ZoneId.systemDefault()).toInstant)
+      )
+    }
+
     "If a parameter of type Object is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
       val javaObject: Object = new java.lang.Object()
       val sql = sql"SELECT object FROM test WHERE object = $javaObject"
@@ -310,5 +415,43 @@ object ParameterBinderTest extends Specification:
       sql.params.head.bind(statement, 1)
 
       verify(statement, org.mockito.Mockito.times(1)).setURL(1, url)
+    }
+
+    "If a parameter of type Some[T] is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
+      val some = Some(1)
+      val sql  = sql"SELECT some FROM test WHERE some = $some"
+
+      sql.statement === "SELECT some FROM test WHERE some = ?" and sql.params.size === 1
+    }
+
+    "If a parameter of type Some[T] is passed, the bind method of the ParameterBinder calls set{T} of PreparedStatement." in {
+      val some = Some(1)
+      val sql  = sql"SELECT some FROM test WHERE some = $some"
+
+      val statement = mock(classOf[PreparedStatement[Id]])
+      when(statement.setInt(1, 1)).thenReturn(Id(()))
+
+      sql.params.head.bind(statement, 1)
+
+      verify(statement, org.mockito.Mockito.times(1)).setInt(1, 1)
+    }
+
+    "If a parameter of type None is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
+      val none = None
+      val sql  = sql"SELECT none FROM test WHERE none = $none"
+
+      sql.statement === "SELECT none FROM test WHERE none = ?" and sql.params.size === 1
+    }
+
+    "If a parameter of type None is passed, the bind method of the ParameterBinder calls setObject of PreparedStatement." in {
+      val none = None
+      val sql  = sql"SELECT none FROM test WHERE none = $none"
+
+      val statement = mock(classOf[PreparedStatement[Id]])
+      when(statement.setObject(1, null)).thenReturn(Id(()))
+
+      sql.params.head.bind(statement, 1)
+
+      verify(statement, org.mockito.Mockito.times(1)).setObject(1, null)
     }
   }
