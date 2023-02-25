@@ -36,6 +36,9 @@ lazy val LdbcCoreProject = LepusSbtProject("Ldbc-Core", "core")
 
 lazy val LdbcSqlProject = LepusSbtProject("Ldbc-Sql", "module/ldbc-sql")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+  .settings(libraryDependencies ++= Seq(
+    mockito
+  ) ++ specs2)
   .dependsOn(LdbcCoreProject)
 
 lazy val coreProjects: Seq[ProjectReference] = Seq(
