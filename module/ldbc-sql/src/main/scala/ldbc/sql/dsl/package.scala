@@ -4,19 +4,25 @@
 
 package ldbc.sql
 
+import javax.sql.DataSource
+
 import cats.data.Kleisli
 import cats.implicits.*
 
-import cats.effect.{ IO, Resource }
+import cats.effect.{ Sync, IO, Resource }
+import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.sql.{ Connection, ResultSetConsumer }
 
 package object dsl:
 
-  val io: SQLSyntax[IO] = new SQLSyntax[IO]:
+  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F]:
+    private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
+      val release: Connection[F] => F[Unit] = connection => connection.close()
+      Resource.make(acquire)(release)
 
-    extension (sql: SQL[IO])
-      def query[T](using consumer: ResultSetConsumer[IO, T]): Kleisli[IO, Connection[IO], T] = Kleisli { connection =>
+    extension (sql: SQL[F])
+      def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, Connection[F], T] = Kleisli { connection =>
         for
           statement <- connection.prepareStatement(sql.statement)
           resultSet <- sql.params.zipWithIndex.traverse {
@@ -26,7 +32,7 @@ package object dsl:
         yield result
       }
 
-      def update(): Kleisli[IO, Connection[IO], Int] = Kleisli { connection =>
+      def update(): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
         for
           statement <- connection.prepareStatement(sql.statement)
           result <- sql.params.zipWithIndex.traverse {
@@ -34,3 +40,42 @@ package object dsl:
           } >> statement.executeUpdate()
         yield result
       }
+
+    extension[T] (connectionKleisli: Kleisli[F, Connection[F], T])
+
+      def readOnly: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
+        buildConnectionResource {
+          for
+            connection <- Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
+            _ <- connection.setReadOnly(true)
+          yield connection
+        }
+          .use(connectionKleisli.run)
+      }
+
+      def autoCommit: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
+        buildConnectionResource {
+          for
+            connection <- Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
+            _ <- connection.setReadOnly(false) >> connection.setAutoCommit(true)
+          yield connection
+        }
+          .use(connectionKleisli.run)
+      }
+
+      def transaction: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
+        (for
+          connection <- buildConnectionResource {
+            for
+              connection <- Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
+              _ <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
+            yield connection
+          }
+          transact <- Resource.makeCase(Sync[F].pure(connection)) {
+            case (conn, ExitCase.Errored(e)) => conn.rollback() >> Sync[F].raiseError(e)
+            case (conn, _) => conn.commit()
+          }
+        yield transact).use(connectionKleisli.run)
+      }
+
+  val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
