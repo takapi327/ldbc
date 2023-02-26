@@ -4,17 +4,15 @@
 
 package ldbc.core.interpreter
 
-import ldbc.core.Column
-
 /** Column Type representing the conversion from Tuple to Tuple Map.
   *
   * @tparam Types
   *   Primitive Tuples
   * @tparam F
-  *   The effect type
+  *   Column Type
   */
 opaque type ColumnTupleConverter[Types <: Tuple, F[_]] =
-  ColumnTuples[Types, F] => Tuple.Map[Types, [T] =>> Column[F, T]]
+  ColumnTuples[Types, F] => Tuple.Map[Types, F]
 
 /** An object that converts a Column's Tuple to a Tuple Map
   */
@@ -22,15 +20,15 @@ object ColumnTupleConverter:
 
   /** Implicit value of ColumnTupleConverter according to the number of Tuples. */
 
-  given [T, F[_]]: ColumnTupleConverter[T *: EmptyTuple, F] = (column: Column[F, T]) => column *: EmptyTuple
+  given [T, F[_]]: ColumnTupleConverter[T *: EmptyTuple, F] = (column: F[T]) => column *: EmptyTuple
 
   given [T1, T2, F[_]]: ColumnTupleConverter[(T1, T2), F] = identity
 
   given [T1, T2, TN <: NonEmptyTuple, F[_]](using
     converter: ColumnTupleConverter[T2 *: TN, F]
   ): ColumnTupleConverter[T1 *: T2 *: TN, F] =
-    (columns: Column[F, T1] *: ColumnTuples[T2 *: TN, F]) =>
-      columns.head *: converter(columns.tail).asInstanceOf[Column[F, T2] *: Tuple.Map[TN, [T] =>> Column[F, T]]]
+    (columns: F[T1] *: ColumnTuples[T2 *: TN, F]) =>
+      columns.head *: converter(columns.tail).asInstanceOf[Tuple.Map[T2 *: TN, F]]
 
   /** Method for converting Column Tuple to Tuple Map.
     *
@@ -45,4 +43,4 @@ object ColumnTupleConverter:
     */
   def convert[Types <: Tuple, F[_]](using
     converter:    ColumnTupleConverter[Types, F]
-  )(columnTuples: ColumnTuples[Types, F]): Tuple.Map[Types, [T] =>> Column[F, T]] = converter(columnTuples)
+  )(columnTuples: ColumnTuples[Types, F]): Tuple.Map[Types, F] = converter(columnTuples)

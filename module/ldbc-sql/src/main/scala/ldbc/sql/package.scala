@@ -4,12 +4,17 @@
 
 package ldbc
 
+import ldbc.core.{ Alias, DataTypes }
+
 /** Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
   * might look something like this.
   *
   * example:
   * {{{
-  *   import ldbc.core.*
+  *   import ldbc.sql.*
   * }}}
   */
-package object core extends Alias, DataTypes
+package object sql extends Alias, DataTypes:
+
+  type Table[P <: Product] = ldbc.core.Table[P]
+  val Table: ldbc.core.Table.type = ldbc.core.Table

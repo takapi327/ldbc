@@ -4,15 +4,13 @@
 
 package ldbc.core.interpreter
 
-import ldbc.core.Column
-
 /** Type to convert type from Tuple to Tuple in Colum.
   *
   * @tparam Types
   *   Tuple Type
   * @tparam F
-  *   The effect type
+  *   Column Type
   */
 type ColumnTuples[Types <: Tuple, F[_]] = Types match
-  case t *: EmptyTuple => Column[F, t]
-  case _               => Tuple.Map[Types, [T] =>> Column[F, T]]
+  case t *: EmptyTuple => F[t]
+  case _               => Tuple.Map[Types, F]

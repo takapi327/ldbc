@@ -28,7 +28,7 @@ private[ldbc] trait Index extends Key:
   def indexType: Option[Index.Type]
 
   /** List of columns for which the Index key is set */
-  def keyPart: NonEmptyList[free.Column[?]]
+  def keyPart: NonEmptyList[Column[?]]
 
   /** Additional indexing options */
   def indexOption: Option[Index.IndexOption]
@@ -87,7 +87,7 @@ object Index:
 private[ldbc] case class IndexKey(
   indexName:   Option[String],
   indexType:   Option[Index.Type],
-  keyPart:     NonEmptyList[free.Column[?]],
+  keyPart:     NonEmptyList[Column[?]],
   indexOption: Option[Index.IndexOption]
 ) extends Index:
 
@@ -111,7 +111,7 @@ private[ldbc] case class IndexKey(
   */
 private[ldbc] case class Fulltext(
   indexName:   Option[String],
-  keyPart:     NonEmptyList[free.Column[?]],
+  keyPart:     NonEmptyList[Column[?]],
   indexOption: Option[Index.IndexOption]
 ) extends Key:
 
@@ -134,7 +134,7 @@ private[ldbc] case class Fulltext(
   */
 private[ldbc] case class PrimaryKey(
   indexType:   Option[Index.Type],
-  keyPart:     NonEmptyList[free.Column[?]],
+  keyPart:     NonEmptyList[Column[?]],
   indexOption: Option[Index.IndexOption]
 ) extends Index:
 
@@ -160,7 +160,7 @@ private[ldbc] case class PrimaryKey(
 private[ldbc] case class UniqueKey(
   indexName:   Option[String],
   indexType:   Option[Index.Type],
-  keyPart:     NonEmptyList[free.Column[?]],
+  keyPart:     NonEmptyList[Column[?]],
   indexOption: Option[Index.IndexOption]
 ) extends Index:
 
@@ -184,7 +184,7 @@ private[ldbc] case class UniqueKey(
   */
 private[ldbc] case class ForeignKey(
   indexName: Option[String],
-  colName:   NonEmptyList[free.Column[?]],
+  colName:   NonEmptyList[Column[?]],
   reference: Reference
 ) extends Key:
 

@@ -8,6 +8,7 @@ import sbt._
 
 object Dependencies {
 
+  val cats = "org.typelevel" %% "cats-core" % "2.9.0"
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.4.6"
 
   val specs2Version = "5.2.0"
@@ -17,4 +18,6 @@ object Dependencies {
   ).map("org.specs2" %% _ % specs2Version % Test)
 
   val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15" % Test
+
+  val mockito = "org.mockito" % "mockito-inline" % "5.1.1" % Test
 }

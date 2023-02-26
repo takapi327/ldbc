@@ -6,13 +6,12 @@ package ldbc.core
 
 import org.specs2.mutable.Specification
 
-import cats.Id
 import cats.data.NonEmptyList
 
 object KeyTest extends Specification:
 
-  private val column1 = column[Id, Long]("id", BIGINT(64))
-  private val column2 = column[Id, String]("name", VARCHAR(255))
+  private val column1 = column[Long]("id", BIGINT(64))
+  private val column2 = column[String]("name", VARCHAR(255))
 
   "IndexKey Test" should {
     "The query string of the generated IndexKey model matches the specified string." in {

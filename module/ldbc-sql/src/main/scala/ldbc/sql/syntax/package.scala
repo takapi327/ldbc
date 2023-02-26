@@ -2,14 +2,16 @@
   * distributed with this source code.
   */
 
-package ldbc
+package ldbc.sql
+
+import ldbc.core.syntax.DataTypeConversion
 
 /** Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
   * might look something like this.
   *
   * example:
   * {{{
-  *   import ldbc.core.*
+  *   import ldbc.sql.syntax.{ *, given }
   * }}}
   */
-package object core extends Alias, DataTypes
+package object syntax extends TableSyntax, DataTypeConversion
