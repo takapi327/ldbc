@@ -114,6 +114,10 @@ object Parameter:
     override def bind(statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
       statement.setObject(index, value)
 
+  given [F[_]]: Parameter[F, None.type] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
+      statement.setObject(index, null)
+
   given [F[_], T](using parameter: Parameter[F, T], nullParameter: Parameter[F, Null]): Parameter[F, Option[T]] with
     override def bind(statement: PreparedStatement[F], index: Int, value: Option[T]): F[Unit] =
       value match
