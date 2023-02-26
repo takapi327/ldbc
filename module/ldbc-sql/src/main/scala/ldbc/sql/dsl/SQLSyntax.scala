@@ -4,11 +4,9 @@
 
 package ldbc.sql.dsl
 
-import javax.sql.DataSource
-
 import cats.data.Kleisli
 
-import ldbc.sql.ResultSetConsumer
+import ldbc.sql.{ Connection, ResultSetConsumer }
 
 /** Trait for generating SQL models from string completion knowledge.
   *
@@ -24,6 +22,6 @@ trait SQLSyntax[F[_]]:
       SQL(strings.mkString("?"), expressions.toSeq)
 
   extension (sql: SQL[F])
-    def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, DataSource, T]
+    def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, Connection[F], T]
 
-    def update(): Kleisli[F, DataSource, Int]
+    def update(): Kleisli[F, Connection[F], Int]
