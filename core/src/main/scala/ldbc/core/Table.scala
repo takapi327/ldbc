@@ -6,7 +6,6 @@ package ldbc.core
 
 import scala.language.dynamics
 import scala.deriving.Mirror
-import scala.annotation.targetName
 
 import ldbc.core.interpreter.*
 
@@ -43,7 +42,7 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Method to retrieve an array of column information that a table has.
     */
-  @targetName("allColumn") def * : List[Column[Any]]
+  def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]
 
   def keys(func: Table[P] => Seq[Key]): Table[P]
 
@@ -65,7 +64,8 @@ object Table extends Dynamic:
         .productElement(index.value)
         .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
 
-    @targetName("allColumn") def * : List[Column[Any]] = columns.toList.asInstanceOf[List[Column[Any]]]
+    override def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
+      columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
 
     override def keys(func: Table[P] => Seq[Key]): Table[P] = this.copy(keyDefinitions = func(this))
 
