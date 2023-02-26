@@ -4,8 +4,6 @@
 
 package ldbc.sql.dsl
 
-import javax.sql.DataSource
-
 import org.specs2.mutable.Specification
 
 import org.mockito.Mockito.*
@@ -19,9 +17,9 @@ object ParameterBinderTest extends Specification:
 
   given SQLSyntax[Id] = new SQLSyntax[Id]:
     extension (sql: SQL[Id])
-      def query[T](using consumer: ResultSetConsumer[Id, T]): Kleisli[Id, DataSource, T] =
+      def query[T](using consumer: ResultSetConsumer[Id, T]): Kleisli[Id, Connection[Id], T] =
         throw new IllegalStateException("This method is never called in this test.")
-      def update(): Kleisli[Id, DataSource, Int] = throw new IllegalStateException(
+      def update(): Kleisli[Id, Connection[Id], Int] = throw new IllegalStateException(
         "This method is never called in this test."
       )
 
