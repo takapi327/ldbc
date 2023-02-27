@@ -4,6 +4,8 @@
 
 package ldbc.dsl
 
+import scala.annotation.targetName
+
 /** A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,
   * etc.
   *
@@ -14,4 +16,8 @@ package ldbc.dsl
   * @tparam F
   *   The effect type
   */
-case class SQL[F[_]](statement: String, params: Seq[ParameterBinder[F]])
+case class SQL[F[_]](statement: String, params: Seq[ParameterBinder[F]]):
+
+  @targetName("combine")
+  def ++(sql: SQL[F]): SQL[F] =
+    SQL[F](statement ++ " " ++ sql.statement, params ++ sql.params)
