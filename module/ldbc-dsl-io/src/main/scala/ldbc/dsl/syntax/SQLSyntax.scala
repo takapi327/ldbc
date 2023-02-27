@@ -2,11 +2,12 @@
   * distributed with this source code.
   */
 
-package ldbc.dsl
+package ldbc.dsl.syntax
 
 import cats.data.Kleisli
 
 import ldbc.sql.{ Connection, ResultSetConsumer }
+import ldbc.dsl.{ ParameterBinder, SQL }
 
 /** Trait for generating SQL models from string completion knowledge.
   *

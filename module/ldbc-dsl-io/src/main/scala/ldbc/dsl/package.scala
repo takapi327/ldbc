@@ -9,10 +9,11 @@ import javax.sql.DataSource
 import cats.data.Kleisli
 import cats.implicits.*
 
-import cats.effect.{ Sync, IO, Resource }
+import cats.effect.{ IO, Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.sql.{ Connection, ResultSetConsumer }
+import ldbc.dsl.syntax.{ ConnectionSyntax, SQLSyntax }
 
 package object dsl:
 

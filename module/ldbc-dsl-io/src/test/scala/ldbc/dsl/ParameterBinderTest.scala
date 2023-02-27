@@ -12,6 +12,7 @@ import cats.Id
 import cats.data.Kleisli
 
 import ldbc.sql.*
+import ldbc.dsl.syntax.SQLSyntax
 
 object ParameterBinderTest extends Specification:
 
