@@ -4,8 +4,6 @@
 
 package ldbc.sql
 
-import cats.effect.Sync
-
 /** An object that is used to identify a generic SQL type, called a JDBC type or a vendor specific data type.
   *
   * @tparam F
@@ -35,12 +33,4 @@ trait SQLType[F[_]]:
     */
   def getVendorTypeNumber(): F[Int]
 
-object SQLType:
-
-  def apply[F[_]: Sync](sqlType: java.sql.SQLType): SQLType[F] = new SQLType[F]:
-
-    override def getName(): F[String] = Sync[F].blocking(sqlType.getName)
-
-    override def getVendor(): F[String] = Sync[F].blocking(sqlType.getVendor)
-
-    override def getVendorTypeNumber(): F[Int] = Sync[F].blocking(sqlType.getVendorTypeNumber)
+object SQLType

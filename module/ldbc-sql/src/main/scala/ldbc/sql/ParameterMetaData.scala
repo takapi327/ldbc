@@ -4,8 +4,6 @@
 
 package ldbc.sql
 
-import cats.effect.Sync
-
 /** An object that can be used to get information about the types and properties for each parameter marker in a
   * PreparedStatement object. For some queries and driver implementations, the data that would be returned by a
   * ParameterMetaData object may not be available until the PreparedStatement has been executed.
@@ -124,28 +122,3 @@ object ParameterMetaData:
     case IN      extends Mode(java.sql.ParameterMetaData.parameterModeIn)
     case IN_OUT  extends Mode(java.sql.ParameterMetaData.parameterModeInOut)
     case OUT     extends Mode(java.sql.ParameterMetaData.parameterModeOut)
-
-  def apply[F[_]: Sync](parameterMetaData: java.sql.ParameterMetaData): ParameterMetaData[F] = new ParameterMetaData[F]:
-
-    override def getParameterCount(): F[Int] = Sync[F].blocking(parameterMetaData.getParameterCount)
-
-    override def isNullable(param: Int): F[Option[Parameter]] =
-      Sync[F].blocking(Parameter.values.find(_.code == parameterMetaData.isNullable(param)))
-
-    override def isSigned(param: Int): F[Boolean] = Sync[F].blocking(parameterMetaData.isSigned(param))
-
-    override def getPrecision(param: Int): F[Int] = Sync[F].blocking(parameterMetaData.getPrecision(param))
-
-    override def getScale(param: Int): F[Int] = Sync[F].blocking(parameterMetaData.getScale(param))
-
-    override def getParameterType(param: Int): F[JdbcType] =
-      Sync[F].blocking(JdbcType.fromCode(parameterMetaData.getParameterType(param)))
-
-    override def getParameterTypeName(param: Int): F[String] =
-      Sync[F].blocking(parameterMetaData.getParameterTypeName(param))
-
-    override def getParameterClassName(param: Int): F[String] =
-      Sync[F].blocking(parameterMetaData.getParameterClassName(param))
-
-    override def getParameterMode(param: Int): F[Option[Mode]] =
-      Sync[F].blocking(Mode.values.find(_.code == parameterMetaData.getParameterMode(param)))
