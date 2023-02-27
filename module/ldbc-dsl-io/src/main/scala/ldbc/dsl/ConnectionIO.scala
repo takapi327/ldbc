@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl
 
@@ -56,16 +56,16 @@ case class ConnectionIO[F[_]: Sync](connection: java.sql.Connection) extends Con
   override def clearWarnings(): F[Unit] = Sync[F].blocking(connection.clearWarnings())
 
   override def createStatement(
-                                resultSetType: ResultSet.Type,
-                                resultSetConcurrency: ResultSet.Concur
-                              ): F[Statement[F]] =
+    resultSetType:        ResultSet.Type,
+    resultSetConcurrency: ResultSet.Concur
+  ): F[Statement[F]] =
     Sync[F].blocking(connection.createStatement(resultSetType.code, resultSetConcurrency.code)).map(StatementIO[F])
 
   override def prepareStatement(
-                                 sql: String,
-                                 resultSetType: ResultSet.Type,
-                                 resultSetConcurrency: ResultSet.Concur
-                               ): F[PreparedStatement[F]] =
+    sql:                  String,
+    resultSetType:        ResultSet.Type,
+    resultSetConcurrency: ResultSet.Concur
+  ): F[PreparedStatement[F]] =
     Sync[F]
       .blocking(connection.prepareStatement(sql, resultSetType.code, resultSetConcurrency.code))
       .map(PreparedStatementIO[F])
@@ -79,19 +79,19 @@ case class ConnectionIO[F[_]: Sync](connection: java.sql.Connection) extends Con
   override def getHoldability(): F[Int] = Sync[F].blocking(connection.getHoldability)
 
   override def createStatement(
-                                resultSetType: ResultSet.Type,
-                                resultSetConcurrency: ResultSet.Concur,
-                                resultSetHoldability: ResultSet.Holdability
-                              ): F[Statement[F]] = Sync[F]
+    resultSetType:        ResultSet.Type,
+    resultSetConcurrency: ResultSet.Concur,
+    resultSetHoldability: ResultSet.Holdability
+  ): F[Statement[F]] = Sync[F]
     .blocking(connection.createStatement(resultSetType.code, resultSetConcurrency.code, resultSetHoldability.code))
     .map(StatementIO[F])
 
   override def prepareStatement(
-                                 sql: String,
-                                 resultSetType: ResultSet.Type,
-                                 resultSetConcurrency: ResultSet.Concur,
-                                 resultSetHoldability: ResultSet.Holdability
-                               ): F[PreparedStatement[F]] = Sync[F]
+    sql:                  String,
+    resultSetType:        ResultSet.Type,
+    resultSetConcurrency: ResultSet.Concur,
+    resultSetHoldability: ResultSet.Holdability
+  ): F[PreparedStatement[F]] = Sync[F]
     .blocking(
       connection.prepareStatement(sql, resultSetType.code, resultSetConcurrency.code, resultSetHoldability.code)
     )
@@ -141,4 +141,3 @@ case class ConnectionIO[F[_]: Sync](connection: java.sql.Connection) extends Con
     Sync[F].blocking(connection.setNetworkTimeout(executor, milliseconds))
 
   override def getNetworkTimeout(): F[Int] = Sync[F].blocking(connection.getNetworkTimeout)
-

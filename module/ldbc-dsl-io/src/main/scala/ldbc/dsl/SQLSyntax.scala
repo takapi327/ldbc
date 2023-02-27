@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl
 
@@ -9,10 +9,10 @@ import cats.data.Kleisli
 import ldbc.sql.{ Connection, ResultSetConsumer }
 
 /** Trait for generating SQL models from string completion knowledge.
- *
- * @tparam F
- *   The effect type
- */
+  *
+  * @tparam F
+  *   The effect type
+  */
 trait SQLSyntax[F[_]]:
 
   extension (sc: StringContext)

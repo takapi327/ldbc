@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc
 
@@ -26,8 +26,8 @@ package object dsl:
         for
           statement <- connection.prepareStatement(sql.statement)
           resultSet <- sql.params.zipWithIndex.traverse {
-            case (param, index) => param.bind(statement, index + 1)
-          } >> statement.executeQuery()
+                         case (param, index) => param.bind(statement, index + 1)
+                       } >> statement.executeQuery()
           result <- consumer.consume(resultSet) <* statement.close()
         yield result
       }
@@ -36,8 +36,8 @@ package object dsl:
         for
           statement <- connection.prepareStatement(sql.statement)
           result <- sql.params.zipWithIndex.traverse {
-            case (param, index) => param.bind(statement, index + 1)
-          } >> statement.executeUpdate()
+                      case (param, index) => param.bind(statement, index + 1)
+                    } >> statement.executeUpdate()
         yield result
       }
 
@@ -66,15 +66,15 @@ package object dsl:
       def transaction: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
         (for
           connection <- buildConnectionResource {
-            for
-              connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
-              _          <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
-            yield connection
-          }
+                          for
+                            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+                            _          <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
+                          yield connection
+                        }
           transact <- Resource.makeCase(Sync[F].pure(connection)) {
-            case (conn, ExitCase.Errored(e)) => conn.rollback() >> Sync[F].raiseError(e)
-            case (conn, _)                   => conn.commit()
-          }
+                        case (conn, ExitCase.Errored(e)) => conn.rollback() >> Sync[F].raiseError(e)
+                        case (conn, _)                   => conn.commit()
+                      }
         yield transact).use(connectionKleisli.run)
       }
 

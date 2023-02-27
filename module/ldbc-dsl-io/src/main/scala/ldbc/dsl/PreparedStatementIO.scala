@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl
 
@@ -160,11 +160,11 @@ case class PreparedStatementIO[F[_]: Sync](statement: java.sql.PreparedStatement
     Sync[F].blocking(statement.setSQLXML(parameterIndex, xmlObject))
 
   override def setObject(
-                          parameterIndex: Int,
-                          x: Object,
-                          targetSqlType: java.sql.SQLType,
-                          scaleOrLength: Int
-                        ): F[Unit] =
+    parameterIndex: Int,
+    x:              Object,
+    targetSqlType:  java.sql.SQLType,
+    scaleOrLength:  Int
+  ): F[Unit] =
     Sync[F].blocking(statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength))
 
   override def setObject(parameterIndex: Int, x: Object, targetSqlType: Int, scaleOrLength: Int): F[Unit] =
