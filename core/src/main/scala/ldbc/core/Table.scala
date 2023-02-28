@@ -44,7 +44,7 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     */
   def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]
 
-  def keys(func: Table[P] => Seq[Key]): Table[P]
+  def keySet(func: Table[P] => Key): Table[P]
 
 object Table extends Dynamic:
 
@@ -67,7 +67,7 @@ object Table extends Dynamic:
     override def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
       columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
 
-    override def keys(func: Table[P] => Seq[Key]): Table[P] = this.copy(keyDefinitions = func(this))
+    override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
   /** Methods for static Table construction using Dynamic.
     *
