@@ -4,6 +4,8 @@
 
 package ldbc.core
 
+import cats.data.NonEmptyList
+
 import ldbc.core.attribute.{ Attribute, AutoInc, Key }
 
 private[ldbc] trait Alias:
@@ -34,5 +36,57 @@ private[ldbc] trait Alias:
 
   def AUTO_INCREMENT[T <: Byte | Short | Int | Long]: AutoInc[T] = AutoInc[T]()
 
-  def PRIMARY_KEY[T]: Key.Primary[T] = Key.Primary[T]()
-  def UNIQUE_KEY[T]:  Key.Unique[T]  = Key.Unique[T]()
+  def PRIMARY_KEY[T]: PrimaryKey & Attribute[T] = new PrimaryKey with Attribute[T]:
+    override def queryString: String = label
+
+  def PRIMARY_KEY(keyPart: Column[?]): PrimaryKey with Index = PrimaryKey(None, NonEmptyList.one(keyPart), None)
+
+  def PRIMARY_KEY(keyPart: NonEmptyList[Column[?]]): PrimaryKey with Index = PrimaryKey(None, keyPart, None)
+
+  def PRIMARY_KEY(
+    indexType: Index.Type,
+    keyPart:   NonEmptyList[Column[?]]
+  ): PrimaryKey with Index = PrimaryKey(Some(indexType), keyPart, None)
+
+  def PRIMARY_KEY(
+    keyPart:     NonEmptyList[Column[?]],
+    indexOption: Index.IndexOption
+  ): PrimaryKey with Index = PrimaryKey(None, keyPart, Some(indexOption))
+
+  def PRIMARY_KEY(
+    indexType:   Index.Type,
+    keyPart:     NonEmptyList[Column[?]],
+    indexOption: Index.IndexOption
+  ): PrimaryKey with Index = PrimaryKey(Some(indexType), keyPart, Some(indexOption))
+
+  def UNIQUE_KEY[T]: UniqueKey & Attribute[T] = new UniqueKey with Attribute[T]:
+    override def indexName: Option[String] = None
+
+    override def queryString: String = label
+
+  def UNIQUE_KEY(keyPart: Column[?]): UniqueKey with Index = UniqueKey(None, None, NonEmptyList.one(keyPart), None)
+
+  def UNIQUE_KEY(
+    indexName: String,
+    keyPart:   NonEmptyList[Column[?]]
+  ): UniqueKey with Index = UniqueKey(Some(indexName), None, keyPart, None)
+
+  def UNIQUE_KEY(
+    indexName: String,
+    indexType: Index.Type,
+    keyPart:   NonEmptyList[Column[?]]
+  ): UniqueKey with Index = UniqueKey(Some(indexName), Some(indexType), keyPart, None)
+
+  def UNIQUE_KEY(
+    indexName:   String,
+    indexType:   Index.Type,
+    keyPart:     NonEmptyList[Column[?]],
+    indexOption: Index.IndexOption
+  ): UniqueKey with Index = UniqueKey(Some(indexName), Some(indexType), keyPart, Some(indexOption))
+
+  def UNIQUE_KEY(
+    indexName:   Option[String],
+    indexType:   Option[Index.Type],
+    keyPart:     NonEmptyList[Column[?]],
+    indexOption: Option[Index.IndexOption]
+  ): UniqueKey with Index = UniqueKey(indexName, indexType, keyPart, indexOption)
