@@ -14,13 +14,13 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
   private val primaryKey = table.*.filter {
-    case c: Column[?] => c.attributes.contains(Key.Primary())
+    case c: Column[?] => c.attributes.exists(_.isInstanceOf[PrimaryKey])
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
   private val keyPart = table.keyDefinitions.flatMap {
-    case key: PrimaryKey => key.keyPart.toList
-    case key: UniqueKey  => key.keyPart.toList
-    case _               => List.empty
+    case key: PrimaryKey with Index => key.keyPart.toList
+    case key: UniqueKey with Index  => key.keyPart.toList
+    case _                          => List.empty
   }
 
   require(
@@ -45,15 +45,16 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
 
   require(
     autoInc.count {
-      case column: Column[?] => column.attributes.contains(Key.Primary()) || column.attributes.contains(Key.Unique())
-      case unknown           => throw new IllegalStateException(s"$unknown is not a Column.")
+      case column: Column[?] =>
+        column.attributes.exists(_.isInstanceOf[PrimaryKey]) || column.attributes.exists(_.isInstanceOf[UniqueKey])
+      case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
     } == 1 || keyPart.count(key =>
       autoInc
         .map {
           case c: Column[?] => c.label
           case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
         }
-        .contains(key)
+        .contains(key.label)
     ) == 1,
     "The columns with AUTO_INCREMENT must have a Primary Key or Unique Key."
   )
