@@ -6,7 +6,7 @@ package ldbc.core
 
 import cats.data.NonEmptyList
 
-import ldbc.core.attribute.{ Attribute, AutoInc, Key }
+import ldbc.core.attribute.{ Attribute, AutoInc }
 
 private[ldbc] trait Alias:
 
