@@ -90,3 +90,47 @@ private[ldbc] trait Alias:
     keyPart:     NonEmptyList[Column[?]],
     indexOption: Option[Index.IndexOption]
   ): UniqueKey with Index = UniqueKey(indexName, indexType, keyPart, indexOption)
+
+  def INDEX_KEY(keyPart: Column[?]): IndexKey = IndexKey(None, None, NonEmptyList.one(keyPart), None)
+
+  def INDEX_KEY(
+    indexName: Option[String],
+    indexType: Option[Index.Type],
+    keyPart: NonEmptyList[Column[?]],
+    indexOption: Option[Index.IndexOption]
+  ): IndexKey = IndexKey(indexName, indexType, keyPart, indexOption)
+
+  def CONSTRAINT(
+    symbol: String,
+    key: PrimaryKey | UniqueKey | ForeignKey
+  ): Constraint = Constraint(symbol, key)
+
+  def FOREIGN_KEY(
+    colName: Column[?],
+    reference: Reference
+  ): ForeignKey = ForeignKey(None, NonEmptyList.one(colName), reference)
+
+  def FOREIGN_KEY(
+    indexName: Option[String],
+    colName: NonEmptyList[Column[?]],
+    reference: Reference
+  ): ForeignKey = ForeignKey(indexName, colName, reference)
+
+  def REFERENCE(
+    table: Table[?],
+    keyPart: Column[?],
+  ): Reference = Reference(table, NonEmptyList.one(keyPart), None, None)
+
+  def REFERENCE(table: Table[?])(columns: Column[?]*): Reference =
+    require(
+      NonEmptyList.fromList(columns.toList).nonEmpty,
+      "For Reference settings, at least one COLUMN must always be specified."
+    )
+    Reference(table, NonEmptyList.fromListUnsafe(columns.toList), None, None)
+
+  def REFERENCE(
+    table: Table[?],
+    keyPart: NonEmptyList[Column[?]],
+    onDelete: Option[Reference.ReferenceOption],
+    onUpdate: Option[Reference.ReferenceOption]
+  ): Reference = Reference(table, keyPart, onDelete, onUpdate)
