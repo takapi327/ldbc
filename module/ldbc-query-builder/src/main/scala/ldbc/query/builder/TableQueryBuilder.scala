@@ -23,6 +23,11 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
     case _                          => List.empty
   }
 
+  private val constraints = table.keyDefinitions.flatMap {
+    case key: Constraint => Some(key)
+    case _               => None
+  }
+
   require(
     table.*.distinctBy {
       case c: Column[?] => c.label
@@ -59,6 +64,28 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
     "The columns with AUTO_INCREMENT must have a Primary Key or Unique Key."
   )
 
+  if constraints.nonEmpty then
+    require(
+      constraints.exists(_.key match
+        case key: ForeignKey => key.colName.map(_.dataType) == key.reference.keyPart.map(_.dataType)
+        case _ => false
+      ),
+      "The type of the column set in FOREIGN KEY does not match."
+    )
+
+    require(
+       constraints.exists(_.key match
+        case key: ForeignKey =>
+          key.reference.keyPart.toList.flatMap(_.attributes).exists(_.isInstanceOf[PrimaryKey]) ||
+            key.reference.table.keyDefinitions.exists(_ match
+              case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
+              case _ => false
+            )
+        case _ => false
+      ),
+      "The column referenced by FOREIGN KEY must be a PRIMARY KEY."
+    )
+
   private val columnDefinitions: Seq[String] =
     table.*.map {
       case c: Column[?] => c.queryString
@@ -73,7 +100,6 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
        |CREATE TABLE `${ table.name }` (
        |  ${ options.mkString(",\n  ") }
        |);
-       |
        |""".stripMargin
 
 object TableQueryBuilder
