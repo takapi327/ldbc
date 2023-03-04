@@ -68,19 +68,19 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
     require(
       constraints.exists(_.key match
         case key: ForeignKey => key.colName.map(_.dataType) == key.reference.keyPart.map(_.dataType)
-        case _ => false
+        case _               => false
       ),
       "The type of the column set in FOREIGN KEY does not match."
     )
 
     require(
-       constraints.exists(_.key match
+      constraints.exists(_.key match
         case key: ForeignKey =>
           key.reference.keyPart.toList.flatMap(_.attributes).exists(_.isInstanceOf[PrimaryKey]) ||
-            key.reference.table.keyDefinitions.exists(_ match
-              case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
-              case _ => false
-            )
+          key.reference.table.keyDefinitions.exists(_ match
+            case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
+            case _                        => false
+          )
         case _ => false
       ),
       "The column referenced by FOREIGN KEY must be a PRIMARY KEY."

@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.query.builder
 
@@ -12,9 +12,9 @@ import ldbc.core.syntax.{ *, given }
 object TableQueryBuilderTest extends Specification:
 
   case class User(
-    id: Long,
-    name: String,
-    age: Option[Int],
+    id:        Long,
+    name:      String,
+    age:       Option[Int],
     updatedAt: java.time.LocalDateTime,
     createdAt: java.time.LocalDateTime
   )
@@ -61,7 +61,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT, UNIQUE_KEY),
-        column("sub_id", BIGINT(64), AUTO_INCREMENT, UNIQUE_KEY),
+        column("sub_id", BIGINT(64), AUTO_INCREMENT, UNIQUE_KEY)
       )
 
       TableQueryBuilder(table) must throwAn[IllegalArgumentException]
@@ -73,7 +73,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT, PRIMARY_KEY),
-        column("sub_id", BIGINT(64), PRIMARY_KEY),
+        column("sub_id", BIGINT(64), PRIMARY_KEY)
       )
 
       TableQueryBuilder(table) must throwAn[IllegalArgumentException]
@@ -85,7 +85,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64)),
+        column("sub_id", BIGINT(64))
       )
 
       TableQueryBuilder(table) must throwAn[IllegalArgumentException]
@@ -96,7 +96,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64)),
+        column("sub_id", BIGINT(64))
       ).keySet(table => PRIMARY_KEY(table.id))
 
       TableQueryBuilder(table).querySting ===
@@ -114,7 +114,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64)),
+        column("sub_id", BIGINT(64))
       )
         .keySet(table => PRIMARY_KEY(table.id))
         .keySet(table => PRIMARY_KEY(table.subId))
@@ -127,7 +127,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64)),
+        column("sub_id", BIGINT(64))
       )
         .keySet(table => PRIMARY_KEY(table.id))
         .keySet(table => INDEX_KEY(table.subId))
@@ -153,7 +153,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64)),
+        column("sub_id", BIGINT(64))
       )
         .keySet(table => PRIMARY_KEY(table.id))
         .keySet(table => INDEX_KEY(table.subId))
@@ -182,7 +182,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64)),
+        column("sub_id", BIGINT(64))
       )
         .keySet(table => PRIMARY_KEY(table.id))
         .keySet(table => INDEX_KEY(table.subId))
@@ -202,7 +202,7 @@ object TableQueryBuilderTest extends Specification:
 
       val table: Table[Test] = Table[Test]("test")(
         column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64)),
+        column("sub_id", BIGINT(64))
       )
         .keySet(table => PRIMARY_KEY(table.id))
         .keySet(table => INDEX_KEY(table.subId))
