@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.schemaspy
 
@@ -22,10 +22,10 @@ object SchemaSpyGenerator:
     user:            String,
     password:        Option[String]
   ): Unit =
-    val sqlService: SqlService = new SqlService()
+    val sqlService:             SqlService             = new SqlService()
     val databaseServiceFactory: DatabaseServiceFactory = new DatabaseServiceFactory(sqlService)
-    val outputProducer: OutputProducer = new XmlProducerUsingDOM()
-    val layoutFolder: LayoutFolder = new LayoutFolder(classOf[SchemaAnalyzer].getClassLoader)
+    val outputProducer:         OutputProducer         = new XmlProducerUsingDOM()
+    val layoutFolder:           LayoutFolder           = new LayoutFolder(classOf[SchemaAnalyzer].getClassLoader)
 
     val arguments: Arguments = new SchemaSpyArguments(
       nohtml          = false,
