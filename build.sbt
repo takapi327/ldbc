@@ -51,8 +51,13 @@ lazy val LdbcQueryBuilderProject = LepusSbtProject("Ldbc-Query-Builder", "module
 lazy val LdbcSchemaspyProject = LepusSbtProject("Ldbc-Schemaspy", "module/ldbc-schemaspy")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(
-    resolvers += "jitpack" at "https://jitpack.io",
-    libraryDependencies += schemaspy
+    resolvers += "Lepus Maven" at "s3://com.github.takapi327.s3-ap-northeast-1.amazonaws.com/lepus/",
+    libraryDependencies ++= Seq(
+      "mysql" % "mysql-connector-java" % "8.0.32",
+      "ch.qos.logback" % "logback-classic" % "1.4.5",
+      "com.github.takapi327" % "schemaspy-db" % "0.1.0-SNAPSHOT",
+      "com.github.takapi327" % "schemaspy-output" % "0.1.0-SNAPSHOT",
+    ),
   )
   .dependsOn(LdbcCoreProject)
 
