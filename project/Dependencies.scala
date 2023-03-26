@@ -11,6 +11,9 @@ object Dependencies {
   val cats = "org.typelevel" %% "cats-core" % "2.9.0"
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.4.6"
 
+  // TODO: Scala3 compatible version needs to be officially released
+  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-pre.71.7c7e79ee.dirty"
+
   val specs2Version = "5.2.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
