@@ -43,13 +43,19 @@ lazy val LdbcDslIOProject = LepusSbtProject("Ldbc-Dsl-IO", "module/ldbc-dsl-io")
   ) ++ specs2)
   .dependsOn(LdbcSqlProject)
 
+lazy val LdbcSlickProject = LepusSbtProject("Ldbc-Slick", "module/ldbc-slick")
+  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+  .settings(libraryDependencies += slick)
+  .dependsOn(LdbcCoreProject)
+
 lazy val coreProjects: Seq[ProjectReference] = Seq(
   LdbcCoreProject
 )
 
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
   LdbcSqlProject,
-  LdbcDslIOProject
+  LdbcDslIOProject,
+  LdbcSlickProject
 )
 
 lazy val Ldbc = Project("Ldbc", file("."))
