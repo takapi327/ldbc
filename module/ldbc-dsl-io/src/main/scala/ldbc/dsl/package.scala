@@ -2,17 +2,18 @@
   * distributed with this source code.
   */
 
-package ldbc.sql
+package ldbc
 
 import javax.sql.DataSource
 
 import cats.data.Kleisli
 import cats.implicits.*
 
-import cats.effect.{ Sync, IO, Resource }
+import cats.effect.{ IO, Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.sql.{ Connection, ResultSetConsumer }
+import ldbc.dsl.syntax.{ ConnectionSyntax, SQLSyntax }
 
 package object dsl:
 
@@ -46,7 +47,7 @@ package object dsl:
       def readOnly: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
         buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
+            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
             _          <- connection.setReadOnly(true)
           yield connection
         }
@@ -56,7 +57,7 @@ package object dsl:
       def autoCommit: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
         buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
+            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
             _          <- connection.setReadOnly(false) >> connection.setAutoCommit(true)
           yield connection
         }
@@ -67,7 +68,7 @@ package object dsl:
         (for
           connection <- buildConnectionResource {
                           for
-                            connection <- Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
+                            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
                             _          <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
                           yield connection
                         }

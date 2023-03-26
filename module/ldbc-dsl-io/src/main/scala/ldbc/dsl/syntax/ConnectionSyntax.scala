@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.dsl
+package ldbc.dsl.syntax
 
 import javax.sql.DataSource
 

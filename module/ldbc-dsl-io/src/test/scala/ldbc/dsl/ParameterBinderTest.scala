@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.dsl
+package ldbc.dsl
 
 import org.specs2.mutable.Specification
 
@@ -12,6 +12,7 @@ import cats.Id
 import cats.data.Kleisli
 
 import ldbc.sql.*
+import ldbc.dsl.syntax.SQLSyntax
 
 object ParameterBinderTest extends Specification:
 

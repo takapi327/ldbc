@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.sql.dsl
+package ldbc.dsl
 
 import java.net.URL
 import java.sql.{ Blob, Clob, Date, Time, Timestamp, Array as SqlArray }
