@@ -19,3 +19,6 @@ object TableQuery:
 
   type Extract[T] = T match
     case SlickTable[t] => t
+  
+  def apply[T <: SlickTable[?]](table: T): TableQuery[T] =
+    new TableQuery[T](table)
