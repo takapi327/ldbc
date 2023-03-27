@@ -2,23 +2,25 @@
  * distributed with this source code.
  */
 
-package ldbc.slick
+package ldbc.slick.relational
 
-import scala.language.dynamics
 import scala.deriving.Mirror
+import scala.language.dynamics
 import scala.reflect.ClassTag
 
-import slick.ast.{ Node, TableNode, TableIdentitySymbol, SimpleTableIdentitySymbol, Select, FieldSymbol, AnonSymbol, Ref, TableExpansion }
-import slick.lifted.{ ToTuple, Rep, FlatShapeLevel, ProvenShape, TupleShape, RepShape, ShapedValue }
+import slick.ast.*
+import slick.lifted.*
 import slick.relational.RelationalProfile
 
-import ldbc.core.{ Key, Column, DataType, Table }
 import ldbc.core.attribute.Attribute
 import ldbc.core.interpreter.*
-import ldbc.slick.lifted.{ Tag, BaseTag, RefTag }
-import ldbc.slick.syntax.TableSyntax
+import ldbc.core.{Column, DataType, Key, Table}
 
-private[ldbc] trait TableComponent:
+import ldbc.slick.lifted.{BaseTag, RefTag, Tag}
+import ldbc.slick.syntax.TableSyntax
+import ldbc.slick.{SlickTable, TypedColumn}
+
+private[ldbc] trait RelationalTableComponent:
   self: RelationalProfile =>
 
   object SlickTable extends Dynamic:
