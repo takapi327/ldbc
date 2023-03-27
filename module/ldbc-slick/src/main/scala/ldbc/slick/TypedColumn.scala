@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.slick
 
@@ -16,9 +16,9 @@ trait TypedColumn[T] extends Column[T]:
 object TypedColumn:
 
   def apply[T](
-    _label: String,
+    _label:    String,
     _dataType: DataType[T]
-  )(using tt: TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
+  )(using tt:  TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
 
     override def label: String = _label
 
@@ -30,12 +30,11 @@ object TypedColumn:
 
     override def typedType: slick.ast.TypedType[T] = tt
 
-
   def apply[T](
-    _label: String,
+    _label:    String,
     _dataType: DataType[T],
-    _comment: String
-  )(using tt: TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
+    _comment:  String
+  )(using tt:  TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
 
     override def label: String = _label
 
@@ -48,10 +47,10 @@ object TypedColumn:
     override def typedType: slick.ast.TypedType[T] = tt
 
   def apply[T](
-    _label: String,
-    _dataType: DataType[T],
+    _label:      String,
+    _dataType:   DataType[T],
     _attributes: Attribute[T]*
-  )(using tt: TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
+  )(using tt:    TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
 
     override def label: String = _label
 
@@ -64,11 +63,11 @@ object TypedColumn:
     override def typedType: slick.ast.TypedType[T] = tt
 
   def apply[T](
-    _label: String,
-    _dataType: DataType[T],
-    _comment: String,
+    _label:      String,
+    _dataType:   DataType[T],
+    _comment:    String,
     _attributes: Attribute[T]*
-  )(using tt: TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
+  )(using tt:    TypedType[T]): TypedColumn[T] = new TypedColumn[T]:
 
     override def label: String = _label
 

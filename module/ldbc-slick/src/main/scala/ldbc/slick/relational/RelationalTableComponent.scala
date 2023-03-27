@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.slick.relational
 
@@ -14,11 +14,11 @@ import slick.relational.RelationalProfile
 
 import ldbc.core.attribute.Attribute
 import ldbc.core.interpreter.*
-import ldbc.core.{Column, DataType, Key, Table}
+import ldbc.core.{ Column, DataType, Key, Table }
 
-import ldbc.slick.lifted.{BaseTag, RefTag, Tag}
+import ldbc.slick.lifted.{ BaseTag, RefTag, Tag }
 import ldbc.slick.syntax.TableSyntax
-import ldbc.slick.{SlickTable, TypedColumn}
+import ldbc.slick.{ SlickTable, TypedColumn }
 
 private[ldbc] trait RelationalTableComponent:
   self: RelationalProfile =>
@@ -31,14 +31,15 @@ private[ldbc] trait RelationalTableComponent:
     type RepColumnType[Type] = TypedColumn[Type] & Rep[Type]
 
     private case class Impl[P <: Product](
-      tag: Tag,
-      name: String,
+      tag:            Tag,
+      name:           String,
       keyDefinitions: Seq[Key]
     )(using
       mirror:   Mirror.ProductOf[P],
       classTag: ClassTag[P],
       tt:       ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
-    )(columns: Tuple.Map[mirror.MirroredElemTypes, TypedColumn]) extends SlickTable[P]:
+    )(columns:  Tuple.Map[mirror.MirroredElemTypes, TypedColumn])
+      extends SlickTable[P]:
 
       override def encodeRef(path: Node): SlickTable[P] =
         tag.taggedAs(path).asInstanceOf[SlickTable[P]]
@@ -50,39 +51,58 @@ private[ldbc] trait RelationalTableComponent:
         TableNode(None, name, tableIdentitySymbol, tableIdentitySymbol)(this)
 
       override def allColumnShape: ProvenShape[P] =
-        val tupleShape = new TupleShape[FlatShapeLevel, Tuple.Map[mirror.MirroredElemTypes, RepColumnType], mirror.MirroredElemTypes, P](
-          columns.productIterator.map(v => {
-            RepShape[FlatShapeLevel, Rep[Extract[v.type]], Extract[v.type]]
-          }).toList: _*
+        val tupleShape = new TupleShape[
+          FlatShapeLevel,
+          Tuple.Map[mirror.MirroredElemTypes, RepColumnType],
+          mirror.MirroredElemTypes,
+          P
+        ](
+          columns.productIterator
+            .map(v => {
+              RepShape[FlatShapeLevel, Rep[Extract[v.type]], Extract[v.type]]
+            })
+            .toList: _*
         )
-        val repColumns: Tuple.Map[mirror.MirroredElemTypes, RepColumnType] = Tuple.fromArray(columns.productIterator.map(v => {
-          val column = v.asInstanceOf[TypedColumn[?]]
-          new TypedColumn[Extract[column.type]] with Rep[Extract[column.type]]:
-            override def label: String = column.label
+        val repColumns: Tuple.Map[mirror.MirroredElemTypes, RepColumnType] = Tuple
+          .fromArray(
+            columns.productIterator
+              .map(v => {
+                val column = v.asInstanceOf[TypedColumn[?]]
+                new TypedColumn[Extract[column.type]] with Rep[Extract[column.type]]:
+                  override def label: String = column.label
 
-            override def dataType: DataType[Extract[column.type]] = column.dataType
+                  override def dataType: DataType[Extract[column.type]] = column.dataType
 
-            override def comment: Option[String] = column.comment
+                  override def comment: Option[String] = column.comment
 
-            override def attributes: Seq[Attribute[Extract[column.type]]] = column.attributes
+                  override def attributes: Seq[Attribute[Extract[column.type]]] = column.attributes
 
-            override def typedType = column.typedType
+                  override def typedType = column.typedType
 
-            override def encodeRef(path: Node): Rep[Extract[column.type]] = Rep.forNode(path)(using column.typedType)
+                  override def encodeRef(path: Node): Rep[Extract[column.type]] =
+                    Rep.forNode(path)(using column.typedType)
 
-            override def toNode =
-              Select((tag match
-                case r: RefTag => r.path
-                case _ => tableNode),
-                FieldSymbol(label)(Seq.empty, typedType)
-              ) :@ typedType
+                  override def toNode =
+                    Select(
+                      (tag match
+                        case r: RefTag => r.path
+                        case _         => tableNode
+                      ),
+                      FieldSymbol(label)(Seq.empty, typedType)
+                    ) :@ typedType
 
-            override def toString = (tag match
-              case r: RefTag => "(" + name + " " + r.path + ")"
-              case _ => name
-            ) + "." + label
-        }).toArray).asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, RepColumnType]]
-        val shapedValue = new ShapedValue[Tuple.Map[mirror.MirroredElemTypes, RepColumnType], mirror.MirroredElemTypes](repColumns, tupleShape)
+                  override def toString = (tag match
+                    case r: RefTag => "(" + name + " " + r.path + ")"
+                    case _         => name
+                  ) + "." + label
+              })
+              .toArray
+          )
+          .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, RepColumnType]]
+        val shapedValue = new ShapedValue[Tuple.Map[mirror.MirroredElemTypes, RepColumnType], mirror.MirroredElemTypes](
+          repColumns,
+          tupleShape
+        )
         shapedValue <> (
           v => mirror.fromTuple(v.asInstanceOf[mirror.MirroredElemTypes]),
           Tuple.fromProductTyped
@@ -99,7 +119,7 @@ private[ldbc] trait RelationalTableComponent:
         tag: Tag
       )(using
         mirror: Mirror.ProductOf[P],
-        index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+        index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
       ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
         columns
           .productElement(index.value)
@@ -112,29 +132,33 @@ private[ldbc] trait RelationalTableComponent:
         this.copy(keyDefinitions = this.keyDefinitions ++ func(this))(columns)
 
     def applyDynamic[P <: Product](using
-     mirror: Mirror.ProductOf[P],
-     converter: ColumnTupleConverter[mirror.MirroredElemTypes, TypedColumn],
-     classTag: ClassTag[P],
-     tt: ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
+      mirror:    Mirror.ProductOf[P],
+      converter: ColumnTupleConverter[mirror.MirroredElemTypes, TypedColumn],
+      classTag:  ClassTag[P],
+      tt:        ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
     )(nameApply: "apply")(name: String)(
-      columns: ColumnTuples[mirror.MirroredElemTypes, TypedColumn]
+      columns:   ColumnTuples[mirror.MirroredElemTypes, TypedColumn]
     ): SlickTable[P] =
 
       val tableTag: Tag = new BaseTag {
         base =>
-        def taggedAs(path: Node): SlickTable[?] = fromTupleMap[P](new RefTag(path) {
-          def taggedAs(path: Node) = base.taggedAs(path)
-        }, name, ColumnTupleConverter.convert(columns))
+        def taggedAs(path: Node): SlickTable[?] = fromTupleMap[P](
+          new RefTag(path) {
+            def taggedAs(path: Node) = base.taggedAs(path)
+          },
+          name,
+          ColumnTupleConverter.convert(columns)
+        )
       }
       fromTupleMap[P](tableTag, name, ColumnTupleConverter.convert(columns))
 
     private def fromTupleMap[P <: Product](using
-     mirror: Mirror.ProductOf[P],
-     classTag: scala.reflect.ClassTag[P],
-     tt: slick.lifted.ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
+      mirror:   Mirror.ProductOf[P],
+      classTag: scala.reflect.ClassTag[P],
+      tt:       slick.lifted.ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
     )(
       tableTag: ldbc.slick.lifted.Tag,
-      _name: String,
-      columns: Tuple.Map[mirror.MirroredElemTypes, TypedColumn]
+      _name:    String,
+      columns:  Tuple.Map[mirror.MirroredElemTypes, TypedColumn]
     ): SlickTable[P] =
       Impl[P](tableTag, _name, Seq.empty)(columns)
