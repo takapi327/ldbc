@@ -94,31 +94,31 @@ private[ldbc] trait Alias:
   def INDEX_KEY(keyPart: Column[?]): IndexKey = IndexKey(None, None, NonEmptyList.one(keyPart), None)
 
   def INDEX_KEY(
-    indexName: Option[String],
-    indexType: Option[Index.Type],
-    keyPart: NonEmptyList[Column[?]],
+    indexName:   Option[String],
+    indexType:   Option[Index.Type],
+    keyPart:     NonEmptyList[Column[?]],
     indexOption: Option[Index.IndexOption]
   ): IndexKey = IndexKey(indexName, indexType, keyPart, indexOption)
 
   def CONSTRAINT(
     symbol: String,
-    key: PrimaryKey | UniqueKey | ForeignKey
+    key:    PrimaryKey | UniqueKey | ForeignKey
   ): Constraint = Constraint(symbol, key)
 
   def FOREIGN_KEY(
-    colName: Column[?],
+    colName:   Column[?],
     reference: Reference
   ): ForeignKey = ForeignKey(None, NonEmptyList.one(colName), reference)
 
   def FOREIGN_KEY(
     indexName: Option[String],
-    colName: NonEmptyList[Column[?]],
+    colName:   NonEmptyList[Column[?]],
     reference: Reference
   ): ForeignKey = ForeignKey(indexName, colName, reference)
 
   def REFERENCE(
-    table: Table[?],
-    keyPart: Column[?],
+    table:   Table[?],
+    keyPart: Column[?]
   ): Reference = Reference(table, NonEmptyList.one(keyPart), None, None)
 
   def REFERENCE(table: Table[?])(columns: Column[?]*): Reference =
@@ -129,8 +129,8 @@ private[ldbc] trait Alias:
     Reference(table, NonEmptyList.fromListUnsafe(columns.toList), None, None)
 
   def REFERENCE(
-    table: Table[?],
-    keyPart: NonEmptyList[Column[?]],
+    table:    Table[?],
+    keyPart:  NonEmptyList[Column[?]],
     onDelete: Option[Reference.ReferenceOption],
     onUpdate: Option[Reference.ReferenceOption]
   ): Reference = Reference(table, keyPart, onDelete, onUpdate)
