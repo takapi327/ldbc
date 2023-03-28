@@ -14,6 +14,8 @@ import org.schemaspy.input.dbms.exceptions.ConnectionFailure
 import org.schemaspy.output.OutputProducer
 import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 
+import ldbc.core.Database
+
 object SchemaSpyGenerator:
 
   def generate(
@@ -31,7 +33,7 @@ object SchemaSpyGenerator:
       nohtml          = false,
       noImplied       = false,
       databaseType    = database.databaseType,
-      databaseName    = database.databaseName,
+      databaseName    = database.name,
       schemaMeta      = database.schemaMeta.orNull,
       sso             = false,
       user            = user,
@@ -51,7 +53,7 @@ object SchemaSpyGenerator:
     )
 
     val config = ConfigBuilder.build(
-      db       = database.databaseName,
+      db       = database.name,
       host     = database.host,
       port     = database.port,
       user     = user,

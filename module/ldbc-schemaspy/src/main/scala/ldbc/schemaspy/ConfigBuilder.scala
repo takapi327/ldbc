@@ -10,6 +10,8 @@ import scala.jdk.CollectionConverters.*
 
 import org.schemaspy.Config
 
+import ldbc.core.Database
+
 object ConfigBuilder:
 
   def build(
@@ -84,7 +86,7 @@ object ConfigBuilder:
     user:     String
   ): Config =
     this.build(
-      db     = database.databaseName,
+      db     = database.name,
       host   = database.host,
       port   = database.port,
       user   = user,
