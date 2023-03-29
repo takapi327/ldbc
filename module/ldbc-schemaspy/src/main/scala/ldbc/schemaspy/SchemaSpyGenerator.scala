@@ -15,6 +15,7 @@ import org.schemaspy.output.OutputProducer
 import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 
 import ldbc.core.Database
+import ldbc.schemaspy.result.Status
 
 object SchemaSpyGenerator:
 
@@ -23,7 +24,7 @@ object SchemaSpyGenerator:
     outputDirectory: File,
     user:            String,
     password:        Option[String]
-  ): Unit =
+  ): Status =
     val sqlService:             SqlService             = new SqlService()
     val databaseServiceFactory: DatabaseServiceFactory = new DatabaseServiceFactory(sqlService)
     val outputProducer:         OutputProducer         = new XmlProducerUsingDOM()
@@ -63,18 +64,20 @@ object SchemaSpyGenerator:
 
     try
       val result = Option(analyzer.analyze(config))
-      if result.nonEmpty then println("exitCode: 0") else println("exitCode: 1")
+      if result.nonEmpty then Status.Success else Status.Failure
     catch
       case ex: ConnectionFailure =>
         ex.printStackTrace()
-        println("exitCode: 3")
+        Status.ConnectionFailure
       case ex: EmptySchemaException =>
         ex.printStackTrace()
-        println("exitCode: 2")
+        Status.EmptySchema
       case ex: InvalidConfigurationException =>
         ex.printStackTrace()
-        println("exitCode: 4")
+        Status.InvalidConfig
       case ex: SQLException =>
         ex.printStackTrace()
+        Status.Failure
       case ex: IOException =>
         ex.printStackTrace()
+        Status.Failure
