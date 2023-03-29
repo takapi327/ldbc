@@ -19,7 +19,7 @@ object SqlFileBuilder:
   private def build(
     output:   String,
     fileName: Option[String],
-    database: Database,
+    database: Database
   ): Unit =
 
     val tableQueryBuilder: Set[TableQueryBuilder] = database.tables.map(TableQueryBuilder(_))
