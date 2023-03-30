@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.core.builder
 
@@ -13,7 +13,7 @@ import scala.io.Codec
 import ldbc.core.Database
 
 /** Object to generate sql files that write out Create statements for databases and tables.
- */
+  */
 object SqlFileBuilder:
 
   private def build(
