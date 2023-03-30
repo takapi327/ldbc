@@ -18,10 +18,12 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
     case c: Column[?] => c.attributes.contains(AutoInc())
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
+
   private val primaryKey = table.*.filter {
     case c: Column[?] => c.attributes.exists(_.isInstanceOf[PrimaryKey])
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
+
   private val keyPart = table.keyDefinitions.flatMap {
     case key: PrimaryKey with Index => key.keyPart.toList
     case key: UniqueKey with Index  => key.keyPart.toList
