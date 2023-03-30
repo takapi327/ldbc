@@ -1,18 +1,17 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.core.builder
 
 import ldbc.core.*
 import ldbc.core.attribute.*
 
-/**
- * Class for generating query strings such as Create statements from Table values.
- *
- * @param table
- *   Trait for generating SQL table information.
- */
+/** Class for generating query strings such as Create statements from Table values.
+  *
+  * @param table
+  *   Trait for generating SQL table information.
+  */
 private[ldbc] case class TableQueryBuilder(table: Table[?]):
 
   private val autoInc = table.*.filter {
@@ -83,10 +82,10 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
       constraints.exists(_.key match
         case key: ForeignKey =>
           key.reference.keyPart.toList.flatMap(_.attributes).exists(_.isInstanceOf[PrimaryKey]) ||
-            key.reference.table.keyDefinitions.exists(_ match
-              case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
-              case _                        => false
-            )
+          key.reference.table.keyDefinitions.exists(_ match
+            case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
+            case _                        => false
+          )
         case _ => false
       ),
       "The column referenced by FOREIGN KEY must be a PRIMARY KEY."
@@ -101,9 +100,8 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
   private val options: Seq[String] =
     columnDefinitions ++ table.keyDefinitions.map(_.queryString)
 
-  /**
-   * Variable that generates the Create statement that creates the Table.
-   */
+  /** Variable that generates the Create statement that creates the Table.
+    */
   lazy val createStatement: String =
     s"""
        |CREATE TABLE `${ table.name }` (
@@ -111,15 +109,13 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
        |);
        |""".stripMargin
 
-  /**
-   * Variable that generates the Drop statement that creates the Table.
-   */
+  /** Variable that generates the Drop statement that creates the Table.
+    */
   lazy val dropStatement: String =
     s"DROP TABLE `${ table.name }`"
 
-  /**
-   * Variable that generates the Truncate statement that creates the Table.
-   */
+  /** Variable that generates the Truncate statement that creates the Table.
+    */
   lazy val truncateStatement: String =
     s"TRUNCATE TABLE `${ table.name }`"
 
