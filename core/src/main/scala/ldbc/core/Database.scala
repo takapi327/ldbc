@@ -40,5 +40,6 @@ object Database:
   /**
    * Enum representing the database type, only databases that are already supported by the library will be managed.
    */
-  enum Type:
-    case MySQL
+  enum Type(val driver: String):
+    case MySQL    extends Type("com.mysql.cj.jdbc.Driver")
+    case AWSMySQL extends Type("software.aws.rds.jdbc.mysql.Driver")
