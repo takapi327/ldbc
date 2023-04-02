@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.query.builder
+package ldbc.core.builder
 
 import org.specs2.mutable.Specification
 
@@ -31,7 +31,7 @@ object TableQueryBuilderTest extends Specification:
         column("created_at", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP())
       )
 
-      TableQueryBuilder(table).querySting ===
+      TableQueryBuilder(table).createStatement ===
         """
           |CREATE TABLE `user` (
           |  `id` BIGINT(64) NOT NULL AUTO_INCREMENT UNIQUE KEY,
@@ -99,7 +99,7 @@ object TableQueryBuilderTest extends Specification:
         column("sub_id", BIGINT(64))
       ).keySet(table => PRIMARY_KEY(table.id))
 
-      TableQueryBuilder(table).querySting ===
+      TableQueryBuilder(table).createStatement ===
         """
           |CREATE TABLE `test` (
           |  `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
@@ -132,7 +132,7 @@ object TableQueryBuilderTest extends Specification:
         .keySet(table => PRIMARY_KEY(table.id))
         .keySet(table => INDEX_KEY(table.subId))
 
-      TableQueryBuilder(table).querySting ===
+      TableQueryBuilder(table).createStatement ===
         """
           |CREATE TABLE `test` (
           |  `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
@@ -159,7 +159,7 @@ object TableQueryBuilderTest extends Specification:
         .keySet(table => INDEX_KEY(table.subId))
         .keySet(table => CONSTRAINT("fk_id", FOREIGN_KEY(table.subId, REFERENCE(subTable, subTable.id))))
 
-      TableQueryBuilder(table).querySting ===
+      TableQueryBuilder(table).createStatement ===
         """
           |CREATE TABLE `test` (
           |  `id` BIGINT(64) NOT NULL AUTO_INCREMENT,

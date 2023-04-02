@@ -9,7 +9,7 @@ package ldbc.core
 trait Database:
 
   /** Database Type */
-  val databaseType: String
+  val databaseType: Database.Type
 
   /** Database Name */
   val name: String
@@ -34,3 +34,11 @@ trait Database:
 
   /** List of Tables in Database */
   val tables: Set[Table[?]]
+
+object Database:
+
+  /** Enum representing the database type, only databases that are already supported by the library will be managed.
+    */
+  enum Type(val driver: String):
+    case MySQL    extends Type("com.mysql.cj.jdbc.Driver")
+    case AWSMySQL extends Type("software.aws.rds.jdbc.mysql.Driver")

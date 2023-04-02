@@ -2,21 +2,28 @@
   * distributed with this source code.
   */
 
-package ldbc.query.builder
+package ldbc.core.builder
 
 import ldbc.core.*
 import ldbc.core.attribute.*
 
+/** Class for generating query strings such as Create statements from Table values.
+  *
+  * @param table
+  *   Trait for generating SQL table information.
+  */
 private[ldbc] case class TableQueryBuilder(table: Table[?]):
 
   private val autoInc = table.*.filter {
     case c: Column[?] => c.attributes.contains(AutoInc())
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
+
   private val primaryKey = table.*.filter {
     case c: Column[?] => c.attributes.exists(_.isInstanceOf[PrimaryKey])
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
+
   private val keyPart = table.keyDefinitions.flatMap {
     case key: PrimaryKey with Index => key.keyPart.toList
     case key: UniqueKey with Index  => key.keyPart.toList
@@ -95,11 +102,23 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]):
   private val options: Seq[String] =
     columnDefinitions ++ table.keyDefinitions.map(_.queryString)
 
-  def querySting: String =
+  /** Variable that generates the Create statement that creates the Table.
+    */
+  lazy val createStatement: String =
     s"""
        |CREATE TABLE `${ table.name }` (
        |  ${ options.mkString(",\n  ") }
        |);
        |""".stripMargin
+
+  /** Variable that generates the Drop statement that creates the Table.
+    */
+  lazy val dropStatement: String =
+    s"DROP TABLE `${ table.name }`"
+
+  /** Variable that generates the Truncate statement that creates the Table.
+    */
+  lazy val truncateStatement: String =
+    s"TRUNCATE TABLE `${ table.name }`"
 
 object TableQueryBuilder
