@@ -123,55 +123,65 @@ private[ldbc] case class Fulltext(
       + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
       + indexOption.fold("")(option => s"${ option.queryString }")
 
-/** A model representing SQL Primary key information.
-  *
-  * @param indexType
-  *   Value that is the type of Index
-  * @param keyPart
-  *   List of columns for which the Index key is set
-  * @param indexOption
-  *   Additional indexing options
-  */
-private[ldbc] case class PrimaryKey(
-  indexType:   Option[Index.Type],
-  keyPart:     NonEmptyList[Column[?]],
-  indexOption: Option[Index.IndexOption]
-) extends Index:
+/** Trait for representing SQL primary key information. */
+private[ldbc] trait PrimaryKey:
 
-  override def label: String = "PRIMARY KEY"
+  val label: String = "PRIMARY KEY"
 
-  override def queryString: String =
-    label
-      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
-      + indexType.fold("")(index => s" USING $index")
-      + indexOption.fold("")(option => s"${ option.queryString }")
+  def queryString: String
 
-/** A model representing SQL Unique key information.
-  *
-  * @param indexName
-  *   Unique name for key
-  * @param indexType
-  *   Value that is the type of Index
-  * @param keyPart
-  *   List of columns for which the Index key is set
-  * @param indexOption
-  *   Additional indexing options
-  */
-private[ldbc] case class UniqueKey(
-  indexName:   Option[String],
-  indexType:   Option[Index.Type],
-  keyPart:     NonEmptyList[Column[?]],
-  indexOption: Option[Index.IndexOption]
-) extends Index:
+object PrimaryKey:
+  def apply(
+    _indexType:   Option[Index.Type],
+    _keyPart:     NonEmptyList[Column[?]],
+    _indexOption: Option[Index.IndexOption]
+  ): PrimaryKey with Index = new PrimaryKey with Index:
 
-  override def label: String = "UNIQUE KEY"
+    override def indexType: Option[Index.Type] = _indexType
 
-  override def queryString: String =
-    label
-      + indexName.fold("")(str => s" `$str`")
-      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
-      + indexType.fold("")(index => s" USING $index")
-      + indexOption.fold("")(option => s"${ option.queryString }")
+    override def keyPart: NonEmptyList[Column[_]] = _keyPart
+
+    override def indexOption: Option[Index.IndexOption] = _indexOption
+
+    override def queryString: String =
+      label
+        + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+        + indexType.fold("")(index => s" USING $index")
+        + indexOption.fold("")(option => s"${ option.queryString }")
+
+/** Trait for representing SQL unique key information. */
+private[ldbc] trait UniqueKey:
+
+  val label: String = "UNIQUE KEY"
+
+  /** Unique name for key */
+  def indexName: Option[String]
+
+  def queryString: String
+
+object UniqueKey:
+
+  def apply(
+    _indexName:   Option[String],
+    _indexType:   Option[Index.Type],
+    _keyPart:     NonEmptyList[Column[?]],
+    _indexOption: Option[Index.IndexOption]
+  ): UniqueKey with Index = new UniqueKey with Index:
+
+    override def indexName: Option[String] = _indexName
+
+    override def indexType: Option[Index.Type] = _indexType
+
+    override def keyPart: NonEmptyList[Column[_]] = _keyPart
+
+    override def indexOption: Option[Index.IndexOption] = _indexOption
+
+    override def queryString: String =
+      label
+        + indexName.fold("")(str => s" `$str`")
+        + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+        + indexType.fold("")(index => s" USING $index")
+        + indexOption.fold("")(option => s"${ option.queryString }")
 
 /** A model representing SQL Foreign key information.
   *

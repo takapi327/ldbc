@@ -4,4 +4,4 @@
 
 package ldbc.core
 
-package object syntax extends DataTypeConversion
+package object syntax extends DataTypeConversion, OrderingTable
