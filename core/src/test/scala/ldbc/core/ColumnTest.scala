@@ -15,28 +15,28 @@ object ColumnTest extends Specification:
   "Column Test" should {
     "The query string of the Column model generated with only label and DataType matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None))
+      val column = Column[Long]("id", Bigint(64))
 
       column.queryString === "`id` BIGINT(64) NOT NULL"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None), "identifier")
+      val column = Column[Long]("id", Bigint(64), "identifier")
 
       column.queryString === "`id` BIGINT(64) NOT NULL COMMENT 'identifier'"
     }
 
     "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None), AutoInc[Long]())
+      val column = Column[Long]("id", Bigint(64), AutoInc[Long]())
 
       column.queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT"
     }
 
     "The query string of the Column model generated with only label and DataType and attributes and comment matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None), "identifier", AutoInc[Long]())
+      val column = Column[Long]("id", Bigint(64), "identifier", AutoInc[Long]())
 
       column.queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
     }

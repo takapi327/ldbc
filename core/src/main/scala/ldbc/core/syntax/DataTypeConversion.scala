@@ -29,15 +29,15 @@ private[ldbc] trait DataTypeConversion:
     v => BitOpt(v.length, v.default)
 
   given Conversion[Tinyint[Byte], TinyintOpt[Option[Byte]]] =
-    v => TinyintOpt(v.length, v.default)
+    v => TinyintOpt(v.length, v.isUnSigned, v.default)
   given Conversion[Smallint[Short], SmallintOpt[Option[Short]]] =
-    v => SmallintOpt(v.length, v.default)
+    v => SmallintOpt(v.length, v.isUnSigned, v.default)
   given Conversion[Mediumint[Int], MediumintOpt[Option[Int]]] =
-    v => MediumintOpt(v.length, v.default)
+    v => MediumintOpt(v.length, v.isUnSigned, v.default)
   given Conversion[Integer[Int], IntegerOpt[Option[Int]]] =
-    v => IntegerOpt(v.length, v.default)
+    v => IntegerOpt(v.length, v.isUnSigned, v.default)
   given Conversion[Bigint[Long], BigintOpt[Option[Long]]] =
-    v => BigintOpt(v.length, v.default)
+    v => BigintOpt(v.length, v.isUnSigned, v.default)
   given Conversion[Decimal[BigDecimal], DecimalOpt[Option[BigDecimal]]] =
     v => DecimalOpt(v.accuracy, v.scale, v.default)
 
