@@ -179,231 +179,341 @@ object DataType:
     *
     * @param length
     *   Maximum display width of integer data type. The length of the TINYINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Tinyint[T <: Byte](
-    length:  Int,
-    default: Option[Default]
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def queryString: String = s"TINYINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"TINYINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"TINYINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Tinyint[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): Tinyint[T] = this.copy(default = Some(Default.Value(value)))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: Tinyint[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Bit data type, which is numeric data with NULL tolerance for SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the TINYINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class TinyintOpt[T <: Option[Byte]](
-    length:  Int,
-    default: Option[Default]
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
-    override def queryString: String = s"TINYINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"TINYINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"TINYINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): TinyintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
+    def DEFAULT(value: T): TinyintOpt[T] = this.copy(default = Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
-    def DEFAULT_NULL: TinyintOpt[T] = this.copy(length, Some(Default.Null))
+    def DEFAULT_NULL: TinyintOpt[T] = this.copy(default = Some(Default.Null))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: TinyintOpt[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Smallint data type, which is the numeric data of SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the SMALLINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Smallint[T <: Short](length: Int, default: Option[Default]) extends IntegerType[T]:
+  private[ldbc] case class Smallint[T <: Short](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
-    override def queryString: String = s"SMALLINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"SMALLINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"SMALLINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Smallint[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): Smallint[T] = this.copy(default = Some(Default.Value(value)))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: Smallint[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Smallint data type, which is numeric data with NULL tolerance for SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the SMALLINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class SmallintOpt[T <: Option[Short]](length: Int, default: Option[Default])
-    extends IntegerOptType[T]:
+  private[ldbc] case class SmallintOpt[T <: Option[Short]](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerOptType[T]:
 
-    override def queryString: String = s"SMALLINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"SMALLINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"SMALLINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): SmallintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
+    def DEFAULT(value: T): SmallintOpt[T] = this.copy(default = Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
-    def DEFAULT_NULL: SmallintOpt[T] = this.copy(length, Some(Default.Null))
+    def DEFAULT_NULL: SmallintOpt[T] = this.copy(default = Some(Default.Null))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: SmallintOpt[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Mediumint data type, which is the numeric data of SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the MEDIUMINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Mediumint[T <: Int](length: Int, default: Option[Default]) extends IntegerType[T]:
+  private[ldbc] case class Mediumint[T <: Int](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
-    override def queryString: String = s"MEDIUMINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"MEDIUMINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"MEDIUMINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Mediumint[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): Mediumint[T] = this.copy(default = Some(Default.Value(value)))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: Mediumint[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Mediumint data type, which is numeric data with NULL tolerance for SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the MEDIUMINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class MediumintOpt[T <: Option[Int]](length: Int, default: Option[Default])
-    extends IntegerOptType[T]:
+  private[ldbc] case class MediumintOpt[T <: Option[Int]](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerOptType[T]:
 
-    override def queryString: String = s"MEDIUMINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"MEDIUMINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"MEDIUMINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): MediumintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
+    def DEFAULT(value: T): MediumintOpt[T] = this.copy(default = Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
-    def DEFAULT_NULL: MediumintOpt[T] = this.copy(length, Some(Default.Null))
+    def DEFAULT_NULL: MediumintOpt[T] = this.copy(default = Some(Default.Null))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: MediumintOpt[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Integer data type, which is the numeric data of SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the INT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Integer[T <: Int](length: Int, default: Option[Default]) extends IntegerType[T]:
+  private[ldbc] case class Integer[T <: Int](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
-    override def queryString: String = s"INT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"INT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"INT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Integer[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): Integer[T] = this.copy(default = Some(Default.Value(value)))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: Integer[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Integer data type, which is numeric data with NULL tolerance for SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the INT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class IntegerOpt[T <: Option[Int]](length: Int, default: Option[Default])
-    extends IntegerOptType[T]:
+  private[ldbc] case class IntegerOpt[T <: Option[Int]](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerOptType[T]:
 
-    override def queryString: String = s"INT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"INT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"INT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): IntegerOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
+    def DEFAULT(value: T): IntegerOpt[T] = this.copy(default = Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
-    def DEFAULT_NULL: IntegerOpt[T] = this.copy(length, Some(Default.Null))
+    def DEFAULT_NULL: IntegerOpt[T] = this.copy(default = Some(Default.Null))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: IntegerOpt[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Bigint data type, which is the numeric data of SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the BIGINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Bigint[T <: Long](length: Int, default: Option[Default]) extends IntegerType[T]:
+  private[ldbc] case class Bigint[T <: Long](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
-    override def queryString: String = s"BIGINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"BIGINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"BIGINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Bigint[T] = this.copy(length, Some(Default.Value(value)))
+    def DEFAULT(value: T): Bigint[T] = this.copy(default = Some(Default.Value(value)))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: Bigint[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Bigint data type, which is numeric data with NULL tolerance for SQL DataType.
     *
     * @param length
     *   Maximum display width of integer data type. The length of the BIGINT must be in the range 0 to 255.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class BigintOpt[T <: Option[Long]](length: Int, default: Option[Default])
-    extends IntegerOptType[T]:
+  private[ldbc] case class BigintOpt[T <: Option[Long]](
+    length:     Int,
+    isUnSigned: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerOptType[T]:
 
-    override def queryString: String = s"BIGINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override val queryString: String =
+      if isUnSigned then s"BIGINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"BIGINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): BigintOpt[T] = this.copy(length, Some(value.fold(Default.Null)(Default.Value(_))))
+    def DEFAULT(value: T): BigintOpt[T] = this.copy(default = Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
-    def DEFAULT_NULL: BigintOpt[T] = this.copy(length, Some(Default.Null))
+    def DEFAULT_NULL: BigintOpt[T] = this.copy(default = Some(Default.Null))
+
+    /** Method for setting data type to unsigned.
+      */
+    def UNSIGNED: BigintOpt[T] = this.copy(isUnSigned = true)
 
   /** Model for representing the Decimal data type, which is the numeric data of SQL DataType.
     *
