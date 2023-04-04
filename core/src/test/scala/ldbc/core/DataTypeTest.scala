@@ -26,7 +26,10 @@ object DataTypeTest extends Specification:
       Tinyint[Byte](1).queryString === "TINYINT(1) NOT NULL" and
         Tinyint[Byte](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NOT NULL" and
         Tinyint[Byte](64).DEFAULT("byte".getBytes.head).queryString === "TINYINT(64) NOT NULL DEFAULT '98'" and
-        Tinyint[Byte](64).DEFAULT("byte".getBytes.head).UNSIGNED.queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT '98'" and
+        Tinyint[Byte](64)
+          .DEFAULT("byte".getBytes.head)
+          .UNSIGNED
+          .queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT '98'" and
         TinyintOpt[Option[Byte]](1).queryString === "TINYINT(1) NULL" and
         TinyintOpt[Option[Byte]](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NULL" and
         TinyintOpt[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL" and

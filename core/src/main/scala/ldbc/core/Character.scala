@@ -12,13 +12,13 @@ trait Character:
   /** Character name */
   def name: String
 
-  /** Collate information to be set for Character  */
+  /** Collate information to be set for Character */
   def collate: Option[Character.Collate]
 
   /** Methods for setting collate to Character */
   def set(collate: Character.Collate): Character
 
-  val queryString: String = collate.fold(s"CHARACTER SET $name")(v => s"CHARACTER SET $name COLLATE ${v.name}")
+  val queryString: String = collate.fold(s"CHARACTER SET $name")(v => s"CHARACTER SET $name COLLATE ${ v.name }")
 
 object Character:
 
