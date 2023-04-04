@@ -9,7 +9,6 @@ package ldbc.core
   *
   * @param name
   *   Character name
-  *
   * @param collate
   *   Collate information to be set for Character
   */
