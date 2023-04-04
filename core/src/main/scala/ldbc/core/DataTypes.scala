@@ -24,23 +24,23 @@ trait DataTypes:
 
   inline def TINYINT[T <: Byte](inline length: Int): Tinyint[T] =
     inline if length < 0 || length > 255 then error("The length of the TINYINT must be in the range 0 to 255.")
-    else Tinyint(length, None)
+    else Tinyint(length)
 
   inline def SMALLINT[T <: Short](inline length: Int): Smallint[T] =
     inline if length < 0 || length > 255 then error("The length of the SMALLINT must be in the range 0 to 255.")
-    else Smallint(length, None)
+    else Smallint(length)
 
   inline def MEDIUMINT[T <: Int](inline length: Int): Mediumint[T] =
     inline if length < 0 || length > 255 then error("The length of the MEDIUMINT must be in the range 0 to 255.")
-    else Mediumint(length, None)
+    else Mediumint(length)
 
   inline def INT[T <: Int](inline length: Int): Integer[T] =
     inline if length < 0 || length > 255 then error("The length of the INT must be in the range 0 to 255.")
-    else Integer(length, None)
+    else Integer(length)
 
   inline def BIGINT[T <: Long](inline length: Int): Bigint[T] =
     inline if length < 0 || length > 255 then error("The length of the BIGINT must be in the range 0 to 255.")
-    else Bigint(length, None)
+    else Bigint(length)
 
   inline def DECIMAL[T <: BigDecimal](inline accuracy: Int = 10, inline scale: Int = 0): Decimal[T] =
     inline if accuracy < 0 then error("The value of accuracy for DECIMAL must be an integer.")

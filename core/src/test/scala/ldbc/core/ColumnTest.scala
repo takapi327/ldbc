@@ -15,51 +15,51 @@ object ColumnTest extends Specification:
   "Column Test" should {
     "The query string of the Column model generated with only label and DataType matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None))
+      val column = Column[Long]("id", Bigint(64))
 
       column.queryString === "`id` BIGINT(64) NOT NULL"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None), "identifier")
+      val column = Column[Long]("id", Bigint(64), "identifier")
 
       column.queryString === "`id` BIGINT(64) NOT NULL COMMENT 'identifier'"
     }
 
     "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None), AutoInc[Long]())
+      val column = Column[Long]("id", Bigint(64), AutoInc[Long]())
 
       column.queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT"
     }
 
     "The query string of the Column model generated with only label and DataType and attributes and comment matches the specified string." in {
 
-      val column = Column[Long]("id", Bigint(64, None), "identifier", AutoInc[Long]())
+      val column = Column[Long]("id", Bigint(64), "identifier", AutoInc[Long]())
 
       column.queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
     }
 
     "The query string of the Column model generated with only label and DataType matches the specified string." in {
 
-      val column = Column[String]("name", Varchar(255, None, Some(Big5(None))))
+      val column = Column[String]("name", Varchar(255, None, Some(Character("ascii"))))
 
-      column.queryString === "`name` VARCHAR(255) CHARACTER SET Big5 NOT NULL"
+      column.queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
 
-      val column = Column[String]("name", Varchar(255, None, Some(Big5(None))), "name")
+      val column = Column[String]("name", Varchar(255, None, Some(Character("ascii"))), "name")
 
-      column.queryString === "`name` VARCHAR(255) CHARACTER SET Big5 NOT NULL COMMENT 'name'"
+      column.queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
 
       val column =
-        Column[String]("name", Varchar(255, None, None).CHARACTER_SET(Big5(Some(Big5.Collate.big5_bin))), "name")
+        Column[String]("name", Varchar(255, None, None).CHARACTER_SET(Character("ascii").set("ascii_bin")), "name")
 
-      column.queryString === "`name` VARCHAR(255) CHARACTER SET Big5 COLLATE big5_bin NOT NULL COMMENT 'name'"
+      column.queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     }
   }
