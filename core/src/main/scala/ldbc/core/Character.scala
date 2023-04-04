@@ -9,26 +9,17 @@ package ldbc.core
   */
 trait Character:
 
-  def queryString: String
+  /** Character name */
+  def name: String
+
+  /** Collate information to be set for Character  */
+  def collate: Option[Character.Collate]
+
+  /** Methods for setting collate to Character */
+  def set(collate: Character.Collate): Character
+
+  val queryString: String = collate.fold(s"CHARACTER SET $name")(v => s"CHARACTER SET $name COLLATE ${v.name}")
 
 object Character:
 
-  case class Big5(collate: Option[Big5.Collate]) extends Character:
-
-    override def queryString: String = collate.fold("CHARACTER SET Big5")(v => s"CHARACTER SET Big5 COLLATE $v")
-
-  object Big5:
-
-    enum Collate:
-      case big5_chinese_ci
-      case big5_bin
-
-  case class Dec8(collate: Option[Dec8.Collate]) extends Character:
-
-    override def queryString: String = collate.fold("CHARACTER SET dec8")(v => s"CHARACTER SET dec8 COLLATE $v")
-
-  object Dec8:
-
-    enum Collate:
-      case dec8_swedish_ci
-      case dec8_bin
+  trait Collate(val name: String)
