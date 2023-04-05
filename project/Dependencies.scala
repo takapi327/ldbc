@@ -11,7 +11,10 @@ object Dependencies {
   val cats = "org.typelevel" %% "cats-core" % "2.9.0"
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.4.6"
 
-  val schemaspy = "com.github.schemaspy" % "schemaspy" % "6.1.0"
+  val schemaspy: Seq[ModuleID] = Seq(
+    "schemaspy-db",
+    "schemaspy-output"
+  ).map("com.github.takapi327" % _ % "0.1.0-SNAPSHOT")
 
   val specs2Version = "5.2.0"
   val specs2: Seq[ModuleID] = Seq(
