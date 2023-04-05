@@ -90,5 +90,5 @@ object ConfigBuilder:
       host   = database.host,
       port   = database.port,
       user   = user,
-      dbType = Some(database.databaseType)
+      dbType = Some(database.databaseType.toString.toLowerCase())
     )

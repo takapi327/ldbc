@@ -33,7 +33,7 @@ object SchemaSpyGenerator:
     val arguments: Arguments = new SchemaSpyArguments(
       nohtml          = false,
       noImplied       = false,
-      databaseType    = database.databaseType,
+      databaseType    = database.databaseType.toString.toLowerCase,
       databaseName    = database.name,
       schemaMeta      = database.schemaMeta.orNull,
       sso             = false,
@@ -58,7 +58,7 @@ object SchemaSpyGenerator:
       host     = database.host,
       port     = database.port,
       user     = user,
-      dbType   = Some(database.databaseType),
+      dbType   = Some(database.databaseType.toString.toLowerCase()),
       password = password
     )
 
