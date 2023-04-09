@@ -34,6 +34,20 @@ sealed trait DataType[T]:
 
 object DataType:
 
+  /** Methods for mapping specific types to DataType.
+    *
+    * @tparam D
+    *   Trait for representing SQL DataType
+    * @tparam T
+    *   Scala types that match SQL DataType
+    */
+  def mapping[D <: DataType[?], T]: Conversion[D, DataType[T]] =
+    v =>
+      new DataType[T]:
+        override def queryString: String = v.queryString
+
+        override def isOptional: Boolean = v.isOptional
+
   /** Trait for representing numeric data types in SQL DataType
     *
     * @tparam T
@@ -1348,28 +1362,3 @@ object DataType:
     /** Method to set the Default value to NULL for SQL DataType.
       */
     def DEFAULT_NULL: YearOpt[T] = this.copy(Some(Default.Null))
-
-  /** A model for adapting a specific type, such as enum, to a specified DataType.
-    *
-    * @param dataType
-    *   Trait for representing SQL DataType
-    * @tparam T
-    *   Scala types that match SQL DataType
-    */
-  private[ldbc] case class CustomDataType[T](dataType: DataType[?]) extends DataType[T]:
-
-    override def queryString: String = dataType.queryString
-
-    override def isOptional: Boolean = dataType.isOptional
-
-  object CustomDataType:
-
-    /** Methods for mapping specific types to CustomDataType.
-      *
-      * @tparam D
-      *   Trait for representing SQL DataType
-      * @tparam T
-      *   Scala types that match SQL DataType
-      */
-    def mapping[D <: DataType[?], T]: Conversion[D, CustomDataType[T]] =
-      v => CustomDataType[T](v)

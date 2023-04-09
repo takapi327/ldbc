@@ -269,6 +269,3 @@ private[ldbc] trait Alias:
         case Instant   => DataType.YearOpt[Option[Instant]]
         case LocalDate => DataType.YearOpt[Option[LocalDate]]
         case JYear     => DataType.YearOpt[Option[JYear]]
-
-  type CustomDataType[T] = DataType.CustomDataType[T]
-  val CustomDataType = DataType.CustomDataType
