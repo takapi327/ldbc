@@ -4,6 +4,9 @@
 
 package ldbc.core
 
+import java.time.*
+import java.time.Year as JYear
+
 import cats.data.NonEmptyList
 
 import ldbc.core.attribute.{ Attribute, AutoInc }
@@ -134,3 +137,135 @@ private[ldbc] trait Alias:
     onDelete: Option[Reference.ReferenceOption],
     onUpdate: Option[Reference.ReferenceOption]
   ): Reference = Reference(table, keyPart, onDelete, onUpdate)
+
+  type BIT[
+    T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
+      Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
+  ] =
+    T match
+      case Byte       => DataType.Bit[Byte]
+      case Short      => DataType.Bit[Short]
+      case Int        => DataType.Bit[Int]
+      case Long       => DataType.Bit[Long]
+      case Float      => DataType.Bit[Float]
+      case Double     => DataType.Bit[Double]
+      case BigDecimal => DataType.Bit[BigDecimal]
+      case Option[t] =>
+        t match
+          case Byte       => DataType.BitOpt[Option[Byte]]
+          case Short      => DataType.BitOpt[Option[Short]]
+          case Int        => DataType.BitOpt[Option[Int]]
+          case Long       => DataType.BitOpt[Option[Long]]
+          case Float      => DataType.BitOpt[Option[Float]]
+          case Double     => DataType.BitOpt[Option[Double]]
+          case BigDecimal => DataType.BitOpt[Option[BigDecimal]]
+
+  type TINYINT[T <: Byte | Option[Byte]] = T match
+    case Byte         => DataType.Tinyint[Byte]
+    case Option[Byte] => DataType.TinyintOpt[Option[Byte]]
+
+  type SMALLINT[T <: Short | Option[Short]] = T match
+    case Short         => DataType.Smallint[Short]
+    case Option[Short] => DataType.SmallintOpt[Option[Short]]
+
+  type MEDIUMINT[T <: Int | Option[Int]] = T match
+    case Int         => DataType.Mediumint[Int]
+    case Option[Int] => DataType.MediumintOpt[Option[Int]]
+
+  type INTEGER[T <: Int | Option[Int]] = T match
+    case Int         => DataType.Integer[Int]
+    case Option[Int] => DataType.IntegerOpt[Option[Int]]
+
+  type BIGINT[T <: Long | Option[Long]] = T match
+    case Long         => DataType.Bigint[Long]
+    case Option[Long] => DataType.BigintOpt[Option[Long]]
+
+  type DECIMAL[T <: BigDecimal | Option[BigDecimal]] = T match
+    case BigDecimal         => DataType.Decimal[BigDecimal]
+    case Option[BigDecimal] => DataType.DecimalOpt[Option[BigDecimal]]
+
+  type FLOAT[T <: Double | Float | Option[Double | Float]] = T match
+    case Double => DataType.CFloat[Double]
+    case Float  => DataType.CFloat[Float]
+    case Option[t] =>
+      t match
+        case Double => DataType.FloatOpt[Option[Double]]
+        case Float  => DataType.FloatOpt[Option[Float]]
+
+  type CHAR[T <: String | Option[String]] = T match
+    case String         => DataType.CChar[String]
+    case Option[String] => DataType.CharOpt[Option[String]]
+
+  type VARCHAR[T <: String | Option[String]] = T match
+    case String         => DataType.Varchar[String]
+    case Option[String] => DataType.VarcharOpt[Option[String]]
+
+  type BINARY[T <: Array[Byte] | Option[Array[Byte]]] = T match
+    case Array[Byte]         => DataType.Binary[Array[Byte]]
+    case Option[Array[Byte]] => DataType.BinaryOpt[Option[Array[Byte]]]
+
+  type TINYBLOB[T <: Array[Byte] | Option[Array[Byte]]] = T match
+    case Array[Byte]         => DataType.Tinyblob[Array[Byte]]
+    case Option[Array[Byte]] => DataType.TinyblobOpt[Option[Array[Byte]]]
+
+  type BLOB[T <: Array[Byte] | Option[Array[Byte]]] = T match
+    case Array[Byte]         => DataType.Blob[Array[Byte]]
+    case Option[Array[Byte]] => DataType.BlobOpt[Option[Array[Byte]]]
+
+  type MEDIUMBLOB[T <: Array[Byte] | Option[Array[Byte]]] = T match
+    case Array[Byte]         => DataType.Mediumblob[Array[Byte]]
+    case Option[Array[Byte]] => DataType.MediumblobOpt[Option[Array[Byte]]]
+
+  type LONGBLOB[T <: Array[Byte] | Option[Array[Byte]]] = T match
+    case Array[Byte]         => DataType.LongBlob[Array[Byte]]
+    case Option[Array[Byte]] => DataType.LongBlobOpt[Option[Array[Byte]]]
+
+  type TINYTEXT[T <: String | Option[String]] = T match
+    case String         => DataType.TinyText[String]
+    case Option[String] => DataType.TinyTextOpt[Option[String]]
+
+  type TEXT[T <: String | Option[String]] = T match
+    case String         => DataType.Text[String]
+    case Option[String] => DataType.TextOpt[Option[String]]
+
+  type MEDIUMTEXT[T <: String | Option[String]] = T match
+    case String         => DataType.MediumText[String]
+    case Option[String] => DataType.MediumTextOpt[Option[String]]
+
+  type LONGTEXT[T <: String | Option[String]] = T match
+    case String         => DataType.LongText[String]
+    case Option[String] => DataType.LongTextOpt[Option[String]]
+
+  type DATE[T <: LocalDate | Option[LocalDate]] = T match
+    case LocalDate         => DataType.Date[LocalDate]
+    case Option[LocalDate] => DataType.DateOpt[Option[LocalDate]]
+
+  type DATETIME[T <: Instant | LocalDateTime | Option[Instant | LocalDateTime]] = T match
+    case Instant       => DataType.DateTime[Instant]
+    case LocalDateTime => DataType.DateTime[LocalDateTime]
+    case Option[t] =>
+      t match
+        case Instant       => DataType.DateTimeOpt[Option[Instant]]
+        case LocalDateTime => DataType.DateTimeOpt[Option[LocalDateTime]]
+
+  type TIMESTAMP[T <: Instant | LocalDateTime | Option[Instant | LocalDateTime]] = T match
+    case Instant       => DataType.TimeStamp[Instant]
+    case LocalDateTime => DataType.TimeStamp[LocalDateTime]
+    case Option[t] =>
+      t match
+        case Instant       => DataType.TimeStampOpt[Option[Instant]]
+        case LocalDateTime => DataType.TimeStampOpt[Option[LocalDateTime]]
+
+  type TIME[T <: LocalTime | Option[LocalTime]] = T match
+    case LocalTime         => DataType.Time[LocalTime]
+    case Option[LocalTime] => DataType.TimeOpt[Option[LocalTime]]
+
+  type YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]] = T match
+    case Instant   => DataType.Year[Instant]
+    case LocalDate => DataType.Year[LocalDate]
+    case JYear     => DataType.Year[JYear]
+    case Option[t] =>
+      t match
+        case Instant   => DataType.YearOpt[Option[Instant]]
+        case LocalDate => DataType.YearOpt[Option[LocalDate]]
+        case JYear     => DataType.YearOpt[Option[JYear]]

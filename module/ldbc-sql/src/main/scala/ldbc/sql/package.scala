@@ -18,3 +18,6 @@ package object sql extends Alias, DataTypes:
 
   type Table[P <: Product] = ldbc.core.Table[P]
   val Table: ldbc.core.Table.type = ldbc.core.Table
+
+  type DataType[T] = ldbc.core.DataType[T]
+  val DataType: ldbc.core.DataType.type = ldbc.core.DataType
