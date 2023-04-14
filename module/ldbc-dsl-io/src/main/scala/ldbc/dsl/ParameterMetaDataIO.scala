@@ -6,7 +6,8 @@ package ldbc.dsl
 
 import cats.effect.Sync
 
-import ldbc.sql.{ ParameterMetaData, JdbcType }
+import ldbc.core.JdbcType
+import ldbc.sql.ParameterMetaData
 import ParameterMetaData.*
 
 case class ParameterMetaDataIO[F[_]: Sync](parameterMetaData: java.sql.ParameterMetaData) extends ParameterMetaData[F]:

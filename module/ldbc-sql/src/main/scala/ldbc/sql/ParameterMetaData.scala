@@ -4,6 +4,8 @@
 
 package ldbc.sql
 
+import ldbc.core.JdbcType
+
 /** An object that can be used to get information about the types and properties for each parameter marker in a
   * PreparedStatement object. For some queries and driver implementations, the data that would be returned by a
   * ParameterMetaData object may not be available until the PreparedStatement has been executed.

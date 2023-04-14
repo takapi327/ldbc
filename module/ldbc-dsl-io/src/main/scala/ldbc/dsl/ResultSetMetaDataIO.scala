@@ -6,7 +6,8 @@ package ldbc.dsl
 
 import cats.effect.Sync
 
-import ldbc.sql.{ ResultSetMetaData, JdbcType }
+import ldbc.core.JdbcType
+import ldbc.sql.ResultSetMetaData
 import ResultSetMetaData.*
 
 case class ResultSetMetaDataIO[F[_]: Sync](resultSetMetaData: java.sql.ResultSetMetaData) extends ResultSetMetaData[F]:

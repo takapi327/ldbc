@@ -4,6 +4,8 @@
 
 package ldbc.sql
 
+import ldbc.core.JdbcType
+
 /** An object that can be used to get information about the types and properties of the columns in a ResultSet object.
   * The following code fragment creates the ResultSet object rs, creates the ResultSetMetaData object rsmd, and uses
   * rsmd to find out how many columns rs has and whether the first column in rs can be used in a WHERE clause.
