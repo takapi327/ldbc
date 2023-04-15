@@ -616,7 +616,7 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Decimal
 
     override def queryString: String =
-      s"typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
