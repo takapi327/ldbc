@@ -78,7 +78,15 @@ private[ldbc] trait TableValidator:
         case key: ForeignKey => key.colName.map(_.dataType) == key.reference.keyPart.map(_.dataType)
         case _ => false
       ),
-      "The type of the column set in FOREIGN KEY does not match."
+      s"""
+         |The type of the column set in FOREIGN KEY does not match.
+         |
+         |`${ table.name }` Table
+         |
+         |============================================================
+         |${ initForeignKeyErrorMsg(constraints) }
+         |============================================================
+         |""".stripMargin
     )
 
     require(
@@ -93,3 +101,17 @@ private[ldbc] trait TableValidator:
       ),
       "The column referenced by FOREIGN KEY must be a PRIMARY KEY."
     )
+
+  private def initForeignKeyErrorMsg(constraints: Seq[Constraint]): String =
+    constraints.flatMap(_.key match
+      case key: ForeignKey =>
+        for
+          (column, index) <- key.colName.zipWithIndex.toList
+          (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
+        yield if index == refColumnIndex then
+          s"""
+             |(${ column.dataType == refColumn.dataType }) `${ column.label }` ${column.dataType.typeName} =:= `${ refColumn.label }` ${ refColumn.dataType.typeName }
+             |""".stripMargin
+        else ""
+      case _ => ""
+    ).mkString("\n")
