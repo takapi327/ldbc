@@ -19,10 +19,11 @@ import org.apache.commons.io.filefilter.FileFilterUtils
 import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, SchemaAnalyzer }
 import org.schemaspy.model.Database as SchemaspyDatabase
 import org.schemaspy.model.Table as SchemaspyTable
-import org.schemaspy.model.{ TableIndex, ProgressListener, Tracked, Console }
+import org.schemaspy.model.{ TableIndex, ProgressListener, Tracked, Console, ForeignKeyConstraint }
 import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPrintWriter, Jar }
 import org.schemaspy.util.naming.FileNameGenerator
 import org.schemaspy.view.*
+import org.schemaspy.input.dbms.service.helper.ImportForeignKey
 import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
 import org.schemaspy.output.diagram.{ SummaryDiagram, TableDiagram }
 import org.schemaspy.output.diagram.graphviz.GraphvizDot
@@ -45,7 +46,7 @@ class SchemaSpyGenerator(database: Database):
   private val progressListener = new Console(commandLineArguments, new Tracked())
 
   private def writeInfo(key: String, value: String, infoFile: Path): Unit  =
-    try {
+    try
       Files.write(
         infoFile,
         (key + "=" + "\n").getBytes(StandardCharsets.UTF_8),
@@ -53,7 +54,7 @@ class SchemaSpyGenerator(database: Database):
         StandardOpenOption.APPEND,
         StandardOpenOption.WRITE
       )
-    } catch
+    catch
       case e: IOException =>
         println(s"Failed to write `$key=$value`, to $infoFile")
         e.printStackTrace()
@@ -210,14 +211,69 @@ class SchemaSpyGenerator(database: Database):
       }
     })
 
+  private def buildImportForeignKey(key: ForeignKey, catalog: String, schema: String): Seq[ImportForeignKey] =
+    val foreignKeyBuilder = new ImportForeignKey.Builder
+    (for
+      (keyColumn, keyColumnIndex) <- key.colName.zipWithIndex.toList
+      (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
+    yield
+      if keyColumnIndex == refColumnIndex then
+        Some(foreignKeyBuilder
+          .withFkName(key.indexName.getOrElse(key.label))
+          .withFkColumnName(keyColumn.label)
+          .withPkTableCat(catalog)
+          .withPkTableSchema(schema)
+          .withPkTableName(key.reference.table.name)
+          .withPkColumnName(refColumn.label)
+          .withUpdateRule(key.reference.onUpdate.getOrElse(Reference.ReferenceOption.RESTRICT).code)
+          .withDeleteRule(key.reference.onDelete.getOrElse(Reference.ReferenceOption.RESTRICT).code)
+          .build())
+      else None).flatten
+
   def generateTo(outputDirectory: File): Unit =
 
     val dbmsMeta = builder.build
     val db = new SchemaspyDatabase(dbmsMeta, database.name, database.catalog.orNull, database.schema)
 
-    database.tables.map(table => {
+    database.tables.foreach(table => {
       val builder = TableBuilder(db, table)
-      builder.build
+      val schemaSpyTable = builder.build
+
+      val importedKeys = table.keyDefinitions.flatMap {
+        case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName)
+        case constraint: Constraint => constraint.key match
+          case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName)
+          case _ => Nil
+        case _ => Nil
+      }
+
+      val tables = db.getLocals
+
+      importedKeys.foreach(key => {
+        val foreignKeyConstraint = Option(schemaSpyTable.getForeignKeysMap.get(key.getFkName))
+          .getOrElse {
+            val fkc = new ForeignKeyConstraint(
+              schemaSpyTable,
+              key.getFkName,
+              key.getUpdateRule,
+              key.getDeleteRule
+            )
+            schemaSpyTable.getForeignKeysMap.put(key.getFkName, fkc)
+            fkc
+          }
+
+        val childColumn = Option(schemaSpyTable.getColumn(key.getFkColumnName))
+        childColumn.foreach(v => {
+          foreignKeyConstraint.addChildColumn(v)
+          val parentTable = tables.get(key.getPkTableName)
+          val parentColumn = Option(parentTable.getColumn(key.getPkColumnName))
+          parentColumn.foreach(p => {
+            foreignKeyConstraint.addParentColumn(p)
+            v.addParent(p, foreignKeyConstraint)
+            p.addChild(v, foreignKeyConstraint)
+          })
+        })
+      })
     })
 
     generateHtmlDoc(db, outputDirectory, progressListener)
