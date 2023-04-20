@@ -26,7 +26,7 @@ import org.schemaspy.view.*
 import org.schemaspy.input.dbms.service.helper.ImportForeignKey
 import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
 import org.schemaspy.output.diagram.{ SummaryDiagram, TableDiagram }
-import org.schemaspy.output.diagram.graphviz.GraphvizDot
+import org.schemaspy.output.diagram.vizjs.VizJSDot
 import org.schemaspy.output.html.mustache.diagrams.{ MustacheSummaryDiagramFactory, OrphanDiagram, MustacheTableDiagramFactory }
 import org.schemaspy.analyzer.ImpliedConstraintsFinder
 import org.schemaspy.cli.CommandLineArguments
@@ -70,11 +70,11 @@ class SchemaSpyGenerator(database: Database):
   ): Unit =
     val tables = db.getTables
 
-    Markdown.registryPage(new ArrayList[SchemaspyTable](tables))
+    Markdown.registryPage(new java.util.ArrayList[SchemaspyTable](tables))
 
     new Jar(layoutFolder.url(), outputDirectory, notHtml()).copyJarResourceToPath()
 
-    val renderer = new GraphvizDot(commandLineArguments.getGraphVizConfig)
+    val renderer = new VizJSDot()
 
     val htmlInfoFile = outputDirectory.toPath.resolve("info-html.txt")
     Files.deleteIfExists(htmlInfoFile)
@@ -86,6 +86,8 @@ class SchemaSpyGenerator(database: Database):
     writeInfo("renderer", renderer.identifier(), htmlInfoFile)
     progressListener.graphingSummaryProgressed()
 
+    val hasRealConstraints = !db.getRemoteTables.isEmpty || tables.stream().anyMatch(table => !table.isOrphan(false))
+
     val impliedConstraintsFinder = new ImpliedConstraintsFinder()
 
     val impliedConstraints = impliedConstraintsFinder.find(tables)
@@ -94,7 +96,7 @@ class SchemaSpyGenerator(database: Database):
       new DefaultFontConfig(commandLineArguments.getDotConfig),
       commandLineArguments.getDotConfig,
       "svg".equalsIgnoreCase(renderer.format()),
-      true
+      false
     )
 
     val dotProducer = new DotFormatter(runtimeDotConfig)
@@ -104,19 +106,20 @@ class SchemaSpyGenerator(database: Database):
     summaryDir.mkdirs()
     val summaryDiagram = new SummaryDiagram(renderer, summaryDir)
 
-    val mustacheSummaryDiagramFactory = new MustacheSummaryDiagramFactory(dotProducer, summaryDiagram, true, !impliedConstraints.isEmpty, outputDirectory)
+    val mustacheSummaryDiagramFactory = new MustacheSummaryDiagramFactory(dotProducer, summaryDiagram, hasRealConstraints, !impliedConstraints.isEmpty, outputDirectory)
     val results = mustacheSummaryDiagramFactory.generateSummaryDiagrams(db, tables, progressListener)
+    results.getOutputExceptions.stream().forEachOrdered(_.printStackTrace())
 
     val dataTableConfig = new DataTableConfig(commandLineArguments)
     val mustacheCompiler = new MustacheCompiler(
       db.getName,
       db.getSchema.getName,
       commandLineArguments.getHtmlConfig,
-      true,
+      false,
       dataTableConfig
     )
 
-    val htmlRelationshipsPage = new HtmlRelationshipsPage(mustacheCompiler, true, !impliedConstraints.isEmpty)
+    val htmlRelationshipsPage = new HtmlRelationshipsPage(mustacheCompiler, hasRealConstraints, !impliedConstraints.isEmpty)
     Using(new DefaultPrintWriter(outputDirectory.toPath.resolve("relationships.html").toFile)) { writer =>
       htmlRelationshipsPage.write(results, writer)
     }
