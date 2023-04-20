@@ -27,7 +27,11 @@ import org.schemaspy.input.dbms.service.helper.ImportForeignKey
 import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
 import org.schemaspy.output.diagram.{ SummaryDiagram, TableDiagram }
 import org.schemaspy.output.diagram.vizjs.VizJSDot
-import org.schemaspy.output.html.mustache.diagrams.{ MustacheSummaryDiagramFactory, OrphanDiagram, MustacheTableDiagramFactory }
+import org.schemaspy.output.html.mustache.diagrams.{
+  MustacheSummaryDiagramFactory,
+  OrphanDiagram,
+  MustacheTableDiagramFactory
+}
 import org.schemaspy.analyzer.ImpliedConstraintsFinder
 import org.schemaspy.cli.CommandLineArguments
 
@@ -37,15 +41,15 @@ import ldbc.schemaspy.builder.{ DbmsMetaBuilder, TableBuilder }
 
 class SchemaSpyGenerator(database: Database):
 
-  private val DOT_HTML = ".html"
+  private val DOT_HTML       = ".html"
   private val INDEX_DOT_HTML = "index.html"
 
-  private val layoutFolder = new LayoutFolder(this.getClass.getClassLoader)
-  private val builder = new DbmsMetaBuilder(database)
+  private val layoutFolder         = new LayoutFolder(this.getClass.getClassLoader)
+  private val builder              = new DbmsMetaBuilder(database)
   private val commandLineArguments = new CommandLineArguments
-  private val progressListener = new Console(commandLineArguments, new Tracked())
+  private val progressListener     = new Console(commandLineArguments, new Tracked())
 
-  private def writeInfo(key: String, value: String, infoFile: Path): Unit  =
+  private def writeInfo(key: String, value: String, infoFile: Path): Unit =
     try
       Files.write(
         infoFile,
@@ -64,8 +68,8 @@ class SchemaSpyGenerator(database: Database):
     FileFilterUtils.and(notHtmlFilter)
 
   private def generateHtmlDoc(
-    db: SchemaspyDatabase,
-    outputDirectory: File,
+    db:               SchemaspyDatabase,
+    outputDirectory:  File,
     progressListener: ProgressListener
   ): Unit =
     val tables = db.getTables
@@ -100,13 +104,19 @@ class SchemaSpyGenerator(database: Database):
     )
 
     val dotProducer = new DotFormatter(runtimeDotConfig)
-    val diagramDir = new File(outputDirectory, "diagrams")
+    val diagramDir  = new File(outputDirectory, "diagrams")
     diagramDir.mkdirs()
     val summaryDir = new File(outputDirectory, "summary")
     summaryDir.mkdirs()
     val summaryDiagram = new SummaryDiagram(renderer, summaryDir)
 
-    val mustacheSummaryDiagramFactory = new MustacheSummaryDiagramFactory(dotProducer, summaryDiagram, hasRealConstraints, !impliedConstraints.isEmpty, outputDirectory)
+    val mustacheSummaryDiagramFactory = new MustacheSummaryDiagramFactory(
+      dotProducer,
+      summaryDiagram,
+      hasRealConstraints,
+      !impliedConstraints.isEmpty,
+      outputDirectory
+    )
     val results = mustacheSummaryDiagramFactory.generateSummaryDiagrams(db, tables, progressListener)
     results.getOutputExceptions.stream().forEachOrdered(_.printStackTrace())
 
@@ -119,7 +129,8 @@ class SchemaSpyGenerator(database: Database):
       dataTableConfig
     )
 
-    val htmlRelationshipsPage = new HtmlRelationshipsPage(mustacheCompiler, hasRealConstraints, !impliedConstraints.isEmpty)
+    val htmlRelationshipsPage =
+      new HtmlRelationshipsPage(mustacheCompiler, hasRealConstraints, !impliedConstraints.isEmpty)
     Using(new DefaultPrintWriter(outputDirectory.toPath.resolve("relationships.html").toFile)) { writer =>
       htmlRelationshipsPage.write(results, writer)
     }
@@ -186,18 +197,25 @@ class SchemaSpyGenerator(database: Database):
           outputDirectory.toPath
             .resolve("routines")
             .resolve(new FileNameGenerator(routine.getName).value() + DOT_HTML)
-            .toFile)
+            .toFile
+        )
       ) { writer => htmlRoutinePage.write(routine, writer) }
     })
 
-    val sqlAnalyzer = new SqlAnalyzer(db.getDbmsMeta.getIdentifierQuoteString, db.getDbmsMeta.getAllKeywords, db.getTables, db.getViews)
+    val sqlAnalyzer =
+      new SqlAnalyzer(db.getDbmsMeta.getIdentifierQuoteString, db.getDbmsMeta.getAllKeywords, db.getTables, db.getViews)
 
     val tablesDir = new File(diagramDir, "tables")
     tablesDir.mkdirs()
 
     val tableDiagram = new TableDiagram(renderer, tablesDir)
 
-    val mustacheTableDiagramFactory = new MustacheTableDiagramFactory(dotProducer, tableDiagram, outputDirectory, commandLineArguments.getDegreeOfSeparation)
+    val mustacheTableDiagramFactory = new MustacheTableDiagramFactory(
+      dotProducer,
+      tableDiagram,
+      outputDirectory,
+      commandLineArguments.getDegreeOfSeparation
+    )
     val htmlTablePage = new HtmlTablePage(mustacheCompiler, sqlAnalyzer)
 
     tables.forEach(table => {
@@ -207,7 +225,8 @@ class SchemaSpyGenerator(database: Database):
         new DefaultPrintWriter(
           outputDirectory.toPath
             .resolve("tables")
-            .resolve(new FileNameGenerator(table.getName).value() + DOT_HTML).toFile
+            .resolve(new FileNameGenerator(table.getName).value() + DOT_HTML)
+            .toFile
         )
       ) { writer =>
         htmlTablePage.write(table, mustacheTableDiagrams, writer)
@@ -221,32 +240,35 @@ class SchemaSpyGenerator(database: Database):
       (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
     yield
       if keyColumnIndex == refColumnIndex then
-        Some(foreignKeyBuilder
-          .withFkName(key.indexName.getOrElse(key.label))
-          .withFkColumnName(keyColumn.label)
-          .withPkTableCat(catalog)
-          .withPkTableSchema(schema)
-          .withPkTableName(key.reference.table.name)
-          .withPkColumnName(refColumn.label)
-          .withUpdateRule(key.reference.onUpdate.getOrElse(Reference.ReferenceOption.RESTRICT).code)
-          .withDeleteRule(key.reference.onDelete.getOrElse(Reference.ReferenceOption.RESTRICT).code)
-          .build())
+        Some(
+          foreignKeyBuilder
+            .withFkName(key.indexName.getOrElse(key.label))
+            .withFkColumnName(keyColumn.label)
+            .withPkTableCat(catalog)
+            .withPkTableSchema(schema)
+            .withPkTableName(key.reference.table.name)
+            .withPkColumnName(refColumn.label)
+            .withUpdateRule(key.reference.onUpdate.getOrElse(Reference.ReferenceOption.RESTRICT).code)
+            .withDeleteRule(key.reference.onDelete.getOrElse(Reference.ReferenceOption.RESTRICT).code)
+            .build()
+        )
       else None).flatten
 
   def generateTo(outputDirectory: File): Unit =
 
     val dbmsMeta = builder.build
-    val db = new SchemaspyDatabase(dbmsMeta, database.name, database.catalog.orNull, database.schema)
+    val db       = new SchemaspyDatabase(dbmsMeta, database.name, database.catalog.orNull, database.schema)
 
     database.tables.foreach(table => {
-      val builder = TableBuilder(db, table)
+      val builder        = TableBuilder(db, table)
       val schemaSpyTable = builder.build
 
       val importedKeys = table.keyDefinitions.flatMap {
         case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName)
-        case constraint: Constraint => constraint.key match
-          case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName)
-          case _ => Nil
+        case constraint: Constraint =>
+          constraint.key match
+            case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName)
+            case _             => Nil
         case _ => Nil
       }
 
@@ -268,7 +290,7 @@ class SchemaSpyGenerator(database: Database):
         val childColumn = Option(schemaSpyTable.getColumn(key.getFkColumnName))
         childColumn.foreach(v => {
           foreignKeyConstraint.addChildColumn(v)
-          val parentTable = tables.get(key.getPkTableName)
+          val parentTable  = tables.get(key.getPkTableName)
           val parentColumn = Option(parentTable.getColumn(key.getPkColumnName))
           parentColumn.foreach(p => {
             foreignKeyConstraint.addParentColumn(p)
