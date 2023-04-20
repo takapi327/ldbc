@@ -1,13 +1,13 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.core
 
 import cats.kernel.Order
 
 /** Enum that defines constants to identify generic SQL types called JDBC types.
- */
+  */
 enum JdbcType(val code: Int):
   case Array                 extends JdbcType(java.sql.Types.ARRAY)
   case BigInt                extends JdbcType(java.sql.Types.BIGINT)

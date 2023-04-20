@@ -14,20 +14,18 @@ import java.time.Year as JYear
   */
 sealed trait DataType[T]:
 
-  /**
-   * Define a TYPE_NAME string for each DataType.
-   *
-   * @return
-   *   SQL TYPE_NAME
-   */
+  /** Define a TYPE_NAME string for each DataType.
+    *
+    * @return
+    *   SQL TYPE_NAME
+    */
   def typeName: String
 
-  /**
-   * Value of JdbcType Enum that matches DataType.
-   *
-   * @return
-   *   JdbcType Enum
-   */
+  /** Value of JdbcType Enum that matches DataType.
+    *
+    * @return
+    *   JdbcType Enum
+    */
   def jdbcType: JdbcType
 
   /** Define SQL query string for each DataType

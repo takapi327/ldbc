@@ -1,15 +1,14 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.core.validator
 
 import ldbc.core.*
 import ldbc.core.attribute.*
 
-/**
- * Trait for validation of table definitions.
- */
+/** Trait for validation of table definitions.
+  */
 private[ldbc] trait TableValidator:
 
   /** Trait for generating SQL table information. */
@@ -17,29 +16,29 @@ private[ldbc] trait TableValidator:
 
   protected val autoInc = table.*.filter {
     case c: Column[?] => c.attributes.contains(AutoInc())
-    case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
+    case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
 
   protected val primaryKey = table.*.filter {
     case c: Column[?] => c.attributes.exists(_.isInstanceOf[PrimaryKey])
-    case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
+    case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
 
   protected val keyPart = table.keyDefinitions.flatMap {
     case key: PrimaryKey with Index => key.keyPart.toList
-    case key: UniqueKey with Index => key.keyPart.toList
-    case _ => List.empty
+    case key: UniqueKey with Index  => key.keyPart.toList
+    case _                          => List.empty
   }
 
   protected val constraints = table.keyDefinitions.flatMap {
     case key: Constraint => Some(key)
-    case _ => None
+    case _               => None
   }
 
   require(
     table.*.distinctBy {
       case c: Column[?] => c.label
-      case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
+      case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
     }.length == table.*.length,
     "Columns with the same name cannot be defined in a single table."
   )
@@ -65,7 +64,7 @@ private[ldbc] trait TableValidator:
       autoInc
         .map {
           case c: Column[?] => c.label
-          case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
+          case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
         }
         .contains(key.label)
     ) == 1,
@@ -76,7 +75,7 @@ private[ldbc] trait TableValidator:
     require(
       constraints.exists(_.key match
         case key: ForeignKey => key.colName.map(_.dataType) == key.reference.keyPart.map(_.dataType)
-        case _ => false
+        case _               => false
       ),
       s"""
          |The type of the column set in FOREIGN KEY does not match.
@@ -93,25 +92,27 @@ private[ldbc] trait TableValidator:
       constraints.exists(_.key match
         case key: ForeignKey =>
           key.reference.keyPart.toList.flatMap(_.attributes).exists(_.isInstanceOf[PrimaryKey]) ||
-            key.reference.table.keyDefinitions.exists(_ match
-              case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
-              case _ => false
-            )
+          key.reference.table.keyDefinitions.exists(_ match
+            case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
+            case _                        => false
+          )
         case _ => false
       ),
       "The column referenced by FOREIGN KEY must be a PRIMARY KEY."
     )
 
   private def initForeignKeyErrorMsg(constraints: Seq[Constraint]): String =
-    constraints.flatMap(_.key match
-      case key: ForeignKey =>
-        for
-          (column, index) <- key.colName.zipWithIndex.toList
-          (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
-        yield if index == refColumnIndex then
-          s"""
-             |(${ column.dataType == refColumn.dataType }) `${ column.label }` ${column.dataType.typeName} =:= `${ refColumn.label }` ${ refColumn.dataType.typeName }
+    constraints
+      .flatMap(_.key match
+        case key: ForeignKey =>
+          for
+            (column, index)             <- key.colName.zipWithIndex.toList
+            (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
+          yield
+            if index == refColumnIndex then s"""
+             |(${ column.dataType == refColumn.dataType }) `${ column.label }` ${ column.dataType.typeName } =:= `${ refColumn.label }` ${ refColumn.dataType.typeName }
              |""".stripMargin
-        else ""
-      case _ => ""
-    ).mkString("\n")
+            else ""
+        case _ => ""
+      )
+      .mkString("\n")

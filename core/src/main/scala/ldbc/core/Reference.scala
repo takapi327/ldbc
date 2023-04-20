@@ -4,7 +4,13 @@
 
 package ldbc.core
 
-import java.sql.DatabaseMetaData.{ importedKeyCascade, importedKeyRestrict, importedKeySetNull, importedKeyNoAction, importedKeySetDefault }
+import java.sql.DatabaseMetaData.{
+  importedKeyCascade,
+  importedKeyRestrict,
+  importedKeySetNull,
+  importedKeyNoAction,
+  importedKeySetDefault
+}
 
 import cats.data.NonEmptyList
 
