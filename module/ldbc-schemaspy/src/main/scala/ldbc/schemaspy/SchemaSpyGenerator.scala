@@ -32,6 +32,7 @@ import org.schemaspy.output.html.mustache.diagrams.{
   OrphanDiagram,
   MustacheTableDiagramFactory
 }
+import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 import org.schemaspy.analyzer.ImpliedConstraintsFinder
 import org.schemaspy.cli.CommandLineArguments
 
@@ -48,6 +49,7 @@ class SchemaSpyGenerator(database: Database):
   private val builder              = new DbmsMetaBuilder(database)
   private val commandLineArguments = new CommandLineArguments
   private val progressListener     = new Console(commandLineArguments, new Tracked())
+  private val outputProducer       = new XmlProducerUsingDOM
 
   private def writeInfo(key: String, value: String, infoFile: Path): Unit =
     try
@@ -302,6 +304,8 @@ class SchemaSpyGenerator(database: Database):
     })
 
     generateHtmlDoc(db, outputDirectory, progressListener)
+
+    outputProducer.generate(db, outputDirectory)
 
 object SchemaSpyGenerator:
 
