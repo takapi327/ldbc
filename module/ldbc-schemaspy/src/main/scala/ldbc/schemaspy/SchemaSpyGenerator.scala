@@ -13,10 +13,11 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 import scala.util.Using
+import scala.jdk.CollectionConverters.*
 
 import org.apache.commons.io.filefilter.FileFilterUtils
 
-import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, SchemaAnalyzer }
+import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, SchemaAnalyzer, TableOrderer, OrderingReport }
 import org.schemaspy.model.Database as SchemaspyDatabase
 import org.schemaspy.model.Table as SchemaspyTable
 import org.schemaspy.model.{ TableIndex, ProgressListener, Tracked, Console, ForeignKeyConstraint }
@@ -45,11 +46,14 @@ class SchemaSpyGenerator(database: Database):
   private val DOT_HTML       = ".html"
   private val INDEX_DOT_HTML = "index.html"
 
+  private val isOneOfMultipleSchemas = false
+
   private val layoutFolder         = new LayoutFolder(this.getClass.getClassLoader)
   private val builder              = new DbmsMetaBuilder(database)
   private val commandLineArguments = new CommandLineArguments
   private val progressListener     = new Console(commandLineArguments, new Tracked())
   private val outputProducer       = new XmlProducerUsingDOM
+  private val orderer              = new TableOrderer()
 
   private def writeInfo(key: String, value: String, infoFile: Path): Unit =
     try
@@ -102,13 +106,13 @@ class SchemaSpyGenerator(database: Database):
       new DefaultFontConfig(commandLineArguments.getDotConfig),
       commandLineArguments.getDotConfig,
       "svg".equalsIgnoreCase(renderer.format()),
-      false
+      isOneOfMultipleSchemas
     )
 
     val dotProducer = new DotFormatter(runtimeDotConfig)
     val diagramDir  = new File(outputDirectory, "diagrams")
     diagramDir.mkdirs()
-    val summaryDir = new File(outputDirectory, "summary")
+    val summaryDir = new File(diagramDir, "summary")
     summaryDir.mkdirs()
     val summaryDiagram = new SummaryDiagram(renderer, summaryDir)
 
@@ -127,7 +131,7 @@ class SchemaSpyGenerator(database: Database):
       db.getName,
       db.getSchema.getName,
       commandLineArguments.getHtmlConfig,
-      false,
+      isOneOfMultipleSchemas,
       dataTableConfig
     )
 
@@ -235,7 +239,7 @@ class SchemaSpyGenerator(database: Database):
       }
     })
 
-  private def buildImportForeignKey(key: ForeignKey, catalog: String, schema: String): Seq[ImportForeignKey] =
+  private def buildImportForeignKey(key: ForeignKey, catalog: String, schema: String, constraintName: Option[String]): Seq[ImportForeignKey] =
     val foreignKeyBuilder = new ImportForeignKey.Builder
     (for
       (keyColumn, keyColumnIndex) <- key.colName.zipWithIndex.toList
@@ -244,7 +248,7 @@ class SchemaSpyGenerator(database: Database):
       if keyColumnIndex == refColumnIndex then
         Some(
           foreignKeyBuilder
-            .withFkName(key.indexName.getOrElse(key.label))
+            .withFkName(constraintName.getOrElse(key.indexName.getOrElse(key.label)))
             .withFkColumnName(keyColumn.label)
             .withPkTableCat(catalog)
             .withPkTableSchema(schema)
@@ -266,10 +270,10 @@ class SchemaSpyGenerator(database: Database):
       val schemaSpyTable = builder.build
 
       val importedKeys = table.keyDefinitions.flatMap {
-        case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName)
+        case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName, None)
         case constraint: Constraint =>
           constraint.key match
-            case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName)
+            case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName, Some(constraint.symbol))
             case _             => Nil
         case _ => Nil
       }
@@ -306,6 +310,10 @@ class SchemaSpyGenerator(database: Database):
     generateHtmlDoc(db, outputDirectory, progressListener)
 
     outputProducer.generate(db, outputDirectory)
+
+    val orderedTables = orderer.getTablesOrderedByRI(db.getTables, List.empty.asJava)
+
+    new OrderingReport(outputDirectory, orderedTables).write()
 
 object SchemaSpyGenerator:
 
