@@ -239,7 +239,12 @@ class SchemaSpyGenerator(database: Database):
       }
     })
 
-  private def buildImportForeignKey(key: ForeignKey, catalog: String, schema: String, constraintName: Option[String]): Seq[ImportForeignKey] =
+  private def buildImportForeignKey(
+    key:            ForeignKey,
+    catalog:        String,
+    schema:         String,
+    constraintName: Option[String]
+  ): Seq[ImportForeignKey] =
     val foreignKeyBuilder = new ImportForeignKey.Builder
     (for
       (keyColumn, keyColumnIndex) <- key.colName.zipWithIndex.toList
@@ -273,8 +278,9 @@ class SchemaSpyGenerator(database: Database):
         case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName, None)
         case constraint: Constraint =>
           constraint.key match
-            case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName, Some(constraint.symbol))
-            case _             => Nil
+            case v: ForeignKey =>
+              buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName, Some(constraint.symbol))
+            case _ => Nil
         case _ => Nil
       }
 

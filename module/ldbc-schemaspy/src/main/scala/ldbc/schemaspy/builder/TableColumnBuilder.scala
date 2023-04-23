@@ -40,7 +40,8 @@ object TableColumnBuilder:
       case v: DataType.TimeOpt[?]        => v.default.map(_.value) foreach column.setDefaultValue
       case v: DataType.Year[?]           => v.default.map(_.value) foreach column.setDefaultValue
       case v: DataType.YearOpt[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case unknown                       => throw new IllegalArgumentException(s"The $unknown in the ${ _column.label } column is not a DataType type.")
+      case unknown =>
+        throw new IllegalArgumentException(s"The $unknown in the ${ _column.label } column is not a DataType type.")
 
     _column.comment foreach column.setComments
     column.setId(index)
