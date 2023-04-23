@@ -14,7 +14,7 @@ import ldbc.core.validator.TableValidator
 
 case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableValidator:
 
-  private val schemaTable = new SchemaspyTable(db, "def", db.getSchema.getName, table.name, "table comment")
+  private val schemaTable = new SchemaspyTable(db, null, db.getSchema.getName, table.name, table.comment.orNull)
 
   private def detectPrimaryKeyColumn(table: Table[?]): Seq[Column[?]] =
     (table.*.flatMap {
