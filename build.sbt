@@ -43,7 +43,7 @@ lazy val LdbcDslIOProject = LepusSbtProject("Ldbc-Dsl-IO", "module/ldbc-dsl-io")
   ) ++ specs2)
   .dependsOn(LdbcSqlProject)
 
-lazy val LdbcSchemaspyProject = LepusSbtProject("Ldbc-Schemaspy", "module/ldbc-schemaspy")
+lazy val LdbcSchemaSpyProject = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(libraryDependencies += schemaspy)
   .dependsOn(LdbcCoreProject)
@@ -55,7 +55,7 @@ lazy val coreProjects: Seq[ProjectReference] = Seq(
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
   LdbcSqlProject,
   LdbcDslIOProject,
-  LdbcSchemaspyProject
+  LdbcSchemaSpyProject
 )
 
 lazy val Ldbc = Project("Ldbc", file("."))
