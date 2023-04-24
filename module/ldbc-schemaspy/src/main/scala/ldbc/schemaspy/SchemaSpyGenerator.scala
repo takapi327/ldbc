@@ -20,7 +20,15 @@ import org.apache.commons.io.filefilter.FileFilterUtils
 import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, SchemaAnalyzer, TableOrderer, OrderingReport }
 import org.schemaspy.model.Database as SchemaspyDatabase
 import org.schemaspy.model.Table as SchemaspyTable
-import org.schemaspy.model.{ TableIndex, ProgressListener, Tracked, Console, ForeignKeyConstraint, EmptySchemaException, InvalidConfigurationException }
+import org.schemaspy.model.{
+  TableIndex,
+  ProgressListener,
+  Tracked,
+  Console,
+  ForeignKeyConstraint,
+  EmptySchemaException,
+  InvalidConfigurationException
+}
 import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPrintWriter, Jar }
 import org.schemaspy.util.naming.FileNameGenerator
 import org.schemaspy.view.*
@@ -38,7 +46,12 @@ import org.schemaspy.output.html.mustache.diagrams.{
 }
 import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 import org.schemaspy.analyzer.ImpliedConstraintsFinder
-import org.schemaspy.cli.{ CommandLineArguments, ConfigFileArgumentParser, DefaultProviderFactory, CommandLineArgumentParser }
+import org.schemaspy.cli.{
+  CommandLineArguments,
+  ConfigFileArgumentParser,
+  DefaultProviderFactory,
+  CommandLineArgumentParser
+}
 
 import ldbc.core.*
 import ldbc.schemaspy.result.Status
@@ -335,16 +348,16 @@ class SchemaSpyGenerator(database: Database):
       "-host",
       database.host,
       "-port",
-      database.port.toString,
+      database.port.toString
     )
 
   def connectGenerateTo(user: String, password: String, outputDirectory: File): Status =
     connectGenerateTo(user, Some(password), outputDirectory)
 
   def connectGenerateTo(user: String, password: Option[String], outputDirectory: File): Status =
-    val sqlService = new SqlService()
+    val sqlService               = new SqlService()
     val configFileArgumentParser = new ConfigFileArgumentParser
-    val factory = new DefaultProviderFactory
+    val factory                  = new DefaultProviderFactory
 
     val databaseArguments: Seq[String] = buildDatabaseArguments(database)
 
@@ -352,14 +365,15 @@ class SchemaSpyGenerator(database: Database):
       "-u",
       user,
       "-o",
-      outputDirectory.getPath,
+      outputDirectory.getPath
     ) ++ password.fold(Seq.empty)(v => Seq("-p", v))
 
     Class.forName(database.databaseType.driver)
 
     val arguments: Seq[String] = databaseArguments ++ argumentsTest
 
-    val iDefaultProvider = factory.create(configFileArgumentParser.parseConfigFileArgumentValue(arguments: _*).orElse(null))
+    val iDefaultProvider =
+      factory.create(configFileArgumentParser.parseConfigFileArgumentValue(arguments: _*).orElse(null))
     val parser = CommandLineArgumentParser(commandLineArguments, iDefaultProvider)
     val analyzer = new SchemaAnalyzer(
       sqlService,
@@ -369,8 +383,7 @@ class SchemaSpyGenerator(database: Database):
       layoutFolder
     )
 
-    try
-      Option(analyzer.analyze()).fold(Status.Failure)(_ => Status.Success)
+    try Option(analyzer.analyze()).fold(Status.Failure)(_ => Status.Success)
     catch
       case connectionFailure: ConnectionFailure =>
         connectionFailure.printStackTrace()
