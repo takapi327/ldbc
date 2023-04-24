@@ -20,11 +20,14 @@ import org.apache.commons.io.filefilter.FileFilterUtils
 import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, SchemaAnalyzer, TableOrderer, OrderingReport }
 import org.schemaspy.model.Database as SchemaspyDatabase
 import org.schemaspy.model.Table as SchemaspyTable
-import org.schemaspy.model.{ TableIndex, ProgressListener, Tracked, Console, ForeignKeyConstraint }
+import org.schemaspy.model.{ TableIndex, ProgressListener, Tracked, Console, ForeignKeyConstraint, EmptySchemaException, InvalidConfigurationException }
 import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPrintWriter, Jar }
 import org.schemaspy.util.naming.FileNameGenerator
 import org.schemaspy.view.*
+import org.schemaspy.input.dbms.MissingParameterException
 import org.schemaspy.input.dbms.service.helper.ImportForeignKey
+import org.schemaspy.input.dbms.service.{ SqlService, DatabaseServiceFactory }
+import org.schemaspy.input.dbms.exceptions.ConnectionFailure
 import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
 import org.schemaspy.output.diagram.{ SummaryDiagram, TableDiagram }
 import org.schemaspy.output.diagram.vizjs.VizJSDot
@@ -35,7 +38,7 @@ import org.schemaspy.output.html.mustache.diagrams.{
 }
 import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 import org.schemaspy.analyzer.ImpliedConstraintsFinder
-import org.schemaspy.cli.CommandLineArguments
+import org.schemaspy.cli.{ CommandLineArguments, ConfigFileArgumentParser, DefaultProviderFactory, CommandLineArgumentParser }
 
 import ldbc.core.*
 import ldbc.schemaspy.result.Status
@@ -320,6 +323,73 @@ class SchemaSpyGenerator(database: Database):
     val orderedTables = orderer.getTablesOrderedByRI(db.getTables, List.empty.asJava)
 
     new OrderingReport(outputDirectory, orderedTables).write()
+
+  private def buildDatabaseArguments(database: Database): Seq[String] =
+    Seq(
+      "-t",
+      database.databaseType.toString.toLowerCase(),
+      "-db",
+      database.name,
+      "-s",
+      database.schema,
+      "-host",
+      database.host,
+      "-port",
+      database.port.toString,
+    )
+
+  def connectGenerateTo(user: String, password: String, outputDirectory: File): Status =
+    connectGenerateTo(user, Some(password), outputDirectory)
+
+  def connectGenerateTo(user: String, password: Option[String], outputDirectory: File): Status =
+    val sqlService = new SqlService()
+    val configFileArgumentParser = new ConfigFileArgumentParser
+    val factory = new DefaultProviderFactory
+
+    val databaseArguments: Seq[String] = buildDatabaseArguments(database)
+
+    val argumentsTest: Seq[String] = Seq(
+      "-u",
+      user,
+      "-o",
+      outputDirectory.getPath,
+    ) ++ password.fold(Seq.empty)(v => Seq("-p", v))
+
+    Class.forName(database.databaseType.driver)
+
+    val arguments: Seq[String] = databaseArguments ++ argumentsTest
+
+    val iDefaultProvider = factory.create(configFileArgumentParser.parseConfigFileArgumentValue(arguments: _*).orElse(null))
+    val parser = CommandLineArgumentParser(commandLineArguments, iDefaultProvider)
+    val analyzer = new SchemaAnalyzer(
+      sqlService,
+      new DatabaseServiceFactory(sqlService),
+      parser.parse(arguments: _*),
+      outputProducer,
+      layoutFolder
+    )
+
+    try
+      Option(analyzer.analyze()).fold(Status.Failure)(_ => Status.Success)
+    catch
+      case connectionFailure: ConnectionFailure =>
+        connectionFailure.printStackTrace()
+        Status.ConnectionFailure
+      case noData: EmptySchemaException =>
+        noData.printStackTrace()
+        Status.EmptySchema
+      case badConfig: InvalidConfigurationException =>
+        badConfig.printStackTrace()
+        Status.InvalidConfig
+      case miss: MissingParameterException =>
+        miss.printStackTrace()
+        Status.MissingParameter
+      case e: SQLException =>
+        e.printStackTrace()
+        Status.Failure
+      case e: IOException =>
+        e.printStackTrace()
+        Status.Failure
 
 object SchemaSpyGenerator:
 
