@@ -12,3 +12,4 @@ enum Status(val code: Int):
   case EmptySchema       extends Status(2)
   case ConnectionFailure extends Status(3)
   case InvalidConfig     extends Status(4)
+  case MissingParameter  extends Status(5)
