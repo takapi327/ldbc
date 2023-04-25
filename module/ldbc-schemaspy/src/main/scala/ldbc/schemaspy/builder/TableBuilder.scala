@@ -41,12 +41,16 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
       case _ => None
     } ++ table.keyDefinitions.flatMap {
       case key: PrimaryKey with Index if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
-      case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty => Some((key.indexName.getOrElse(column.label), true))
-      case key: IndexKey if key.keyPart.find(_ == column).nonEmpty => Some((key.indexName.getOrElse(column.label), false))
-      case constraint: Constraint => constraint.key match
-        case key: PrimaryKey with Index if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
-        case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty => Some((key.indexName.getOrElse(column.label), true))
-        case _ => List.empty
+      case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty =>
+        Some((key.indexName.getOrElse(column.label), true))
+      case key: IndexKey if key.keyPart.find(_ == column).nonEmpty =>
+        Some((key.indexName.getOrElse(column.label), false))
+      case constraint: Constraint =>
+        constraint.key match
+          case key: PrimaryKey with Index if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
+          case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty =>
+            Some((key.indexName.getOrElse(column.label), true))
+          case _ => List.empty
       case _ => List.empty
     }
 
