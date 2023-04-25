@@ -39,9 +39,18 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
           case key: UniqueKey => Some((key.indexName.getOrElse(column.label), true))
           case _              => None
       case _ => None
+    } ++ table.keyDefinitions.flatMap {
+      case key: PrimaryKey with Index if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
+      case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty => Some((key.indexName.getOrElse(column.label), true))
+      case key: IndexKey if key.keyPart.find(_ == column).nonEmpty => Some((key.indexName.getOrElse(column.label), false))
+      case constraint: Constraint => constraint.key match
+        case key: PrimaryKey with Index if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
+        case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty => Some((key.indexName.getOrElse(column.label), true))
+        case _ => List.empty
+      case _ => List.empty
     }
 
-    indexedSeq.foreach { (key, isUnique) =>
+    indexedSeq.distinct.foreach { (key, isUnique) =>
       if Option(schemaTable.getIndex(key)).isEmpty then
         val index = new TableIndex(key, isUnique)
         schemaTable.getIndexesMap.put(index.getName, index)
