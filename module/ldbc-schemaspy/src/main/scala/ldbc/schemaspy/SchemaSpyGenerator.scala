@@ -33,7 +33,6 @@ import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPri
 import org.schemaspy.util.naming.FileNameGenerator
 import org.schemaspy.view.*
 import org.schemaspy.input.dbms.MissingParameterException
-import org.schemaspy.input.dbms.service.helper.ImportForeignKey
 import org.schemaspy.input.dbms.service.{ SqlService, DatabaseServiceFactory }
 import org.schemaspy.input.dbms.exceptions.ConnectionFailure
 import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
@@ -55,7 +54,7 @@ import org.schemaspy.cli.{
 
 import ldbc.core.*
 import ldbc.schemaspy.result.Status
-import ldbc.schemaspy.builder.{ DbmsMetaBuilder, TableBuilder }
+import ldbc.schemaspy.builder.{ DbmsMetaBuilder, TableBuilder, ImportForeignKeyBuilder }
 
 class SchemaSpyGenerator(database: Database):
 
@@ -255,32 +254,6 @@ class SchemaSpyGenerator(database: Database):
       }
     })
 
-  private def buildImportForeignKey(
-    key:            ForeignKey,
-    catalog:        String,
-    schema:         String,
-    constraintName: Option[String]
-  ): Seq[ImportForeignKey] =
-    val foreignKeyBuilder = new ImportForeignKey.Builder
-    (for
-      (keyColumn, keyColumnIndex) <- key.colName.zipWithIndex.toList
-      (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
-    yield
-      if keyColumnIndex == refColumnIndex then
-        Some(
-          foreignKeyBuilder
-            .withFkName(constraintName.getOrElse(key.indexName.getOrElse(key.label)))
-            .withFkColumnName(keyColumn.label)
-            .withPkTableCat(catalog)
-            .withPkTableSchema(schema)
-            .withPkTableName(key.reference.table.name)
-            .withPkColumnName(refColumn.label)
-            .withUpdateRule(key.reference.onUpdate.getOrElse(Reference.ReferenceOption.RESTRICT).code)
-            .withDeleteRule(key.reference.onDelete.getOrElse(Reference.ReferenceOption.RESTRICT).code)
-            .build()
-        )
-      else None).flatten
-
   def generateTo(outputDirectory: File): Unit =
 
     val dbmsMeta = builder.build
@@ -291,11 +264,11 @@ class SchemaSpyGenerator(database: Database):
       val schemaSpyTable = builder.build
 
       val importedKeys = table.keyDefinitions.flatMap {
-        case v: ForeignKey => buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName, None)
+        case v: ForeignKey => ImportForeignKeyBuilder.build(v, db.getCatalog.getName, db.getSchema.getName, None)
         case constraint: Constraint =>
           constraint.key match
             case v: ForeignKey =>
-              buildImportForeignKey(v, db.getCatalog.getName, db.getSchema.getName, Some(constraint.symbol))
+              ImportForeignKeyBuilder.build(v, db.getCatalog.getName, db.getSchema.getName, Some(constraint.symbol))
             case _ => Nil
         case _ => Nil
       }
