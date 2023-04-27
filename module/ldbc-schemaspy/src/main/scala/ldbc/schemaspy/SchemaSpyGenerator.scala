@@ -11,9 +11,13 @@ import java.sql.SQLException
 import java.util.ArrayList
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.lang.invoke.MethodHandles
 
 import scala.util.Using
 import scala.jdk.CollectionConverters.*
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import org.apache.commons.io.filefilter.FileFilterUtils
 
@@ -60,8 +64,11 @@ class SchemaSpyGenerator(database: Database):
 
   private val DOT_HTML       = ".html"
   private val INDEX_DOT_HTML = "index.html"
+  private val SECONDS_IN_MS  = 1000
 
   private val isOneOfMultipleSchemas = false
+
+  private val logger: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
 
   private val layoutFolder         = new LayoutFolder(this.getClass.getClassLoader)
   private val builder              = new DbmsMetaBuilder(database)
@@ -81,7 +88,7 @@ class SchemaSpyGenerator(database: Database):
       )
     catch
       case e: IOException =>
-        println(s"Failed to write `$key=$value`, to $infoFile")
+        logger.error(s"Failed to write `$key=$value`, to $infoFile")
         e.printStackTrace()
 
   private def notHtml(): FileFilter =
@@ -93,6 +100,10 @@ class SchemaSpyGenerator(database: Database):
     outputDirectory:  File,
     progressListener: ProgressListener
   ): Unit =
+
+    logger.info(s"Gathered schema details in ${ progressListener.startedGraphingSummaries() / SECONDS_IN_MS } seconds")
+    logger.info("Writing/graphing summary")
+
     val tables = db.getTables
 
     Markdown.registryPage(new java.util.ArrayList[SchemaspyTable](tables))
@@ -223,6 +234,9 @@ class SchemaSpyGenerator(database: Database):
       ) { writer => htmlRoutinePage.write(routine, writer) }
     })
 
+    logger.info(s"Completed summary in ${ progressListener.startedGraphingDetails() / SECONDS_IN_MS } seconds")
+    logger.info("Writing/diagramming details")
+
     val sqlAnalyzer =
       new SqlAnalyzer(db.getDbmsMeta.getIdentifierQuoteString, db.getDbmsMeta.getAllKeywords, db.getTables, db.getViews)
 
@@ -242,6 +256,7 @@ class SchemaSpyGenerator(database: Database):
     tables.forEach(table => {
       val mustacheTableDiagrams = mustacheTableDiagramFactory.generateTableDiagrams(table)
       progressListener.graphingDetailsProgressed(table)
+      logger.debug(s"Writing details of ${ table.getName }")
       Using(
         new DefaultPrintWriter(
           outputDirectory.toPath
@@ -255,6 +270,8 @@ class SchemaSpyGenerator(database: Database):
     })
 
   def generateTo(outputDirectory: File): Unit =
+
+    logger.info("Starting schema analysis")
 
     val dbmsMeta = builder.build
     val db       = new SchemaspyDatabase(dbmsMeta, database.name, database.catalog.orNull, database.schema)
@@ -309,6 +326,10 @@ class SchemaSpyGenerator(database: Database):
     val orderedTables = orderer.getTablesOrderedByRI(db.getTables, List.empty.asJava)
 
     new OrderingReport(outputDirectory, orderedTables).write()
+
+    logger.info(s"Wrote table details in ${ progressListener.finishedGatheringDetails() / SECONDS_IN_MS } seconds")
+    logger.info(s"Wrote relationship details of ${ db.getTables.size } tables/views to directory '$outputDirectory' in ${progressListener.finished(db.getTables) / SECONDS_IN_MS } seconds.")
+    logger.info(s"View the results by opening ${ new File(outputDirectory, INDEX_DOT_HTML) }")
 
   private def buildDatabaseArguments(database: Database): Seq[String] =
     Seq(
