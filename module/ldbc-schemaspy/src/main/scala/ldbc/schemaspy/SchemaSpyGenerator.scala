@@ -327,8 +327,12 @@ class SchemaSpyGenerator(database: Database):
 
     new OrderingReport(outputDirectory, orderedTables).write()
 
+    val wroteRelationshipDuration = progressListener.finished(db.getTables)
+
     logger.info(s"Wrote table details in ${ progressListener.finishedGatheringDetails() / SECONDS_IN_MS } seconds")
-    logger.info(s"Wrote relationship details of ${ db.getTables.size } tables/views to directory '$outputDirectory' in ${progressListener.finished(db.getTables) / SECONDS_IN_MS } seconds.")
+    logger.info(
+      s"Wrote relationship details of ${ db.getTables.size } tables/views to directory '$outputDirectory' in ${ wroteRelationshipDuration / SECONDS_IN_MS } seconds."
+    )
     logger.info(s"View the results by opening ${ new File(outputDirectory, INDEX_DOT_HTML) }")
 
   private def buildDatabaseArguments(database: Database): Seq[String] =
