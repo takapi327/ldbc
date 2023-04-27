@@ -16,8 +16,6 @@ object TableColumnBuilder:
     column.setName(_column.label)
     column.setTypeName(_column.dataType.typeName)
     column.setType(_column.dataType.jdbcType.code)
-    // column.setLength(255)
-    // column.setDecimalDigits(???)
     column.setNullable(_column.dataType.isOptional)
     _column.dataType match
       case v: DataType.IntegerType[?]    => v.default.map(_.value) foreach column.setDefaultValue
