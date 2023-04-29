@@ -9,8 +9,20 @@ import org.schemaspy.model.Table as SchemaspyTable
 
 import ldbc.core.{ Column, DataType }
 
+/** Object to generate a TableColumn model for SchemaSpy.
+  */
 object TableColumnBuilder:
 
+  /** Methods for constructing a TableColumn from a Column.
+    *
+    * @param table
+    *   A Table is one of the basic building blocks of SchemaSpy that knows everything about the database table's
+    *   metadata.
+    * @param _column
+    *   Trait for representing SQL Column
+    * @param index
+    *   The index number of the column set in the table.
+    */
   def build(table: SchemaspyTable, _column: Column[?], index: Int): TableColumn =
     val column = new TableColumn(table)
     column.setName(_column.label)

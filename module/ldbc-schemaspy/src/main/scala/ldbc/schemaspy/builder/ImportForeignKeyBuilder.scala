@@ -8,8 +8,21 @@ import org.schemaspy.input.dbms.service.helper.ImportForeignKey
 
 import ldbc.core.{ ForeignKey, Reference }
 
+/** Object to generate the ImportForeignKey model for SchemaSpy.
+  */
 object ImportForeignKeyBuilder:
 
+  /** Methods for constructing an ImportForeignKey array based on a ForeignKey.
+    *
+    * @param key
+    *   A model representing SQL Foreign key information.
+    * @param catalog
+    *   Database Catalog
+    * @param schema
+    *   Database Schema
+    * @param constraintName
+    *   Unique name of the constraint
+    */
   def build(
     key:            ForeignKey,
     catalog:        String,

@@ -60,6 +60,11 @@ import ldbc.core.*
 import ldbc.schemaspy.result.Status
 import ldbc.schemaspy.builder.{ DbmsMetaBuilder, TableBuilder, ImportForeignKeyBuilder }
 
+/** Class for generating SchemaSpy documents from Database models.
+  *
+  * @param database
+  *   A model representing SQL database information.
+  */
 class SchemaSpyGenerator(database: Database):
 
   private val DOT_HTML       = ".html"
