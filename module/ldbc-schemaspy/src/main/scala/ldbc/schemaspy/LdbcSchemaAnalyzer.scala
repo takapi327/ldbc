@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.schemaspy
 
@@ -64,9 +64,9 @@ class LdbcSchemaAnalyzer(
   outputDirectory:      File
 ):
 
-  private val DOT_HTML = ".html"
+  private val DOT_HTML       = ".html"
   private val INDEX_DOT_HTML = "index.html"
-  private val SECONDS_IN_MS = 1000
+  private val SECONDS_IN_MS  = 1000
 
   private val isOneOfMultipleSchemas = false
 
@@ -91,12 +91,12 @@ class LdbcSchemaAnalyzer(
     FileFilterUtils.and(notHtmlFilter)
 
   private def generateHtmlDoc(
-                               db: SchemaspyDatabase,
-                               outputDirectory: File,
-                               progressListener: ProgressListener
-                             ): Unit =
+    db:               SchemaspyDatabase,
+    outputDirectory:  File,
+    progressListener: ProgressListener
+  ): Unit =
 
-    logger.info(s"Gathered schema details in ${progressListener.startedGraphingSummaries() / SECONDS_IN_MS} seconds")
+    logger.info(s"Gathered schema details in ${ progressListener.startedGraphingSummaries() / SECONDS_IN_MS } seconds")
     logger.info("Writing/graphing summary")
 
     val tables = db.getTables
@@ -131,7 +131,7 @@ class LdbcSchemaAnalyzer(
     )
 
     val dotProducer = new DotFormatter(runtimeDotConfig)
-    val diagramDir = new File(outputDirectory, "diagrams")
+    val diagramDir  = new File(outputDirectory, "diagrams")
     diagramDir.mkdirs()
     val summaryDir = new File(diagramDir, "summary")
     summaryDir.mkdirs()
@@ -229,7 +229,7 @@ class LdbcSchemaAnalyzer(
       ) { writer => htmlRoutinePage.write(routine, writer) }
     })
 
-    logger.info(s"Completed summary in ${progressListener.startedGraphingDetails() / SECONDS_IN_MS} seconds")
+    logger.info(s"Completed summary in ${ progressListener.startedGraphingDetails() / SECONDS_IN_MS } seconds")
     logger.info("Writing/diagramming details")
 
     val sqlAnalyzer =
@@ -251,7 +251,7 @@ class LdbcSchemaAnalyzer(
     tables.forEach(table => {
       val mustacheTableDiagrams = mustacheTableDiagramFactory.generateTableDiagrams(table)
       progressListener.graphingDetailsProgressed(table)
-      logger.debug(s"Writing details of ${table.getName}")
+      logger.debug(s"Writing details of ${ table.getName }")
       Using(
         new DefaultPrintWriter(
           outputDirectory.toPath
@@ -274,7 +274,7 @@ class LdbcSchemaAnalyzer(
     val progressListener = new Console(commandLineArguments, new Tracked())
 
     database.tables.foreach(table => {
-      val builder = TableBuilder(db, table)
+      val builder        = TableBuilder(db, table)
       val schemaSpyTable = builder.build
 
       val importedKeys = table.keyDefinitions.flatMap {
@@ -305,7 +305,7 @@ class LdbcSchemaAnalyzer(
         val childColumn = Option(schemaSpyTable.getColumn(key.getFkColumnName))
         childColumn.foreach(v => {
           foreignKeyConstraint.addChildColumn(v)
-          val parentTable = tables.get(key.getPkTableName)
+          val parentTable  = tables.get(key.getPkTableName)
           val parentColumn = Option(parentTable.getColumn(key.getPkColumnName))
           parentColumn.foreach(p => {
             foreignKeyConstraint.addParentColumn(p)
@@ -326,10 +326,10 @@ class LdbcSchemaAnalyzer(
 
     val wroteRelationshipDuration = progressListener.finished(db.getTables)
 
-    logger.info(s"Wrote table details in ${progressListener.finishedGatheringDetails() / SECONDS_IN_MS} seconds")
+    logger.info(s"Wrote table details in ${ progressListener.finishedGatheringDetails() / SECONDS_IN_MS } seconds")
     logger.info(
-      s"Wrote relationship details of ${db.getTables.size} tables/views to directory '$outputDirectory' in ${wroteRelationshipDuration / SECONDS_IN_MS} seconds."
+      s"Wrote relationship details of ${ db.getTables.size } tables/views to directory '$outputDirectory' in ${ wroteRelationshipDuration / SECONDS_IN_MS } seconds."
     )
-    logger.info(s"View the results by opening ${new File(outputDirectory, INDEX_DOT_HTML)}")
+    logger.info(s"View the results by opening ${ new File(outputDirectory, INDEX_DOT_HTML) }")
 
     db
