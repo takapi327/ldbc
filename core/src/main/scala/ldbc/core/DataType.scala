@@ -14,6 +14,20 @@ import java.time.Year as JYear
   */
 sealed trait DataType[T]:
 
+  /** Define a TYPE_NAME string for each DataType.
+    *
+    * @return
+    *   SQL TYPE_NAME
+    */
+  def typeName: String
+
+  /** Value of JdbcType Enum that matches DataType.
+    *
+    * @return
+    *   JdbcType Enum
+    */
+  def jdbcType: JdbcType
+
   /** Define SQL query string for each DataType
     *
     * @return
@@ -44,6 +58,10 @@ object DataType:
   def mapping[D <: DataType[?], T]: Conversion[D, DataType[T]] =
     v =>
       new DataType[T]:
+        override def typeName: String = v.typeName
+
+        override def jdbcType: JdbcType = v.jdbcType
+
         override def queryString: String = v.queryString
 
         override def isOptional: Boolean = v.isOptional
@@ -53,7 +71,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  sealed trait IntegerType[T <: Byte | Short | Int | Long | Float | Double | BigDecimal] extends DataType[T]:
+  private[ldbc] trait IntegerType[T <: Byte | Short | Int | Long | Float | Double | BigDecimal] extends DataType[T]:
 
     /** Maximum display width of integer data type
       */
@@ -153,7 +171,11 @@ object DataType:
     default: Option[Default]
   ) extends IntegerType[T]:
 
-    override def queryString: String = s"BIT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = s"BIT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Bit
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -176,7 +198,11 @@ object DataType:
     default: Option[Default]
   ) extends IntegerOptType[T]:
 
-    override def queryString: String = s"BIT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = s"BIT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Bit
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -206,9 +232,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
+    override def typeName: String = s"TINYINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.TinyInt
+
     override val queryString: String =
-      if isUnSigned then s"TINYINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"TINYINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -238,9 +268,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
+    override def typeName: String = s"TINYINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.TinyInt
+
     override val queryString: String =
-      if isUnSigned then s"TINYINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"TINYINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -274,9 +308,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
+    override def typeName: String = s"SMALLINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.SmallInt
+
     override val queryString: String =
-      if isUnSigned then s"SMALLINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"SMALLINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -306,9 +344,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
+    override def typeName: String = s"SMALLINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.SmallInt
+
     override val queryString: String =
-      if isUnSigned then s"SMALLINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"SMALLINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -342,9 +384,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
+    override def typeName: String = s"MEDIUMINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Integer
+
     override val queryString: String =
-      if isUnSigned then s"MEDIUMINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"MEDIUMINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -374,9 +420,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
+    override def typeName: String = s"MEDIUMINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Integer
+
     override val queryString: String =
-      if isUnSigned then s"MEDIUMINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"MEDIUMINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -410,9 +460,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
+    override def typeName: String = s"INT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Integer
+
     override val queryString: String =
-      if isUnSigned then s"INT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"INT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -442,9 +496,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
+    override def typeName: String = s"INT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Integer
+
     override val queryString: String =
-      if isUnSigned then s"INT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"INT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -478,9 +536,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
+    override def typeName: String = s"BIGINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.BigInt
+
     override val queryString: String =
-      if isUnSigned then s"BIGINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"BIGINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -510,9 +572,13 @@ object DataType:
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
+    override def typeName: String = s"BIGINT($length)"
+
+    override def jdbcType: JdbcType = JdbcType.BigInt
+
     override val queryString: String =
-      if isUnSigned then s"BIGINT($length) UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"BIGINT($length) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -543,8 +609,12 @@ object DataType:
   private[ldbc] case class Decimal[T <: BigDecimal](accuracy: Int, scale: Int, default: Option[Default])
     extends DataType[T]:
 
+    override def typeName: String = s"DECIMAL($accuracy, $scale)"
+
+    override def jdbcType: JdbcType = JdbcType.Decimal
+
     override def queryString: String =
-      s"DECIMAL($accuracy, $scale) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -570,8 +640,12 @@ object DataType:
     default:  Option[Default]
   ) extends DataType[T]:
 
+    override def typeName: String = s"DECIMAL($accuracy, $scale)"
+
+    override def jdbcType: JdbcType = JdbcType.Decimal
+
     override def queryString: String =
-      s"DECIMAL($accuracy, $scale) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     override def isOptional: Boolean = true
 
@@ -600,7 +674,11 @@ object DataType:
     default:  Option[Default]
   ) extends DataType[T]:
 
-    override def queryString: String = s"FLOAT($accuracy) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = s"FLOAT($accuracy)"
+
+    override def jdbcType: JdbcType = JdbcType.Float
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -623,7 +701,11 @@ object DataType:
     default:  Option[Default]
   ) extends DataType[T]:
 
-    override def queryString: String = s"FLOAT($accuracy) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = s"FLOAT($accuracy)"
+
+    override def jdbcType: JdbcType = JdbcType.Float
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     override def isOptional: Boolean = true
 
@@ -657,8 +739,12 @@ object DataType:
     character: Option[Character]
   ) extends StringType[T]:
 
+    override def typeName: String = s"CHAR($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Char
+
     override def queryString: String =
-      s"CHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
         s" ${ v.queryString }"
       )
 
@@ -691,8 +777,12 @@ object DataType:
     character: Option[Character]
   ) extends StringOptType[T]:
 
+    override def typeName: String = s"CHAR($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Char
+
     override def queryString: String =
-      s"CHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
         s" ${ v.queryString }"
       )
 
@@ -729,8 +819,12 @@ object DataType:
     character: Option[Character]
   ) extends StringType[T]:
 
+    override def typeName: String = s"VARCHAR($length)"
+
+    override def jdbcType: JdbcType = JdbcType.VarChar
+
     override def queryString: String =
-      s"VARCHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
         s" ${ v.queryString }"
       )
 
@@ -763,8 +857,12 @@ object DataType:
     character: Option[Character]
   ) extends StringOptType[T]:
 
+    override def typeName: String = s"VARCHAR($length)"
+
+    override def jdbcType: JdbcType = JdbcType.VarChar
+
     override def queryString: String =
-      s"VARCHAR($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
         s" ${ v.queryString }"
       )
 
@@ -795,8 +893,12 @@ object DataType:
     */
   private[ldbc] case class Binary[T <: Array[Byte]](length: Int, character: Option[Character]) extends StringType[T]:
 
+    override def typeName: String = s"BINARY($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Binary
+
     override def queryString: String =
-      s"BINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -815,8 +917,12 @@ object DataType:
   private[ldbc] case class BinaryOpt[T <: Option[Array[Byte]]](length: Int, character: Option[Character])
     extends StringOptType[T]:
 
+    override def typeName: String = s"BINARY($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Binary
+
     override def queryString: String =
-      s"BINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -834,8 +940,12 @@ object DataType:
     */
   private[ldbc] case class Varbinary[T <: Array[Byte]](length: Int, character: Option[Character]) extends StringType[T]:
 
+    override def typeName: String = s"VARBINARY($length)"
+
+    override def jdbcType: JdbcType = JdbcType.VarBinary
+
     override def queryString: String =
-      s"VARBINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -854,8 +964,12 @@ object DataType:
   private[ldbc] case class VarbinaryOpt[T <: Option[Array[Byte]]](length: Int, character: Option[Character])
     extends StringOptType[T]:
 
+    override def typeName: String = s"VARBINARY($length)"
+
+    override def jdbcType: JdbcType = JdbcType.VarBinary
+
     override def queryString: String =
-      s"VARBINARY($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -871,7 +985,11 @@ object DataType:
     */
   private[ldbc] case class Tinyblob[T <: Array[Byte]](character: Option[Character]) extends BlobType[T]:
 
-    override def queryString: String = s"TINYBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "TINYBLOB"
+
+    override def jdbcType: JdbcType = JdbcType.VarBinary
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -887,7 +1005,11 @@ object DataType:
     */
   private[ldbc] case class TinyblobOpt[T <: Option[Array[Byte]]](character: Option[Character]) extends BlobOptType[T]:
 
-    override def queryString: String = s"TINYBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "TINYBLOB"
+
+    override def jdbcType: JdbcType = JdbcType.VarBinary
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -905,8 +1027,12 @@ object DataType:
     */
   private[ldbc] case class Blob[T <: Array[Byte]](length: Long, character: Option[Character]) extends BlobType[T]:
 
+    override def typeName: String = s"BLOB($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Blob
+
     override def queryString: String =
-      s"BLOB($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -925,8 +1051,12 @@ object DataType:
   private[ldbc] case class BlobOpt[T <: Option[Array[Byte]]](length: Long, character: Option[Character])
     extends BlobOptType[T]:
 
+    override def typeName: String = s"BLOB($length)"
+
+    override def jdbcType: JdbcType = JdbcType.Blob
+
     override def queryString: String =
-      s"BLOB($length)" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -942,7 +1072,11 @@ object DataType:
     */
   private[ldbc] case class Mediumblob[T <: Array[Byte]](character: Option[Character]) extends BlobType[T]:
 
-    override def queryString: String = s"MEDIUMBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "MEDIUMBLOB"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarBinary
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -958,7 +1092,11 @@ object DataType:
     */
   private[ldbc] case class MediumblobOpt[T <: Option[Array[Byte]]](character: Option[Character]) extends BlobOptType[T]:
 
-    override def queryString: String = s"MEDIUMBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "MEDIUMBLOB"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarBinary
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -974,7 +1112,11 @@ object DataType:
     */
   private[ldbc] case class LongBlob[T <: Array[Byte]](character: Option[Character]) extends BlobType[T]:
 
-    override def queryString: String = s"LONGBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "LONGBLOB"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarBinary
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -990,7 +1132,11 @@ object DataType:
     */
   private[ldbc] case class LongBlobOpt[T <: Option[Array[Byte]]](character: Option[Character]) extends BlobOptType[T]:
 
-    override def queryString: String = s"LONGBLOB" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "LONGBLOB"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarBinary
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1006,7 +1152,11 @@ object DataType:
     */
   private[ldbc] case class TinyText[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"TINYTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "TINYTEXT"
+
+    override def jdbcType: JdbcType = JdbcType.VarChar
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1022,7 +1172,11 @@ object DataType:
     */
   private[ldbc] case class TinyTextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
-    override def queryString: String = s"TINYTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "TINYTEXT"
+
+    override def jdbcType: JdbcType = JdbcType.VarChar
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1038,7 +1192,11 @@ object DataType:
     */
   private[ldbc] case class Text[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"TEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "TEXT"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarChar
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1054,7 +1212,11 @@ object DataType:
     */
   private[ldbc] case class TextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
-    override def queryString: String = s"TEXT $nullType"
+    override def typeName: String = "TEXT"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarChar
+
+    override def queryString: String = s"$typeName $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1070,7 +1232,11 @@ object DataType:
     */
   private[ldbc] case class MediumText[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"MEDIUMTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "MEDIUMTEXT"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarChar
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1086,7 +1252,11 @@ object DataType:
     */
   private[ldbc] case class MediumTextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
-    override def queryString: String = s"MEDIUMTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "MEDIUMTEXT"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarChar
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1102,7 +1272,11 @@ object DataType:
     */
   private[ldbc] case class LongText[T <: String](character: Option[Character]) extends StringType[T]:
 
-    override def queryString: String = s"LONGTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "LONGTEXT"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarChar
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1118,7 +1292,11 @@ object DataType:
     */
   private[ldbc] case class LongTextOpt[T <: Option[String]](character: Option[Character]) extends StringOptType[T]:
 
-    override def queryString: String = s"LONGTEXT" ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def typeName: String = "LONGTEXT"
+
+    override def jdbcType: JdbcType = JdbcType.LongVarChar
+
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -1138,7 +1316,11 @@ object DataType:
     */
   private[ldbc] case class Date[T <: LocalDate](default: Option[Default]) extends DateType[T]:
 
-    override def queryString: String = s"DATE $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "DATE"
+
+    override def jdbcType: JdbcType = JdbcType.Date
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1156,7 +1338,11 @@ object DataType:
     */
   private[ldbc] case class DateOpt[T <: Option[LocalDate]](default: Option[Default]) extends DateOptType[T]:
 
-    override def queryString: String = s"DATE $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "DATE"
+
+    override def jdbcType: JdbcType = JdbcType.Date
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1178,7 +1364,11 @@ object DataType:
     */
   private[ldbc] case class DateTime[T <: Instant | LocalDateTime](default: Option[Default]) extends DateType[T]:
 
-    override def queryString: String = s"DATETIME $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "DATETIME"
+
+    override def jdbcType: JdbcType = JdbcType.Timestamp
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1204,7 +1394,11 @@ object DataType:
   private[ldbc] case class DateTimeOpt[T <: Option[Instant | LocalDateTime]](default: Option[Default])
     extends DateOptType[T]:
 
-    override def queryString: String = s"DATETIME $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "DATETIME"
+
+    override def jdbcType: JdbcType = JdbcType.Timestamp
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1234,7 +1428,11 @@ object DataType:
     */
   private[ldbc] case class TimeStamp[T <: Instant | LocalDateTime](default: Option[Default]) extends DateType[T]:
 
-    override def queryString: String = s"TIMESTAMP $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "TIMESTAMP"
+
+    override def jdbcType: JdbcType = JdbcType.Timestamp
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1261,7 +1459,11 @@ object DataType:
   private[ldbc] case class TimeStampOpt[T <: Option[Instant | LocalDateTime]](default: Option[Default])
     extends DateOptType[T]:
 
-    override def queryString: String = s"TIMESTAMP $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "TIMESTAMP"
+
+    override def jdbcType: JdbcType = JdbcType.Timestamp
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1291,7 +1493,11 @@ object DataType:
     */
   private[ldbc] case class Time[T <: LocalTime](default: Option[Default]) extends DateType[T]:
 
-    override def queryString: String = s"TIME $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "TIME"
+
+    override def jdbcType: JdbcType = JdbcType.Time
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1309,7 +1515,11 @@ object DataType:
     */
   private[ldbc] case class TimeOpt[T <: Option[LocalTime]](default: Option[Default]) extends DateOptType[T]:
 
-    override def queryString: String = s"TIME $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "TIME"
+
+    override def jdbcType: JdbcType = JdbcType.Time
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1331,7 +1541,11 @@ object DataType:
     */
   private[ldbc] case class Year[T <: Instant | LocalDate | JYear](default: Option[Default]) extends DateType[T]:
 
-    override def queryString: String = s"YEAR $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "YEAR"
+
+    override def jdbcType: JdbcType = JdbcType.Date
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1350,7 +1564,11 @@ object DataType:
   private[ldbc] case class YearOpt[T <: Option[Instant | LocalDate | JYear]](default: Option[Default])
     extends DateOptType[T]:
 
-    override def queryString: String = s"YEAR $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def typeName: String = "YEAR"
+
+    override def jdbcType: JdbcType = JdbcType.Date
+
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *

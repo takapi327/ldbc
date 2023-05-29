@@ -11,6 +11,8 @@ object Dependencies {
   val cats = "org.typelevel" %% "cats-core" % "2.9.0"
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.4.6"
 
+  val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.2"
+
   val specs2Version = "5.2.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",

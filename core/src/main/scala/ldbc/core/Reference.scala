@@ -4,6 +4,14 @@
 
 package ldbc.core
 
+import java.sql.DatabaseMetaData.{
+  importedKeyCascade,
+  importedKeyRestrict,
+  importedKeySetNull,
+  importedKeyNoAction,
+  importedKeySetDefault
+}
+
 import cats.data.NonEmptyList
 
 /** A model for setting reference options used for foreign key constraints, etc.
@@ -33,12 +41,12 @@ case class Reference(
 
 object Reference:
 
-  enum ReferenceOption(val label: String):
-    case RESTRICT    extends ReferenceOption("RESTRICT")
-    case CASCADE     extends ReferenceOption("CASCADE")
-    case SET_NULL    extends ReferenceOption("SET NULL")
-    case NO_ACTION   extends ReferenceOption("NO ACTION")
-    case SET_DEFAULT extends ReferenceOption("SET DEFAULT")
+  enum ReferenceOption(val label: String, val code: Int):
+    case RESTRICT    extends ReferenceOption("RESTRICT", importedKeyRestrict)
+    case CASCADE     extends ReferenceOption("CASCADE", importedKeyCascade)
+    case SET_NULL    extends ReferenceOption("SET NULL", importedKeySetNull)
+    case NO_ACTION   extends ReferenceOption("NO ACTION", importedKeyNoAction)
+    case SET_DEFAULT extends ReferenceOption("SET DEFAULT", importedKeySetDefault)
 
   def apply(table: Table[?])(columns: Column[?]*): Reference =
     require(

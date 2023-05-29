@@ -8,6 +8,9 @@ package ldbc.core
   */
 trait Default:
 
+  /** Value set as the default value for DataType */
+  def value: String
+
   /** Define SQL query string for each DataType.
     *
     * @return
@@ -22,16 +25,22 @@ object Default:
   /** Object for setting NULL as the Default value when the SQL DataType is NULL-allowed.
     */
   object Null extends Default:
-    override def queryString: String = "DEFAULT NULL"
+
+    override def value: String = "NULL"
+
+    override def queryString: String = s"DEFAULT $value"
 
   /** Model to be used when a value matching the DataType type is set.
     *
-    * @param value
+    * @param _value
     *   Value set as the default value for DataType
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  case class Value[T](value: T) extends Default:
+  case class Value[T](_value: T) extends Default:
+
+    override def value: String = _value.toString
+
     override def queryString: String = s"DEFAULT '$value'"
 
   /** Model for setting TimeStamp-specific Default values.
@@ -40,6 +49,9 @@ object Default:
     *   Value to determine whether to set additional information
     */
   case class TimeStamp(withOn: Boolean) extends Default:
+
+    override def value: String = "CURRENT_TIMESTAMP"
+
     override def queryString: String =
-      if withOn then "DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-      else "DEFAULT CURRENT_TIMESTAMP"
+      if withOn then s"DEFAULT $value ON UPDATE CURRENT_TIMESTAMP"
+      else s"DEFAULT $value"
