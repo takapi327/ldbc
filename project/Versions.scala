@@ -5,7 +5,7 @@
  */
 
 object ScalaVersions {
-  val scala3 = "3.2.1"
+  val scala3 = "3.3.0"
 }
 
 object JavaVersions {
