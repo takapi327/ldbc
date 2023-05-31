@@ -21,12 +21,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils
 import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, TableOrderer, OrderingReport }
 import org.schemaspy.model.Database as SchemaspyDatabase
 import org.schemaspy.model.Table as SchemaspyTable
-import org.schemaspy.model.{
-  ProgressListener,
-  Tracked,
-  Console,
-  ForeignKeyConstraint,
-}
+import org.schemaspy.model.{ ProgressListener, Tracked, Console, ForeignKeyConstraint }
 import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPrintWriter, Jar }
 import org.schemaspy.util.naming.FileNameGenerator
 import org.schemaspy.view.*
