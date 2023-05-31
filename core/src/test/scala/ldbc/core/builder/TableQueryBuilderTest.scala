@@ -7,7 +7,7 @@ package ldbc.core.builder
 import org.specs2.mutable.Specification
 
 import ldbc.core.*
-import ldbc.core.syntax.{ *, given }
+import ldbc.core.syntax.given
 
 object TableQueryBuilderTest extends Specification:
 
