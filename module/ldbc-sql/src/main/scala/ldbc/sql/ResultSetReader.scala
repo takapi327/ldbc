@@ -5,14 +5,12 @@
 package ldbc.sql
 
 import java.io.{ InputStream, Reader }
-import java.sql.{ Date, SQLWarning, Time, Timestamp }
+import java.sql.{ Date, Time, Timestamp }
 import java.util.Date as UtilDate
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
 import cats.{ Functor, Monad }
 import cats.implicits.*
-
-import ldbc.core.Column
 
 /** Trait to get the DataType that matches the Scala type information from the ResultSet.
   *

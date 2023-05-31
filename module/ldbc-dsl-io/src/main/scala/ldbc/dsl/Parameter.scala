@@ -5,7 +5,7 @@
 package ldbc.dsl
 
 import java.net.URL
-import java.sql.{ Blob, Clob, Date, Time, Timestamp, Array as SqlArray }
+import java.sql.{ Date, Time, Timestamp }
 import java.util.Date as UtilDate
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 

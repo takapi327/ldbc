@@ -9,7 +9,6 @@ import java.sql.SQLException
 
 import org.schemaspy.{ LayoutFolder, SchemaAnalyzer, TableOrderer }
 import org.schemaspy.model.{ EmptySchemaException, InvalidConfigurationException }
-import org.schemaspy.view.*
 import org.schemaspy.input.dbms.MissingParameterException
 import org.schemaspy.input.dbms.service.{ DatabaseServiceFactory, SqlService }
 import org.schemaspy.input.dbms.exceptions.ConnectionFailure

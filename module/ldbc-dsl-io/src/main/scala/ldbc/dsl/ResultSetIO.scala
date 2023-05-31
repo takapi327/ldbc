@@ -23,8 +23,7 @@ import java.sql.{
   SQLXML,
   Time,
   Timestamp,
-  Array as JavaSqlArray,
-  ResultSet as JavaResultSet
+  Array as JavaSqlArray
 }
 
 import scala.jdk.CollectionConverters.*
