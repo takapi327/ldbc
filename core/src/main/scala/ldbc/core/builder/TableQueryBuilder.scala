@@ -5,7 +5,6 @@
 package ldbc.core.builder
 
 import ldbc.core.*
-import ldbc.core.attribute.*
 import ldbc.core.validator.TableValidator
 
 /** Class for generating query strings such as Create statements from Table values.

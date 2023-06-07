@@ -14,6 +14,7 @@ object BuildSettings {
 
   val baseScalaSettings: Seq[String] = Seq(
     "-Xfatal-warnings",
+    "-Wunused:all",
     "-deprecation",
     "-feature",
     "-unchecked",

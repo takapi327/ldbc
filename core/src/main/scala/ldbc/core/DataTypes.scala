@@ -8,7 +8,6 @@ import java.time.{ Instant, LocalTime, LocalDate, LocalDateTime }
 import java.time.Year as JYear
 
 import scala.compiletime.error
-import scala.annotation.targetName
 
 import ldbc.core.DataType.*
 
