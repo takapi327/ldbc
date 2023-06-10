@@ -50,6 +50,7 @@ lazy val LdbcSchemaSpyProject = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-s
 
 lazy val LdbcGeneratorProject = LepusSbtProject("Ldbc-Generator", "module/ldbc-generator")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+  .settings(libraryDependencies += parserCombinators)
   .dependsOn(LdbcCoreProject)
 
 lazy val coreProjects: Seq[ProjectReference] = Seq(

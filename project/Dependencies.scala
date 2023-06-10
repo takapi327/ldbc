@@ -13,6 +13,8 @@ object Dependencies {
 
   val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.2"
 
+  val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
+
   val specs2Version = "5.2.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
