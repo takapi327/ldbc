@@ -8,7 +8,7 @@ import sbt._
 
 object Ldbc extends AutoPlugin {
 
-  val autoImport = Dependencies
+  val autoImport = AutoImport
 
   override def projectSettings = Settings.projectSettings
 }
