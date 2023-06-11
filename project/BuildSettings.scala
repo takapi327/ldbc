@@ -7,6 +7,7 @@
 import sbt._
 import sbt.Keys._
 import sbt.plugins.SbtPlugin
+import sbt.ScriptedPlugin.autoImport._
 
 import sbtrelease.ReleasePlugin.autoImport._
 import ReleaseTransformations._
@@ -29,6 +30,17 @@ object BuildSettings {
 
   val scala3Settings: Seq[String] = baseScalaSettings ++ Seq(
     "-Wunused:all",
+  )
+
+  /**
+   * Set up a scripted framework to test the plugin.
+   */
+  def scriptedSettings: Seq[Setting[_]] = Seq(
+    scriptedLaunchOpts := {
+      scriptedLaunchOpts.value ++
+        Seq("-Xmx1024M", "-Dplugin.version=" + version.value)
+    },
+    scriptedBufferLog := false
   )
 
   /**
@@ -81,6 +93,7 @@ object BuildSettings {
         .settings(scalacOptions ++= baseScalaSettings)
         .settings(commonSettings: _*)
         .settings(publishSettings: _*)
+        .settings(scriptedSettings: _*)
         .enablePlugins(SbtPlugin)
   }
 }
