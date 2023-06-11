@@ -18,17 +18,17 @@ object Generator {
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
 
   def generateCode(
-    sqlFilePaths:  SettingKey[List[String]],
+    sqlFilePaths:  SettingKey[List[File]],
     sourceManaged: SettingKey[File],
     baseDirectory: SettingKey[File]
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
 
     type LdbcGenerator = {
       def generate(
-        sqlFilePaths:  List[String],
+        sqlFilePaths:  Array[File],
         sourceManaged: File,
         baseDirectory: File
-      ): Seq[File]
+      ): Array[File]
     }
 
     val projectClassLoader = new ProjectClassLoader(
@@ -36,9 +36,9 @@ object Generator {
       parent = baseClassloader.value
     )
 
-    val mainClass:  Class[_] = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
-    val mainObject: LdbcGenerator  = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
+    val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
+    val mainObject: LdbcGenerator = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
 
-    mainObject.generate(sqlFilePaths.value, sourceManaged.value, baseDirectory.value)
+    mainObject.generate(sqlFilePaths.value.toArray, sourceManaged.value, baseDirectory.value)
   }
 }
