@@ -6,7 +6,7 @@ package ldbc.generator
 
 import scala.util.parsing.combinator.{ RegexParsers, JavaTokenParsers }
 
-case class Comment(message: String)
+import ldbc.generator.model.Comment
 
 trait LdbcParser:
   self: RegexParsers & JavaTokenParsers =>
