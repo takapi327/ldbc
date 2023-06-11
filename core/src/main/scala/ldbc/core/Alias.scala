@@ -13,6 +13,8 @@ import ldbc.core.attribute.{ Attribute, AutoInc }
 
 private[ldbc] trait Alias:
 
+  type TABLE[P <: Product] = Table[P]
+
   def column[T](
     label:    String,
     dataType: DataType[T]
