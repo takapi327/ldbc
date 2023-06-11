@@ -1,0 +1,42 @@
+/** This file is part of the Lepus Framework. For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+package ldbc.sbt
+
+import sbt._
+import sbt.Keys._
+
+import scala.language.reflectiveCalls
+
+import ldbc.sbt.CustomKeys._
+
+object Generator {
+  val generate: Def.Initialize[Task[Seq[File]]] = generateCode(Compile / sourceManaged, Compile / baseDirectory)
+
+  private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
+
+  def generateCode(
+    sourceManaged: SettingKey[File],
+    baseDirectory: SettingKey[File]
+  ): Def.Initialize[Task[Seq[File]]] = Def.task {
+
+    type LdbcGenerator = {
+      def generate(
+        sourceManaged: File,
+        baseDirectory: File
+      ): Seq[File]
+    }
+
+
+    val projectClassLoader = new ProjectClassLoader(
+      urls   = convertToUrls((Runtime / externalDependencyClasspath).value.files),
+      parent = baseClassloader.value
+    )
+
+    val mainClass:  Class[_] = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
+    val mainObject: LdbcGenerator  = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
+
+    mainObject.generate(sourceManaged.value, baseDirectory.value)
+  }
+}
