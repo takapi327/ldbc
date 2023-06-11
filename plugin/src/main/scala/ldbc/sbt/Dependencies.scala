@@ -6,7 +6,7 @@ package ldbc.sbt
 
 import sbt._
 
-object Dependencies {
+trait Dependencies {
   private def component(id: String): ModuleID = "com.github.takapi327" %% id % ldbc.build.Version.current
 
   val ldbcCore = component("ldbc-core")
@@ -15,3 +15,5 @@ object Dependencies {
   val ldbcSchemaSPY = component("ldbc-schemaspy")
   val ldbcSql = component("ldbc-sql")
 }
+
+object Dependencies extends Dependencies
