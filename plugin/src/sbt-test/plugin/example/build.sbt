@@ -10,5 +10,8 @@ lazy val root = (project in file("."))
     scalaVersion := sys.props.get("scala.version").getOrElse("3.3.0"),
     version      := "0.1",
     run / fork   := true,
+    Compile / sqlFilePaths := List(
+      new File(new File(".").getAbsoluteFile().getParent(), "test.sql")
+    )
   )
   .enablePlugins(Ldbc)
