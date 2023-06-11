@@ -7,7 +7,7 @@ package ldbc.generator
 import scala.util.parsing.combinator.*
 
 trait DataTypeParser extends LdbcParser:
-  self: RegexParsers =>
+  self: RegexParsers & JavaTokenParsers =>
 
   // デジット（0以上の数字）のパーサー
   protected def digit: Parser[Int] = """\d+""".r ^^ (_.toInt)
