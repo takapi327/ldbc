@@ -6,6 +6,8 @@ package ldbc.generator
 
 import scala.util.parsing.combinator.*
 
+import ldbc.generator.model.DataType
+
 trait DataTypeParser extends LdbcParser:
   self: RegexParsers & JavaTokenParsers =>
 
@@ -15,17 +17,17 @@ trait DataTypeParser extends LdbcParser:
   private def unsigned: Parser[String] = "(?i)unsigned".r ^^ (_.toUpperCase)
   private def zerofill: Parser[String] = "(?i)zerofill".r ^^ (_.toUpperCase)
 
-  protected def dataType: Parser[DataTypeParseResult] = bitType | tinyintType
+  protected def dataType: Parser[DataType] = bitType | tinyintType
 
   /**
    * ==========================================
    * Numeric data type parsing
    * ==========================================
    */
-  private def bitType: Parser[DataTypeParseResult] =
+  private def bitType: Parser[DataType] =
     customError(
       "(?i)bit".r ~> "(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")" ^^ { n =>
-        DataTypeParseResult.Bit(n)
+        DataType.Bit(n)
       },
       """
         |===============================================================================
@@ -42,10 +44,10 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def tinyintType: Parser[DataTypeParseResult] =
+  private def tinyintType: Parser[DataType] =
     customError(
       "(?i)tinyint".r ~> "(" ~> digit.filter(n => n >= -128 && n <= 255) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
-        case n ~ _ ~ unsigned ~ zerofill => DataTypeParseResult.Tinyint(n, unsigned.isDefined, zerofill.isDefined)
+        case n ~ _ ~ unsigned ~ zerofill => DataType.Tinyint(n, unsigned.isDefined, zerofill.isDefined)
       },
       """
         |===============================================================================
