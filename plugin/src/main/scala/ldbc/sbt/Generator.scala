@@ -10,24 +10,26 @@ import sbt.Keys._
 import scala.language.reflectiveCalls
 
 import ldbc.sbt.CustomKeys._
+import ldbc.sbt.AutoImport._
 
 object Generator {
-  val generate: Def.Initialize[Task[Seq[File]]] = generateCode(Compile / sourceManaged, Compile / baseDirectory)
+  val generate: Def.Initialize[Task[Seq[File]]] = generateCode(Compile / sqlFilePaths, Compile / sourceManaged, Compile / baseDirectory)
 
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
 
   def generateCode(
+    sqlFilePaths:  SettingKey[List[String]],
     sourceManaged: SettingKey[File],
     baseDirectory: SettingKey[File]
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
 
     type LdbcGenerator = {
       def generate(
+        sqlFilePaths:  List[String],
         sourceManaged: File,
         baseDirectory: File
       ): Seq[File]
     }
-
 
     val projectClassLoader = new ProjectClassLoader(
       urls   = convertToUrls((Runtime / externalDependencyClasspath).value.files),
@@ -37,6 +39,6 @@ object Generator {
     val mainClass:  Class[_] = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
     val mainObject: LdbcGenerator  = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
 
-    mainObject.generate(sourceManaged.value, baseDirectory.value)
+    mainObject.generate(sqlFilePaths.value, sourceManaged.value, baseDirectory.value)
   }
 }
