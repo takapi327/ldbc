@@ -8,7 +8,7 @@ import sbt._
 
 object AutoImport extends Dependencies {
 
-  val sqlFilePaths = SettingKey[List[String]](
+  val sqlFilePaths = SettingKey[List[File]](
     label       = "sqlFilePaths",
     description = "Path list of SQL files to read"
   )
