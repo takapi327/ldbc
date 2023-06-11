@@ -4,12 +4,14 @@
 
 package ldbc.generator
 
-import scala.util.parsing.combinator.RegexParsers
+import scala.util.parsing.combinator.{ RegexParsers, JavaTokenParsers }
 
 case class Comment(message: String)
 
 trait LdbcParser:
-  self: RegexParsers =>
+  self: RegexParsers & JavaTokenParsers =>
+
+  protected def comment: Parser[Comment] = ("/*" | "--+".r) ~> ident <~ opt("*/") ^^ Comment.apply
 
   protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
     parser(input) match
