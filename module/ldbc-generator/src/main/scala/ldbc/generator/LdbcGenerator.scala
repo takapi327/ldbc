@@ -27,10 +27,8 @@ private[ldbc] object LdbcGenerator:
       Parser.parse(content) match
         case Parser.Success(statements, _) =>
           statements.map(statement =>
-            val className = s"${ statement.tableName.head.toUpper }${ statement.tableName.tail }"
-            val properties = statement.columnDefinitions.map(column =>
-              s"${ column.name }: ${ column.scalaType }"
-            )
+            val className  = s"${ statement.tableName.head.toUpper }${ statement.tableName.tail }"
+            val properties = statement.columnDefinitions.map(column => s"${ column.name }: ${ column.scalaType }")
             val hasNullableProperty = statement.columnDefinitions.count(_.attributes.forall(_.constraint))
 
             val outputFile = new File(sourceManaged, s"$className.scala")
