@@ -29,11 +29,7 @@ private[ldbc] object LdbcGenerator:
           statements.map(statement =>
             val className = s"${ statement.tableName.head.toUpper }${ statement.tableName.tail }"
             val properties = statement.columnDefinitions.map(column =>
-              val isNullable = column.attributes.forall(_.constraint)
-              val scalaType =
-                if isNullable then s"Option[${ column.dataType.scalaType }]"
-                else s"${ column.dataType.scalaType }"
-              s"${ column.name }: $scalaType"
+              s"${ column.name }: ${ column.scalaType }"
             )
             val hasNullableProperty = statement.columnDefinitions.count(_.attributes.forall(_.constraint))
 

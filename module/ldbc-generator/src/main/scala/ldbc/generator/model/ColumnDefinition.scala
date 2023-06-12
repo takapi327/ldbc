@@ -23,7 +23,7 @@ case class ColumnDefinition(
   attributes: Option[Attributes]
 ):
 
-  private val scalaType =
+  val scalaType =
     if attributes.forall(_.constraint) then s"Option[${ dataType.scalaType }]"
     else s"${ dataType.scalaType }"
 
