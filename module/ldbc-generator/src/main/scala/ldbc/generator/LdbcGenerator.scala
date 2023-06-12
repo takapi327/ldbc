@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.generator
 
@@ -17,7 +17,6 @@ private[ldbc] object LdbcGenerator:
     sourceManaged: File,
     baseDirectory: File
   ): Array[File] =
-
     sqlFilePaths.flatMap(file =>
 
       val content = new String(
@@ -28,13 +27,13 @@ private[ldbc] object LdbcGenerator:
       Parser.parse(content) match
         case Parser.Success(statements, _) =>
           statements.map(statement =>
-            val className = s"${statement.tableName.head.toUpper}${statement.tableName.tail}"
+            val className = s"${ statement.tableName.head.toUpper }${ statement.tableName.tail }"
             val properties = statement.columnDefinitions.map(column =>
               val isNullable = column.attributes.flatMap(_.constraint)
-              val scalaType = if isNullable.getOrElse("NULL") == "NULL" then
-                s"Option[${column.dataType.scalaType}]"
-              else s"${column.dataType.scalaType}"
-              s"${column.name}: $scalaType"
+              val scalaType =
+                if isNullable.getOrElse("NULL") == "NULL" then s"Option[${ column.dataType.scalaType }]"
+                else s"${ column.dataType.scalaType }"
+              s"${ column.name }: $scalaType"
             )
             val test = statement.columnDefinitions.count(column =>
               column.attributes.flatMap(_.constraint).getOrElse("NULL") == "NULL"
@@ -49,16 +48,16 @@ private[ldbc] object LdbcGenerator:
             val scalaSource =
               s"""
                  |import ldbc.core.*
-                 |${if test > 0 then "import ldbc.core.syntax.given" else ""}
+                 |${ if test > 0 then "import ldbc.core.syntax.given" else "" }
                  |
                  |case class $className(
-                 |  ${properties.mkString(",\n  ")}
+                 |  ${ properties.mkString(",\n  ") }
                  |)
                  |
                  |object $className:
                  |
-                 |  val table: TABLE[$className] = Table[$className]("${statement.tableName}")(
-                 |    ${statement.columnDefinitions.map(_.toCode).mkString(",\n    ")}
+                 |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
+                 |    ${ statement.columnDefinitions.map(_.toCode).mkString(",\n    ") }
                  |  )
                  |""".stripMargin
 

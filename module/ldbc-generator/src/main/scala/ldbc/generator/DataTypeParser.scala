@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.generator
 
@@ -11,7 +11,7 @@ import ldbc.generator.model.DataType
 trait DataTypeParser extends LdbcParser:
   self: RegexParsers & JavaTokenParsers =>
 
-  // デジット（0以上の数字）のパーサー
+  // Parser for digits (numbers greater than or equal to 0)
   protected def digit: Parser[Int] = """\d+""".r ^^ (_.toInt)
 
   private def unsigned: Parser[String] = "(?i)unsigned".r ^^ (_.toUpperCase)
@@ -19,11 +19,8 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] = bitType | tinyintType
 
-  /**
-   * ==========================================
-   * Numeric data type parsing
-   * ==========================================
-   */
+  /** Numeric data type parsing
+    */
   private def bitType: Parser[DataType] =
     customError(
       "(?i)bit".r ~> "(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")" ^^ { n =>
