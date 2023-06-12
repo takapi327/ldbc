@@ -1,9 +1,9 @@
-/* コメント */
+/* Comment */
 
----- コメント
+---- Comment
 
-CREATE TABLE country (
-  code1 BIT(1) PRIMARY KEY UNIQUE KEY COMMENT 'test',
+CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
+  /* Comment */ code1 /* Comment */ BIT(1) /* Comment */ PRIMARY KEY /* Comment */ UNIQUE KEY /* Comment */ COMMENT 'test' ---- Comment,
   code2 bit(24) NOT NULL,
   code3 Bit(64) DEFAULT 1
 );
