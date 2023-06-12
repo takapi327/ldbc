@@ -17,6 +17,6 @@ trait StatementParser extends ColumnParser:
   private def ifNotExists: Parser[String] = "IF NOT EXISTS" ^^ (_.toUpperCase)
 
   protected def createStatement: Parser[CreateStatement] =
-    create ~ opt(temporary) ~ table ~ opt(ifNotExists) ~ ident ~ "(" ~ repsep(columnDefinition, ",") <~ ")" ~ ";" ^^ {
-      case _ ~ _ ~ _ ~ _ ~ tableName ~ _ ~ columnDefs => CreateStatement(tableName, columnDefs)
+    create ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> table ~> opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> ident ~ opt(comment) ~ "(" ~ repsep(columnDefinition, ",") <~ opt(comment) <~ ")" ~ ";" ^^ {
+      case tableName ~ _ ~ _ ~ columnDefs => CreateStatement(tableName, columnDefs)
     }
