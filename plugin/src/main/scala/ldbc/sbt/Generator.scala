@@ -1,6 +1,6 @@
 /** This file is part of the Lepus Framework. For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+  * file that was distributed with this source code.
+  */
 
 package ldbc.sbt
 
@@ -13,7 +13,8 @@ import ldbc.sbt.CustomKeys._
 import ldbc.sbt.AutoImport._
 
 object Generator {
-  val generate: Def.Initialize[Task[Seq[File]]] = generateCode(Compile / sqlFilePaths, Compile / sourceManaged, Compile / baseDirectory)
+  val generate: Def.Initialize[Task[Seq[File]]] =
+    generateCode(Compile / sqlFilePaths, Compile / sourceManaged, Compile / baseDirectory)
 
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
 
