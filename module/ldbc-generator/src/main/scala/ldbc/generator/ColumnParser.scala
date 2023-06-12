@@ -72,7 +72,7 @@ trait ColumnParser extends DataTypeParser:
             case _ =>
               Some(
                 Attributes(
-                  constraint,
+                  constraint.forall(_ == "NULL"),
                   default,
                   visible,
                   key,

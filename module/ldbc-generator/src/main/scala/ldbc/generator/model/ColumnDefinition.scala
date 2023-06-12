@@ -5,7 +5,7 @@
 package ldbc.generator.model
 
 case class Attributes(
-  constraint:               Option[String],
+  constraint:               Boolean,
   default:                  Option[String | Int],
   visible:                  Option[String],
   key:                      Option[List[String]],
@@ -24,7 +24,7 @@ case class ColumnDefinition(
 ):
 
   private val scalaType =
-    if attributes.flatMap(_.constraint).getOrElse("NULL") == "NULL" then s"Option[${ dataType.scalaType }]"
+    if attributes.forall(_.constraint) then s"Option[${ dataType.scalaType }]"
     else s"${ dataType.scalaType }"
 
   private val default = attributes.fold("")(attribute =>

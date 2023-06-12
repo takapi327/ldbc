@@ -29,15 +29,13 @@ private[ldbc] object LdbcGenerator:
           statements.map(statement =>
             val className = s"${ statement.tableName.head.toUpper }${ statement.tableName.tail }"
             val properties = statement.columnDefinitions.map(column =>
-              val isNullable = column.attributes.flatMap(_.constraint)
+              val isNullable = column.attributes.forall(_.constraint)
               val scalaType =
-                if isNullable.getOrElse("NULL") == "NULL" then s"Option[${ column.dataType.scalaType }]"
+                if isNullable then s"Option[${ column.dataType.scalaType }]"
                 else s"${ column.dataType.scalaType }"
               s"${ column.name }: $scalaType"
             )
-            val test = statement.columnDefinitions.count(column =>
-              column.attributes.flatMap(_.constraint).getOrElse("NULL") == "NULL"
-            )
+            val hasNullableProperty = statement.columnDefinitions.count(_.attributes.forall(_.constraint))
 
             val outputFile = new File(sourceManaged, s"$className.scala")
 
@@ -48,7 +46,7 @@ private[ldbc] object LdbcGenerator:
             val scalaSource =
               s"""
                  |import ldbc.core.*
-                 |${ if test > 0 then "import ldbc.core.syntax.given" else "" }
+                 |${ if hasNullableProperty > 0 then "import ldbc.core.syntax.given" else "" }
                  |
                  |case class $className(
                  |  ${ properties.mkString(",\n  ") }
