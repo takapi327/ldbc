@@ -4,6 +4,9 @@
 
 package ldbc.generator
 
+import ldbc.generator.model.Key
+import ldbc.generator.model.Key.*
+
 trait KeyParser extends ColumnParser:
 
   private def indexType: Parser[String] =
@@ -31,19 +34,16 @@ trait KeyParser extends ColumnParser:
                  |""".stripMargin)
       }
 
-  private def indexKey: Parser[String] =
+  private def indexKey: Parser[Index] =
     ("(?i)index".r | "(?i)key".r) ~> opt(sqlIdent) ~ opt(indexType) ~ "(" ~
       repsep(sqlIdent, ",") <~ ")" <~ indexOption ^^ {
-        case indexName ~ _ ~ _ ~ keyParts =>
-          indexName.fold(s"INDEX_KEY(${ keyParts.mkString(",") })")(name =>
-            s"INDEX_KEY($name, ${ keyParts.mkString(",") })"
-          )
+        case indexName ~ _ ~ _ ~ keyParts => Index(indexName, keyParts)
       }
 
-  private def fulltext: Parser[String] =
+  private def fulltext: Parser[Index] =
     ("(?i)fulltext".r | "(?i)spatial".r) ~> ("(?i)index".r | "(?i)key".r) ~>
       opt(sqlIdent) ~ "(" ~ repsep(sqlIdent, ",") <~ ")" <~ indexOption ^^ {
-        case _ ~ _ ~ _ => ""
+        case indexName ~ _ ~ keyParts => Index(indexName, keyParts)
       }
 
   private def constraint: Parser[Option[String]] =
@@ -57,62 +57,33 @@ trait KeyParser extends ColumnParser:
       case option: String => s"Reference.ReferenceOption.${ option.toUpperCase }"
     }
 
-  private def referenceDefinition: Parser[String] =
+  private def referenceDefinition: Parser[Reference] =
     "(?i)references".r ~> sqlIdent ~ "(" ~ repsep(sqlIdent, ",") ~ ")" ~
       opt("(?i)match".r ~ ("(?i)full".r | "(?i)partial".r | "(?i)simple".r)) ~
       opt("(?i)on".r ~> "(?i)delete".r ~> opt(referenceOption)) ~
       opt("(?i)on".r ~> "(?i)update".r ~> opt(referenceOption)) ^^ {
         case tableName ~ _ ~ keyParts ~ _ ~ _ ~ onDelete ~ onUpdate =>
-          (onDelete, onUpdate) match
-            case (None, None) => s"REFERENCE($tableName)(${ keyParts.mkString(",") })"
-            case (Some(delete), None) =>
-              s"REFERENCE($tableName, NonEmptyList.of(${ keyParts.mkString(",") }), Some($delete), None)"
-            case (None, Some(update)) =>
-              s"REFERENCE($tableName, NonEmptyList.of(${ keyParts.mkString(",") }), None, Some($update))"
-            case (Some(delete), Some(update)) =>
-              s"REFERENCE($tableName, NonEmptyList.of(${ keyParts.mkString(",") }), Some($delete), Some($update))"
+          Reference(tableName, keyParts, onDelete.flatten, onUpdate.flatten)
       }
 
-  private def constraintPrimaryKey: Parser[String] =
+  private def constraintPrimaryKey: Parser[Primary] =
     opt(constraint) ~ primaryKey ~ opt(indexType) ~ "(" ~ repsep(sqlIdent, ",") ~ ")" ~ indexOption ^^ {
-      case constraint ~ key ~ indexType ~ _ ~ keyParts ~ _ ~ option =>
-        val key = indexType.fold(s"PRIMARY_KEY(NonEmptyList.of(${ keyParts.mkString(",") }))")(v =>
-          option match
-            case None    => s"PRIMARY_KEY($v, NonEmptyList.of(${ keyParts.mkString(",") }))"
-            case Some(o) => s"PRIMARY_KEY($v, NonEmptyList.of(${ keyParts.mkString(",") }), $o)"
-        )
-        constraint.fold(key)(v => s"CONSTRAINT(${ v.getOrElse(keyParts.mkString("_")) }, $key)")
+      case constraint ~ _ ~ indexType ~ _ ~ keyParts ~ _ ~ option =>
+        Primary(constraint, indexType, keyParts, option)
     }
 
-  private def constraintUniqueKey: Parser[String] =
+  private def constraintUniqueKey: Parser[Unique] =
     opt(constraint) ~ "(?i)unique".r ~ opt("(?i)index".r | "(?i)key".r) ~ opt(sqlIdent) ~
       opt(indexType) ~ "(" ~ repsep(sqlIdent, ",") ~ ")" ~ indexOption ^^ {
         case constraint ~ _ ~ _ ~ indexName ~ indexType ~ _ ~ keyParts ~ _ ~ option =>
-          val key =
-            s"""
-             |UNIQUE_KEY(
-             |  ${ indexName.fold("None")(v => s"Some($v)") },
-             |  ${ indexType.fold("None")(v => s"Some($v)") },
-             |  NonEmptyList.of(${ keyParts.mkString(",") }),
-             |  ${ option.fold("None")(v => s"Some($v)") },
-             |)
-             |""".stripMargin
-          constraint.fold(key)(v => s"CONSTRAINT(${ v.getOrElse(keyParts.mkString("_")) }, $key)")
+          Unique(constraint, indexName, indexType, keyParts, option)
       }
 
-  private def constraintForeignKey: Parser[String] =
+  private def constraintForeignKey: Parser[Foreign] =
     opt(constraint) ~ "(?i)foreign".r ~ "(?i)key".r ~ opt(sqlIdent) ~
       "(" ~ repsep(sqlIdent, ",") ~ ")" ~ referenceDefinition ^^ {
         case constraint ~ _ ~ _ ~ indexName ~ _ ~ columnNames ~ _ ~ referenceDefinition =>
-          val key =
-            s"""
-             |FOREIGN_KEY(
-             |  ${ indexName.fold("None")(v => s"Some($v)") },
-             |  NonEmptyList.of(${ columnNames.mkString(",") }),
-             |  $referenceDefinition
-             |)
-             |""".stripMargin
-          constraint.fold(key)(v => s"CONSTRAINT(${ v.getOrElse(columnNames.mkString("_")) }, $key)")
+          Foreign(constraint, indexName, columnNames, referenceDefinition)
       }
 
   private def checkConstraintDefinition: Parser[String] =
@@ -120,7 +91,7 @@ trait KeyParser extends ColumnParser:
       case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced => s"$constraint $expr $not $enforced"
     }
 
-  protected def keyDefinitions: Parser[String] =
+  protected def keyDefinitions: Parser[Key | String] =
     (indexKey | fulltext | constraintPrimaryKey | constraintUniqueKey | constraintForeignKey | checkConstraintDefinition) ^^ {
       str => str
     }
