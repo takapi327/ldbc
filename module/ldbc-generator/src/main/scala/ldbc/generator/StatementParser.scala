@@ -19,5 +19,6 @@ trait StatementParser extends KeyParser:
       "(" ~ repsep(columnDefinition | keyDefinitions, ",") ~ opt(comment) <~ ")" ~ ";" ^^ {
         case tableName ~ _ ~ _ ~ objects ~ _ =>
           val columnDefs = objects.filter(_.isInstanceOf[ColumnDefinition]).asInstanceOf[List[ColumnDefinition]]
-          CreateStatement(tableName, columnDefs)
+          val keyDefs = objects.filter(_.isInstanceOf[Key]).asInstanceOf[List[Key]]
+          CreateStatement(tableName, columnDefs, keyDefs)
       }

@@ -6,5 +6,6 @@ package ldbc.generator.model
 
 case class CreateStatement(
   tableName:         String,
-  columnDefinitions: List[ColumnDefinition]
+  columnDefinitions: List[ColumnDefinition],
+  keyDefinitions:    List[Key]
 )
