@@ -30,3 +30,11 @@ object DataType:
     override def toString: String =
       if unsigned then s"TINYINT[$scalaType]($length).UNSIGNED"
       else s"TINYINT[$scalaType]($length)"
+
+  case class BigInt(length: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
+    override val jdbcType: JdbcType = JdbcType.BigInt
+    override val scalaType: ScalaType = ScalaType.Long
+
+    override def toString: String =
+      if unsigned then s"BIGINT[$scalaType]($length).UNSIGNED"
+      else s"BIGINT[$scalaType]($length)"

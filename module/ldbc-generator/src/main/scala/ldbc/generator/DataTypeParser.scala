@@ -4,12 +4,9 @@
 
 package ldbc.generator
 
-import scala.util.parsing.combinator.*
-
 import ldbc.generator.model.DataType
 
 trait DataTypeParser extends LdbcParser:
-  self: RegexParsers & JavaTokenParsers =>
 
   // Parser for digits (numbers greater than or equal to 0)
   protected def digit: Parser[Int] = """\d+""".r ^^ (_.toInt)
@@ -17,7 +14,7 @@ trait DataTypeParser extends LdbcParser:
   private def unsigned: Parser[String] = "(?i)unsigned".r ^^ (_.toUpperCase)
   private def zerofill: Parser[String] = "(?i)zerofill".r ^^ (_.toUpperCase)
 
-  protected def dataType: Parser[DataType] = bitType | tinyintType
+  protected def dataType: Parser[DataType] = bitType | tinyintType | bigIntType
 
   /** Numeric data type parsing
     */
@@ -57,6 +54,26 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
         |example: TINYINT[(M)] [UNSIGNED] [ZEROFILL]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def bigIntType: Parser[DataType] =
+    customError(
+      "(?i)bigint".r ~> "(" ~> digit.filter(n => n >= -128 && n <= 255) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
+        case n ~ _ ~ unsigned ~ zerofill => DataType.BigInt(n, unsigned.isDefined, zerofill.isDefined)
+      },
+      """
+        |===============================================================================
+        |Failed to parse bigint data type.
+        |The bigint Data type must be defined as follows
+        |※ bigint strings are case-insensitive.
+        |
+        |M, the signed range is -128 to 127. The unsigned range is 0 to 255.
+        |
+        |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
+        |
+        |example: BIGINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
     )
