@@ -12,8 +12,10 @@ trait LdbcParser extends JavaTokenParsers:
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
-  private def normalIdent: Parser[String] = rep1(acceptIf(Character.isJavaIdentifierStart)("identifier expected but `" + _ + "' found"),
-    elem("identifier part", Character.isJavaIdentifierPart(_: Char))) ^^ (_.mkString)
+  private def normalIdent: Parser[String] = rep1(
+    acceptIf(Character.isJavaIdentifierStart)("identifier expected but `" + _ + "' found"),
+    elem("identifier part", Character.isJavaIdentifierPart(_: Char))
+  ) ^^ (_.mkString)
 
   protected def sqlIdent: Parser[String] =
     "" ~> // handle whitespace
