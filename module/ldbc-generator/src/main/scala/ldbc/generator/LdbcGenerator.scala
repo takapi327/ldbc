@@ -37,6 +37,10 @@ private[ldbc] object LdbcGenerator:
               outputFile.getParentFile.mkdirs()
               outputFile.createNewFile()
 
+            val keyDefinitions = statement.keyDefinitions.map(key =>
+              s".keySet(table => ${ key.toCode("table") })"
+            )
+
             val scalaSource =
               s"""
                  |import ldbc.core.*
@@ -51,6 +55,7 @@ private[ldbc] object LdbcGenerator:
                  |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
                  |    ${ statement.columnDefinitions.map(_.toCode).mkString(",\n    ") }
                  |  )
+                 |  ${ keyDefinitions.mkString("") }
                  |""".stripMargin
 
             Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
