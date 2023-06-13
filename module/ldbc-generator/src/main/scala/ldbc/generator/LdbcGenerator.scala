@@ -37,9 +37,7 @@ private[ldbc] object LdbcGenerator:
               outputFile.getParentFile.mkdirs()
               outputFile.createNewFile()
 
-            val keyDefinitions = statement.keyDefinitions.map(key =>
-              s".keySet(table => ${ key.toCode("table") })"
-            )
+            val keyDefinitions = statement.keyDefinitions.map(key => s".keySet(table => ${ key.toCode("table") })")
 
             val scalaSource =
               s"""
