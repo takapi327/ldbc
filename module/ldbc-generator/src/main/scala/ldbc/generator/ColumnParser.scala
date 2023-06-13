@@ -4,14 +4,9 @@
 
 package ldbc.generator
 
-import scala.util.parsing.combinator.*
-
 import ldbc.generator.model.*
 
 trait ColumnParser extends DataTypeParser:
-  self: RegexParsers & JavaTokenParsers =>
-
-  private def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
   private def constraint: Parser[String] =
     "(?i)not".r ~> "(?i)null".r ^^ (_ => "NOT NULL") | "NULL"
@@ -25,13 +20,13 @@ trait ColumnParser extends DataTypeParser:
   private def autoInc: Parser[String] =
     "(?i)auto_increment".r <~ opt(comment) ^^ (_.toUpperCase)
 
-  private def primaryKey: Parser[String] =
+  protected def primaryKey: Parser[String] =
     "(?i)primary".r <~ opt("(?i)key".r) <~ opt(comment) ^^ { _ => "PRIMARY_KEY" }
 
-  private def uniqueKey: Parser[String] =
+  protected def uniqueKey: Parser[String] =
     "(?i)unique".r <~ opt("(?i)key".r) <~ opt(comment) ^^ { _ => "UNIQUE_KEY" }
 
-  private def columnComment: Parser[Comment] =
+  protected def columnComment: Parser[Comment] =
     "(?i)comment".r ~> stringLiteral ^^ Comment.apply
 
   private def collate: Parser[String] =
@@ -87,6 +82,6 @@ trait ColumnParser extends DataTypeParser:
       }
 
   protected def columnDefinition: Parser[ColumnDefinition] =
-    opt(comment) ~> ident ~ opt(comment) ~ dataType ~ opt(comment) ~ attributes <~ opt(comment) ^^ {
+    opt(comment) ~> sqlIdent ~ opt(comment) ~ dataType ~ opt(comment) ~ attributes <~ opt(comment) ^^ {
       case columnName ~ _ ~ dataType ~ _ ~ attributes => ColumnDefinition(columnName, dataType, attributes)
     }
