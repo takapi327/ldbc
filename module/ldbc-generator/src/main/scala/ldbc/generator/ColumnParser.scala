@@ -9,40 +9,42 @@ import ldbc.generator.model.*
 trait ColumnParser extends DataTypeParser:
 
   private def constraint: Parser[String] =
-    "(?i)not".r ~> "(?i)null".r ^^ (_ => "NOT NULL") | "NULL"
+    caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL"
 
   private def default: Parser[String | Int] =
-    "(?i)default".r ~> (stringLiteral | digit | "(?i)null".r) ^^ { i => i }
+    caseSensitivity("default") ~> (stringLiteral | digit | caseSensitivity("null")) ^^ { i => i }
 
   private def visible: Parser[String] =
-    "(?i)visible".r | "(?i)invisible".r ^^ { i => i }
+    caseSensitivity("visible") | caseSensitivity("invisible") ^^ { i => i }
 
   private def autoInc: Parser[String] =
-    "(?i)auto_increment".r <~ opt(comment) ^^ (_.toUpperCase)
+    caseSensitivity("auto_increment") <~ opt(comment) ^^ (_.toUpperCase)
 
   protected def primaryKey: Parser[String] =
-    "(?i)primary".r <~ opt("(?i)key".r) <~ opt(comment) ^^ { _ => "PRIMARY_KEY" }
+    caseSensitivity("primary") <~ opt(caseSensitivity("key")) <~ opt(comment) ^^ { _ => "PRIMARY_KEY" }
 
   protected def uniqueKey: Parser[String] =
-    "(?i)unique".r <~ opt("(?i)key".r) <~ opt(comment) ^^ { _ => "UNIQUE_KEY" }
+    caseSensitivity("unique") <~ opt(caseSensitivity("key")) <~ opt(comment) ^^ { _ => "UNIQUE_KEY" }
 
   protected def columnComment: Parser[Comment] =
-    "(?i)comment".r ~> stringLiteral ^^ Comment.apply
+    caseSensitivity("comment") ~> stringLiteral ^^ Comment.apply
 
   private def collate: Parser[String] =
-    "(?i)collate".r ~> ident ^^ { i => i }
+    caseSensitivity("collate") ~> ident ^^ { i => i }
 
   private def columnFormat: Parser[String] =
-    "(?i)column_format".r ~> ("(?i)fixed".r | "(?i)dynamic".r | "(?i)default".r) ^^ { i => i }
+    caseSensitivity("column_format") ~> (
+      caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
+    ) ^^ { i => i }
 
   private def engineAttribute: Parser[String] =
-    "(?i)engine_attribute".r ~> opt("=") ~> ident ^^ { i => i }
+    caseSensitivity("engine_attribute") ~> opt("=") ~> ident ^^ { i => i }
 
   private def secondaryEngineAttribute: Parser[String] =
-    "(?i)secondary_engine_attribute".r ~> opt("=") ~> ident ^^ { i => i }
+    caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident ^^ { i => i }
 
   private def storage: Parser[String] =
-    "(?i)storage".r ~> ("(?i)disk".r | "(?i)memory".r) ^^ { i => i }
+    caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")) ^^ { i => i }
 
   private def attributes: Parser[Option[Attributes]] =
     opt(constraint) ~ opt(comment) ~ opt(default) ~ opt(comment) ~ opt(visible) ~

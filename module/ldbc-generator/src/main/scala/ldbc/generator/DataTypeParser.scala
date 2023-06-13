@@ -20,7 +20,7 @@ trait DataTypeParser extends LdbcParser:
     */
   private def bitType: Parser[DataType] =
     customError(
-      "(?i)bit".r ~> "(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")" ^^ { n =>
+      caseSensitivity("bit") ~> "(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")" ^^ { n =>
         DataType.Bit(n)
       },
       """
@@ -40,9 +40,10 @@ trait DataTypeParser extends LdbcParser:
 
   private def tinyintType: Parser[DataType] =
     customError(
-      "(?i)tinyint".r ~> "(" ~> digit.filter(n => n >= -128 && n <= 255) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
-        case n ~ _ ~ unsigned ~ zerofill => DataType.Tinyint(n, unsigned.isDefined, zerofill.isDefined)
-      },
+      caseSensitivity("tinyint") ~> "(" ~> digit.filter(n => n >= -128 && n <= 255) ~ ")" ~
+        opt(unsigned) ~ opt(zerofill) ^^ {
+          case n ~ _ ~ unsigned ~ zerofill => DataType.Tinyint(n, unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse tinyint data type.
@@ -60,9 +61,10 @@ trait DataTypeParser extends LdbcParser:
 
   private def bigIntType: Parser[DataType] =
     customError(
-      "(?i)bigint".r ~> "(" ~> digit.filter(n => n >= -128 && n <= 255) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
-        case n ~ _ ~ unsigned ~ zerofill => DataType.BigInt(n, unsigned.isDefined, zerofill.isDefined)
-      },
+      caseSensitivity("bigint") ~> "(" ~> digit.filter(n => n >= -128 && n <= 255) ~ ")" ~
+        opt(unsigned) ~ opt(zerofill) ^^ {
+          case n ~ _ ~ unsigned ~ zerofill => DataType.BigInt(n, unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse bigint data type.
