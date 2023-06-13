@@ -4,12 +4,9 @@
 
 package ldbc.generator
 
-import scala.util.parsing.combinator.*
+import ldbc.generator.model.*
 
-import ldbc.generator.model.CreateStatement
-
-trait StatementParser extends ColumnParser:
-  self: RegexParsers & JavaTokenParsers =>
+trait StatementParser extends KeyParser:
 
   private def create:      Parser[String] = "CREATE" ^^ (_.toUpperCase)
   private def temporary:   Parser[String] = "TEMPORARY" ^^ (_.toUpperCase)
@@ -18,7 +15,9 @@ trait StatementParser extends ColumnParser:
 
   protected def createStatement: Parser[CreateStatement] =
     create ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> table ~>
-      opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> ident ~ opt(comment) ~
-      "(" ~ repsep(columnDefinition, ",") <~ opt(comment) <~ ")" ~ ";" ^^ {
-        case tableName ~ _ ~ _ ~ columnDefs => CreateStatement(tableName, columnDefs)
+      opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~
+      "(" ~ repsep(columnDefinition | keyDefinitions, ",") ~ opt(comment) <~ ")" ~ ";" ^^ {
+        case tableName ~ _ ~ _ ~ objects ~ _ =>
+          val columnDefs = objects.filter(_.isInstanceOf[ColumnDefinition]).asInstanceOf[List[ColumnDefinition]]
+          CreateStatement(tableName, columnDefs)
       }
