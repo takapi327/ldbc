@@ -4,12 +4,11 @@
 
 package ldbc.generator
 
-import scala.util.parsing.combinator.*
 import scala.util.parsing.input.*
 
 import ldbc.generator.model.CreateStatement
 
-object Parser extends RegexParsers, JavaTokenParsers, StatementParser:
+object Parser extends StatementParser:
 
   private def end: util.matching.Regex = """\s*""".r
 
