@@ -8,4 +8,5 @@
 # Validate the application's Compile
 > compile
 $ exists target/scala-3.3.0/src_managed/main/Country.scala
+$ exists target/scala-3.3.0/src_managed/main/Sub_test.scala
 $ exists target/scala-3.3.0/src_managed/main/Test.scala
