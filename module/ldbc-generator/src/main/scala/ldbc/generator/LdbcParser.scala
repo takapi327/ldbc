@@ -4,12 +4,20 @@
 
 package ldbc.generator
 
-import scala.util.parsing.combinator.{ RegexParsers, JavaTokenParsers }
+import scala.util.parsing.combinator.JavaTokenParsers
 
 import ldbc.generator.model.Comment
 
-trait LdbcParser:
-  self: RegexParsers & JavaTokenParsers =>
+trait LdbcParser extends JavaTokenParsers:
+
+  override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
+
+  private def normalIdent: Parser[String] = rep1(acceptIf(Character.isJavaIdentifierStart)("identifier expected but `" + _ + "' found"),
+    elem("identifier part", Character.isJavaIdentifierPart(_: Char))) ^^ (_.mkString)
+
+  protected def sqlIdent: Parser[String] =
+    "" ~> // handle whitespace
+      opt("`") ~> normalIdent <~ opt("`") ^^ (_.mkString)
 
   protected def comment: Parser[Comment] = ("/*" | "--+".r) ~> ident <~ opt("*/") ^^ Comment.apply
 
