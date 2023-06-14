@@ -8,8 +8,7 @@ import ldbc.generator.model.DataType
 
 trait DataTypeParser extends LdbcParser:
 
-  // Parser for digits (numbers greater than or equal to 0)
-  protected def digit: Parser[Int] = """\d+""".r ^^ (_.toInt)
+  protected def digit: Parser[Int] = """-?\d+""".r ^^ (_.toInt)
 
   private def unsigned: Parser[String] = "(?i)unsigned".r ^^ (_.toUpperCase)
   private def zerofill: Parser[String] = "(?i)zerofill".r ^^ (_.toUpperCase)
