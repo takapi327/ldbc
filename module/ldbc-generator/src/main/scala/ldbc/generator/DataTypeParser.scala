@@ -14,7 +14,7 @@ trait DataTypeParser extends LdbcParser:
   private def zerofill: Parser[String] = "(?i)zerofill".r ^^ (_.toUpperCase)
 
   protected def dataType: Parser[DataType] =
-    bitType | tinyintType | smallintType | mediumintType |  bigIntType |
+    bitType | tinyintType | smallintType | mediumintType | bigIntType |
       intType | decimalType | floatType | doubleType
 
   /** Numeric data type parsing
@@ -64,8 +64,8 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("smallint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-        case n ~ _ ~ unsigned ~ zerofill => DataType.Smallint(n, unsigned.isDefined, zerofill.isDefined)
-      },
+          case n ~ _ ~ unsigned ~ zerofill => DataType.Smallint(n, unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse smallint data type.
@@ -85,8 +85,8 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("mediumint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-        case n ~ _ ~ unsigned ~ zerofill => DataType.Mediumint(n, unsigned.isDefined, zerofill.isDefined)
-      },
+          case n ~ _ ~ unsigned ~ zerofill => DataType.Mediumint(n, unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse mediumint data type.
@@ -106,8 +106,8 @@ trait DataTypeParser extends LdbcParser:
     customError(
       (caseSensitivity("int") | caseSensitivity("integer")) ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-        case n ~ _ ~ unsigned ~ zerofill => DataType.Integer(n, unsigned.isDefined, zerofill.isDefined)
-      },
+          case n ~ _ ~ unsigned ~ zerofill => DataType.Integer(n, unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse int data type.
@@ -149,8 +149,9 @@ trait DataTypeParser extends LdbcParser:
       (caseSensitivity("decimal") | caseSensitivity("dec")) ~> "(" ~>
         digit.filter(n => n >= 0 && n <= 65) ~ opt("," ~> digit.filter(n => n >= 0 && n <= 30)) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-        case m ~ d ~ _ ~ unsigned ~ zerofill => DataType.Decimal(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
-      },
+          case m ~ d ~ _ ~ unsigned ~ zerofill =>
+            DataType.Decimal(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse decimal data type.
@@ -170,8 +171,8 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("float") ~> "(" ~> digit.filter(n => n >= 0 && n <= 24) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-        case n ~ _ ~ unsigned ~ zerofill => DataType.CFloat(n, unsigned.isDefined, zerofill.isDefined)
-      },
+          case n ~ _ ~ unsigned ~ zerofill => DataType.CFloat(n, unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse float data type.
@@ -191,8 +192,8 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("double") ~> "(" ~> digit.filter(n => n >= 24 && n <= 53) ~ "," ~
         digit.filter(n => n >= 24 && n <= 53) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
-        case m ~ _ ~ d ~ _ ~ unsigned ~ zerofill => DataType.CFloat(m, unsigned.isDefined, zerofill.isDefined)
-      },
+          case m ~ _ ~ d ~ _ ~ unsigned ~ zerofill => DataType.CFloat(m, unsigned.isDefined, zerofill.isDefined)
+        },
       """
         |===============================================================================
         |Failed to parse double data type.

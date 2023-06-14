@@ -32,7 +32,7 @@ object DataType:
       else s"TINYINT[$scalaType]($length)"
 
   case class Smallint(length: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
-    override val jdbcType: JdbcType = JdbcType.SmallInt
+    override val jdbcType:  JdbcType  = JdbcType.SmallInt
     override val scalaType: ScalaType = ScalaType.Short
 
     override def toString: String =
@@ -40,7 +40,7 @@ object DataType:
       else s"SMALLINT[$scalaType]($length)"
 
   case class Mediumint(length: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
-    override val jdbcType: JdbcType = JdbcType.Integer
+    override val jdbcType:  JdbcType  = JdbcType.Integer
     override val scalaType: ScalaType = ScalaType.Int
 
     override def toString: String =
@@ -48,7 +48,7 @@ object DataType:
       else s"MEDIUMINT[$scalaType]($length)"
 
   case class Integer(length: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
-    override val jdbcType: JdbcType = JdbcType.Integer
+    override val jdbcType:  JdbcType  = JdbcType.Integer
     override val scalaType: ScalaType = ScalaType.Int
 
     override def toString: String =
@@ -64,7 +64,7 @@ object DataType:
       else s"BIGINT[$scalaType]($length)"
 
   case class Decimal(accuracy: Int, scale: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
-    override val jdbcType: JdbcType = JdbcType.Decimal
+    override val jdbcType:  JdbcType  = JdbcType.Decimal
     override val scalaType: ScalaType = ScalaType.BigDecimal
 
     override def toString: String =
@@ -72,7 +72,7 @@ object DataType:
       else s"DECIMAL[$scalaType]($accuracy, $scale)"
 
   case class CFloat(accuracy: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
-    override val jdbcType: JdbcType = JdbcType.Float
+    override val jdbcType:  JdbcType  = JdbcType.Float
     override val scalaType: ScalaType = ScalaType.Float
 
     override def toString: String =
