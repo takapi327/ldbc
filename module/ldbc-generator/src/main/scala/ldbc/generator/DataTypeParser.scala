@@ -190,7 +190,7 @@ trait DataTypeParser extends LdbcParser:
 
   private def doubleType: Parser[DataType] =
     customError(
-      caseSensitivity("double") ~> "(" ~> digit.filter(n => n >= 24 && n <= 53) ~ "," ~
+      (caseSensitivity("double") | caseSensitivity("real")) ~> "(" ~> digit.filter(n => n >= 24 && n <= 53) ~ "," ~
         digit.filter(n => n >= 24 && n <= 53) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
           case m ~ _ ~ d ~ _ ~ unsigned ~ zerofill => DataType.CFloat(m, unsigned.isDefined, zerofill.isDefined)
         },
