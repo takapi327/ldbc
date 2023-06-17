@@ -3,7 +3,7 @@
 ---- Comment
 
 CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
-  /* Comment */ code1 /* Comment */ BIT(1) /* Comment */ PRIMARY KEY /* Comment */ UNIQUE KEY /* Comment */ COMMENT 'test' ---- Comment,
+  /* Comment */ code1 /* Comment */ BIT /* Comment */ PRIMARY KEY /* Comment */ UNIQUE KEY /* Comment */ COMMENT 'test' ---- Comment,
   code2 bit(24) NOT NULL,
   code3 Bit(64) DEFAULT 1
 );
@@ -16,7 +16,7 @@ CREATE TABLE `sub_test` (
 
 CREATE TABLE `test` (
   `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `sub_id` TINYINT(64) UNSIGNED NOT NULL,
+  `sub_id` TINYINT UNSIGNED NOT NULL,
   `sub_category` BIGINT(64) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
