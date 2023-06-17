@@ -56,18 +56,19 @@ private[ldbc] trait TableValidator:
   )
 
   require(
-    autoInc.count {
+    !(autoInc.nonEmpty &&
+    (autoInc.count {
       case column: Column[?] =>
         column.attributes.exists(_.isInstanceOf[PrimaryKey]) || column.attributes.exists(_.isInstanceOf[UniqueKey])
       case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
-    } == 1 || keyPart.count(key =>
+    } >= 1 || keyPart.count(key =>
       autoInc
         .map {
           case c: Column[?] => c.label
           case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
         }
         .contains(key.label)
-    ) == 1,
+    ) == 0)),
     "The columns with AUTO_INCREMENT must have a Primary Key or Unique Key."
   )
 
