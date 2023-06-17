@@ -71,7 +71,8 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] trait IntegerType[T <: Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt] extends DataType[T]:
+  private[ldbc] trait IntegerType[T <: Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt]
+    extends DataType[T]:
 
     /** Maximum display width of integer data type
       */
@@ -86,7 +87,8 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  sealed trait IntegerOptType[T <: Option[Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt]] extends DataType[T]:
+  sealed trait IntegerOptType[T <: Option[Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt]]
+    extends DataType[T]:
 
     /** Maximum display width of integer data type
       */

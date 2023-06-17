@@ -39,7 +39,8 @@ private[ldbc] trait Alias:
     attributes: Attribute[T]*
   ): Column[T] = Column[T](label, dataType, comment, attributes: _*)
 
-  def AUTO_INCREMENT[T <: Byte | Short | Int | Long | BigInt | Option[Byte | Short | Int | Long | BigInt]]: AutoInc[T] = AutoInc[T]()
+  def AUTO_INCREMENT[T <: Byte | Short | Int | Long | BigInt | Option[Byte | Short | Int | Long | BigInt]]: AutoInc[T] =
+    AutoInc[T]()
 
   def PRIMARY_KEY[T]: PrimaryKey & Attribute[T] = new PrimaryKey with Attribute[T]:
     override def queryString: String = label
