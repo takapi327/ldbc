@@ -26,18 +26,34 @@ object ColumnTest extends Specification:
     }
 
     "The query string of the Column model generated with only label and DataType and attributes and comment matches the specified string." in {
-      column[Long]("id", BIGINT(64), "identifier", AutoInc[Long]()).queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
+      column[Long](
+        "id",
+        BIGINT(64),
+        "identifier",
+        AutoInc[Long]()
+      ).queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
     }
 
     "The query string of the Column model generated with only label and DataType matches the specified string." in {
-      column[String]("name", VARCHAR(255).CHARACTER_SET(Character("ascii"))).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
+      column[String](
+        "name",
+        VARCHAR(255).CHARACTER_SET(Character("ascii"))
+      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
-      column[String]("name", VARCHAR(255).CHARACTER_SET(Character("ascii")), "name").queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'"
+      column[String](
+        "name",
+        VARCHAR(255).CHARACTER_SET(Character("ascii")),
+        "name"
+      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
-      column[String]("name", VARCHAR(255).CHARACTER_SET(Character("ascii").set("ascii_bin")), "name").queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
+      column[String](
+        "name",
+        VARCHAR(255).CHARACTER_SET(Character("ascii").set("ascii_bin")),
+        "name"
+      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     }
   }

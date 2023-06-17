@@ -17,7 +17,7 @@ trait DataTypes:
 
   transparent inline private def isOptional[T] = inline erasedValue[T] match
     case _: Option[?] => true
-    case _ => false
+    case _            => false
 
   /** ===== List of Numeric Data Types ===== */
 
@@ -48,7 +48,10 @@ trait DataTypes:
     inline if length < 0 || length > 255 then error("The length of the BIGINT must be in the range 0 to 255.")
     else Bigint(length, isOptional[T])
 
-  inline def DECIMAL[T <: BigDecimal | Option[BigDecimal]](inline accuracy: Int = 10, inline scale: Int = 0): Decimal[T] =
+  inline def DECIMAL[T <: BigDecimal | Option[BigDecimal]](
+    inline accuracy: Int = 10,
+    inline scale:    Int = 0
+  ): Decimal[T] =
     inline if accuracy < 0 then error("The value of accuracy for DECIMAL must be an integer.")
     inline if scale < 0 then error("The DECIMAL scale value must be an integer.")
     inline if accuracy > 65 then error("The maximum number of digits for DECIMAL is 65.")
@@ -103,9 +106,13 @@ trait DataTypes:
 
   inline def DATE[T <: LocalDate | Option[LocalDate]]: Date[T] = Date(isOptional[T])
 
-  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]]: DateTime[T] = DateTime(isOptional[T])
+  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]]
+    : DateTime[T] = DateTime(isOptional[T])
 
-  inline def TIMESTAMP[T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]]: TimeStamp[T] = TimeStamp(isOptional[T])
+  inline def TIMESTAMP[
+    T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ]: TimeStamp[T] = TimeStamp(isOptional[T])
 
   inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(isOptional[T])
 

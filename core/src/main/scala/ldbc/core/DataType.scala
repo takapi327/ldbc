@@ -74,8 +74,7 @@ object DataType:
   private[ldbc] trait IntegerType[
     T <: Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt |
       Option[Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt]
-  ]
-    extends DataType[T]:
+  ] extends DataType[T]:
 
     /** Maximum display width of integer data type
       */
@@ -128,9 +127,9 @@ object DataType:
     T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
       Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
   ](
-    length:  Int,
+    length:     Int,
     isOptional: Boolean,
-    default: Option[Default] = None
+    default:    Option[Default] = None
   ) extends IntegerType[T]:
 
     override def typeName: String = s"BIT($length)"
@@ -146,7 +145,7 @@ object DataType:
       */
     def DEFAULT(value: T): Bit[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
   /** Model for representing the Tinyint data type, which is the numeric data of SQL DataType.
     *
@@ -185,7 +184,7 @@ object DataType:
       */
     def DEFAULT(value: T): Tinyint[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting data type to unsigned.
       */
@@ -232,7 +231,7 @@ object DataType:
       */
     def DEFAULT(value: T): Smallint[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting data type to unsigned.
       */
@@ -279,7 +278,7 @@ object DataType:
       */
     def DEFAULT(value: T): Mediumint[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting data type to unsigned.
       */
@@ -326,7 +325,7 @@ object DataType:
       */
     def DEFAULT(value: T): Integer[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting data type to unsigned.
       */
@@ -373,7 +372,7 @@ object DataType:
       */
     def DEFAULT(value: T): Bigint[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting data type to unsigned.
       */
@@ -421,7 +420,7 @@ object DataType:
       */
     def DEFAULT(value: T): Decimal[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting data type to unsigned.
       */
@@ -466,7 +465,7 @@ object DataType:
       */
     def DEFAULT(value: T): CFloat[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting data type to unsigned.
       */
@@ -490,10 +489,10 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class CChar[T <: String | Option[String]](
-    length:    Int,
+    length:     Int,
     isOptional: Boolean,
-    default:   Option[Default] = None,
-    character: Option[Character] = None
+    default:    Option[Default]   = None,
+    character:  Option[Character] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"CHAR($length)"
@@ -512,7 +511,7 @@ object DataType:
       */
     def DEFAULT(value: T): CChar[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -531,10 +530,10 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Varchar[T <: String | Option[String]](
-    length:    Int,
+    length:     Int,
     isOptional: Boolean,
-    default:   Option[Default] = None,
-    character: Option[Character] = None
+    default:    Option[Default]   = None,
+    character:  Option[Character] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"VARCHAR($length)"
@@ -553,7 +552,7 @@ object DataType:
       */
     def DEFAULT(value: T): Varchar[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting Character Set and Collation to DataType in SQL.
       *
@@ -570,10 +569,10 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Binary[T <: Array[Byte] | Option[Array[Byte]]](
-                                                     length: Int,
-                                                     isOptional: Boolean,
-                                                     character: Option[Character] = None
-                                                   ) extends StringType[T]:
+    length:     Int,
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends StringType[T]:
 
     override def typeName: String = s"BINARY($length)"
 
@@ -597,10 +596,10 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Varbinary[T <: Array[Byte] | Option[Array[Byte]]](
-                                                        length: Int,
-                                                        isOptional: Boolean,
-                                                        character: Option[Character] = None
-                                                      ) extends StringType[T]:
+    length:     Int,
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends StringType[T]:
 
     override def typeName: String = s"VARBINARY($length)"
 
@@ -622,9 +621,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Tinyblob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                             isOptional: Boolean,
-                                                                             character: Option[Character] = None
-                                                                           ) extends BlobType[T]:
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends BlobType[T]:
 
     override def typeName: String = "TINYBLOB"
 
@@ -647,10 +646,10 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Blob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                         length: Long,
-                                                                         isOptional: Boolean,
-                                                                         character: Option[Character] = None
-                                                                       ) extends BlobType[T]:
+    length:     Long,
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends BlobType[T]:
 
     override def typeName: String = s"BLOB($length)"
 
@@ -672,9 +671,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Mediumblob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                               isOptional: Boolean,
-                                                                               character: Option[Character] = None
-                                                                             ) extends BlobType[T]:
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends BlobType[T]:
 
     override def typeName: String = "MEDIUMBLOB"
 
@@ -695,9 +694,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class LongBlob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                             isOptional: Boolean,
-                                                                             character: Option[Character] = None
-                                                                           ) extends BlobType[T]:
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends BlobType[T]:
 
     override def typeName: String = "LONGBLOB"
 
@@ -718,9 +717,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class TinyText[T <: String | Option[String]](
-                                                                   isOptional: Boolean,
-                                                                   character: Option[Character] = None
-                                                                 ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends StringType[T]:
 
     override def typeName: String = "TINYTEXT"
 
@@ -741,9 +740,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Text[T <: String | Option[String]](
-                                                               isOptional: Boolean,
-                                                               character: Option[Character] = None
-                                                             ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends StringType[T]:
 
     override def typeName: String = "TEXT"
 
@@ -764,9 +763,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class MediumText[T <: String | Option[String]](
-                                                                     isOptional: Boolean,
-                                                                     character: Option[Character] = None
-                                                                   ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends StringType[T]:
 
     override def typeName: String = "MEDIUMTEXT"
 
@@ -787,9 +786,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class LongText[T <: String | Option[String]](
-                                                                   isOptional: Boolean,
-                                                                   character: Option[Character] = None
-                                                                 ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character] = None
+  ) extends StringType[T]:
 
     override def typeName: String = "LONGTEXT"
 
@@ -814,9 +813,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Date[T <: LocalDate | Option[LocalDate]](
-                                                 isOptional: Boolean,
-                                                 default: Option[Default] = None
-                                               ) extends DateType[T]:
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DateType[T]:
 
     override def typeName: String = "DATE"
 
@@ -831,7 +830,7 @@ object DataType:
       */
     def DEFAULT(value: T): Date[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
   /** This model is used to represent SQL DataType DateTime data.
     *
@@ -840,10 +839,12 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class DateTime[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]](
-                                                                   isOptional: Boolean,
-                                                                   default: Option[Default] = None
-                                                                 ) extends DateType[T]:
+  private[ldbc] case class DateTime[
+    T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]
+  ](
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DateType[T]:
 
     override def typeName: String = "DATETIME"
 
@@ -858,14 +859,15 @@ object DataType:
       */
     def DEFAULT(value: T): DateTime[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Methods for setting default values for dates.
       *
       * @param onUpdate
       *   Value of whether to add settings on update
       */
-    def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): DateTime[T] = this.copy(default = Some(Default.TimeStamp(onUpdate)))
+    def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): DateTime[T] =
+      this.copy(default = Some(Default.TimeStamp(onUpdate)))
 
   /** This model is used to represent SQL DataType TimeStamp data.
     *
@@ -876,10 +878,11 @@ object DataType:
     */
   private[ldbc] case class TimeStamp[
     T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]](
-                                                                    isOptional: Boolean,
-                                                                    default: Option[Default] = None
-                                                                  ) extends DateType[T]:
+      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DateType[T]:
 
     override def typeName: String = "TIMESTAMP"
 
@@ -894,7 +897,7 @@ object DataType:
       */
     def DEFAULT(value: T): TimeStamp[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Methods for setting default values for dates.
       *
@@ -912,9 +915,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Time[T <: LocalTime | Option[LocalTime]](
-                                                 isOptional: Boolean,
-                                                 default: Option[Default] = None
-                                               ) extends DateType[T]:
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DateType[T]:
 
     override def typeName: String = "TIME"
 
@@ -929,7 +932,7 @@ object DataType:
       */
     def DEFAULT(value: T): Time[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
   /** This model is used to represent SQL DataType Year data.
     *
@@ -939,9 +942,9 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Year[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](
-                                                                   isOptional: Boolean,
-                                                                   default: Option[Default] = None
-                                                                 ) extends DateType[T]:
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DateType[T]:
 
     override def typeName: String = "YEAR"
 
@@ -956,4 +959,4 @@ object DataType:
       */
     def DEFAULT(value: T): Year[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))

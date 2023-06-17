@@ -188,6 +188,6 @@ private[ldbc] trait Alias:
 
   type TIMESTAMP[T <: Instant | LocalDateTime | Option[Instant | LocalDateTime]] = DataType.TimeStamp[T]
 
-  type TIME[T <: LocalTime | Option[LocalTime]] =  DataType.Time[T]
+  type TIME[T <: LocalTime | Option[LocalTime]] = DataType.Time[T]
 
   type YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]] = DataType.Year[T]
