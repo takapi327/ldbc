@@ -10,13 +10,13 @@ CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
 
 CREATE TABLE `sub_test` (
   `id` BIGINT(64) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `category` BIGINT(64) NOT NULL,
+  `category` TINYINT(64) NOT NULL,
   PRIMARY KEY(`id`, `category`)
 );
 
 CREATE TABLE `test` (
-  `id` BIGINT(64) NOT NULL AUTO_INCREMENT,
-  `sub_id` BIGINT(64) NOT NULL,
+  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sub_id` TINYINT(64) UNSIGNED NOT NULL,
   `sub_category` BIGINT(64) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
