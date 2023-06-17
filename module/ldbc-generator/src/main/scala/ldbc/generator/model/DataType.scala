@@ -33,9 +33,9 @@ object DataType:
 
     override def toString: String =
       (unsigned, zerofill) match
-        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
-        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
-        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (true, true)   => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true)  => s"$name[$scalaType]($length).ZEROFILL"
         case (false, false) => s"$name[$scalaType]($length)"
 
   def SMALLINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
@@ -45,9 +45,9 @@ object DataType:
 
     override def toString: String =
       (unsigned, zerofill) match
-        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
-        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
-        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (true, true)   => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true)  => s"$name[$scalaType]($length).ZEROFILL"
         case (false, false) => s"$name[$scalaType]($length)"
 
   def MEDIUMINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
@@ -57,9 +57,9 @@ object DataType:
 
     override def toString: String =
       (unsigned, zerofill) match
-        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
-        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
-        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (true, true)   => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true)  => s"$name[$scalaType]($length).ZEROFILL"
         case (false, false) => s"$name[$scalaType]($length)"
 
   def INT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
@@ -69,9 +69,9 @@ object DataType:
 
     override def toString: String =
       (unsigned, zerofill) match
-        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
-        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
-        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (true, true)   => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true)  => s"$name[$scalaType]($length).ZEROFILL"
         case (false, false) => s"$name[$scalaType]($length)"
 
   def BIGINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
@@ -81,9 +81,9 @@ object DataType:
 
     override def toString: String =
       (unsigned, zerofill) match
-        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
-        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
-        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (true, true)   => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true)  => s"$name[$scalaType]($length).ZEROFILL"
         case (false, false) => s"$name[$scalaType]($length)"
 
   def DECIMAL(accuracy: Int, scale: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
@@ -93,9 +93,9 @@ object DataType:
 
     override def toString: String =
       (unsigned, zerofill) match
-        case (true, true) => s"$name[$scalaType]($accuracy, $scale).UNSIGNED.ZEROFILL"
-        case (true, false) => s"$name[$scalaType]($accuracy, $scale).UNSIGNED"
-        case (false, true) => s"$name[$scalaType]($accuracy, $scale).ZEROFILL"
+        case (true, true)   => s"$name[$scalaType]($accuracy, $scale).UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$name[$scalaType]($accuracy, $scale).UNSIGNED"
+        case (false, true)  => s"$name[$scalaType]($accuracy, $scale).ZEROFILL"
         case (false, false) => s"$name[$scalaType]($accuracy, $scale)"
 
   def FLOAT(accuracy: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
@@ -105,7 +105,7 @@ object DataType:
 
     override def toString: String =
       (unsigned, zerofill) match
-        case (true, true) => s"$name[$scalaType]($accuracy).UNSIGNED.ZEROFILL"
-        case (true, false) => s"$name[$scalaType]($accuracy).UNSIGNED"
-        case (false, true) => s"$name[$scalaType]($accuracy).ZEROFILL"
+        case (true, true)   => s"$name[$scalaType]($accuracy).UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$name[$scalaType]($accuracy).UNSIGNED"
+        case (false, true)  => s"$name[$scalaType]($accuracy).ZEROFILL"
         case (false, false) => s"$name[$scalaType]($accuracy)"
