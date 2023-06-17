@@ -32,8 +32,11 @@ object DataType:
     override val scalaType: ScalaType = if unsigned then ScalaType.Short else ScalaType.Byte
 
     override def toString: String =
-      if unsigned then s"$name[$scalaType]($length).UNSIGNED"
-      else s"$name[$scalaType]($length)"
+      (unsigned, zerofill) match
+        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (false, false) => s"$name[$scalaType]($length)"
 
   def SMALLINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "SMALLINT"
@@ -41,8 +44,11 @@ object DataType:
     override val scalaType: ScalaType = if unsigned then ScalaType.Int else ScalaType.Short
 
     override def toString: String =
-      if unsigned then s"$name[$scalaType]($length).UNSIGNED"
-      else s"$name[$scalaType]($length)"
+      (unsigned, zerofill) match
+        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (false, false) => s"$name[$scalaType]($length)"
 
   def MEDIUMINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "MEDIUMINT"
@@ -50,8 +56,11 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.Int
 
     override def toString: String =
-      if unsigned then s"$name[$scalaType]($length).UNSIGNED"
-      else s"$name[$scalaType]($length)"
+      (unsigned, zerofill) match
+        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (false, false) => s"$name[$scalaType]($length)"
 
   def INT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "INT"
@@ -59,8 +68,11 @@ object DataType:
     override val scalaType: ScalaType = if unsigned then ScalaType.Long else ScalaType.Int
 
     override def toString: String =
-      if unsigned then s"$name[$scalaType]($length).UNSIGNED"
-      else s"$name[$scalaType]($length)"
+      (unsigned, zerofill) match
+        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (false, false) => s"$name[$scalaType]($length)"
 
   def BIGINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "BIGINT"
@@ -68,8 +80,11 @@ object DataType:
     override val scalaType: ScalaType = if unsigned then ScalaType.BigInt else ScalaType.Long
 
     override def toString: String =
-      if unsigned then s"$name[$scalaType]($length).UNSIGNED"
-      else s"$name[$scalaType]($length)"
+      (unsigned, zerofill) match
+        case (true, true) => s"$name[$scalaType]($length).UNSIGNED.ZEROFILL"
+        case (true, false) => s"$name[$scalaType]($length).UNSIGNED"
+        case (false, true) => s"$name[$scalaType]($length).ZEROFILL"
+        case (false, false) => s"$name[$scalaType]($length)"
 
   def DECIMAL(accuracy: Int, scale: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "DECIMAL"
@@ -77,8 +92,11 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.BigDecimal
 
     override def toString: String =
-      if unsigned then s"$name[$scalaType]($accuracy, $scale).UNSIGNED"
-      else s"$name[$scalaType]($accuracy, $scale)"
+      (unsigned, zerofill) match
+        case (true, true) => s"$name[$scalaType]($accuracy, $scale).UNSIGNED.ZEROFILL"
+        case (true, false) => s"$name[$scalaType]($accuracy, $scale).UNSIGNED"
+        case (false, true) => s"$name[$scalaType]($accuracy, $scale).ZEROFILL"
+        case (false, false) => s"$name[$scalaType]($accuracy, $scale)"
 
   def FLOAT(accuracy: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "FLOAT"
@@ -86,5 +104,8 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.Float
 
     override def toString: String =
-      if unsigned then s"$name[$scalaType]($accuracy).UNSIGNED"
-      else s"$name[$scalaType]($accuracy)"
+      (unsigned, zerofill) match
+        case (true, true) => s"$name[$scalaType]($accuracy).UNSIGNED.ZEROFILL"
+        case (true, false) => s"$name[$scalaType]($accuracy).UNSIGNED"
+        case (false, true) => s"$name[$scalaType]($accuracy).ZEROFILL"
+        case (false, false) => s"$name[$scalaType]($accuracy)"

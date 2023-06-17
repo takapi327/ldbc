@@ -9,15 +9,15 @@ CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
 );
 
 CREATE TABLE `sub_test` (
-  `id` BIGINT(64) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `category` TINYINT(64) NOT NULL,
+  `id` BIGINT(64) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `category` TINYINT(64) ZEROFILL NOT NULL,
   PRIMARY KEY(`id`, `category`)
 );
 
 CREATE TABLE `test` (
   `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `sub_id` TINYINT UNSIGNED NOT NULL,
-  `sub_category` BIGINT(64) NOT NULL,
+  `sub_id` BIGINT(64) UNSIGNED ZEROFILL NOT NULL,
+  `sub_category` TINYINT(64) ZEROFILL NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
   INDEX (`id`),

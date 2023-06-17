@@ -45,15 +45,15 @@ trait DataTypes:
     inline if accuracy < 0 then error("The value of accuracy for DECIMAL must be an integer.")
     inline if scale < 0 then error("The DECIMAL scale value must be an integer.")
     inline if accuracy > 65 then error("The maximum number of digits for DECIMAL is 65.")
-    else Decimal(accuracy, scale, None)
+    else Decimal(accuracy, scale)
 
   inline def FLOAT[T <: Float](inline accuracy: Int): CFloat[T] =
     inline if accuracy < 0 || accuracy > 24 then error("The length of the FLOAT must be in the range 0 to 24.")
-    else CFloat(accuracy, None)
+    else CFloat(accuracy)
 
   inline def DOUBLE[T <: Double](inline accuracy: Int): CFloat[T] =
     inline if accuracy < 24 || accuracy > 53 then error("The length of the DOUBLE must be in the range 24 to 53.")
-    else CFloat(accuracy, None)
+    else CFloat(accuracy)
 
   /** ===== List of String Data Types ===== */
 

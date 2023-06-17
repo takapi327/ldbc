@@ -29,34 +29,34 @@ private[ldbc] trait DataTypeConversion:
     v => BitOpt(v.length, v.default)
 
   given optionTinyIntByte: Conversion[Tinyint[Byte], TinyintOpt[Option[Byte]]] =
-    v => TinyintOpt(v.length, v.isUnSigned, v.default)
+    v => TinyintOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
 
   given optionTinyIntShort: Conversion[Tinyint[Short], TinyintOpt[Option[Short]]] =
-    v => TinyintOpt(v.length, v.isUnSigned, v.default)
+    v => TinyintOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
   given optionSmallIntShort: Conversion[Smallint[Short], SmallintOpt[Option[Short]]] =
-    v => SmallintOpt(v.length, v.isUnSigned, v.default)
+    v => SmallintOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
 
   given optionSmallIntInt: Conversion[Smallint[Int], SmallintOpt[Option[Int]]] =
-    v => SmallintOpt(v.length, v.isUnSigned, v.default)
+    v => SmallintOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
   given Conversion[Mediumint[Int], MediumintOpt[Option[Int]]] =
-    v => MediumintOpt(v.length, v.isUnSigned, v.default)
+    v => MediumintOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
   given optionIntegerInt: Conversion[Integer[Int], IntegerOpt[Option[Int]]] =
-    v => IntegerOpt(v.length, v.isUnSigned, v.default)
+    v => IntegerOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
 
   given optionIntegerLong: Conversion[Integer[Long], IntegerOpt[Option[Long]]] =
-    v => IntegerOpt(v.length, v.isUnSigned, v.default)
+    v => IntegerOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
   given optionBigIntLong: Conversion[Bigint[Long], BigintOpt[Option[Long]]] =
-    v => BigintOpt(v.length, v.isUnSigned, v.default)
+    v => BigintOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
 
   given optionBigIntBigInt: Conversion[Bigint[BigInt], BigintOpt[Option[BigInt]]] =
-    v => BigintOpt(v.length, v.isUnSigned, v.default)
+    v => BigintOpt(v.length, v.isUnSigned, v.isZerofill, v.default)
   given Conversion[Decimal[BigDecimal], DecimalOpt[Option[BigDecimal]]] =
-    v => DecimalOpt(v.accuracy, v.scale, v.default)
+    v => DecimalOpt(v.accuracy, v.scale, v.isUnSigned, v.isZerofill, v.default)
 
   given optionFloatDouble: Conversion[CFloat[Double], FloatOpt[Option[Double]]] =
-    v => FloatOpt(v.accuracy, v.default)
+    v => FloatOpt(v.accuracy, v.isUnSigned, v.isZerofill, v.default)
   given optionFloatFloat: Conversion[CFloat[Float], FloatOpt[Option[Float]]] =
-    v => FloatOpt(v.accuracy, v.default)
+    v => FloatOpt(v.accuracy, v.isUnSigned, v.isZerofill, v.default)
 
   given Conversion[CChar[String], CharOpt[Option[String]]] =
     v => CharOpt(v.length, v.default, v.character)

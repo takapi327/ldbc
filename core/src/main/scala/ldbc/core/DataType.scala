@@ -231,6 +231,7 @@ object DataType:
   private[ldbc] case class Tinyint[T <: Byte | Short](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
@@ -239,8 +240,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.TinyInt
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -252,6 +256,10 @@ object DataType:
     /** Method for setting data type to unsigned.
       */
     def UNSIGNED: Tinyint[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: Tinyint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Bit data type, which is numeric data with NULL tolerance for SQL DataType.
     *
@@ -267,6 +275,7 @@ object DataType:
   private[ldbc] case class TinyintOpt[T <: Option[Byte | Short]](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
@@ -275,8 +284,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.TinyInt
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -293,6 +305,10 @@ object DataType:
       */
     def UNSIGNED: TinyintOpt[T] = this.copy(isUnSigned = true)
 
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: TinyintOpt[T] = this.copy(isZerofill = true)
+
   /** Model for representing the Smallint data type, which is the numeric data of SQL DataType.
     *
     * @param length
@@ -307,6 +323,7 @@ object DataType:
   private[ldbc] case class Smallint[T <: Short | Int](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
@@ -315,8 +332,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.SmallInt
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -328,6 +348,10 @@ object DataType:
     /** Method for setting data type to unsigned.
       */
     def UNSIGNED: Smallint[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: Smallint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Smallint data type, which is numeric data with NULL tolerance for SQL DataType.
     *
@@ -343,6 +367,7 @@ object DataType:
   private[ldbc] case class SmallintOpt[T <: Option[Short | Int]](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
@@ -351,8 +376,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.SmallInt
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -369,6 +397,10 @@ object DataType:
       */
     def UNSIGNED: SmallintOpt[T] = this.copy(isUnSigned = true)
 
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: SmallintOpt[T] = this.copy(isZerofill = true)
+
   /** Model for representing the Mediumint data type, which is the numeric data of SQL DataType.
     *
     * @param length
@@ -383,6 +415,7 @@ object DataType:
   private[ldbc] case class Mediumint[T <: Int](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
@@ -391,8 +424,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Integer
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -404,6 +440,10 @@ object DataType:
     /** Method for setting data type to unsigned.
       */
     def UNSIGNED: Mediumint[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: Mediumint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Mediumint data type, which is numeric data with NULL tolerance for SQL DataType.
     *
@@ -419,6 +459,7 @@ object DataType:
   private[ldbc] case class MediumintOpt[T <: Option[Int]](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
@@ -427,8 +468,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Integer
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -445,6 +489,10 @@ object DataType:
       */
     def UNSIGNED: MediumintOpt[T] = this.copy(isUnSigned = true)
 
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: MediumintOpt[T] = this.copy(isZerofill = true)
+
   /** Model for representing the Integer data type, which is the numeric data of SQL DataType.
     *
     * @param length
@@ -459,6 +507,7 @@ object DataType:
   private[ldbc] case class Integer[T <: Int | Long](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
@@ -467,8 +516,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Integer
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -480,6 +532,10 @@ object DataType:
     /** Method for setting data type to unsigned.
       */
     def UNSIGNED: Integer[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: Integer[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Integer data type, which is numeric data with NULL tolerance for SQL DataType.
     *
@@ -495,6 +551,7 @@ object DataType:
   private[ldbc] case class IntegerOpt[T <: Option[Int | Long]](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
@@ -503,8 +560,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Integer
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -521,6 +581,10 @@ object DataType:
       */
     def UNSIGNED: IntegerOpt[T] = this.copy(isUnSigned = true)
 
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: IntegerOpt[T] = this.copy(isZerofill = true)
+
   /** Model for representing the Bigint data type, which is the numeric data of SQL DataType.
     *
     * @param length
@@ -535,6 +599,7 @@ object DataType:
   private[ldbc] case class Bigint[T <: Long | BigInt](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
@@ -543,8 +608,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.BigInt
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -556,6 +624,10 @@ object DataType:
     /** Method for setting data type to unsigned.
       */
     def UNSIGNED: Bigint[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: Bigint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Bigint data type, which is numeric data with NULL tolerance for SQL DataType.
     *
@@ -571,6 +643,7 @@ object DataType:
   private[ldbc] case class BigintOpt[T <: Option[Long | BigInt]](
     length:     Int,
     isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerOptType[T]:
 
@@ -579,8 +652,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.BigInt
 
     override val queryString: String =
-      if isUnSigned then s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-      else s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -597,6 +673,10 @@ object DataType:
       */
     def UNSIGNED: BigintOpt[T] = this.copy(isUnSigned = true)
 
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: BigintOpt[T] = this.copy(isZerofill = true)
+
   /** Model for representing the Decimal data type, which is the numeric data of SQL DataType.
     *
     * @param accuracy
@@ -608,22 +688,39 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Decimal[T <: BigDecimal](accuracy: Int, scale: Int, default: Option[Default])
-    extends DataType[T]:
+  private[ldbc] case class Decimal[T <: BigDecimal](
+    accuracy: Int,
+    scale:    Int,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default: Option[Default]    = None
+  ) extends DataType[T]:
 
     override def typeName: String = s"DECIMAL($accuracy, $scale)"
 
     override def jdbcType: JdbcType = JdbcType.Decimal
 
     override def queryString: String =
-      s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Decimal[T] = this.copy(accuracy, scale, Some(Default.Value(value)))
+    def DEFAULT(value: T): Decimal[T] = this.copy(default = Some(Default.Value(value)))
+
+    /** Method for setting data type to unsigned.
+     */
+    def UNSIGNED: Decimal[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: Decimal[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Decimal data type, which is numeric data with NULL tolerance for SQL DataType.
     *
@@ -639,7 +736,9 @@ object DataType:
   private[ldbc] case class DecimalOpt[T <: Option[BigDecimal]](
     accuracy: Int,
     scale:    Int,
-    default:  Option[Default]
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:  Option[Default] = None
   ) extends DataType[T]:
 
     override def typeName: String = s"DECIMAL($accuracy, $scale)"
@@ -647,7 +746,11 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Decimal
 
     override def queryString: String =
-      s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     override def isOptional: Boolean = true
 
@@ -656,11 +759,19 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): DecimalOpt[T] = this.copy(accuracy, scale, Some(value.fold(Default.Null)(Default.Value(_))))
+    def DEFAULT(value: T): DecimalOpt[T] = this.copy(default = Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
-    def DEFAULT_NULL: DecimalOpt[T] = this.copy(accuracy, scale, Some(Default.Null))
+    def DEFAULT_NULL: DecimalOpt[T] = this.copy(default = Some(Default.Null))
+
+    /** Method for setting data type to unsigned.
+     */
+    def UNSIGNED: DecimalOpt[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: DecimalOpt[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Float data type, which is the numeric data of SQL DataType.
     *
@@ -673,21 +784,36 @@ object DataType:
     */
   private[ldbc] case class CFloat[T <: Double | Float](
     accuracy: Int,
-    default:  Option[Default]
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:  Option[Default] = None
   ) extends DataType[T]:
 
     override def typeName: String = s"FLOAT($accuracy)"
 
     override def jdbcType: JdbcType = JdbcType.Float
 
-    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String =
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     /** Method for setting Default value to DataType in SQL.
       *
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): CFloat[T] = this.copy(accuracy, Some(Default.Value(value)))
+    def DEFAULT(value: T): CFloat[T] = this.copy(default = Some(Default.Value(value)))
+
+    /** Method for setting data type to unsigned.
+     */
+    def UNSIGNED: CFloat[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: CFloat[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Float data type, which is numeric data with NULL tolerance for SQL DataType.
     *
@@ -700,14 +826,21 @@ object DataType:
     */
   private[ldbc] case class FloatOpt[T <: Option[Double | Float]](
     accuracy: Int,
-    default:  Option[Default]
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:  Option[Default] = None
   ) extends DataType[T]:
 
     override def typeName: String = s"FLOAT($accuracy)"
 
     override def jdbcType: JdbcType = JdbcType.Float
 
-    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String =
+      (isUnSigned, isZerofill) match
+        case (true, true) => s"$typeName UNSIGNED ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (true, false) => s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, true) => s"$typeName ZEROFILL $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+        case (false, false) => s"$typeName $nullType" ++ default.fold("")(v => s" ${v.queryString}")
 
     override def isOptional: Boolean = true
 
@@ -716,11 +849,19 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): FloatOpt[T] = this.copy(accuracy, Some(value.fold(Default.Null)(Default.Value(_))))
+    def DEFAULT(value: T): FloatOpt[T] = this.copy(default = Some(value.fold(Default.Null)(Default.Value(_))))
 
     /** Method to set the Default value to NULL for SQL DataType.
       */
-    def DEFAULT_NULL: FloatOpt[T] = this.copy(accuracy, Some(Default.Null))
+    def DEFAULT_NULL: FloatOpt[T] = this.copy(default = Some(Default.Null))
+
+    /** Method for setting data type to unsigned.
+     */
+    def UNSIGNED: FloatOpt[T] = this.copy(isUnSigned = true)
+
+    /** Method for setting data type to zerofill.
+     */
+    def ZEROFILL: FloatOpt[T] = this.copy(isZerofill = true)
 
   /** ===== List of String Data Types ===== */
 
