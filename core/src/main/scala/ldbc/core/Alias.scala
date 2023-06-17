@@ -39,7 +39,7 @@ private[ldbc] trait Alias:
     attributes: Attribute[T]*
   ): Column[T] = Column[T](label, dataType, comment, attributes: _*)
 
-  def AUTO_INCREMENT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]]: AutoInc[T] = AutoInc[T]()
+  def AUTO_INCREMENT[T <: Byte | Short | Int | Long | BigInt | Option[Byte | Short | Int | Long | BigInt]]: AutoInc[T] = AutoInc[T]()
 
   def PRIMARY_KEY[T]: PrimaryKey & Attribute[T] = new PrimaryKey with Attribute[T]:
     override def queryString: String = label
@@ -162,25 +162,33 @@ private[ldbc] trait Alias:
           case Double     => DataType.BitOpt[Option[Double]]
           case BigDecimal => DataType.BitOpt[Option[BigDecimal]]
 
-  type TINYINT[T <: Byte | Option[Byte]] = T match
-    case Byte         => DataType.Tinyint[Byte]
-    case Option[Byte] => DataType.TinyintOpt[Option[Byte]]
+  type TINYINT[T <: Byte | Short | Option[Byte | Short]] = T match
+    case Byte          => DataType.Tinyint[Byte]
+    case Short         => DataType.Tinyint[Short]
+    case Option[Byte]  => DataType.TinyintOpt[Option[Byte]]
+    case Option[Short] => DataType.TinyintOpt[Option[Short]]
 
-  type SMALLINT[T <: Short | Option[Short]] = T match
+  type SMALLINT[T <: Short | Int | Option[Short | Int]] = T match
     case Short         => DataType.Smallint[Short]
+    case Int           => DataType.Smallint[Int]
     case Option[Short] => DataType.SmallintOpt[Option[Short]]
+    case Option[Int]   => DataType.SmallintOpt[Option[Int]]
 
   type MEDIUMINT[T <: Int | Option[Int]] = T match
     case Int         => DataType.Mediumint[Int]
     case Option[Int] => DataType.MediumintOpt[Option[Int]]
 
-  type INTEGER[T <: Int | Option[Int]] = T match
-    case Int         => DataType.Integer[Int]
-    case Option[Int] => DataType.IntegerOpt[Option[Int]]
+  type INTEGER[T <: Int | Long | Option[Int | Long]] = T match
+    case Int          => DataType.Integer[Int]
+    case Long         => DataType.Integer[Long]
+    case Option[Int]  => DataType.IntegerOpt[Option[Int]]
+    case Option[Long] => DataType.IntegerOpt[Option[Long]]
 
-  type BIGINT[T <: Long | Option[Long]] = T match
-    case Long         => DataType.Bigint[Long]
-    case Option[Long] => DataType.BigintOpt[Option[Long]]
+  type BIGINT[T <: Long | BigInt | Option[Long | BigInt]] = T match
+    case Long           => DataType.Bigint[Long]
+    case BigInt         => DataType.Bigint[BigInt]
+    case Option[Long]   => DataType.BigintOpt[Option[Long]]
+    case Option[BigInt] => DataType.BigintOpt[Option[BigInt]]
 
   type DECIMAL[T <: BigDecimal | Option[BigDecimal]] = T match
     case BigDecimal         => DataType.Decimal[BigDecimal]

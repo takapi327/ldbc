@@ -21,11 +21,11 @@ trait DataTypes:
     inline if length < 1 || length > 64 then error("The length of the BIT must be in the range 1 to 64.")
     else Bit(length, None)
 
-  inline def TINYINT[T <: Byte](inline length: Int): Tinyint[T] =
+  inline def TINYINT[T <: Byte | Short](inline length: Int): Tinyint[T] =
     inline if length < 0 || length > 255 then error("The length of the TINYINT must be in the range 0 to 255.")
     else Tinyint(length)
 
-  inline def SMALLINT[T <: Short](inline length: Int): Smallint[T] =
+  inline def SMALLINT[T <: Short | Int](inline length: Int): Smallint[T] =
     inline if length < 0 || length > 255 then error("The length of the SMALLINT must be in the range 0 to 255.")
     else Smallint(length)
 
@@ -33,11 +33,11 @@ trait DataTypes:
     inline if length < 0 || length > 255 then error("The length of the MEDIUMINT must be in the range 0 to 255.")
     else Mediumint(length)
 
-  inline def INT[T <: Int](inline length: Int): Integer[T] =
+  inline def INT[T <: Int | Long](inline length: Int): Integer[T] =
     inline if length < 0 || length > 255 then error("The length of the INT must be in the range 0 to 255.")
     else Integer(length)
 
-  inline def BIGINT[T <: Long](inline length: Int): Bigint[T] =
+  inline def BIGINT[T <: Long | BigInt](inline length: Int): Bigint[T] =
     inline if length < 0 || length > 255 then error("The length of the BIGINT must be in the range 0 to 255.")
     else Bigint(length)
 

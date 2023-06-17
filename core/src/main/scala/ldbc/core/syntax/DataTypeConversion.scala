@@ -28,15 +28,27 @@ private[ldbc] trait DataTypeConversion:
   given optionBitBigDecimal: Conversion[Bit[BigDecimal], BitOpt[Option[BigDecimal]]] =
     v => BitOpt(v.length, v.default)
 
-  given Conversion[Tinyint[Byte], TinyintOpt[Option[Byte]]] =
+  given optionTinyIntByte: Conversion[Tinyint[Byte], TinyintOpt[Option[Byte]]] =
     v => TinyintOpt(v.length, v.isUnSigned, v.default)
-  given Conversion[Smallint[Short], SmallintOpt[Option[Short]]] =
+
+  given optionTinyIntShort: Conversion[Tinyint[Short], TinyintOpt[Option[Short]]] =
+    v => TinyintOpt(v.length, v.isUnSigned, v.default)
+  given optionSmallIntShort: Conversion[Smallint[Short], SmallintOpt[Option[Short]]] =
+    v => SmallintOpt(v.length, v.isUnSigned, v.default)
+
+  given optionSmallIntInt: Conversion[Smallint[Int], SmallintOpt[Option[Int]]] =
     v => SmallintOpt(v.length, v.isUnSigned, v.default)
   given Conversion[Mediumint[Int], MediumintOpt[Option[Int]]] =
     v => MediumintOpt(v.length, v.isUnSigned, v.default)
-  given Conversion[Integer[Int], IntegerOpt[Option[Int]]] =
+  given optionIntegerInt: Conversion[Integer[Int], IntegerOpt[Option[Int]]] =
     v => IntegerOpt(v.length, v.isUnSigned, v.default)
-  given Conversion[Bigint[Long], BigintOpt[Option[Long]]] =
+
+  given optionIntegerLong: Conversion[Integer[Long], IntegerOpt[Option[Long]]] =
+    v => IntegerOpt(v.length, v.isUnSigned, v.default)
+  given optionBigIntLong: Conversion[Bigint[Long], BigintOpt[Option[Long]]] =
+    v => BigintOpt(v.length, v.isUnSigned, v.default)
+
+  given optionBigIntBigInt: Conversion[Bigint[BigInt], BigintOpt[Option[BigInt]]] =
     v => BigintOpt(v.length, v.isUnSigned, v.default)
   given Conversion[Decimal[BigDecimal], DecimalOpt[Option[BigDecimal]]] =
     v => DecimalOpt(v.accuracy, v.scale, v.default)

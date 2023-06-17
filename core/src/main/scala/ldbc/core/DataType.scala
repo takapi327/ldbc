@@ -71,7 +71,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] trait IntegerType[T <: Byte | Short | Int | Long | Float | Double | BigDecimal] extends DataType[T]:
+  private[ldbc] trait IntegerType[T <: Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt] extends DataType[T]:
 
     /** Maximum display width of integer data type
       */
@@ -86,7 +86,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  sealed trait IntegerOptType[T <: Option[Byte | Short | Int | Long | Float | Double | BigDecimal]] extends DataType[T]:
+  sealed trait IntegerOptType[T <: Option[Byte | Short | Int | Long | Float | Double | BigDecimal | BigInt]] extends DataType[T]:
 
     /** Maximum display width of integer data type
       */
@@ -226,7 +226,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Tinyint[T <: Byte](
+  private[ldbc] case class Tinyint[T <: Byte | Short](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
@@ -262,7 +262,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class TinyintOpt[T <: Option[Byte]](
+  private[ldbc] case class TinyintOpt[T <: Option[Byte | Short]](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
@@ -302,7 +302,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Smallint[T <: Short](
+  private[ldbc] case class Smallint[T <: Short | Int](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
@@ -338,7 +338,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class SmallintOpt[T <: Option[Short]](
+  private[ldbc] case class SmallintOpt[T <: Option[Short | Int]](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
@@ -454,7 +454,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Integer[T <: Int](
+  private[ldbc] case class Integer[T <: Int | Long](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
@@ -490,7 +490,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class IntegerOpt[T <: Option[Int]](
+  private[ldbc] case class IntegerOpt[T <: Option[Int | Long]](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
@@ -530,7 +530,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Bigint[T <: Long](
+  private[ldbc] case class Bigint[T <: Long | BigInt](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
@@ -566,7 +566,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class BigintOpt[T <: Option[Long]](
+  private[ldbc] case class BigintOpt[T <: Option[Long | BigInt]](
     length:     Int,
     isUnSigned: Boolean         = false,
     default:    Option[Default] = None
