@@ -21,8 +21,8 @@ trait DataTypeParser extends LdbcParser:
     */
   private def bitType: Parser[DataType] =
     customError(
-      caseSensitivity("bit") ~> "(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")" ^^ { n =>
-        DataType.BIT(n)
+      caseSensitivity("bit") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")") ^^ { n =>
+        DataType.BIT(n.getOrElse(1))
       },
       """
         |===============================================================================
@@ -41,9 +41,9 @@ trait DataTypeParser extends LdbcParser:
 
   private def tinyintType: Parser[DataType] =
     customError(
-      caseSensitivity("tinyint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
+      caseSensitivity("tinyint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.TINYINT(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.TINYINT(n.getOrElse(3), unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -51,7 +51,7 @@ trait DataTypeParser extends LdbcParser:
         |The tinyint Data type must be defined as follows
         |※ tinyint strings are case-insensitive.
         |
-        |M, the signed range is -128 to 127. The unsigned range is 0 to 255.
+        |M is the number of bits per value (0 to 255). If M is omitted, the default is 3.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -62,9 +62,9 @@ trait DataTypeParser extends LdbcParser:
 
   private def smallintType: Parser[DataType] =
     customError(
-      caseSensitivity("smallint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
+      caseSensitivity("smallint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.SMALLINT(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.SMALLINT(n.getOrElse(5), unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -72,7 +72,7 @@ trait DataTypeParser extends LdbcParser:
         |The smallint Data type must be defined as follows
         |※ smallint strings are case-insensitive.
         |
-        |M, the signed range is -32768 to 32767. The unsigned range is 0 to 65535.
+        |M is the number of bits per value (0 to 255). If M is omitted, the default is 5.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -83,9 +83,9 @@ trait DataTypeParser extends LdbcParser:
 
   private def mediumintType: Parser[DataType] =
     customError(
-      caseSensitivity("mediumint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
+      caseSensitivity("mediumint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.MEDIUMINT(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.MEDIUMINT(n.getOrElse(8), unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -93,7 +93,7 @@ trait DataTypeParser extends LdbcParser:
         |The mediumint Data type must be defined as follows
         |※ mediumint strings are case-insensitive.
         |
-        |M, the signed range is -32768 to 32767. The unsigned range is 0 to 65535.
+        |M is the number of bits per value (0 to 255). If M is omitted, the default is 8.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -104,9 +104,11 @@ trait DataTypeParser extends LdbcParser:
 
   private def intType: Parser[DataType] =
     customError(
-      (caseSensitivity("int") | caseSensitivity("integer")) ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
+      (caseSensitivity("int") | caseSensitivity("integer")) ~> opt(
+        "(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")"
+      ) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.INT(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.INT(n.getOrElse(10), unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -114,7 +116,7 @@ trait DataTypeParser extends LdbcParser:
         |The int Data type must be defined as follows
         |※ int strings are case-insensitive.
         |
-        |M, the signed range is -32768 to 32767. The unsigned range is 0 to 65535.
+        |M is the number of bits per value (0 to 255). If M is omitted, the default is 10.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -125,9 +127,9 @@ trait DataTypeParser extends LdbcParser:
 
   private def bigIntType: Parser[DataType] =
     customError(
-      caseSensitivity("bigint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
+      caseSensitivity("bigint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.BIGINT(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.BIGINT(n.getOrElse(20), unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -135,7 +137,7 @@ trait DataTypeParser extends LdbcParser:
         |The bigint Data type must be defined as follows
         |※ bigint strings are case-insensitive.
         |
-        |M, the signed range is -128 to 127. The unsigned range is 0 to 255.
+        |M is the number of bits per value (0 to 255). If M is omitted, the default is 20.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -146,11 +148,13 @@ trait DataTypeParser extends LdbcParser:
 
   private def decimalType: Parser[DataType] =
     customError(
-      (caseSensitivity("decimal") | caseSensitivity("dec")) ~> "(" ~>
-        digit.filter(n => n >= 0 && n <= 65) ~ opt("," ~> digit.filter(n => n >= 0 && n <= 30)) ~ ")" ~
+      (caseSensitivity("decimal") | caseSensitivity("dec")) ~>
+        opt("(" ~> digit.filter(n => n >= 0 && n <= 65) ~ opt("," ~> digit.filter(n => n >= 0 && n <= 30)) <~ ")") ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case m ~ d ~ _ ~ unsigned ~ zerofill =>
-            DataType.DECIMAL(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill =>
+            n match
+              case Some(m ~ d) => DataType.DECIMAL(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
+              case None        => DataType.DECIMAL(10, 0, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -190,9 +194,13 @@ trait DataTypeParser extends LdbcParser:
 
   private def doubleType: Parser[DataType] =
     customError(
-      (caseSensitivity("double") | caseSensitivity("real")) ~> "(" ~> digit.filter(n => n >= 24 && n <= 53) ~ "," ~
-        digit.filter(n => n >= 24 && n <= 53) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
-          case m ~ _ ~ d ~ _ ~ unsigned ~ zerofill => DataType.FLOAT(m, unsigned.isDefined, zerofill.isDefined)
+      (caseSensitivity("double") | caseSensitivity("real")) ~>
+        opt("(" ~> digit.filter(n => n >= 24 && n <= 53) ~ "," ~ digit.filter(n => n >= 24 && n <= 53) <~ ")") ~
+        opt(unsigned) ~ opt(zerofill) ^^ {
+          case n ~ unsigned ~ zerofill =>
+            n match
+              case Some(m ~ _ ~ d) => DataType.FLOAT(m, unsigned.isDefined, zerofill.isDefined)
+              case None            => DataType.FLOAT(10, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
