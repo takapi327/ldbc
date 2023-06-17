@@ -13,6 +13,12 @@ trait DataTypeParser extends LdbcParser:
   private def unsigned: Parser[String] = "(?i)unsigned".r ^^ (_.toUpperCase)
   private def zerofill: Parser[String] = "(?i)zerofill".r ^^ (_.toUpperCase)
 
+  private def argument(name: String, min: Int, max: Int, default: Int): Parser[Int] =
+    customError(
+      "(" ~> digit.filter(n => n >= min && n <= max) <~ ")",
+      s"M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default."
+    )
+
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType |
       intType | decimalType | floatType | doubleType
@@ -21,7 +27,7 @@ trait DataTypeParser extends LdbcParser:
     */
   private def bitType: Parser[DataType] =
     customError(
-      caseSensitivity("bit") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")") ^^ { n =>
+      caseSensitivity("bit") ~> opt(argument("BIT", 1, 64, 1)) ^^ { n =>
         DataType.BIT(n.getOrElse(1))
       },
       """
@@ -41,7 +47,7 @@ trait DataTypeParser extends LdbcParser:
 
   private def tinyintType: Parser[DataType] =
     customError(
-      caseSensitivity("tinyint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
+      caseSensitivity("tinyint") ~> opt(argument("TINYINT", 1, 255, 3)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.TINYINT(n.getOrElse(3), unsigned.isDefined, zerofill.isDefined)
         },
@@ -62,7 +68,7 @@ trait DataTypeParser extends LdbcParser:
 
   private def smallintType: Parser[DataType] =
     customError(
-      caseSensitivity("smallint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
+      caseSensitivity("smallint") ~> opt(argument("SMALLINT", 1, 255, 5)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.SMALLINT(n.getOrElse(5), unsigned.isDefined, zerofill.isDefined)
         },
@@ -83,7 +89,7 @@ trait DataTypeParser extends LdbcParser:
 
   private def mediumintType: Parser[DataType] =
     customError(
-      caseSensitivity("mediumint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
+      caseSensitivity("mediumint") ~> opt(argument("MEDIUMINT", 1, 255, 8)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.MEDIUMINT(n.getOrElse(8), unsigned.isDefined, zerofill.isDefined)
         },
@@ -104,9 +110,8 @@ trait DataTypeParser extends LdbcParser:
 
   private def intType: Parser[DataType] =
     customError(
-      (caseSensitivity("int") | caseSensitivity("integer")) ~> opt(
-        "(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")"
-      ) ~
+      (caseSensitivity("int") | caseSensitivity("integer")) ~>
+        opt(argument("INT", 1, 255, 10)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.INT(n.getOrElse(10), unsigned.isDefined, zerofill.isDefined)
         },
@@ -127,7 +132,7 @@ trait DataTypeParser extends LdbcParser:
 
   private def bigIntType: Parser[DataType] =
     customError(
-      caseSensitivity("bigint") ~> opt("(" ~> digit.filter(n => n >= 1 && n <= 255) <~ ")") ~
+      caseSensitivity("bigint") ~> opt(argument("BIGINT", 1, 255, 20)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.BIGINT(n.getOrElse(20), unsigned.isDefined, zerofill.isDefined)
         },
