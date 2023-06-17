@@ -22,7 +22,7 @@ trait DataTypeParser extends LdbcParser:
   private def bitType: Parser[DataType] =
     customError(
       caseSensitivity("bit") ~> "(" ~> digit.filter(n => n >= 1 && n <= 64) <~ ")" ^^ { n =>
-        DataType.Bit(n)
+        DataType.BIT(n)
       },
       """
         |===============================================================================
@@ -43,7 +43,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("tinyint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.Tinyint(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ _ ~ unsigned ~ zerofill => DataType.TINYINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -64,7 +64,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("smallint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.Smallint(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ _ ~ unsigned ~ zerofill => DataType.SMALLINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -85,7 +85,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("mediumint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.Mediumint(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ _ ~ unsigned ~ zerofill => DataType.MEDIUMINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -106,7 +106,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       (caseSensitivity("int") | caseSensitivity("integer")) ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.Integer(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ _ ~ unsigned ~ zerofill => DataType.INT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -127,7 +127,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("bigint") ~> "(" ~> digit.filter(n => n >= 1 && n <= 255) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.BigInt(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ _ ~ unsigned ~ zerofill => DataType.BIGINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -150,7 +150,7 @@ trait DataTypeParser extends LdbcParser:
         digit.filter(n => n >= 0 && n <= 65) ~ opt("," ~> digit.filter(n => n >= 0 && n <= 30)) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
           case m ~ d ~ _ ~ unsigned ~ zerofill =>
-            DataType.Decimal(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
+            DataType.DECIMAL(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -171,7 +171,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("float") ~> "(" ~> digit.filter(n => n >= 0 && n <= 24) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.CFloat(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ _ ~ unsigned ~ zerofill => DataType.FLOAT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -192,7 +192,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       (caseSensitivity("double") | caseSensitivity("real")) ~> "(" ~> digit.filter(n => n >= 24 && n <= 53) ~ "," ~
         digit.filter(n => n >= 24 && n <= 53) ~ ")" ~ opt(unsigned) ~ opt(zerofill) ^^ {
-          case m ~ _ ~ d ~ _ ~ unsigned ~ zerofill => DataType.CFloat(m, unsigned.isDefined, zerofill.isDefined)
+          case m ~ _ ~ d ~ _ ~ unsigned ~ zerofill => DataType.FLOAT(m, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
