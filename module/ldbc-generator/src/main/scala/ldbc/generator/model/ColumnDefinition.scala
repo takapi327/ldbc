@@ -28,10 +28,13 @@ case class ColumnDefinition(
     else s"${ dataType.scalaType }"
 
   private val default = attributes.fold("")(attribute =>
-    attribute.default match
-      case Some(v) if v == "NULL" => ".DEFAULT_NULL"
-      case Some(v)                => s".DEFAULT($v)"
-      case None                   => ""
+    (attribute.default, attribute.constraint) match
+      case (Some(v), true) if v == "NULL" => ".DEFAULT(None)"
+      case (Some(v), false) if v == "NULL" =>
+        throw new IllegalArgumentException("NULL cannot be set as the default value for non-null-allowed columns.")
+      case (Some(v), false) => s".DEFAULT($v)"
+      case (Some(v), true)  => s".DEFAULT(Some($v))"
+      case (None, _)        => ""
   )
 
   private val _attributes = attributes.fold("")(attribute =>
@@ -43,4 +46,4 @@ case class ColumnDefinition(
   )
 
   def toCode: String =
-    s"column[$scalaType](\"$name\", $dataType" + default + _attributes + ")"
+    s"column[$scalaType](\"$name\", ${ dataType.toCode(scalaType) }" + default + _attributes + ")"
