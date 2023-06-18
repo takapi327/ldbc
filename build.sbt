@@ -24,6 +24,22 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     ),
     scalas = List(scala3),
     javas  = List(JavaSpec.temurin(java11)),
+  ),
+  WorkflowJob(
+    "sbtScripted",
+    "sbt scripted",
+    githubWorkflowJobSetup.value.toList ::: List(
+      WorkflowStep.Run(
+        List("sbt +publishLocal"),
+        name = Some("sbt publishLocal"),
+      ),
+      WorkflowStep.Run(
+        List("sbt scripted"),
+        name = Some("sbt scripted"),
+      )
+    ),
+    scalas = List(scala3),
+    javas = List(JavaSpec.temurin(java11)),
   )
 )
 
