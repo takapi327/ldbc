@@ -21,7 +21,7 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType |
-      intType | decimalType | floatType | doubleType
+      intType | decimalType | floatType | doubleType | charType
 
   /** Numeric data type parsing
     */
@@ -218,6 +218,29 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
         |example: DOUBLE[(M,D)] [UNSIGNED] [ZEROFILL]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def charType: Parser[DataType] =
+    customError(
+      opt(caseSensitivity("national")) ~> (caseSensitivity("char") | caseSensitivity("character")) ~>
+        opt(argument("CHAR", 0, 255, 1)) ~
+        opt(caseSensitivity("character") ~> caseSensitivity("set") ~> sqlIdent) ~
+        opt(caseSensitivity("collate") ~> sqlIdent) ^^ {
+          case n ~ character ~ collate => DataType.CHAR(n.getOrElse(1), character, collate)
+        },
+      """
+        |===============================================================================
+        |Failed to parse char data type.
+        |The char Data type must be defined as follows
+        |※ char strings are case-insensitive.
+        |
+        |M is the length of the column in characters. M ranges from 0 to 255. If M is omitted, the length is 1.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: [NATIONAL] CHAR[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
     )
