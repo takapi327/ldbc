@@ -19,9 +19,18 @@ trait DataTypeParser extends LdbcParser:
       s"M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default."
     )
 
+  private def argument(name: String, min: Int, max: Int): Parser[Int] =
+    customError(
+      "(" ~> digit.filter(n => n >= min && n <= max) <~ ")",
+      s"M in $name[(M)] is the number of bits per value ($min to $max)"
+    )
+
+  private def character: Parser[String] = caseSensitivity("character") ~> caseSensitivity("set") ~> sqlIdent
+  private def collate: Parser[String] = caseSensitivity("collate") ~> sqlIdent
+
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType |
-      intType | decimalType | floatType | doubleType | charType
+      intType | decimalType | floatType | doubleType | charType | varcharType
 
   /** Numeric data type parsing
     */
@@ -225,9 +234,7 @@ trait DataTypeParser extends LdbcParser:
   private def charType: Parser[DataType] =
     customError(
       opt(caseSensitivity("national")) ~> (caseSensitivity("char") | caseSensitivity("character")) ~>
-        opt(argument("CHAR", 0, 255, 1)) ~
-        opt(caseSensitivity("character") ~> caseSensitivity("set") ~> sqlIdent) ~
-        opt(caseSensitivity("collate") ~> sqlIdent) ^^ {
+        opt(argument("CHAR", 0, 255, 1)) ~ opt(character) ~ opt(collate) ^^ {
           case n ~ character ~ collate => DataType.CHAR(n.getOrElse(1), character, collate)
         },
       """
@@ -241,6 +248,27 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: [NATIONAL] CHAR[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def varcharType: Parser[DataType] =
+    customError(
+      opt(caseSensitivity("national")) ~> caseSensitivity("varchar") ~>
+        argument("VARCHAR", 0, 65535) ~ opt(character) ~ opt(collate) ^^ {
+          case n ~ character ~ collate => DataType.VARCHAR(n, character, collate)
+        },
+      """
+        |===============================================================================
+        |Failed to parse varchar data type.
+        |The varchar Data type must be defined as follows
+        |※ varchar strings are case-insensitive.
+        |
+        |M is the length of the column in characters. M ranges from 0 to 65,535.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: [NATIONAL] VARCHAR(M) [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
     )

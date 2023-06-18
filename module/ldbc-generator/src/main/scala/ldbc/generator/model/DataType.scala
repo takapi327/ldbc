@@ -123,3 +123,15 @@ object DataType:
         case (Some(ch), None) => s"$name[$typeParam]($length).CHARACTER_SET(Character(\"$ch\"))"
         case (None, Some(co)) => throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]($length)"
+
+  def VARCHAR(length: Int, character: Option[String], collate: Option[String]): DataType = new DataType:
+    override val name: String = "VARCHAR"
+    override val jdbcType: JdbcType = JdbcType.VarChar
+    override val scalaType: ScalaType = ScalaType.String
+
+    override def toCode(typeParam: String): String =
+      (character, collate) match
+        case (Some(ch), Some(co)) => s"$name[$typeParam]($length).CHARACTER_SET(Character(\"$ch\").set(\"$co\"))"
+        case (Some(ch), None) => s"$name[$typeParam]($length).CHARACTER_SET(Character(\"$ch\"))"
+        case (None, Some(co)) => throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
+        case (None, None) => s"$name[$typeParam]($length)"
