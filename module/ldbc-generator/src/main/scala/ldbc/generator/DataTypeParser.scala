@@ -26,7 +26,7 @@ trait DataTypeParser extends LdbcParser:
     )
 
   private def character: Parser[String] = caseSensitivity("character") ~> caseSensitivity("set") ~> sqlIdent
-  private def collate: Parser[String] = caseSensitivity("collate") ~> sqlIdent
+  private def collate:   Parser[String] = caseSensitivity("collate") ~> sqlIdent
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType |
