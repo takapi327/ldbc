@@ -85,10 +85,11 @@ trait DataTypes:
 
   inline def TINYBLOB[T <: Array[Byte] | Option[Array[Byte]]](): Tinyblob[T] = Tinyblob(isOptional[T])
 
+  inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](): Blob[T] = Blob(None, isOptional[T])
   inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](inline length: Long): Blob[T] =
     inline if length < 0 || length > 4294967295L then
       error("The length of the BLOB must be in the range 0 to 4294967295.")
-    else Blob(length, isOptional[T])
+    else Blob(Some(length), isOptional[T])
 
   inline def MEDIUMBLOB[T <: Array[Byte] | Option[Array[Byte]]](): Mediumblob[T] = Mediumblob(isOptional[T])
 

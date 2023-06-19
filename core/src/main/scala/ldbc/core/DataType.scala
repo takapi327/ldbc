@@ -636,24 +636,15 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Blob[T <: Array[Byte] | Option[Array[Byte]]](
-    length:     Long,
+    length:     Option[Long],
     isOptional: Boolean,
-    character:  Option[Character] = None
-  ) extends BlobType[T]:
+  ) extends DataType[T]:
 
-    override def typeName: String = s"BLOB($length)"
+    override def typeName: String = length.fold("BLOB")(n => s"BLOB($n)")
 
     override def jdbcType: JdbcType = JdbcType.Blob
 
-    override def queryString: String =
-      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
-
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
-    def CHARACTER_SET(character: Character): Blob[T] = this.copy(character = Some(character))
+    override def queryString: String = s"$typeName $nullType"
 
   /** Model for representing the Mediumblob data type, which is the string data of SQL DataType.
     *
