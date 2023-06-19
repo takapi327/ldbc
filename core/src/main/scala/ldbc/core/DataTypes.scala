@@ -128,6 +128,10 @@ trait DataTypes:
     error("If an fsp value is specified for TIMESTAMP, it must be in the range of 0 to 6.")
     else TimeStamp(Some(fsp), isOptional[T])
 
-  inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(isOptional[T])
+  inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(None, isOptional[T])
+  inline def TIME[T <: LocalTime | Option[LocalTime]](inline fsp: Int): Time[T] =
+    inline if fsp < 0 || fsp > 6 then
+    error("If an fsp value is specified for TIME, it must be in the range of 0 to 6.")
+    else Time(Some(fsp), isOptional[T])
 
   inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] = Year(isOptional[T])

@@ -898,6 +898,7 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Time[T <: LocalTime | Option[LocalTime]](
+                                                                     fsp:        Option[Int],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends DateType[T]:
@@ -906,7 +907,7 @@ object DataType:
 
     override def jdbcType: JdbcType = JdbcType.Time
 
-    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String = fsp.fold(typeName)(n => s"$typeName($n)") ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
