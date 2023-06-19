@@ -7,15 +7,15 @@ package ldbc.generator.model
 import ldbc.core.JdbcType
 
 enum ScalaType(val code: String):
-  case Byte extends ScalaType("Byte")
-  case String extends ScalaType("String")
-  case Short extends ScalaType("Short")
-  case Int extends ScalaType("Int")
-  case Long extends ScalaType("Long")
+  case Byte       extends ScalaType("Byte")
+  case String     extends ScalaType("String")
+  case Short      extends ScalaType("Short")
+  case Int        extends ScalaType("Int")
+  case Long       extends ScalaType("Long")
   case BigDecimal extends ScalaType("BigDecimal")
-  case Float extends ScalaType("Float")
-  case BigInt extends ScalaType("BigInt")
-  case ArrayByte extends ScalaType("Array[Byte]")
+  case Float      extends ScalaType("Float")
+  case BigInt     extends ScalaType("BigInt")
+  case ArrayByte  extends ScalaType("Array[Byte]")
 
 trait DataType:
 
@@ -147,95 +147,95 @@ object DataType:
         case (None, None) => s"$name[$typeParam]($length)"
 
   def BINARY(length: Int): DataType = new DataType:
-    override val name: String = "BINARY"
-    override val jdbcType: JdbcType = JdbcType.Binary
+    override val name:      String    = "BINARY"
+    override val jdbcType:  JdbcType  = JdbcType.Binary
     override val scalaType: ScalaType = ScalaType.ArrayByte
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]($length)"
 
   def VARBINARY(length: Int): DataType = new DataType:
-    override val name: String = "VARBINARY"
-    override val jdbcType: JdbcType = JdbcType.VarBinary
+    override val name:      String    = "VARBINARY"
+    override val jdbcType:  JdbcType  = JdbcType.VarBinary
     override val scalaType: ScalaType = ScalaType.ArrayByte
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]($length)"
 
   def TINYBLOB(): DataType = new DataType:
-    override val name: String = "TINYBLOB"
-    override val jdbcType: JdbcType = JdbcType.VarBinary
+    override val name:      String    = "TINYBLOB"
+    override val jdbcType:  JdbcType  = JdbcType.VarBinary
     override val scalaType: ScalaType = ScalaType.ArrayByte
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]()"
 
   def TINYTEXT(character: Option[String], collate: Option[String]): DataType = new DataType:
-    override val name: String = "TINYTEXT"
-    override val jdbcType: JdbcType = JdbcType.VarChar
+    override val name:      String    = "TINYTEXT"
+    override val jdbcType:  JdbcType  = JdbcType.VarChar
     override val scalaType: ScalaType = ScalaType.String
 
     override def toCode(typeParam: String): String =
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\").set(\"$co\"))"
-        case (Some(ch), None) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
+        case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]()"
 
   def BLOB(length: Option[Int]): DataType = new DataType:
-    override val name: String = "BLOB"
-    override val jdbcType: JdbcType = JdbcType.Blob
+    override val name:      String    = "BLOB"
+    override val jdbcType:  JdbcType  = JdbcType.Blob
     override val scalaType: ScalaType = ScalaType.ArrayByte
 
     override def toCode(typeParam: String): String = length.fold(s"$name[$typeParam]()")(n => s"$name[$typeParam]($n)")
 
   def TEXT(length: Option[Int], character: Option[String], collate: Option[String]): DataType = new DataType:
-    override val name: String = "TEXT"
-    override val jdbcType: JdbcType = JdbcType.LongVarChar
+    override val name:      String    = "TEXT"
+    override val jdbcType:  JdbcType  = JdbcType.LongVarChar
     override val scalaType: ScalaType = ScalaType.String
 
     override def toCode(typeParam: String): String =
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\").set(\"$co\"))"
-        case (Some(ch), None) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
+        case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]()"
 
   def MEDIUMBLOB(): DataType = new DataType:
-    override val name: String = "MEDIUMBLOB"
-    override val jdbcType: JdbcType = JdbcType.LongVarBinary
+    override val name:      String    = "MEDIUMBLOB"
+    override val jdbcType:  JdbcType  = JdbcType.LongVarBinary
     override val scalaType: ScalaType = ScalaType.ArrayByte
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]()"
 
   def MEDIUMTEXT(character: Option[String], collate: Option[String]): DataType = new DataType:
-    override val name: String = "MEDIUMTEXT"
-    override val jdbcType: JdbcType = JdbcType.LongVarChar
+    override val name:      String    = "MEDIUMTEXT"
+    override val jdbcType:  JdbcType  = JdbcType.LongVarChar
     override val scalaType: ScalaType = ScalaType.String
 
     override def toCode(typeParam: String): String =
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\").set(\"$co\"))"
-        case (Some(ch), None) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
+        case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]()"
 
   def LONGBLOB(): DataType = new DataType:
-    override val name: String = "LONGBLOB"
-    override val jdbcType: JdbcType = JdbcType.LongVarBinary
+    override val name:      String    = "LONGBLOB"
+    override val jdbcType:  JdbcType  = JdbcType.LongVarBinary
     override val scalaType: ScalaType = ScalaType.ArrayByte
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]()"
 
   def LONGTEXT(character: Option[String], collate: Option[String]): DataType = new DataType:
-    override val name: String = "LONGTEXT"
-    override val jdbcType: JdbcType = JdbcType.LongVarChar
+    override val name:      String    = "LONGTEXT"
+    override val jdbcType:  JdbcType  = JdbcType.LongVarChar
     override val scalaType: ScalaType = ScalaType.String
 
     override def toCode(typeParam: String): String =
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\").set(\"$co\"))"
-        case (Some(ch), None) => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
+        case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(Character(\"$ch\"))"
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]()"

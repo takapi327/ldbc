@@ -276,8 +276,8 @@ trait DataTypeParser extends LdbcParser:
 
   private def binaryType: Parser[DataType] =
     customError(
-      caseSensitivity("binary") ~> opt(argument("BINARY", 0, 255, 1)) ^^ {
-        n => DataType.BINARY(n.getOrElse(1))
+      caseSensitivity("binary") ~> opt(argument("BINARY", 0, 255, 1)) ^^ { n =>
+        DataType.BINARY(n.getOrElse(1))
       },
       """
         |===============================================================================
@@ -296,8 +296,8 @@ trait DataTypeParser extends LdbcParser:
 
   private def varbinaryType: Parser[DataType] =
     customError(
-      caseSensitivity("varbinary") ~> argument("VARBINARY", 0, Int.MaxValue) ^^ {
-        n => DataType.VARBINARY(n)
+      caseSensitivity("varbinary") ~> argument("VARBINARY", 0, Int.MaxValue) ^^ { n =>
+        DataType.VARBINARY(n)
       },
       """
         |===============================================================================
@@ -350,8 +350,8 @@ trait DataTypeParser extends LdbcParser:
 
   private def blobType: Parser[DataType] =
     customError(
-      caseSensitivity("blob") ~> opt(argument("BLOB", 0, 4294967295L.toInt)) ^^ {
-        n => DataType.BLOB(n)
+      caseSensitivity("blob") ~> opt(argument("BLOB", 0, 4294967295L.toInt)) ^^ { n =>
+        DataType.BLOB(n)
       },
       """
         |===============================================================================

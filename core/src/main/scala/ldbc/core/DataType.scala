@@ -637,7 +637,7 @@ object DataType:
     */
   private[ldbc] case class Blob[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Option[Long],
-    isOptional: Boolean,
+    isOptional: Boolean
   ) extends DataType[T]:
 
     override def typeName: String = length.fold("BLOB")(n => s"BLOB($n)")
