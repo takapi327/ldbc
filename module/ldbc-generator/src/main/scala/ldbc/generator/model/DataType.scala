@@ -199,4 +199,10 @@ object DataType:
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]()"
-  
+
+  def MEDIUMBLOB(): DataType = new DataType:
+    override val name: String = "MEDIUMBLOB"
+    override val jdbcType: JdbcType = JdbcType.LongVarBinary
+    override val scalaType: ScalaType = ScalaType.ArrayByte
+
+    override def toCode(typeParam: String): String = s"$name[$typeParam]()"

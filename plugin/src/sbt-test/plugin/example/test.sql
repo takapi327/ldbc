@@ -26,6 +26,7 @@ CREATE TABLE `test` (
   `p9` TINYTEXT NOT NULL,
   `p10` BLOB,
   `p11` TEXT,
+  `p12` MEDIUMBLOB NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
   INDEX (`id`),
