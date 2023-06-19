@@ -29,8 +29,8 @@ trait DataTypeParser extends LdbcParser:
   private def collate:   Parser[String] = caseSensitivity("collate") ~> sqlIdent
 
   protected def dataType: Parser[DataType] =
-    bitType | tinyintType | smallintType | mediumintType | bigIntType |
-      intType | decimalType | floatType | doubleType | charType | varcharType | binaryType | varbinaryType
+    bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
+      charType | varcharType | binaryType | varbinaryType | tinyblobType
 
   /** Numeric data type parsing
     */
@@ -309,6 +309,22 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: VARBINARY(M)
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def tinyblobType: Parser[DataType] =
+    customError(
+      caseSensitivity("tinyblob") ^^ (_ => DataType.TINYBLOB()),
+      """
+        |===============================================================================
+        |Failed to parse tinyblob data type.
+        |The tinyblob Data type must be defined as follows
+        |※ tinyblob strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: TINYBLOB
         |==============================================================================
         |""".stripMargin
     )

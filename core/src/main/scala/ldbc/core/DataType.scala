@@ -620,23 +620,13 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Tinyblob[T <: Array[Byte] | Option[Array[Byte]]](
-    isOptional: Boolean,
-    character:  Option[Character] = None
-  ) extends BlobType[T]:
+  private[ldbc] case class Tinyblob[T <: Array[Byte] | Option[Array[Byte]]](isOptional: Boolean) extends DataType[T]:
 
     override def typeName: String = "TINYBLOB"
 
     override def jdbcType: JdbcType = JdbcType.VarBinary
 
-    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
-
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
-    def CHARACTER_SET(character: Character): Tinyblob[T] = this.copy(character = Some(character))
+    override def queryString: String = s"$typeName $nullType"
 
   /** Model for representing the Blob data type, which is the string data of SQL DataType.
     *

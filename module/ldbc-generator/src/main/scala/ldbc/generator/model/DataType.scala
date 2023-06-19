@@ -159,3 +159,10 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.ArrayByte
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]($length)"
+
+  def TINYBLOB(): DataType = new DataType:
+    override val name: String = "TINYBLOB"
+    override val jdbcType: JdbcType = JdbcType.VarBinary
+    override val scalaType: ScalaType = ScalaType.ArrayByte
+
+    override def toCode(typeParam: String): String = s"$name[$typeParam]()"
