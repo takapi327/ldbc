@@ -12,10 +12,12 @@ trait ColumnParser extends DataTypeParser:
     caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL"
 
   private def default: Parser[Default] =
-    caseSensitivity("default") ~> (stringLiteral | digit | caseSensitivity("null") | caseSensitivity("current_timestamp")) ~
+    caseSensitivity("default") ~> (stringLiteral | digit | caseSensitivity("null") | caseSensitivity(
+      "current_timestamp"
+    )) ~
       opt(caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp")) ^^ {
-      case i ~ attribute => Default(i, attribute)
-    }
+        case i ~ attribute => Default(i, attribute)
+      }
 
   private def visible: Parser[String] =
     caseSensitivity("visible") | caseSensitivity("invisible") ^^ { i => i }

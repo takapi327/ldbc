@@ -27,9 +27,8 @@ case class ColumnDefinition(
     if attributes.forall(_.constraint) then s"Option[${ dataType.scalaType.code }]"
     else s"${ dataType.scalaType.code }"
 
-  private val default = attributes.fold("")(attribute =>
-    attribute.default.map(_.toCode(attribute.constraint)).getOrElse("")
-  )
+  private val default =
+    attributes.fold("")(attribute => attribute.default.map(_.toCode(attribute.constraint)).getOrElse(""))
 
   private val _attributes = attributes.fold("")(attribute =>
     val attributes = Seq(

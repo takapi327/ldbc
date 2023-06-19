@@ -108,11 +108,13 @@ trait DataTypes:
   inline def DATE[T <: LocalDate | Option[LocalDate]]: Date[T] = Date(isOptional[T])
 
   inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]]
-  : DateTime[T] = DateTime(None, isOptional[T])
+    : DateTime[T] = DateTime(None, isOptional[T])
 
-  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]](inline fsp: Int): DateTime[T] =
+  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]](
+    inline fsp: Int
+  ): DateTime[T] =
     inline if fsp < 0 || fsp > 6 then
-    error("If an fsp value is specified for DATETIME, it must be in the range of 0 to 6.")
+      error("If an fsp value is specified for DATETIME, it must be in the range of 0 to 6.")
     else DateTime(Some(fsp), isOptional[T])
 
   inline def TIMESTAMP[
@@ -125,13 +127,12 @@ trait DataTypes:
       Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](inline fsp: Int): TimeStamp[T] =
     inline if fsp < 0 || fsp > 6 then
-    error("If an fsp value is specified for TIMESTAMP, it must be in the range of 0 to 6.")
+      error("If an fsp value is specified for TIMESTAMP, it must be in the range of 0 to 6.")
     else TimeStamp(Some(fsp), isOptional[T])
 
   inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(None, isOptional[T])
   inline def TIME[T <: LocalTime | Option[LocalTime]](inline fsp: Int): Time[T] =
-    inline if fsp < 0 || fsp > 6 then
-    error("If an fsp value is specified for TIME, it must be in the range of 0 to 6.")
+    inline if fsp < 0 || fsp > 6 then error("If an fsp value is specified for TIME, it must be in the range of 0 to 6.")
     else Time(Some(fsp), isOptional[T])
 
   inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] = Year(isOptional[T])
