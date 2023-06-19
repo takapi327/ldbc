@@ -16,6 +16,7 @@ enum ScalaType(val code: String):
   case Float      extends ScalaType("Float")
   case BigInt     extends ScalaType("BigInt")
   case ArrayByte  extends ScalaType("Array[Byte]")
+  case LocalDate  extends ScalaType("java.time.LocalDate")
 
 trait DataType:
 
@@ -239,3 +240,10 @@ object DataType:
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]()"
+
+  def DATE(): DataType = new DataType:
+    override val name:      String    = "DATE"
+    override val jdbcType:  JdbcType  = JdbcType.Date
+    override val scalaType: ScalaType = ScalaType.LocalDate
+
+    override def toCode(typeParam: String): String = s"$name[$typeParam]"

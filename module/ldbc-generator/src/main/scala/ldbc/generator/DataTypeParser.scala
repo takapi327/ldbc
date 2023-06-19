@@ -31,7 +31,7 @@ trait DataTypeParser extends LdbcParser:
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType
+      mediumtextType | longblobType | longtextType | dateType
 
   /** Numeric data type parsing
     */
@@ -448,6 +448,22 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: LONGTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def dateType: Parser[DataType] =
+    customError(
+      caseSensitivity("date") ^^ (_ => DataType.DATE()),
+      """
+        |===============================================================================
+        |Failed to parse date data type.
+        |The date Data type must be defined as follows
+        |※ date strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
+        |
+        |example: DATE
         |==============================================================================
         |""".stripMargin
     )

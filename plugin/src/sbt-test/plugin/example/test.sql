@@ -30,6 +30,7 @@ CREATE TABLE `test` (
   `p13` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `p14` LONGBLOB,
   `p15` LONGTEXT CHARACTER SET utf8mb4 NULL,
+  `p16` DATE NULL,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
   INDEX (`id`),
