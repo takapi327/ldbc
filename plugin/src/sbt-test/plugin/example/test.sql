@@ -28,6 +28,7 @@ CREATE TABLE `test` (
   `p11` TEXT,
   `p12` MEDIUMBLOB NOT NULL,
   `p13` MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `p14` LONGBLOB,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
   INDEX (`id`),

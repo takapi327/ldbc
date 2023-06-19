@@ -30,7 +30,8 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
-      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType | mediumtextType
+      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
+      mediumtextType | longblobType
 
   /** Numeric data type parsing
     */
@@ -413,6 +414,22 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: MEDIUMTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def longblobType: Parser[DataType] =
+    customError(
+      caseSensitivity("longblob") ^^ (_ => DataType.LONGBLOB()),
+      """
+        |===============================================================================
+        |Failed to parse longblob data type.
+        |The longblob Data type must be defined as follows
+        |※ longblob strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: LONGBLOB
         |==============================================================================
         |""".stripMargin
     )
