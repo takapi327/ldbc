@@ -31,7 +31,7 @@ trait DataTypeParser extends LdbcParser:
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | datetimeType | dateType | timestampType | timeType
+      mediumtextType | longblobType | longtextType | datetimeType | dateType | timestampType | timeType | yearType
 
   /** Numeric data type parsing
     */
@@ -524,6 +524,22 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
         |example: TIME[(fsp)]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def yearType: Parser[DataType] =
+    customError(
+      caseSensitivity("year") ~> opt("(" ~> "4" ~> ")") ^^ (_ => DataType.YEAR()),
+      """
+        |===============================================================================
+        |Failed to parse year data type.
+        |The year Data type must be defined as follows
+        |※ year strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
+        |
+        |example: YEAR[(4)]
         |==============================================================================
         |""".stripMargin
     )

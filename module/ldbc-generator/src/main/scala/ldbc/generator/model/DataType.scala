@@ -19,6 +19,7 @@ enum ScalaType(val code: String):
   case LocalDate     extends ScalaType("java.time.LocalDate")
   case LocalDateTime extends ScalaType("java.time.LocalDateTime")
   case LocalTime extends ScalaType("java.time.LocalTime")
+  case YEAR extends ScalaType("java.time.Year")
 
 trait DataType:
 
@@ -270,3 +271,10 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.LocalTime
 
     override def toCode(typeParam: String): String = fsp.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
+
+  def YEAR(): DataType = new DataType:
+    override val name: String = "YEAR"
+    override val jdbcType: JdbcType = JdbcType.Date
+    override val scalaType: ScalaType = ScalaType.YEAR
+
+    override def toCode(typeParam: String): String = s"$name[$typeParam]"
