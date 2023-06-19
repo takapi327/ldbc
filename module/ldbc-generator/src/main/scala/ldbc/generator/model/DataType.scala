@@ -179,3 +179,10 @@ object DataType:
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]()"
+
+  def BLOB(length: Option[Int]): DataType = new DataType:
+    override val name: String = "BLOB"
+    override val jdbcType: JdbcType = JdbcType.Blob
+    override val scalaType: ScalaType = ScalaType.ArrayByte
+
+    override def toCode(typeParam: String): String = length.fold(s"$name[$typeParam]()")(n => s"$name[$typeParam]($n)")

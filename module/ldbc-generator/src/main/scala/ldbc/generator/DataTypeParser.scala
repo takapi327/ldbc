@@ -30,7 +30,7 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
-      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType
+      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType
 
   /** Numeric data type parsing
     */
@@ -343,6 +343,24 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: TINYTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def blobType: Parser[DataType] =
+    customError(
+      caseSensitivity("blob") ~> opt(argument("BLOB", 0, 4294967295L.toInt)) ^^ {
+        n => DataType.BLOB(n)
+      },
+      """
+        |===============================================================================
+        |Failed to parse blob data type.
+        |The blob Data type must be defined as follows
+        |※ blob strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: BLOB[(M)]
         |==============================================================================
         |""".stripMargin
     )
