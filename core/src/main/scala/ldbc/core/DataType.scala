@@ -823,6 +823,7 @@ object DataType:
   private[ldbc] case class DateTime[
     T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]
   ](
+    fsp:        Option[Int],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends DateType[T]:
@@ -831,7 +832,7 @@ object DataType:
 
     override def jdbcType: JdbcType = JdbcType.Timestamp
 
-    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String = fsp.fold(typeName)(n => s"$typeName($n)") ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
