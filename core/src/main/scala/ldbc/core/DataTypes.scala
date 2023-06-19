@@ -112,13 +112,22 @@ trait DataTypes:
 
   inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]](inline fsp: Int): DateTime[T] =
     inline if fsp < 0 || fsp > 6 then
-    error("The length of the BLOB must be in the range 0 to 4294967295.")
+    error("If an fsp value is specified for DATETIME, it must be in the range of 0 to 6.")
     else DateTime(Some(fsp), isOptional[T])
 
   inline def TIMESTAMP[
     T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
-  ]: TimeStamp[T] = TimeStamp(isOptional[T])
+  ]: TimeStamp[T] = TimeStamp(None, isOptional[T])
+
+
+  inline def TIMESTAMP[
+    T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](inline fsp: Int): TimeStamp[T] =
+    inline if fsp < 0 || fsp > 6 then
+    error("If an fsp value is specified for TIMESTAMP, it must be in the range of 0 to 6.")
+    else TimeStamp(Some(fsp), isOptional[T])
 
   inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(isOptional[T])
 
