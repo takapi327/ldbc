@@ -30,7 +30,7 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
-      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType
+      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType
 
   /** Numeric data type parsing
     */
@@ -361,6 +361,24 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: BLOB[(M)]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def textType: Parser[DataType] =
+    customError(
+      caseSensitivity("text") ~> opt(argument("TEXT", 0, 255)) ~ opt(character) ~ opt(collate) ^^ {
+        case n ~ character ~ collate => DataType.TEXT(n, character, collate)
+      },
+      """
+        |===============================================================================
+        |Failed to parse text data type.
+        |The text Data type must be defined as follows
+        |※ text strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: TEXT[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
     )
