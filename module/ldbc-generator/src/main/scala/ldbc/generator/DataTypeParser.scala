@@ -30,7 +30,7 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
-      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType
+      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType | mediumtextType
 
   /** Numeric data type parsing
     */
@@ -395,6 +395,24 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: MEDIUMBLOB
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def mediumtextType: Parser[DataType] =
+    customError(
+      caseSensitivity("mediumtext") ~> opt(character) ~ opt(collate) ^^ {
+        case character ~ collate => DataType.MEDIUMTEXT(character, collate)
+      },
+      """
+        |===============================================================================
+        |Failed to parse mediumtext data type.
+        |The mediumtext Data type must be defined as follows
+        |※ mediumtext strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: MEDIUMTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
     )
