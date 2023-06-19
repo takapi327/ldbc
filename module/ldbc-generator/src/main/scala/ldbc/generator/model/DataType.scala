@@ -255,3 +255,10 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.LocalDateTime
 
     override def toCode(typeParam: String): String = fsp.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
+
+  def TIMESTAMP(fsp: Option[Int]): DataType = new DataType:
+    override val name: String = "TIMESTAMP"
+    override val jdbcType: JdbcType = JdbcType.Timestamp
+    override val scalaType: ScalaType = ScalaType.LocalDateTime
+
+    override def toCode(typeParam: String): String = fsp.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")

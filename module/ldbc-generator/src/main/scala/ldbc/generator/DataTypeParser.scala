@@ -31,7 +31,7 @@ trait DataTypeParser extends LdbcParser:
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | datetimeType | dateType
+      mediumtextType | longblobType | longtextType | datetimeType | dateType | timestampType
 
   /** Numeric data type parsing
     */
@@ -484,6 +484,26 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
         |example: DATETIME[(fsp)]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def timestampType: Parser[DataType] =
+    customError(
+      caseSensitivity("timestamp") ~> opt(argument("TIMESTAMP", 0, 6)) ^^ { fsp =>
+        DataType.TIMESTAMP(fsp)
+      },
+      """
+        |===============================================================================
+        |Failed to parse timestamp data type.
+        |The timestamp Data type must be defined as follows
+        |※ timestamp strings are case-insensitive.
+        |
+        |If an fsp value is specified, it must be in the range of 0 to 6.
+        |
+        |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
+        |
+        |example: TIMESTAMP[(fsp)]
         |==============================================================================
         |""".stripMargin
     )
