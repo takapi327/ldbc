@@ -30,7 +30,7 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType |
-      intType | decimalType | floatType | doubleType | charType | varcharType | binaryType
+      intType | decimalType | floatType | doubleType | charType | varcharType | binaryType | varbinaryType
 
   /** Numeric data type parsing
     */
@@ -289,6 +289,26 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: BINARY[(M)]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def varbinaryType: Parser[DataType] =
+    customError(
+      caseSensitivity("varbinary") ~> argument("VARBINARY", 0, Int.MaxValue) ^^ {
+        n => DataType.VARBINARY(n)
+      },
+      """
+        |===============================================================================
+        |Failed to parse varbinary data type.
+        |The varbinary Data type must be defined as follows
+        |※ varbinary strings are case-insensitive.
+        |
+        |M is the number of bits per value (1 to max).
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: VARBINARY(M)
         |==============================================================================
         |""".stripMargin
     )
