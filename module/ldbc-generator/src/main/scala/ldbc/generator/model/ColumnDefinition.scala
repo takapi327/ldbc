@@ -6,7 +6,7 @@ package ldbc.generator.model
 
 case class Attributes(
   constraint:               Boolean,
-  default:                  Option[String | Int],
+  default:                  Option[Default],
   visible:                  Option[String],
   key:                      Option[List[String]],
   comment:                  Option[Comment],
@@ -28,13 +28,7 @@ case class ColumnDefinition(
     else s"${ dataType.scalaType.code }"
 
   private val default = attributes.fold("")(attribute =>
-    (attribute.default, attribute.constraint) match
-      case (Some(v), true) if v == "NULL" => ".DEFAULT(None)"
-      case (Some(v), false) if v == "NULL" =>
-        throw new IllegalArgumentException("NULL cannot be set as the default value for non-null-allowed columns.")
-      case (Some(v), false) => s".DEFAULT($v)"
-      case (Some(v), true)  => s".DEFAULT(Some($v))"
-      case (None, _)        => ""
+    attribute.default.map(_.toCode(attribute.constraint)).getOrElse("")
   )
 
   private val _attributes = attributes.fold("")(attribute =>

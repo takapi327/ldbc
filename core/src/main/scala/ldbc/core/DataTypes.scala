@@ -120,7 +120,6 @@ trait DataTypes:
       Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ]: TimeStamp[T] = TimeStamp(None, isOptional[T])
 
-
   inline def TIMESTAMP[
     T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]

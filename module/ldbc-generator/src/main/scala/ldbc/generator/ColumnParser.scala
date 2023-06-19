@@ -11,8 +11,11 @@ trait ColumnParser extends DataTypeParser:
   private def constraint: Parser[String] =
     caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL"
 
-  private def default: Parser[String | Int] =
-    caseSensitivity("default") ~> (stringLiteral | digit | caseSensitivity("null")) ^^ { i => i }
+  private def default: Parser[Default] =
+    caseSensitivity("default") ~> (stringLiteral | digit | caseSensitivity("null") | caseSensitivity("current_timestamp")) ~
+      opt(caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp")) ^^ {
+      case i ~ attribute => Default(i, attribute)
+    }
 
   private def visible: Parser[String] =
     caseSensitivity("visible") | caseSensitivity("invisible") ^^ { i => i }
