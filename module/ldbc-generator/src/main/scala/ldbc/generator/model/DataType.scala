@@ -7,16 +7,17 @@ package ldbc.generator.model
 import ldbc.core.JdbcType
 
 enum ScalaType(val code: String):
-  case Byte       extends ScalaType("Byte")
-  case String     extends ScalaType("String")
-  case Short      extends ScalaType("Short")
-  case Int        extends ScalaType("Int")
-  case Long       extends ScalaType("Long")
-  case BigDecimal extends ScalaType("BigDecimal")
-  case Float      extends ScalaType("Float")
-  case BigInt     extends ScalaType("BigInt")
-  case ArrayByte  extends ScalaType("Array[Byte]")
-  case LocalDate  extends ScalaType("java.time.LocalDate")
+  case Byte          extends ScalaType("Byte")
+  case String        extends ScalaType("String")
+  case Short         extends ScalaType("Short")
+  case Int           extends ScalaType("Int")
+  case Long          extends ScalaType("Long")
+  case BigDecimal    extends ScalaType("BigDecimal")
+  case Float         extends ScalaType("Float")
+  case BigInt        extends ScalaType("BigInt")
+  case ArrayByte     extends ScalaType("Array[Byte]")
+  case LocalDate     extends ScalaType("java.time.LocalDate")
+  case LocalDateTime extends ScalaType("java.time.LocalDateTime")
 
 trait DataType:
 
@@ -247,3 +248,10 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.LocalDate
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]"
+
+  def DATETIME(fsp: Option[Int]): DataType = new DataType:
+    override val name: String = "DATETIME"
+    override val jdbcType: JdbcType = JdbcType.Timestamp
+    override val scalaType: ScalaType = ScalaType.LocalDateTime
+
+    override def toCode(typeParam: String): String = fsp.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")

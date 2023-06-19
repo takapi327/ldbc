@@ -31,6 +31,7 @@ CREATE TABLE `test` (
   `p14` LONGBLOB,
   `p15` LONGTEXT CHARACTER SET utf8mb4 NULL,
   `p16` DATE NULL,
+  `p17` DATEtIME(6) NULL,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
   INDEX (`id`),
