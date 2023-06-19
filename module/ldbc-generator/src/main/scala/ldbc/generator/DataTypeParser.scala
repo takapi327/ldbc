@@ -31,7 +31,7 @@ trait DataTypeParser extends LdbcParser:
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | datetimeType | dateType | timestampType
+      mediumtextType | longblobType | longtextType | datetimeType | dateType | timestampType | timeType
 
   /** Numeric data type parsing
     */
@@ -504,6 +504,26 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
         |example: TIMESTAMP[(fsp)]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def timeType: Parser[DataType] =
+    customError(
+      caseSensitivity("time") ~> opt(argument("TIME", 0, 6)) ^^ { fsp =>
+        DataType.TIME(fsp)
+      },
+      """
+        |===============================================================================
+        |Failed to parse time data type.
+        |The time Data type must be defined as follows
+        |※ time strings are case-insensitive.
+        |
+        |If an fsp value is specified, it must be in the range of 0 to 6.
+        |
+        |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
+        |
+        |example: TIME[(fsp)]
         |==============================================================================
         |""".stripMargin
     )

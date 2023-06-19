@@ -18,6 +18,7 @@ enum ScalaType(val code: String):
   case ArrayByte     extends ScalaType("Array[Byte]")
   case LocalDate     extends ScalaType("java.time.LocalDate")
   case LocalDateTime extends ScalaType("java.time.LocalDateTime")
+  case LocalTime extends ScalaType("java.time.LocalTime")
 
 trait DataType:
 
@@ -260,5 +261,12 @@ object DataType:
     override val name: String = "TIMESTAMP"
     override val jdbcType: JdbcType = JdbcType.Timestamp
     override val scalaType: ScalaType = ScalaType.LocalDateTime
+
+    override def toCode(typeParam: String): String = fsp.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
+
+  def TIME(fsp: Option[Int]): DataType = new DataType:
+    override val name: String = "TIME"
+    override val jdbcType: JdbcType = JdbcType.Time
+    override val scalaType: ScalaType = ScalaType.LocalTime
 
     override def toCode(typeParam: String): String = fsp.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
