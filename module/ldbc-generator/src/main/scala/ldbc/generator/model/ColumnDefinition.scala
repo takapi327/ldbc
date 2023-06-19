@@ -24,8 +24,8 @@ case class ColumnDefinition(
 ):
 
   val scalaType =
-    if attributes.forall(_.constraint) then s"Option[${ dataType.scalaType }]"
-    else s"${ dataType.scalaType }"
+    if attributes.forall(_.constraint) then s"Option[${ dataType.scalaType.code }]"
+    else s"${ dataType.scalaType.code }"
 
   private val default = attributes.fold("")(attribute =>
     (attribute.default, attribute.constraint) match

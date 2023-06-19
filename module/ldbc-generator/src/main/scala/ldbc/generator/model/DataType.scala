@@ -6,8 +6,16 @@ package ldbc.generator.model
 
 import ldbc.core.JdbcType
 
-enum ScalaType:
-  case Byte, String, Short, Int, Long, BigDecimal, Float, BigInt
+enum ScalaType(val code: String):
+  case Byte extends ScalaType("Byte")
+  case String extends ScalaType("String")
+  case Short extends ScalaType("Short")
+  case Int extends ScalaType("Int")
+  case Long extends ScalaType("Long")
+  case BigDecimal extends ScalaType("BigDecimal")
+  case Float extends ScalaType("Float")
+  case BigInt extends ScalaType("BigInt")
+  case ArrayByte extends ScalaType("Array[Byte]")
 
 trait DataType:
 
@@ -137,3 +145,10 @@ object DataType:
         case (None, Some(co)) =>
           throw new IllegalArgumentException("It is not possible to set only COLLATE without setting Character.")
         case (None, None) => s"$name[$typeParam]($length)"
+
+  def BINARY(length: Int): DataType = new DataType:
+    override val name: String = "BINARY"
+    override val jdbcType: JdbcType = JdbcType.Binary
+    override val scalaType: ScalaType = ScalaType.ArrayByte
+
+    override def toCode(typeParam: String): String = s"$name[$typeParam]($length)"

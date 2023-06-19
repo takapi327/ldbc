@@ -20,6 +20,7 @@ CREATE TABLE `test` (
   `sub_category` TINYINT(64) ZEROFILL NOT NULL,
   `p4` CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,
   `p5` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `p6` BINARY(255),
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
   INDEX (`id`),

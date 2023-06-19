@@ -30,7 +30,7 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType |
-      intType | decimalType | floatType | doubleType | charType | varcharType
+      intType | decimalType | floatType | doubleType | charType | varcharType | binaryType
 
   /** Numeric data type parsing
     */
@@ -269,6 +269,26 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: [NATIONAL] VARCHAR(M) [CHARACTER SET charset_name] [COLLATE collation_name]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def binaryType: Parser[DataType] =
+    customError(
+      caseSensitivity("binary") ~> opt(argument("BINARY", 0, 255, 1)) ^^ {
+        n => DataType.BINARY(n.getOrElse(1))
+      },
+      """
+        |===============================================================================
+        |Failed to parse binary data type.
+        |The binary Data type must be defined as follows
+        |※ binary strings are case-insensitive.
+        |
+        |M is the number of bits per value (1 to 255). If M is omitted, the default is 1.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: BINARY[(M)]
         |==============================================================================
         |""".stripMargin
     )
