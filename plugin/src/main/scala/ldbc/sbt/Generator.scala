@@ -14,7 +14,7 @@ import ldbc.sbt.AutoImport._
 
 object Generator {
   val generate: Def.Initialize[Task[Seq[File]]] =
-    generateCode(Compile / sqlFilePaths, Compile / sourceManaged, Compile / baseDirectory)
+    generateCode(Compile / sqlFiles, Compile / sourceManaged, Compile / baseDirectory)
 
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
 

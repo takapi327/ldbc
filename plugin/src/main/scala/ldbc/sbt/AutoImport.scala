@@ -8,8 +8,11 @@ import sbt._
 
 object AutoImport extends Dependencies {
 
-  val sqlFilePaths = SettingKey[List[File]](
-    label       = "sqlFilePaths",
-    description = "Path list of SQL files to read"
+  val sqlFiles = SettingKey[List[File]](
+    label       = "sqlFiles",
+    description = "List of SQL files to be read"
   )
+
+  def current(file: String): File =
+    new File(new File(".").getAbsoluteFile.getParent, file)
 }
