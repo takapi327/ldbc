@@ -23,6 +23,7 @@ CREATE TABLE `test` (
   `p6` BINARY(255),
   `p7` VARBINARY(255) NOT NULL,
   `p8` TINYBLOB,
+  `p9` TINYTEXT NOT NULL,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`),
   INDEX (`id`),

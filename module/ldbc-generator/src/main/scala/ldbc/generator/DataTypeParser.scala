@@ -30,7 +30,7 @@ trait DataTypeParser extends LdbcParser:
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
-      charType | varcharType | binaryType | varbinaryType | tinyblobType
+      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType
 
   /** Numeric data type parsing
     */
@@ -325,6 +325,24 @@ trait DataTypeParser extends LdbcParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: TINYBLOB
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private def tinytextType: Parser[DataType] =
+    customError(
+      caseSensitivity("tinytext") ~> opt(character) ~ opt(collate) ^^ {
+        case character ~ collate => DataType.TINYTEXT(character, collate)
+      },
+      """
+        |===============================================================================
+        |Failed to parse tinytext data type.
+        |The tinytext Data type must be defined as follows
+        |※ tinytext strings are case-insensitive.
+        |
+        |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
+        |
+        |example: TINYTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
     )
