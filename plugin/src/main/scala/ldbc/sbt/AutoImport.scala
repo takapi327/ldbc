@@ -12,7 +12,4 @@ object AutoImport extends Dependencies {
     label       = "sqlFiles",
     description = "List of SQL files to be read"
   )
-
-  def current(file: String): File =
-    new File(new File(".").getAbsoluteFile.getParent, file)
 }
