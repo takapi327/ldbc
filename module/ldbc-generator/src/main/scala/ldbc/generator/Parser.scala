@@ -12,13 +12,15 @@ object Parser extends DatabaseStatementParser:
 
   private def end: util.matching.Regex = """\s*""".r
 
-  private def sentence: Parser[Product] = Seq[Parser[Product]](comment, databaseStatement, useDatabase, createStatement).reduceLeft(_ | _)
+  private def sentence: Parser[Product] =
+    Seq[Parser[Product]](comment, databaseStatement, useDatabase, createStatement).reduceLeft(_ | _)
 
   private def parser: Parser[Map[String, List[CreateStatement]]] =
     var currentDatabase: String = ""
     phrase(rep(sentence) <~ end) ^^ { statements =>
       statements.foldLeft(Map[String, List[CreateStatement]](currentDatabase -> List.empty)) {
-        case (map, statement: CreateStatement) => map.updated(currentDatabase, map.getOrElse(currentDatabase, List.empty) :+ statement)
+        case (map, statement: CreateStatement) =>
+          map.updated(currentDatabase, map.getOrElse(currentDatabase, List.empty) :+ statement)
         case (map, statement: ldbc.generator.model.DatabaseStatement) =>
           currentDatabase = statement.name
           map

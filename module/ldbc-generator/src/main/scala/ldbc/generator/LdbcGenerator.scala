@@ -25,43 +25,44 @@ private[ldbc] object LdbcGenerator:
       )
 
       Parser.parse(content) match
-        case Parser.Success(parsed, _) => parsed.flatMap { (name, statements) =>
-          statements.map(statement =>
-            val className = s"${statement.tableName.head.toUpper}${statement.tableName.tail}"
-            val properties = statement.columnDefinitions.map(column => s"${column.name}: ${column.scalaType}")
+        case Parser.Success(parsed, _) =>
+          parsed.flatMap { (name, statements) =>
+            statements.map(statement =>
+              val className  = s"${ statement.tableName.head.toUpper }${ statement.tableName.tail }"
+              val properties = statement.columnDefinitions.map(column => s"${ column.name }: ${ column.scalaType }")
 
-            val outputFile = new File(sourceManaged, s"$className.scala")
+              val outputFile = new File(sourceManaged, s"$className.scala")
 
-            if !outputFile.exists() then
-              outputFile.getParentFile.mkdirs()
-              outputFile.createNewFile()
+              if !outputFile.exists() then
+                outputFile.getParentFile.mkdirs()
+                outputFile.createNewFile()
 
-            val keyDefinitions = statement.keyDefinitions.map(key => s".keySet(table => ${key.toCode("table")})")
+              val keyDefinitions = statement.keyDefinitions.map(key => s".keySet(table => ${ key.toCode("table") })")
 
-            val packageName = if name.nonEmpty then s"ldbc.generated.$name" else "ldbc.generated"
+              val packageName = if name.nonEmpty then s"ldbc.generated.$name" else "ldbc.generated"
 
-            val scalaSource =
-              s"""
+              val scalaSource =
+                s"""
                  |package $packageName
                  |
                  |import ldbc.core.*
                  |
                  |case class $className(
-                 |  ${properties.mkString(",\n  ")}
+                 |  ${ properties.mkString(",\n  ") }
                  |)
                  |
                  |object $className:
                  |
-                 |  val table: TABLE[$className] = Table[$className]("${statement.tableName}")(
-                 |    ${statement.columnDefinitions.map(_.toCode).mkString(",\n    ")}
+                 |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
+                 |    ${ statement.columnDefinitions.map(_.toCode).mkString(",\n    ") }
                  |  )
-                 |  ${keyDefinitions.mkString("")}
+                 |  ${ keyDefinitions.mkString("") }
                  |""".stripMargin
 
-            Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
-            outputFile
-          )
-        }
+              Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
+              outputFile
+            )
+          }
         case Parser.NoSuccess(errorMessage, _) =>
           println(s"NoSuccess: $errorMessage")
           List.empty
