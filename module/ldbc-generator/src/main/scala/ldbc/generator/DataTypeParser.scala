@@ -25,9 +25,6 @@ trait DataTypeParser extends LdbcParser:
       s"M in $name[(M)] is the number of bits per value ($min to $max)"
     )
 
-  private def character: Parser[String] = caseSensitivity("character") ~> caseSensitivity("set") ~> sqlIdent
-  private def collate:   Parser[String] = caseSensitivity("collate") ~> sqlIdent
-
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |

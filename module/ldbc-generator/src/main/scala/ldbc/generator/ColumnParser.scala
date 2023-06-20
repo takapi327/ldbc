@@ -34,9 +34,6 @@ trait ColumnParser extends DataTypeParser:
   protected def columnComment: Parser[Comment] =
     caseSensitivity("comment") ~> stringLiteral ^^ Comment.apply
 
-  private def collate: Parser[String] =
-    caseSensitivity("collate") ~> ident ^^ { i => i }
-
   private def columnFormat: Parser[String] =
     caseSensitivity("column_format") ~> (
       caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")

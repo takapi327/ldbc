@@ -21,6 +21,14 @@ trait LdbcParser extends JavaTokenParsers:
     "" ~> // handle whitespace
       opt("`") ~> normalIdent <~ opt("`") ^^ (_.mkString)
 
+  protected def create: Parser[String] = caseSensitivity("create") ^^ (_.toUpperCase)
+
+  protected def ifNotExists: Parser[String] =
+    caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase)
+
+  protected def character: Parser[String] = caseSensitivity("character") ~> caseSensitivity("set") ~> opt("=") ~> sqlIdent
+  protected def collate:   Parser[String] = caseSensitivity("collate") ~> opt("=") ~> sqlIdent
+
   /** Rules for allowing upper and lower case letters. */
   protected def caseSensitivity(str: String): Parser[String] =
     s"(?i)$str".r
