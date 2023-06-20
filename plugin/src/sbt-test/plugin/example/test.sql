@@ -2,6 +2,10 @@
 
 ---- Comment
 
+/* Comment */ CREATE /* Comment */ DATABASE /* Comment */ `test`;
+
+/* Comment */ USE /* Comment */ `test`;
+
 CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
   /* Comment */ code1 /* Comment */ BIT /* Comment */ PRIMARY KEY /* Comment */ UNIQUE KEY /* Comment */ COMMENT 'test',
   code2 bit(24) NOT NULL,

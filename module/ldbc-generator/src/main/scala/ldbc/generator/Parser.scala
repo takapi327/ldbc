@@ -8,11 +8,11 @@ import scala.util.parsing.input.*
 
 import ldbc.generator.model.CreateStatement
 
-object Parser extends StatementParser:
+object Parser extends DatabaseStatementParser:
 
   private def end: util.matching.Regex = """\s*""".r
 
-  private def sentence: Parser[Product] = Seq[Parser[Product]](comment, createStatement).reduceLeft(_ | _)
+  private def sentence: Parser[Product] = Seq[Parser[Product]](comment, databaseStatement, useDatabase, createStatement).reduceLeft(_ | _)
 
   private def parser: Parser[List[CreateStatement]] =
     phrase(rep(sentence) <~ end) ^^ { statements =>
