@@ -10,10 +10,14 @@ import java.nio.charset.Charset
 
 import scala.io.Codec
 
+import ldbc.generator.formatter.Naming
+
 private[ldbc] object LdbcGenerator:
 
   def generate(
     sqlFilePaths:  Array[File],
+    classNameFormat: String,
+    propertyNameFormat: String,
     sourceManaged: File,
     baseDirectory: File
   ): Array[File] =
@@ -24,12 +28,15 @@ private[ldbc] object LdbcGenerator:
         Charset.defaultCharset()
       )
 
+      val classNameFormatter = Naming.fromString(classNameFormat)
+      val propertyNameFormatter = Naming.fromString(propertyNameFormat)
+
       Parser.parse(content) match
         case Parser.Success(parsed, _) =>
           parsed.flatMap { (name, statements) =>
             statements.map(statement =>
-              val className  = s"${ statement.tableName.head.toUpper }${ statement.tableName.tail }"
-              val properties = statement.columnDefinitions.map(column => s"${ column.name }: ${ column.scalaType }")
+              val className  = classNameFormatter.format(statement.tableName)
+              val properties = statement.columnDefinitions.map(column => s"${ propertyNameFormatter.format(column.name) }: ${ column.scalaType }")
 
               val outputFile = new File(sourceManaged, s"$className.scala")
 
@@ -37,7 +44,9 @@ private[ldbc] object LdbcGenerator:
                 outputFile.getParentFile.mkdirs()
                 outputFile.createNewFile()
 
-              val keyDefinitions = statement.keyDefinitions.map(key => s".keySet(table => ${ key.toCode("table") })")
+              val keyDefinitions = statement.keyDefinitions.map(key =>
+                s".keySet(table => ${ key.toCode("table", classNameFormatter, propertyNameFormatter) })"
+              )
 
               val packageName = if name.nonEmpty then s"ldbc.generated.$name" else "ldbc.generated"
 
