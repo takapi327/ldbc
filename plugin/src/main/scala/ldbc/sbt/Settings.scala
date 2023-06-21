@@ -17,7 +17,7 @@ object Settings {
     libraryDependencies += ldbcGenerator,
     baseClassloader := Commands.baseClassloaderTask.value,
     (Compile / sourceGenerators) += Generator.generate.taskValue,
-    classNameFormat := Format.PASCAL,
+    classNameFormat    := Format.PASCAL,
     propertyNameFormat := Format.CAMEL
   )
 }

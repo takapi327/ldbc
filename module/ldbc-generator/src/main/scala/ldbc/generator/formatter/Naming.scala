@@ -1,13 +1,13 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.generator.formatter
 
 import scala.annotation.tailrec
 
 /** Enum of naming rules
- */
+  */
 enum Naming:
   case CAMEL, PASCAL, SNAKE, KEBAB
 
@@ -15,11 +15,14 @@ object Naming:
 
   def fromString(str: String): Naming =
     str match
-      case "CAMEL" => CAMEL
+      case "CAMEL"  => CAMEL
       case "PASCAL" => PASCAL
-      case "SNAKE" => SNAKE
-      case "KEBAB" => KEBAB
-      case unknown => throw new IllegalArgumentException(s"$unknown does not match any of the Naming, it must be CAMEL, PASCAL, SNAKE, or KEBAB.")
+      case "SNAKE"  => SNAKE
+      case "KEBAB"  => KEBAB
+      case unknown =>
+        throw new IllegalArgumentException(
+          s"$unknown does not match any of the Naming, it must be CAMEL, PASCAL, SNAKE, or KEBAB."
+        )
 
   extension (`case`: Naming)
     def format(name: String): String =
@@ -30,24 +33,24 @@ object Naming:
         case KEBAB  => toKebab(name)
 
   /** Converts to camelCase e.g.: PascalCase => pascalCase
-   *
-   * @param name
-   *   name to be converted to camelCase
-   * @return
-   *   camelCase version of the string passed
-   */
+    *
+    * @param name
+    *   name to be converted to camelCase
+    * @return
+    *   camelCase version of the string passed
+    */
   def toCamel(name: String): String =
     toSnake(name).split("_").toList match
       case Nil          => name
       case head :: tail => head + tail.map(v => s"${ v.charAt(0).toUpper }${ v.drop(1) }").mkString
 
   /** Converts to PascalCase e.g.: camelCase => CamelCase
-   *
-   * @param name
-   *   name to be converted to PascalCase
-   * @return
-   *   PascalCase version of the string passed
-   */
+    *
+    * @param name
+    *   name to be converted to PascalCase
+    * @return
+    *   PascalCase version of the string passed
+    */
   def toPascal(name: String): String =
     val list = toSnake(name).split("_").toList
     if list.nonEmpty && !(list.size == 1 && list.head == "") then
@@ -55,12 +58,12 @@ object Naming:
     else name
 
   /** Converts to snake_case e.g.: camelCase => camel_case
-   *
-   * @param name
-   *   name to be converted to snake_case
-   * @return
-   *   snake_case version of the string passed
-   */
+    *
+    * @param name
+    *   name to be converted to snake_case
+    * @return
+    *   snake_case version of the string passed
+    */
   def toSnake(name: String): String =
     @tailrec def go(accDone: List[Char], acc: List[Char]): List[Char] = acc match
       case Nil                                                        => accDone
@@ -70,12 +73,12 @@ object Naming:
     go(Nil, name.toList).mkString.toLowerCase.replaceAll("-", "_")
 
   /** Converts to kebab-case e.g.: camelCase => camel-case
-   *
-   * @param name
-   *   name to be converted to kebab-case
-   * @return
-   *   kebab-case version of the string passed
-   */
+    *
+    * @param name
+    *   name to be converted to kebab-case
+    * @return
+    *   kebab-case version of the string passed
+    */
   def toKebab(name: String): String =
     @tailrec def go(accDone: List[Char], acc: List[Char]): List[Char] = acc match
       case Nil                                                        => accDone

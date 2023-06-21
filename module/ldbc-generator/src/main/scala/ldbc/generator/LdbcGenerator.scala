@@ -15,11 +15,11 @@ import ldbc.generator.formatter.Naming
 private[ldbc] object LdbcGenerator:
 
   def generate(
-    sqlFilePaths:  Array[File],
-    classNameFormat: String,
+    sqlFilePaths:       Array[File],
+    classNameFormat:    String,
     propertyNameFormat: String,
-    sourceManaged: File,
-    baseDirectory: File
+    sourceManaged:      File,
+    baseDirectory:      File
   ): Array[File] =
     sqlFilePaths.flatMap(file =>
 
@@ -28,15 +28,17 @@ private[ldbc] object LdbcGenerator:
         Charset.defaultCharset()
       )
 
-      val classNameFormatter = Naming.fromString(classNameFormat)
+      val classNameFormatter    = Naming.fromString(classNameFormat)
       val propertyNameFormatter = Naming.fromString(propertyNameFormat)
 
       Parser.parse(content) match
         case Parser.Success(parsed, _) =>
           parsed.flatMap { (name, statements) =>
             statements.map(statement =>
-              val className  = classNameFormatter.format(statement.tableName)
-              val properties = statement.columnDefinitions.map(column => s"${ propertyNameFormatter.format(column.name) }: ${ column.scalaType }")
+              val className = classNameFormatter.format(statement.tableName)
+              val properties = statement.columnDefinitions.map(column =>
+                s"${ propertyNameFormatter.format(column.name) }: ${ column.scalaType }"
+              )
 
               val outputFile = new File(sourceManaged, s"$className.scala")
 

@@ -8,10 +8,10 @@ import sbt._
 
 object AutoImport extends Dependencies {
 
-  val CAMEL = Format.CAMEL
+  val CAMEL  = Format.CAMEL
   val PASCAL = Format.PASCAL
-  val SNAKE = Format.SNAKE
-  val KEBAB = Format.KEBAB
+  val SNAKE  = Format.SNAKE
+  val KEBAB  = Format.KEBAB
 
   val sqlFiles = SettingKey[List[File]](
     label       = "sqlFiles",

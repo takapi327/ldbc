@@ -25,20 +25,20 @@ object Generator {
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
 
   def generateCode(
-    sqlFilePaths:  SettingKey[List[File]],
-    classNameFormat: SettingKey[Format],
+    sqlFilePaths:       SettingKey[List[File]],
+    classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
-    sourceManaged: SettingKey[File],
-    baseDirectory: SettingKey[File]
+    sourceManaged:      SettingKey[File],
+    baseDirectory:      SettingKey[File]
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
 
     type LdbcGenerator = {
       def generate(
-        sqlFilePaths:  Array[File],
-        classNameFormat: String,
+        sqlFilePaths:       Array[File],
+        classNameFormat:    String,
         propertyNameFormat: String,
-        sourceManaged: File,
-        baseDirectory: File
+        sourceManaged:      File,
+        baseDirectory:      File
       ): Array[File]
     }
 
