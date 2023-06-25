@@ -12,6 +12,12 @@ trait LdbcParser extends JavaTokenParsers:
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
+  private def symbol: Parser[String] = "@" | "=" | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "-" | "+" | ";" | ":" | "," | "." | "?" |
+    "<" | ">" | "[" | "]" | "{" | "}" | "|" | "\\" | "^" | "_" | "~" | "'" | "`"
+
+  private def specialChars: Parser[String] =
+    ident | wholeNumber | decimalNumber | symbol
+
   private def normalIdent: Parser[String] = rep1(
     acceptIf(Character.isJavaIdentifierStart)("identifier expected but `" + _ + "' found"),
     elem("identifier part", Character.isJavaIdentifierPart(_: Char))
@@ -34,7 +40,9 @@ trait LdbcParser extends JavaTokenParsers:
   protected def caseSensitivity(str: String): Parser[String] =
     s"(?i)$str".r
 
-  protected def comment: Parser[Comment] = ("/*" | "--+".r) ~> ident <~ opt("*/") ^^ Comment.apply
+  protected def comment: Parser[Comment] = ("/*" ~> opt(rep1(specialChars)) <~ "*/" <~ opt(";") | "--+".r ~> opt(rep1(specialChars))) ^^ (
+    comment => Comment(comment.getOrElse(List.empty).mkString(" "))
+  )
 
   protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
     parser(input) match
