@@ -28,6 +28,7 @@ trait LdbcParser extends JavaTokenParsers:
       opt("`") ~> normalIdent <~ opt("`") ^^ (_.mkString)
 
   protected def create: Parser[String] = caseSensitivity("create") ^^ (_.toUpperCase)
+  protected def drop: Parser[String] = caseSensitivity("drop") ^^ (_.toUpperCase)
 
   protected def ifNotExists: Parser[String] =
     caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase)
