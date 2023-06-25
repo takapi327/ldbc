@@ -6,7 +6,7 @@ package ldbc.generator
 
 import ldbc.generator.model.*
 
-trait DatabaseStatementParser extends StatementParser:
+trait DatabaseStatementParser extends TableParser:
 
   protected def databaseStatement: Parser[DatabaseStatement] =
     opt(comment) ~> create ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>

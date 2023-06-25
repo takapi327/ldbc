@@ -6,7 +6,7 @@ package ldbc.generator
 
 import ldbc.generator.model.*
 
-trait StatementParser extends KeyParser:
+trait TableParser extends KeyParser:
 
   private def temporary: Parser[String] = caseSensitivity("temporary") ^^ (_.toUpperCase)
   private def table:     Parser[String] = caseSensitivity("table") ^^ (_.toUpperCase)
