@@ -6,20 +6,20 @@ package ldbc.generator
 
 import scala.util.parsing.input.*
 
-import ldbc.generator.model.CreateStatement
+import ldbc.generator.model.Table
 
 object Parser extends DatabaseStatementParser:
 
   private def end: util.matching.Regex = """\s*""".r
 
   private def sentence: Parser[Product] =
-    Seq[Parser[Product]](comment, databaseStatement, useDatabase, createStatement).reduceLeft(_ | _)
+    Seq[Parser[Product]](comment, databaseStatement, useDatabase, tableStatements).reduceLeft(_ | _)
 
-  private def parser: Parser[Map[String, List[CreateStatement]]] =
+  private def parser: Parser[Map[String, List[Table.CreateStatement]]] =
     var currentDatabase: String = ""
     phrase(rep(sentence) <~ end) ^^ { statements =>
-      statements.foldLeft(Map[String, List[CreateStatement]](currentDatabase -> List.empty)) {
-        case (map, statement: CreateStatement) =>
+      statements.foldLeft(Map[String, List[Table.CreateStatement]](currentDatabase -> List.empty)) {
+        case (map, statement: Table.CreateStatement) =>
           map.updated(currentDatabase, map.getOrElse(currentDatabase, List.empty) :+ statement)
         case (map, statement: ldbc.generator.model.DatabaseStatement) =>
           currentDatabase = statement.name
@@ -28,5 +28,5 @@ object Parser extends DatabaseStatementParser:
       }
     }
 
-  def parse(sql: String): ParseResult[Map[String, List[CreateStatement]]] =
+  def parse(sql: String): ParseResult[Map[String, List[Table.CreateStatement]]] =
     parser(new CharSequenceReader(sql))
