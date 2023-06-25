@@ -12,8 +12,9 @@ trait LdbcParser extends JavaTokenParsers:
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
-  private def symbol: Parser[String] = "@" | "=" | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "-" | "+" | ";" | ":" | "," | "." | "?" |
-    "<" | ">" | "[" | "]" | "{" | "}" | "|" | "\\" | "^" | "_" | "~" | "'" | "`"
+  private def symbol: Parser[String] =
+    "@" | "=" | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "-" | "+" | ";" | ":" | "," | "." | "?" |
+      "<" | ">" | "[" | "]" | "{" | "}" | "|" | "\\" | "^" | "_" | "~" | "'" | "`"
 
   private def specialChars: Parser[String] =
     ident | wholeNumber | decimalNumber | symbol
@@ -28,7 +29,7 @@ trait LdbcParser extends JavaTokenParsers:
       opt("`") ~> normalIdent <~ opt("`") ^^ (_.mkString)
 
   protected def create: Parser[String] = caseSensitivity("create") ^^ (_.toUpperCase)
-  protected def drop: Parser[String] = caseSensitivity("drop") ^^ (_.toUpperCase)
+  protected def drop:   Parser[String] = caseSensitivity("drop") ^^ (_.toUpperCase)
 
   protected def ifNotExists: Parser[String] =
     caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase)
@@ -41,9 +42,10 @@ trait LdbcParser extends JavaTokenParsers:
   protected def caseSensitivity(str: String): Parser[String] =
     s"(?i)$str".r
 
-  protected def comment: Parser[Comment] = ("/*" ~> opt(rep1(specialChars)) <~ "*/" <~ opt(";") | "--+".r ~> opt(rep1(specialChars))) ^^ (
-    comment => Comment(comment.getOrElse(List.empty).mkString(" "))
-  )
+  protected def comment: Parser[Comment] =
+    ("/*" ~> opt(rep1(specialChars)) <~ "*/" <~ opt(";") | "--+".r ~> opt(rep1(specialChars))) ^^ (comment =>
+      Comment(comment.getOrElse(List.empty).mkString(" "))
+    )
 
   protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
     parser(input) match
