@@ -35,7 +35,9 @@ trait LdbcParser extends JavaTokenParsers:
     caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase)
 
   protected def character: Parser[String] =
-    caseSensitivity("character") ~> caseSensitivity("set") ~> opt("=") ~> sqlIdent
+    ((caseSensitivity("character") ~> caseSensitivity("set")) | caseSensitivity("charset")) ~>
+      opt("=") ~> sqlIdent
+
   protected def collate: Parser[String] = caseSensitivity("collate") ~> opt("=") ~> sqlIdent
 
   /** Rules for allowing upper and lower case letters. */
