@@ -5,6 +5,7 @@
 package ldbc.generator
 
 import ldbc.generator.model.*
+import ldbc.generator.parser.TableParser
 
 trait DatabaseStatementParser extends TableParser:
 
