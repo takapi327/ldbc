@@ -2,13 +2,13 @@
   * distributed with this source code.
   */
 
-package ldbc.generator
-
-import scala.util.parsing.combinator.JavaTokenParsers
+package ldbc.generator.parser
 
 import ldbc.generator.model.Comment
 
-trait LdbcParser extends JavaTokenParsers:
+import scala.util.parsing.combinator.JavaTokenParsers
+
+trait SqlParser extends JavaTokenParsers:
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 

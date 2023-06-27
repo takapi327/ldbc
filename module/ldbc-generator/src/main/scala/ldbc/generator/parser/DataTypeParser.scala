@@ -4,10 +4,9 @@
 
 package ldbc.generator.parser
 
-import ldbc.generator.LdbcParser
 import ldbc.generator.model.DataType
 
-trait DataTypeParser extends LdbcParser:
+trait DataTypeParser extends SqlParser:
 
   protected def digit: Parser[Int] = """-?\d+""".r ^^ (_.toInt)
 
