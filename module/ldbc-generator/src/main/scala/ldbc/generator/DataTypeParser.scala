@@ -19,9 +19,12 @@ trait DataTypeParser extends LdbcParser:
       s"M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default."
     )
 
-  private def argument(name: String, min: Int, max: Int): Parser[Int] =
+  private def argument(name: String, min: Int, max: Int | Long): Parser[Int] =
     customError(
-      "(" ~> digit.filter(n => n >= min && n <= max) <~ ")",
+      "(" ~> digit.filter(n => n >= min && (max match
+        case m: Int => n <= m
+        case m: Long => n <= m
+      )) <~ ")",
       s"M in $name[(M)] is the number of bits per value ($min to $max)"
     )
 
@@ -32,7 +35,7 @@ trait DataTypeParser extends LdbcParser:
 
   /** Numeric data type parsing
     */
-  private def bitType: Parser[DataType] =
+  private[ldbc] def bitType: Parser[DataType] =
     customError(
       caseSensitivity("bit") ~> opt(argument("BIT", 1, 64, 1)) ^^ { n =>
         DataType.BIT(n.getOrElse(1))
@@ -52,7 +55,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def tinyintType: Parser[DataType] =
+  private[ldbc] def tinyintType: Parser[DataType] =
     customError(
       caseSensitivity("tinyint") ~> opt(argument("TINYINT", 1, 255, 3)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
@@ -73,7 +76,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def smallintType: Parser[DataType] =
+  private[ldbc] def smallintType: Parser[DataType] =
     customError(
       caseSensitivity("smallint") ~> opt(argument("SMALLINT", 1, 255, 5)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
@@ -94,7 +97,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def mediumintType: Parser[DataType] =
+  private[ldbc] def mediumintType: Parser[DataType] =
     customError(
       caseSensitivity("mediumint") ~> opt(argument("MEDIUMINT", 1, 255, 8)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
@@ -115,9 +118,9 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def intType: Parser[DataType] =
+  private[ldbc] def intType: Parser[DataType] =
     customError(
-      (caseSensitivity("int") | caseSensitivity("integer")) ~>
+      (caseSensitivity("int") ||| caseSensitivity("integer")) ~>
         opt(argument("INT", 1, 255, 10)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.INT(n.getOrElse(10), unsigned.isDefined, zerofill.isDefined)
@@ -137,7 +140,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def bigIntType: Parser[DataType] =
+  private[ldbc] def bigIntType: Parser[DataType] =
     customError(
       caseSensitivity("bigint") ~> opt(argument("BIGINT", 1, 255, 20)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
@@ -158,7 +161,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def decimalType: Parser[DataType] =
+  private[ldbc] def decimalType: Parser[DataType] =
     customError(
       (caseSensitivity("decimal") | caseSensitivity("dec")) ~>
         opt("(" ~> digit.filter(n => n >= 0 && n <= 65) ~ opt("," ~> digit.filter(n => n >= 0 && n <= 30)) <~ ")") ~
@@ -183,7 +186,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def floatType: Parser[DataType] =
+  private[ldbc] def floatType: Parser[DataType] =
     customError(
       caseSensitivity("float") ~> "(" ~> digit.filter(n => n >= 0 && n <= 24) ~ ")" ~
         opt(unsigned) ~ opt(zerofill) ^^ {
@@ -204,7 +207,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def doubleType: Parser[DataType] =
+  private[ldbc] def doubleType: Parser[DataType] =
     customError(
       (caseSensitivity("double") | caseSensitivity("real")) ~>
         opt("(" ~> digit.filter(n => n >= 24 && n <= 53) ~ "," ~ digit.filter(n => n >= 24 && n <= 53) <~ ")") ~
@@ -229,11 +232,14 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def charType: Parser[DataType] =
+  /** String data type parsing
+   */
+  private[ldbc] def charType: Parser[DataType] =
     customError(
-      opt(caseSensitivity("national")) ~> (caseSensitivity("char") | caseSensitivity("character")) ~>
-        opt(argument("CHAR", 0, 255, 1)) ~ opt(character) ~ opt(collate) ^^ {
-          case n ~ character ~ collate => DataType.CHAR(n.getOrElse(1), character, collate)
+      opt(caseSensitivity("national")) ~> (caseSensitivity("char") ||| caseSensitivity("character")) ~>
+        opt(argument("CHAR", 0, 255, 1)) ~ opt(character ~ opt(collate)) ^^ {
+          case n ~ Some(character ~ collate) => DataType.CHAR(n.getOrElse(1), Some(character), collate)
+          case n ~ None => DataType.CHAR(n.getOrElse(1), None, None)
         },
       """
         |===============================================================================
@@ -250,11 +256,12 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def varcharType: Parser[DataType] =
+  private[ldbc] def varcharType: Parser[DataType] =
     customError(
       opt(caseSensitivity("national")) ~> caseSensitivity("varchar") ~>
-        argument("VARCHAR", 0, 65535) ~ opt(character) ~ opt(collate) ^^ {
-          case n ~ character ~ collate => DataType.VARCHAR(n, character, collate)
+        argument("VARCHAR", 0, 65535) ~ opt(character ~ opt(collate)) ^^ {
+          case n ~ Some(character ~ collate) => DataType.VARCHAR(n, Some(character), collate)
+          case n ~ None => DataType.VARCHAR(n, None, None)
         },
       """
         |===============================================================================
@@ -271,7 +278,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def binaryType: Parser[DataType] =
+  private[ldbc] def binaryType: Parser[DataType] =
     customError(
       caseSensitivity("binary") ~> opt(argument("BINARY", 0, 255, 1)) ^^ { n =>
         DataType.BINARY(n.getOrElse(1))
@@ -291,7 +298,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def varbinaryType: Parser[DataType] =
+  private[ldbc] def varbinaryType: Parser[DataType] =
     customError(
       caseSensitivity("varbinary") ~> argument("VARBINARY", 0, Int.MaxValue) ^^ { n =>
         DataType.VARBINARY(n)
@@ -311,7 +318,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def tinyblobType: Parser[DataType] =
+  private[ldbc] def tinyblobType: Parser[DataType] =
     customError(
       caseSensitivity("tinyblob") ^^ (_ => DataType.TINYBLOB()),
       """
@@ -327,10 +334,11 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def tinytextType: Parser[DataType] =
+  private[ldbc] def tinytextType: Parser[DataType] =
     customError(
-      caseSensitivity("tinytext") ~> opt(character) ~ opt(collate) ^^ {
-        case character ~ collate => DataType.TINYTEXT(character, collate)
+      caseSensitivity("tinytext") ~> opt(character ~ opt(collate)) ^^ {
+        case Some(character ~ collate) => DataType.TINYTEXT(Some(character), collate)
+        case None => DataType.TINYTEXT(None, None)
       },
       """
         |===============================================================================
@@ -345,9 +353,9 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def blobType: Parser[DataType] =
+  private[ldbc] def blobType: Parser[DataType] =
     customError(
-      caseSensitivity("blob") ~> opt(argument("BLOB", 0, 4294967295L.toInt)) ^^ { n =>
+      caseSensitivity("blob") ~> opt(argument("BLOB", 0, 4294967295L)) ^^ { n =>
         DataType.BLOB(n)
       },
       """
@@ -363,10 +371,11 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def textType: Parser[DataType] =
+  private[ldbc] def textType: Parser[DataType] =
     customError(
-      caseSensitivity("text") ~> opt(argument("TEXT", 0, 255)) ~ opt(character) ~ opt(collate) ^^ {
-        case n ~ character ~ collate => DataType.TEXT(n, character, collate)
+      caseSensitivity("text") ~> opt(argument("TEXT", 0, 255)) ~ opt(character ~ opt(collate)) ^^ {
+        case n ~ Some(character ~ collate) => DataType.TEXT(n, Some(character), collate)
+        case n ~ None => DataType.TEXT(n, None, None)
       },
       """
         |===============================================================================
@@ -381,7 +390,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def mediumblobType: Parser[DataType] =
+  private[ldbc] def mediumblobType: Parser[DataType] =
     customError(
       caseSensitivity("mediumblob") ^^ (_ => DataType.TINYBLOB()),
       """
@@ -397,10 +406,11 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def mediumtextType: Parser[DataType] =
+  private[ldbc] def mediumtextType: Parser[DataType] =
     customError(
-      caseSensitivity("mediumtext") ~> opt(character) ~ opt(collate) ^^ {
-        case character ~ collate => DataType.MEDIUMTEXT(character, collate)
+      caseSensitivity("mediumtext") ~> opt(character ~ opt(collate)) ^^ {
+        case Some(character ~ collate) => DataType.MEDIUMTEXT(Some(character), collate)
+        case None => DataType.MEDIUMTEXT(None, None)
       },
       """
         |===============================================================================
@@ -415,7 +425,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def longblobType: Parser[DataType] =
+  private[ldbc] def longblobType: Parser[DataType] =
     customError(
       caseSensitivity("longblob") ^^ (_ => DataType.LONGBLOB()),
       """
@@ -431,10 +441,11 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def longtextType: Parser[DataType] =
+  private[ldbc] def longtextType: Parser[DataType] =
     customError(
-      caseSensitivity("longtext") ~> opt(character) ~ opt(collate) ^^ {
-        case character ~ collate => DataType.LONGTEXT(character, collate)
+      caseSensitivity("longtext") ~> opt(character ~ opt(collate)) ^^ {
+        case Some(character ~ collate) => DataType.LONGTEXT(Some(character), collate)
+        case None => DataType.LONGTEXT(None, None)
       },
       """
         |===============================================================================
@@ -449,7 +460,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def dateType: Parser[DataType] =
+  private[ldbc] def dateType: Parser[DataType] =
     customError(
       caseSensitivity("date") ^^ (_ => DataType.DATE()),
       """
@@ -465,7 +476,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def datetimeType: Parser[DataType] =
+  private[ldbc] def datetimeType: Parser[DataType] =
     customError(
       caseSensitivity("datetime") ~> opt(argument("DATETIME", 0, 6)) ^^ { fsp =>
         DataType.DATETIME(fsp)
@@ -485,7 +496,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def timestampType: Parser[DataType] =
+  private[ldbc] def timestampType: Parser[DataType] =
     customError(
       caseSensitivity("timestamp") ~> opt(argument("TIMESTAMP", 0, 6)) ^^ { fsp =>
         DataType.TIMESTAMP(fsp)
@@ -505,7 +516,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def timeType: Parser[DataType] =
+  private[ldbc] def timeType: Parser[DataType] =
     customError(
       caseSensitivity("time") ~> opt(argument("TIME", 0, 6)) ^^ { fsp =>
         DataType.TIME(fsp)
@@ -525,7 +536,7 @@ trait DataTypeParser extends LdbcParser:
         |""".stripMargin
     )
 
-  private def yearType: Parser[DataType] =
+  private[ldbc] def yearType: Parser[DataType] =
     customError(
       caseSensitivity("year") ~> opt("(" ~> "4" ~> ")") ^^ (_ => DataType.YEAR()),
       """
