@@ -11,6 +11,7 @@ import java.nio.charset.Charset
 import scala.io.Codec
 
 import ldbc.generator.formatter.Naming
+import ldbc.generator.parser.Parser
 
 private[ldbc] object LdbcGenerator:
 

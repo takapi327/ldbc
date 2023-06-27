@@ -2,11 +2,11 @@
   * distributed with this source code.
   */
 
-package ldbc.generator
+package ldbc.generator.parser
+
+import ldbc.generator.model.Table
 
 import scala.util.parsing.input.*
-import ldbc.generator.model.Table
-import ldbc.generator.parser.DatabaseStatementParser
 
 object Parser extends DatabaseStatementParser:
 
