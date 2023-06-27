@@ -2,11 +2,10 @@
   * distributed with this source code.
   */
 
-package ldbc.generator
+package ldbc.generator.parser
 
 import ldbc.generator.model.Key
 import ldbc.generator.model.Key.*
-import ldbc.generator.parser.ColumnParser
 
 trait KeyParser extends ColumnParser:
 
