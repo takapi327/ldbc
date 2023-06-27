@@ -6,6 +6,7 @@ package ldbc.generator
 
 import ldbc.generator.model.Key
 import ldbc.generator.model.Key.*
+import ldbc.generator.parser.ColumnParser
 
 trait KeyParser extends ColumnParser:
 

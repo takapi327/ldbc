@@ -2,10 +2,9 @@
   * distributed with this source code.
   */
 
-package ldbc.generator
+package ldbc.generator.parser
 
 import ldbc.generator.model.*
-import ldbc.generator.parser.DataTypeParser
 
 trait ColumnParser extends DataTypeParser:
 
