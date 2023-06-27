@@ -5,8 +5,8 @@
 package ldbc.generator
 
 import scala.util.parsing.input.*
-
 import ldbc.generator.model.Table
+import ldbc.generator.parser.DatabaseStatementParser
 
 object Parser extends DatabaseStatementParser:
 
