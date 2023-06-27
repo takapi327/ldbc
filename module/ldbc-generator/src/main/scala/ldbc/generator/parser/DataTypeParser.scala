@@ -2,8 +2,9 @@
   * distributed with this source code.
   */
 
-package ldbc.generator
+package ldbc.generator.parser
 
+import ldbc.generator.LdbcParser
 import ldbc.generator.model.DataType
 
 trait DataTypeParser extends LdbcParser:

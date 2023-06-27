@@ -5,6 +5,7 @@
 package ldbc.generator
 
 import ldbc.generator.model.*
+import ldbc.generator.parser.DataTypeParser
 
 trait ColumnParser extends DataTypeParser:
 
