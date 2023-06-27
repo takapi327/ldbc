@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.generator.parser
 
@@ -28,7 +28,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(tinyintType, "TINYINT(255) ZEROFILL").successful)
     assert(parseAll(tinyintType, "TINYINT(255) UNSIGNED ZEROFILL").successful)
   }
-
 
   it should "TINYINT data type parsing test fails." in {
     assert(!parseAll(tinyintType, "failed").successful)

@@ -22,10 +22,12 @@ trait DataTypeParser extends LdbcParser:
 
   private def argument(name: String, min: Int, max: Int | Long): Parser[Int] =
     customError(
-      "(" ~> digit.filter(n => n >= min && (max match
-        case m: Int => n <= m
-        case m: Long => n <= m
-      )) <~ ")",
+      "(" ~> digit.filter(n =>
+        n >= min && (max match
+          case m: Int  => n <= m
+          case m: Long => n <= m
+        )
+      ) <~ ")",
       s"M in $name[(M)] is the number of bits per value ($min to $max)"
     )
 
@@ -234,13 +236,13 @@ trait DataTypeParser extends LdbcParser:
     )
 
   /** String data type parsing
-   */
+    */
   private[ldbc] def charType: Parser[DataType] =
     customError(
       opt(caseSensitivity("national")) ~> (caseSensitivity("char") ||| caseSensitivity("character")) ~>
         opt(argument("CHAR", 0, 255, 1)) ~ opt(character ~ opt(collate)) ^^ {
           case n ~ Some(character ~ collate) => DataType.CHAR(n.getOrElse(1), Some(character), collate)
-          case n ~ None => DataType.CHAR(n.getOrElse(1), None, None)
+          case n ~ None                      => DataType.CHAR(n.getOrElse(1), None, None)
         },
       """
         |===============================================================================
@@ -262,7 +264,7 @@ trait DataTypeParser extends LdbcParser:
       opt(caseSensitivity("national")) ~> caseSensitivity("varchar") ~>
         argument("VARCHAR", 0, 65535) ~ opt(character ~ opt(collate)) ^^ {
           case n ~ Some(character ~ collate) => DataType.VARCHAR(n, Some(character), collate)
-          case n ~ None => DataType.VARCHAR(n, None, None)
+          case n ~ None                      => DataType.VARCHAR(n, None, None)
         },
       """
         |===============================================================================
@@ -339,7 +341,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("tinytext") ~> opt(character ~ opt(collate)) ^^ {
         case Some(character ~ collate) => DataType.TINYTEXT(Some(character), collate)
-        case None => DataType.TINYTEXT(None, None)
+        case None                      => DataType.TINYTEXT(None, None)
       },
       """
         |===============================================================================
@@ -376,7 +378,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("text") ~> opt(argument("TEXT", 0, 255)) ~ opt(character ~ opt(collate)) ^^ {
         case n ~ Some(character ~ collate) => DataType.TEXT(n, Some(character), collate)
-        case n ~ None => DataType.TEXT(n, None, None)
+        case n ~ None                      => DataType.TEXT(n, None, None)
       },
       """
         |===============================================================================
@@ -411,7 +413,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("mediumtext") ~> opt(character ~ opt(collate)) ^^ {
         case Some(character ~ collate) => DataType.MEDIUMTEXT(Some(character), collate)
-        case None => DataType.MEDIUMTEXT(None, None)
+        case None                      => DataType.MEDIUMTEXT(None, None)
       },
       """
         |===============================================================================
@@ -446,7 +448,7 @@ trait DataTypeParser extends LdbcParser:
     customError(
       caseSensitivity("longtext") ~> opt(character ~ opt(collate)) ^^ {
         case Some(character ~ collate) => DataType.LONGTEXT(Some(character), collate)
-        case None => DataType.LONGTEXT(None, None)
+        case None                      => DataType.LONGTEXT(None, None)
       },
       """
         |===============================================================================
