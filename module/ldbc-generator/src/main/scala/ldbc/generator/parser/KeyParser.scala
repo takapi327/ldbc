@@ -104,14 +104,24 @@ trait KeyParser extends ColumnParser:
       case option: String => s"Reference.ReferenceOption.${ option.toUpperCase }"
     }
 
+  private def matchParser: Parser[String ~ String] =
+    customError(
+      caseSensitivity("match") ~ (caseSensitivity("full") | caseSensitivity("partial") | caseSensitivity("simple")),
+      """
+        |======================================================
+        |There is an error in the format of the match type.
+        |Please correct the format according to the following.
+        |
+        |example: MATCH {FULL | PARTIAL | SIMPLE}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def referenceDefinition: Parser[Reference] =
-    caseSensitivity("references") ~> sqlIdent ~ "(" ~ repsep(sqlIdent, ",") ~ ")" ~
-      opt(
-        caseSensitivity("match") ~ (caseSensitivity("full") |
-          caseSensitivity("partial") | caseSensitivity("simple"))
-      ) ~ opt(caseSensitivity("on") ~> caseSensitivity("delete") ~> opt(referenceOption)) ~
+    caseSensitivity("references") ~> sqlIdent ~ columnsParser ~
+      opt(matchParser) ~ opt(caseSensitivity("on") ~> caseSensitivity("delete") ~> opt(referenceOption)) ~
       opt(caseSensitivity("on") ~> caseSensitivity("update") ~> opt(referenceOption)) ^^ {
-        case tableName ~ _ ~ keyParts ~ _ ~ _ ~ onDelete ~ onUpdate =>
+        case tableName ~ keyParts ~ _ ~ onDelete ~ onUpdate =>
           Reference(tableName, keyParts, onDelete.flatten, onUpdate.flatten)
       }
 
