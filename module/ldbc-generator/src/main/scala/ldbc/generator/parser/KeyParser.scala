@@ -9,10 +9,33 @@ import ldbc.generator.model.Key.*
 
 trait KeyParser extends ColumnParser:
 
+  private def columnsParser: Parser[List[String]] =
+    customError(
+      "(" ~> repsep(sqlIdent, ",") <~ ")",
+      """
+        |======================================================
+        |There is an error in the column list format.
+        |Please correct the format according to the following.
+        |
+        |example: (`column_name`) or (`column_name`, `column_name`, ...)
+        |======================================================
+        |""".stripMargin
+    )
+
   private def indexType: Parser[String] =
-    caseSensitivity("using") ~> (caseSensitivity("btree") | caseSensitivity("hash")) ^^ { input =>
-      s"Index.Type.${ input.toUpperCase }"
-    }
+    customError(
+      caseSensitivity("using") ~> (caseSensitivity("btree") | caseSensitivity("hash")) ^^ { input =>
+        s"Index.Type.${input.toUpperCase}"
+      },
+      """
+        |======================================================
+        |There is an error in the format of the Index type.
+        |Please correct the format according to the following.
+        |
+        |example: USING {BTREE | HASH}
+        |======================================================
+        |""".stripMargin
+    )
 
   private def indexOption: Parser[Option[String]] =
     opt(caseSensitivity("key_block_size") ~> "=" ~> digit) ~ opt(indexType) ~
@@ -37,22 +60,28 @@ trait KeyParser extends ColumnParser:
       }
 
   private def indexKey: Parser[Index] =
-    (caseSensitivity("index") | caseSensitivity("key")) ~> opt(sqlIdent) ~ opt(indexType) ~ "(" ~
-      repsep(sqlIdent, ",") <~ ")" <~ indexOption ^^ {
-        case indexName ~ _ ~ _ ~ keyParts => Index(indexName, keyParts)
-      }
+    (caseSensitivity("index") | caseSensitivity("key")) ~> opt(sqlIdent.filter {
+      case str if "(?i)using".r.matches(str) => false
+      case _ => true
+    }) ~ opt(indexType) ~ columnsParser <~ indexOption ^^ {
+      case indexName ~ _ ~ keyParts => Index(indexName, keyParts)
+    }
 
   private def fulltext: Parser[Index] =
     (caseSensitivity("fulltext") | caseSensitivity("spatial")) ~>
       (caseSensitivity("index") | caseSensitivity("key")) ~>
-      opt(sqlIdent) ~ "(" ~ repsep(sqlIdent, ",") <~ ")" <~ indexOption ^^ {
-        case indexName ~ _ ~ keyParts => Index(indexName, keyParts)
+      opt(sqlIdent) ~ columnsParser <~ indexOption ^^ {
+        case indexName ~ keyParts => Index(indexName, keyParts)
       }
 
-  private def constraint: Parser[Option[String]] =
-    caseSensitivity("constraint") ~> opt(sqlIdent) ^^ { symbol =>
-      symbol
-    }
+  private def constraint: Parser[Constraint] =
+    caseSensitivity("constraint") ~> opt(sqlIdent.filter {
+      case str if "(?i)primary".r.matches(str) => false
+      case str if "(?i)unique".r.matches(str) => false
+      case str if "(?i)foreign".r.matches(str) => false
+      case str if "(?i)check".r.matches(str) => false
+      case _ => true
+    }) ^^ Constraint.apply
 
   private def referenceOption: Parser[String] =
     (
@@ -76,29 +105,29 @@ trait KeyParser extends ColumnParser:
       }
 
   private def constraintPrimaryKey: Parser[Primary] =
-    opt(constraint) ~ primaryKey ~ opt(indexType) ~ "(" ~ repsep(sqlIdent, ",") ~ ")" ~ indexOption ^^ {
-      case constraint ~ _ ~ indexType ~ _ ~ keyParts ~ _ ~ option =>
+    opt(constraint) ~ primaryKey ~ opt(indexType) ~ columnsParser ~ indexOption ^^ {
+      case constraint ~ _ ~ indexType ~ keyParts ~ option =>
         Primary(constraint, indexType, keyParts, option)
     }
 
   private def constraintUniqueKey: Parser[Unique] =
     opt(constraint) ~ caseSensitivity("unique") ~ opt(caseSensitivity("index") | caseSensitivity("key"))
-      ~ opt(sqlIdent) ~ opt(indexType) ~ "(" ~ repsep(sqlIdent, ",") ~ ")" ~ indexOption ^^ {
-        case constraint ~ _ ~ _ ~ indexName ~ indexType ~ _ ~ keyParts ~ _ ~ option =>
+      ~ opt(sqlIdent) ~ opt(indexType) ~ columnsParser ~ indexOption ^^ {
+        case constraint ~ _ ~ _ ~ indexName ~ indexType ~ keyParts ~ option =>
           Unique(constraint, indexName, indexType, keyParts, option)
       }
 
   private def constraintForeignKey: Parser[Foreign] =
     opt(constraint) ~ caseSensitivity("foreign") ~ caseSensitivity("key") ~ opt(sqlIdent) ~
-      "(" ~ repsep(sqlIdent, ",") ~ ")" ~ referenceDefinition ^^ {
-        case constraint ~ _ ~ _ ~ indexName ~ _ ~ columnNames ~ _ ~ referenceDefinition =>
+      columnsParser ~ referenceDefinition ^^ {
+        case constraint ~ _ ~ _ ~ indexName ~ columnNames ~ referenceDefinition =>
           Foreign(constraint, indexName, columnNames, referenceDefinition)
       }
 
   private def checkConstraintDefinition: Parser[String] =
-    opt(constraint) ~ caseSensitivity("check") ~ "(" ~ sqlIdent ~ ")" ~
+    opt(constraint) ~ caseSensitivity("check") ~ "(" ~ rep1(specialChars) ~ ")" ~
       opt(caseSensitivity("not")) ~ opt(caseSensitivity("enforced")) ^^ {
-        case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced => s"$constraint $expr $not $enforced"
+        case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced => s"$constraint ${expr.mkString(" ")} $not $enforced"
       }
 
   protected def keyDefinitions: Parser[Key | String] =
