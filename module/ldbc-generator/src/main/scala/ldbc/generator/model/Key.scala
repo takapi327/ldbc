@@ -13,10 +13,15 @@ object Key:
 
   case class Constraint(name: Option[String])
 
-  case class Index(indexName: Option[String], keyParts: List[String]) extends Key:
+  case class Index(
+                    indexName: Option[String],
+                    indexType: Option[String],
+                    keyParts: List[String],
+                    indexOption: Option[String]
+                  ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
-      indexName.fold(s"INDEX_KEY(${ columns.mkString(",") })")(name => s"INDEX_KEY($name, ${ columns.mkString(",") })")
+      s"INDEX_KEY($indexName, ${ indexType.fold("None")(str => s"Some($str)") }, cats.data.NonEmptyList.of(${ columns.mkString(",") }), ${indexOption.fold("None")(str => s"Some($str)")})"
 
   case class Primary(
     constraint: Option[Constraint],

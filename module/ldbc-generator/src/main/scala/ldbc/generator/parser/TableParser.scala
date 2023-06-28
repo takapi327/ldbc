@@ -63,7 +63,7 @@ trait TableParser extends KeyParser:
             s"$unknown is not a value that can be set in the insert_method; the checksum must be one of the values NO, FIRST or LAST."
           )
       } |
-      keyValue(caseSensitivity("key_block_size"), sqlIdent) ^^ Table.Options.KeyBlockSize.apply |
+      keyBlockSize ^^ Table.Options.KeyBlockSize.apply |
       keyValue(caseSensitivity("max_rows"), digit) ^^ Table.Options.MaxRows.apply |
       keyValue(caseSensitivity("min_rows"), digit) ^^ Table.Options.MinRows.apply |
       keyValue(caseSensitivity("pack_keys"), sqlIdent) ^^ {

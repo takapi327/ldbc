@@ -14,7 +14,7 @@ trait SqlParser extends JavaTokenParsers:
 
   private def symbol: Parser[String] =
     "@" | "=" | "!" | "#" | "$" | "%" | "&" | "-" | "+" | ";" | ":" | "," | "." | "?" |
-      "<" | ">" | "[" | "]" | "{" | "}" | "|" | "\\" | "^" | "_" | "~" | "'" | "`"
+      "<" | ">" | "[" | "]" | "{" | "}" | "(" | ")" | "|" | "\\" | "^" | "_" | "~" | "'" | "`"
 
   protected def specialChars: Parser[String] =
     ident | wholeNumber | decimalNumber | symbol
@@ -54,3 +54,16 @@ trait SqlParser extends JavaTokenParsers:
       case Failure(_, in) => Failure(msg, in)
       case result         => result
   }
+
+  protected def keyBlockSize: Parser[Int] =
+    customError(
+      caseSensitivity("key_block_size") ~> opt("=") ~> ("1" | "2" | "4" | "8" | "16") ^^ (_.toInt),
+      """
+        |======================================================
+        |There is an error in the key_block_size format.
+        |Please correct the format according to the following.
+        |
+        |example: key_block_size[=]{1 | 2 | 4 | 8 | 16}
+        |======================================================
+        |""".stripMargin
+    )

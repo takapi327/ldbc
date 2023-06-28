@@ -25,7 +25,7 @@ object Table:
     case class Engine(value: String)                        extends Options
     case class EngineAttribute(value: String)               extends Options
     case class InsertMethod(value: "NO" | "FIRST" | "LAST") extends Options
-    case class KeyBlockSize(value: String)                  extends Options
+    case class KeyBlockSize(value: Int)                  extends Options
     case class MaxRows(value: Int)                          extends Options
     case class MinRows(value: Int)                          extends Options
     case class PackKeys(value: "0" | "1" | "DEFAULT")       extends Options

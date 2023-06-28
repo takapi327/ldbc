@@ -38,7 +38,7 @@ trait KeyParser extends ColumnParser:
     )
 
   private def indexOption: Parser[Option[String]] =
-    opt(caseSensitivity("key_block_size") ~> "=" ~> digit) ~ opt(indexType) ~
+    opt(keyBlockSize) ~ opt(indexType) ~
       opt(caseSensitivity("with") ~> caseSensitivity("parser") ~> ident) ~
       opt(columnComment) ~ opt(caseSensitivity("visible") | caseSensitivity("invisible")) ~
       opt(caseSensitivity("engine_attribute") ~> "=" ~> ident) ~
@@ -63,15 +63,15 @@ trait KeyParser extends ColumnParser:
     (caseSensitivity("index") | caseSensitivity("key")) ~> opt(sqlIdent.filter {
       case str if "(?i)using".r.matches(str) => false
       case _ => true
-    }) ~ opt(indexType) ~ columnsParser <~ indexOption ^^ {
-      case indexName ~ _ ~ keyParts => Index(indexName, keyParts)
+    }) ~ opt(indexType) ~ columnsParser ~ indexOption ^^ {
+      case indexName ~ indexType ~ keyParts ~ indexOption => Index(indexName, indexType, keyParts, indexOption)
     }
 
   private def fulltext: Parser[Index] =
     (caseSensitivity("fulltext") | caseSensitivity("spatial")) ~>
       (caseSensitivity("index") | caseSensitivity("key")) ~>
-      opt(sqlIdent) ~ columnsParser <~ indexOption ^^ {
-        case indexName ~ keyParts => Index(indexName, keyParts)
+      opt(sqlIdent) ~ columnsParser ~ indexOption ^^ {
+        case indexName ~ keyParts ~ indexOption => Index(indexName, None, keyParts, indexOption)
       }
 
   private def constraint: Parser[Constraint] =
