@@ -39,9 +39,6 @@ trait ColumnParser extends DataTypeParser:
       caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
     ) ^^ { i => i }
 
-  private def secondaryEngineAttribute: Parser[String] =
-    caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident ^^ { i => i }
-
   private def storage: Parser[String] =
     caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")) ^^ { i => i }
 

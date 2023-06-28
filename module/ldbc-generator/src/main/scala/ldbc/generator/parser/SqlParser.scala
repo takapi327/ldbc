@@ -80,3 +80,16 @@ trait SqlParser extends JavaTokenParsers:
         |======================================================
         |""".stripMargin
     )
+    
+  protected def secondaryEngineAttribute: Parser[String] =
+    customError(
+      caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident,
+      """
+        |======================================================
+        |There is an error in the secondary_engine_attribute format.
+        |Please correct the format according to the following.
+        |
+        |example: SECONDARY_ENGINE_ATTRIBUTE[=]'string'
+        |======================================================
+        |""".stripMargin
+    )
