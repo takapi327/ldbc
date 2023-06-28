@@ -53,7 +53,7 @@ trait KeyParser extends ColumnParser:
   private def indexOption: Parser[Option[String]] =
     opt(keyBlockSize) ~ opt(indexType) ~ opt(withParser) ~
       opt(columnComment) ~ opt(caseSensitivity("visible") | caseSensitivity("invisible")) ~
-      opt(caseSensitivity("engine_attribute") ~> "=" ~> ident) ~
+      opt(engineAttribute) ~
       opt(caseSensitivity("secondary_engine_attribute") ~> "=" ~> ident) ^^ {
         case size ~ indexType ~ parserName ~ comment ~ _ ~ engine ~ secondary =>
           (size, indexType, parserName, comment, engine, secondary) match

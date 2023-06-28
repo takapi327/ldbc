@@ -63,7 +63,20 @@ trait SqlParser extends JavaTokenParsers:
         |There is an error in the key_block_size format.
         |Please correct the format according to the following.
         |
-        |example: key_block_size[=]{1 | 2 | 4 | 8 | 16}
+        |example: KEY_BLOCK_SIZE[=]{1 | 2 | 4 | 8 | 16}
+        |======================================================
+        |""".stripMargin
+    )
+
+  protected def engineAttribute: Parser[String] =
+    customError(
+      caseSensitivity("engine_attribute") ~> opt("=") ~> ident,
+      """
+        |======================================================
+        |There is an error in the engine_attribute format.
+        |Please correct the format according to the following.
+        |
+        |example: ENGINE_ATTRIBUTE[=]'string'
         |======================================================
         |""".stripMargin
     )

@@ -55,7 +55,7 @@ trait TableParser extends KeyParser:
           )
       } |
       keyValue(caseSensitivity("engine"), sqlIdent) ^^ Table.Options.Engine.apply |
-      keyValue(caseSensitivity("engine_attribute"), sqlIdent) ^^ Table.Options.EngineAttribute.apply |
+      engineAttribute ^^ Table.Options.EngineAttribute.apply |
       keyValue(caseSensitivity("insert_method"), sqlIdent) ^^ {
         case value: ("NO" | "FIRST" | "LAST") => Table.Options.InsertMethod(value)
         case unknown =>
