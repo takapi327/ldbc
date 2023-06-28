@@ -136,9 +136,9 @@ trait KeyParser extends ColumnParser:
       }
 
   private def checkConstraintDefinition: Parser[String] =
-    opt(constraint) ~ caseSensitivity("check") ~ "(" ~ rep1(specialChars) ~ ")" ~
+    opt(constraint) ~ caseSensitivity("check") ~ "(" ~ rep1(specialChars) ~
       opt(caseSensitivity("not")) ~ opt(caseSensitivity("enforced")) ^^ {
-        case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced => s"$constraint ${expr.mkString(" ")} $not $enforced"
+        case constraint ~ _ ~ _ ~ expr ~ not ~ enforced => s"$constraint ${expr.mkString(" ")} $not $enforced"
       }
 
   protected def keyDefinitions: Parser[Key | String] =
