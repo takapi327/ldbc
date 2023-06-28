@@ -22,6 +22,19 @@ trait KeyParser extends ColumnParser:
         |""".stripMargin
     )
 
+  private def withParser: Parser[String] =
+    customError(
+      caseSensitivity("with") ~> caseSensitivity("parser") ~> ident,
+      """
+        |======================================================
+        |There is an error in the format of the with parser type.
+        |Please correct the format according to the following.
+        |
+        |example: WITH PARSER `parser_name`
+        |======================================================
+        |""".stripMargin
+    )
+
   private def indexType: Parser[String] =
     customError(
       caseSensitivity("using") ~> (caseSensitivity("btree") | caseSensitivity("hash")) ^^ { input =>
@@ -38,8 +51,7 @@ trait KeyParser extends ColumnParser:
     )
 
   private def indexOption: Parser[Option[String]] =
-    opt(keyBlockSize) ~ opt(indexType) ~
-      opt(caseSensitivity("with") ~> caseSensitivity("parser") ~> ident) ~
+    opt(keyBlockSize) ~ opt(indexType) ~ opt(withParser) ~
       opt(columnComment) ~ opt(caseSensitivity("visible") | caseSensitivity("invisible")) ~
       opt(caseSensitivity("engine_attribute") ~> "=" ~> ident) ~
       opt(caseSensitivity("secondary_engine_attribute") ~> "=" ~> ident) ^^ {
@@ -69,7 +81,7 @@ trait KeyParser extends ColumnParser:
 
   private def fulltext: Parser[Index] =
     (caseSensitivity("fulltext") | caseSensitivity("spatial")) ~>
-      (caseSensitivity("index") | caseSensitivity("key")) ~>
+      opt(caseSensitivity("index") | caseSensitivity("key")) ~>
       opt(sqlIdent) ~ columnsParser ~ indexOption ^^ {
         case indexName ~ keyParts ~ indexOption => Index(indexName, None, keyParts, indexOption)
       }
