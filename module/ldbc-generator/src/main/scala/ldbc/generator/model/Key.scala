@@ -11,13 +11,15 @@ trait Key:
 
 object Key:
 
+  case class Constraint(name: Option[String])
+
   case class Index(indexName: Option[String], keyParts: List[String]) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       indexName.fold(s"INDEX_KEY(${ columns.mkString(",") })")(name => s"INDEX_KEY($name, ${ columns.mkString(",") })")
 
   case class Primary(
-    constraint: Option[Option[String]],
+    constraint: Option[Constraint],
     indexType:  Option[String],
     keyParts:   List[String],
     option:     Option[String]
@@ -29,10 +31,10 @@ object Key:
           case None    => s"PRIMARY_KEY($v, cats.data.NonEmptyList.of(${ columns.mkString(",") }))"
           case Some(o) => s"PRIMARY_KEY($v, cats.data.NonEmptyList.of(${ columns.mkString(",") }), $o)"
       )
-      constraint.fold(key)(v => s"CONSTRAINT(${ v.getOrElse(keyParts.mkString("_")) }, $key)")
+      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
 
   case class Unique(
-    constraint: Option[Option[String]],
+    constraint: Option[Constraint],
     indexName:  Option[String],
     indexType:  Option[String],
     keyParts:   List[String],
@@ -49,10 +51,10 @@ object Key:
            |  ${ option.fold("None")(v => s"Some($v)") },
            |)
            |""".stripMargin
-      constraint.fold(key)(v => s"CONSTRAINT(${ v.getOrElse(keyParts.mkString("_")) }, $key)")
+      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
 
   case class Foreign(
-    constraint: Option[Option[String]],
+    constraint: Option[Constraint],
     indexName:  Option[String],
     keyParts:   List[String],
     reference:  Reference
@@ -67,7 +69,7 @@ object Key:
            |  ${ reference.toCode(classNameFormatter, propertyFormatter) }
            |)
            |""".stripMargin
-      constraint.fold(key)(v => s"CONSTRAINT(\"${ v.getOrElse(keyParts.mkString("_")) }\", $key)")
+      constraint.fold(key)(v => s"CONSTRAINT(\"${ v.name.getOrElse(keyParts.mkString("_")) }\", $key)")
 
   case class Reference(tableName: String, keyParts: List[String], onDelete: Option[String], onUpdate: Option[String]):
     def toCode(classNameFormatter: Naming, propertyFormatter: Naming): String =
