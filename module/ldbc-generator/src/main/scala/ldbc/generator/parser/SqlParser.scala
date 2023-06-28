@@ -13,10 +13,10 @@ trait SqlParser extends JavaTokenParsers:
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
   private def symbol: Parser[String] =
-    "@" | "=" | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "-" | "+" | ";" | ":" | "," | "." | "?" |
+    "@" | "=" | "!" | "#" | "$" | "%" | "&" | "-" | "+" | ";" | ":" | "," | "." | "?" |
       "<" | ">" | "[" | "]" | "{" | "}" | "|" | "\\" | "^" | "_" | "~" | "'" | "`"
 
-  private def specialChars: Parser[String] =
+  protected def specialChars: Parser[String] =
     ident | wholeNumber | decimalNumber | symbol
 
   private def normalIdent: Parser[String] = rep1(
