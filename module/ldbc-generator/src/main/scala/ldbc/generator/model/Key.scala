@@ -20,14 +20,15 @@ object Key:
   case class Constraint(name: Option[String])
 
   case class Index(
-                    indexName: Option[String],
-                    indexType: Option[String],
-                    keyParts: List[String],
-                    indexOption: Option[String]
-                  ) extends Key:
+    indexName:   Option[String],
+    indexType:   Option[String],
+    keyParts:    List[String],
+    indexOption: Option[String]
+  ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
-      s"INDEX_KEY($indexName, ${ indexType.fold("None")(str => s"Some($str)") }, cats.data.NonEmptyList.of(${ columns.mkString(",") }), ${indexOption.fold("None")(str => s"Some($str)")})"
+      s"INDEX_KEY($indexName, ${ indexType.fold("None")(str => s"Some($str)") }, cats.data.NonEmptyList.of(${ columns
+          .mkString(",") }), ${ indexOption.fold("None")(str => s"Some($str)") })"
 
   case class Primary(
     constraint: Option[Constraint],
@@ -89,11 +90,11 @@ object Key:
       on match
         case Some(list) =>
           (list.find(_.isInstanceOf[OnDelete]), list.find(_.isInstanceOf[OnUpdate])) match
-            case (None, None) => s"REFERENCE($className.table)(${columns.mkString(",")})"
+            case (None, None) => s"REFERENCE($className.table)(${ columns.mkString(",") })"
             case (Some(delete), None) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${columns.mkString(",")}), Some($delete), None)"
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some($delete), None)"
             case (None, Some(update)) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${columns.mkString(",")}), None, Some($update))"
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), None, Some($update))"
             case (Some(delete), Some(update)) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${columns.mkString(",")}), Some($delete), Some($update))"
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some($delete), Some($update))"
         case None => s"REFERENCE($className.table)(${ columns.mkString(",") })"

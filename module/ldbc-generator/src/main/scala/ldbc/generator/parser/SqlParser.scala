@@ -80,7 +80,7 @@ trait SqlParser extends JavaTokenParsers:
         |======================================================
         |""".stripMargin
     )
-    
+
   protected def secondaryEngineAttribute: Parser[String] =
     customError(
       caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident,

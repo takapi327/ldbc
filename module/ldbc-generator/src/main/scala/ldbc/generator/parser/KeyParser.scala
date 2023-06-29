@@ -38,7 +38,7 @@ trait KeyParser extends ColumnParser:
   private def indexType: Parser[String] =
     customError(
       caseSensitivity("using") ~> (caseSensitivity("btree") | caseSensitivity("hash")) ^^ { input =>
-        s"Index.Type.${input.toUpperCase}"
+        s"Index.Type.${ input.toUpperCase }"
       },
       """
         |======================================================
@@ -73,7 +73,7 @@ trait KeyParser extends ColumnParser:
   private def indexKey: Parser[Index] =
     (caseSensitivity("index") | caseSensitivity("key")) ~> opt(sqlIdent.filter {
       case str if "(?i)using".r.matches(str) => false
-      case _ => true
+      case _                                 => true
     }) ~ opt(indexType) ~ columnsParser ~ indexOption ^^ {
       case indexName ~ indexType ~ keyParts ~ indexOption => Index(indexName, indexType, keyParts, indexOption)
     }
@@ -88,10 +88,10 @@ trait KeyParser extends ColumnParser:
   private def constraint: Parser[Constraint] =
     caseSensitivity("constraint") ~> opt(sqlIdent.filter {
       case str if "(?i)primary".r.matches(str) => false
-      case str if "(?i)unique".r.matches(str) => false
+      case str if "(?i)unique".r.matches(str)  => false
       case str if "(?i)foreign".r.matches(str) => false
-      case str if "(?i)check".r.matches(str) => false
-      case _ => true
+      case str if "(?i)check".r.matches(str)   => false
+      case _                                   => true
     }) ^^ Constraint.apply
 
   private def referenceOption: Parser[String] =
@@ -100,9 +100,9 @@ trait KeyParser extends ColumnParser:
         caseSensitivity("restrict") | caseSensitivity("cascade") | (caseSensitivity("set") ~
           (caseSensitivity("null") | caseSensitivity("default"))) | (caseSensitivity("no") ~
           caseSensitivity("action"))
-        ) ^^ {
-        case set ~ option => s"Reference.ReferenceOption.${set.toUpperCase}_${option.toUpperCase}"
-        case option: String => s"Reference.ReferenceOption.${option.toUpperCase}"
+      ) ^^ {
+        case set ~ option   => s"Reference.ReferenceOption.${ set.toUpperCase }_${ option.toUpperCase }"
+        case option: String => s"Reference.ReferenceOption.${ option.toUpperCase }"
       },
       """
         |======================================================
@@ -130,9 +130,10 @@ trait KeyParser extends ColumnParser:
   private def onDeleteUpdate: Parser[Key.OnDelete | Key.OnUpdate] =
     customError(
       caseSensitivity("on") ~> (caseSensitivity("delete") | caseSensitivity("update")) ~ referenceOption ^^ {
-        case str ~ option => str match
-          case str if "(?i)delete".r.matches(str) => Key.onDelete(option)
-          case str if "(?i)update".r.matches(str) => Key.onUpdate(option)
+        case str ~ option =>
+          str match
+            case str if "(?i)delete".r.matches(str) => Key.onDelete(option)
+            case str if "(?i)update".r.matches(str) => Key.onUpdate(option)
       },
       """
         |======================================================
@@ -175,9 +176,9 @@ trait KeyParser extends ColumnParser:
     customError(
       opt(constraint) ~ caseSensitivity("check") ~ "(" ~ rep1(specialChars.filter(_ != ")")) ~ ")" ~
         opt(caseSensitivity("not")) ~ opt(caseSensitivity("enforced")) ^^ {
-        case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced =>
-          s"$constraint ${expr.mkString(" ")} $not $enforced"
-      },
+          case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced =>
+            s"$constraint ${ expr.mkString(" ") } $not $enforced"
+        },
       """
         |======================================================
         |There is an error in the format of the check type.
