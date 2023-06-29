@@ -95,14 +95,24 @@ trait KeyParser extends ColumnParser:
     }) ^^ Constraint.apply
 
   private def referenceOption: Parser[String] =
-    (
-      caseSensitivity("restrict") | caseSensitivity("cascade") | (caseSensitivity("set") ~
-        (caseSensitivity("null") | caseSensitivity("default"))) | (caseSensitivity("no") ~
-        caseSensitivity("action"))
-    ) ^^ {
-      case set ~ option   => s"Reference.ReferenceOption.${ set.toUpperCase }_${ option.toUpperCase }"
-      case option: String => s"Reference.ReferenceOption.${ option.toUpperCase }"
-    }
+    customError(
+      (
+        caseSensitivity("restrict") | caseSensitivity("cascade") | (caseSensitivity("set") ~
+          (caseSensitivity("null") | caseSensitivity("default"))) | (caseSensitivity("no") ~
+          caseSensitivity("action"))
+        ) ^^ {
+        case set ~ option => s"Reference.ReferenceOption.${set.toUpperCase}_${option.toUpperCase}"
+        case option: String => s"Reference.ReferenceOption.${option.toUpperCase}"
+      },
+      """
+        |======================================================
+        |There is an error in the format of the referenceOption type.
+        |Please correct the format according to the following.
+        |
+        |example: RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT
+        |======================================================
+        |""".stripMargin
+    )
 
   private def matchParser: Parser[String ~ String] =
     customError(
@@ -117,12 +127,28 @@ trait KeyParser extends ColumnParser:
         |""".stripMargin
     )
 
+  private def onDeleteUpdate: Parser[Key.OnDelete | Key.OnUpdate] =
+    customError(
+      caseSensitivity("on") ~> (caseSensitivity("delete") | caseSensitivity("update")) ~ referenceOption ^^ {
+        case str ~ option => str match
+          case str if "(?i)delete".r.matches(str) => Key.onDelete(option)
+          case str if "(?i)update".r.matches(str) => Key.onUpdate(option)
+      },
+      """
+        |======================================================
+        |There is an error in the format of the on delete/update type.
+        |Please correct the format according to the following.
+        |
+        |example: ON {DELETE | UPDATE} [RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT]
+        |======================================================
+        |""".stripMargin
+    )
+
   private def referenceDefinition: Parser[Reference] =
     caseSensitivity("references") ~> sqlIdent ~ columnsParser ~
-      opt(matchParser) ~ opt(caseSensitivity("on") ~> caseSensitivity("delete") ~> opt(referenceOption)) ~
-      opt(caseSensitivity("on") ~> caseSensitivity("update") ~> opt(referenceOption)) ^^ {
-        case tableName ~ keyParts ~ _ ~ onDelete ~ onUpdate =>
-          Reference(tableName, keyParts, onDelete.flatten, onUpdate.flatten)
+      opt(matchParser) ~ opt(rep1(onDeleteUpdate)) ^^ {
+        case tableName ~ keyParts ~ _ ~ on =>
+          Reference(tableName, keyParts, on)
       }
 
   private def constraintPrimaryKey: Parser[Primary] =
