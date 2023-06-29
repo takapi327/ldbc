@@ -172,10 +172,21 @@ trait KeyParser extends ColumnParser:
       }
 
   private def checkConstraintDefinition: Parser[String] =
-    opt(constraint) ~ caseSensitivity("check") ~ "(" ~ rep1(specialChars) ~
-      opt(caseSensitivity("not")) ~ opt(caseSensitivity("enforced")) ^^ {
-        case constraint ~ _ ~ _ ~ expr ~ not ~ enforced => s"$constraint ${expr.mkString(" ")} $not $enforced"
-      }
+    customError(
+      opt(constraint) ~ caseSensitivity("check") ~ "(" ~ rep1(specialChars.filter(_ != ")")) ~ ")" ~
+        opt(caseSensitivity("not")) ~ opt(caseSensitivity("enforced")) ^^ {
+        case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced =>
+          s"$constraint ${expr.mkString(" ")} $not $enforced"
+      },
+      """
+        |======================================================
+        |There is an error in the format of the check type.
+        |Please correct the format according to the following.
+        |
+        |example: [CONSTRAINT [symbol]] CHECK (expr) [[NOT] ENFORCED]
+        |======================================================
+        |""".stripMargin
+    )
 
   protected def keyDefinitions: Parser[Key | String] =
     (indexKey | fulltext | constraintPrimaryKey | constraintUniqueKey | constraintForeignKey | checkConstraintDefinition) ^^ {
