@@ -137,9 +137,25 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * It is a comment of the table and can be up to 2048 characters in length.
+   */
+  private def commentOption: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply,
+      """
+        |======================================================
+        |There is an error in the comment format.
+        |Please correct the format according to the following.
+        |
+        |example: COMMENT [=] 'string'
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
-      keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply |
+      commentOption |
       keyValue(caseSensitivity("compression"), sqlIdent) ^^ {
         case value: ("ZLIB" | "LZ4" | "NONE") => Table.Options.Compression(value)
         case unknown =>
