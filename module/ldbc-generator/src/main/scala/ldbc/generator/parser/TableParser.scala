@@ -14,13 +14,14 @@ trait TableParser extends KeyParser:
   private def keyValue[T](keyParser: Parser[String], valueParser: Parser[T]): Parser[T] =
     keyParser ~> opt("=") ~> valueParser
 
-  /**
-   * The AUTOEXTEND_SIZE option is a feature added in MySQL database version 8.0.23 and later. This is an option to set whether the database file size is automatically extended.
-   *
-   * The AUTOEXTEND_SIZE option is a feature to automatically increase the size of the database, allowing for flexibility in accommodating data growth.
-   *
-   * SEE: https://dev.mysql.com/doc/refman/8.0/ja/innodb-tablespace-autoextend-size.html
-   */
+  /** The AUTOEXTEND_SIZE option is a feature added in MySQL database version 8.0.23 and later. This is an option to set
+    * whether the database file size is automatically extended.
+    *
+    * The AUTOEXTEND_SIZE option is a feature to automatically increase the size of the database, allowing for
+    * flexibility in accommodating data growth.
+    *
+    * SEE: https://dev.mysql.com/doc/refman/8.0/ja/innodb-tablespace-autoextend-size.html
+    */
   private def autoextendSize: Parser[Table.Options] =
     customError(
       keyValue(
@@ -40,12 +41,12 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The initial AUTO_INCREMENT value for the table.
-   *
-   * In MySQL 8.0, this works for MyISAM, MEMORY, InnoDB, and ARCHIVE tables. To set the initial auto-increment value for engines that do not support the AUTO_INCREMENT table option,
-   * insert a "dummy" row with a value one less than the desired value after creating the table, then delete the dummy row.
-   */
+  /** The initial AUTO_INCREMENT value for the table.
+    *
+    * In MySQL 8.0, this works for MyISAM, MEMORY, InnoDB, and ARCHIVE tables. To set the initial auto-increment value
+    * for engines that do not support the AUTO_INCREMENT table option, insert a "dummy" row with a value one less than
+    * the desired value after creating the table, then delete the dummy row.
+    */
   private def autoIncrement: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("auto_increment"), digit) ^^ Table.Options.AutoIncrement.apply,
@@ -62,11 +63,12 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * An approximation of the average row length of the table. You only need to set this for large tables with variable size rows.
-   *
-   * The AVG_ROW_LENGTH option is a setting to specify the average length of a single row. This setting allows for efficient use of database space.
-   */
+  /** An approximation of the average row length of the table. You only need to set this for large tables with variable
+    * size rows.
+    *
+    * The AVG_ROW_LENGTH option is a setting to specify the average length of a single row. This setting allows for
+    * efficient use of database space.
+    */
   private def avgRowLength: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("avg_row_length"), digit) ^^ Table.Options.AVGRowLength.apply,
@@ -82,9 +84,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Specifies the default character set for the table. CHARSET is a synonym for CHARACTER SET. If the character set name is DEFAULT, the database character set is used.
-   */
+  /** Specifies the default character set for the table. CHARSET is a synonym for CHARACTER SET. If the character set
+    * name is DEFAULT, the database character set is used.
+    */
   private def characterSet: Parser[Table.Options] =
     customError(
       opt(caseSensitivity("default")) ~> character ^^ Table.Options.Character.apply,
@@ -100,11 +102,12 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The CHECKSUM option is one of the features used in the MySQL database. It is used to check data integrity.
-   *
-   * The CHECKSUM option has two setting values, 0 and 1. If set to 0, no checksum calculation is performed. When set to 0, no checksum calculation is performed, i.e., data integrity is not checked. On the other hand, when set to 1, the checksum is calculated and data integrity is checked.
-   */
+  /** The CHECKSUM option is one of the features used in the MySQL database. It is used to check data integrity.
+    *
+    * The CHECKSUM option has two setting values, 0 and 1. If set to 0, no checksum calculation is performed. When set
+    * to 0, no checksum calculation is performed, i.e., data integrity is not checked. On the other hand, when set to 1,
+    * the checksum is calculated and data integrity is checked.
+    */
   private def checksum: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("checksum"), """(0|1)""".r) ^^ {
@@ -121,9 +124,8 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Specifies the default collation for the table.
-   */
+  /** Specifies the default collation for the table.
+    */
   private def collateSet: Parser[Table.Options] =
     customError(
       opt(caseSensitivity("default")) ~> collate ^^ Table.Options.Collate.apply,
@@ -137,9 +139,8 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * It is a comment of the table and can be up to 2048 characters in length.
-   */
+  /** It is a comment of the table and can be up to 2048 characters in length.
+    */
   private def commentOption: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply,
@@ -153,9 +154,10 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The COMPRESSION option is a feature for compressing and storing data. This reduces the size of the database and saves space. Different setting values will change the compression algorithm, resulting in different compression speeds and efficiencies.
-   */
+  /** The COMPRESSION option is a feature for compressing and storing data. This reduces the size of the database and
+    * saves space. Different setting values will change the compression algorithm, resulting in different compression
+    * speeds and efficiencies.
+    */
   private def compression: Parser[Table.Options] =
     customError(
       keyValue(
@@ -163,7 +165,7 @@ trait TableParser extends KeyParser:
         caseSensitivity("zlib") | caseSensitivity("lz4") | caseSensitivity("none")
       ) ^^ {
         case str if str.toUpperCase == "ZLIB" => Table.Options.Compression("ZLIB")
-        case str if str.toUpperCase == "LZ4" => Table.Options.Compression("LZ4")
+        case str if str.toUpperCase == "LZ4"  => Table.Options.Compression("LZ4")
         case str if str.toUpperCase == "NONE" => Table.Options.Compression("NONE")
       },
       """
@@ -176,9 +178,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The CONNECTION option is one of the settings used by the MySQL database. It is used to configure settings related to the connection to the database.
-   */
+  /** The CONNECTION option is one of the settings used by the MySQL database. It is used to configure settings related
+    * to the connection to the database.
+    */
   private def connection: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("connection"), stringLiteral) ^^ Table.Options.Connection.apply,
@@ -206,9 +208,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * DATA DIRECTORY and INDEX DIRECTORY are options used in the MySQL database. These options are used to specify where data and indexes are stored.
-   */
+  /** DATA DIRECTORY and INDEX DIRECTORY are options used in the MySQL database. These options are used to specify where
+    * data and indexes are stored.
+    */
   private def directory: Parser[Table.Options] =
     customError(
       keyValue(
@@ -225,9 +227,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Specifies how to use delayed key writing. This applies only to MyISAM tables. Delayed key writes do not flush the key buffer between writes.
-   */
+  /** Specifies how to use delayed key writing. This applies only to MyISAM tables. Delayed key writes do not flush the
+    * key buffer between writes.
+    */
   private def delayKeyWrite: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("delay_key_write"), """(0|1)""".r) ^^ {
@@ -244,9 +246,8 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The ENCRYPTION option is one of the settings used in the MySQL database. It is used to encrypt (encode) data.
-   */
+  /** The ENCRYPTION option is one of the settings used in the MySQL database. It is used to encrypt (encode) data.
+    */
   private def encryption: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("encryption"), caseSensitivity("y") | caseSensitivity("n")) ^^ {
@@ -263,25 +264,24 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Option to specify storage engine for table
-   */
+  /** Option to specify storage engine for table
+    */
   private def engine: Parser[Table.Options] =
     customError(
       keyValue(
         caseSensitivity("engine"),
         "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
       ) ^^ {
-        case "InnoDB" => Table.Options.Engine("InnoDB")
-        case "MyISAM" => Table.Options.Engine("MyISAM")
-        case "MEMORY" => Table.Options.Engine("MEMORY")
-        case "CSV" => Table.Options.Engine("CSV")
-        case "ARCHIVE" => Table.Options.Engine("ARCHIVE")
-        case "EXAMPLE" => Table.Options.Engine("EXAMPLE")
+        case "InnoDB"    => Table.Options.Engine("InnoDB")
+        case "MyISAM"    => Table.Options.Engine("MyISAM")
+        case "MEMORY"    => Table.Options.Engine("MEMORY")
+        case "CSV"       => Table.Options.Engine("CSV")
+        case "ARCHIVE"   => Table.Options.Engine("ARCHIVE")
+        case "EXAMPLE"   => Table.Options.Engine("EXAMPLE")
         case "FEDERATED" => Table.Options.Engine("FEDERATED")
-        case "HEAP" => Table.Options.Engine("HEAP")
-        case "MERGE" => Table.Options.Engine("MERGE")
-        case "NDB" => Table.Options.Engine("NDB")
+        case "HEAP"      => Table.Options.Engine("HEAP")
+        case "MERGE"     => Table.Options.Engine("MERGE")
+        case "NDB"       => Table.Options.Engine("NDB")
       },
       """
         |======================================================
@@ -293,18 +293,18 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * When inserting data into a MERGE table, INSERT_METHOD must be used to specify the table into which the rows are to be inserted. INSERT_METHOD is a useful option only for MERGE tables.
-   */
+  /** When inserting data into a MERGE table, INSERT_METHOD must be used to specify the table into which the rows are to
+    * be inserted. INSERT_METHOD is a useful option only for MERGE tables.
+    */
   private def insertMethod: Parser[Table.Options] =
     customError(
       keyValue(
         caseSensitivity("insert_method"),
         caseSensitivity("NO") | caseSensitivity("FIRST") | caseSensitivity("LAST")
       ) ^^ {
-        case str if str.toUpperCase == "NO" => Table.Options.InsertMethod("NO")
+        case str if str.toUpperCase == "NO"    => Table.Options.InsertMethod("NO")
         case str if str.toUpperCase == "FIRST" => Table.Options.InsertMethod("FIRST")
-        case str if str.toUpperCase == "LAST" => Table.Options.InsertMethod("LAST")
+        case str if str.toUpperCase == "LAST"  => Table.Options.InsertMethod("LAST")
       },
       """
         |======================================================
@@ -316,13 +316,13 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The maximum number of rows you plan to store in the table. This is not a strong limit, but rather a hint to the storage engine that the table must be able to store at least this number of rows.
-   */
+  /** The maximum number of rows you plan to store in the table. This is not a strong limit, but rather a hint to the
+    * storage engine that the table must be able to store at least this number of rows.
+    */
   private def maxRows: Parser[Table.Options] =
     customError(
-      keyValue(caseSensitivity("max_rows"), """-?\d+""".r.filter(_.toLong < 4294967296L)) ^^ {
-        digit => Table.Options.MaxRows(digit.toLong)
+      keyValue(caseSensitivity("max_rows"), """-?\d+""".r.filter(_.toLong < 4294967296L)) ^^ { digit =>
+        Table.Options.MaxRows(digit.toLong)
       },
       """
         |======================================================
@@ -336,13 +336,13 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The minimum number of rows you plan to store in the table. MEMORY The storage engine uses this option as a hint regarding memory usage.
-   */
+  /** The minimum number of rows you plan to store in the table. MEMORY The storage engine uses this option as a hint
+    * regarding memory usage.
+    */
   private def minRows: Parser[Table.Options] =
     customError(
-      keyValue(caseSensitivity("min_rows"), """-?\d+""".r) ^^ {
-        digit => Table.Options.MinRows(digit.toLong)
+      keyValue(caseSensitivity("min_rows"), """-?\d+""".r) ^^ { digit =>
+        Table.Options.MinRows(digit.toLong)
       },
       """
         |======================================================
@@ -354,17 +354,18 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Valid only for MyISAM tables. Set this option to 1 for smaller indexes. This usually results in slower updates and faster reads. Setting this option to 0 disables all packing of keys. Setting it to DEFAULT tells the storage engine to pack only long CHAR, VARCHAR, BINARY, or VARBINARY columns.
-   */
+  /** Valid only for MyISAM tables. Set this option to 1 for smaller indexes. This usually results in slower updates and
+    * faster reads. Setting this option to 0 disables all packing of keys. Setting it to DEFAULT tells the storage
+    * engine to pack only long CHAR, VARCHAR, BINARY, or VARBINARY columns.
+    */
   private def packKeys: Parser[Table.Options] =
     customError(
       keyValue(
         caseSensitivity("pack_keys"),
         "0" | "1" | caseSensitivity("default")
       ) ^^ {
-        case "0" => Table.Options.PackKeys("0")
-        case "1" => Table.Options.PackKeys("1")
+        case "0"                                 => Table.Options.PackKeys("0")
+        case "1"                                 => Table.Options.PackKeys("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.PackKeys("DEFAULT")
       },
       """
@@ -377,21 +378,22 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Defines the physical format in which the rows will be stored.
-   */
+  /** Defines the physical format in which the rows will be stored.
+    */
   private def rowFormat: Parser[Table.Options] =
     customError(
       keyValue(
         caseSensitivity("row_format"),
-        caseSensitivity("default") | caseSensitivity("dynamic") | caseSensitivity("fixed") | caseSensitivity("redundant") | caseSensitivity("compact")
+        caseSensitivity("default") | caseSensitivity("dynamic") | caseSensitivity("fixed") | caseSensitivity(
+          "redundant"
+        ) | caseSensitivity("compact")
       ) ^^ {
-        case str if str.toUpperCase == "DEFAULT" => Table.Options.RowFormat("DEFAULT")
-        case str if str.toUpperCase == "DYNAMIC" => Table.Options.RowFormat("DYNAMIC")
-        case str if str.toUpperCase == "FIXED" => Table.Options.RowFormat("FIXED")
+        case str if str.toUpperCase == "DEFAULT"    => Table.Options.RowFormat("DEFAULT")
+        case str if str.toUpperCase == "DYNAMIC"    => Table.Options.RowFormat("DYNAMIC")
+        case str if str.toUpperCase == "FIXED"      => Table.Options.RowFormat("FIXED")
         case str if str.toUpperCase == "COMPRESSED" => Table.Options.RowFormat("COMPRESSED")
-        case str if str.toUpperCase == "REDUNDANT" => Table.Options.RowFormat("REDUNDANT")
-        case str if str.toUpperCase == "COMPACT" => Table.Options.RowFormat("COMPACT")
+        case str if str.toUpperCase == "REDUNDANT"  => Table.Options.RowFormat("REDUNDANT")
+        case str if str.toUpperCase == "COMPACT"    => Table.Options.RowFormat("COMPACT")
       },
       """
         |======================================================
@@ -403,17 +405,20 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Specifies whether the persistent statistics for InnoDB tables should be automatically recalculated. With the value DEFAULT, the table's persistent statistics settings are determined by the innodb_stats_auto_recalc configuration option. A value of 1 specifies that the statistics will be recalculated when 10% of the data in the table has changed. A value of 0 prevents automatic recalculation of this table. With this setting, to recalculate the statistics after making significant changes to the table, issue an ANALYZE TABLE statement.
-   */
+  /** Specifies whether the persistent statistics for InnoDB tables should be automatically recalculated. With the value
+    * DEFAULT, the table's persistent statistics settings are determined by the innodb_stats_auto_recalc configuration
+    * option. A value of 1 specifies that the statistics will be recalculated when 10% of the data in the table has
+    * changed. A value of 0 prevents automatic recalculation of this table. With this setting, to recalculate the
+    * statistics after making significant changes to the table, issue an ANALYZE TABLE statement.
+    */
   private def statsAutoRecalc: Parser[Table.Options] =
     customError(
       keyValue(
         caseSensitivity("stats_auto_recalc"),
         "0" | "1" | caseSensitivity("default")
       ) ^^ {
-        case "0" => Table.Options.StatsAutoRecalc("0")
-        case "1" => Table.Options.StatsAutoRecalc("1")
+        case "0"                                 => Table.Options.StatsAutoRecalc("0")
+        case "1"                                 => Table.Options.StatsAutoRecalc("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsAutoRecalc("DEFAULT")
       },
       """
@@ -426,17 +431,18 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Specifies whether to enable persistent statistics for InnoDB tables. With the value DEFAULT, the table persistent statistics setting is determined by the innodb_stats_persistent configuration option. A value of 1 enables persistent statistics for the table, while a value of 0 disables this feature.
-   */
+  /** Specifies whether to enable persistent statistics for InnoDB tables. With the value DEFAULT, the table persistent
+    * statistics setting is determined by the innodb_stats_persistent configuration option. A value of 1 enables
+    * persistent statistics for the table, while a value of 0 disables this feature.
+    */
   private def statsPersistent: Parser[Table.Options] =
     customError(
       keyValue(
         caseSensitivity("stats_persistent"),
         "0" | "1" | caseSensitivity("default")
       ) ^^ {
-        case "0" => Table.Options.StatsPersistent("0")
-        case "1" => Table.Options.StatsPersistent("1")
+        case "0"                                 => Table.Options.StatsPersistent("0")
+        case "1"                                 => Table.Options.StatsPersistent("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsPersistent("DEFAULT")
       },
       """
@@ -449,9 +455,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Number of index pages to sample when estimating cardinality and other statistics (such as those computed by ANALYZE TABLE) for indexed columns.
-   */
+  /** Number of index pages to sample when estimating cardinality and other statistics (such as those computed by
+    * ANALYZE TABLE) for indexed columns.
+    */
   private def statsSamplePages: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("stats_sample_pages"), digit) ^^ Table.Options.StatsSamplePages.apply,
@@ -465,9 +471,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * The TABLESPACE clause can be used to create tables in an existing general tablespace, file-per-table tablespace, or system tablespace.
-   */
+  /** The TABLESPACE clause can be used to create tables in an existing general tablespace, file-per-table tablespace,
+    * or system tablespace.
+    */
   private def tablespace: Parser[Table.Options] =
     customError(
       caseSensitivity("tablespace") ~> sqlIdent ~ opt(
@@ -477,7 +483,7 @@ trait TableParser extends KeyParser:
           Table.Options.Tablespace(
             name,
             storage.map {
-              case "DISK" => "DISK"
+              case "DISK"   => "DISK"
               case "MEMORY" => "MEMORY"
             }
           )
@@ -492,9 +498,8 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
-  /**
-   * Used to access collections of identical MyISAM tables. This only works with MERGE tables.
-   */
+  /** Used to access collections of identical MyISAM tables. This only works with MERGE tables.
+    */
   private def union: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("union"), "(" ~> repsep(sqlIdent, ",") <~ ")") ^^ Table.Options.Union.apply,
