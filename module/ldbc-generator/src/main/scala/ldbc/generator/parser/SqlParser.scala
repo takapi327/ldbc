@@ -35,8 +35,20 @@ trait SqlParser extends JavaTokenParsers:
     caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase)
 
   protected def character: Parser[String] =
-    ((caseSensitivity("character") ~> caseSensitivity("set")) | caseSensitivity("charset")) ~>
-      opt("=") ~> sqlIdent
+    customError(
+      ((caseSensitivity("character") ~> caseSensitivity("set")) | caseSensitivity("charset")) ~>
+        opt("=") ~> sqlIdent.filter(_ != "="),
+      """
+        |======================================================
+        |There is an error in the character format.
+        |Please correct the format according to the following.
+        |
+        |Only numbers can be set for size.
+        |
+        |example: {CHARACTER [SET] | CHARSET} [=] 'string'
+        |======================================================
+        |""".stripMargin
+    )
 
   protected def collate: Parser[String] = caseSensitivity("collate") ~> opt("=") ~> sqlIdent
 

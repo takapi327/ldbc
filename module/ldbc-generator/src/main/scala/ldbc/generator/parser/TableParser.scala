@@ -82,9 +82,26 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Specifies the default character set for the table. CHARSET is a synonym for CHARACTER SET. If the character set name is DEFAULT, the database character set is used.
+   */
+  private def characterSet: Parser[Table.Options] =
+    customError(
+      opt(caseSensitivity("default")) ~> character ^^ Table.Options.Character.apply,
+      """
+        |======================================================
+        |There is an error in the character format.
+        |Please correct the format according to the following.
+        |
+        |Only numbers can be set for size.
+        |
+        |example: [DEFAULT] {CHARACTER [SET] | CHARSET} [=] 'string'
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
-    autoextendSize | autoIncrement | avgRowLength |
-      opt(caseSensitivity("default")) ~> character ^^ Table.Options.Character.apply |
+    autoextendSize | autoIncrement | avgRowLength | characterSet |
       keyValue(caseSensitivity("checksum"), digit) ^^ {
         case value: (0 | 1) => Table.Options.CheckSum(value)
         case unknown =>
