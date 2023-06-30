@@ -465,6 +465,33 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * The TABLESPACE clause can be used to create tables in an existing general tablespace, file-per-table tablespace, or system tablespace.
+   */
+  private def tablespace: Parser[Table.Options] =
+    customError(
+      caseSensitivity("tablespace") ~> sqlIdent ~ opt(
+        caseSensitivity("storage") ~> caseSensitivity("disk") | caseSensitivity("memory")
+      ) ^^ {
+        case name ~ storage =>
+          Table.Options.Tablespace(
+            name,
+            storage.map {
+              case "DISK" => "DISK"
+              case "MEMORY" => "MEMORY"
+            }
+          )
+      },
+      """
+        |======================================================
+        |There is an error in the tablespace format.
+        |Please correct the format according to the following.
+        |
+        |example: TABLESPACE [=] 'string' [STORAGE {DISK | MEMORY}]
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
@@ -474,23 +501,7 @@ trait TableParser extends KeyParser:
         caseSensitivity("secondary_engine_attribute"),
         sqlIdent
       ) ^^ Table.Options.SecondaryEngineAttribute.apply |
-      statsAutoRecalc | statsPersistent | statsSamplePages |
-      caseSensitivity("tablespace") ~> sqlIdent ~ opt(
-        caseSensitivity("storage") ~> caseSensitivity("disk") | caseSensitivity("memory")
-      ) ^^ {
-        case name ~ storage =>
-          Table.Options.Tablespace(
-            name,
-            storage.map {
-              case "DISK"   => "DISK"
-              case "MEMORY" => "MEMORY"
-              case unknown =>
-                throw new IllegalArgumentException(
-                  s"$unknown is not a value that can be set in the tablespace storage; the checksum must be one of the values DISK or MEMORY."
-                )
-            }
-          )
-      } |
+      statsAutoRecalc | statsPersistent | statsSamplePages | tablespace |
       keyValue(caseSensitivity("union"), repsep(sqlIdent, ",")) ^^ Table.Options.Union.apply
 
   protected def tableStatements: Parser[Table.CreateStatement | Table.DropStatement] = createStatement | dropStatement
