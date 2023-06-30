@@ -153,16 +153,32 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * The COMPRESSION option is a feature for compressing and storing data. This reduces the size of the database and saves space. Different setting values will change the compression algorithm, resulting in different compression speeds and efficiencies.
+   */
+  private def compression: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("compression"),
+        caseSensitivity("zlib") | caseSensitivity("lz4") | caseSensitivity("none")
+      ) ^^ {
+        case str if str.toUpperCase == "ZLIB" => Table.Options.Compression("ZLIB")
+        case str if str.toUpperCase == "LZ4" => Table.Options.Compression("LZ4")
+        case str if str.toUpperCase == "NONE" => Table.Options.Compression("NONE")
+      },
+      """
+        |======================================================
+        |There is an error in the compression format.
+        |Please correct the format according to the following.
+        |
+        |example: COMPRESSION [=] {ZLIB | LZ4 | NONE}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
-      commentOption |
-      keyValue(caseSensitivity("compression"), sqlIdent) ^^ {
-        case value: ("ZLIB" | "LZ4" | "NONE") => Table.Options.Compression(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the compression; the checksum must be one of the values ZLIB, LZ4 or NONE."
-          )
-      } |
+      commentOption | compression |
       keyValue(caseSensitivity("connection"), sqlIdent) ^^ Table.Options.Connection.apply |
       keyValue(
         caseSensitivity("data") | caseSensitivity("index") ~> caseSensitivity("directory"),
