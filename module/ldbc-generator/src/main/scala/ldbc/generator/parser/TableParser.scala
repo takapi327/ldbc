@@ -377,19 +377,38 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Defines the physical format in which the rows will be stored.
+   */
+  private def rowFormat: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("row_format"),
+        caseSensitivity("default") | caseSensitivity("dynamic") | caseSensitivity("fixed") | caseSensitivity("redundant") | caseSensitivity("compact")
+      ) ^^ {
+        case str if str.toUpperCase == "DEFAULT" => Table.Options.RowFormat("DEFAULT")
+        case str if str.toUpperCase == "DYNAMIC" => Table.Options.RowFormat("DYNAMIC")
+        case str if str.toUpperCase == "FIXED" => Table.Options.RowFormat("FIXED")
+        case str if str.toUpperCase == "COMPRESSED" => Table.Options.RowFormat("COMPRESSED")
+        case str if str.toUpperCase == "REDUNDANT" => Table.Options.RowFormat("REDUNDANT")
+        case str if str.toUpperCase == "COMPACT" => Table.Options.RowFormat("COMPACT")
+      },
+      """
+        |======================================================
+        |There is an error in the row_format format.
+        |Please correct the format according to the following.
+        |
+        |example: ROW_FORMAT [=] {DEFAULT | DYNAMIC | FIXED | COMPRESSED | REDUNDANT | COMPACT}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
       engine | engineAttribute ^^ Table.Options.EngineAttribute.apply | insertMethod |
       keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows | minRows | packKeys |
-      keyValue(caseSensitivity("row_format"), sqlIdent) ^^ {
-        case value: ("DEFAULT" | "DYNAMIC" | "FIXED" | "COMPRESSED" | "REDUNDANT" | "COMPACT") =>
-          Table.Options.RowFormat(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the pack_keys; the checksum must be one of the values DEFAULT, DYNAMIC, FIXED, COMPRESSED, REDUNDANT, or COMPACT."
-          )
-      } |
+      rowFormat |
       keyValue(
         caseSensitivity("secondary_engine_attribute"),
         sqlIdent
