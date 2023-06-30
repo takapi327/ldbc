@@ -403,23 +403,39 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Specifies whether the persistent statistics for InnoDB tables should be automatically recalculated. With the value DEFAULT, the table's persistent statistics settings are determined by the innodb_stats_auto_recalc configuration option. A value of 1 specifies that the statistics will be recalculated when 10% of the data in the table has changed. A value of 0 prevents automatic recalculation of this table. With this setting, to recalculate the statistics after making significant changes to the table, issue an ANALYZE TABLE statement.
+   */
+  private def statsAutoRecalc: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("stats_auto_recalc"),
+        "0" | "1" | caseSensitivity("default")
+      ) ^^ {
+        case "0" => Table.Options.StatsAutoRecalc("0")
+        case "1" => Table.Options.StatsAutoRecalc("1")
+        case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsAutoRecalc("DEFAULT")
+      },
+      """
+        |======================================================
+        |There is an error in the stats_auto_recalc format.
+        |Please correct the format according to the following.
+        |
+        |example: STATS_AUTO_RECALC [=] {0 | 1 | DEFAULT}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
       engine | engineAttribute ^^ Table.Options.EngineAttribute.apply | insertMethod |
       keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows | minRows | packKeys |
-      rowFormat |
-      keyValue(
+      rowFormat | keyValue(
         caseSensitivity("secondary_engine_attribute"),
         sqlIdent
       ) ^^ Table.Options.SecondaryEngineAttribute.apply |
-      keyValue(caseSensitivity("stats_auto_recalc"), sqlIdent) ^^ {
-        case value: ("0" | "1" | "DEFAULT") => Table.Options.StatsAutoRecalc(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the stats_auto_recalc; the checksum must be one of the values 0, 1 or DEFAULT."
-          )
-      } |
+      statsAutoRecalc |
       keyValue(caseSensitivity("stats_persistent"), sqlIdent) ^^ {
         case value: ("0" | "1" | "DEFAULT") => Table.Options.StatsPersistent(value)
         case unknown =>
