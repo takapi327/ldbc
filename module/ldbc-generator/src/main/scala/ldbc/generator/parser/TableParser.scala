@@ -316,12 +316,31 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * The maximum number of rows you plan to store in the table. This is not a strong limit, but rather a hint to the storage engine that the table must be able to store at least this number of rows.
+   */
+  private def maxRows: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("max_rows"), """-?\d+""".r.filter(_.toLong < 4294967296L)) ^^ {
+        digit => Table.Options.MaxRows(digit.toLong)
+      },
+      """
+        |======================================================
+        |There is an error in the max_rows format.
+        |Please correct the format according to the following.
+        |
+        |size must be less than 4294967295.
+        |
+        |example: MAX_ROWS [=] 'size';
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
       engine | engineAttribute ^^ Table.Options.EngineAttribute.apply | insertMethod |
-      keyBlockSize ^^ Table.Options.KeyBlockSize.apply |
-      keyValue(caseSensitivity("max_rows"), digit) ^^ Table.Options.MaxRows.apply |
+      keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows |
       keyValue(caseSensitivity("min_rows"), digit) ^^ Table.Options.MinRows.apply |
       keyValue(caseSensitivity("pack_keys"), sqlIdent) ^^ {
         case value: ("0" | "1" | "DEFAULT") => Table.Options.PackKeys(value)
