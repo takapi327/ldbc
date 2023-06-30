@@ -244,6 +244,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * The ENCRYPTION option is one of the settings used in the MySQL database. It is used to encrypt (encode) data.
+   */
   private def encryption: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("encryption"), caseSensitivity("y") | caseSensitivity("n")) ^^ {
@@ -260,11 +263,40 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Option to specify storage engine for table
+   */
+  private def engine: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("engine"),
+        "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
+      ) ^^ {
+        case "InnoDB" => Table.Options.Engine("InnoDB")
+        case "MyISAM" => Table.Options.Engine("MyISAM")
+        case "MEMORY" => Table.Options.Engine("MEMORY")
+        case "CSV" => Table.Options.Engine("CSV")
+        case "ARCHIVE" => Table.Options.Engine("ARCHIVE")
+        case "EXAMPLE" => Table.Options.Engine("EXAMPLE")
+        case "FEDERATED" => Table.Options.Engine("FEDERATED")
+        case "HEAP" => Table.Options.Engine("HEAP")
+        case "MERGE" => Table.Options.Engine("MERGE")
+        case "NDB" => Table.Options.Engine("NDB")
+      },
+      """
+        |======================================================
+        |There is an error in the engine format.
+        |Please correct the format according to the following.
+        |
+        |example: ENGINE [=] {InnoDB | MyISAM | MEMORY | CSV | ARCHIVE | EXAMPLE | FEDERATED | HEAP | MERGE | NDB}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
-      keyValue(caseSensitivity("engine"), sqlIdent) ^^ Table.Options.Engine.apply |
-      engineAttribute ^^ Table.Options.EngineAttribute.apply |
+      engine | engineAttribute ^^ Table.Options.EngineAttribute.apply |
       keyValue(caseSensitivity("insert_method"), sqlIdent) ^^ {
         case value: ("NO" | "FIRST" | "LAST") => Table.Options.InsertMethod(value)
         case unknown =>

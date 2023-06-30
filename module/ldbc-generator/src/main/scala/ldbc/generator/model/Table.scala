@@ -22,7 +22,7 @@ object Table:
     case class Directory(value: String)                     extends Options
     case class DelayKeyWrite(value: 0 | 1)                  extends Options
     case class Encryption(value: "Y" | "N")                 extends Options
-    case class Engine(value: String)                        extends Options
+    case class Engine(value: "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB")                        extends Options
     case class EngineAttribute(value: String)               extends Options
     case class InsertMethod(value: "NO" | "FIRST" | "LAST") extends Options
     case class KeyBlockSize(value: Int)                     extends Options
