@@ -244,16 +244,25 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  private def encryption: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("encryption"), caseSensitivity("y") | caseSensitivity("n")) ^^ {
+        case str if str.toUpperCase == "Y" => Table.Options.Encryption("Y")
+        case str if str.toUpperCase == "N" => Table.Options.Encryption("N")
+      },
+      """
+        |======================================================
+        |There is an error in the encryption format.
+        |Please correct the format according to the following.
+        |
+        |example: ENCRYPTION [=] {Y | N}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
-      commentOption | compression | connection | directory | delayKeyWrite |
-      keyValue(caseSensitivity("encryption"), sqlIdent) ^^ {
-        case value: ("Y" | "N") => Table.Options.Encryption(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the encryption; the checksum must be one of the values Y or N."
-          )
-      } |
+      commentOption | compression | connection | directory | delayKeyWrite | encryption |
       keyValue(caseSensitivity("engine"), sqlIdent) ^^ Table.Options.Engine.apply |
       engineAttribute ^^ Table.Options.EngineAttribute.apply |
       keyValue(caseSensitivity("insert_method"), sqlIdent) ^^ {
