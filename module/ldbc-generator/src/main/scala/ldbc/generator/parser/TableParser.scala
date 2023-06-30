@@ -14,10 +14,76 @@ trait TableParser extends KeyParser:
   private def keyValue[T](keyParser: Parser[String], valueParser: Parser[T]): Parser[T] =
     keyParser ~> opt("=") ~> valueParser
 
+  /**
+   * The AUTOEXTEND_SIZE option is a feature added in MySQL database version 8.0.23 and later. This is an option to set whether the database file size is automatically extended.
+   *
+   * The AUTOEXTEND_SIZE option is a feature to automatically increase the size of the database, allowing for flexibility in accommodating data growth.
+   *
+   * SEE: https://dev.mysql.com/doc/refman/8.0/ja/innodb-tablespace-autoextend-size.html
+   */
+  private def autoextendSize: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("autoextend_size"),
+        """(4|8|12|16|20|24|28|32|36|40|44|48|52|56|60|64)""".r <~ caseSensitivity("m")
+      ) ^^ (v => Table.Options.AutoExtendSize(v.toInt)),
+      """
+        |======================================================
+        |There is an error in the autoextend_size format.
+        |Please correct the format according to the following.
+        |
+        |The value set for AUTOEXTEND_SIZE must be a multiple of 4.
+        |The minimum is 4 and the maximum is 64.
+        |
+        |example: AUTOEXTEND_SIZE[=]'size'M
+        |======================================================
+        |""".stripMargin
+    )
+
+  /**
+   * The initial AUTO_INCREMENT value for the table.
+   *
+   * In MySQL 8.0, this works for MyISAM, MEMORY, InnoDB, and ARCHIVE tables. To set the initial auto-increment value for engines that do not support the AUTO_INCREMENT table option,
+   * insert a "dummy" row with a value one less than the desired value after creating the table, then delete the dummy row.
+   */
+  private def autoIncrement: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("auto_increment"), digit) ^^ Table.Options.AutoIncrement.apply,
+      """
+        |======================================================
+        |There is an error in the auto_increment format.
+        |Please correct the format according to the following.
+        |
+        |Only numbers can be set for size.
+        |It cannot be set smaller than the maximum value currently in the column.
+        |
+        |example: AUTO_INCREMENT[=]'size'
+        |======================================================
+        |""".stripMargin
+    )
+
+  /**
+   * An approximation of the average row length of the table. You only need to set this for large tables with variable size rows.
+   *
+   * The AVG_ROW_LENGTH option is a setting to specify the average length of a single row. This setting allows for efficient use of database space.
+   */
+  private def avgRowLength: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("avg_row_length"), digit) ^^ Table.Options.AVGRowLength.apply,
+      """
+        |======================================================
+        |There is an error in the avg_row_length format.
+        |Please correct the format according to the following.
+        |
+        |Only numbers can be set for size.
+        |
+        |example: AVG_ROW_LENGTH[=]'size'
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
-    keyValue(caseSensitivity("autoextend_size"), sqlIdent) ^^ Table.Options.AutoExtendSize.apply |
-      keyValue(caseSensitivity("auto_increment"), digit) ^^ Table.Options.AutoIncrement.apply |
-      keyValue(caseSensitivity("avg_row_length"), sqlIdent) ^^ Table.Options.AVGRowLength.apply |
+    autoextendSize | autoIncrement | avgRowLength |
       opt(caseSensitivity("default")) ~> character ^^ Table.Options.Character.apply |
       keyValue(caseSensitivity("checksum"), digit) ^^ {
         case value: (0 | 1) => Table.Options.CheckSum(value)

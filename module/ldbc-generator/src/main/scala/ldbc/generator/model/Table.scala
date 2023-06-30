@@ -10,9 +10,9 @@ object Table:
 
   object Options:
 
-    case class AutoExtendSize(value: String)                extends Options
+    case class AutoExtendSize(value: Int)                extends Options
     case class AutoIncrement(value: Int)                    extends Options
-    case class AVGRowLength(value: String)                  extends Options
+    case class AVGRowLength(value: Int)                  extends Options
     case class Character(value: String)                     extends Options
     case class CheckSum(value: 0 | 1)                       extends Options
     case class Collate(value: String)                       extends Options
