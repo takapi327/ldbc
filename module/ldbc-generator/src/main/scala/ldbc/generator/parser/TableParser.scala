@@ -426,6 +426,29 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Specifies whether to enable persistent statistics for InnoDB tables. With the value DEFAULT, the table persistent statistics setting is determined by the innodb_stats_persistent configuration option. A value of 1 enables persistent statistics for the table, while a value of 0 disables this feature.
+   */
+  private def statsPersistent: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("stats_persistent"),
+        "0" | "1" | caseSensitivity("default")
+      ) ^^ {
+        case "0" => Table.Options.StatsPersistent("0")
+        case "1" => Table.Options.StatsPersistent("1")
+        case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsPersistent("DEFAULT")
+      },
+      """
+        |======================================================
+        |There is an error in the stats_persistent format.
+        |Please correct the format according to the following.
+        |
+        |example: STATS_PERSISTENT [=] {0 | 1 | DEFAULT}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
@@ -435,14 +458,7 @@ trait TableParser extends KeyParser:
         caseSensitivity("secondary_engine_attribute"),
         sqlIdent
       ) ^^ Table.Options.SecondaryEngineAttribute.apply |
-      statsAutoRecalc |
-      keyValue(caseSensitivity("stats_persistent"), sqlIdent) ^^ {
-        case value: ("0" | "1" | "DEFAULT") => Table.Options.StatsPersistent(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the stats_persistent; the checksum must be one of the values 0, 1 or DEFAULT."
-          )
-      } |
+      statsAutoRecalc | statsPersistent |
       keyValue(caseSensitivity("stats_sample_pages"), sqlIdent) ^^ Table.Options.StatsSamplePages.apply |
       caseSensitivity("tablespace") ~> sqlIdent ~ opt(
         caseSensitivity("storage") ~> caseSensitivity("disk") | caseSensitivity("memory")
