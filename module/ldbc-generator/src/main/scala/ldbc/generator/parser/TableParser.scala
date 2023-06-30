@@ -100,15 +100,29 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * The CHECKSUM option is one of the features used in the MySQL database. It is used to check data integrity.
+   *
+   * The CHECKSUM option has two setting values, 0 and 1. If set to 0, no checksum calculation is performed. When set to 0, no checksum calculation is performed, i.e., data integrity is not checked. On the other hand, when set to 1, the checksum is calculated and data integrity is checked.
+   */
+  private def checksum: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("checksum"), """(0|1)""".r) ^^ {
+        case "0" => Table.Options.CheckSum(0)
+        case "1" => Table.Options.CheckSum(1)
+      },
+      """
+        |======================================================
+        |There is an error in the checksum format.
+        |Please correct the format according to the following.
+        |
+        |example: CHECKSUM [=] {0 | 1}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
-    autoextendSize | autoIncrement | avgRowLength | characterSet |
-      keyValue(caseSensitivity("checksum"), digit) ^^ {
-        case value: (0 | 1) => Table.Options.CheckSum(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the checksum; the checksum must be one of the values 0 or 1."
-          )
-      } |
+    autoextendSize | autoIncrement | avgRowLength | characterSet | checksum |
       opt(caseSensitivity("default")) ~> collate ^^ Table.Options.Collate.apply |
       keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply |
       keyValue(caseSensitivity("compression"), sqlIdent) ^^ {
