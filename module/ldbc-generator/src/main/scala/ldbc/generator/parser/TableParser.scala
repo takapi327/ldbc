@@ -293,17 +293,33 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * When inserting data into a MERGE table, INSERT_METHOD must be used to specify the table into which the rows are to be inserted. INSERT_METHOD is a useful option only for MERGE tables.
+   */
+  private def insertMethod: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("insert_method"),
+        caseSensitivity("NO") | caseSensitivity("FIRST") | caseSensitivity("LAST")
+      ) ^^ {
+        case str if str.toUpperCase == "NO" => Table.Options.InsertMethod("NO")
+        case str if str.toUpperCase == "FIRST" => Table.Options.InsertMethod("FIRST")
+        case str if str.toUpperCase == "LAST" => Table.Options.InsertMethod("LAST")
+      },
+      """
+        |======================================================
+        |There is an error in the insert_method format.
+        |Please correct the format according to the following.
+        |
+        |example: INSERT_METHOD [=] {NO | FIRST | LAST}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
-      engine | engineAttribute ^^ Table.Options.EngineAttribute.apply |
-      keyValue(caseSensitivity("insert_method"), sqlIdent) ^^ {
-        case value: ("NO" | "FIRST" | "LAST") => Table.Options.InsertMethod(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the insert_method; the checksum must be one of the values NO, FIRST or LAST."
-          )
-      } |
+      engine | engineAttribute ^^ Table.Options.EngineAttribute.apply | insertMethod |
       keyBlockSize ^^ Table.Options.KeyBlockSize.apply |
       keyValue(caseSensitivity("max_rows"), digit) ^^ Table.Options.MaxRows.apply |
       keyValue(caseSensitivity("min_rows"), digit) ^^ Table.Options.MinRows.apply |
