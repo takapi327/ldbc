@@ -176,6 +176,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * The CONNECTION option is one of the settings used by the MySQL database. It is used to configure settings related to the connection to the database.
+   */
   private def connection: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("connection"), stringLiteral) ^^ Table.Options.Connection.apply,
@@ -203,6 +206,9 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * DATA DIRECTORY and INDEX DIRECTORY are options used in the MySQL database. These options are used to specify where data and indexes are stored.
+   */
   private def directory: Parser[Table.Options] =
     customError(
       keyValue(
@@ -219,16 +225,28 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Specifies how to use delayed key writing. This applies only to MyISAM tables. Delayed key writes do not flush the key buffer between writes.
+   */
+  private def delayKeyWrite: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("delay_key_write"), """(0|1)""".r) ^^ {
+        case "0" => Table.Options.DelayKeyWrite(0)
+        case "1" => Table.Options.DelayKeyWrite(1)
+      },
+      """
+        |======================================================
+        |There is an error in the delay_key_write format.
+        |Please correct the format according to the following.
+        |
+        |example: DELAY_KEY_WRITE [=] {0 | 1}
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
-      commentOption | compression | connection | directory |
-      keyValue(caseSensitivity("delay_key_write"), digit) ^^ {
-        case value: (0 | 1) => Table.Options.DelayKeyWrite(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the delay_key_write; the checksum must be one of the values 0 or 1."
-          )
-      } |
+      commentOption | compression | connection | directory | delayKeyWrite |
       keyValue(caseSensitivity("encryption"), sqlIdent) ^^ {
         case value: ("Y" | "N") => Table.Options.Encryption(value)
         case unknown =>
