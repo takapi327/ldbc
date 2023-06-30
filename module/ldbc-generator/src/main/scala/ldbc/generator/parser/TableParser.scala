@@ -176,10 +176,36 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  private def connection: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("connection"), stringLiteral) ^^ Table.Options.Connection.apply,
+      """
+        |======================================================
+        |There is an error in the connection format.
+        |Please correct the format according to the following.
+        |
+        |scheme: The recognized connection protocol. At this time, only mysql is supported as a scheme value.
+        |
+        |user_name: User name for the connection. This user must have been created on the remote server and must have the appropriate privileges to perform the required actions (SELECT, INSERT, UPDATE, etc.) on the remote table.
+        |
+        |password: (optional) Password corresponding to user_name.
+        |
+        |host_name: Host name or IP address of the remote server.
+        |
+        |port_num: (Optional) Port number of the remote server. Default is 3306.
+        |
+        |db_name: Name of the database holding the remote table.
+        |
+        |tbl_name: Name of the remote table. The names of the local and remote tables do not need to match.
+        |
+        |example: CONNECTION [=] 'scheme://user_name[:password]@host_name[:port_num]/db_name/tbl_name'
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
-      commentOption | compression |
-      keyValue(caseSensitivity("connection"), sqlIdent) ^^ Table.Options.Connection.apply |
+      commentOption | compression | connection |
       keyValue(
         caseSensitivity("data") | caseSensitivity("index") ~> caseSensitivity("directory"),
         sqlIdent
