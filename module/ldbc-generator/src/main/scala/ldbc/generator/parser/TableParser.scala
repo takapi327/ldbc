@@ -449,6 +449,22 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Number of index pages to sample when estimating cardinality and other statistics (such as those computed by ANALYZE TABLE) for indexed columns.
+   */
+  private def statsSamplePages: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("stats_sample_pages"), digit) ^^ Table.Options.StatsSamplePages.apply,
+      """
+        |======================================================
+        |There is an error in the stats_sample_pages format.
+        |Please correct the format according to the following.
+        |
+        |example: STATS_SAMPLE_PAGES [=] 'size'
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
@@ -458,8 +474,7 @@ trait TableParser extends KeyParser:
         caseSensitivity("secondary_engine_attribute"),
         sqlIdent
       ) ^^ Table.Options.SecondaryEngineAttribute.apply |
-      statsAutoRecalc | statsPersistent |
-      keyValue(caseSensitivity("stats_sample_pages"), sqlIdent) ^^ Table.Options.StatsSamplePages.apply |
+      statsAutoRecalc | statsPersistent | statsSamplePages |
       caseSensitivity("tablespace") ~> sqlIdent ~ opt(
         caseSensitivity("storage") ~> caseSensitivity("disk") | caseSensitivity("memory")
       ) ^^ {

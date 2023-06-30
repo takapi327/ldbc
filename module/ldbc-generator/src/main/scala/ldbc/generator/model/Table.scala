@@ -34,7 +34,7 @@ object Table:
     case class SecondaryEngineAttribute(value: String)                      extends Options
     case class StatsAutoRecalc(value: "0" | "1" | "DEFAULT")                extends Options
     case class StatsPersistent(value: "0" | "1" | "DEFAULT")                extends Options
-    case class StatsSamplePages(value: String)                              extends Options
+    case class StatsSamplePages(value: Int)                              extends Options
     case class Tablespace(name: String, storage: Option["DISK" | "MEMORY"]) extends Options
     case class Union(tableNames: List[String])                              extends Options
 
