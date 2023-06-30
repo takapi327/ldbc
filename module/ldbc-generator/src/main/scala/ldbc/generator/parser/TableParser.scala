@@ -331,7 +331,7 @@ trait TableParser extends KeyParser:
         |
         |size must be less than 4294967295.
         |
-        |example: MAX_ROWS [=] 'size';
+        |example: MAX_ROWS [=] 'size'
         |======================================================
         |""".stripMargin
     )
@@ -349,7 +349,30 @@ trait TableParser extends KeyParser:
         |There is an error in the min_rows format.
         |Please correct the format according to the following.
         |
-        |example: MIN_ROWS [=] 'size';
+        |example: MIN_ROWS [=] 'size'
+        |======================================================
+        |""".stripMargin
+    )
+
+  /**
+   * Valid only for MyISAM tables. Set this option to 1 for smaller indexes. This usually results in slower updates and faster reads. Setting this option to 0 disables all packing of keys. Setting it to DEFAULT tells the storage engine to pack only long CHAR, VARCHAR, BINARY, or VARBINARY columns.
+   */
+  private def packKeys: Parser[Table.Options] =
+    customError(
+      keyValue(
+        caseSensitivity("pack_keys"),
+        "0" | "1" | caseSensitivity("default")
+      ) ^^ {
+        case "0" => Table.Options.PackKeys("0")
+        case "1" => Table.Options.PackKeys("1")
+        case str if str.toUpperCase == "DEFAULT" => Table.Options.PackKeys("DEFAULT")
+      },
+      """
+        |======================================================
+        |There is an error in the pack_keys format.
+        |Please correct the format according to the following.
+        |
+        |example: PACK_KEYS [=] {0 | 1 | DEFAULT}
         |======================================================
         |""".stripMargin
     )
@@ -358,14 +381,7 @@ trait TableParser extends KeyParser:
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
       engine | engineAttribute ^^ Table.Options.EngineAttribute.apply | insertMethod |
-      keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows | minRows |
-      keyValue(caseSensitivity("pack_keys"), sqlIdent) ^^ {
-        case value: ("0" | "1" | "DEFAULT") => Table.Options.PackKeys(value)
-        case unknown =>
-          throw new IllegalArgumentException(
-            s"$unknown is not a value that can be set in the pack_keys; the checksum must be one of the values 0, 1 or DEFAULT."
-          )
-      } |
+      keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows | minRows | packKeys |
       keyValue(caseSensitivity("password"), sqlIdent) ^^ Table.Options.Password.apply |
       keyValue(caseSensitivity("row_format"), sqlIdent) ^^ {
         case value: ("DEFAULT" | "DYNAMIC" | "FIXED" | "COMPRESSED" | "REDUNDANT" | "COMPACT") =>
