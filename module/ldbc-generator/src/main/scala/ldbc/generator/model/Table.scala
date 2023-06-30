@@ -29,7 +29,6 @@ object Table:
     case class MaxRows(value: Long)                          extends Options
     case class MinRows(value: Long)                          extends Options
     case class PackKeys(value: "0" | "1" | "DEFAULT")       extends Options
-    case class Password(value: String)                      extends Options
     case class RowFormat(value: "DEFAULT" | "DYNAMIC" | "FIXED" | "COMPRESSED" | "REDUNDANT" | "COMPACT")
       extends Options
     case class SecondaryEngineAttribute(value: String)                      extends Options

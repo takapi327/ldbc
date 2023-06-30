@@ -382,7 +382,6 @@ trait TableParser extends KeyParser:
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
       engine | engineAttribute ^^ Table.Options.EngineAttribute.apply | insertMethod |
       keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows | minRows | packKeys |
-      keyValue(caseSensitivity("password"), sqlIdent) ^^ Table.Options.Password.apply |
       keyValue(caseSensitivity("row_format"), sqlIdent) ^^ {
         case value: ("DEFAULT" | "DYNAMIC" | "FIXED" | "COMPRESSED" | "REDUNDANT" | "COMPACT") =>
           Table.Options.RowFormat(value)
