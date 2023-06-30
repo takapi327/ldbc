@@ -203,13 +203,25 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  private def directory: Parser[Table.Options] =
+    customError(
+      keyValue(
+        (caseSensitivity("data") | caseSensitivity("index")) ~> caseSensitivity("directory"),
+        stringLiteral
+      ) ^^ Table.Options.Directory.apply,
+      """
+        |======================================================
+        |There is an error in the directory format.
+        |Please correct the format according to the following.
+        |
+        |example: {DATA | INDEX} DIRECTORY [=] 'string'
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
-      commentOption | compression | connection |
-      keyValue(
-        caseSensitivity("data") | caseSensitivity("index") ~> caseSensitivity("directory"),
-        sqlIdent
-      ) ^^ Table.Options.Directory.apply |
+      commentOption | compression | connection | directory |
       keyValue(caseSensitivity("delay_key_write"), digit) ^^ {
         case value: (0 | 1) => Table.Options.DelayKeyWrite(value)
         case unknown =>
