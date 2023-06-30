@@ -492,6 +492,22 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Used to access collections of identical MyISAM tables. This only works with MERGE tables.
+   */
+  private def union: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("union"), "(" ~> repsep(sqlIdent, ",") <~ ")") ^^ Table.Options.Union.apply,
+      """
+        |======================================================
+        |There is an error in the union format.
+        |Please correct the format according to the following.
+        |
+        |example: UNION [=] (table_name, table_name, ...)
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
@@ -501,8 +517,7 @@ trait TableParser extends KeyParser:
         caseSensitivity("secondary_engine_attribute"),
         sqlIdent
       ) ^^ Table.Options.SecondaryEngineAttribute.apply |
-      statsAutoRecalc | statsPersistent | statsSamplePages | tablespace |
-      keyValue(caseSensitivity("union"), repsep(sqlIdent, ",")) ^^ Table.Options.Union.apply
+      statsAutoRecalc | statsPersistent | statsSamplePages | tablespace | union
 
   protected def tableStatements: Parser[Table.CreateStatement | Table.DropStatement] = createStatement | dropStatement
 
