@@ -121,9 +121,24 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * Specifies the default collation for the table.
+   */
+  private def collateSet: Parser[Table.Options] =
+    customError(
+      opt(caseSensitivity("default")) ~> collate ^^ Table.Options.Collate.apply,
+      """
+        |======================================================
+        |There is an error in the collate format.
+        |Please correct the format according to the following.
+        |
+        |example: [DEFAULT] COLLATE [=] 'string'
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
-    autoextendSize | autoIncrement | avgRowLength | characterSet | checksum |
-      opt(caseSensitivity("default")) ~> collate ^^ Table.Options.Collate.apply |
+    autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply |
       keyValue(caseSensitivity("compression"), sqlIdent) ^^ {
         case value: ("ZLIB" | "LZ4" | "NONE") => Table.Options.Compression(value)

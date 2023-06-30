@@ -50,7 +50,18 @@ trait SqlParser extends JavaTokenParsers:
         |""".stripMargin
     )
 
-  protected def collate: Parser[String] = caseSensitivity("collate") ~> opt("=") ~> sqlIdent
+  protected def collate: Parser[String] =
+    customError(
+      caseSensitivity("collate") ~> opt("=") ~> sqlIdent,
+      """
+        |======================================================
+        |There is an error in the collate format.
+        |Please correct the format according to the following.
+        |
+        |example: COLLATE [=] 'string'
+        |======================================================
+        |""".stripMargin
+    )
 
   /** Rules for allowing upper and lower case letters. */
   protected def caseSensitivity(str: String): Parser[String] =
