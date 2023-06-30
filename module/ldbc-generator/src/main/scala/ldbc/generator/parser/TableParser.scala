@@ -336,12 +336,29 @@ trait TableParser extends KeyParser:
         |""".stripMargin
     )
 
+  /**
+   * The minimum number of rows you plan to store in the table. MEMORY The storage engine uses this option as a hint regarding memory usage.
+   */
+  private def minRows: Parser[Table.Options] =
+    customError(
+      keyValue(caseSensitivity("min_rows"), """-?\d+""".r) ^^ {
+        digit => Table.Options.MinRows(digit.toLong)
+      },
+      """
+        |======================================================
+        |There is an error in the min_rows format.
+        |Please correct the format according to the following.
+        |
+        |example: MIN_ROWS [=] 'size';
+        |======================================================
+        |""".stripMargin
+    )
+
   private def tableOption: Parser[Table.Options] =
     autoextendSize | autoIncrement | avgRowLength | characterSet | checksum | collateSet |
       commentOption | compression | connection | directory | delayKeyWrite | encryption |
       engine | engineAttribute ^^ Table.Options.EngineAttribute.apply | insertMethod |
-      keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows |
-      keyValue(caseSensitivity("min_rows"), digit) ^^ Table.Options.MinRows.apply |
+      keyBlockSize ^^ Table.Options.KeyBlockSize.apply | maxRows | minRows |
       keyValue(caseSensitivity("pack_keys"), sqlIdent) ^^ {
         case value: ("0" | "1" | "DEFAULT") => Table.Options.PackKeys(value)
         case unknown =>
