@@ -445,3 +445,33 @@ class TableParserTest extends AnyFlatSpec, TableParser:
       ).successful
     )
   }
+
+  it should "Table drop statement parsing test succeeds." in {
+    assert(parseAll(tableStatements,
+      """
+        |DROP IF NOT EXISTS `table`;
+        |""".stripMargin).successful)
+    assert(parseAll(tableStatements,
+      """
+        |DROP `table`;
+        |""".stripMargin).successful)
+    assert(parseAll(tableStatements,
+      """
+        |/* comment */ DROP /* comment */ IF NOT EXISTS /* comment */ `table`;
+        |""".stripMargin).successful)
+  }
+
+  it should "Table drop statement parsing test fails" in {
+    assert(!parseAll(tableStatements,
+      """
+        |DROP TABLE `table`;
+        |""".stripMargin).successful)
+    assert(!parseAll(tableStatements,
+      """
+        |DROP IF EXISTS `table`;
+        |""".stripMargin).successful)
+    assert(!parseAll(tableStatements,
+      """
+        |DROP IF NOT EXISTS;
+        |""".stripMargin).successful)
+  }
