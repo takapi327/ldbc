@@ -19,16 +19,36 @@ trait DatabaseStatementParser extends TableParser:
           Database.CreateStatement(name, None, None, encryption.map(_.value))
       }
 
-  private def dropStatement: Parser[Database.DropStatement] =
-    opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
-      opt(comment) ~> opt(ifExists) ~> opt(comment) ~> sqlIdent ^^ { name =>
-        Database.DropStatement(name)
-    }
+  private[ldbc] def dropStatement: Parser[Database.DropStatement] =
+    customError(
+      opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
+        opt(comment) ~> opt(ifExists) ~> opt(comment) ~> sqlIdent <~ ";" ^^ { name =>
+          Database.DropStatement(name)
+        },
+      """
+        |======================================================
+        |There is an error in the if drop database statement format.
+        |Please correct the format according to the following.
+        |
+        |example: DROP {DATABASE | SCHEMA} [IF EXISTS] `database_name`
+        |======================================================
+        |""".stripMargin
+    )
 
   private def useDatabase: Parser[Database.DropStatement] =
-    opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
-      Database.DropStatement(name)
-    }
+    customError(
+      opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
+        Database.DropStatement(name)
+      },
+      """
+        |======================================================
+        |There is an error in the if use database statement format.
+        |Please correct the format according to the following.
+        |
+        |example: USE `database_name`
+        |======================================================
+        |""".stripMargin
+    )
 
   protected def databaseStatement: Parser[Database.CreateStatement | Database.DropStatement | Database.UseStatement] =
     createStatement | dropStatement | useDatabase
