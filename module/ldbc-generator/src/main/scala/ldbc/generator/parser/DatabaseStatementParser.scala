@@ -8,21 +8,27 @@ import ldbc.generator.model.*
 
 trait DatabaseStatementParser extends TableParser:
 
-  private def createStatement: Parser[DatabaseStatement] =
+  private def createStatement: Parser[Database.CreateStatement] =
     opt(comment) ~> create ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
       opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~ opt(caseSensitivity("default")) ~
       opt(comment) ~ opt(character ~ opt(collate)) ~ opt(comment) ~ opt(encryption) <~
       opt(comment) <~ ";" ^^ {
         case name ~ _ ~ _ ~ _ ~ Some(character ~ collate) ~ _ ~ encryption =>
-          DatabaseStatement(name, Some(character), collate, encryption.map(_.value))
+          Database.CreateStatement(name, Some(character), collate, encryption.map(_.value))
         case name ~ _ ~ _ ~ _ ~ None ~ _ ~ encryption =>
-          DatabaseStatement(name, None, None, encryption.map(_.value))
+          Database.CreateStatement(name, None, None, encryption.map(_.value))
       }
 
-  private def useDatabase: Parser[DatabaseStatement] =
-    opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
-      DatabaseStatement(name, None, None, None)
+  private def dropStatement: Parser[Database.DropStatement] =
+    opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
+      opt(comment) ~> opt(ifExists) ~> opt(comment) ~> sqlIdent ^^ { name =>
+        Database.DropStatement(name)
     }
 
-  protected def databaseStatement: Parser[DatabaseStatement] =
-    createStatement | useDatabase
+  private def useDatabase: Parser[Database.DropStatement] =
+    opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
+      Database.DropStatement(name)
+    }
+
+  protected def databaseStatement: Parser[Database.CreateStatement | Database.DropStatement | Database.UseStatement] =
+    createStatement | dropStatement | useDatabase

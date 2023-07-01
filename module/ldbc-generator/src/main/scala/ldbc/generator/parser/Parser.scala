@@ -4,7 +4,7 @@
 
 package ldbc.generator.parser
 
-import ldbc.generator.model.Table
+import ldbc.generator.model.{ Database, Table }
 
 import scala.util.parsing.input.*
 
@@ -21,7 +21,7 @@ object Parser extends DatabaseStatementParser:
       statements.foldLeft(Map[String, List[Table.CreateStatement]](currentDatabase -> List.empty)) {
         case (map, statement: Table.CreateStatement) =>
           map.updated(currentDatabase, map.getOrElse(currentDatabase, List.empty) :+ statement)
-        case (map, statement: ldbc.generator.model.DatabaseStatement) =>
+        case (map, statement: Database.CreateStatement) =>
           currentDatabase = statement.name
           map
         case (map, _) => map
