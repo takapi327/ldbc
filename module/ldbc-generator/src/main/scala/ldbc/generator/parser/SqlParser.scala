@@ -46,7 +46,7 @@ trait SqlParser extends JavaTokenParsers:
         |======================================================
         |""".stripMargin
     )
-    
+
   protected def ifNotExists: Parser[String] =
     customError(
       caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase),

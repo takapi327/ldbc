@@ -6,9 +6,9 @@ package ldbc.generator.model
 
 object Database:
   case class CreateStatement(
-    name: String,
-    charset: Option[String],
-    collate: Option[String],
+    name:       String,
+    charset:    Option[String],
+    collate:    Option[String],
     encryption: Option["Y" | "N"]
   )
 

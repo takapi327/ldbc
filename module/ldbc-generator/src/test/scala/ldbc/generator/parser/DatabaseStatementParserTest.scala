@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.generator.parser
 
@@ -11,16 +11,36 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
   it should "Database create statement parsing test succeeds." in {
     assert(parseAll(databaseStatement, "CREATE DATABASE `database`;").successful)
     assert(parseAll(databaseStatement, "CREATE DATABASE `database` DEFAULT CHARACTER SET utf8mb4;").successful)
-    assert(parseAll(databaseStatement, "CREATE DATABASE `database` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;").successful)
+    assert(
+      parseAll(
+        databaseStatement,
+        "CREATE DATABASE `database` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+      ).successful
+    )
     assert(parseAll(databaseStatement, "CREATE DATABASE IF NOT EXISTS `database`;").successful)
     assert(parseAll(databaseStatement, "CREATE DATABASE `database` ENCRYPTION Y;").successful)
-    assert(parseAll(databaseStatement, "/* comment */ CREATE /* comment */ DATABASE /* comment */ IF NOT EXISTS /* comment */ `database`;").successful)
+    assert(
+      parseAll(
+        databaseStatement,
+        "/* comment */ CREATE /* comment */ DATABASE /* comment */ IF NOT EXISTS /* comment */ `database`;"
+      ).successful
+    )
     assert(parseAll(databaseStatement, "CREATE SCHEMA `database`;").successful)
     assert(parseAll(databaseStatement, "CREATE SCHEMA `database` DEFAULT CHARACTER SET utf8mb4;").successful)
-    assert(parseAll(databaseStatement, "CREATE SCHEMA `database` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;").successful)
+    assert(
+      parseAll(
+        databaseStatement,
+        "CREATE SCHEMA `database` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+      ).successful
+    )
     assert(parseAll(databaseStatement, "CREATE SCHEMA IF NOT EXISTS `database`;").successful)
     assert(parseAll(databaseStatement, "CREATE SCHEMA `database` ENCRYPTION Y;").successful)
-    assert(parseAll(databaseStatement, "/* comment */ CREATE /* comment */ SCHEMA /* comment */ IF NOT EXISTS /* comment */ `database`;").successful)
+    assert(
+      parseAll(
+        databaseStatement,
+        "/* comment */ CREATE /* comment */ SCHEMA /* comment */ IF NOT EXISTS /* comment */ `database`;"
+      ).successful
+    )
   }
 
   it should "Database create statement parsing test fails." in {
@@ -39,7 +59,9 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
   it should "Database drop statement parsing test succeeds." in {
     assert(parseAll(databaseStatement, "DROP DATABASE `database`;").successful)
     assert(parseAll(databaseStatement, "DROP DATABASE IF EXISTS `database`;").successful)
-    assert(parseAll(databaseStatement, "/* comment */ DROP /* comment */ DATABASE /* comment */ `database`;").successful)
+    assert(
+      parseAll(databaseStatement, "/* comment */ DROP /* comment */ DATABASE /* comment */ `database`;").successful
+    )
     assert(parseAll(databaseStatement, "DROP SCHEMA `database`;").successful)
     assert(parseAll(databaseStatement, "DROP SCHEMA IF EXISTS `database`;").successful)
     assert(parseAll(databaseStatement, "/* comment */ DROP /* comment */ SCHEMA /* comment */ `database`;").successful)
