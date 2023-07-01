@@ -447,16 +447,19 @@ class TableParserTest extends AnyFlatSpec, TableParser:
   }
 
   it should "Table drop statement parsing test succeeds." in {
-    assert(parseAll(dropTableStatement, "DROP IF NOT EXISTS `table`;").successful)
-    assert(parseAll(dropTableStatement, "DROP IF EXISTS `table`;").successful)
-    assert(parseAll(dropTableStatement, "DROP `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP TABLE IF NOT EXISTS `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP TABLE IF EXISTS `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP TABLE `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP TEMPORARY TABLE `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP TABLE `table` restrict;").successful)
+    assert(parseAll(dropTableStatement, "DROP TABLE `table` CASCADE;").successful)
     assert(
-      parseAll(dropTableStatement, "/* comment */ DROP /* comment */ IF NOT EXISTS /* comment */ `table`;").successful
+      parseAll(dropTableStatement, "/* comment */ DROP /* comment */ TEMPORARY /* comment */ TABLE /* comment */ IF NOT EXISTS /* comment */ `table` /* comment */ RESTRICT;").successful
     )
   }
 
   it should "Table drop statement parsing test fails" in {
-    assert(!parseAll(dropTableStatement, "DROP TABLE `table`;").successful)
+    assert(!parseAll(dropTableStatement, "DROP `table`;").successful)
     assert(!parseAll(dropTableStatement, "DROP IF EXISTS;").successful)
     assert(!parseAll(dropTableStatement, "DROP IF NOT EXISTS;").successful)
   }
