@@ -454,7 +454,10 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     assert(parseAll(dropTableStatement, "DROP TABLE `table` restrict;").successful)
     assert(parseAll(dropTableStatement, "DROP TABLE `table` CASCADE;").successful)
     assert(
-      parseAll(dropTableStatement, "/* comment */ DROP /* comment */ TEMPORARY /* comment */ TABLE /* comment */ IF NOT EXISTS /* comment */ `table` /* comment */ RESTRICT;").successful
+      parseAll(
+        dropTableStatement,
+        "/* comment */ DROP /* comment */ TEMPORARY /* comment */ TABLE /* comment */ IF NOT EXISTS /* comment */ `table` /* comment */ RESTRICT;"
+      ).successful
     )
   }
 
