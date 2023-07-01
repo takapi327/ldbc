@@ -6,6 +6,8 @@ package ldbc.generator.parser
 
 import ldbc.generator.model.*
 
+/** Parser for parsing Table definitions.
+  */
 trait TableParser extends KeyParser:
 
   private def temporary: Parser[String] = caseSensitivity("temporary") ^^ (_.toUpperCase)
@@ -523,6 +525,11 @@ trait TableParser extends KeyParser:
 
   protected def tableStatements: Parser[Table.CreateStatement | Table.DropStatement] = createStatement | dropStatement
 
+  /** Parser for parsing Table create statement.
+    *
+    * Please refer to the official documentation for MySQL Table create statement. SEE:
+    * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+    */
   private def createStatement: Parser[Table.CreateStatement] =
     opt(comment) ~> create ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> table ~>
       opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~
@@ -533,6 +540,11 @@ trait TableParser extends KeyParser:
           Table.CreateStatement(tableName, columnDefs, keyDefs, options)
       }
 
+  /** Parser for parsing Table drop statement.
+    *
+    * Please refer to the official documentation for MySQL Table drop statement. SEE:
+    * https://dev.mysql.com/doc/refman/8.0/en/drop-table.html
+    */
   private def dropStatement: Parser[Table.DropStatement] =
     customError(
       opt(comment) ~> drop ~> opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ {

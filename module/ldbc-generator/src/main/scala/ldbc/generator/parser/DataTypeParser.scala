@@ -6,6 +6,11 @@ package ldbc.generator.parser
 
 import ldbc.generator.model.DataType
 
+/** Parser for parsing data type definitions.
+  *
+  * Please refer to the official documentation for MySQL data type definitions. SEE:
+  * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+  */
 trait DataTypeParser extends SqlParser:
 
   protected def digit: Parser[Int] = """-?\d+""".r ^^ (_.toInt)

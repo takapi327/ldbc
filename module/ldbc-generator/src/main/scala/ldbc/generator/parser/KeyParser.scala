@@ -7,6 +7,8 @@ package ldbc.generator.parser
 import ldbc.generator.model.Key
 import ldbc.generator.model.Key.*
 
+/** Parser for parsing create table key definitions.
+  */
 trait KeyParser extends ColumnParser:
 
   private def columnsParser: Parser[List[String]] =

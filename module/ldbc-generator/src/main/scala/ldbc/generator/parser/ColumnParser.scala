@@ -6,6 +6,11 @@ package ldbc.generator.parser
 
 import ldbc.generator.model.*
 
+/** Parser for parsing column definitions.
+  *
+  * Please refer to the official documentation for MySQL column definitions. SEE:
+  * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+  */
 trait ColumnParser extends DataTypeParser:
 
   private def constraint: Parser[String] =

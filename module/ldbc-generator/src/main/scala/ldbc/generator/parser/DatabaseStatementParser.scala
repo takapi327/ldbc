@@ -6,8 +6,15 @@ package ldbc.generator.parser
 
 import ldbc.generator.model.*
 
+/** Parser for parsing Database definitions.
+  */
 trait DatabaseStatementParser extends TableParser:
 
+  /** Parser for parsing Database create statement.
+    *
+    * Please refer to the official documentation for MySQL Database create statement. SEE:
+    * https://dev.mysql.com/doc/refman/8.0/en/create-database.html
+    */
   private def createStatement: Parser[Database.CreateStatement] =
     opt(comment) ~> create ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
       opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~ opt(caseSensitivity("default")) ~
@@ -19,6 +26,11 @@ trait DatabaseStatementParser extends TableParser:
           Database.CreateStatement(name, None, None, encryption.map(_.value))
       }
 
+  /** Parser for parsing Database drop statement.
+    *
+    * Please refer to the official documentation for MySQL Database drop statement. SEE:
+    * https://dev.mysql.com/doc/refman/8.0/en/drop-database.html
+    */
   private[ldbc] def dropStatement: Parser[Database.DropStatement] =
     customError(
       opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
@@ -35,6 +47,8 @@ trait DatabaseStatementParser extends TableParser:
         |""".stripMargin
     )
 
+  /** Parser for parsing Database use statement.
+    */
   private def useDatabase: Parser[Database.DropStatement] =
     customError(
       opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>

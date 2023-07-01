@@ -8,6 +8,8 @@ import scala.util.parsing.combinator.JavaTokenParsers
 
 import ldbc.generator.model.Comment
 
+/** Parser to parse common definitions in MySQL.
+  */
 trait SqlParser extends JavaTokenParsers:
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
