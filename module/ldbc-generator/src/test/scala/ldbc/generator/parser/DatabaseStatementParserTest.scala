@@ -33,6 +33,7 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
         "CREATE SCHEMA `database` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
       ).successful
     )
+    assert(parseAll(databaseStatement, "CREATE DATABASE IF EXISTS `database`;").successful)
     assert(parseAll(databaseStatement, "CREATE SCHEMA IF NOT EXISTS `database`;").successful)
     assert(parseAll(databaseStatement, "CREATE SCHEMA `database` ENCRYPTION Y;").successful)
     assert(
@@ -47,18 +48,17 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
     assert(!parseAll(databaseStatement, "CREATE DATABASE;").successful)
     assert(!parseAll(databaseStatement, "CREATE DATABASE /* comment */;").successful)
     assert(!parseAll(databaseStatement, "CREATE DATABASE `database` COLLATE utf8mb4_bin;").successful)
-    assert(!parseAll(databaseStatement, "CREATE DATABASE IF EXISTS `database`;").successful)
     assert(!parseAll(databaseStatement, "CREATE DATABASE `database` ENCRYPTION X;").successful)
     assert(!parseAll(databaseStatement, "CREATE SCHEMA;").successful)
     assert(!parseAll(databaseStatement, "CREATE SCHEMA /* comment */;").successful)
     assert(!parseAll(databaseStatement, "CREATE SCHEMA `database` COLLATE utf8mb4_bin;").successful)
-    assert(!parseAll(databaseStatement, "CREATE SCHEMA IF EXISTS `database`;").successful)
     assert(!parseAll(databaseStatement, "CREATE SCHEMA `database` ENCRYPTION X;").successful)
   }
 
   it should "Database drop statement parsing test succeeds." in {
     assert(parseAll(databaseStatement, "DROP DATABASE `database`;").successful)
     assert(parseAll(databaseStatement, "DROP DATABASE IF EXISTS `database`;").successful)
+    assert(parseAll(databaseStatement, "DROP DATABASE IF NOT EXISTS `database`;").successful)
     assert(
       parseAll(databaseStatement, "/* comment */ DROP /* comment */ DATABASE /* comment */ `database`;").successful
     )
@@ -69,10 +69,8 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
 
   it should "Database drop statement parsing test fails." in {
     assert(!parseAll(databaseStatement, "DROP DATABASE;").successful)
-    assert(!parseAll(databaseStatement, "DROP DATABASE IF NOT EXISTS `database`;").successful)
     assert(!parseAll(databaseStatement, "/* comment */ DROP /* comment */;").successful)
     assert(!parseAll(databaseStatement, "DROP SCHEMA;").successful)
-    assert(!parseAll(databaseStatement, "DROP SCHEMA IF NOT EXISTS `database`;").successful)
     assert(!parseAll(databaseStatement, "/* comment */ DROP /* comment */;").successful)
   }
 

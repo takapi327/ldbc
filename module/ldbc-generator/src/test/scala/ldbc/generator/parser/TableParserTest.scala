@@ -11,7 +11,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
   it should "Table create statement parsing test succeeds." in {
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |);
@@ -20,7 +20,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """/* comment */ CREATE /* comment */ temporary /* comment */ TABLE /* comment */ IF NOT EXISTS /* comment */ `table` /* comment */ (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |);
@@ -29,7 +29,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) autoextend_size=8M;
@@ -38,7 +38,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) auto_increment=8;
@@ -47,7 +47,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) avg_row_length=8;
@@ -56,7 +56,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) default character set = utf8mb4;
@@ -65,7 +65,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) checksum 0;
@@ -74,7 +74,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) default collate = utf8mb4_unicode_ci;
@@ -83,7 +83,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) COMMENT='NDB_TABLE=READ_BACKUP=0,PARTITION_BALANCE=FOR_RP_BY_NODE';
@@ -92,7 +92,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) compression lz4;
@@ -101,7 +101,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) CONNECTION='mysql://fed_user@remote_host:9306/federated/test_table';
@@ -110,7 +110,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) DATA DIRECTORY = 'test';
@@ -119,7 +119,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) delay_key_write 1;
@@ -128,7 +128,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) encryption y;
@@ -137,7 +137,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) ENGINE InnoDB;
@@ -146,7 +146,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) INSERT_METHOD FIRST;
@@ -155,7 +155,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) MAX_ROWS 4294967295;
@@ -164,7 +164,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) MIN_ROWS 4294967295;
@@ -173,7 +173,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) PACK_KEYS 0;
@@ -182,7 +182,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) row_format default;
@@ -191,7 +191,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) STATS_AUTO_RECALC 1;
@@ -200,7 +200,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) STATS_PERSISTENT 1;
@@ -209,7 +209,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) STATS_SAMPLE_PAGES 1;
@@ -218,7 +218,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) TABLESPACE innodb_system;
@@ -227,7 +227,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) ENGINE MERGE UNION (t1, t2);
@@ -239,7 +239,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
   it should "Table create statement parsing test fails." in {
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) autoextend_size=2M;
@@ -248,7 +248,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) auto_increment=d;
@@ -257,7 +257,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) avg_row_length=d;
@@ -266,7 +266,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) default character set;
@@ -275,7 +275,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) checksum 2;
@@ -284,7 +284,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) default collate;
@@ -293,7 +293,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) COMMENT="NDB_TABLE=READ_BACKUP=0,PARTITION_BALANCE=FOR_RP_BY_NODE";
@@ -302,7 +302,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) compression hoge;
@@ -311,7 +311,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) CONNECTION;
@@ -320,7 +320,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) DATA DIRECTORY;
@@ -329,7 +329,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) delay_key_write 2;
@@ -338,7 +338,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) encryption m;
@@ -347,7 +347,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) ENGINE failed;
@@ -356,7 +356,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) INSERT_METHOD failed;
@@ -365,7 +365,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) MAX_ROWS 4294967296;
@@ -374,7 +374,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) MIN_ROWS d;
@@ -383,7 +383,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) PACK_KEYS failed;
@@ -392,7 +392,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) row_format failed;
@@ -401,7 +401,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) STATS_AUTO_RECALC failed;
@@ -410,7 +410,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) STATS_PERSISTENT failed;
@@ -419,7 +419,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) stats_sample_pages failed;
@@ -428,7 +428,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) TABLESPACE innodb_system STORAGE failed;
@@ -437,7 +437,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
     assert(
       !parseAll(
-        tableStatements,
+        createTableStatement,
         """CREATE TABLE `table` (
         |  `id` BIGINT(64) UNSIGNED NOT NULL AUTO_INCREMENT
         |) ENGINE MERGE UNION;
@@ -447,15 +447,16 @@ class TableParserTest extends AnyFlatSpec, TableParser:
   }
 
   it should "Table drop statement parsing test succeeds." in {
-    assert(parseAll(tableStatements, "DROP IF NOT EXISTS `table`;").successful)
-    assert(parseAll(tableStatements, "DROP `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP IF NOT EXISTS `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP IF EXISTS `table`;").successful)
+    assert(parseAll(dropTableStatement, "DROP `table`;").successful)
     assert(
-      parseAll(tableStatements, "/* comment */ DROP /* comment */ IF NOT EXISTS /* comment */ `table`;").successful
+      parseAll(dropTableStatement, "/* comment */ DROP /* comment */ IF NOT EXISTS /* comment */ `table`;").successful
     )
   }
 
   it should "Table drop statement parsing test fails" in {
-    assert(!parseAll(tableStatements, "DROP TABLE `table`;").successful)
-    assert(!parseAll(tableStatements, "DROP IF EXISTS `table`;").successful)
-    assert(!parseAll(tableStatements, "DROP IF NOT EXISTS;").successful)
+    assert(!parseAll(dropTableStatement, "DROP TABLE `table`;").successful)
+    assert(!parseAll(dropTableStatement, "DROP IF EXISTS;").successful)
+    assert(!parseAll(dropTableStatement, "DROP IF NOT EXISTS;").successful)
   }

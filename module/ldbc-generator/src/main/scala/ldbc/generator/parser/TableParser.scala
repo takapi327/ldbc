@@ -523,14 +523,14 @@ trait TableParser extends KeyParser:
       ) ^^ Table.Options.SecondaryEngineAttribute.apply |
       statsAutoRecalc | statsPersistent | statsSamplePages | tablespace | union
 
-  protected def tableStatements: Parser[Table.CreateStatement | Table.DropStatement] = createStatement | dropStatement
+  protected def tableStatements: Parser[Table.CreateStatement | Table.DropStatement] = createTableStatement | dropTableStatement
 
   /** Parser for parsing Table create statement.
     *
     * Please refer to the official documentation for MySQL Table create statement. SEE:
     * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
     */
-  private def createStatement: Parser[Table.CreateStatement] =
+  private[ldbc] def createTableStatement: Parser[Table.CreateStatement] =
     opt(comment) ~> create ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> table ~>
       opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~
       "(" ~ repsep(columnDefinition | keyDefinitions, ",") ~ opt(comment) ~ ")" ~ opt(rep1(tableOption)) <~ ";" ^^ {
@@ -545,9 +545,10 @@ trait TableParser extends KeyParser:
     * Please refer to the official documentation for MySQL Table drop statement. SEE:
     * https://dev.mysql.com/doc/refman/8.0/en/drop-table.html
     */
-  private def dropStatement: Parser[Table.DropStatement] =
+  private[ldbc] def dropTableStatement: Parser[Table.DropStatement] =
     customError(
-      opt(comment) ~> drop ~> opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ {
+      opt(comment) ~> drop ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent
+        <~ opt(comment) <~ opt(caseSensitivity("restrict") | caseSensitivity("cascade")) <~ ";" ^^ {
         tableName => Table.DropStatement(tableName)
       },
       """
@@ -555,7 +556,7 @@ trait TableParser extends KeyParser:
         |There is an error in the drop statement format.
         |Please correct the format according to the following.
         |
-        |example: DROP [IF NOT EXISTS] `table_name`;
+        |example: DROP [TEMPORARY] TABLE [IF [NOT] EXISTS] `table_name` [RESTRICT | CASCADE];
         |======================================================
         |""".stripMargin
     )
