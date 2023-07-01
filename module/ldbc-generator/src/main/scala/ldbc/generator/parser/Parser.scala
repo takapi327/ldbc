@@ -13,7 +13,7 @@ object Parser extends DatabaseStatementParser:
   private def end: util.matching.Regex = """\s*""".r
 
   private def sentence: Parser[Product] =
-    Seq[Parser[Product]](comment, databaseStatement, useDatabase, tableStatements).reduceLeft(_ | _)
+    Seq[Parser[Product]](comment, databaseStatement, tableStatements).reduceLeft(_ | _)
 
   private def parser: Parser[Map[String, List[Table.CreateStatement]]] =
     var currentDatabase: String = ""

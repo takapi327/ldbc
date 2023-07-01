@@ -4,9 +4,9 @@
 
 package ldbc.generator.parser
 
-import ldbc.generator.model.Comment
-
 import scala.util.parsing.combinator.JavaTokenParsers
+
+import ldbc.generator.model.Comment
 
 trait SqlParser extends JavaTokenParsers:
 
@@ -27,6 +27,9 @@ trait SqlParser extends JavaTokenParsers:
   protected def sqlIdent: Parser[String] =
     "" ~> // handle whitespace
       opt("`") ~> normalIdent <~ opt("`") ^^ (_.mkString)
+
+  protected def keyValue[T](keyParser: Parser[String], valueParser: Parser[T]): Parser[T] =
+    keyParser ~> opt("=") ~> valueParser
 
   protected def create: Parser[String] = caseSensitivity("create") ^^ (_.toUpperCase)
   protected def drop:   Parser[String] = caseSensitivity("drop") ^^ (_.toUpperCase)

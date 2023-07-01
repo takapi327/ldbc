@@ -11,9 +11,6 @@ trait TableParser extends KeyParser:
   private def temporary: Parser[String] = caseSensitivity("temporary") ^^ (_.toUpperCase)
   private def table:     Parser[String] = caseSensitivity("table") ^^ (_.toUpperCase)
 
-  private def keyValue[T](keyParser: Parser[String], valueParser: Parser[T]): Parser[T] =
-    keyParser ~> opt("=") ~> valueParser
-
   /** The AUTOEXTEND_SIZE option is a feature added in MySQL database version 8.0.23 and later. This is an option to set
     * whether the database file size is automatically extended.
     *
@@ -248,7 +245,7 @@ trait TableParser extends KeyParser:
 
   /** The ENCRYPTION option is one of the settings used in the MySQL database. It is used to encrypt (encode) data.
     */
-  private def encryption: Parser[Table.Options] =
+  protected def encryption: Parser[Table.Options.Encryption] =
     customError(
       keyValue(caseSensitivity("encryption"), caseSensitivity("y") | caseSensitivity("n")) ^^ {
         case str if str.toUpperCase == "Y" => Table.Options.Encryption("Y")

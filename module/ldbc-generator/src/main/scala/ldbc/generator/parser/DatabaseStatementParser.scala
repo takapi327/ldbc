@@ -8,17 +8,21 @@ import ldbc.generator.model.*
 
 trait DatabaseStatementParser extends TableParser:
 
-  protected def databaseStatement: Parser[DatabaseStatement] =
+  private def createStatement: Parser[DatabaseStatement] =
     opt(comment) ~> create ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
       opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~ opt(caseSensitivity("default")) ~
-      opt(comment) ~ opt(character) ~ opt(comment) ~ opt(collate) ~ opt(comment) ~
-      opt(caseSensitivity("encryption") ~> opt(comment) ~> opt("=") ~> opt(comment) ~> ("Y" | "N") <~ opt(comment)) <~
+      opt(comment) ~ opt(character ~ opt(collate)) ~ opt(comment) ~ opt(encryption) <~
       opt(comment) <~ ";" ^^ {
-        case name ~ _ ~ _ ~ _ ~ character ~ _ ~ collate ~ _ ~ encryption =>
-          DatabaseStatement(name, character, collate, encryption)
+        case name ~ _ ~ _ ~ _ ~ Some(character ~ collate) ~ _ ~ encryption =>
+          DatabaseStatement(name, Some(character), collate, encryption.map(_.value))
+        case name ~ _ ~ _ ~ _ ~ None ~ _ ~ encryption =>
+          DatabaseStatement(name, None, None, encryption.map(_.value))
       }
 
-  protected def useDatabase: Parser[DatabaseStatement] =
+  private def useDatabase: Parser[DatabaseStatement] =
     opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
       DatabaseStatement(name, None, None, None)
     }
+
+  protected def databaseStatement: Parser[DatabaseStatement] =
+    createStatement | useDatabase

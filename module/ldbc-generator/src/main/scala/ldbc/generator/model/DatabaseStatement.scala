@@ -8,5 +8,5 @@ case class DatabaseStatement(
   name:       String,
   charset:    Option[String],
   collate:    Option[String],
-  encryption: Option[String]
+  encryption: Option["Y" | "N"]
 )
