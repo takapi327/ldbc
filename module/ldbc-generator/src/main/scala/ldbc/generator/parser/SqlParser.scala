@@ -32,7 +32,17 @@ trait SqlParser extends JavaTokenParsers:
   protected def drop:   Parser[String] = caseSensitivity("drop") ^^ (_.toUpperCase)
 
   protected def ifNotExists: Parser[String] =
-    caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase)
+    customError(
+      caseSensitivity("if") ~> caseSensitivity("not") ~> caseSensitivity("exists") ^^ (_.toUpperCase),
+      """
+        |======================================================
+        |There is an error in the if not exists format.
+        |Please correct the format according to the following.
+        |
+        |example: IF NOT EXISTS
+        |======================================================
+        |""".stripMargin
+    )
 
   protected def character: Parser[String] =
     customError(

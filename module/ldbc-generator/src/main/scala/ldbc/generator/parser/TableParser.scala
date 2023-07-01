@@ -537,6 +537,16 @@ trait TableParser extends KeyParser:
       }
 
   private def dropStatement: Parser[Table.DropStatement] =
-    opt(comment) ~> drop ~> opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ {
-      tableName => Table.DropStatement(tableName)
-    }
+    customError(
+      opt(comment) ~> drop ~> opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ {
+        tableName => Table.DropStatement(tableName)
+      },
+      """
+        |======================================================
+        |There is an error in the drop statement format.
+        |Please correct the format according to the following.
+        |
+        |example: DROP [IF NOT EXISTS] `table_name`;
+        |======================================================
+        |""".stripMargin
+    )
