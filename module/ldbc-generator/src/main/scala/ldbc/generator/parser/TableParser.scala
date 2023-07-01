@@ -523,7 +523,8 @@ trait TableParser extends KeyParser:
       ) ^^ Table.Options.SecondaryEngineAttribute.apply |
       statsAutoRecalc | statsPersistent | statsSamplePages | tablespace | union
 
-  protected def tableStatements: Parser[Table.CreateStatement | Table.DropStatement] = createTableStatement | dropTableStatement
+  protected def tableStatements: Parser[Table.CreateStatement | Table.DropStatement] =
+    createTableStatement | dropTableStatement
 
   /** Parser for parsing Table create statement.
     *
@@ -547,10 +548,12 @@ trait TableParser extends KeyParser:
     */
   private[ldbc] def dropTableStatement: Parser[Table.DropStatement] =
     customError(
-      opt(comment) ~> drop ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent
-        <~ opt(comment) <~ opt(caseSensitivity("restrict") | caseSensitivity("cascade")) <~ ";" ^^ {
-        tableName => Table.DropStatement(tableName)
-      },
+      opt(comment) ~> drop ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> table ~> opt(comment) ~> opt(
+        ifNotExists
+      ) ~> opt(comment) ~> sqlIdent
+        <~ opt(comment) <~ opt(caseSensitivity("restrict") | caseSensitivity("cascade")) <~ ";" ^^ { tableName =>
+          Table.DropStatement(tableName)
+        },
       """
         |======================================================
         |There is an error in the drop statement format.
