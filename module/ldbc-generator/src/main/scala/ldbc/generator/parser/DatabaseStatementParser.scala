@@ -34,7 +34,7 @@ trait DatabaseStatementParser extends TableParser:
   private[ldbc] def dropStatement: Parser[Database.DropStatement] =
     customError(
       opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
-        opt(comment) ~> opt(ifExists) ~> opt(comment) ~> sqlIdent <~ ";" ^^ { name =>
+        opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ ";" ^^ { name =>
           Database.DropStatement(name)
         },
       """
