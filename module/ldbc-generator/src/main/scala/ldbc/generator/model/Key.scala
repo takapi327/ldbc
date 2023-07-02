@@ -54,15 +54,7 @@ object Key:
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
-      val key =
-        s"""
-           |UNIQUE_KEY(
-           |  ${ indexName.fold("None")(v => s"Some($v)") },
-           |  ${ indexType.fold("None")(v => s"Some($v)") },
-           |  cats.data.NonEmptyList.of(${ columns.mkString(",") }),
-           |  ${ option.fold("None")(v => s"Some($v)") },
-           |)
-           |""".stripMargin
+      val key = s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },${ indexType.fold("None")(v => s"Some(\"$v\")") },cats.data.NonEmptyList.of(${ columns.mkString(",") }),${ option.fold("None")(v => s"Some(\"$v\")") })"
       constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
 
   case class Foreign(
@@ -74,9 +66,8 @@ object Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key =
-        s"""
-           |FOREIGN_KEY(
-           |  ${ indexName.fold("None")(v => s"Some($v)") },
+        s"""FOREIGN_KEY(
+           |  ${ indexName.fold("None")(v => s"Some(\"$v\")") },
            |  cats.data.NonEmptyList.of(${ columns.mkString(",") }),
            |  ${ reference.toCode(classNameFormatter, propertyFormatter) }
            |)
