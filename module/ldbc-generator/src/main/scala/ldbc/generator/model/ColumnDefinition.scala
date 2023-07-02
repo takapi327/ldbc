@@ -33,9 +33,9 @@ case class ColumnDefinition(
   private val _attributes = attributes.fold("")(attribute =>
     val attributes = Seq(
       attribute.comment.map(comment => s"\"${ comment.message }\""),
-      attribute.key.map(keys => if keys.nonEmpty then s"${ keys.mkString(", ") }" else "")
-    ).flatten.mkString(", ")
-    if attributes.nonEmpty then ", " + attributes else ""
+      attribute.key.flatMap(keys => if keys.nonEmpty then Some(s"${ keys.mkString(", ") }") else None)
+    ).flatten
+    if attributes.nonEmpty then ", " + attributes.mkString(", ") else ""
   )
 
   def toCode: String =
