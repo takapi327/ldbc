@@ -27,7 +27,7 @@ object Key:
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
-      s"INDEX_KEY($indexName, ${ indexType.fold("None")(str => s"Some($str)") }, cats.data.NonEmptyList.of(${ columns
+      s"INDEX_KEY(${ indexName.fold("None")(str => s"Some(\"$str\")") }, ${ indexType.fold("None")(str => s"Some($str)") }, cats.data.NonEmptyList.of(${ columns
           .mkString(",") }), ${ indexOption.fold("None")(str => s"Some($str)") })"
 
   case class Primary(
