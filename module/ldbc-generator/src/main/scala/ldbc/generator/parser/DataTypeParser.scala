@@ -244,9 +244,8 @@ trait DataTypeParser extends SqlParser:
   private[ldbc] def charType: Parser[DataType] =
     customError(
       opt(caseSensitivity("national")) ~> (caseSensitivity("char") ||| caseSensitivity("character")) ~>
-        opt(argument("CHAR", 0, 255, 1)) ~ opt(character ~ opt(collate)) ^^ {
-          case n ~ Some(character ~ collate) => DataType.CHAR(n.getOrElse(1), Some(character), collate)
-          case n ~ None                      => DataType.CHAR(n.getOrElse(1), None, None)
+        opt(argument("CHAR", 0, 255, 1)) ~ opt(character) ~ opt(collate) ^^ {
+          case n ~ character ~ collate => DataType.CHAR(n.getOrElse(1), character, collate)
         },
       """
         |===============================================================================
@@ -266,9 +265,8 @@ trait DataTypeParser extends SqlParser:
   private[ldbc] def varcharType: Parser[DataType] =
     customError(
       opt(caseSensitivity("national")) ~> caseSensitivity("varchar") ~>
-        argument("VARCHAR", 0, 65535) ~ opt(character ~ opt(collate)) ^^ {
-          case n ~ Some(character ~ collate) => DataType.VARCHAR(n, Some(character), collate)
-          case n ~ None                      => DataType.VARCHAR(n, None, None)
+        argument("VARCHAR", 0, 65535) ~ opt(character) ~ opt(collate) ^^ {
+          case n ~ character ~ collate => DataType.VARCHAR(n, character, collate)
         },
       """
         |===============================================================================
@@ -343,9 +341,8 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def tinytextType: Parser[DataType] =
     customError(
-      caseSensitivity("tinytext") ~> opt(character ~ opt(collate)) ^^ {
-        case Some(character ~ collate) => DataType.TINYTEXT(Some(character), collate)
-        case None                      => DataType.TINYTEXT(None, None)
+      caseSensitivity("tinytext") ~> opt(character) ~ opt(collate) ^^ {
+        case character ~ collate => DataType.TINYTEXT(character, collate)
       },
       """
         |===============================================================================
@@ -380,9 +377,8 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def textType: Parser[DataType] =
     customError(
-      caseSensitivity("text") ~> opt(argument("TEXT", 0, 255)) ~ opt(character ~ opt(collate)) ^^ {
-        case n ~ Some(character ~ collate) => DataType.TEXT(n, Some(character), collate)
-        case n ~ None                      => DataType.TEXT(n, None, None)
+      caseSensitivity("text") ~> opt(argument("TEXT", 0, 255)) ~ opt(character) ~ opt(collate) ^^ {
+        case n ~ character ~ collate => DataType.TEXT(n, character, collate)
       },
       """
         |===============================================================================
@@ -415,9 +411,8 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def mediumtextType: Parser[DataType] =
     customError(
-      caseSensitivity("mediumtext") ~> opt(character ~ opt(collate)) ^^ {
-        case Some(character ~ collate) => DataType.MEDIUMTEXT(Some(character), collate)
-        case None                      => DataType.MEDIUMTEXT(None, None)
+      caseSensitivity("mediumtext") ~> opt(character) ~ opt(collate) ^^ {
+        case character ~ collate => DataType.MEDIUMTEXT(character, collate)
       },
       """
         |===============================================================================
@@ -450,9 +445,8 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def longtextType: Parser[DataType] =
     customError(
-      caseSensitivity("longtext") ~> opt(character ~ opt(collate)) ^^ {
-        case Some(character ~ collate) => DataType.LONGTEXT(Some(character), collate)
-        case None                      => DataType.LONGTEXT(None, None)
+      caseSensitivity("longtext") ~> opt(character) ~ opt(collate) ^^ {
+        case character ~ collate => DataType.LONGTEXT(character, collate)
       },
       """
         |===============================================================================

@@ -199,6 +199,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(charType, "CHAR(0) CHARACTER SET = utf8mb4").successful)
     assert(parseAll(charType, "CHAR(0) CHARSET utf8mb4").successful)
     assert(parseAll(charType, "CHAR(0) CHARSET=utf8mb4").successful)
+    assert(parseAll(charType, "CHAR(255) COLLATE utf8mb4_bin").successful)
     assert(parseAll(charType, "CHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
     assert(parseAll(charType, "CHAR(255) CHARACTER SET utf8mb4 COLLATE = utf8mb4_bin").successful)
     assert(parseAll(charType, "CHAR(255) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
@@ -224,7 +225,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(charType, "CHAR(256)").successful)
     assert(!parseAll(charType, "CHARACTER(0) CHARACTER SET").successful)
     assert(!parseAll(charType, "CHAR(0) CHARACTER utf8mb4").successful)
-    assert(!parseAll(charType, "CHAR(255) COLLATE utf8mb4_bin").successful)
     assert(!parseAll(charType, "CHARACTER(255) CHARACTER SET utf8mb4 COLLATE").successful)
   }
 
@@ -235,6 +235,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(varcharType, "VARCHAR(0) CHARACTER SET = utf8mb4").successful)
     assert(parseAll(varcharType, "VARCHAR(0) CHARSET utf8mb4").successful)
     assert(parseAll(varcharType, "VARCHAR(0) CHARSET=utf8mb4").successful)
+    assert(parseAll(varcharType, "VARCHAR(255) COLLATE utf8mb4_bin").successful)
     assert(parseAll(varcharType, "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
     assert(parseAll(varcharType, "VARCHAR(65535) CHARACTER SET utf8mb4 COLLATE = utf8mb4_bin").successful)
     assert(parseAll(varcharType, "VARCHAR(65535) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
@@ -249,7 +250,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(varcharType, "VARCHAR(65536)").successful)
     assert(!parseAll(varcharType, "VARCHAR(0) CHARACTER SET").successful)
     assert(!parseAll(varcharType, "VARCHAR(0) CHARACTER utf8mb4").successful)
-    assert(!parseAll(varcharType, "VARCHAR(255) COLLATE utf8mb4_bin").successful)
     assert(!parseAll(varcharType, "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE").successful)
     assert(!parseAll(varcharType, "NATIONAL VARCHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
   }
@@ -295,6 +295,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(tinytextType, "TINYTEXT CHARACTER SET = utf8mb4").successful)
     assert(parseAll(tinytextType, "TINYTEXT CHARSET utf8mb4").successful)
     assert(parseAll(tinytextType, "TINYTEXT CHARSET=utf8mb4").successful)
+    assert(parseAll(tinytextType, "TINYTEXT COLLATE utf8mb4_bin").successful)
     assert(parseAll(tinytextType, "TINYTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
     assert(parseAll(tinytextType, "TINYTEXT CHARACTER SET utf8mb4 COLLATE = utf8mb4_bin").successful)
     assert(parseAll(tinytextType, "TINYTEXT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
@@ -304,7 +305,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(tinytextType, "failed").successful)
     assert(!parseAll(tinytextType, "Tinytext(-1)").successful)
     assert(!parseAll(tinytextType, "TINYTEXT CHARACTER utf8mb4").successful)
-    assert(!parseAll(tinytextType, "TINYTEXT COLLATE utf8mb4_bin").successful)
   }
 
   it should "BLOB data type parsing test succeeds." in {
@@ -326,6 +326,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(textType, "TEXT(0) CHARACTER SET = utf8mb4").successful)
     assert(parseAll(textType, "TEXT(0) CHARSET utf8mb4").successful)
     assert(parseAll(textType, "TEXT(0) CHARSET=utf8mb4").successful)
+    assert(parseAll(textType, "TEXT(255) COLLATE utf8mb4_bin").successful)
     assert(parseAll(textType, "TEXT(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
     assert(parseAll(textType, "TEXT(255) CHARACTER SET utf8mb4 COLLATE = utf8mb4_bin").successful)
     assert(parseAll(textType, "TEXT(255) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
@@ -336,7 +337,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(textType, "text(-1)").successful)
     assert(!parseAll(textType, "Text(256)").successful)
     assert(!parseAll(textType, "TEXT(0) CHARACTER utf8mb4").successful)
-    assert(!parseAll(textType, "TEXT(255) COLLATE utf8mb4_bin").successful)
   }
 
   it should "MEDIUMBLOB data type parsing test succeeds." in {
@@ -357,6 +357,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARACTER SET = utf8mb4").successful)
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARSET utf8mb4").successful)
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARSET=utf8mb4").successful)
+    assert(parseAll(mediumtextType, "MEDIUMTEXT COLLATE utf8mb4_bin").successful)
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE = utf8mb4_bin").successful)
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
@@ -366,7 +367,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(mediumtextType, "failed").successful)
     assert(!parseAll(mediumtextType, "mediumtext(-1)").successful)
     assert(!parseAll(mediumtextType, "MEDIUMTEXT CHARACTER utf8mb4").successful)
-    assert(!parseAll(mediumtextType, "MEDIUMTEXT COLLATE utf8mb4_bin").successful)
   }
 
   it should "LONGBLOB data type parsing test succeeds." in {
@@ -387,6 +387,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(longtextType, "LONGTEXT CHARACTER SET = utf8mb4").successful)
     assert(parseAll(longtextType, "LONGTEXT CHARSET utf8mb4").successful)
     assert(parseAll(longtextType, "LONGTEXT CHARSET=utf8mb4").successful)
+    assert(parseAll(longtextType, "LONGTEXT COLLATE utf8mb4_bin").successful)
     assert(parseAll(longtextType, "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
     assert(parseAll(longtextType, "LONGTEXT CHARACTER SET utf8mb4 COLLATE = utf8mb4_bin").successful)
     assert(parseAll(longtextType, "LONGTEXT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
@@ -396,7 +397,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(longtextType, "failed").successful)
     assert(!parseAll(longtextType, "longtext(-1)").successful)
     assert(!parseAll(longtextType, "LONGTEXT CHARACTER utf8mb4").successful)
-    assert(!parseAll(longtextType, "LONGTEXT COLLATE utf8mb4_bin").successful)
   }
 
   it should "DATE data type parsing test succeeds." in {
