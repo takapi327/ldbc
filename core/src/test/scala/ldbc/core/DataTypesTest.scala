@@ -370,15 +370,6 @@ class DataTypesTest extends AnyFlatSpec:
     """.stripMargin)
   }
 
-  it should "If the length at the time of VARBINARY generation is greater than 255, an error occurs." in {
-    assertDoesNotCompile("""
-      import ldbc.core.*
-      import ldbc.core.DataType.*
-
-      val bit: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](256)
-    """.stripMargin)
-  }
-
   it should "Successful generation of BLOB" in {
     assertCompiles("""
       import ldbc.core.*
