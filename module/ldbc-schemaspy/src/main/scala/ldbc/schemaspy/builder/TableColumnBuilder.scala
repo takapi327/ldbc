@@ -35,6 +35,16 @@ object TableColumnBuilder:
       case v: DataType.CFloat[?]      => v.default.map(_.value) foreach column.setDefaultValue
       case v: DataType.CChar[?]       => v.default.map(_.value) foreach column.setDefaultValue
       case v: DataType.Varchar[?]     => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Binary[?]      => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Varbinary[?]   => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Tinyblob[?]    =>
+      case v: DataType.Blob[?]        =>
+      case v: DataType.Mediumblob[?]  =>
+      case v: DataType.LongBlob[?]    =>
+      case v: DataType.TinyText[?]    =>
+      case v: DataType.Text[?]        =>
+      case v: DataType.MediumText[?]  =>
+      case v: DataType.LongText[?]    =>
       case v: DataType.Date[?]        => v.default.map(_.value) foreach column.setDefaultValue
       case v: DataType.DateTime[?]    => v.default.map(_.value) foreach column.setDefaultValue
       case v: DataType.TimeStamp[?]   => v.default.map(_.value) foreach column.setDefaultValue
