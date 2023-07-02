@@ -27,7 +27,7 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidat
     */
   lazy val createStatement: String =
     s"""
-       |CREATE TABLE `${ table.name }` (
+       |CREATE TABLE `${ table._name }` (
        |  ${ options.mkString(",\n  ") }
        |);
        |""".stripMargin
@@ -35,11 +35,11 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidat
   /** Variable that generates the Drop statement that creates the Table.
     */
   lazy val dropStatement: String =
-    s"DROP TABLE `${ table.name }`"
+    s"DROP TABLE `${ table._name }`"
 
   /** Variable that generates the Truncate statement that creates the Table.
     */
   lazy val truncateStatement: String =
-    s"TRUNCATE TABLE `${ table.name }`"
+    s"TRUNCATE TABLE `${ table._name }`"
 
 object TableQueryBuilder

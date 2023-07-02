@@ -35,7 +35,7 @@ case class Reference(
   def label: String = "REFERENCES"
 
   def queryString: String =
-    s"$label `${ table.name }` (${ keyPart.toList.map(column => s"`${ column.label }`").mkString(", ") })"
+    s"$label `${ table._name }` (${ keyPart.toList.map(column => s"`${ column.label }`").mkString(", ") })"
       + onDelete.fold("")(v => s" ON DELETE ${ v.label }")
       + onUpdate.fold("")(v => s" ON UPDATE ${ v.label }")
 

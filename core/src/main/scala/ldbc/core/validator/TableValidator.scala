@@ -81,7 +81,7 @@ private[ldbc] trait TableValidator:
       s"""
          |The type of the column set in FOREIGN KEY does not match.
          |
-         |`${ table.name }` Table
+         |`${ table._name }` Table
          |
          |============================================================
          |${ initForeignKeyErrorMsg(constraints) }

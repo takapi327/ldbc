@@ -17,7 +17,7 @@ import ldbc.core.interpreter.*
 private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Table name */
-  private[ldbc] def name: String
+  private[ldbc] def _name: String
 
   /** Table Key definitions */
   private[ldbc] def keyDefinitions: Seq[Key]
@@ -54,7 +54,7 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 object Table extends Dynamic:
 
   private case class Impl[P <: Product, T <: Tuple](
-    name:           String,
+    _name:          String,
     columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key],
     comment:        Option[String]
