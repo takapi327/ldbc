@@ -133,8 +133,8 @@ object DataType:
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]($length).CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
         case (Some(ch), None)     => s"$name[$typeParam]($length).CHARACTER_SET(\"$ch\")"
-        case (None, Some(co)) => s"$name[$typeParam]($length).COLLATE(\"$co\")"
-        case (None, None) => s"$name[$typeParam]($length)"
+        case (None, Some(co))     => s"$name[$typeParam]($length).COLLATE(\"$co\")"
+        case (None, None)         => s"$name[$typeParam]($length)"
 
   def VARCHAR(length: Int, character: Option[String], collate: Option[String]): DataType = new DataType:
     override val name:      String    = "VARCHAR"
@@ -145,8 +145,8 @@ object DataType:
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]($length).CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
         case (Some(ch), None)     => s"$name[$typeParam]($length).CHARACTER_SET(\"$ch\")"
-        case (None, Some(co)) => s"$name[$typeParam]($length).COLLATE(\"$co\")"
-        case (None, None) => s"$name[$typeParam]($length)"
+        case (None, Some(co))     => s"$name[$typeParam]($length).COLLATE(\"$co\")"
+        case (None, None)         => s"$name[$typeParam]($length)"
 
   def BINARY(length: Int): DataType = new DataType:
     override val name:      String    = "BINARY"
@@ -178,8 +178,8 @@ object DataType:
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
         case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(\"$ch\")"
-        case (None, Some(co)) => s"$name[$typeParam]().COLLATE(\"$co\")"
-        case (None, None) => s"$name[$typeParam]()"
+        case (None, Some(co))     => s"$name[$typeParam]().COLLATE(\"$co\")"
+        case (None, None)         => s"$name[$typeParam]()"
 
   def BLOB(length: Option[Int]): DataType = new DataType:
     override val name:      String    = "BLOB"
@@ -197,8 +197,8 @@ object DataType:
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
         case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(\"$ch\")"
-        case (None, Some(co)) => s"$name[$typeParam]().COLLATE(\"$co\")"
-        case (None, None) => s"$name[$typeParam]()"
+        case (None, Some(co))     => s"$name[$typeParam]().COLLATE(\"$co\")"
+        case (None, None)         => s"$name[$typeParam]()"
 
   def MEDIUMBLOB(): DataType = new DataType:
     override val name:      String    = "MEDIUMBLOB"
@@ -216,8 +216,8 @@ object DataType:
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
         case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(\"$ch\")"
-        case (None, Some(co)) => s"$name[$typeParam]().COLLATE(\"$co\")"
-        case (None, None) => s"$name[$typeParam]()"
+        case (None, Some(co))     => s"$name[$typeParam]().COLLATE(\"$co\")"
+        case (None, None)         => s"$name[$typeParam]()"
 
   def LONGBLOB(): DataType = new DataType:
     override val name:      String    = "LONGBLOB"
@@ -235,8 +235,8 @@ object DataType:
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam]().CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
         case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(\"$ch\")"
-        case (None, Some(co)) => s"$name[$typeParam]().COLLATE(\"$co\")"
-        case (None, None) => s"$name[$typeParam]()"
+        case (None, Some(co))     => s"$name[$typeParam]().COLLATE(\"$co\")"
+        case (None, None)         => s"$name[$typeParam]()"
 
   def DATE(): DataType = new DataType:
     override val name:      String    = "DATE"

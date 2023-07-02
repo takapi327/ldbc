@@ -4,8 +4,8 @@
 
 package ldbc.core
 
-/** A model for representing character sets to be set in column definitions for the string data types
-  * CHAR, VARCHAR, TEXT, ENUM, SET, and any synonym.
+/** A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,
+  * TEXT, ENUM, SET, and any synonym.
   *
   * @param name
   *   Character name
@@ -19,18 +19,17 @@ case class Character(name: String):
     */
   val queryString: String = s"CHARACTER SET $name"
 
-/**
- * A model for representing collations to be set in column definitions for the string data types
- * CHAR, VARCHAR, TEXT, ENUM, SET, and any synonym.
- *
- * @param name
- * Collate name
- */
+/** A model for representing collations to be set in column definitions for the string data types CHAR, VARCHAR, TEXT,
+  * ENUM, SET, and any synonym.
+  *
+  * @param name
+  *   Collate name
+  */
 case class Collate(name: String):
 
   /** Variable that contains the SQL string of Collate
-   *
-   * @return
-   * SQL query string
-   */
+    *
+    * @return
+    *   SQL query string
+    */
   val queryString: String = s"COLLATE $name"
