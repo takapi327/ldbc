@@ -52,7 +52,7 @@ object ColumnTest extends Specification:
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
       column[String](
         "name",
-        VARCHAR(255).CHARACTER_SET(Character("ascii").set("ascii_bin")),
+        VARCHAR(255).CHARACTER_SET(Character("ascii")).COLLATE(Collate("ascii_bin")),
         "name"
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     }

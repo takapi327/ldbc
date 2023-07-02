@@ -93,6 +93,8 @@ object DataType:
 
     def character: Option[Character]
 
+    def collate: Option[Collate]
+
   /** SQL DataType to represent BLOB type of string data trait.
     *
     * @tparam T
@@ -492,7 +494,8 @@ object DataType:
     length:     Int,
     isOptional: Boolean,
     default:    Option[Default]   = None,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"CHAR($length)"
@@ -500,7 +503,7 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Char
 
     override def queryString: String =
-      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
         s" ${ v.queryString }"
       )
 
@@ -513,12 +516,33 @@ object DataType:
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
 
-    /** Method for setting Character Set and Collation to DataType in SQL.
+    /** Method for setting Character Set to DataType in SQL.
       *
       * @param character
-      *   Character Set and Collation
+      *   Character Set
       */
     def CHARACTER_SET(character: Character): CChar[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): CChar[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): CChar[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): CChar[T] = COLLATE(Collate(collate))
 
   /** Model for representing the Varchar data type, which is the string data of SQL DataType.
     *
@@ -533,7 +557,8 @@ object DataType:
     length:     Int,
     isOptional: Boolean,
     default:    Option[Default]   = None,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"VARCHAR($length)"
@@ -541,7 +566,7 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.VarChar
 
     override def queryString: String =
-      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType" ++ default.fold("")(v =>
         s" ${ v.queryString }"
       )
 
@@ -554,12 +579,33 @@ object DataType:
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
 
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
     def CHARACTER_SET(character: Character): Varchar[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): Varchar[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): Varchar[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): Varchar[T] = COLLATE(Collate(collate))
 
   /** Model for representing the Binary data type, which is the string data of SQL DataType.
     *
@@ -571,8 +617,9 @@ object DataType:
   private[ldbc] case class Binary[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Int,
     isOptional: Boolean,
+    default:    Option[Default] = None,
     character:  Option[Character] = None,
-    default:    Option[Default] = None
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"BINARY($length)"
@@ -580,14 +627,7 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Binary
 
     override def queryString: String =
-      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
-
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
-    def CHARACTER_SET(character: Character): Binary[T] = this.copy(character = Some(character))
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
     /** Method for setting Default value to DataType in SQL.
      *
@@ -597,6 +637,35 @@ object DataType:
     def DEFAULT(value: T): Binary[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v => this.copy(default = Some(Default.Value(v)))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: Character): Binary[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): Binary[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): Binary[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): Binary[T] = COLLATE(Collate(collate))
+
 
   /** Model for representing the Varbinary data type, which is the string data of SQL DataType.
     *
@@ -608,7 +677,8 @@ object DataType:
   private[ldbc] case class Varbinary[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Int,
     isOptional: Boolean,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"VARBINARY($length)"
@@ -616,14 +686,35 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.VarBinary
 
     override def queryString: String =
-      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
     def CHARACTER_SET(character: Character): Varbinary[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): Varbinary[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): Varbinary[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): Varbinary[T] = COLLATE(Collate(collate))
 
   /** Model for representing the Tinyblob data type, which is the string data of SQL DataType.
     *
@@ -663,21 +754,13 @@ object DataType:
     */
   private[ldbc] case class Mediumblob[T <: Array[Byte] | Option[Array[Byte]]](
     isOptional: Boolean,
-    character:  Option[Character] = None
-  ) extends BlobType[T]:
+  ) extends DataType[T]:
 
     override def typeName: String = "MEDIUMBLOB"
 
     override def jdbcType: JdbcType = JdbcType.LongVarBinary
 
-    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
-
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
-    def CHARACTER_SET(character: Character): Mediumblob[T] = this.copy(character = Some(character))
+    override def queryString: String = typeName ++ s" $nullType"
 
   /** Model for representing the LongBlob data type, which is the string data of SQL DataType.
     *
@@ -686,21 +769,13 @@ object DataType:
     */
   private[ldbc] case class LongBlob[T <: Array[Byte] | Option[Array[Byte]]](
     isOptional: Boolean,
-    character:  Option[Character] = None
-  ) extends BlobType[T]:
+  ) extends DataType[T]:
 
     override def typeName: String = "LONGBLOB"
 
     override def jdbcType: JdbcType = JdbcType.LongVarBinary
 
-    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
-
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
-    def CHARACTER_SET(character: Character): LongBlob[T] = this.copy(character = Some(character))
+    override def queryString: String = typeName ++ s" $nullType"
 
   /** Model for representing the TinyText data type, which is the string data of SQL DataType.
     *
@@ -709,21 +784,43 @@ object DataType:
     */
   private[ldbc] case class TinyText[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = "TINYTEXT"
 
     override def jdbcType: JdbcType = JdbcType.VarChar
 
-    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
     def CHARACTER_SET(character: Character): TinyText[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): TinyText[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): TinyText[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): TinyText[T] = COLLATE(Collate(collate))
 
   /** Model for representing the Text data type, which is the string data of SQL DataType.
     *
@@ -732,21 +829,43 @@ object DataType:
     */
   private[ldbc] case class Text[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = "TEXT"
 
     override def jdbcType: JdbcType = JdbcType.LongVarChar
 
-    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
     def CHARACTER_SET(character: Character): Text[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): Text[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): Text[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): Text[T] = COLLATE(Collate(collate))
 
   /** Model for representing the MediumText data type, which is the string data of SQL DataType.
     *
@@ -755,21 +874,43 @@ object DataType:
     */
   private[ldbc] case class MediumText[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = "MEDIUMTEXT"
 
     override def jdbcType: JdbcType = JdbcType.LongVarChar
 
-    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
     def CHARACTER_SET(character: Character): MediumText[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): MediumText[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): MediumText[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): MediumText[T] = COLLATE(Collate(collate))
 
   /** Model for representing the LongText data type, which is the string data of SQL DataType.
     *
@@ -778,21 +919,43 @@ object DataType:
     */
   private[ldbc] case class LongText[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    collate: Option[Collate] = None
   ) extends StringType[T]:
 
     override def typeName: String = "LONGTEXT"
 
     override def jdbcType: JdbcType = JdbcType.LongVarChar
 
-    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
+    override def queryString: String = typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v => s" ${ v.queryString }") ++ s" $nullType"
 
-    /** Method for setting Character Set and Collation to DataType in SQL.
-      *
-      * @param character
-      *   Character Set and Collation
-      */
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
     def CHARACTER_SET(character: Character): LongText[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+     *
+     * @param character
+     * Character Set
+     */
+    def CHARACTER_SET(character: String): LongText[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: Collate): LongText[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+     *
+     * @param collate
+     * Collation
+     */
+    def COLLATE(collate: String): LongText[T] = COLLATE(Collate(collate))
 
   /** ===== List of Date Data Types ===== */
 
