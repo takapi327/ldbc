@@ -68,7 +68,7 @@ private[ldbc] object LdbcGenerator:
                  |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
                  |    ${ statement.columnDefinitions.map(_.toCode).mkString(",\n    ") }
                  |  )
-                 |  ${ keyDefinitions.mkString("") }
+                 |  ${ keyDefinitions.mkString("\n  ") }
                  |""".stripMargin
 
               Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
