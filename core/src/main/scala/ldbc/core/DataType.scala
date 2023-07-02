@@ -571,7 +571,8 @@ object DataType:
   private[ldbc] case class Binary[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Int,
     isOptional: Boolean,
-    character:  Option[Character] = None
+    character:  Option[Character] = None,
+    default:    Option[Default] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"BINARY($length)"
@@ -587,6 +588,15 @@ object DataType:
       *   Character Set and Collation
       */
     def CHARACTER_SET(character: Character): Binary[T] = this.copy(character = Some(character))
+
+    /** Method for setting Default value to DataType in SQL.
+     *
+     * @param value
+     * Value set as the default value for DataType
+     */
+    def DEFAULT(value: T): Binary[T] = value match
+      case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
+      case v => this.copy(default = Some(Default.Value(v)))
 
   /** Model for representing the Varbinary data type, which is the string data of SQL DataType.
     *
