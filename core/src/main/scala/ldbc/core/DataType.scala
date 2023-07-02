@@ -693,13 +693,13 @@ object DataType:
       ) ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     def DEFAULT(value: T): Varbinary[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v            => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting Character Set to DataType in SQL.
       *

@@ -80,7 +80,8 @@ trait DataTypes:
     else Binary(length, isOptional[T])
 
   inline def VARBINARY[T <: Array[Byte] | Option[Array[Byte]]](inline length: Int): Varbinary[T] =
-    inline if length < 0 || length > Int.MaxValue then error(s"The length of the VARBINARY must be in the range 0 to ${ Int.MaxValue }.")
+    inline if length < 0 || length > Int.MaxValue then
+      error(s"The length of the VARBINARY must be in the range 0 to ${ Int.MaxValue }.")
     else Varbinary(length, isOptional[T])
 
   inline def TINYBLOB[T <: Array[Byte] | Option[Array[Byte]]](): Tinyblob[T] = Tinyblob(isOptional[T])
