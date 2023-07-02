@@ -40,7 +40,7 @@ DROP TABLE IF EXISTS `sub_test`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `sub_test` (
-  `id` BIGINT(64) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `id` BIGINT(64) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT,
   `category` TINYINT(64) ZEROFILL NOT NULL,
   PRIMARY KEY(`id`, `category`)
 );
