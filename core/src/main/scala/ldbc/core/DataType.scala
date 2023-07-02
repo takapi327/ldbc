@@ -629,7 +629,7 @@ object DataType:
     override def queryString: String =
       typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v =>
         s" ${ v.queryString }"
-      ) ++ s" $nullType"
+      ) ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -678,6 +678,7 @@ object DataType:
   private[ldbc] case class Varbinary[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Int,
     isOptional: Boolean,
+    default:    Option[Default]   = None,
     character:  Option[Character] = None,
     collate:    Option[Collate]   = None
   ) extends StringType[T]:
@@ -689,7 +690,16 @@ object DataType:
     override def queryString: String =
       typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v =>
         s" ${ v.queryString }"
-      ) ++ s" $nullType"
+      ) ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+
+    /** Method for setting Default value to DataType in SQL.
+     *
+     * @param value
+     * Value set as the default value for DataType
+     */
+    def DEFAULT(value: T): Varbinary[T] = value match
+      case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
+      case v => this.copy(default = Some(Default.Value(v)))
 
     /** Method for setting Character Set to DataType in SQL.
       *
