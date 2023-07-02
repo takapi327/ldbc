@@ -80,8 +80,7 @@ lazy val LdbcPluginProject = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
   }.taskValue)
 
 lazy val coreProjects: Seq[ProjectReference] = Seq(
-  LdbcCoreProject,
-  LdbcPluginProject
+  LdbcCoreProject
 )
 
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
@@ -91,8 +90,12 @@ lazy val moduleProjects: Seq[ProjectReference] = Seq(
   LdbcGeneratorProject
 )
 
+lazy val pluginProjects: Seq[ProjectReference] = Seq(
+  LdbcPluginProject
+)
+
 lazy val Ldbc = Project("Ldbc", file("."))
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(publish / skip := true)
   .settings(commonSettings: _*)
-  .aggregate((coreProjects ++ moduleProjects): _*)
+  .aggregate((coreProjects ++ moduleProjects ++ pluginProjects): _*)
