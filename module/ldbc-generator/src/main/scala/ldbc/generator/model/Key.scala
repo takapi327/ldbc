@@ -19,29 +19,39 @@ object Key:
 
   case class Constraint(name: Option[String])
 
+  case class IndexOption(
+    size: Option[Int],
+    indexType: Option[String],
+    parserName: Option[String],
+    comment: Option[Comment],
+    engine: Option[String],
+    secondary: Option[String]
+  ):
+    def toCode: String = s"Index.IndexOption(${ size.fold("None")(v => s"Some($v)") }, ${ indexType.fold("None")(v => s"Some($v)") }, ${ parserName.fold("None")(v => s"Some($v)") }, ${ comment.fold("None")(v => s"Some($v)") }, ${ engine.fold("None")(v => s"Some($v)") }, ${ secondary.fold("None")(v => s"Some($v)") })"
+
   case class Index(
     indexName:   Option[String],
     indexType:   Option[String],
     keyParts:    List[String],
-    indexOption: Option[String]
+    indexOption: Option[IndexOption]
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       s"INDEX_KEY(${ indexName.fold("None")(str => s"Some(\"$str\")") }, ${ indexType.fold("None")(str => s"Some($str)") }, cats.data.NonEmptyList.of(${ columns
-          .mkString(",") }), ${ indexOption.fold("None")(str => s"Some($str)") })"
+          .mkString(",") }), ${ indexOption.fold("None")(option => s"Some(${ option.toCode })") })"
 
   case class Primary(
     constraint: Option[Constraint],
     indexType:  Option[String],
     keyParts:   List[String],
-    option:     Option[String]
+    indexOption:     Option[IndexOption]
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key = indexType.fold(s"PRIMARY_KEY(cats.data.NonEmptyList.of(${ columns.mkString(",") }))")(v =>
-        option match
+        indexOption match
           case None    => s"PRIMARY_KEY($v, cats.data.NonEmptyList.of(${ columns.mkString(",") }))"
-          case Some(o) => s"PRIMARY_KEY($v, cats.data.NonEmptyList.of(${ columns.mkString(",") }), $o)"
+          case Some(o) => s"PRIMARY_KEY($v, cats.data.NonEmptyList.of(${ columns.mkString(",") }), ${o.toCode})"
       )
       constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
 
@@ -50,13 +60,13 @@ object Key:
     indexName:  Option[String],
     indexType:  Option[String],
     keyParts:   List[String],
-    option:     Option[String]
+    indexOption:     Option[IndexOption]
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key =
         s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },${ indexType.fold("None")(v => s"Some(\"$v\")") },cats.data.NonEmptyList.of(${ columns
-            .mkString(",") }),${ option.fold("None")(v => s"Some(\"$v\")") })"
+            .mkString(",") }),${ indexOption.fold("None")(v => s"Some(${ v.toCode })") })"
       constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
 
   case class Foreign(

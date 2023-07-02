@@ -52,24 +52,14 @@ trait KeyParser extends ColumnParser:
         |""".stripMargin
     )
 
-  private def indexOption: Parser[Option[String]] =
+  private def indexOption: Parser[Option[IndexOption]] =
     opt(keyBlockSize) ~ opt(indexType) ~ opt(withParser) ~
       opt(columnComment) ~ opt(caseSensitivity("visible") | caseSensitivity("invisible")) ~
       opt(engineAttribute) ~ opt(secondaryEngineAttribute) ^^ {
         case size ~ indexType ~ parserName ~ comment ~ _ ~ engine ~ secondary =>
           (size, indexType, parserName, comment, engine, secondary) match
             case (None, None, None, None, None, None) => None
-            case _ =>
-              Some(s"""
-                 |Index.IndexOption(
-                 |  ${ size.fold("None")(v => s"Some($v)") },
-                 |  ${ indexType.fold("None")(v => s"Some($v)") },
-                 |  ${ parserName.fold("None")(v => s"Some($v)") },
-                 |  ${ comment.fold("None")(v => s"Some($v)") },
-                 |  ${ engine.fold("None")(v => s"Some($v)") },
-                 |  ${ secondary.fold("None")(v => s"Some($v)") }
-                 |)
-                 |""".stripMargin)
+            case _ => Some(IndexOption(size, indexType, parserName, comment, engine, secondary))
       }
 
   private def indexKey: Parser[Index] =
