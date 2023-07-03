@@ -80,7 +80,7 @@ CREATE TABLE `test` (
   INDEX (`sub_id`) KEY_BLOCK_SIZE=1,
   INDEX (`id`),
   UNIQUE KEY (`id`),
-  CONSTRAINT `fk_id` FOREIGN KEY (`sub_id`, `sub_category`) REFERENCES `sub_test` (`id`, `category`) ON DELETE NO ACTION ON DELETE RESTRICT
+  CONSTRAINT `fk_id` FOREIGN KEY (`sub_id`, `sub_category`) REFERENCES `sub_test` (`id`, `category`) ON UPDATE NO ACTION ON DELETE RESTRICT
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
