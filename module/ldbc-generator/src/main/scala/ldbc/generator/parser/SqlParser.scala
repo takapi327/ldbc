@@ -5,6 +5,7 @@
 package ldbc.generator.parser
 
 import scala.util.parsing.combinator.JavaTokenParsers
+import scala.util.parsing.input.CharArrayReader.EofCh
 
 import ldbc.generator.model.{ Comment, Key }
 
@@ -82,10 +83,19 @@ trait SqlParser extends JavaTokenParsers:
   protected def caseSensitivity(str: String): Parser[String] =
     s"(?i)$str".r
 
-  protected def comment: Parser[Comment] =
-    ("/*" ~> opt(rep1(specialChars)) <~ "*/" <~ opt(";") | "--+".r ~> opt(rep1(specialChars))) ^^ (comment =>
-      Comment(comment.getOrElse(List.empty).mkString(" "))
-    )
+  private def chrExcept(cs: Char*) = elem("", ch => !cs.contains(ch))
+
+  private def lineComment: Parser[Comment] =
+    "--+".r ~> rep(chrExcept(EofCh, '\n')) ^^ { str =>
+      Comment(str.mkString(" "))
+    }
+
+  private def blockComment: Parser[Comment] =
+    "/*" ~> rep(chrExcept(EofCh, '*')) <~ "*/" <~ opt(";") ^^ { str =>
+      Comment(str.mkString(" "))
+    }
+
+  protected def comment: Parser[Comment] = lineComment | blockComment
 
   protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
     parser(input) match
