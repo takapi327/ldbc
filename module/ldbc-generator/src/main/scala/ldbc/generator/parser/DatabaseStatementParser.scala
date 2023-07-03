@@ -18,12 +18,10 @@ trait DatabaseStatementParser extends TableParser:
   private def createStatement: Parser[Database.CreateStatement] =
     opt(comment) ~> create ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
       opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~ opt(caseSensitivity("default")) ~
-      opt(comment) ~ opt(character ~ opt(collate)) ~ opt(comment) ~ opt(encryption) <~
+      opt(comment) ~ opt(character) ~ opt(collate) ~ opt(comment) ~ opt(encryption) <~
       opt(comment) <~ ";" ^^ {
-        case name ~ _ ~ _ ~ _ ~ Some(character ~ collate) ~ _ ~ encryption =>
-          Database.CreateStatement(name, Some(character), collate, encryption.map(_.value))
-        case name ~ _ ~ _ ~ _ ~ None ~ _ ~ encryption =>
-          Database.CreateStatement(name, None, None, encryption.map(_.value))
+        case name ~ _ ~ _ ~ _ ~ character ~ collate ~ _ ~ encryption =>
+          Database.CreateStatement(name, character, collate, encryption.map(_.value))
       }
 
   /** Parser for parsing Database drop statement.
@@ -64,5 +62,5 @@ trait DatabaseStatementParser extends TableParser:
         |""".stripMargin
     )
 
-  protected def databaseStatement: Parser[Database.CreateStatement | Database.DropStatement | Database.UseStatement] =
+  protected def databaseStatements: Parser[Database.CreateStatement | Database.DropStatement | Database.UseStatement] =
     createStatement | dropStatement | useDatabase
