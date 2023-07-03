@@ -4,7 +4,7 @@
 
 package ldbc.generator.parser
 
-import ldbc.generator.model.Key
+import ldbc.generator.model.{ Comment, Key }
 import ldbc.generator.model.Key.*
 
 /** Parser for parsing create table key definitions.
@@ -24,9 +24,9 @@ trait KeyParser extends ColumnParser:
         |""".stripMargin
     )
 
-  private def withParser: Parser[String] =
+  private def withParser: Parser[Key.WithParser] =
     customError(
-      caseSensitivity("with") ~> caseSensitivity("parser") ~> ident,
+      caseSensitivity("with") ~> caseSensitivity("parser") ~> ident ^^ Key.WithParser.apply,
       """
         |======================================================
         |There is an error in the format of the with parser type.
@@ -37,10 +37,11 @@ trait KeyParser extends ColumnParser:
         |""".stripMargin
     )
 
-  private def indexType: Parser[String] =
+  private def indexType: Parser[Key.IndexType] =
     customError(
-      caseSensitivity("using") ~> (caseSensitivity("btree") | caseSensitivity("hash")) ^^ { input =>
-        s"Index.Type.${ input.toUpperCase }"
+      caseSensitivity("using") ~> (caseSensitivity("btree") | caseSensitivity("hash")) ^^ {
+        case str if "(?i)btree".r.matches(str) => Key.IndexType("BTREE")
+        case str if "(?i)hash".r.matches(str)  => Key.IndexType("HASH")
       },
       """
         |======================================================
@@ -52,28 +53,53 @@ trait KeyParser extends ColumnParser:
         |""".stripMargin
     )
 
-  private def indexOption: Parser[Option[IndexOption]] =
-    opt(keyBlockSize) ~ opt(indexType) ~ opt(withParser) ~
-      opt(columnComment) ~ opt(caseSensitivity("visible") | caseSensitivity("invisible")) ~
-      opt(engineAttribute) ~ opt(secondaryEngineAttribute) ^^ {
-        case size ~ indexType ~ parserName ~ comment ~ _ ~ engine ~ secondary =>
-          (size, indexType, parserName, comment, engine, secondary) match
-            case (None, None, None, None, None, None) => None
-            case _ => Some(IndexOption(size, indexType, parserName, comment, engine, secondary))
-      }
+  private def visible: Parser[Key.Visible] =
+    customError(
+      (caseSensitivity("visible") | caseSensitivity("invisible")) ^^ {
+        case str if "(?i)visible".r.matches(str)   => Key.Visible("VISIBLE")
+        case str if "(?i)invisible".r.matches(str) => Key.Visible("INVISIBLE")
+      },
+      """
+        |======================================================
+        |There is an error in the format of the visible.
+        |Please correct the format according to the following.
+        |
+        |example: {VISIBLE | INVISIBLE}
+        |======================================================
+        |""".stripMargin
+    )
+
+  private def indexOptions: Parser[Key.IndexOptions] =
+    keyBlockSize | indexType | withParser | columnComment | visible |
+      engineAttribute | secondaryEngineAttribute
+
+  private def indexOption: Parser[IndexOption] =
+    rep1(indexOptions) ^^ { indexOptions =>
+      indexOptions.foldLeft(IndexOption.empty)((prev, current) =>
+        current match
+          case value: Key.KeyBlockSize             => prev.setSize(value)
+          case value: Key.IndexType                => prev.setIndexType(value)
+          case value: Key.WithParser               => prev.setWithParser(value)
+          case value: Comment                      => prev.setComment(value)
+          case value: Key.EngineAttribute          => prev.setEngineAttribute(value)
+          case value: Key.SecondaryEngineAttribute => prev.setSecondaryEngineAttribute(value)
+          case value: Key.Visible                  => prev
+      )
+    }
 
   private def indexKey: Parser[Index] =
     (caseSensitivity("index") | caseSensitivity("key")) ~> opt(sqlIdent.filter {
       case str if "(?i)using".r.matches(str) => false
       case _                                 => true
-    }) ~ opt(indexType) ~ columnsParser ~ indexOption ^^ {
-      case indexName ~ indexType ~ keyParts ~ indexOption => Index(indexName, indexType, keyParts, indexOption)
+    }) ~ opt(indexType) ~ columnsParser ~ opt(indexOption) ^^ {
+      case indexName ~ indexType ~ keyParts ~ indexOption =>
+        Index(indexName, indexType, keyParts, indexOption)
     }
 
   private def fulltext: Parser[Index] =
     (caseSensitivity("fulltext") | caseSensitivity("spatial")) ~>
       opt(caseSensitivity("index") | caseSensitivity("key")) ~>
-      opt(sqlIdent) ~ columnsParser ~ indexOption ^^ {
+      opt(sqlIdent) ~ columnsParser ~ opt(indexOption) ^^ {
         case indexName ~ keyParts ~ indexOption => Index(indexName, None, keyParts, indexOption)
       }
 
@@ -145,14 +171,14 @@ trait KeyParser extends ColumnParser:
       }
 
   private def constraintPrimaryKey: Parser[Primary] =
-    opt(constraint) ~ primaryKey ~ opt(indexType) ~ columnsParser ~ indexOption ^^ {
+    opt(constraint) ~ primaryKey ~ opt(indexType) ~ columnsParser ~ opt(indexOption) ^^ {
       case constraint ~ _ ~ indexType ~ keyParts ~ option =>
         Primary(constraint, indexType, keyParts, option)
     }
 
   private def constraintUniqueKey: Parser[Unique] =
     opt(constraint) ~ caseSensitivity("unique") ~ opt(caseSensitivity("index") | caseSensitivity("key"))
-      ~ opt(sqlIdent) ~ opt(indexType) ~ columnsParser ~ indexOption ^^ {
+      ~ opt(sqlIdent) ~ opt(indexType) ~ columnsParser ~ opt(indexOption) ^^ {
         case constraint ~ _ ~ _ ~ indexName ~ indexType ~ keyParts ~ option =>
           Unique(constraint, indexName, indexType, keyParts, option)
       }

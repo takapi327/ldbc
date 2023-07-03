@@ -25,9 +25,9 @@ object Table:
     case class Engine(
       value: "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
     ) extends Options
-    case class EngineAttribute(value: String)               extends Options
+    case class EngineAttribute(value: Key.EngineAttribute)  extends Options
     case class InsertMethod(value: "NO" | "FIRST" | "LAST") extends Options
-    case class KeyBlockSize(value: Int)                     extends Options
+    case class KeyBlockSize(value: Key.KeyBlockSize)        extends Options
     case class MaxRows(value: Long)                         extends Options
     case class MinRows(value: Long)                         extends Options
     case class PackKeys(value: "0" | "1" | "DEFAULT")       extends Options

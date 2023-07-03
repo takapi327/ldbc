@@ -12,8 +12,8 @@ case class Attributes(
   comment:                  Option[Comment],
   collate:                  Option[String],
   columnFormat:             Option[String],
-  engineAttribute:          Option[String],
-  secondaryEngineAttribute: Option[String],
+  engineAttribute:          Option[Key.EngineAttribute],
+  secondaryEngineAttribute: Option[Key.SecondaryEngineAttribute],
   storage:                  Option[String]
 )
 

@@ -6,7 +6,7 @@ package ldbc.generator.parser
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
-import ldbc.generator.model.Comment
+import ldbc.generator.model.{ Comment, Key }
 
 /** Parser to parse common definitions in MySQL.
   */
@@ -93,9 +93,15 @@ trait SqlParser extends JavaTokenParsers:
       case result         => result
   }
 
-  protected def keyBlockSize: Parser[Int] =
+  protected def keyBlockSize: Parser[Key.KeyBlockSize] =
     customError(
-      caseSensitivity("key_block_size") ~> opt("=") ~> ("1" | "2" | "4" | "8" | "16") ^^ (_.toInt),
+      caseSensitivity("key_block_size") ~> opt("=") ~> ("1" | "2" | "4" | "8" | "16") ^^ {
+        case "1"  => Key.KeyBlockSize(1)
+        case "2"  => Key.KeyBlockSize(2)
+        case "4"  => Key.KeyBlockSize(4)
+        case "8"  => Key.KeyBlockSize(8)
+        case "16" => Key.KeyBlockSize(16)
+      },
       """
         |======================================================
         |There is an error in the key_block_size format.
@@ -106,9 +112,9 @@ trait SqlParser extends JavaTokenParsers:
         |""".stripMargin
     )
 
-  protected def engineAttribute: Parser[String] =
+  protected def engineAttribute: Parser[Key.EngineAttribute] =
     customError(
-      caseSensitivity("engine_attribute") ~> opt("=") ~> ident,
+      caseSensitivity("engine_attribute") ~> opt("=") ~> ident ^^ Key.EngineAttribute.apply,
       """
         |======================================================
         |There is an error in the engine_attribute format.
@@ -119,9 +125,9 @@ trait SqlParser extends JavaTokenParsers:
         |""".stripMargin
     )
 
-  protected def secondaryEngineAttribute: Parser[String] =
+  protected def secondaryEngineAttribute: Parser[Key.SecondaryEngineAttribute] =
     customError(
-      caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident,
+      caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident ^^ Key.SecondaryEngineAttribute.apply,
       """
         |======================================================
         |There is an error in the secondary_engine_attribute format.
