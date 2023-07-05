@@ -1,0 +1,12 @@
+# This file is part of the ldbc.
+# For the full copyright and license information,
+# please view the LICENSE file that was distributed with this source code.
+
+# Structure of this test:
+# =======================
+
+# Validate the application's Compile
+> compile
+$ exists target/scala-3.3.0/src_managed/main/Country.scala
+$ exists target/scala-3.3.0/src_managed/main/SubTest.scala
+$ exists target/scala-3.3.0/src_managed/main/Test.scala

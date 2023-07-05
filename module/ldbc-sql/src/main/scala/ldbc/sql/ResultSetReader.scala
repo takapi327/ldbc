@@ -67,6 +67,9 @@ object ResultSetReader:
   given [F[_]]: ResultSetReader[F, Reader]      = ResultSetReader(_.getCharacterStream)
   given [F[_]]: ResultSetReader[F, BigDecimal]  = ResultSetReader(_.getBigDecimal)
 
+  given [F[_]: Functor](using reader: ResultSetReader[F, String]): ResultSetReader[F, BigInt] =
+    reader.map(BigInt(_))
+
   given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, Instant] =
     reader.map(_.toInstant)
 

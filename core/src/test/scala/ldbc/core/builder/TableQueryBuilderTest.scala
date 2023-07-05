@@ -4,52 +4,178 @@
 
 package ldbc.core.builder
 
+import java.time.*
+import java.time.Year as JYear
+
 import org.specs2.mutable.Specification
 
 import ldbc.core.*
-import ldbc.core.syntax.given
 
 object TableQueryBuilderTest extends Specification:
 
-  case class User(
-    id:        Long,
-    name:      String,
-    age:       Option[Int],
-    updatedAt: java.time.LocalDateTime,
-    createdAt: java.time.LocalDateTime
+  case class AllDataTypeTest(
+    p1:  Byte,
+    p2:  Option[Byte],
+    p3:  Byte,
+    p4:  Option[Byte],
+    p5:  Short,
+    p6:  Option[Short],
+    p7:  Int,
+    p8:  Option[Int],
+    p9:  Long,
+    p10: Option[Long],
+    p11: BigInt,
+    p12: Option[BigInt],
+    p13: Float,
+    p14: Option[Float],
+    p15: Double,
+    p16: Option[Double],
+    p17: BigDecimal,
+    p18: Option[BigDecimal],
+    p19: String,
+    p20: Option[String],
+    p21: Instant,
+    p22: Option[Instant],
+    p23: OffsetTime,
+    p24: Option[OffsetTime],
+    p25: LocalTime,
+    p26: Option[LocalTime],
+    p27: LocalDate,
+    p28: Option[LocalDate],
+    p29: LocalDateTime,
+    p30: Option[LocalDateTime],
+    p31: OffsetDateTime,
+    p32: Option[OffsetDateTime],
+    p33: ZonedDateTime,
+    p34: Option[ZonedDateTime],
+    p35: JYear,
+    p36: Option[JYear]
   )
 
   "TableQueryBuilder Test" should {
 
     "The Create statement of the Table generated using TableQueryBuilder matches the specified value." in {
 
-      val table: Table[User] = Table[User]("user")(
-        column("id", BIGINT(64), AUTO_INCREMENT, UNIQUE_KEY),
-        column("name", VARCHAR(255)),
-        column("age", INT(255).DEFAULT_NULL),
-        column("updated_at", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP(true)),
-        column("created_at", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP())
+      val table: Table[AllDataTypeTest] = Table[AllDataTypeTest]("all_datatype_test")(
+        column("p1", BIT(1)),
+        column("p2", BIT(64).DEFAULT(None)),
+        column("p3", TINYINT(0)),
+        column("p4", TINYINT(255).DEFAULT(None)),
+        column("p5", SMALLINT(0)),
+        column("p6", SMALLINT(255).DEFAULT(None)),
+        column("p7", MEDIUMINT(0)),
+        column("p8", MEDIUMINT(255).DEFAULT(None)),
+        column("p9", BIGINT(0)),
+        column("p10", BIGINT(255).DEFAULT(None)),
+        column("p11", BIGINT(0)),
+        column("p12", BIGINT(255).DEFAULT(None)),
+        column("p13", FLOAT(0)),
+        column("p14", FLOAT(24).DEFAULT(None)),
+        column("p15", DOUBLE(24)),
+        column("p16", DOUBLE(53).DEFAULT(None)),
+        column("p17", DECIMAL(10, 0)),
+        column("p18", DECIMAL(10, 65).DEFAULT(None)),
+        column("p19", VARCHAR(255)),
+        column("p20", VARCHAR(255).DEFAULT(None)),
+        column("p21", DATETIME),
+        column("p22", DATETIME.DEFAULT(None)),
+        column("p23", DATETIME),
+        column("p24", DATETIME.DEFAULT(None)),
+        column("p25", TIME),
+        column("p26", TIME.DEFAULT(None)),
+        column("p27", DATE),
+        column("p28", DATE.DEFAULT(None)),
+        column("p29", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP(true)),
+        column("p30", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP()),
+        column("p31", TIMESTAMP),
+        column("p32", TIMESTAMP.DEFAULT(None)),
+        column("p33", TIMESTAMP),
+        column("p34", TIMESTAMP.DEFAULT(None)),
+        column("p35", YEAR),
+        column("p36", YEAR.DEFAULT(None))
       )
 
       TableQueryBuilder(table).createStatement ===
         """
-          |CREATE TABLE `user` (
-          |  `id` BIGINT(64) NOT NULL AUTO_INCREMENT UNIQUE KEY,
-          |  `name` VARCHAR(255) NOT NULL,
-          |  `age` INT(255) NULL DEFAULT NULL,
-          |  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          |  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+          |CREATE TABLE `all_datatype_test` (
+          |  `p1` BIT(1) NOT NULL,
+          |  `p2` BIT(64) NULL DEFAULT NULL,
+          |  `p3` TINYINT(0) NOT NULL,
+          |  `p4` TINYINT(255) NULL DEFAULT NULL,
+          |  `p5` SMALLINT(0) NOT NULL,
+          |  `p6` SMALLINT(255) NULL DEFAULT NULL,
+          |  `p7` MEDIUMINT(0) NOT NULL,
+          |  `p8` MEDIUMINT(255) NULL DEFAULT NULL,
+          |  `p9` BIGINT(0) NOT NULL,
+          |  `p10` BIGINT(255) NULL DEFAULT NULL,
+          |  `p11` BIGINT(0) NOT NULL,
+          |  `p12` BIGINT(255) NULL DEFAULT NULL,
+          |  `p13` FLOAT(0) NOT NULL,
+          |  `p14` FLOAT(24) NULL DEFAULT NULL,
+          |  `p15` FLOAT(24) NOT NULL,
+          |  `p16` FLOAT(53) NULL DEFAULT NULL,
+          |  `p17` DECIMAL(10, 0) NOT NULL,
+          |  `p18` DECIMAL(10, 65) NULL DEFAULT NULL,
+          |  `p19` VARCHAR(255) NOT NULL,
+          |  `p20` VARCHAR(255) NULL DEFAULT NULL,
+          |  `p21` DATETIME NOT NULL,
+          |  `p22` DATETIME NULL DEFAULT NULL,
+          |  `p23` DATETIME NOT NULL,
+          |  `p24` DATETIME NULL DEFAULT NULL,
+          |  `p25` TIME NOT NULL,
+          |  `p26` TIME NULL DEFAULT NULL,
+          |  `p27` DATE NOT NULL,
+          |  `p28` DATE NULL DEFAULT NULL,
+          |  `p29` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          |  `p30` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+          |  `p31` TIMESTAMP NOT NULL,
+          |  `p32` TIMESTAMP NULL DEFAULT NULL,
+          |  `p33` TIMESTAMP NOT NULL,
+          |  `p34` TIMESTAMP NULL DEFAULT NULL,
+          |  `p35` YEAR NOT NULL,
+          |  `p36` YEAR NULL DEFAULT NULL
           |);
           |""".stripMargin
     }
 
     "If the column name is duplicated, an IllegalArgumentException is raised." in {
-      val table: Table[User] = Table[User]("user")(
-        column("id", BIGINT(64), AUTO_INCREMENT, UNIQUE_KEY),
-        column("id", VARCHAR(255)),
-        column("age", INT(255).DEFAULT_NULL),
-        column("updated_at", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP(true)),
-        column("created_at", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP())
+      val table: Table[AllDataTypeTest] = Table[AllDataTypeTest]("all_datatype_test")(
+        column("p1", BIT(1)),
+        column("p1", BIT(64).DEFAULT(None)),
+        column("p3", TINYINT(0)),
+        column("p4", TINYINT(255).DEFAULT(None)),
+        column("p5", SMALLINT(0)),
+        column("p6", SMALLINT(255).DEFAULT(None)),
+        column("p7", MEDIUMINT(0)),
+        column("p8", MEDIUMINT(255).DEFAULT(None)),
+        column("p9", BIGINT(0)),
+        column("p10", BIGINT(255).DEFAULT(None)),
+        column("p11", BIGINT(0)),
+        column("p12", BIGINT(255).DEFAULT(None)),
+        column("p13", FLOAT(0)),
+        column("p14", FLOAT(24).DEFAULT(None)),
+        column("p15", DOUBLE(24)),
+        column("p16", DOUBLE(53).DEFAULT(None)),
+        column("p17", DECIMAL(10, 0)),
+        column("p18", DECIMAL(10, 65).DEFAULT(None)),
+        column("p19", VARCHAR(255)),
+        column("p20", VARCHAR(255).DEFAULT(None)),
+        column("p21", DATETIME),
+        column("p22", DATETIME.DEFAULT(None)),
+        column("p23", DATETIME),
+        column("p24", DATETIME.DEFAULT(None)),
+        column("p25", TIME),
+        column("p26", TIME.DEFAULT(None)),
+        column("p27", DATE),
+        column("p28", DATE.DEFAULT(None)),
+        column("p29", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP(true)),
+        column("p30", TIMESTAMP.DEFAULT_CURRENT_TIMESTAMP()),
+        column("p31", TIMESTAMP),
+        column("p32", TIMESTAMP.DEFAULT(None)),
+        column("p33", TIMESTAMP),
+        column("p34", TIMESTAMP.DEFAULT(None)),
+        column("p35", YEAR),
+        column("p36", YEAR.DEFAULT(None))
       )
 
       TableQueryBuilder(table) must throwAn[IllegalArgumentException]

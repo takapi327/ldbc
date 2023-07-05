@@ -30,26 +30,26 @@ object TableColumnBuilder:
     column.setType(_column.dataType.jdbcType.code)
     column.setNullable(_column.dataType.isOptional)
     _column.dataType match
-      case v: DataType.IntegerType[?]    => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.IntegerOptType[?] => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Decimal[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.DecimalOpt[?]     => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.CFloat[?]         => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.FloatOpt[?]       => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.CChar[?]          => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.CharOpt[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Varchar[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.VarcharOpt[?]     => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Date[?]           => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.DateOpt[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.DateTime[?]       => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.DateTimeOpt[?]    => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.TimeStamp[?]      => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.TimeStampOpt[?]   => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Time[?]           => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.TimeOpt[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Year[?]           => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.YearOpt[?]        => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.IntegerType[?] => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Decimal[?]     => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.CFloat[?]      => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.CChar[?]       => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Varchar[?]     => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Binary[?]      => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Varbinary[?]   => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Tinyblob[?]    =>
+      case v: DataType.Blob[?]        =>
+      case v: DataType.Mediumblob[?]  =>
+      case v: DataType.LongBlob[?]    =>
+      case v: DataType.TinyText[?]    =>
+      case v: DataType.Text[?]        =>
+      case v: DataType.MediumText[?]  =>
+      case v: DataType.LongText[?]    =>
+      case v: DataType.Date[?]        => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.DateTime[?]    => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.TimeStamp[?]   => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Time[?]        => v.default.map(_.value) foreach column.setDefaultValue
+      case v: DataType.Year[?]        => v.default.map(_.value) foreach column.setDefaultValue
       case unknown =>
         throw new IllegalArgumentException(s"The $unknown in the ${ _column.label } column is not a DataType type.")
 

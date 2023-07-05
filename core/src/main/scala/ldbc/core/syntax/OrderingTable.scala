@@ -23,6 +23,7 @@ trait OrderingTable:
           constraint.key match
             case _: ForeignKey => 1
             case _             => 0
+        case _ => 0
       }.sum
     else 0
 

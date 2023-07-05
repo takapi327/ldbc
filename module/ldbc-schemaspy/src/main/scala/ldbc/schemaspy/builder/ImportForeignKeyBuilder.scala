@@ -41,7 +41,7 @@ object ImportForeignKeyBuilder:
             .withFkColumnName(keyColumn.label)
             .withPkTableCat(catalog)
             .withPkTableSchema(schema)
-            .withPkTableName(key.reference.table.name)
+            .withPkTableName(key.reference.table._name)
             .withPkColumnName(refColumn.label)
             .withUpdateRule(key.reference.onUpdate.getOrElse(Reference.ReferenceOption.RESTRICT).code)
             .withDeleteRule(key.reference.onDelete.getOrElse(Reference.ReferenceOption.RESTRICT).code)

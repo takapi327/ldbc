@@ -1,0 +1,133 @@
+/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
+  * distributed with this source code.
+  */
+
+package ldbc.generator.model
+
+import ldbc.generator.formatter.Naming
+
+trait Key:
+  def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String
+
+object Key:
+
+  opaque type OnDelete = String
+  opaque type OnUpdate = String
+
+  type IndexOptions = KeyBlockSize | IndexType | WithParser | Comment | Visible | EngineAttribute |
+    SecondaryEngineAttribute
+
+  def onDelete(str: String): OnDelete = str
+  def onUpdate(str: String): OnDelete = str
+
+  case class Constraint(name: Option[String])
+
+  case class KeyBlockSize(value: 1 | 2 | 4 | 8 | 16)
+  case class WithParser(value: String)
+  case class Visible(value: "VISIBLE" | "INVISIBLE")
+  case class EngineAttribute(value: String)
+  case class SecondaryEngineAttribute(value: String)
+
+  case class IndexType(value: "BTREE" | "HASH"):
+    def toCode: String = s"Index.Type.$value"
+
+  case class IndexOption(
+    size:       Option[KeyBlockSize],
+    indexType:  Option[IndexType],
+    parserName: Option[WithParser],
+    comment:    Option[Comment],
+    engine:     Option[EngineAttribute],
+    secondary:  Option[SecondaryEngineAttribute]
+  ):
+
+    def setSize(value: KeyBlockSize):                                 IndexOption = this.copy(size = Some(value))
+    def setIndexType(value: IndexType):                               IndexOption = this.copy(indexType = Some(value))
+    def setWithParser(value: WithParser):                             IndexOption = this.copy(parserName = Some(value))
+    def setComment(value: Comment):                                   IndexOption = this.copy(comment = Some(value))
+    def setEngineAttribute(value: EngineAttribute):                   IndexOption = this.copy(engine = Some(value))
+    def setSecondaryEngineAttribute(value: SecondaryEngineAttribute): IndexOption = this.copy(secondary = Some(value))
+
+    def toCode: String =
+      s"Index.IndexOption(${ size.fold("None")(v => s"Some(${ v.value })") }, ${ indexType
+          .fold("None")(v => s"Some(${ v.toCode })") }, ${ parserName
+          .fold("None")(v => s"Some(${ v.value })") }, ${ comment.fold("None")(v => s"Some($v)") }, ${ engine
+          .fold("None")(v => s"Some(${ v.value })") }, ${ secondary.fold("None")(v => s"Some(${ v.value })") })"
+
+  object IndexOption:
+    def empty: IndexOption = IndexOption(None, None, None, None, None, None)
+
+  case class Index(
+    indexName:   Option[String],
+    indexType:   Option[IndexType],
+    keyParts:    List[String],
+    indexOption: Option[IndexOption]
+  ) extends Key:
+    def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
+      val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
+      s"INDEX_KEY(${ indexName.fold("None")(str => s"Some(\"$str\")") }, ${ indexType
+          .fold("None")(v => s"Some(${ v.toCode })") }, cats.data.NonEmptyList.of(${ columns
+          .mkString(",") }), ${ indexOption.fold("None")(option => s"Some(${ option.toCode })") })"
+
+  case class Primary(
+    constraint:  Option[Constraint],
+    indexType:   Option[IndexType],
+    keyParts:    List[String],
+    indexOption: Option[IndexOption]
+  ) extends Key:
+    def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
+      val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
+      val key = indexType.fold(s"PRIMARY_KEY(cats.data.NonEmptyList.of(${ columns.mkString(",") }))")(v =>
+        indexOption match
+          case None => s"PRIMARY_KEY(${ v.toCode }, cats.data.NonEmptyList.of(${ columns.mkString(",") }))"
+          case Some(o) =>
+            s"PRIMARY_KEY(${ v.toCode }, cats.data.NonEmptyList.of(${ columns.mkString(",") }), ${ o.toCode })"
+      )
+      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
+
+  case class Unique(
+    constraint:  Option[Constraint],
+    indexName:   Option[String],
+    indexType:   Option[IndexType],
+    keyParts:    List[String],
+    indexOption: Option[IndexOption]
+  ) extends Key:
+    def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
+      val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
+      val key =
+        s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },${ indexType
+            .fold("None")(v => s"Some(${ v.toCode })") },cats.data.NonEmptyList.of(${ columns
+            .mkString(",") }),${ indexOption.fold("None")(v => s"Some(${ v.toCode })") })"
+      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
+
+  case class Foreign(
+    constraint: Option[Constraint],
+    indexName:  Option[String],
+    keyParts:   List[String],
+    reference:  Reference
+  ) extends Key:
+    def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
+      val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
+      val key =
+        s"""FOREIGN_KEY(
+           |  ${ indexName.fold("None")(v => s"Some(\"$v\")") },
+           |  cats.data.NonEmptyList.of(${ columns.mkString(",") }),
+           |  ${ reference.toCode(classNameFormatter, propertyFormatter) }
+           |)
+           |""".stripMargin
+      constraint.fold(key)(v => s"CONSTRAINT(\"${ v.name.getOrElse(keyParts.mkString("_")) }\", $key)")
+
+  case class Reference(tableName: String, keyParts: List[String], on: Option[List[OnDelete | OnUpdate]]):
+    def toCode(classNameFormatter: Naming, propertyFormatter: Naming): String =
+      val className = classNameFormatter.format(tableName)
+      val columns   = keyParts.map(v => s"$className.table.${ propertyFormatter.format(v) }")
+      on match
+        case Some(list) =>
+          (list.find(_.isInstanceOf[OnDelete]), list.find(_.isInstanceOf[OnUpdate])) match
+            case (None, None) => s"REFERENCE($className.table)(${ columns.mkString(",") })"
+            case (Some(delete), None) =>
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some($delete), None)"
+            case (None, Some(update)) =>
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), None, Some($update))"
+            case (Some(delete), Some(update)) =>
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some($delete), Some($update))"
+        case None => s"REFERENCE($className.table)(${ columns.mkString(",") })"

@@ -38,6 +38,7 @@ import org.schemaspy.analyzer.ImpliedConstraintsFinder
 import org.schemaspy.cli.CommandLineArguments
 
 import ldbc.core.*
+import ldbc.core.syntax.given
 import ldbc.schemaspy.builder.{ DbmsMetaBuilder, TableBuilder, ImportForeignKeyBuilder }
 
 class LdbcSchemaAnalyzer(
@@ -259,7 +260,9 @@ class LdbcSchemaAnalyzer(
 
     val progressListener = new Console(commandLineArguments, new Tracked())
 
-    database.tables.foreach(table => {
+    val sortedTables = database.tables.toList.sorted
+
+    sortedTables.foreach(table => {
       val builder        = TableBuilder(db, table)
       val schemaSpyTable = builder.build
 

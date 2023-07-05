@@ -8,17 +8,17 @@ import sbt._
 
 object Generator {
 
-  def lepusVersion(
+  def version(
     version:      String,
     scalaVersion: String,
     sbtVersion:   String,
     dir:          File
   ): Seq[File] = {
-    val file = dir / "LepusVersion.scala"
+    val file = dir / "Version.scala"
     val scalaSource =
-      s"""|package lepus.core
+      s"""|package ldbc.build
           |
-          |object LepusVersion {
+          |object Version {
           |  val current      = "$version"
           |  val scalaVersion = "$scalaVersion"
           |  val sbtVersion   = "$sbtVersion"
