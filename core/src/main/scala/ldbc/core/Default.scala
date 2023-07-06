@@ -45,8 +45,8 @@ object Default:
 
   /** Model for setting TimeStamp-specific Default values.
     *
-   * @param fsp
-   * Decimal second precision value
+    * @param fsp
+    *   Decimal second precision value
     * @param withOn
     *   Value to determine whether to set additional information
     */

@@ -19,10 +19,14 @@ trait ColumnParser extends DataTypeParser:
   private def currentTimestamp: Parser[Default.CurrentTimestamp] =
     customError(
       caseSensitivity("default") ~> caseSensitivity("current_timestamp") ~> opt("(" ~> digit <~ ")") ~
-        opt(caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp") ~ opt("(" ~> digit <~ ")")) ^^ {
-        case _ ~ Some(attribute ~ _) => Default.CurrentTimestamp(true)
-        case _ ~ None => Default.CurrentTimestamp(false)
-      },
+        opt(
+          caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp") ~ opt(
+            "(" ~> digit <~ ")"
+          )
+        ) ^^ {
+          case _ ~ Some(attribute ~ _) => Default.CurrentTimestamp(true)
+          case _ ~ None                => Default.CurrentTimestamp(false)
+        },
       """
         |======================================================
         |There is an error in the format of the default current timestamp.

@@ -1144,7 +1144,8 @@ object DataType:
       * @param onUpdate
       *   Value of whether to add settings on update
       */
-    def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): DateTime[T] = this.copy(default = Some(Default.TimeStamp(fsp, onUpdate)))
+    def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): DateTime[T] =
+      this.copy(default = Some(Default.TimeStamp(fsp, onUpdate)))
 
   /** This model is used to represent SQL DataType TimeStamp data.
     *
@@ -1183,7 +1184,8 @@ object DataType:
       * @param onUpdate
       *   Value of whether to add settings on update
       */
-    def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): TimeStamp[T] = this.copy(default = Some(Default.TimeStamp(fsp, onUpdate)))
+    def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): TimeStamp[T] =
+      this.copy(default = Some(Default.TimeStamp(fsp, onUpdate)))
 
   /** This model is used to represent SQL DataType Time data.
     *
