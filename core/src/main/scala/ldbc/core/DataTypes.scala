@@ -112,11 +112,8 @@ trait DataTypes:
     : DateTime[T] = DateTime(None, isOptional[T])
 
   inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]](
-    inline fsp: Int
-  ): DateTime[T] =
-    inline if fsp < 0 || fsp > 6 then
-      error("If an fsp value is specified for DATETIME, it must be in the range of 0 to 6.")
-    else DateTime(Some(fsp), isOptional[T])
+    inline fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  ): DateTime[T] = DateTime(Some(fsp), isOptional[T])
 
   inline def TIMESTAMP[
     T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
@@ -126,10 +123,7 @@ trait DataTypes:
   inline def TIMESTAMP[
     T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
-  ](inline fsp: Int): TimeStamp[T] =
-    inline if fsp < 0 || fsp > 6 then
-      error("If an fsp value is specified for TIMESTAMP, it must be in the range of 0 to 6.")
-    else TimeStamp(Some(fsp), isOptional[T])
+  ](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): TimeStamp[T] = TimeStamp(Some(fsp), isOptional[T])
 
   inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(None, isOptional[T])
   inline def TIME[T <: LocalTime | Option[LocalTime]](inline fsp: Int): Time[T] =
