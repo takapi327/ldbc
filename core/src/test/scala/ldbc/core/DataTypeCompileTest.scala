@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.core
 
@@ -9,8 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 class DataTypeCompileTest extends AnyFlatSpec:
 
   it should "Successful TINYBLOB compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -19,8 +18,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails TINYBLOB compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -30,8 +28,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Successful BLOB compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -40,8 +37,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails BLOB compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -51,8 +47,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Successful MEDIUMBLOB compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -61,8 +56,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails MEDIUMBLOB compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -72,8 +66,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Successful LONGBLOB compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -82,8 +75,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails LONGBLOB compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -93,8 +85,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Successful TINYTEXT compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -103,8 +94,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails TINYTEXT compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -114,8 +104,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Successful TEXT compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -124,8 +113,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails TEXT compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -135,8 +123,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Successful MEDIUMTEXT compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -145,8 +132,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails MEDIUMTEXT compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -156,8 +142,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Successful LONGTEXT compile" in {
-    assertCompiles(
-      """
+    assertCompiles("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |
@@ -166,8 +151,7 @@ class DataTypeCompileTest extends AnyFlatSpec:
   }
 
   it should "Fails LONGTEXT compile" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |import ldbc.core.*
         |import ldbc.core.DataType.*
         |

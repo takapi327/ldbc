@@ -44,12 +44,11 @@ sealed trait DataType[T]:
     */
   def isOptional: Boolean
 
-  /**
-   * Default value to set for DataType.
-   *
-   * @return
-   *   DataType default value
-   */
+  /** Default value to set for DataType.
+    *
+    * @return
+    *   DataType default value
+    */
   def default: Option[Default]
 
   /** Value to indicate whether NULL is acceptable as a query string in SQL
@@ -744,7 +743,7 @@ object DataType:
     */
   private[ldbc] case class Tinyblob[T <: Array[Byte] | Option[Array[Byte]]](
     isOptional: Boolean,
-    default:    Option[Default] = None,
+    default:    Option[Default] = None
   ) extends DataType[T]:
 
     override def typeName: String = "TINYBLOB"
@@ -754,14 +753,14 @@ object DataType:
     override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): Tinyblob[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the Blob data type, which is the string data of SQL DataType.
     *
@@ -773,7 +772,7 @@ object DataType:
   private[ldbc] case class Blob[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Option[Long],
     isOptional: Boolean,
-    default:    Option[Default] = None,
+    default:    Option[Default] = None
   ) extends DataType[T]:
 
     override def typeName: String = length.fold("BLOB")(n => s"BLOB($n)")
@@ -783,14 +782,14 @@ object DataType:
     override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): Blob[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the Mediumblob data type, which is the string data of SQL DataType.
     *
@@ -799,7 +798,7 @@ object DataType:
     */
   private[ldbc] case class Mediumblob[T <: Array[Byte] | Option[Array[Byte]]](
     isOptional: Boolean,
-    default:    Option[Default] = None,
+    default:    Option[Default] = None
   ) extends DataType[T]:
 
     override def typeName: String = "MEDIUMBLOB"
@@ -809,14 +808,14 @@ object DataType:
     override def queryString: String = typeName ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): Mediumblob[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the LongBlob data type, which is the string data of SQL DataType.
     *
@@ -825,7 +824,7 @@ object DataType:
     */
   private[ldbc] case class LongBlob[T <: Array[Byte] | Option[Array[Byte]]](
     isOptional: Boolean,
-    default:    Option[Default] = None,
+    default:    Option[Default] = None
   ) extends DataType[T]:
 
     override def typeName: String = "LONGBLOB"
@@ -835,14 +834,14 @@ object DataType:
     override def queryString: String = typeName ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): LongBlob[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the TinyText data type, which is the string data of SQL DataType.
     *
@@ -853,7 +852,7 @@ object DataType:
     isOptional: Boolean,
     character:  Option[Character] = None,
     collate:    Option[Collate]   = None,
-    default:    Option[Default] = None,
+    default:    Option[Default]   = None
   ) extends StringType[T]:
 
     override def typeName: String = "TINYTEXT"
@@ -894,14 +893,14 @@ object DataType:
     def COLLATE(collate: String): TinyText[T] = COLLATE(Collate(collate))
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): TinyText[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the Text data type, which is the string data of SQL DataType.
     *
@@ -912,7 +911,7 @@ object DataType:
     isOptional: Boolean,
     character:  Option[Character] = None,
     collate:    Option[Collate]   = None,
-    default:    Option[Default] = None,
+    default:    Option[Default]   = None
   ) extends StringType[T]:
 
     override def typeName: String = "TEXT"
@@ -953,14 +952,14 @@ object DataType:
     def COLLATE(collate: String): Text[T] = COLLATE(Collate(collate))
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): Text[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the MediumText data type, which is the string data of SQL DataType.
     *
@@ -971,7 +970,7 @@ object DataType:
     isOptional: Boolean,
     character:  Option[Character] = None,
     collate:    Option[Collate]   = None,
-    default:    Option[Default] = None,
+    default:    Option[Default]   = None
   ) extends StringType[T]:
 
     override def typeName: String = "MEDIUMTEXT"
@@ -1012,14 +1011,14 @@ object DataType:
     def COLLATE(collate: String): MediumText[T] = COLLATE(Collate(collate))
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): MediumText[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the LongText data type, which is the string data of SQL DataType.
     *
@@ -1030,7 +1029,7 @@ object DataType:
     isOptional: Boolean,
     character:  Option[Character] = None,
     collate:    Option[Collate]   = None,
-    default:    Option[Default] = None,
+    default:    Option[Default]   = None
   ) extends StringType[T]:
 
     override def typeName: String = "LONGTEXT"
@@ -1071,14 +1070,14 @@ object DataType:
     def COLLATE(collate: String): LongText[T] = COLLATE(Collate(collate))
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): LongText[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case v: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case _ => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
+      case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** ===== List of Date Data Types ===== */
 
