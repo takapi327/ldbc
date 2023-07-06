@@ -7,6 +7,8 @@ package ldbc.core
 import java.time.*
 import java.time.Year as JYear
 
+import scala.compiletime.error
+
 /** Trait for representing SQL DataType
   *
   * @tparam T
@@ -734,13 +736,26 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Tinyblob[T <: Array[Byte] | Option[Array[Byte]]](isOptional: Boolean) extends DataType[T]:
+  private[ldbc] case class Tinyblob[T <: Array[Byte] | Option[Array[Byte]]](
+    isOptional: Boolean,
+    default:    Option[Default] = None,
+  ) extends DataType[T]:
 
     override def typeName: String = "TINYBLOB"
 
     override def jdbcType: JdbcType = JdbcType.VarBinary
 
-    override def queryString: String = s"$typeName $nullType"
+    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+
+    /** Method for setting Default value to DataType in SQL.
+     *
+     * @param value
+     * Value set as the default value for DataType
+     */
+    inline def DEFAULT(value: T): Tinyblob[T] = inline value match
+      case None => this.copy(default = Some(Default.Null))
+      case v: Some[?] => error("TINYBLOB cannot have a default value other than NULL.")
+      case _ => error("TINYBLOB can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the Blob data type, which is the string data of SQL DataType.
     *

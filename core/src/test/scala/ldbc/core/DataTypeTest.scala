@@ -137,7 +137,8 @@ object DataTypeTest extends Specification:
 
     "The query string generated from the Tinyblob DataType model matches the specified one." in {
       TINYBLOB[Array[Byte]]().queryString === "TINYBLOB NOT NULL" and
-        TINYBLOB[Option[Array[Byte]]]().queryString === "TINYBLOB NULL"
+        TINYBLOB[Option[Array[Byte]]]().queryString === "TINYBLOB NULL" and
+        TINYBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "TINYBLOB NULL DEFAULT NULL"
     }
 
     "The query string generated from the Blob DataType model matches the specified one." in {
