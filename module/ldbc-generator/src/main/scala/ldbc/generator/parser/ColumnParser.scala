@@ -16,13 +16,50 @@ trait ColumnParser extends DataTypeParser:
   private def constraint: Parser[String] =
     caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL"
 
-  private def default: Parser[Default] =
-    caseSensitivity("default") ~> (stringLiteral | digit | caseSensitivity("null") | caseSensitivity(
-      "current_timestamp"
-    )) ~
-      opt(caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp")) ^^ {
-        case i ~ attribute => Default(i, attribute)
-      }
+  private def currentTimestamp: Parser[Default.CurrentTimestamp] =
+    customError(
+      caseSensitivity("default") ~> caseSensitivity("current_timestamp") ~> opt("(" ~> digit <~ ")") ~
+        opt(caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp") ~ opt("(" ~> digit <~ ")")) ^^ {
+        case _ ~ Some(attribute ~ _) => Default.CurrentTimestamp(true)
+        case _ ~ None => Default.CurrentTimestamp(false)
+      },
+      """
+        |======================================================
+        |There is an error in the format of the default current timestamp.
+        |Please correct the format according to the following.
+        |
+        |example: DEFAULT CURRENT_TIMESTAMP[({0 ~ 6})] [ON UPDATE CURRENT_TIMESTAMP[({0 ~ 6})]]
+        |======================================================
+        |""".stripMargin
+    )
+
+  private def defaultNull: Parser[Default.Null.type] =
+    customError(
+      caseSensitivity("default") ~> caseSensitivity("null") ^^ (_ => Default.Null),
+      """
+        |======================================================
+        |There is an error in the format of the default null.
+        |Please correct the format according to the following.
+        |
+        |example: DEFAULT NULL
+        |======================================================
+        |""".stripMargin
+    )
+
+  private def defaultValue: Parser[Default.Value] =
+    customError(
+      caseSensitivity("default") ~> (stringLiteral | digit) ^^ Default.Value.apply,
+      """
+        |======================================================
+        |There is an error in the format of the default value.
+        |Please correct the format according to the following.
+        |
+        |example: DEFAULT `value`
+        |======================================================
+        |""".stripMargin
+    )
+
+  private def default: Parser[Default] = defaultValue | defaultNull | currentTimestamp
 
   private def visible: Parser[String] =
     caseSensitivity("visible") | caseSensitivity("invisible") ^^ { i => i }
