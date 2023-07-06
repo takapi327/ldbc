@@ -143,37 +143,44 @@ object DataTypeTest extends Specification:
 
     "The query string generated from the Blob DataType model matches the specified one." in {
       BLOB[Array[Byte]](0).queryString === "BLOB(0) NOT NULL" and
-        BLOB[Option[Array[Byte]]](0).queryString === "BLOB(0) NULL"
+        BLOB[Option[Array[Byte]]](0).queryString === "BLOB(0) NULL" and
+        BLOB[Option[Array[Byte]]](0).DEFAULT(None).queryString === "BLOB(0) NULL DEFAULT NULL"
     }
 
     "The query string generated from the Mediumblob DataType model matches the specified one." in {
       MEDIUMBLOB[Array[Byte]]().queryString === "MEDIUMBLOB NOT NULL" and
-        MEDIUMBLOB[Option[Array[Byte]]]().queryString === "MEDIUMBLOB NULL"
+        MEDIUMBLOB[Option[Array[Byte]]]().queryString === "MEDIUMBLOB NULL" and
+        MEDIUMBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "MEDIUMBLOB NULL DEFAULT NULL"
     }
 
     "The query string generated from the LongBlob DataType model matches the specified one." in {
       LONGBLOB[Array[Byte]]().queryString === "LONGBLOB NOT NULL" and
-        LONGBLOB[Option[Array[Byte]]]().queryString === "LONGBLOB NULL"
+        LONGBLOB[Option[Array[Byte]]]().queryString === "LONGBLOB NULL" and
+        LONGBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "LONGBLOB NULL DEFAULT NULL"
     }
 
     "The query string generated from the TinyText DataType model matches the specified one." in {
       TINYTEXT[String]().queryString === "TINYTEXT NOT NULL" and
-        TINYTEXT[Option[String]]().queryString === "TINYTEXT NULL"
+        TINYTEXT[Option[String]]().queryString === "TINYTEXT NULL" and
+        TINYTEXT[Option[String]]().DEFAULT(None).queryString === "TINYTEXT NULL DEFAULT NULL"
     }
 
     "The query string generated from the Text DataType model matches the specified one." in {
       TEXT[String]().queryString === "TEXT NOT NULL" and
-        TEXT[Option[String]]().queryString === "TEXT NULL"
+        TEXT[Option[String]]().queryString === "TEXT NULL" and
+        TEXT[Option[String]]().DEFAULT(None).queryString === "TEXT NULL DEFAULT NULL"
     }
 
     "The query string generated from the MediumText DataType model matches the specified one." in {
       MEDIUMTEXT[String]().queryString === "MEDIUMTEXT NOT NULL" and
-        MEDIUMTEXT[Option[String]]().queryString === "MEDIUMTEXT NULL"
+        MEDIUMTEXT[Option[String]]().queryString === "MEDIUMTEXT NULL" and
+        MEDIUMTEXT[Option[String]]().DEFAULT(None).queryString === "MEDIUMTEXT NULL DEFAULT NULL"
     }
 
     "The query string generated from the LongText DataType model matches the specified one." in {
       LONGTEXT[String]().queryString === "LONGTEXT NOT NULL" and
-        LONGTEXT[Option[String]]().queryString === "LONGTEXT NULL"
+        LONGTEXT[Option[String]]().queryString === "LONGTEXT NULL" and
+        LONGTEXT[Option[String]]().DEFAULT(None).queryString === "LONGTEXT NULL DEFAULT NULL"
     }
 
     "The query string generated from the Date DataType model matches the specified one." in {
