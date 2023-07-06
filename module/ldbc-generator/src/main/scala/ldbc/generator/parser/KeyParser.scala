@@ -150,8 +150,8 @@ trait KeyParser extends ColumnParser:
       caseSensitivity("on") ~> (caseSensitivity("delete") | caseSensitivity("update")) ~ referenceOption ^^ {
         case str ~ option =>
           str match
-            case str if "(?i)delete".r.matches(str) => Key.onDelete(option)
-            case str if "(?i)update".r.matches(str) => Key.onUpdate(option)
+            case str if "(?i)delete".r.matches(str) => Key.OnDelete(option)
+            case str if "(?i)update".r.matches(str) => Key.OnUpdate(option)
       },
       """
         |======================================================
