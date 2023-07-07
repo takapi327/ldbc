@@ -89,7 +89,15 @@ object DataType:
 
     /** Maximum display width of integer data type
       */
-    def length: Int
+    def length: Option[Int]
+
+    /**
+     * Method for generating a TypeName based on the presence or absence of the display width attribute.
+     *
+     * @param name
+     *   Data type name
+     */
+    protected def buildTypeName(name: String): String = length.fold(name)(n => s"$name($n)")
 
   /** SQL DataType to represent a string data type trait.
     *
@@ -136,12 +144,12 @@ object DataType:
     T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
       Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
   ](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"BIT($length)"
+    override def typeName: String = buildTypeName("BIT")
 
     override def jdbcType: JdbcType = JdbcType.Bit
 
@@ -168,14 +176,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Tinyint[T <: Byte | Short | Option[Byte | Short]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"TINYINT($length)"
+    override def typeName: String = buildTypeName("TINYINT")
 
     override def jdbcType: JdbcType = JdbcType.TinyInt
 
@@ -215,14 +223,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Smallint[T <: Short | Int | Option[Short | Int]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"SMALLINT($length)"
+    override def typeName: String = buildTypeName("SMALLINT")
 
     override def jdbcType: JdbcType = JdbcType.SmallInt
 
@@ -262,14 +270,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Mediumint[T <: Int | Option[Int]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"MEDIUMINT($length)"
+    override def typeName: String = buildTypeName("MEDIUMINT")
 
     override def jdbcType: JdbcType = JdbcType.Integer
 
@@ -309,14 +317,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Integer[T <: Int | Long | Option[Int | Long]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"INT($length)"
+    override def typeName: String = buildTypeName("INT")
 
     override def jdbcType: JdbcType = JdbcType.Integer
 
@@ -356,14 +364,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Bigint[T <: Long | BigInt | Option[Long | BigInt]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"BIGINT($length)"
+    override def typeName: String = buildTypeName("BIGINT")
 
     override def jdbcType: JdbcType = JdbcType.BigInt
 

@@ -13,8 +13,10 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Bit[Byte]  = BIT[Byte](1)
-      val bit2: Bit[Short] = BIT[Short](64)
+      val p1: Bit[Byte]  = BIT[Byte](1)
+      val p2: Bit[Short] = BIT[Short](64)
+      val p3: Bit[Byte]  = BIT[Byte]
+      val p4: Bit[Short] = BIT[Short]
     """.stripMargin)
   }
 
@@ -23,7 +25,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Bit[Byte] = BIT[Byte](0)
+      val p: Bit[Byte] = BIT[Byte](0)
     """.stripMargin)
   }
 
@@ -32,7 +34,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Bit[Short] = BIT[Short](65)
+      val p: Bit[Short] = BIT[Short](65)
     """.stripMargin)
   }
 
@@ -41,8 +43,10 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Tinyint[Byte] = TINYINT[Byte](1)
-      val bit2: Tinyint[Byte] = TINYINT[Byte](255)
+      val p1: Tinyint[Byte] = TINYINT[Byte](1)
+      val p2: Tinyint[Byte] = TINYINT[Byte](255)
+      val p3: Tinyint[Byte] = TINYINT[Byte]
+      val p4: Tinyint[Byte] = TINYINT[Byte]
     """.stripMargin)
   }
 
@@ -51,7 +55,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Tinyint[Byte] = TINYINT[Byte](-1)
+      val p: Tinyint[Byte] = TINYINT[Byte](-1)
     """.stripMargin)
   }
 
@@ -60,7 +64,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Tinyint[Byte] = TINYINT[Byte](256)
+      val p: Tinyint[Byte] = TINYINT[Byte](256)
     """.stripMargin)
   }
 
@@ -69,8 +73,10 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Smallint[Short] = SMALLINT[Short](1)
-      val bit2: Smallint[Short] = SMALLINT[Short](255)
+      val p1: Smallint[Short] = SMALLINT[Short](1)
+      val p2: Smallint[Short] = SMALLINT[Short](255)
+      val p3: Smallint[Short] = SMALLINT[Short]
+      val p4: Smallint[Short] = SMALLINT[Short]
     """.stripMargin)
   }
 
@@ -79,7 +85,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Smallint[Short] = SMALLINT[Short](-1)
+      val p: Smallint[Short] = SMALLINT[Short](-1)
     """.stripMargin)
   }
 
@@ -88,7 +94,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Smallint[Short] = SMALLINT[Short](256)
+      val p: Smallint[Short] = SMALLINT[Short](256)
     """.stripMargin)
   }
 
@@ -97,8 +103,10 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Mediumint[Int] = MEDIUMINT[Int](1)
-      val bit2: Mediumint[Int] = MEDIUMINT[Int](255)
+      val p1: Mediumint[Int] = MEDIUMINT[Int](1)
+      val p2: Mediumint[Int] = MEDIUMINT[Int](255)
+      val p3: Mediumint[Int] = MEDIUMINT[Int]
+      val p4: Mediumint[Int] = MEDIUMINT[Int]
     """.stripMargin)
   }
 
@@ -107,7 +115,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Mediumint[Int] = MEDIUMINT[Int](-1)
+      val p: Mediumint[Int] = MEDIUMINT[Int](-1)
     """.stripMargin)
   }
 
@@ -116,7 +124,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Mediumint[Int] = MEDIUMINT[Int](256)
+      val p: Mediumint[Int] = MEDIUMINT[Int](256)
     """.stripMargin)
   }
 
@@ -124,8 +132,10 @@ class DataTypesTest extends AnyFlatSpec:
     assertCompiles("""
       import ldbc.core.DataType.*
 
-      val bit1: Integer[Int] = INT[Int](1)
-      val bit2: Integer[Int] = INT[Int](255)
+      val p1: Integer[Int] = INT[Int](1)
+      val p2: Integer[Int] = INT[Int](255)
+      val p3: Integer[Int] = INT[Int]
+      val p4: Integer[Int] = INT[Int]
     """.stripMargin)
   }
 
@@ -134,7 +144,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Integer[Int] = INT[Int](-1)
+      val p: Integer[Int] = INT[Int](-1)
     """.stripMargin)
   }
 
@@ -143,7 +153,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Integer[Int] = INT[Int](256)
+      val p: Integer[Int] = INT[Int](256)
     """.stripMargin)
   }
 
@@ -152,8 +162,10 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Bigint[Long] = BIGINT[Long](1)
-      val bit2: Bigint[Long] = BIGINT[Long](255)
+      val p1: Bigint[Long] = BIGINT[Long](1)
+      val p2: Bigint[Long] = BIGINT[Long](255)
+      val p3: Bigint[Long] = BIGINT[Long]
+      val p4: Bigint[Long] = BIGINT[Long]
     """.stripMargin)
   }
 
@@ -162,7 +174,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Bigint[Long] = BIGINT[Long](-1)
+      val p: Bigint[Long] = BIGINT[Long](-1)
     """.stripMargin)
   }
 
@@ -171,7 +183,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Bigint[Long] = BIGINT[Long](256)
+      val p: Bigint[Long] = BIGINT[Long](256)
     """.stripMargin)
   }
 
@@ -180,8 +192,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Decimal[BigDecimal] = DECIMAL[BigDecimal](0, 0)
-      val bit2: Decimal[BigDecimal] = DECIMAL[BigDecimal](65)
+      val p1: Decimal[BigDecimal] = DECIMAL[BigDecimal](0, 0)
+      val p2: Decimal[BigDecimal] = DECIMAL[BigDecimal](65)
     """.stripMargin)
   }
 
@@ -190,7 +202,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Decimal[BigDecimal] = DECIMAL[BigDecimal](-1, 0)
+      val p: Decimal[BigDecimal] = DECIMAL[BigDecimal](-1, 0)
     """.stripMargin)
   }
 
@@ -199,7 +211,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Decimal[BigDecimal] = DECIMAL[BigDecimal](66, 0)
+      val p: Decimal[BigDecimal] = DECIMAL[BigDecimal](66, 0)
     """.stripMargin)
   }
 
@@ -208,7 +220,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Decimal[BigDecimal] = DECIMAL[BigDecimal](1, -1)
+      val p: Decimal[BigDecimal] = DECIMAL[BigDecimal](1, -1)
     """.stripMargin)
   }
 
@@ -217,8 +229,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: CFloat[Float] = FLOAT[Float](0)
-      val bit2: CFloat[Float] = FLOAT[Float](24)
+      val p1: CFloat[Float] = FLOAT[Float](0)
+      val p2: CFloat[Float] = FLOAT[Float](24)
     """.stripMargin)
   }
 
@@ -227,7 +239,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: CFloat[Float] = FLOAT[Float](-1)
+      val p: CFloat[Float] = FLOAT[Float](-1)
     """.stripMargin)
   }
 
@@ -236,7 +248,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: CFloat[Float] = FLOAT[Float](25)
+      val p: CFloat[Float] = FLOAT[Float](25)
     """.stripMargin)
   }
 
@@ -245,8 +257,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: CFloat[Double] = DOUBLE[Double](24)
-      val bit2: CFloat[Double] = DOUBLE[Double](53)
+      val p1: CFloat[Double] = DOUBLE[Double](24)
+      val p2: CFloat[Double] = DOUBLE[Double](53)
     """.stripMargin)
   }
 
@@ -255,7 +267,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: CFloat[Double] = DOUBLE[Double](23)
+      val p: CFloat[Double] = DOUBLE[Double](23)
     """.stripMargin)
   }
 
@@ -273,8 +285,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: CChar[String] = CHAR[String](0)
-      val bit2: CChar[String] = CHAR[String](255)
+      val p1: CChar[String] = CHAR[String](0)
+      val p2: CChar[String] = CHAR[String](255)
     """.stripMargin)
   }
 
@@ -283,7 +295,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: CChar[String] = CHAR[String](-1)
+      val p: CChar[String] = CHAR[String](-1)
     """.stripMargin)
   }
 
@@ -291,7 +303,7 @@ class DataTypesTest extends AnyFlatSpec:
     assertDoesNotCompile("""
       import ldbc.core.DataType.*
 
-      val bit: CChar[String] = CHAR[String](256)
+      val p: CChar[String] = CHAR[String](256)
     """.stripMargin)
   }
 
@@ -300,8 +312,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Varchar[String] = VARCHAR[String](0)
-      val bit2: Varchar[String] = VARCHAR[String](255)
+      val p1: Varchar[String] = VARCHAR[String](0)
+      val p2: Varchar[String] = VARCHAR[String](255)
     """.stripMargin)
   }
 
@@ -310,7 +322,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Varchar[String] = VARCHAR[String](-1)
+      val p: Varchar[String] = VARCHAR[String](-1)
     """.stripMargin)
   }
 
@@ -319,7 +331,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Varchar[String] = VARCHAR[String](256)
+      val p: Varchar[String] = VARCHAR[String](256)
     """.stripMargin)
   }
 
@@ -328,8 +340,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Binary[Array[Byte]] = BINARY[Array[Byte]](0)
-      val bit2: Binary[Array[Byte]] = BINARY[Array[Byte]](255)
+      val p1: Binary[Array[Byte]] = BINARY[Array[Byte]](0)
+      val p2: Binary[Array[Byte]] = BINARY[Array[Byte]](255)
     """.stripMargin)
   }
 
@@ -338,7 +350,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Binary[Array[Byte]] = BINARY[Array[Byte]](-1)
+      val p: Binary[Array[Byte]] = BINARY[Array[Byte]](-1)
     """.stripMargin)
   }
 
@@ -347,7 +359,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Binary[Array[Byte]] = BINARY[Array[Byte]](256)
+      val p: Binary[Array[Byte]] = BINARY[Array[Byte]](256)
     """.stripMargin)
   }
 
@@ -356,8 +368,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](0)
-      val bit2: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](255)
+      val p1: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](0)
+      val p2: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](255)
     """.stripMargin)
   }
 
@@ -366,7 +378,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](-1)
+      val p: Varbinary[Array[Byte]] = VARBINARY[Array[Byte]](-1)
     """.stripMargin)
   }
 
@@ -375,8 +387,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val bit1: Blob[Array[Byte]] = BLOB[Array[Byte]](0)
-      val bit2: Blob[Array[Byte]] = BLOB[Array[Byte]](4294967295L)
+      val p1: Blob[Array[Byte]] = BLOB[Array[Byte]](0)
+      val p2: Blob[Array[Byte]] = BLOB[Array[Byte]](4294967295L)
     """.stripMargin)
   }
 
@@ -385,7 +397,7 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.sql.DataType.*
 
-      val bit: Blob[Array[Byte]] = BLOB[Array[Byte]](-1)
+      val p: Blob[Array[Byte]] = BLOB[Array[Byte]](-1)
     """.stripMargin)
   }
 
@@ -394,6 +406,6 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.sql.*
       import ldbc.sql.DataType.*
 
-      val bit: Blob[Array[Byte]] = BLOB[Array[Byte]](4294967296L)
+      val p: Blob[Array[Byte]] = BLOB[Array[Byte]](4294967296L)
     """.stripMargin)
   }
