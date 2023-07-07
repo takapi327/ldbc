@@ -33,72 +33,77 @@ trait DataType:
 
 object DataType:
 
-  def BIT(length: Int): DataType = new DataType:
+  def BIT(length: Option[Int]): DataType = new DataType:
     override val name:      String    = "BIT"
     override val jdbcType:  JdbcType  = JdbcType.Bit
     override val scalaType: ScalaType = ScalaType.Byte
 
-    override def toCode(typeParam: String): String = s"$name[$typeParam]($length)"
+    override def toCode(typeParam: String): String = length.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
 
-  def TINYINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
+  def TINYINT(length: Option[Int], unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "TINYINT"
     override val jdbcType:  JdbcType  = JdbcType.TinyInt
     override val scalaType: ScalaType = if unsigned then ScalaType.Short else ScalaType.Byte
 
     override def toCode(typeParam: String): String =
+      val dataType = length.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
       (unsigned, zerofill) match
-        case (true, true)   => s"$name[$typeParam]($length).UNSIGNED.ZEROFILL"
-        case (true, false)  => s"$name[$typeParam]($length).UNSIGNED"
-        case (false, true)  => s"$name[$typeParam]($length).ZEROFILL"
-        case (false, false) => s"$name[$typeParam]($length)"
+        case (true, true)   => s"$dataType.UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$dataType.UNSIGNED"
+        case (false, true)  => s"$dataType.ZEROFILL"
+        case (false, false) => s"$dataType"
 
-  def SMALLINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
+  def SMALLINT(length: Option[Int], unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "SMALLINT"
     override val jdbcType:  JdbcType  = JdbcType.SmallInt
     override val scalaType: ScalaType = if unsigned then ScalaType.Int else ScalaType.Short
 
     override def toCode(typeParam: String): String =
+      val dataType = length.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
       (unsigned, zerofill) match
-        case (true, true)   => s"$name[$typeParam]($length).UNSIGNED.ZEROFILL"
-        case (true, false)  => s"$name[$typeParam]($length).UNSIGNED"
-        case (false, true)  => s"$name[$typeParam]($length).ZEROFILL"
-        case (false, false) => s"$name[$typeParam]($length)"
+        case (true, true)   => s"$dataType.UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$dataType.UNSIGNED"
+        case (false, true)  => s"$dataType.ZEROFILL"
+        case (false, false) => s"$dataType"
 
-  def MEDIUMINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
+  def MEDIUMINT(length: Option[Int], unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "MEDIUMINT"
     override val jdbcType:  JdbcType  = JdbcType.Integer
     override val scalaType: ScalaType = ScalaType.Int
 
     override def toCode(typeParam: String): String =
+      val dataType = length.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
       (unsigned, zerofill) match
-        case (true, true)   => s"$name[$typeParam]($length).UNSIGNED.ZEROFILL"
-        case (true, false)  => s"$name[$typeParam]($length).UNSIGNED"
-        case (false, true)  => s"$name[$typeParam]($length).ZEROFILL"
-        case (false, false) => s"$name[$typeParam]($length)"
+        case (true, true)   => s"$dataType.UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$dataType.UNSIGNED"
+        case (false, true)  => s"$dataType.ZEROFILL"
+        case (false, false) => s"$dataType"
 
-  def INT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
+  def INT(length: Option[Int], unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "INT"
     override val jdbcType:  JdbcType  = JdbcType.Integer
     override val scalaType: ScalaType = if unsigned then ScalaType.Long else ScalaType.Int
 
     override def toCode(typeParam: String): String =
+      val dataType = length.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
       (unsigned, zerofill) match
-        case (true, true)   => s"$name[$typeParam]($length).UNSIGNED.ZEROFILL"
-        case (true, false)  => s"$name[$typeParam]($length).UNSIGNED"
-        case (false, true)  => s"$name[$typeParam]($length).ZEROFILL"
-        case (false, false) => s"$name[$typeParam]($length)"
+        case (true, true)   => s"$dataType.UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$dataType.UNSIGNED"
+        case (false, true)  => s"$dataType.ZEROFILL"
+        case (false, false) => s"$dataType"
 
-  def BIGINT(length: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
+  def BIGINT(length: Option[Int], unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "BIGINT"
     override val jdbcType:  JdbcType  = JdbcType.BigInt
     override val scalaType: ScalaType = if unsigned then ScalaType.BigInt else ScalaType.Long
 
     override def toCode(typeParam: String): String =
+      val dataType = length.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
       (unsigned, zerofill) match
-        case (true, true)   => s"$name[$typeParam]($length).UNSIGNED.ZEROFILL"
-        case (true, false)  => s"$name[$typeParam]($length).UNSIGNED"
-        case (false, true)  => s"$name[$typeParam]($length).ZEROFILL"
-        case (false, false) => s"$name[$typeParam]($length)"
+        case (true, true)   => s"$dataType.UNSIGNED.ZEROFILL"
+        case (true, false)  => s"$dataType.UNSIGNED"
+        case (false, true)  => s"$dataType.ZEROFILL"
+        case (false, false) => s"$dataType"
 
   def DECIMAL(accuracy: Int, scale: Int, unsigned: Boolean, zerofill: Boolean): DataType = new DataType:
     override val name:      String    = "DECIMAL"
