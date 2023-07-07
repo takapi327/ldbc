@@ -22,7 +22,8 @@ trait DataTypes:
   /** ===== List of Numeric Data Types ===== */
 
   @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL."
+    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
+    "Ldbc-Core 0.1.0"
   )
   inline def BIT[
     T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
@@ -37,7 +38,8 @@ trait DataTypes:
   ]: Bit[T] = Bit(None, isOptional[T])
 
   @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL."
+    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
+    "Ldbc-Core 0.1.0"
   )
   inline def TINYINT[T <: Byte | Short | Option[Byte | Short]](inline length: Int): Tinyint[T] =
     inline if length < 0 || length > 255 then error("The length of the TINYINT must be in the range 0 to 255.")
@@ -47,7 +49,8 @@ trait DataTypes:
     Tinyint(None, isOptional[T])
 
   @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL."
+    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
+    "Ldbc-Core 0.1.0"
   )
   inline def SMALLINT[T <: Short | Int | Option[Short | Int]](inline length: Int): Smallint[T] =
     inline if length < 0 || length > 255 then error("The length of the SMALLINT must be in the range 0 to 255.")
@@ -57,7 +60,8 @@ trait DataTypes:
     Smallint(None, isOptional[T])
 
   @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL."
+    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
+    "Ldbc-Core 0.1.0"
   )
   inline def MEDIUMINT[T <: Int | Option[Int]](inline length: Int): Mediumint[T] =
     inline if length < 0 || length > 255 then error("The length of the MEDIUMINT must be in the range 0 to 255.")
@@ -67,7 +71,8 @@ trait DataTypes:
     Mediumint(None, isOptional[T])
 
   @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL."
+    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
+    "Ldbc-Core 0.1.0"
   )
   inline def INT[T <: Int | Long | Option[Int | Long]](inline length: Int): Integer[T] =
     inline if length < 0 || length > 255 then error("The length of the INT must be in the range 0 to 255.")
@@ -77,7 +82,8 @@ trait DataTypes:
     Integer(None, isOptional[T])
 
   @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL."
+    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
+    "Ldbc-Core 0.1.0"
   )
   inline def BIGINT[T <: Long | BigInt | Option[Long | BigInt]](inline length: Int): Bigint[T] =
     inline if length < 0 || length > 255 then error("The length of the BIGINT must be in the range 0 to 255.")
