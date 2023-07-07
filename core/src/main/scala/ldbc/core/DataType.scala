@@ -91,12 +91,11 @@ object DataType:
       */
     def length: Option[Int]
 
-    /**
-     * Method for generating a TypeName based on the presence or absence of the display width attribute.
-     *
-     * @param name
-     *   Data type name
-     */
+    /** Method for generating a TypeName based on the presence or absence of the display width attribute.
+      *
+      * @param name
+      *   Data type name
+      */
     protected def buildTypeName(name: String): String = length.fold(name)(n => s"$name($n)")
 
   /** SQL DataType to represent a string data type trait.
