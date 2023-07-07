@@ -45,13 +45,15 @@ object Default:
 
   /** Model for setting TimeStamp-specific Default values.
     *
+    * @param fsp
+    *   Decimal second precision value
     * @param withOn
     *   Value to determine whether to set additional information
     */
-  case class TimeStamp(withOn: Boolean) extends Default:
+  case class TimeStamp(fsp: Option[0 | 1 | 2 | 3 | 4 | 5 | 6], withOn: Boolean) extends Default:
 
-    override def value: String = "CURRENT_TIMESTAMP"
+    override def value: String = fsp.fold("CURRENT_TIMESTAMP")(v => s"CURRENT_TIMESTAMP($v)")
 
     override def queryString: String =
-      if withOn then s"DEFAULT $value ON UPDATE CURRENT_TIMESTAMP"
+      if withOn then s"DEFAULT $value ON UPDATE CURRENT_TIMESTAMP" ++ fsp.fold("")(v => s"($v)")
       else s"DEFAULT $value"

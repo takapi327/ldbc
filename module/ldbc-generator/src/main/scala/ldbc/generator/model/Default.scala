@@ -4,16 +4,37 @@
 
 package ldbc.generator.model
 
-case class Default(
-  value:     String | Int,
-  attribute: Option[String]
-):
+/** Trait for setting SQL Default values
+  */
+trait Default:
 
-  def toCode(isOptional: Boolean): String =
-    (value, isOptional) match
-      case ("NULL", true) => ".DEFAULT(None)"
-      case ("NULL", false) =>
-        throw new IllegalArgumentException("NULL cannot be set as the default value for non-null-allowed columns.")
-      case ("CURRENT_TIMESTAMP", _) => s".DEFAULT_CURRENT_TIMESTAMP(${ attribute.contains("CURRENT_TIMESTAMP") })"
-      case (_, false)               => s".DEFAULT($value)"
-      case (_, true)                => s".DEFAULT(Some($value))"
+  def toCode(isOptional: Boolean): String
+
+object Default:
+
+  /** Model to be used when a value matching the DataType type is set.
+    *
+    * @param value
+    *   Value set as the default value for DataType
+    */
+  case class Value(value: String | Int) extends Default:
+    override def toCode(isOptional: Boolean): String =
+      if isOptional then s".DEFAULT(Some($value))"
+      else s".DEFAULT($value)"
+
+  /** Object for setting NULL as the Default value when the SQL DataType is NULL-allowed.
+    */
+  object Null extends Default:
+    override def toCode(isOptional: Boolean): String =
+      if isOptional then ".DEFAULT(None)"
+      else throw new IllegalArgumentException("NULL cannot be set as the default value for non-null-allowed columns.")
+
+  /** Model for setting TimeStamp-specific Default values.
+    *
+    * @param onUpdate
+    *   Value to determine whether to set additional information
+    */
+  case class CurrentTimestamp(onUpdate: Boolean) extends Default:
+    override def toCode(isOptional: Boolean): String =
+      if onUpdate then ".DEFAULT_CURRENT_TIMESTAMP(true)"
+      else ".DEFAULT_CURRENT_TIMESTAMP(false)"

@@ -1118,7 +1118,7 @@ object DataType:
   private[ldbc] case class DateTime[
     T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]
   ](
-    fsp:        Option[Int],
+    fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends DateType[T]:
@@ -1145,7 +1145,7 @@ object DataType:
       *   Value of whether to add settings on update
       */
     def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): DateTime[T] =
-      this.copy(default = Some(Default.TimeStamp(onUpdate)))
+      this.copy(default = Some(Default.TimeStamp(fsp, onUpdate)))
 
   /** This model is used to represent SQL DataType TimeStamp data.
     *
@@ -1158,7 +1158,7 @@ object DataType:
     T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
-    fsp:        Option[Int],
+    fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends DateType[T]:
@@ -1185,7 +1185,7 @@ object DataType:
       *   Value of whether to add settings on update
       */
     def DEFAULT_CURRENT_TIMESTAMP(onUpdate: Boolean = false): TimeStamp[T] =
-      this.copy(default = Some(Default.TimeStamp(onUpdate)))
+      this.copy(default = Some(Default.TimeStamp(fsp, onUpdate)))
 
   /** This model is used to represent SQL DataType Time data.
     *

@@ -11,14 +11,14 @@ trait Key:
 
 object Key:
 
-  opaque type OnDelete = String
-  opaque type OnUpdate = String
-
   type IndexOptions = KeyBlockSize | IndexType | WithParser | Comment | Visible | EngineAttribute |
     SecondaryEngineAttribute
 
-  def onDelete(str: String): OnDelete = str
-  def onUpdate(str: String): OnDelete = str
+  trait On:
+    def option: String
+
+  case class OnDelete(option: String) extends On
+  case class OnUpdate(option: String) extends On
 
   case class Constraint(name: Option[String])
 
@@ -116,7 +116,7 @@ object Key:
            |""".stripMargin
       constraint.fold(key)(v => s"CONSTRAINT(\"${ v.name.getOrElse(keyParts.mkString("_")) }\", $key)")
 
-  case class Reference(tableName: String, keyParts: List[String], on: Option[List[OnDelete | OnUpdate]]):
+  case class Reference(tableName: String, keyParts: List[String], on: Option[List[On]]):
     def toCode(classNameFormatter: Naming, propertyFormatter: Naming): String =
       val className = classNameFormatter.format(tableName)
       val columns   = keyParts.map(v => s"$className.table.${ propertyFormatter.format(v) }")
@@ -125,9 +125,9 @@ object Key:
           (list.find(_.isInstanceOf[OnDelete]), list.find(_.isInstanceOf[OnUpdate])) match
             case (None, None) => s"REFERENCE($className.table)(${ columns.mkString(",") })"
             case (Some(delete), None) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some($delete), None)"
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some(${ delete.option }), None)"
             case (None, Some(update)) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), None, Some($update))"
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), None, Some(${ update.option }))"
             case (Some(delete), Some(update)) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some($delete), Some($update))"
+              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some(${ delete.option }), Some(${ update.option }))"
         case None => s"REFERENCE($className.table)(${ columns.mkString(",") })"

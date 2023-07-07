@@ -197,10 +197,12 @@ object DataTypeTest extends Specification:
 
     "The query string generated from the DateTime DataType model matches the specified one." in {
       DATETIME[LocalDateTime].queryString === "DATETIME NOT NULL" and
+        DATETIME[LocalDateTime](6).queryString === "DATETIME(6) NOT NULL" and
         DATETIME[LocalDateTime]
           .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
           .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'" and
         DATETIME[Option[LocalDateTime]].queryString === "DATETIME NULL" and
+        DATETIME[Option[LocalDateTime]](6).queryString === "DATETIME(6) NULL" and
         DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL" and
         DATETIME[Option[LocalDateTime]]
           .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
@@ -209,17 +211,25 @@ object DataTypeTest extends Specification:
         DATETIME[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP()
           .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP" and
+        DATETIME[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP()
+          .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6)" and
         DATETIME[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP(true)
-          .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+          .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" and
+        DATETIME[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP(true)
+          .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
     }
 
     "The query string generated from the TimeStamp DataType model matches the specified one." in {
       TIMESTAMP[LocalDateTime].queryString === "TIMESTAMP NOT NULL" and
+        TIMESTAMP[LocalDateTime](6).queryString === "TIMESTAMP(6) NOT NULL" and
         TIMESTAMP[LocalDateTime]
           .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
           .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'" and
         TIMESTAMP[Option[LocalDateTime]].queryString === "TIMESTAMP NULL" and
+        TIMESTAMP[Option[LocalDateTime]](5).queryString === "TIMESTAMP(5) NULL" and
         TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL" and
         TIMESTAMP[Option[LocalDateTime]]
           .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
@@ -228,9 +238,15 @@ object DataTypeTest extends Specification:
         TIMESTAMP[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP()
           .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP" and
+        TIMESTAMP[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP()
+          .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6)" and
         TIMESTAMP[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP(true)
-          .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+          .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" and
+        TIMESTAMP[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP(true)
+          .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
     }
 
     "The query string generated from the Time DataType model matches the specified one." in {
