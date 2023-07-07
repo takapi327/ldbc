@@ -45,7 +45,7 @@ trait DataTypeParser extends SqlParser:
   private[ldbc] def bitType: Parser[DataType] =
     customError(
       caseSensitivity("bit") ~> opt(argument("BIT", 1, 64, 1)) ^^ { n =>
-        DataType.BIT(n.getOrElse(1))
+        DataType.BIT(n)
       },
       """
         |===============================================================================
@@ -53,7 +53,7 @@ trait DataTypeParser extends SqlParser:
         |The Bit Data type must be defined as follows
         |※ Bit strings are case-insensitive.
         |
-        |M is the number of bits per value (1 to 64). If M is omitted, the default is 1.
+        |M is the number of bits per value (1 to 64). If M is omitted.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -66,7 +66,7 @@ trait DataTypeParser extends SqlParser:
     customError(
       caseSensitivity("tinyint") ~> opt(argument("TINYINT", 1, 255, 3)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ unsigned ~ zerofill => DataType.TINYINT(n.getOrElse(3), unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.TINYINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -74,7 +74,7 @@ trait DataTypeParser extends SqlParser:
         |The tinyint Data type must be defined as follows
         |※ tinyint strings are case-insensitive.
         |
-        |M is the number of bits per value (0 to 255). If M is omitted, the default is 3.
+        |M is the number of bits per value (0 to 255). If M is omitted.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -87,7 +87,7 @@ trait DataTypeParser extends SqlParser:
     customError(
       caseSensitivity("smallint") ~> opt(argument("SMALLINT", 1, 255, 5)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ unsigned ~ zerofill => DataType.SMALLINT(n.getOrElse(5), unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.SMALLINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -95,7 +95,7 @@ trait DataTypeParser extends SqlParser:
         |The smallint Data type must be defined as follows
         |※ smallint strings are case-insensitive.
         |
-        |M is the number of bits per value (0 to 255). If M is omitted, the default is 5.
+        |M is the number of bits per value (0 to 255). If M is omitted.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -108,7 +108,7 @@ trait DataTypeParser extends SqlParser:
     customError(
       caseSensitivity("mediumint") ~> opt(argument("MEDIUMINT", 1, 255, 8)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ unsigned ~ zerofill => DataType.MEDIUMINT(n.getOrElse(8), unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.MEDIUMINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -116,7 +116,7 @@ trait DataTypeParser extends SqlParser:
         |The mediumint Data type must be defined as follows
         |※ mediumint strings are case-insensitive.
         |
-        |M is the number of bits per value (0 to 255). If M is omitted, the default is 8.
+        |M is the number of bits per value (0 to 255). If M is omitted.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -130,7 +130,7 @@ trait DataTypeParser extends SqlParser:
       (caseSensitivity("int") ||| caseSensitivity("integer")) ~>
         opt(argument("INT", 1, 255, 10)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ unsigned ~ zerofill => DataType.INT(n.getOrElse(10), unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.INT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -138,7 +138,7 @@ trait DataTypeParser extends SqlParser:
         |The int Data type must be defined as follows
         |※ int strings are case-insensitive.
         |
-        |M is the number of bits per value (0 to 255). If M is omitted, the default is 10.
+        |M is the number of bits per value (0 to 255). If M is omitted.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
@@ -151,7 +151,7 @@ trait DataTypeParser extends SqlParser:
     customError(
       caseSensitivity("bigint") ~> opt(argument("BIGINT", 1, 255, 20)) ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ unsigned ~ zerofill => DataType.BIGINT(n.getOrElse(20), unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.BIGINT(n, unsigned.isDefined, zerofill.isDefined)
         },
       """
         |===============================================================================
@@ -159,7 +159,7 @@ trait DataTypeParser extends SqlParser:
         |The bigint Data type must be defined as follows
         |※ bigint strings are case-insensitive.
         |
-        |M is the number of bits per value (0 to 255). If M is omitted, the default is 20.
+        |M is the number of bits per value (0 to 255). If M is omitted.
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |

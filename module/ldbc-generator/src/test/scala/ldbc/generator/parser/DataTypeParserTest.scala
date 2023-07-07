@@ -22,6 +22,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
 
   it should "TINYINT data type parsing test succeeds." in {
     assert(parseAll(tinyintType, "tinyint").successful)
+    assert(parseAll(tinyintType, "Tinyint").successful)
     assert(parseAll(tinyintType, "Tinyint(1)").successful)
     assert(parseAll(tinyintType, "TINYINT(255)").successful)
     assert(parseAll(tinyintType, "TINYINT(255) UNSIGNED").successful)
@@ -39,6 +40,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
 
   it should "SMALLINT data type parsing test succeeds." in {
     assert(parseAll(smallintType, "smallint").successful)
+    assert(parseAll(smallintType, "Smallint").successful)
     assert(parseAll(smallintType, "Smallint(1)").successful)
     assert(parseAll(smallintType, "SMALLINT(255)").successful)
     assert(parseAll(smallintType, "SMALLINT(255) UNSIGNED").successful)
@@ -56,6 +58,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
 
   it should "MEDIUMINT data type parsing test succeeds." in {
     assert(parseAll(mediumintType, "mediumint").successful)
+    assert(parseAll(mediumintType, "Mediumint").successful)
     assert(parseAll(mediumintType, "Mediumint(1)").successful)
     assert(parseAll(mediumintType, "MEDIUMINT(255)").successful)
     assert(parseAll(mediumintType, "MEDIUMINT(255) UNSIGNED").successful)

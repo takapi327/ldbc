@@ -89,7 +89,14 @@ object DataType:
 
     /** Maximum display width of integer data type
       */
-    def length: Int
+    def length: Option[Int]
+
+    /** Method for generating a TypeName based on the presence or absence of the display width attribute.
+      *
+      * @param name
+      *   Data type name
+      */
+    protected def buildTypeName(name: String): String = length.fold(name)(n => s"$name($n)")
 
   /** SQL DataType to represent a string data type trait.
     *
@@ -136,12 +143,12 @@ object DataType:
     T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
       Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
   ](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"BIT($length)"
+    override def typeName: String = buildTypeName("BIT")
 
     override def jdbcType: JdbcType = JdbcType.Bit
 
@@ -168,14 +175,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Tinyint[T <: Byte | Short | Option[Byte | Short]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"TINYINT($length)"
+    override def typeName: String = buildTypeName("TINYINT")
 
     override def jdbcType: JdbcType = JdbcType.TinyInt
 
@@ -201,6 +208,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
+    @deprecated(
+      """
+      |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
+      |It will no longer be supported in future versions of MySQL.
+      |Consider using an alternative method to produce the effect of this attribute.
+      |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
+      |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Tinyint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Smallint data type, which is the numeric data of SQL DataType.
@@ -215,14 +231,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Smallint[T <: Short | Int | Option[Short | Int]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"SMALLINT($length)"
+    override def typeName: String = buildTypeName("SMALLINT")
 
     override def jdbcType: JdbcType = JdbcType.SmallInt
 
@@ -248,6 +264,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
+    @deprecated(
+      """
+        |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
+        |It will no longer be supported in future versions of MySQL.
+        |Consider using an alternative method to produce the effect of this attribute.
+        |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Smallint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Mediumint data type, which is the numeric data of SQL DataType.
@@ -262,14 +287,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Mediumint[T <: Int | Option[Int]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"MEDIUMINT($length)"
+    override def typeName: String = buildTypeName("MEDIUMINT")
 
     override def jdbcType: JdbcType = JdbcType.Integer
 
@@ -295,6 +320,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
+    @deprecated(
+      """
+        |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
+        |It will no longer be supported in future versions of MySQL.
+        |Consider using an alternative method to produce the effect of this attribute.
+        |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Mediumint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Integer data type, which is the numeric data of SQL DataType.
@@ -309,14 +343,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Integer[T <: Int | Long | Option[Int | Long]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"INT($length)"
+    override def typeName: String = buildTypeName("INT")
 
     override def jdbcType: JdbcType = JdbcType.Integer
 
@@ -342,6 +376,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
+    @deprecated(
+      """
+        |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
+        |It will no longer be supported in future versions of MySQL.
+        |Consider using an alternative method to produce the effect of this attribute.
+        |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Integer[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Bigint data type, which is the numeric data of SQL DataType.
@@ -356,14 +399,14 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Bigint[T <: Long | BigInt | Option[Long | BigInt]](
-    length:     Int,
+    length:     Option[Int],
     isOptional: Boolean,
     isUnSigned: Boolean         = false,
     isZerofill: Boolean         = false,
     default:    Option[Default] = None
   ) extends IntegerType[T]:
 
-    override def typeName: String = s"BIGINT($length)"
+    override def typeName: String = buildTypeName("BIGINT")
 
     override def jdbcType: JdbcType = JdbcType.BigInt
 
@@ -389,6 +432,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
+    @deprecated(
+      """
+        |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
+        |It will no longer be supported in future versions of MySQL.
+        |Consider using an alternative method to produce the effect of this attribute.
+        |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Bigint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Decimal data type, which is the numeric data of SQL DataType.
@@ -437,6 +489,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
+    @deprecated(
+      """
+        |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
+        |It will no longer be supported in future versions of MySQL.
+        |Consider using an alternative method to produce the effect of this attribute.
+        |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Decimal[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Float data type, which is the numeric data of SQL DataType.
@@ -482,6 +543,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
+    @deprecated(
+      """
+        |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
+        |It will no longer be supported in future versions of MySQL.
+        |Consider using an alternative method to produce the effect of this attribute.
+        |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: CFloat[T] = this.copy(isZerofill = true)
 
   /** ===== List of String Data Types ===== */
