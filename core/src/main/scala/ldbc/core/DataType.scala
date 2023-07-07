@@ -208,12 +208,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
-    @deprecated("""
+    @deprecated(
+      """
       |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
       |It will no longer be supported in future versions of MySQL.
       |Consider using an alternative method to produce the effect of this attribute.
       |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
-      |""".stripMargin, "Ldbc-Core 0.1.0")
+      |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Tinyint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Smallint data type, which is the numeric data of SQL DataType.
@@ -261,12 +264,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
-    @deprecated("""
+    @deprecated(
+      """
         |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
         |It will no longer be supported in future versions of MySQL.
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
-        |""".stripMargin, "Ldbc-Core 0.1.0")
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Smallint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Mediumint data type, which is the numeric data of SQL DataType.
@@ -314,12 +320,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
-    @deprecated("""
+    @deprecated(
+      """
         |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
         |It will no longer be supported in future versions of MySQL.
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
-        |""".stripMargin, "Ldbc-Core 0.1.0")
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Mediumint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Integer data type, which is the numeric data of SQL DataType.
@@ -367,12 +376,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
-    @deprecated("""
+    @deprecated(
+      """
         |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
         |It will no longer be supported in future versions of MySQL.
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
-        |""".stripMargin, "Ldbc-Core 0.1.0")
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Integer[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Bigint data type, which is the numeric data of SQL DataType.
@@ -420,12 +432,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
-    @deprecated("""
+    @deprecated(
+      """
         |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
         |It will no longer be supported in future versions of MySQL.
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
-        |""".stripMargin, "Ldbc-Core 0.1.0")
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Bigint[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Decimal data type, which is the numeric data of SQL DataType.
@@ -474,12 +489,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
-    @deprecated("""
+    @deprecated(
+      """
         |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
         |It will no longer be supported in future versions of MySQL.
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
-        |""".stripMargin, "Ldbc-Core 0.1.0")
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: Decimal[T] = this.copy(isZerofill = true)
 
   /** Model for representing the Float data type, which is the numeric data of SQL DataType.
@@ -525,12 +543,15 @@ object DataType:
 
     /** Method for setting data type to zerofill.
       */
-    @deprecated("""
+    @deprecated(
+      """
         |As of MySQL 8.0.17, the ZEROFILL attribute is deprecated for numeric data types.
         |It will no longer be supported in future versions of MySQL.
         |Consider using an alternative method to produce the effect of this attribute.
         |For example, an application could use the LPAD() function to zero-fill a number to the required width or to store a formatted number in a CHAR column.
-        |""".stripMargin, "Ldbc-Core 0.1.0")
+        |""".stripMargin,
+      "Ldbc-Core 0.1.0"
+    )
     def ZEROFILL: CFloat[T] = this.copy(isZerofill = true)
 
   /** ===== List of String Data Types ===== */
