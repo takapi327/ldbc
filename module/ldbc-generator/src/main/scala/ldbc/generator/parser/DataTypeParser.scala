@@ -38,7 +38,7 @@ trait DataTypeParser extends SqlParser:
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | datetimeType | dateType | timestampType | timeType | yearType
+      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType
 
   /** Numeric data type parsing
     */
@@ -457,6 +457,24 @@ trait DataTypeParser extends SqlParser:
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
         |example: LONGTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
+        |==============================================================================
+        |""".stripMargin
+    )
+
+  private[ldbc] def enumType: Parser[DataType] =
+    customError(
+      caseSensitivity("enum") ~> "(" ~> repsep(stringLiteral, ",") <~ ")" ^^ {
+        types => DataType.ENUM(types)
+      },
+      """
+        |===============================================================================
+        |Failed to parse enum data type.
+        |The enum Data type must be defined as follows
+        |※ enum strings are case-insensitive.
+        |
+        |SEE: https://dev.mysql.com/doc/refman/8.0/en/enum.html
+        |
+        |example: ENUM('string', ...)
         |==============================================================================
         |""".stripMargin
     )
