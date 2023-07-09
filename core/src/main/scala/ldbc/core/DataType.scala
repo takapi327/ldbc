@@ -1152,31 +1152,32 @@ object DataType:
       case _          => error(s"$typeName can be set to NULL as the default value only if NULL is allowed.")
 
   /** Model for representing the Enum data type, which is the enum data of SQL DataType.
-   *
-   * @tparam T
-   * Scala types that match SQL DataType
-   */
+    *
+    * @tparam T
+    *   Scala types that match SQL DataType
+    */
   private[ldbc] case class Enum[T <: EnumModel | Option[?]](
-    isOptional: Boolean,
-    default: Option[Default] = None
-  )(using enumDataType: EnumDataType[?]) extends DataType[T]:
+    isOptional:         Boolean,
+    default:            Option[Default] = None
+  )(using enumDataType: EnumDataType[?])
+    extends DataType[T]:
 
     override def typeName: String = s"ENUM(${ enumDataType.values.map(v => s"'$v'").mkString(",") })"
 
     override def jdbcType: JdbcType = JdbcType.Char
 
     override def queryString: String =
-      typeName ++ s" $nullType" ++ default.fold("")(v => s" ${v.queryString}")
+      typeName ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
     /** Method for setting Default value to DataType in SQL.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
+      *
+      * @param value
+      *   Value set as the default value for DataType
+      */
     inline def DEFAULT(value: T): Enum[T] = inline value match
-      case None => this.copy(default = Some(Default.Null))
+      case None       => this.copy(default = Some(Default.Null))
       case _: Some[?] => error(s"$typeName cannot have a default value other than NULL.")
-      case v => this.copy(default = Some(Default.Value(v)))
+      case v          => this.copy(default = Some(Default.Value(v)))
 
   /** ===== List of Date Data Types ===== */
 

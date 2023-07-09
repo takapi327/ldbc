@@ -190,7 +190,9 @@ object DataTypeTest extends Specification:
       object Status extends EnumDataType[Status]
 
       ENUM[Status](using Status).queryString === "ENUM('Active','InActive') NOT NULL" and
-        ENUM[Status](using Status).DEFAULT(Status.Active).queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'" and
+        ENUM[Status](using Status)
+          .DEFAULT(Status.Active)
+          .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'" and
         ENUM[Option[Status]](using Status).queryString === "ENUM('Active','InActive') NULL" and
         ENUM[Option[Status]](using Status).DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
     }

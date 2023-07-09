@@ -7,19 +7,19 @@ package ldbc.generator.model
 import ldbc.core.JdbcType
 
 enum ScalaType(val code: String):
-  case Byte          extends ScalaType("Byte")
-  case String        extends ScalaType("String")
-  case Short         extends ScalaType("Short")
-  case Int           extends ScalaType("Int")
-  case Long          extends ScalaType("Long")
-  case BigDecimal    extends ScalaType("BigDecimal")
-  case Float         extends ScalaType("Float")
-  case BigInt        extends ScalaType("BigInt")
-  case ArrayByte     extends ScalaType("Array[Byte]")
-  case LocalDate     extends ScalaType("java.time.LocalDate")
-  case LocalDateTime extends ScalaType("java.time.LocalDateTime")
-  case LocalTime     extends ScalaType("java.time.LocalTime")
-  case YEAR          extends ScalaType("java.time.Year")
+  case Byte                      extends ScalaType("Byte")
+  case String                    extends ScalaType("String")
+  case Short                     extends ScalaType("Short")
+  case Int                       extends ScalaType("Int")
+  case Long                      extends ScalaType("Long")
+  case BigDecimal                extends ScalaType("BigDecimal")
+  case Float                     extends ScalaType("Float")
+  case BigInt                    extends ScalaType("BigInt")
+  case ArrayByte                 extends ScalaType("Array[Byte]")
+  case LocalDate                 extends ScalaType("java.time.LocalDate")
+  case LocalDateTime             extends ScalaType("java.time.LocalDateTime")
+  case LocalTime                 extends ScalaType("java.time.LocalTime")
+  case YEAR                      extends ScalaType("java.time.Year")
   case Enum(types: List[String]) extends ScalaType("Enum")
 
 trait DataType:
@@ -186,10 +186,10 @@ object DataType:
         case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(\"$ch\")"
         case (None, Some(co))     => s"$name[$typeParam]().COLLATE(\"$co\")"
         case (None, None)         => s"$name[$typeParam]()"
-        
+
   def ENUM(types: List[String]): DataType = new DataType:
-    override val name: String = "ENUM"
-    override val jdbcType: JdbcType = JdbcType.Char
+    override val name:      String    = "ENUM"
+    override val jdbcType:  JdbcType  = JdbcType.Char
     override val scalaType: ScalaType = ScalaType.Enum(types)
 
     override def toCode(typeParam: String): String = s"$name[$typeParam]"

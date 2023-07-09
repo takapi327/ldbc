@@ -42,13 +42,11 @@ private[ldbc] object LdbcGenerator:
                 val name = propertyNameFormatter.format(column.name)
                 if column.dataType.scalaType.isInstanceOf[ScalaType.Enum] then
                   s"$name: $className.${ classNameFormatter.format(column.name) }"
-                else
-                  s"$name: ${ column.scalaType }"
+                else s"$name: ${ column.scalaType }"
               )
 
-              val objects = statement.columnDefinitions.map(column =>
-                enumGenerator(column, classNameFormatter)
-              ).filter(_.nonEmpty)
+              val objects =
+                statement.columnDefinitions.map(column => enumGenerator(column, classNameFormatter)).filter(_.nonEmpty)
 
               val outputFile = new File(sourceManaged, s"$className.scala")
 

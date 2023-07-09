@@ -28,20 +28,23 @@ case class ColumnDefinition(
   val scalaType =
     val `type` = dataType.scalaType match
       case ScalaType.Enum(types) => name
-      case _ => dataType.scalaType.code
+      case _                     => dataType.scalaType.code
     if attributes.forall(_.constraint) then s"Option[${ `type` }]"
     else s"${ `type` }"
 
   private def default(formatter: Naming) =
     attributes.fold("")(attribute =>
       dataType.scalaType match
-        case ScalaType.Enum(types) => attribute.default.map {
-          case Default.Value(value) =>
-            val `type` = formatter.format(name)
-            if attribute.constraint then s".DEFAULT(Some(${ `type` }.$value))"
-            else s".DEFAULT(${ `type` }.$value)"
-          case default => default.toCode(attribute.constraint)
-        }.getOrElse("")
+        case ScalaType.Enum(types) =>
+          attribute.default
+            .map {
+              case Default.Value(value) =>
+                val `type` = formatter.format(name)
+                if attribute.constraint then s".DEFAULT(Some(${ `type` }.$value))"
+                else s".DEFAULT(${ `type` }.$value)"
+              case default => default.toCode(attribute.constraint)
+            }
+            .getOrElse("")
         case _ => attribute.default.map(_.toCode(attribute.constraint)).getOrElse("")
     )
 
@@ -56,5 +59,5 @@ case class ColumnDefinition(
   def toCode(formatter: Naming): String =
     val `type` = dataType.scalaType match
       case ScalaType.Enum(types) => formatter.format(scalaType)
-      case _ => scalaType
+      case _                     => scalaType
     s"column[${ `type` }](\"$name\", ${ dataType.toCode(`type`) }" + default(formatter) + _attributes + ")"
