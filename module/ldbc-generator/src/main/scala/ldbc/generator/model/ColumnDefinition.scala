@@ -4,8 +4,6 @@
 
 package ldbc.generator.model
 
-import ldbc.generator.formatter.Naming
-
 case class Attributes(
   constraint:               Boolean,
   default:                  Option[Default],
@@ -25,23 +23,22 @@ case class ColumnDefinition(
   attributes: Option[Attributes]
 ):
 
-  val scalaType =
+  private val scalaType =
     val `type` = dataType.scalaType match
       case ScalaType.Enum(types) => name
       case _                     => dataType.scalaType.code
     if attributes.forall(_.constraint) then s"Option[${ `type` }]"
     else s"${ `type` }"
 
-  private def default(formatter: Naming) =
+  private val default =
     attributes.fold("")(attribute =>
       dataType.scalaType match
         case ScalaType.Enum(types) =>
           attribute.default
             .map {
               case Default.Value(value) =>
-                val `type` = formatter.format(name)
-                if attribute.constraint then s".DEFAULT(Some(${ `type` }.$value))"
-                else s".DEFAULT(${ `type` }.$value)"
+                if attribute.constraint then s".DEFAULT(Some($name.$value))"
+                else s".DEFAULT($name.$value)"
               case default => default.toCode(attribute.constraint)
             }
             .getOrElse("")
@@ -56,8 +53,9 @@ case class ColumnDefinition(
     if attributes.nonEmpty then ", " + attributes.mkString(", ") else ""
   )
 
-  def toCode(formatter: Naming): String =
-    val `type` = dataType.scalaType match
-      case ScalaType.Enum(types) => formatter.format(scalaType)
-      case _                     => scalaType
-    s"column[${ `type` }](\"$name\", ${ dataType.toCode(`type`) }" + default(formatter) + _attributes + ")"
+  def toCode: String =
+    dataType.scalaType match
+      case ScalaType.Enum(types) =>
+        s"column[$scalaType](\"$name\", ${ dataType.toCode(scalaType) }(using $name)" + default + _attributes + ")"
+      case _ =>
+        s"column[$scalaType](\"$name\", ${ dataType.toCode(scalaType) }" + default + _attributes + ")"

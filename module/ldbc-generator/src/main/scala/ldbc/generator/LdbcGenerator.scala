@@ -39,10 +39,7 @@ private[ldbc] object LdbcGenerator:
             statements.map(statement =>
               val className = classNameFormatter.format(statement.tableName)
               val properties = statement.columnDefinitions.map(column =>
-                val name = propertyNameFormatter.format(column.name)
-                if column.dataType.scalaType.isInstanceOf[ScalaType.Enum] then
-                  s"$name: $className.${ classNameFormatter.format(column.name) }"
-                else s"$name: ${ column.scalaType }"
+                propertyGenerator(className, column, propertyNameFormatter, classNameFormatter)
               )
 
               val objects =
@@ -60,6 +57,13 @@ private[ldbc] object LdbcGenerator:
 
               val packageName = if name.nonEmpty then s"ldbc.generated.$name" else "ldbc.generated"
 
+              val columns =
+                statement.columnDefinitions.map((column: ColumnDefinition) =>
+                  column.dataType.scalaType match
+                    case ScalaType.Enum(types) => column.copy(name = classNameFormatter.format(column.name))
+                    case _ => column
+                )
+
               val scalaSource =
                 s"""
                  |package $packageName
@@ -71,9 +75,10 @@ private[ldbc] object LdbcGenerator:
                  |)
                  |
                  |object $className:
-                 |  ${ objects.mkString("\n") }
+                 |
+                 |  ${ objects.mkString("\n  ") }
                  |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
-                 |    ${ statement.columnDefinitions.map(_.toCode(classNameFormatter)).mkString(",\n    ") }
+                 |    ${ columns.map(_.toCode).mkString(",\n    ") }
                  |  )
                  |  ${ keyDefinitions.mkString("\n  ") }
                  |""".stripMargin
@@ -93,14 +98,27 @@ private[ldbc] object LdbcGenerator:
           List.empty
     )
 
+  private def propertyGenerator(
+    className: String,
+    column: ColumnDefinition,
+    propertyNameFormatter: Naming,
+    classNameFormatter: Naming,
+  ): String =
+
+    val name = propertyNameFormatter.format(column.name)
+
+    (column.attributes.forall(_.constraint), column.dataType.scalaType) match
+      case (true, _: ScalaType.Enum) => s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
+      case (false, _: ScalaType.Enum) => s"$name: $className.${ classNameFormatter.format(column.name) }"
+      case (true, _) => s"$name: Option[${ column.dataType.scalaType.code }]"
+      case (false, _) => s"$name: ${ column.dataType.scalaType.code }"
+
   private def enumGenerator(column: ColumnDefinition, formatter: Naming): String =
     column.dataType.scalaType match
       case ScalaType.Enum(types) =>
         val enumName = formatter.format(column.name)
-        s"""
-           |  enum $enumName extends ldbc.core.model.Enum:
+        s"""enum $enumName extends ldbc.core.model.Enum:
            |    case ${ types.mkString(", ") }
            |  object $enumName extends ldbc.core.model.EnumDataType[$enumName]
-           |  given ldbc.core.model.EnumDataType[$enumName] = $enumName
            |""".stripMargin
       case _ => ""
