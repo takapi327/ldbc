@@ -20,6 +20,7 @@ enum ScalaType(val code: String):
   case LocalDateTime extends ScalaType("java.time.LocalDateTime")
   case LocalTime     extends ScalaType("java.time.LocalTime")
   case YEAR          extends ScalaType("java.time.Year")
+  case Enum(types: List[String]) extends ScalaType("Enum")
 
 trait DataType:
 
@@ -185,6 +186,13 @@ object DataType:
         case (Some(ch), None)     => s"$name[$typeParam]().CHARACTER_SET(\"$ch\")"
         case (None, Some(co))     => s"$name[$typeParam]().COLLATE(\"$co\")"
         case (None, None)         => s"$name[$typeParam]()"
+        
+  def ENUM(types: List[String]): DataType = new DataType:
+    override val name: String = "ENUM"
+    override val jdbcType: JdbcType = JdbcType.Char
+    override val scalaType: ScalaType = ScalaType.Enum(types)
+
+    override def toCode(typeParam: String): String = s"$name[$typeParam]"
 
   def BLOB(length: Option[Int]): DataType = new DataType:
     override val name:      String    = "BLOB"
