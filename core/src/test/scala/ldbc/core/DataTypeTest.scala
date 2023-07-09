@@ -10,6 +10,7 @@ import java.time.Year as JYear
 import org.specs2.mutable.Specification
 
 import ldbc.core.DataType.*
+import ldbc.core.model.EnumDataType
 
 object DataTypeTest extends Specification:
 
@@ -181,6 +182,19 @@ object DataTypeTest extends Specification:
       LONGTEXT[String]().queryString === "LONGTEXT NOT NULL" and
         LONGTEXT[Option[String]]().queryString === "LONGTEXT NULL" and
         LONGTEXT[Option[String]]().DEFAULT(None).queryString === "LONGTEXT NULL DEFAULT NULL"
+    }
+
+    "The query string generated from the Enum DataType model matches the specified one." in {
+      enum Status extends ldbc.core.model.Enum:
+        case Active, InActive
+      object Status extends EnumDataType[Status]
+
+      ENUM[Status](using Status).queryString === "ENUM('Active','InActive') NOT NULL" and
+        ENUM[Status](using Status)
+          .DEFAULT(Status.Active)
+          .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'" and
+        ENUM[Option[Status]](using Status).queryString === "ENUM('Active','InActive') NULL" and
+        ENUM[Option[Status]](using Status).DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
     }
 
     "The query string generated from the Date DataType model matches the specified one." in {

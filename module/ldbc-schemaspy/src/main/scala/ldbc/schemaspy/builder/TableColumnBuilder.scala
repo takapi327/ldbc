@@ -7,7 +7,7 @@ package ldbc.schemaspy.builder
 import org.schemaspy.model.TableColumn
 import org.schemaspy.model.Table as SchemaspyTable
 
-import ldbc.core.{ Column, DataType }
+import ldbc.core.Column
 
 /** Object to generate a TableColumn model for SchemaSpy.
   */
@@ -29,29 +29,7 @@ object TableColumnBuilder:
     column.setTypeName(_column.dataType.typeName)
     column.setType(_column.dataType.jdbcType.code)
     column.setNullable(_column.dataType.isOptional)
-    _column.dataType match
-      case v: DataType.IntegerType[?] => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Decimal[?]     => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.CFloat[?]      => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.CChar[?]       => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Varchar[?]     => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Binary[?]      => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Varbinary[?]   => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Tinyblob[?]    =>
-      case v: DataType.Blob[?]        =>
-      case v: DataType.Mediumblob[?]  =>
-      case v: DataType.LongBlob[?]    =>
-      case v: DataType.TinyText[?]    =>
-      case v: DataType.Text[?]        =>
-      case v: DataType.MediumText[?]  =>
-      case v: DataType.LongText[?]    =>
-      case v: DataType.Date[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.DateTime[?]    => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.TimeStamp[?]   => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Time[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case v: DataType.Year[?]        => v.default.map(_.value) foreach column.setDefaultValue
-      case unknown =>
-        throw new IllegalArgumentException(s"The $unknown in the ${ _column.label } column is not a DataType type.")
+    _column.dataType.default.map(_.value) foreach column.setDefaultValue
 
     _column.comment foreach column.setComments
     column.setId(index)

@@ -402,6 +402,18 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(longtextType, "LONGTEXT CHARACTER utf8mb4").successful)
   }
 
+  it should "ENUM data type parsing test succeeds." in {
+    assert(parseAll(enumType, "ENUM('Active', 'InActive')").successful)
+    assert(parseAll(enumType, "ENUM('Active')").successful)
+  }
+
+  it should "ENUM data type parsing test fails." in {
+    assert(!parseAll(enumType, "failed").successful)
+    assert(!parseAll(enumType, "ENUM").successful)
+    assert(!parseAll(enumType, "ENUM()").successful)
+    assert(!parseAll(enumType, "ENUM(Active)").successful)
+  }
+
   it should "DATE data type parsing test succeeds." in {
     assert(parseAll(dateType, "date").successful)
     assert(parseAll(dateType, "Date").successful)

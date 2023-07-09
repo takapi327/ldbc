@@ -10,6 +10,7 @@ import java.time.Year as JYear
 import scala.compiletime.{ error, erasedValue }
 
 import ldbc.core.DataType.*
+import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
 
 /** A set of methods for constructing DataType
   */
@@ -147,6 +148,8 @@ trait DataTypes:
   inline def MEDIUMTEXT[T <: String | Option[String]](): MediumText[T] = MediumText(isOptional[T])
 
   inline def LONGTEXT[T <: String | Option[String]](): LongText[T] = LongText(isOptional[T])
+
+  inline def ENUM[T <: EnumModel | Option[?]](using EnumDataType[?]): Enum[T] = Enum(isOptional[T])
 
   /** ===== List of Date Data Types ===== */
 

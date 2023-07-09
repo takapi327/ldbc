@@ -12,6 +12,7 @@ import scala.io.Codec
 
 import ldbc.generator.formatter.Naming
 import ldbc.generator.parser.Parser
+import ldbc.generator.model.*
 
 private[ldbc] object LdbcGenerator:
 
@@ -38,8 +39,14 @@ private[ldbc] object LdbcGenerator:
             statements.map(statement =>
               val className = classNameFormatter.format(statement.tableName)
               val properties = statement.columnDefinitions.map(column =>
-                s"${ propertyNameFormatter.format(column.name) }: ${ column.scalaType }"
+                val name = propertyNameFormatter.format(column.name)
+                if column.dataType.scalaType.isInstanceOf[ScalaType.Enum] then
+                  s"$name: $className.${ classNameFormatter.format(column.name) }"
+                else s"$name: ${ column.scalaType }"
               )
+
+              val objects =
+                statement.columnDefinitions.map(column => enumGenerator(column, classNameFormatter)).filter(_.nonEmpty)
 
               val outputFile = new File(sourceManaged, s"$className.scala")
 
@@ -64,9 +71,9 @@ private[ldbc] object LdbcGenerator:
                  |)
                  |
                  |object $className:
-                 |
+                 |  ${ objects.mkString("\n") }
                  |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
-                 |    ${ statement.columnDefinitions.map(_.toCode).mkString(",\n    ") }
+                 |    ${ statement.columnDefinitions.map(_.toCode(classNameFormatter)).mkString(",\n    ") }
                  |  )
                  |  ${ keyDefinitions.mkString("\n  ") }
                  |""".stripMargin
@@ -85,3 +92,15 @@ private[ldbc] object LdbcGenerator:
           println(s"Error: $errorMessage")
           List.empty
     )
+
+  private def enumGenerator(column: ColumnDefinition, formatter: Naming): String =
+    column.dataType.scalaType match
+      case ScalaType.Enum(types) =>
+        val enumName = formatter.format(column.name)
+        s"""
+           |  enum $enumName extends ldbc.core.model.Enum:
+           |    case ${ types.mkString(", ") }
+           |  object $enumName extends ldbc.core.model.EnumDataType[$enumName]
+           |  given ldbc.core.model.EnumDataType[$enumName] = $enumName
+           |""".stripMargin
+      case _ => ""
