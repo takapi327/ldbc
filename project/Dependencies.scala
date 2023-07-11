@@ -23,5 +23,5 @@ object Dependencies {
 
   val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15" % Test
 
-  val mockito = "org.mockito" % "mockito-inline" % "5.1.1" % Test
+  val mockito = "org.mockito" % "mockito-inline" % "5.2.0" % Test
 }
