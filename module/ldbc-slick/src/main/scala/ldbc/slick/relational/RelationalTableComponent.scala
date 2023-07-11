@@ -77,7 +77,8 @@ private[ldbc] trait RelationalTableComponent:
 
                   override def attributes: Seq[Attribute[Extract[column.type]]] = column.attributes
 
-                  override def typedType: TypedType[Extract[column.type]] = column.typedType.asInstanceOf[TypedType[Extract[column.type]]]
+                  override def typedType: TypedType[Extract[column.type]] =
+                    column.typedType.asInstanceOf[TypedType[Extract[column.type]]]
 
                   override def encodeRef(path: Node): Rep[Extract[column.type]] =
                     Rep.forNode(path)(using typedType)
@@ -86,15 +87,15 @@ private[ldbc] trait RelationalTableComponent:
                     Select(
                       (tag match
                         case r: RefTag => r.path
-                        case _ => tableNode
-                        ),
+                        case _         => tableNode
+                      ),
                       FieldSymbol(label)(Seq.empty, typedType)
                     ) :@ typedType
 
                   override def toString = (tag match
                     case r: RefTag => "(" + _name + " " + r.path + ")"
-                    case _ => _name
-                    ) + "." + label
+                    case _         => _name
+                  ) + "." + label
               )
               .toArray
           )
