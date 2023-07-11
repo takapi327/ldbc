@@ -35,6 +35,6 @@ trait TableSyntax:
           ) :@ tt
 
         override def toString = (table.tag match
-          case r: RefTag => "(" + table.name + " " + r.path + ")"
-          case _         => table.name
+          case r: RefTag => "(" + table._name + " " + r.path + ")"
+          case _         => table._name
         ) + "." + column.label

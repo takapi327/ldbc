@@ -9,7 +9,7 @@ import scala.language.dynamics
 import slick.ast.TableNode
 import slick.lifted.{ Rep, ProvenShape }
 
-import ldbc.core.{ Table, Key }
+import ldbc.core.Table
 import ldbc.slick.lifted.Tag
 
 trait SlickTable[P <: Product] extends Table[P], Rep[P]:

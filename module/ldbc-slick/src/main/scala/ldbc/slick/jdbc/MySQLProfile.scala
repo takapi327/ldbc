@@ -7,7 +7,6 @@ package ldbc.slick.jdbc
 import slick.jdbc.MySQLProfile as SlickMySQLProfile
 
 import ldbc.core.DataTypes
-import ldbc.core.syntax.DataTypeConversion
 
 import ldbc.slick.Alias
 import ldbc.slick.syntax.TableSyntax

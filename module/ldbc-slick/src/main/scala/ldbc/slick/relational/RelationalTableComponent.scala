@@ -12,12 +12,10 @@ import slick.ast.*
 import slick.lifted.*
 import slick.relational.RelationalProfile
 
-import ldbc.core.attribute.Attribute
+import ldbc.core.{ Column, Key, TABLE }
 import ldbc.core.interpreter.*
-import ldbc.core.{ Column, DataType, Key, Table }
 
 import ldbc.slick.lifted.{ BaseTag, RefTag, Tag }
-import ldbc.slick.syntax.TableSyntax
 import ldbc.slick.{ SlickTable, TypedColumn }
 
 private[ldbc] trait RelationalTableComponent:
@@ -32,8 +30,9 @@ private[ldbc] trait RelationalTableComponent:
 
     private case class Impl[P <: Product](
       tag:            Tag,
-      name:           String,
-      keyDefinitions: Seq[Key]
+      _name:          String,
+      keyDefinitions: Seq[Key],
+      comment:        Option[String]
     )(using
       mirror:   Mirror.ProductOf[P],
       classTag: ClassTag[P],
@@ -45,10 +44,10 @@ private[ldbc] trait RelationalTableComponent:
         tag.taggedAs(path).asInstanceOf[SlickTable[P]]
 
       private def tableIdentitySymbol: TableIdentitySymbol =
-        SimpleTableIdentitySymbol(self, None.getOrElse("_"), name)
+        SimpleTableIdentitySymbol(self, None.getOrElse("_"), _name)
 
       override lazy val tableNode =
-        TableNode(None, name, tableIdentitySymbol, tableIdentitySymbol)(this)
+        TableNode(None, _name, tableIdentitySymbol, tableIdentitySymbol)(this)
 
       override def allColumnShape: ProvenShape[P] =
         val tupleShape = new TupleShape[
@@ -66,36 +65,10 @@ private[ldbc] trait RelationalTableComponent:
         val repColumns: Tuple.Map[mirror.MirroredElemTypes, RepColumnType] = Tuple
           .fromArray(
             columns.productIterator
-              .map(v => {
+              .map(v =>
                 val column = v.asInstanceOf[TypedColumn[?]]
-                new TypedColumn[Extract[column.type]] with Rep[Extract[column.type]]:
-                  override def label: String = column.label
-
-                  override def dataType: DataType[Extract[column.type]] = column.dataType
-
-                  override def comment: Option[String] = column.comment
-
-                  override def attributes: Seq[Attribute[Extract[column.type]]] = column.attributes
-
-                  override def typedType = column.typedType
-
-                  override def encodeRef(path: Node): Rep[Extract[column.type]] =
-                    Rep.forNode(path)(using column.typedType)
-
-                  override def toNode =
-                    Select(
-                      (tag match
-                        case r: RefTag => r.path
-                        case _         => tableNode
-                      ),
-                      FieldSymbol(label)(Seq.empty, typedType)
-                    ) :@ typedType
-
-                  override def toString = (tag match
-                    case r: RefTag => "(" + name + " " + r.path + ")"
-                    case _         => name
-                  ) + "." + label
-              })
+                column.toRep(column, _name, tag, tableNode)
+              )
               .toArray
           )
           .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, RepColumnType]]
@@ -128,8 +101,10 @@ private[ldbc] trait RelationalTableComponent:
       override def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
         columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
 
-      override def keys(func: ldbc.core.Table[P] => Seq[Key]): ldbc.core.Table[P] =
-        this.copy(keyDefinitions = this.keyDefinitions ++ func(this))(columns)
+      override def keySet(func: TABLE[P] => Key): TABLE[P] =
+        this.copy(keyDefinitions = this.keyDefinitions :+ func(this))(columns)
+
+      override def comment(str: String): TABLE[P] = this.copy(comment = Some(str))(columns)
 
     def applyDynamic[P <: Product](using
       mirror:    Mirror.ProductOf[P],
@@ -161,4 +136,4 @@ private[ldbc] trait RelationalTableComponent:
       _name:    String,
       columns:  Tuple.Map[mirror.MirroredElemTypes, TypedColumn]
     ): SlickTable[P] =
-      Impl[P](tableTag, _name, Seq.empty)(columns)
+      Impl[P](tableTag, _name, Seq.empty, None)(columns)

@@ -7,7 +7,7 @@ package ldbc.slick
 import slick.ast.TypedType
 
 import ldbc.core.DataType
-import ldbc.core.attribute.{ Attribute, AutoInc, Key }
+import ldbc.core.attribute.Attribute
 
 private[ldbc] trait Alias:
 
