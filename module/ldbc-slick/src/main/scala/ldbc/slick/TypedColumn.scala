@@ -5,49 +5,13 @@
 package ldbc.slick
 
 import slick.ast.*
-import slick.lifted.{ Rep, RefTag }
 
 import ldbc.core.{ Column, DataType }
 import ldbc.core.attribute.Attribute
 
-import ldbc.slick.lifted.Tag
-
 trait TypedColumn[T] extends Column[T]:
 
   def typedType: TypedType[T]
-
-  def toRep(
-    column:    TypedColumn[T],
-    name:      String,
-    tag:       Tag,
-    tableNode: TableNode
-  ): TypedColumn[T] with Rep[T] = new TypedColumn[T] with Rep[T]:
-    override def label: String = column.label
-
-    override def dataType: DataType[T] = column.dataType
-
-    override def attributes: Seq[Attribute[T]] = column.attributes
-
-    override def comment: Option[String] = column.comment
-
-    override def typedType = column.typedType
-
-    override def encodeRef(path: Node): Rep[T] =
-      Rep.forNode(path)(using typedType)
-
-    override def toNode =
-      Select(
-        (tag match
-          case r: RefTag => r.path
-          case _         => tableNode
-        ),
-        FieldSymbol(label)(Seq.empty, typedType)
-      ) :@ typedType
-
-    override def toString = (tag match
-      case r: RefTag => "(" + name + " " + r.path + ")"
-      case _         => name
-    ) + "." + label
 
 object TypedColumn:
 

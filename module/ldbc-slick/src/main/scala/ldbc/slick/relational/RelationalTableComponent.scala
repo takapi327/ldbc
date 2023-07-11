@@ -12,7 +12,8 @@ import slick.ast.*
 import slick.lifted.*
 import slick.relational.RelationalProfile
 
-import ldbc.core.{ Column, Key, TABLE }
+import ldbc.core.{ Column, Key, TABLE, DataType }
+import ldbc.core.attribute.Attribute
 import ldbc.core.interpreter.*
 
 import ldbc.slick.lifted.{ BaseTag, RefTag, Tag }
@@ -67,7 +68,33 @@ private[ldbc] trait RelationalTableComponent:
             columns.productIterator
               .map(v =>
                 val column = v.asInstanceOf[TypedColumn[?]]
-                column.toRep(column, _name, tag, tableNode)
+                new TypedColumn[Extract[column.type]] with Rep[Extract[column.type]]:
+                  override def label: String = column.label
+
+                  override def dataType: DataType[Extract[column.type]] = column.dataType
+
+                  override def comment: Option[String] = column.comment
+
+                  override def attributes: Seq[Attribute[Extract[column.type]]] = column.attributes
+
+                  override def typedType: TypedType[Extract[column.type]] = column.typedType.asInstanceOf[TypedType[Extract[column.type]]]
+
+                  override def encodeRef(path: Node): Rep[Extract[column.type]] =
+                    Rep.forNode(path)(using typedType)
+
+                  override def toNode =
+                    Select(
+                      (tag match
+                        case r: RefTag => r.path
+                        case _ => tableNode
+                        ),
+                      FieldSymbol(label)(Seq.empty, typedType)
+                    ) :@ typedType
+
+                  override def toString = (tag match
+                    case r: RefTag => "(" + _name + " " + r.path + ")"
+                    case _ => _name
+                    ) + "." + label
               )
               .toArray
           )
