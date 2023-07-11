@@ -4,31 +4,32 @@
 
 package ldbc.core
 
-/** A model for representing character sets and collations to be set in column definitions for the string data types
-  * CHAR, VARCHAR, TEXT, ENUM, SET, and any synonym.
+/** A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,
+  * TEXT, ENUM, SET, and any synonym.
+  *
+  * @param name
+  *   Character name
   */
-trait Character:
+case class Character(name: String):
 
-  def queryString: String
+  /** Variable that contains the SQL string of Character
+    *
+    * @return
+    *   SQL query string
+    */
+  val queryString: String = s"CHARACTER SET $name"
 
-object Character:
+/** A model for representing collations to be set in column definitions for the string data types CHAR, VARCHAR, TEXT,
+  * ENUM, SET, and any synonym.
+  *
+  * @param name
+  *   Collate name
+  */
+case class Collate(name: String):
 
-  case class Big5(collate: Option[Big5.Collate]) extends Character:
-
-    override def queryString: String = collate.fold("CHARACTER SET Big5")(v => s"CHARACTER SET Big5 COLLATE $v")
-
-  object Big5:
-
-    enum Collate:
-      case big5_chinese_ci
-      case big5_bin
-
-  case class Dec8(collate: Option[Dec8.Collate]) extends Character:
-
-    override def queryString: String = collate.fold("CHARACTER SET dec8")(v => s"CHARACTER SET dec8 COLLATE $v")
-
-  object Dec8:
-
-    enum Collate:
-      case dec8_swedish_ci
-      case dec8_bin
+  /** Variable that contains the SQL string of Collate
+    *
+    * @return
+    *   SQL query string
+    */
+  val queryString: String = s"COLLATE $name"

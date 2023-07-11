@@ -24,6 +24,22 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     ),
     scalas = List(scala3),
     javas  = List(JavaSpec.temurin(java11)),
+  ),
+  WorkflowJob(
+    "sbtScripted",
+    "sbt scripted",
+    githubWorkflowJobSetup.value.toList ::: List(
+      WorkflowStep.Run(
+        List("sbt +publishLocal"),
+        name = Some("sbt publishLocal"),
+      ),
+      WorkflowStep.Run(
+        List("sbt scripted"),
+        name = Some("sbt scripted"),
+      )
+    ),
+    scalas = List(scala3),
+    javas = List(JavaSpec.temurin(java11)),
   )
 )
 
@@ -43,10 +59,30 @@ lazy val LdbcDslIOProject = LepusSbtProject("Ldbc-Dsl-IO", "module/ldbc-dsl-io")
   ) ++ specs2)
   .dependsOn(LdbcSqlProject)
 
+lazy val LdbcSchemaSpyProject = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
+  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+  .settings(libraryDependencies += schemaspy)
+  .dependsOn(LdbcCoreProject)
+
+lazy val LdbcGeneratorProject = LepusSbtProject("Ldbc-Generator", "module/ldbc-generator")
+  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+  .settings(libraryDependencies ++= Seq(parserCombinators, scalaTest) ++ specs2)
+  .dependsOn(LdbcCoreProject)
+
 lazy val LdbcSlickProject = LepusSbtProject("Ldbc-Slick", "module/ldbc-slick")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(libraryDependencies += slick)
   .dependsOn(LdbcCoreProject)
+
+lazy val LdbcPluginProject = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
+  .settings((Compile / sourceGenerators) += Def.task {
+    Generator.version(
+      version      = version.value,
+      scalaVersion = (LdbcCoreProject / scalaVersion).value,
+      sbtVersion   = sbtVersion.value,
+      dir          = (Compile / sourceManaged).value
+    )
+  }.taskValue)
 
 lazy val coreProjects: Seq[ProjectReference] = Seq(
   LdbcCoreProject
@@ -55,11 +91,17 @@ lazy val coreProjects: Seq[ProjectReference] = Seq(
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
   LdbcSqlProject,
   LdbcDslIOProject,
+  LdbcSchemaSpyProject,
+  LdbcGeneratorProject,
   LdbcSlickProject
+)
+
+lazy val pluginProjects: Seq[ProjectReference] = Seq(
+  LdbcPluginProject
 )
 
 lazy val Ldbc = Project("Ldbc", file("."))
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(publish / skip := true)
   .settings(commonSettings: _*)
-  .aggregate((coreProjects ++ moduleProjects): _*)
+  .aggregate((coreProjects ++ moduleProjects ++ pluginProjects): _*)

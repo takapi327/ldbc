@@ -5,14 +5,12 @@
 package ldbc.sql
 
 import java.io.{ InputStream, Reader }
-import java.sql.{ Date, SQLWarning, Time, Timestamp }
+import java.sql.{ Date, Time, Timestamp }
 import java.util.Date as UtilDate
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
 import cats.{ Functor, Monad }
 import cats.implicits.*
-
-import ldbc.core.Column
 
 /** Trait to get the DataType that matches the Scala type information from the ResultSet.
   *
@@ -31,6 +29,22 @@ object ResultSetReader:
     new ResultSetReader[F, T]:
       override def read(resultSet: ResultSet[F], columnLabel: String): F[T] =
         func(resultSet)(columnLabel)
+
+  /** A method to convert the specified Scala type to an arbitrary type so that it can be handled by ResultSetReader.
+    *
+    * @param f
+    *   Function to convert from type A to B.
+    * @param reader
+    *   ResultSetReader to retrieve the DataType matching the type A information from the ResultSet.
+    * @tparam F
+    *   The effect type
+    * @tparam A
+    *   The Scala type to be converted from.
+    * @tparam B
+    *   The Scala type to be converted to.
+    */
+  def mapping[F[_]: Functor, A, B](f: A => B)(using reader: ResultSetReader[F, A]): ResultSetReader[F, B] =
+    reader.map(f(_))
 
   given [F[_]: Functor]: Functor[[T] =>> ResultSetReader[F, T]] with
     override def map[A, B](fa: ResultSetReader[F, A])(f: A => B): ResultSetReader[F, B] =
@@ -52,6 +66,9 @@ object ResultSetReader:
   given [F[_]]: ResultSetReader[F, Object]      = ResultSetReader(_.getObject)
   given [F[_]]: ResultSetReader[F, Reader]      = ResultSetReader(_.getCharacterStream)
   given [F[_]]: ResultSetReader[F, BigDecimal]  = ResultSetReader(_.getBigDecimal)
+
+  given [F[_]: Functor](using reader: ResultSetReader[F, String]): ResultSetReader[F, BigInt] =
+    reader.map(BigInt(_))
 
   given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, Instant] =
     reader.map(_.toInstant)

@@ -10,225 +10,275 @@ import java.time.Year as JYear
 import org.specs2.mutable.Specification
 
 import ldbc.core.DataType.*
+import ldbc.core.model.EnumDataType
 
 object DataTypeTest extends Specification:
 
   "DataType Test" should {
     "The query string generated from the Bit DataType model matches the specified one." in {
-      Bit[Byte](1, None).queryString === "BIT(1) NOT NULL" and
-        Bit[Byte](64, None).DEFAULT("byte".getBytes.head).queryString === "BIT(64) NOT NULL DEFAULT '98'" and
-        BitOpt[Option[Short]](1, None).queryString === "BIT(1) NULL" and
-        BitOpt[Option[Short]](64, None).DEFAULT(None).queryString === "BIT(64) NULL DEFAULT NULL" and
-        BitOpt[Option[Short]](64, None).DEFAULT_NULL.queryString === "BIT(64) NULL DEFAULT NULL"
+      BIT[Byte](1).queryString === "BIT(1) NOT NULL" and
+        BIT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "BIT(64) NOT NULL DEFAULT '98'" and
+        BIT[Option[Short]](1).queryString === "BIT(1) NULL" and
+        BIT[Option[Short]](64).DEFAULT(None).queryString === "BIT(64) NULL DEFAULT NULL"
     }
 
     "The query string generated from the Tinyint DataType model matches the specified one." in {
-      Tinyint[Byte](1, None).queryString === "TINYINT(1) NOT NULL" and
-        Tinyint[Byte](64, None).DEFAULT("byte".getBytes.head).queryString === "TINYINT(64) NOT NULL DEFAULT '98'" and
-        TinyintOpt[Option[Byte]](1, None).queryString === "TINYINT(1) NULL" and
-        TinyintOpt[Option[Byte]](64, None).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL" and
-        TinyintOpt[Option[Byte]](64, None)
+      TINYINT[Byte](1).queryString === "TINYINT(1) NOT NULL" and
+        TINYINT[Byte](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NOT NULL" and
+        TINYINT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "TINYINT(64) NOT NULL DEFAULT '98'" and
+        TINYINT[Byte](64)
+          .DEFAULT("byte".getBytes.head)
+          .UNSIGNED
+          .queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT '98'" and
+        TINYINT[Option[Byte]](1).queryString === "TINYINT(1) NULL" and
+        TINYINT[Option[Byte]](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NULL" and
+        TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL" and
+        TINYINT[Option[Byte]](64)
           .DEFAULT("byte".getBytes.headOption)
           .queryString === "TINYINT(64) NULL DEFAULT '98'" and
-        TinyintOpt[Option[Byte]](64, None).DEFAULT_NULL.queryString === "TINYINT(64) NULL DEFAULT NULL"
+        TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL" and
+        TINYINT[Option[Byte]](64).DEFAULT(None).UNSIGNED.queryString === "TINYINT(64) UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Smallint DataType model matches the specified one." in {
-      Smallint[Short](0, None).queryString === "SMALLINT(0) NOT NULL" and
-        Smallint[Short](255, None).DEFAULT(1).queryString === "SMALLINT(255) NOT NULL DEFAULT '1'" and
-        SmallintOpt[Option[Short]](0, None).queryString === "SMALLINT(0) NULL" and
-        SmallintOpt[Option[Short]](255, None).DEFAULT(None).queryString === "SMALLINT(255) NULL DEFAULT NULL" and
-        SmallintOpt[Option[Short]](255, None).DEFAULT(Some(2)).queryString === "SMALLINT(255) NULL DEFAULT '2'" and
-        SmallintOpt[Option[Short]](255, None).DEFAULT_NULL.queryString === "SMALLINT(255) NULL DEFAULT NULL"
+      SMALLINT[Short](0).queryString === "SMALLINT(0) NOT NULL" and
+        SMALLINT[Short](0).UNSIGNED.queryString === "SMALLINT(0) UNSIGNED NOT NULL" and
+        SMALLINT[Short](255).DEFAULT(1).queryString === "SMALLINT(255) NOT NULL DEFAULT '1'" and
+        SMALLINT[Short](255).DEFAULT(1).UNSIGNED.queryString === "SMALLINT(255) UNSIGNED NOT NULL DEFAULT '1'" and
+        SMALLINT[Option[Short]](0).queryString === "SMALLINT(0) NULL" and
+        SMALLINT[Option[Short]](0).UNSIGNED.queryString === "SMALLINT(0) UNSIGNED NULL" and
+        SMALLINT[Option[Short]](255).DEFAULT(None).queryString === "SMALLINT(255) NULL DEFAULT NULL" and
+        SMALLINT[Option[Short]](255).DEFAULT(Some(2)).queryString === "SMALLINT(255) NULL DEFAULT '2'" and
+        SMALLINT[Option[Short]](255).DEFAULT(None).UNSIGNED.queryString === "SMALLINT(255) UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Mediumint DataType model matches the specified one." in {
-      Mediumint[Int](0, None).queryString === "MEDIUMINT(0) NOT NULL" and
-        Mediumint[Int](255, None).DEFAULT(1).queryString === "MEDIUMINT(255) NOT NULL DEFAULT '1'" and
-        MediumintOpt[Option[Int]](0, None).queryString === "MEDIUMINT(0) NULL" and
-        MediumintOpt[Option[Int]](255, None).DEFAULT(None).queryString === "MEDIUMINT(255) NULL DEFAULT NULL" and
-        MediumintOpt[Option[Int]](255, None).DEFAULT(Some(2)).queryString === "MEDIUMINT(255) NULL DEFAULT '2'" and
-        MediumintOpt[Option[Int]](255, None).DEFAULT_NULL.queryString === "MEDIUMINT(255) NULL DEFAULT NULL"
+      MEDIUMINT[Int](0).queryString === "MEDIUMINT(0) NOT NULL" and
+        MEDIUMINT[Int](0).UNSIGNED.queryString === "MEDIUMINT(0) UNSIGNED NOT NULL" and
+        MEDIUMINT[Int](255).DEFAULT(1).queryString === "MEDIUMINT(255) NOT NULL DEFAULT '1'" and
+        MEDIUMINT[Int](255).DEFAULT(1).UNSIGNED.queryString === "MEDIUMINT(255) UNSIGNED NOT NULL DEFAULT '1'" and
+        MEDIUMINT[Option[Int]](0).queryString === "MEDIUMINT(0) NULL" and
+        MEDIUMINT[Option[Int]](0).UNSIGNED.queryString === "MEDIUMINT(0) UNSIGNED NULL" and
+        MEDIUMINT[Option[Int]](255).DEFAULT(None).queryString === "MEDIUMINT(255) NULL DEFAULT NULL" and
+        MEDIUMINT[Option[Int]](255).DEFAULT(Some(2)).queryString === "MEDIUMINT(255) NULL DEFAULT '2'" and
+        MEDIUMINT[Option[Int]](255).DEFAULT(None).UNSIGNED.queryString === "MEDIUMINT(255) UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Integer DataType model matches the specified one." in {
-      Integer[Int](0, None).queryString === "INT(0) NOT NULL" and
-        Integer[Int](255, None).DEFAULT(1).queryString === "INT(255) NOT NULL DEFAULT '1'" and
-        IntegerOpt[Option[Int]](0, None).queryString === "INT(0) NULL" and
-        IntegerOpt[Option[Int]](255, None).DEFAULT(None).queryString === "INT(255) NULL DEFAULT NULL" and
-        IntegerOpt[Option[Int]](255, None).DEFAULT(Some(2)).queryString === "INT(255) NULL DEFAULT '2'" and
-        IntegerOpt[Option[Int]](255, None).DEFAULT_NULL.queryString === "INT(255) NULL DEFAULT NULL"
+      INT[Int](0).queryString === "INT(0) NOT NULL" and
+        INT[Int](0).UNSIGNED.queryString === "INT(0) UNSIGNED NOT NULL" and
+        INT[Int](255).DEFAULT(1).queryString === "INT(255) NOT NULL DEFAULT '1'" and
+        INT[Int](255).DEFAULT(1).UNSIGNED.queryString === "INT(255) UNSIGNED NOT NULL DEFAULT '1'" and
+        INT[Option[Int]](0).queryString === "INT(0) NULL" and
+        INT[Option[Int]](0).UNSIGNED.queryString === "INT(0) UNSIGNED NULL" and
+        INT[Option[Int]](255).DEFAULT(None).queryString === "INT(255) NULL DEFAULT NULL" and
+        INT[Option[Int]](255).DEFAULT(Some(2)).queryString === "INT(255) NULL DEFAULT '2'" and
+        INT[Option[Int]](255).DEFAULT(None).UNSIGNED.queryString === "INT(255) UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Bigint DataType model matches the specified one." in {
-      Bigint[Long](0, None).queryString === "BIGINT(0) NOT NULL" and
-        Bigint[Long](255, None).DEFAULT(1).queryString === "BIGINT(255) NOT NULL DEFAULT '1'" and
-        BigintOpt[Option[Long]](0, None).queryString === "BIGINT(0) NULL" and
-        BigintOpt[Option[Long]](255, None).DEFAULT(None).queryString === "BIGINT(255) NULL DEFAULT NULL" and
-        BigintOpt[Option[Long]](255, None).DEFAULT(Some(2)).queryString === "BIGINT(255) NULL DEFAULT '2'" and
-        BigintOpt[Option[Long]](255, None).DEFAULT_NULL.queryString === "BIGINT(255) NULL DEFAULT NULL"
+      BIGINT[Long](0).queryString === "BIGINT(0) NOT NULL" and
+        BIGINT[Long](0).UNSIGNED.queryString === "BIGINT(0) UNSIGNED NOT NULL" and
+        BIGINT[Long](255).DEFAULT(1).queryString === "BIGINT(255) NOT NULL DEFAULT '1'" and
+        BIGINT[Long](255).DEFAULT(1).UNSIGNED.queryString === "BIGINT(255) UNSIGNED NOT NULL DEFAULT '1'" and
+        BIGINT[Option[Long]](0).queryString === "BIGINT(0) NULL" and
+        BIGINT[Option[Long]](0).UNSIGNED.queryString === "BIGINT(0) UNSIGNED NULL" and
+        BIGINT[Option[Long]](255).DEFAULT(None).queryString === "BIGINT(255) NULL DEFAULT NULL" and
+        BIGINT[Option[Long]](255).DEFAULT(Some(2)).queryString === "BIGINT(255) NULL DEFAULT '2'" and
+        BIGINT[Option[Long]](255).DEFAULT(None).UNSIGNED.queryString === "BIGINT(255) UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Decimal DataType model matches the specified one." in {
-      Decimal[BigDecimal](10, 7, None).queryString === "DECIMAL(10, 7) NOT NULL" and
-        Decimal[BigDecimal](10, 7, None)
+      DECIMAL[BigDecimal](10, 7).queryString === "DECIMAL(10, 7) NOT NULL" and
+        DECIMAL[BigDecimal](10, 7)
           .DEFAULT(BigDecimal(10, 7))
           .queryString === "DECIMAL(10, 7) NOT NULL DEFAULT '0.0000010'" and
-        DecimalOpt[Option[BigDecimal]](10, 7, None).queryString === "DECIMAL(10, 7) NULL" and
-        DecimalOpt[Option[BigDecimal]](10, 7, None).DEFAULT(None).queryString === "DECIMAL(10, 7) NULL DEFAULT NULL" and
-        DecimalOpt[Option[BigDecimal]](10, 7, None)
+        DECIMAL[Option[BigDecimal]](10, 7).queryString === "DECIMAL(10, 7) NULL" and
+        DECIMAL[Option[BigDecimal]](10, 7).DEFAULT(None).queryString === "DECIMAL(10, 7) NULL DEFAULT NULL" and
+        DECIMAL[Option[BigDecimal]](10, 7)
           .DEFAULT(Some(BigDecimal(10, 7)))
-          .queryString === "DECIMAL(10, 7) NULL DEFAULT '0.0000010'" and
-        DecimalOpt[Option[BigDecimal]](10, 7, None).DEFAULT_NULL.queryString === "DECIMAL(10, 7) NULL DEFAULT NULL"
+          .queryString === "DECIMAL(10, 7) NULL DEFAULT '0.0000010'"
     }
 
     "The query string generated from the Float DataType model matches the specified one." in {
-      CFloat[Float](0, None).queryString === "FLOAT(0) NOT NULL" and
-        CFloat[Float](0, None).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT '1.2'" and
-        FloatOpt[Option[Float]](0, None).queryString === "FLOAT(0) NULL" and
-        FloatOpt[Option[Float]](0, None).DEFAULT(None).queryString === "FLOAT(0) NULL DEFAULT NULL" and
-        FloatOpt[Option[Float]](0, None).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT '1.2'" and
-        FloatOpt[Option[Float]](0, None).DEFAULT_NULL.queryString === "FLOAT(0) NULL DEFAULT NULL"
+      FLOAT[Float](0).queryString === "FLOAT(0) NOT NULL" and
+        FLOAT[Float](0).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT '1.2'" and
+        FLOAT[Option[Float]](0).queryString === "FLOAT(0) NULL" and
+        FLOAT[Option[Float]](0).DEFAULT(None).queryString === "FLOAT(0) NULL DEFAULT NULL" and
+        FLOAT[Option[Float]](0).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT '1.2'"
     }
 
     "The query string generated from the Char DataType model matches the specified one." in {
-      CChar[String](0, None, None).queryString === "CHAR(0) NOT NULL" and
-        CChar[String](0, None, None).DEFAULT("test").queryString === "CHAR(0) NOT NULL DEFAULT 'test'" and
-        CharOpt[Option[String]](0, None, None).queryString === "CHAR(0) NULL" and
-        CharOpt[Option[String]](0, None, None).DEFAULT(None).queryString === "CHAR(0) NULL DEFAULT NULL" and
-        CharOpt[Option[String]](0, None, None).DEFAULT(Some("test")).queryString === "CHAR(0) NULL DEFAULT 'test'" and
-        CharOpt[Option[String]](0, None, None).DEFAULT_NULL.queryString === "CHAR(0) NULL DEFAULT NULL"
+      CHAR[String](0).queryString === "CHAR(0) NOT NULL" and
+        CHAR[String](0).DEFAULT("test").queryString === "CHAR(0) NOT NULL DEFAULT 'test'" and
+        CHAR[Option[String]](0).queryString === "CHAR(0) NULL" and
+        CHAR[Option[String]](0).DEFAULT(None).queryString === "CHAR(0) NULL DEFAULT NULL" and
+        CHAR[Option[String]](0).DEFAULT(Some("test")).queryString === "CHAR(0) NULL DEFAULT 'test'"
     }
 
     "The query string generated from the Varchar DataType model matches the specified one." in {
-      Varchar[String](0, None, None).queryString === "VARCHAR(0) NOT NULL" and
-        Varchar[String](0, None, None).DEFAULT("test").queryString === "VARCHAR(0) NOT NULL DEFAULT 'test'" and
-        VarcharOpt[Option[String]](0, None, None).queryString === "VARCHAR(0) NULL" and
-        VarcharOpt[Option[String]](0, None, None).DEFAULT(None).queryString === "VARCHAR(0) NULL DEFAULT NULL" and
-        VarcharOpt[Option[String]](0, None, None)
+      VARCHAR[String](0).queryString === "VARCHAR(0) NOT NULL" and
+        VARCHAR[String](0).DEFAULT("test").queryString === "VARCHAR(0) NOT NULL DEFAULT 'test'" and
+        VARCHAR[Option[String]](0).queryString === "VARCHAR(0) NULL" and
+        VARCHAR[Option[String]](0).DEFAULT(None).queryString === "VARCHAR(0) NULL DEFAULT NULL" and
+        VARCHAR[Option[String]](0)
           .DEFAULT(Some("test"))
-          .queryString === "VARCHAR(0) NULL DEFAULT 'test'" and
-        VarcharOpt[Option[String]](0, None, None).DEFAULT_NULL.queryString === "VARCHAR(0) NULL DEFAULT NULL"
+          .queryString === "VARCHAR(0) NULL DEFAULT 'test'"
     }
 
     "The query string generated from the Binary DataType model matches the specified one." in {
-      Binary[Array[Byte]](0, None).queryString === "BINARY(0) NOT NULL" and
-        BinaryOpt[Option[Array[Byte]]](0, None).queryString === "BINARY(0) NULL"
+      BINARY[Array[Byte]](0).queryString === "BINARY(0) NOT NULL" and
+        BINARY[Option[Array[Byte]]](0).queryString === "BINARY(0) NULL"
     }
 
     "The query string generated from the Varbinary DataType model matches the specified one." in {
-      Varbinary[Array[Byte]](0, None).queryString === "VARBINARY(0) NOT NULL" and
-        VarbinaryOpt[Option[Array[Byte]]](0, None).queryString === "VARBINARY(0) NULL"
+      VARBINARY[Array[Byte]](0).queryString === "VARBINARY(0) NOT NULL" and
+        VARBINARY[Option[Array[Byte]]](0).queryString === "VARBINARY(0) NULL"
     }
 
     "The query string generated from the Tinyblob DataType model matches the specified one." in {
-      Tinyblob[Array[Byte]](None).queryString === "TINYBLOB NOT NULL" and
-        TinyblobOpt[Option[Array[Byte]]](None).queryString === "TINYBLOB NULL"
+      TINYBLOB[Array[Byte]]().queryString === "TINYBLOB NOT NULL" and
+        TINYBLOB[Option[Array[Byte]]]().queryString === "TINYBLOB NULL" and
+        TINYBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "TINYBLOB NULL DEFAULT NULL"
     }
 
     "The query string generated from the Blob DataType model matches the specified one." in {
-      Blob[Array[Byte]](0, None).queryString === "BLOB(0) NOT NULL" and
-        BlobOpt[Option[Array[Byte]]](0, None).queryString === "BLOB(0) NULL"
+      BLOB[Array[Byte]](0).queryString === "BLOB(0) NOT NULL" and
+        BLOB[Option[Array[Byte]]](0).queryString === "BLOB(0) NULL" and
+        BLOB[Option[Array[Byte]]](0).DEFAULT(None).queryString === "BLOB(0) NULL DEFAULT NULL"
     }
 
     "The query string generated from the Mediumblob DataType model matches the specified one." in {
-      Mediumblob[Array[Byte]](None).queryString === "MEDIUMBLOB NOT NULL" and
-        MediumblobOpt[Option[Array[Byte]]](None).queryString === "MEDIUMBLOB NULL"
+      MEDIUMBLOB[Array[Byte]]().queryString === "MEDIUMBLOB NOT NULL" and
+        MEDIUMBLOB[Option[Array[Byte]]]().queryString === "MEDIUMBLOB NULL" and
+        MEDIUMBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "MEDIUMBLOB NULL DEFAULT NULL"
     }
 
     "The query string generated from the LongBlob DataType model matches the specified one." in {
-      LongBlob[Array[Byte]](None).queryString === "LONGBLOB NOT NULL" and
-        LongBlobOpt[Option[Array[Byte]]](None).queryString === "LONGBLOB NULL"
+      LONGBLOB[Array[Byte]]().queryString === "LONGBLOB NOT NULL" and
+        LONGBLOB[Option[Array[Byte]]]().queryString === "LONGBLOB NULL" and
+        LONGBLOB[Option[Array[Byte]]]().DEFAULT(None).queryString === "LONGBLOB NULL DEFAULT NULL"
     }
 
     "The query string generated from the TinyText DataType model matches the specified one." in {
-      TinyText[String](None).queryString === "TINYTEXT NOT NULL" and
-        TinyTextOpt[Option[String]](None).queryString === "TINYTEXT NULL"
+      TINYTEXT[String]().queryString === "TINYTEXT NOT NULL" and
+        TINYTEXT[Option[String]]().queryString === "TINYTEXT NULL" and
+        TINYTEXT[Option[String]]().DEFAULT(None).queryString === "TINYTEXT NULL DEFAULT NULL"
     }
 
     "The query string generated from the Text DataType model matches the specified one." in {
-      Text[String](None).queryString === "TEXT NOT NULL" and
-        TextOpt[Option[String]](None).queryString === "TEXT NULL"
+      TEXT[String]().queryString === "TEXT NOT NULL" and
+        TEXT[Option[String]]().queryString === "TEXT NULL" and
+        TEXT[Option[String]]().DEFAULT(None).queryString === "TEXT NULL DEFAULT NULL"
     }
 
     "The query string generated from the MediumText DataType model matches the specified one." in {
-      MediumText[String](None).queryString === "MEDIUMTEXT NOT NULL" and
-        MediumTextOpt[Option[String]](None).queryString === "MEDIUMTEXT NULL"
+      MEDIUMTEXT[String]().queryString === "MEDIUMTEXT NOT NULL" and
+        MEDIUMTEXT[Option[String]]().queryString === "MEDIUMTEXT NULL" and
+        MEDIUMTEXT[Option[String]]().DEFAULT(None).queryString === "MEDIUMTEXT NULL DEFAULT NULL"
     }
 
     "The query string generated from the LongText DataType model matches the specified one." in {
-      LongText[String](None).queryString === "LONGTEXT NOT NULL" and
-        LongTextOpt[Option[String]](None).queryString === "LONGTEXT NULL"
+      LONGTEXT[String]().queryString === "LONGTEXT NOT NULL" and
+        LONGTEXT[Option[String]]().queryString === "LONGTEXT NULL" and
+        LONGTEXT[Option[String]]().DEFAULT(None).queryString === "LONGTEXT NULL DEFAULT NULL"
+    }
+
+    "The query string generated from the Enum DataType model matches the specified one." in {
+      enum Status extends ldbc.core.model.Enum:
+        case Active, InActive
+      object Status extends EnumDataType[Status]
+
+      ENUM[Status](using Status).queryString === "ENUM('Active','InActive') NOT NULL" and
+        ENUM[Status](using Status)
+          .DEFAULT(Status.Active)
+          .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'" and
+        ENUM[Option[Status]](using Status).queryString === "ENUM('Active','InActive') NULL" and
+        ENUM[Option[Status]](using Status).DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
     }
 
     "The query string generated from the Date DataType model matches the specified one." in {
-      Date[LocalDate](None).queryString === "DATE NOT NULL" and
-        Date[LocalDate](None)
+      DATE[LocalDate].queryString === "DATE NOT NULL" and
+        DATE[LocalDate]
           .DEFAULT(LocalDate.of(2023, 2, 10))
           .queryString === "DATE NOT NULL DEFAULT '2023-02-10'" and
-        DateOpt[Option[LocalDate]](None).queryString === "DATE NULL" and
-        DateOpt[Option[LocalDate]](None).DEFAULT(None).queryString === "DATE NULL DEFAULT NULL" and
-        DateOpt[Option[LocalDate]](None)
+        DATE[Option[LocalDate]].queryString === "DATE NULL" and
+        DATE[Option[LocalDate]].DEFAULT(None).queryString === "DATE NULL DEFAULT NULL" and
+        DATE[Option[LocalDate]]
           .DEFAULT(Some(LocalDate.of(2023, 2, 10)))
-          .queryString === "DATE NULL DEFAULT '2023-02-10'" and
-        DateOpt[Option[LocalDate]](None).DEFAULT_NULL.queryString === "DATE NULL DEFAULT NULL"
+          .queryString === "DATE NULL DEFAULT '2023-02-10'"
     }
 
     "The query string generated from the DateTime DataType model matches the specified one." in {
-      DateTime[LocalDateTime](None).queryString === "DATETIME NOT NULL" and
-        DateTime[LocalDateTime](None)
+      DATETIME[LocalDateTime].queryString === "DATETIME NOT NULL" and
+        DATETIME[LocalDateTime](6).queryString === "DATETIME(6) NOT NULL" and
+        DATETIME[LocalDateTime]
           .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
           .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'" and
-        DateTimeOpt[Option[LocalDateTime]](None).queryString === "DATETIME NULL" and
-        DateTimeOpt[Option[LocalDateTime]](None).DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL" and
-        DateTimeOpt[Option[LocalDateTime]](None)
+        DATETIME[Option[LocalDateTime]].queryString === "DATETIME NULL" and
+        DATETIME[Option[LocalDateTime]](6).queryString === "DATETIME(6) NULL" and
+        DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL" and
+        DATETIME[Option[LocalDateTime]]
           .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
           .queryString === "DATETIME NULL DEFAULT '2023-02-10T10:00'" and
-        DateTimeOpt[Option[LocalDateTime]](None).DEFAULT_NULL.queryString === "DATETIME NULL DEFAULT NULL" and
-        DateTimeOpt[Option[LocalDateTime]](None)
+        DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL" and
+        DATETIME[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP()
           .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP" and
-        DateTimeOpt[Option[LocalDateTime]](None)
+        DATETIME[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP()
+          .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6)" and
+        DATETIME[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP(true)
-          .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+          .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" and
+        DATETIME[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP(true)
+          .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
     }
 
     "The query string generated from the TimeStamp DataType model matches the specified one." in {
-      TimeStamp[LocalDateTime](None).queryString === "TIMESTAMP NOT NULL" and
-        TimeStamp[LocalDateTime](None)
+      TIMESTAMP[LocalDateTime].queryString === "TIMESTAMP NOT NULL" and
+        TIMESTAMP[LocalDateTime](6).queryString === "TIMESTAMP(6) NOT NULL" and
+        TIMESTAMP[LocalDateTime]
           .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
           .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'" and
-        TimeStampOpt[Option[LocalDateTime]](None).queryString === "TIMESTAMP NULL" and
-        TimeStampOpt[Option[LocalDateTime]](None).DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL" and
-        TimeStampOpt[Option[LocalDateTime]](None)
+        TIMESTAMP[Option[LocalDateTime]].queryString === "TIMESTAMP NULL" and
+        TIMESTAMP[Option[LocalDateTime]](5).queryString === "TIMESTAMP(5) NULL" and
+        TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL" and
+        TIMESTAMP[Option[LocalDateTime]]
           .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
           .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10T10:00'" and
-        TimeStampOpt[Option[LocalDateTime]](None).DEFAULT_NULL.queryString === "TIMESTAMP NULL DEFAULT NULL" and
-        TimeStampOpt[Option[LocalDateTime]](None)
+        TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL" and
+        TIMESTAMP[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP()
           .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP" and
-        TimeStampOpt[Option[LocalDateTime]](None)
+        TIMESTAMP[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP()
+          .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6)" and
+        TIMESTAMP[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP(true)
-          .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+          .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" and
+        TIMESTAMP[Option[LocalDateTime]](6)
+          .DEFAULT_CURRENT_TIMESTAMP(true)
+          .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
     }
 
     "The query string generated from the Time DataType model matches the specified one." in {
-      Time[LocalTime](None).queryString === "TIME NOT NULL" and
-        Time[LocalTime](None).DEFAULT(LocalTime.of(10, 0, 10)).queryString === "TIME NOT NULL DEFAULT '10:00:10'" and
-        TimeOpt[Option[LocalTime]](None).queryString === "TIME NULL" and
-        TimeOpt[Option[LocalTime]](None).DEFAULT(None).queryString === "TIME NULL DEFAULT NULL" and
-        TimeOpt[Option[LocalTime]](None)
+      TIME[LocalTime].queryString === "TIME NOT NULL" and
+        TIME[LocalTime].DEFAULT(LocalTime.of(10, 0, 10)).queryString === "TIME NOT NULL DEFAULT '10:00:10'" and
+        TIME[Option[LocalTime]].queryString === "TIME NULL" and
+        TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL" and
+        TIME[Option[LocalTime]]
           .DEFAULT(Some(LocalTime.of(10, 0, 0)))
           .queryString === "TIME NULL DEFAULT '10:00'" and
-        TimeOpt[Option[LocalTime]](None).DEFAULT_NULL.queryString === "TIME NULL DEFAULT NULL"
+        TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL"
     }
 
     "The query string generated from the Year DataType model matches the specified one." in {
-      Year[JYear](None).queryString === "YEAR NOT NULL" and
-        Year[JYear](None).DEFAULT(JYear.of(2023)).queryString === "YEAR NOT NULL DEFAULT '2023'" and
-        YearOpt[Option[JYear]](None).queryString === "YEAR NULL" and
-        YearOpt[Option[JYear]](None).DEFAULT(None).queryString === "YEAR NULL DEFAULT NULL" and
-        YearOpt[Option[JYear]](None).DEFAULT(Some(JYear.of(2023))).queryString === "YEAR NULL DEFAULT '2023'" and
-        YearOpt[Option[JYear]](None).DEFAULT_NULL.queryString === "YEAR NULL DEFAULT NULL"
+      YEAR[JYear].queryString === "YEAR NOT NULL" and
+        YEAR[JYear].DEFAULT(JYear.of(2023)).queryString === "YEAR NOT NULL DEFAULT '2023'" and
+        YEAR[Option[JYear]].queryString === "YEAR NULL" and
+        YEAR[Option[JYear]].DEFAULT(None).queryString === "YEAR NULL DEFAULT NULL" and
+        YEAR[Option[JYear]].DEFAULT(Some(JYear.of(2023))).queryString === "YEAR NULL DEFAULT '2023'"
     }
   }

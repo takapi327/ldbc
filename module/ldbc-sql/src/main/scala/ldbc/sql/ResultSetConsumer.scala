@@ -4,7 +4,7 @@
 
 package ldbc.sql
 
-import cats.{ Monad, Applicative, MonadError, Traverse, Alternative }
+import cats.{ Monad, MonadError, Traverse, Alternative }
 import cats.data.Kleisli
 import cats.implicits.*
 

@@ -9,7 +9,11 @@ import sbt._
 object Dependencies {
 
   val cats = "org.typelevel" %% "cats-core" % "2.9.0"
-  val catsEffect = "org.typelevel" %% "cats-effect" % "3.4.6"
+  val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.0"
+
+  val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.2"
+
+  val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 
   // TODO: Scala3 compatible version needs to be officially released
   val slick = "com.typesafe.slick" %% "slick" % "3.5.0-pre.71.7c7e79ee.dirty"
@@ -22,5 +26,5 @@ object Dependencies {
 
   val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15" % Test
 
-  val mockito = "org.mockito" % "mockito-inline" % "5.1.1" % Test
+  val mockito = "org.mockito" % "mockito-inline" % "5.2.0" % Test
 }

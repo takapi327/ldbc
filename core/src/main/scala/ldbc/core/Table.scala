@@ -17,10 +17,13 @@ import ldbc.core.interpreter.*
 private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Table name */
-  private[ldbc] def name: String
+  private[ldbc] def _name: String
 
   /** Table Key definitions */
   private[ldbc] def keyDefinitions: Seq[Key]
+
+  /** Table comment */
+  private[ldbc] def comment: Option[String]
 
   /** Methods for statically accessing column information held by a Table.
     *
@@ -44,14 +47,17 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     */
   def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]
 
-  def keys(func: Table[P] => Seq[Key]): Table[P]
+  def keySet(func: Table[P] => Key): Table[P]
+
+  def comment(str: String): Table[P]
 
 object Table extends Dynamic:
 
   private case class Impl[P <: Product, T <: Tuple](
-    name:           String,
+    _name:          String,
     columns:        Tuple.Map[T, Column],
-    keyDefinitions: Seq[Key]
+    keyDefinitions: Seq[Key],
+    comment:        Option[String]
   ) extends Table[P]:
 
     override def selectDynamic[Tag <: Singleton](
@@ -67,7 +73,9 @@ object Table extends Dynamic:
     override def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
       columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
 
-    override def keys(func: Table[P] => Seq[Key]): Table[P] = this.copy(keyDefinitions = func(this))
+    override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
+
+    override def comment(str: String): Table[P] = this.copy(comment = Some(str))
 
   /** Methods for static Table construction using Dynamic.
     *
@@ -106,4 +114,4 @@ object Table extends Dynamic:
   )(
     _name:   String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
-  ): Table[P] = Impl[P, mirror.MirroredElemTypes](_name, columns, Seq.empty)
+  ): Table[P] = Impl[P, mirror.MirroredElemTypes](_name, columns, Seq.empty, None)
