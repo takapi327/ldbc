@@ -14,6 +14,7 @@ trait Dependencies {
   val ldbcGenerator = component("ldbc-generator")
   val ldbcSchemaSPY = component("ldbc-schemaspy")
   val ldbcSql       = component("ldbc-sql")
+  val ldbcSlick     = component("ldbc-slick")
 }
 
 object Dependencies extends Dependencies
