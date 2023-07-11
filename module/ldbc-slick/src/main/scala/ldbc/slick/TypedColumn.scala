@@ -17,11 +17,11 @@ trait TypedColumn[T] extends Column[T]:
   def typedType: TypedType[T]
 
   def toRep(
-             column: TypedColumn[T],
-             name: String,
-             tag: Tag,
-             tableNode: TableNode
-           ): TypedColumn[T] with Rep[T] = new TypedColumn[T] with Rep[T]:
+    column:    TypedColumn[T],
+    name:      String,
+    tag:       Tag,
+    tableNode: TableNode
+  ): TypedColumn[T] with Rep[T] = new TypedColumn[T] with Rep[T]:
     override def label: String = column.label
 
     override def dataType: DataType[T] = column.dataType
@@ -39,15 +39,15 @@ trait TypedColumn[T] extends Column[T]:
       Select(
         (tag match
           case r: RefTag => r.path
-          case _ => tableNode
-          ),
+          case _         => tableNode
+        ),
         FieldSymbol(label)(Seq.empty, typedType)
       ) :@ typedType
 
     override def toString = (tag match
       case r: RefTag => "(" + name + " " + r.path + ")"
-      case _ => name
-      ) + "." + label
+      case _         => name
+    ) + "." + label
 
 object TypedColumn:
 
