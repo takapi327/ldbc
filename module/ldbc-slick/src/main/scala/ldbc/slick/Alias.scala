@@ -6,10 +6,10 @@ package ldbc.slick
 
 import slick.ast.TypedType
 
-import ldbc.core.DataType
+import ldbc.core.{ DataType, Alias as CoreAilias }
 import ldbc.core.attribute.Attribute
 
-private[ldbc] trait Alias:
+private[ldbc] trait Alias extends CoreAilias:
 
   def column[T](
     label:    String,
