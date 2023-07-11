@@ -15,8 +15,7 @@ object Dependencies {
 
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 
-  // TODO: Scala3 compatible version needs to be officially released
-  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-pre.71.7c7e79ee.dirty"
+  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-M4"
 
   val specs2Version = "5.2.0"
   val specs2: Seq[ModuleID] = Seq(
