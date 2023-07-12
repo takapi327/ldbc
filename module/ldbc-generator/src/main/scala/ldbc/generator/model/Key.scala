@@ -82,7 +82,10 @@ object Key:
           case Some(o) =>
             s"PRIMARY_KEY(${ v.toCode }, cats.data.NonEmptyList.of(${ columns.mkString(",") }), ${ o.toCode })"
       )
-      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
+      constraint.fold(key)(_.name match
+        case Some(name) => s"CONSTRAINT(\"$name\", $key)"
+        case None => s"CONSTRAINT($key)"
+      )
 
   case class Unique(
     constraint:  Option[Constraint],
@@ -97,7 +100,10 @@ object Key:
         s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },${ indexType
             .fold("None")(v => s"Some(${ v.toCode })") },cats.data.NonEmptyList.of(${ columns
             .mkString(",") }),${ indexOption.fold("None")(v => s"Some(${ v.toCode })") })"
-      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
+      constraint.fold(key)(_.name match
+        case Some(name) => s"CONSTRAINT(\"$name\", $key)"
+        case None => s"CONSTRAINT($key)"
+      )
 
   case class Foreign(
     constraint: Option[Constraint],
@@ -114,7 +120,10 @@ object Key:
            |  ${ reference.toCode(classNameFormatter, propertyFormatter) }
            |)
            |""".stripMargin
-      constraint.fold(key)(v => s"CONSTRAINT(\"${ v.name.getOrElse(keyParts.mkString("_")) }\", $key)")
+      constraint.fold(key)(_.name match
+        case Some(name) => s"CONSTRAINT($name, $key)"
+        case None => s"CONSTRAINT($key)"
+      )
 
   case class Reference(tableName: String, keyParts: List[String], on: Option[List[On]]):
     def toCode(classNameFormatter: Naming, propertyFormatter: Naming): String =

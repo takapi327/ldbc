@@ -214,7 +214,7 @@ private[ldbc] case class ForeignKey(
   *   Types of keys for which constraints can be set
   */
 private[ldbc] case class Constraint(
-  symbol: String,
+  symbol: Option[String],
   key:    PrimaryKey | UniqueKey | ForeignKey
 ) extends Key:
 
@@ -225,4 +225,5 @@ private[ldbc] case class Constraint(
     case u: UniqueKey  => u.queryString
     case f: ForeignKey => f.queryString
 
-  def queryString: String = s"$label `$symbol` $keyQueryString"
+  def queryString: String =
+    symbol.fold(s"$label $keyQueryString")(str => s"$label `$str` $keyQueryString")
