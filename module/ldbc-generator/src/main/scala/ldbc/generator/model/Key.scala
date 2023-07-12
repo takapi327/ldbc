@@ -84,7 +84,7 @@ object Key:
       )
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
-        case None => s"CONSTRAINT($key)"
+        case None       => s"CONSTRAINT($key)"
       )
 
   case class Unique(
@@ -102,7 +102,7 @@ object Key:
             .mkString(",") }),${ indexOption.fold("None")(v => s"Some(${ v.toCode })") })"
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
-        case None => s"CONSTRAINT($key)"
+        case None       => s"CONSTRAINT($key)"
       )
 
   case class Foreign(
@@ -122,7 +122,7 @@ object Key:
            |""".stripMargin
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT($name, $key)"
-        case None => s"CONSTRAINT($key)"
+        case None       => s"CONSTRAINT($key)"
       )
 
   case class Reference(tableName: String, keyParts: List[String], on: Option[List[On]]):
