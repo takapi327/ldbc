@@ -121,7 +121,7 @@ object Key:
            |)
            |""".stripMargin
       constraint.fold(key)(_.name match
-        case Some(name) => s"CONSTRAINT($name, $key)"
+        case Some(name) => s"CONSTRAINT(\"$name\", $key)"
         case None       => s"CONSTRAINT($key)"
       )
 
