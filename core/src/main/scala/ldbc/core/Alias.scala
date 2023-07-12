@@ -106,10 +106,12 @@ private[ldbc] trait Alias:
     indexOption: Option[Index.IndexOption]
   ): IndexKey = IndexKey(indexName, indexType, keyPart, indexOption)
 
+  def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey): Constraint = Constraint(None, key)
+
   def CONSTRAINT(
     symbol: String,
     key:    PrimaryKey | UniqueKey | ForeignKey
-  ): Constraint = Constraint(symbol, key)
+  ): Constraint = Constraint(Some(symbol), key)
 
   def FOREIGN_KEY(
     colName:   Column[?],
