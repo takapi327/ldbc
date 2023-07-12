@@ -45,7 +45,13 @@ private[ldbc] object LdbcGenerator:
               val objects =
                 statement.columnDefinitions.map(column => enumGenerator(column, classNameFormatter)).filter(_.nonEmpty)
 
-              val outputFile = new File(sourceManaged, s"$className.scala")
+              val directory = sourceManaged.toPath.resolve(name)
+              val output = if !directory.toFile.exists() then
+                directory.toFile.getParentFile.mkdirs()
+                Files.createDirectory(directory)
+              else directory
+
+              val outputFile = new File(output.toFile, s"$className.scala")
 
               if !outputFile.exists() then
                 outputFile.getParentFile.mkdirs()
