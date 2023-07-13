@@ -36,7 +36,7 @@ case class Reference(
     s"$label `${ table._name }` (${ keyPart.map(column => s"`${ column.label }`").mkString(", ") })"
       + onDelete.fold("")(v => s" ON DELETE ${ v.label }")
       + onUpdate.fold("")(v => s" ON UPDATE ${ v.label }")
-    
+
   def onDelete(option: Reference.ReferenceOption): Reference =
     this.copy(onDelete = Some(option))
 

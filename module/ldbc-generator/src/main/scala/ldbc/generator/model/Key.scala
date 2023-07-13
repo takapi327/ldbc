@@ -65,7 +65,8 @@ object Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       s"INDEX_KEY(${ indexName.fold("None")(str => s"Some(\"$str\")") }, ${ indexType
-          .fold("None")(v => s"Some(${ v.toCode })") }, ${ indexOption.fold("None")(option => s"Some(${ option.toCode })") }, ${columns.mkString(",")})"
+          .fold("None")(v => s"Some(${ v.toCode })") }, ${ indexOption
+          .fold("None")(option => s"Some(${ option.toCode })") }, ${ columns.mkString(",") })"
 
   case class Primary(
     constraint:  Option[Constraint],
@@ -97,7 +98,8 @@ object Key:
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key =
         s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },${ indexType
-            .fold("None")(v => s"Some(${ v.toCode })") },${ indexOption.fold("None")(v => s"Some(${ v.toCode })") },${ columns.mkString(",") })"
+            .fold("None")(v => s"Some(${ v.toCode })") },${ indexOption
+            .fold("None")(v => s"Some(${ v.toCode })") },${ columns.mkString(",") })"
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
         case None       => s"CONSTRAINT($key)"
@@ -112,7 +114,8 @@ object Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key =
-        s"FOREIGN_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },List(${ columns.mkString(",") }),${ reference.toCode(classNameFormatter, propertyFormatter) })"
+        s"FOREIGN_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },List(${ columns
+            .mkString(",") }),${ reference.toCode(classNameFormatter, propertyFormatter) })"
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
         case None       => s"CONSTRAINT($key)"

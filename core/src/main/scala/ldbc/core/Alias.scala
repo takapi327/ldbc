@@ -76,7 +76,7 @@ private[ldbc] trait Alias:
   def PRIMARY_KEY(
     indexType:   Index.Type,
     indexOption: Index.IndexOption,
-    keyPart:     Column[?]*,
+    keyPart:     Column[?]*
   ): PrimaryKey with Index =
     require(
       keyPart.nonEmpty,
@@ -121,7 +121,7 @@ private[ldbc] trait Alias:
     indexName:   String,
     indexType:   Index.Type,
     indexOption: Index.IndexOption,
-    keyPart:     Column[?]*,
+    keyPart:     Column[?]*
   ): UniqueKey with Index = UniqueKey(Some(indexName), Some(indexType), keyPart.toList, Some(indexOption))
 
   def UNIQUE_KEY(
@@ -142,7 +142,7 @@ private[ldbc] trait Alias:
     indexName:   Option[String],
     indexType:   Option[Index.Type],
     indexOption: Option[Index.IndexOption],
-    keyPart:     Column[?]*,
+    keyPart:     Column[?]*
   ): IndexKey =
     require(
       keyPart.nonEmpty,

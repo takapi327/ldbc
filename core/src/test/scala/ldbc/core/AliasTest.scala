@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.core
 
@@ -16,7 +16,12 @@ object AliasTest extends Specification:
     val p2 = PRIMARY_KEY(column("p1", VARCHAR(255)))
     val p3 = PRIMARY_KEY(column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
     val p4 = PRIMARY_KEY(Index.Type.BTREE, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p5 = PRIMARY_KEY(Index.Type.BTREE, Index.IndexOption(Some(1), None, None, None, None, None), column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p5 = PRIMARY_KEY(
+      Index.Type.BTREE,
+      Index.IndexOption(Some(1), None, None, None, None, None),
+      column("p1", VARCHAR(255)),
+      column("p2", VARCHAR(255))
+    )
 
     p1.queryString == "PRIMARY KEY" and
       p2.queryString == "PRIMARY KEY (`p1`)" and
@@ -28,7 +33,9 @@ object AliasTest extends Specification:
   "PRIMARY_KEY call failed" in {
     PRIMARY_KEY() must throwAn[IllegalArgumentException] and
       (PRIMARY_KEY(Index.Type.BTREE) must throwAn[IllegalArgumentException]) and
-      (PRIMARY_KEY(Index.Type.BTREE, Index.IndexOption(Some(1), None, None, None, None, None)) must throwAn[IllegalArgumentException])
+      (PRIMARY_KEY(Index.Type.BTREE, Index.IndexOption(Some(1), None, None, None, None, None)) must throwAn[
+        IllegalArgumentException
+      ])
   }
 
   "UNIQUE_KEY call succeeds" in {
@@ -37,7 +44,13 @@ object AliasTest extends Specification:
     val p3 = UNIQUE_KEY(column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
     val p4 = UNIQUE_KEY("index", column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
     val p5 = UNIQUE_KEY("index", Index.Type.BTREE, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p6 = UNIQUE_KEY("index", Index.Type.BTREE, Index.IndexOption(Some(1), None, None, None, None, None), column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p6 = UNIQUE_KEY(
+      "index",
+      Index.Type.BTREE,
+      Index.IndexOption(Some(1), None, None, None, None, None),
+      column("p1", VARCHAR(255)),
+      column("p2", VARCHAR(255))
+    )
     val p7 = UNIQUE_KEY(None, None, None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
 
     p1.queryString == "UNIQUE KEY" and
@@ -60,8 +73,15 @@ object AliasTest extends Specification:
     val p2 = INDEX_KEY(column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
     val p3 = INDEX_KEY(None, None, None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
     val p4 = INDEX_KEY(Some("index"), None, None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p5 = INDEX_KEY(Some("index"), Some(Index.Type.BTREE), None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p6 = INDEX_KEY(Some("index"), Some(Index.Type.BTREE), Some(Index.IndexOption(Some(1), None, None, None, None, None)), column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p5 =
+      INDEX_KEY(Some("index"), Some(Index.Type.BTREE), None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p6 = INDEX_KEY(
+      Some("index"),
+      Some(Index.Type.BTREE),
+      Some(Index.IndexOption(Some(1), None, None, None, None, None)),
+      column("p1", VARCHAR(255)),
+      column("p2", VARCHAR(255))
+    )
 
     p1.queryString == "INDEX (`p1`)" and
       p2.queryString == "INDEX (`p1`, `p2`)" and
@@ -76,12 +96,20 @@ object AliasTest extends Specification:
       (INDEX_KEY(None, None, None) must throwAn[IllegalArgumentException]) and
       (INDEX_KEY(Some("index"), None, None) must throwAn[IllegalArgumentException]) and
       (INDEX_KEY(Some("index"), Some(Index.Type.BTREE), None) must throwAn[IllegalArgumentException]) and
-      (INDEX_KEY(Some("index"), Some(Index.Type.BTREE), Some(Index.IndexOption(Some(1), None, None, None, None, None))) must throwAn[IllegalArgumentException])
+      (INDEX_KEY(
+        Some("index"),
+        Some(Index.Type.BTREE),
+        Some(Index.IndexOption(Some(1), None, None, None, None, None))
+      ) must throwAn[IllegalArgumentException])
   }
 
   "FOREIGN_KEY call succeeds" in {
     val p1 = FOREIGN_KEY(column("test_id", BIGINT), REFERENCE(table, table.id))
-    val p2 = FOREIGN_KEY(None, List(column("test_id", BIGINT), column("test_status", INT)), REFERENCE(table, table.id, table.status))
+    val p2 = FOREIGN_KEY(
+      None,
+      List(column("test_id", BIGINT), column("test_status", INT)),
+      REFERENCE(table, table.id, table.status)
+    )
 
     p1.queryString == "FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)" and
       p2.queryString == "FOREIGN KEY (`test_id`, `test_status`) REFERENCES `test` (`id`, `status`)"
