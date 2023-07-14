@@ -12,8 +12,6 @@ import java.sql.DatabaseMetaData.{
   importedKeySetDefault
 }
 
-import cats.data.NonEmptyList
-
 /** A model for setting reference options used for foreign key constraints, etc.
   *
   * @param table
@@ -27,7 +25,7 @@ import cats.data.NonEmptyList
   */
 case class Reference(
   table:    Table[?],
-  keyPart:  NonEmptyList[Column[?]],
+  keyPart:  List[Column[?]],
   onDelete: Option[Reference.ReferenceOption],
   onUpdate: Option[Reference.ReferenceOption]
 ):
@@ -35,9 +33,15 @@ case class Reference(
   def label: String = "REFERENCES"
 
   def queryString: String =
-    s"$label `${ table._name }` (${ keyPart.toList.map(column => s"`${ column.label }`").mkString(", ") })"
+    s"$label `${ table._name }` (${ keyPart.map(column => s"`${ column.label }`").mkString(", ") })"
       + onDelete.fold("")(v => s" ON DELETE ${ v.label }")
       + onUpdate.fold("")(v => s" ON UPDATE ${ v.label }")
+
+  def onDelete(option: Reference.ReferenceOption): Reference =
+    this.copy(onDelete = Some(option))
+
+  def onUpdate(option: Reference.ReferenceOption): Reference =
+    this.copy(onUpdate = Some(option))
 
 object Reference:
 
@@ -47,10 +51,3 @@ object Reference:
     case SET_NULL    extends ReferenceOption("SET NULL", importedKeySetNull)
     case NO_ACTION   extends ReferenceOption("NO ACTION", importedKeyNoAction)
     case SET_DEFAULT extends ReferenceOption("SET DEFAULT", importedKeySetDefault)
-
-  def apply(table: Table[?])(columns: Column[?]*): Reference =
-    require(
-      NonEmptyList.fromList(columns.toList).nonEmpty,
-      "For Reference settings, at least one COLUMN must always be specified."
-    )
-    Reference(table, NonEmptyList.fromListUnsafe(columns.toList), None, None)

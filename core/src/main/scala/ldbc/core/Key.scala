@@ -4,8 +4,6 @@
 
 package ldbc.core
 
-import cats.data.NonEmptyList
-
 /** Key to be set for the table
   */
 private[ldbc] trait Key:
@@ -28,7 +26,7 @@ private[ldbc] trait Index extends Key:
   def indexType: Option[Index.Type]
 
   /** List of columns for which the Index key is set */
-  def keyPart: NonEmptyList[Column[?]]
+  def keyPart: List[Column[?]]
 
   /** Additional indexing options */
   def indexOption: Option[Index.IndexOption]
@@ -87,7 +85,7 @@ object Index:
 private[ldbc] case class IndexKey(
   indexName:   Option[String],
   indexType:   Option[Index.Type],
-  keyPart:     NonEmptyList[Column[?]],
+  keyPart:     List[Column[?]],
   indexOption: Option[Index.IndexOption]
 ) extends Index:
 
@@ -96,7 +94,7 @@ private[ldbc] case class IndexKey(
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+      + s" (${ keyPart.map(column => s"`${ column.label }`").mkString(", ") })"
       + indexType.fold("")(index => s" USING $index")
       + indexOption.fold("")(option => s"${ option.queryString }")
 
@@ -111,7 +109,7 @@ private[ldbc] case class IndexKey(
   */
 private[ldbc] case class Fulltext(
   indexName:   Option[String],
-  keyPart:     NonEmptyList[Column[?]],
+  keyPart:     List[Column[?]],
   indexOption: Option[Index.IndexOption]
 ) extends Key:
 
@@ -120,7 +118,7 @@ private[ldbc] case class Fulltext(
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+      + s" (${ keyPart.map(column => s"`${ column.label }`").mkString(", ") })"
       + indexOption.fold("")(option => s"${ option.queryString }")
 
 /** Trait for representing SQL primary key information. */
@@ -133,19 +131,19 @@ private[ldbc] trait PrimaryKey:
 object PrimaryKey:
   def apply(
     _indexType:   Option[Index.Type],
-    _keyPart:     NonEmptyList[Column[?]],
+    _keyPart:     List[Column[?]],
     _indexOption: Option[Index.IndexOption]
   ): PrimaryKey with Index = new PrimaryKey with Index:
 
     override def indexType: Option[Index.Type] = _indexType
 
-    override def keyPart: NonEmptyList[Column[_]] = _keyPart
+    override def keyPart: List[Column[_]] = _keyPart
 
     override def indexOption: Option[Index.IndexOption] = _indexOption
 
     override def queryString: String =
       label
-        + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+        + s" (${ keyPart.map(column => s"`${ column.label }`").mkString(", ") })"
         + indexType.fold("")(index => s" USING $index")
         + indexOption.fold("")(option => s"${ option.queryString }")
 
@@ -164,7 +162,7 @@ object UniqueKey:
   def apply(
     _indexName:   Option[String],
     _indexType:   Option[Index.Type],
-    _keyPart:     NonEmptyList[Column[?]],
+    _keyPart:     List[Column[?]],
     _indexOption: Option[Index.IndexOption]
   ): UniqueKey with Index = new UniqueKey with Index:
 
@@ -172,14 +170,14 @@ object UniqueKey:
 
     override def indexType: Option[Index.Type] = _indexType
 
-    override def keyPart: NonEmptyList[Column[_]] = _keyPart
+    override def keyPart: List[Column[_]] = _keyPart
 
     override def indexOption: Option[Index.IndexOption] = _indexOption
 
     override def queryString: String =
       label
         + indexName.fold("")(str => s" `$str`")
-        + s" (${ keyPart.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+        + s" (${ keyPart.map(column => s"`${ column.label }`").mkString(", ") })"
         + indexType.fold("")(index => s" USING $index")
         + indexOption.fold("")(option => s"${ option.queryString }")
 
@@ -194,7 +192,7 @@ object UniqueKey:
   */
 private[ldbc] case class ForeignKey(
   indexName: Option[String],
-  colName:   NonEmptyList[Column[?]],
+  colName:   List[Column[?]],
   reference: Reference
 ) extends Key:
 
@@ -203,7 +201,7 @@ private[ldbc] case class ForeignKey(
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${ colName.map(column => s"`${ column.label }`").toList.mkString(", ") })"
+      + s" (${ colName.map(column => s"`${ column.label }`").mkString(", ") })"
       + s" ${ reference.queryString }"
 
 /** A model for setting constraints on keys.
