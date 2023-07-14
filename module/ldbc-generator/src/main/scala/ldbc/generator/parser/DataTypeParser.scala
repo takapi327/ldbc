@@ -557,12 +557,17 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def yearType: Parser[DataType] =
     customError(
-      caseSensitivity("year") ~> opt("(" ~> "4" ~> ")") ^^ (_ => DataType.YEAR()),
+      caseSensitivity("year") ~> opt("(" ~> "4" <~ ")") ^^ {
+        case Some("4") => DataType.YEAR(Some(4))
+        case _         => DataType.YEAR(None)
+      },
       """
         |===============================================================================
         |Failed to parse year data type.
         |The year Data type must be defined as follows
         |※ year strings are case-insensitive.
+        |
+        |※ As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |

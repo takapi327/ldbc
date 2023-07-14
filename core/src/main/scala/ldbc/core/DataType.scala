@@ -136,6 +136,8 @@ object DataType:
     *
     * @param length
     *   Maximum display width of integer data type. The length of the BIT must be in the range 1 to 64.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
     * @tparam T
@@ -169,8 +171,12 @@ object DataType:
     *
     * @param length
     *   Maximum display width of integer data type. The length of the TINYINT must be in the range 0 to 255.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param isUnSigned
     *   Flag to set data type to unsigned
+    * @param isZerofill
+    *   Flag to set data type to zerofill
     * @param default
     *   SQL Default values
     * @tparam T
@@ -225,8 +231,12 @@ object DataType:
     *
     * @param length
     *   Maximum display width of integer data type. The length of the SMALLINT must be in the range 0 to 255.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param isUnSigned
     *   Flag to set data type to unsigned
+    * @param isZerofill
+    *   Flag to set data type to zerofill
     * @param default
     *   SQL Default values
     * @tparam T
@@ -281,8 +291,12 @@ object DataType:
     *
     * @param length
     *   Maximum display width of integer data type. The length of the MEDIUMINT must be in the range 0 to 255.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param isUnSigned
     *   Flag to set data type to unsigned
+    * @param isZerofill
+    *   Flag to set data type to zerofill
     * @param default
     *   SQL Default values
     * @tparam T
@@ -337,8 +351,12 @@ object DataType:
     *
     * @param length
     *   Maximum display width of integer data type. The length of the INT must be in the range 0 to 255.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param isUnSigned
     *   Flag to set data type to unsigned
+    * @param isZerofill
+    *   Flag to set data type to zerofill
     * @param default
     *   SQL Default values
     * @tparam T
@@ -393,8 +411,12 @@ object DataType:
     *
     * @param length
     *   Maximum display width of integer data type. The length of the BIGINT must be in the range 0 to 255.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param isUnSigned
     *   Flag to set data type to unsigned
+    * @param isZerofill
+    *   Flag to set data type to zerofill
     * @param default
     *   SQL Default values
     * @tparam T
@@ -451,6 +473,12 @@ object DataType:
     *   The value of accuracy for DECIMAL must be an integer.
     * @param scale
     *   The DECIMAL scale value must be an integer.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
+    * @param isZerofill
+    *   Flag to set data type to zerofill
     * @param default
     *   SQL Default values
     * @tparam T
@@ -506,6 +534,12 @@ object DataType:
     *
     * @param accuracy
     *   The length of the FLOAT must be in the range 0 to 24.
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param isUnSigned
+    *   Flag to set data type to unsigned
+    * @param isZerofill
+    *   Flag to set data type to zerofill
     * @param default
     *   SQL Default values
     * @tparam T
@@ -562,10 +596,14 @@ object DataType:
     *
     * @param length
     *   Column character length
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
     * @param character
-    *   Character Set and Collation
+    *   Character Set
+    * @param collate
+    *   Collation
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -627,8 +665,14 @@ object DataType:
     *
     * @param length
     *   Column character length
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
+    * @param character
+    *   Character Set
+    * @param collate
+    *   Collation
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -690,6 +734,14 @@ object DataType:
     *
     * @param length
     *   Column character length
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param default
+    *   SQL Default values
+    * @param character
+    *   Character Set
+    * @param collate
+    *   Collation
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -751,6 +803,14 @@ object DataType:
     *
     * @param length
     *   Column character length
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param default
+    *   SQL Default values
+    * @param character
+    *   Character Set
+    * @param collate
+    *   Collation
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -810,6 +870,10 @@ object DataType:
 
   /** Model for representing the Tinyblob data type, which is the string data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -838,6 +902,10 @@ object DataType:
     *
     * @param length
     *   Column character length
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -865,6 +933,10 @@ object DataType:
 
   /** Model for representing the Mediumblob data type, which is the string data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -891,6 +963,10 @@ object DataType:
 
   /** Model for representing the LongBlob data type, which is the string data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -917,6 +993,14 @@ object DataType:
 
   /** Model for representing the TinyText data type, which is the string data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param character
+    *   Character Set
+    * @param collate
+    *   Collation
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -976,6 +1060,14 @@ object DataType:
 
   /** Model for representing the Text data type, which is the string data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param character
+    *   Character Set
+    * @param collate
+    *   Collation
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -1035,6 +1127,14 @@ object DataType:
 
   /** Model for representing the MediumText data type, which is the string data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param character
+    *   Character Set
+    * @param collate
+    *   Collation
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -1094,6 +1194,14 @@ object DataType:
 
   /** Model for representing the LongText data type, which is the string data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param character
+    *   Character Set
+    * @param collate
+    *   Collation
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -1153,6 +1261,10 @@ object DataType:
 
   /** Model for representing the Enum data type, which is the enum data of SQL DataType.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
+    * @param default
+    *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
@@ -1183,6 +1295,8 @@ object DataType:
 
   /** This model is used to represent SQL DataType date data.
     *
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
     * @tparam T
@@ -1210,6 +1324,10 @@ object DataType:
 
   /** This model is used to represent SQL DataType DateTime data.
     *
+    * @param fsp
+    *   Accuracy to microseconds (6 digits)
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
     * @tparam T
@@ -1249,6 +1367,10 @@ object DataType:
 
   /** This model is used to represent SQL DataType TimeStamp data.
     *
+    * @param fsp
+    *   Accuracy to microseconds (6 digits)
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
     * @tparam T
@@ -1289,13 +1411,17 @@ object DataType:
 
   /** This model is used to represent SQL DataType Time data.
     *
+    * @param fsp
+    *   Accuracy to microseconds (6 digits)
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Time[T <: LocalTime | Option[LocalTime]](
-    fsp:        Option[Int],
+    fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends DateType[T]:
@@ -1318,12 +1444,17 @@ object DataType:
 
   /** This model is used to represent SQL DataType Year data.
     *
+    * @param digit
+    *   Display width
+    * @param isOptional
+    *   Value indicating whether DataType is null-allowed or not.
     * @param default
     *   SQL Default values
     * @tparam T
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Year[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](
+    digit:      Option[4],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends DateType[T]:
@@ -1332,7 +1463,10 @@ object DataType:
 
     override def jdbcType: JdbcType = JdbcType.Date
 
-    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String =
+      digit.fold(s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }"))(n =>
+        s"$typeName($n) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      )
 
     /** Method for setting Default value to DataType in SQL.
       *
