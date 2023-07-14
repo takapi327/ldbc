@@ -5,5 +5,5 @@
  */
 
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.15.0")
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 addSbtPlugin("com.github.sbt" % "sbt-release" % "1.1.0")
