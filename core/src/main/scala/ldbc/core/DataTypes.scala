@@ -173,9 +173,7 @@ trait DataTypes:
   ](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): TimeStamp[T] = TimeStamp(Some(fsp), isOptional[T])
 
   inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(None, isOptional[T])
-  inline def TIME[T <: LocalTime | Option[LocalTime]](inline fsp: Int): Time[T] =
-    inline if fsp < 0 || fsp > 6 then error("If an fsp value is specified for TIME, it must be in the range of 0 to 6.")
-    else Time(Some(fsp), isOptional[T])
+  inline def TIME[T <: LocalTime | Option[LocalTime]](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Time[T] = Time(Some(fsp), isOptional[T])
 
   @deprecated(
     "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
