@@ -181,6 +181,8 @@ trait DataTypes:
     "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
     "Ldbc-Core 0.1.0"
   )
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](digit: 4): Year[T] = Year(Some(digit), isOptional[T])
+  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](digit: 4): Year[T] =
+    Year(Some(digit), isOptional[T])
 
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] = Year(None, isOptional[T])
+  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] =
+    Year(None, isOptional[T])

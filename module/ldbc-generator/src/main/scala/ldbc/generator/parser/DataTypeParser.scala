@@ -559,7 +559,7 @@ trait DataTypeParser extends SqlParser:
     customError(
       caseSensitivity("year") ~> opt("(" ~> "4" <~ ")") ^^ {
         case Some("4") => DataType.YEAR(Some(4))
-        case _ => DataType.YEAR(None)
+        case _         => DataType.YEAR(None)
       },
       """
         |===============================================================================
