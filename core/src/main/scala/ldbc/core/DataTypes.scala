@@ -177,4 +177,10 @@ trait DataTypes:
     inline if fsp < 0 || fsp > 6 then error("If an fsp value is specified for TIME, it must be in the range of 0 to 6.")
     else Time(Some(fsp), isOptional[T])
 
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] = Year(isOptional[T])
+  @deprecated(
+    "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
+    "Ldbc-Core 0.1.0"
+  )
+  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](digit: 4): Year[T] = Year(Some(digit), isOptional[T])
+
+  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] = Year(None, isOptional[T])

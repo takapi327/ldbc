@@ -1324,6 +1324,7 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Year[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](
+    digit: Option[4],
     isOptional: Boolean,
     default:    Option[Default] = None
   ) extends DateType[T]:
@@ -1332,7 +1333,9 @@ object DataType:
 
     override def jdbcType: JdbcType = JdbcType.Date
 
-    override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    override def queryString: String = digit.fold(s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }"))(n => 
+      s"$typeName($n) $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+    )
 
     /** Method for setting Default value to DataType in SQL.
       *
