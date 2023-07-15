@@ -33,9 +33,9 @@ private[ldbc] object LdbcGenerator:
 
       Parser.parse(content) match
         case Parser.Success(parsed, _)         => parsed
-        case Parser.NoSuccess(errorMessage, _) => throw new IllegalArgumentException(s"NoSuccess: $errorMessage")
-        case Parser.Failure(errorMessage, _)   => throw new IllegalArgumentException(s"Failure: $errorMessage")
-        case Parser.Error(errorMessage, _)     => throw new IllegalArgumentException(s"Error: $errorMessage")
+        case Parser.NoSuccess(errorMessage, _) => throw new IllegalArgumentException(s"Parsed NoSuccess: $errorMessage")
+        case Parser.Failure(errorMessage, _)   => throw new IllegalArgumentException(s"Parsed Failure: $errorMessage")
+        case Parser.Error(errorMessage, _)     => throw new IllegalArgumentException(s"Parsed Error: $errorMessage")
     }
 
     parsed
