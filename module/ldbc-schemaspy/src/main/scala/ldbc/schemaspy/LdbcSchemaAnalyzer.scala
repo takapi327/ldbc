@@ -271,7 +271,7 @@ class LdbcSchemaAnalyzer(
         case constraint: Constraint =>
           constraint.key match
             case v: ForeignKey =>
-              ImportForeignKeyBuilder.build(v, db.getCatalog.getName, db.getSchema.getName, Some(constraint.symbol))
+              ImportForeignKeyBuilder.build(v, db.getCatalog.getName, db.getSchema.getName, constraint.symbol)
             case _ => Nil
         case _ => Nil
       }

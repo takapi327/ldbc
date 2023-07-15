@@ -279,9 +279,9 @@ object DataType:
 
     override def toCode(typeParam: String): String = fsp.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
 
-  def YEAR(): DataType = new DataType:
+  def YEAR(digit: Option[4]): DataType = new DataType:
     override val name:      String    = "YEAR"
     override val jdbcType:  JdbcType  = JdbcType.Date
     override val scalaType: ScalaType = ScalaType.YEAR
 
-    override def toCode(typeParam: String): String = s"$name[$typeParam]"
+    override def toCode(typeParam: String): String = digit.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
