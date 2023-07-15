@@ -15,18 +15,18 @@ object Parser extends DatabaseStatementParser:
   private def sentence: Parser[Product] =
     Seq[Parser[Product]](comment, databaseStatements, tableStatements).reduceLeft(_ | _)
 
-  private def parser: Parser[Map[String, List[Table.CreateStatement]]] =
+  private type Statements = Table.CreateStatement | Database.CreateStatement
+
+  private def parser: Parser[List[(String, List[Statements])]] =
     var currentDatabase: String = ""
     phrase(rep(sentence) <~ end) ^^ { statements =>
-      statements.foldLeft(Map[String, List[Table.CreateStatement]](currentDatabase -> List.empty)) {
-        case (map, statement: Table.CreateStatement) =>
-          map.updated(currentDatabase, map.getOrElse(currentDatabase, List.empty) :+ statement)
-        case (map, statement: Database.CreateStatement) =>
+      statements.flatMap:
+        case statement: Table.CreateStatement => Some(currentDatabase -> List(statement))
+        case statement: Database.CreateStatement =>
           currentDatabase = statement.name
-          map
-        case (map, _) => map
-      }
+          Some(currentDatabase -> List(statement))
+        case _ => None
     }
 
-  def parse(sql: String): ParseResult[Map[String, List[Table.CreateStatement]]] =
+  def parse(sql: String): ParseResult[List[(String, List[Statements])]] =
     parser(new CharSequenceReader(sql))
