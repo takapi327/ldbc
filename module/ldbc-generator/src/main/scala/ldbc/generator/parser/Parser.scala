@@ -20,12 +20,13 @@ object Parser extends DatabaseStatementParser:
   private def parser: Parser[List[(String, List[Statements])]] =
     var currentDatabase: String = ""
     phrase(rep(sentence) <~ end) ^^ { statements =>
-      statements.flatMap:
+      statements.flatMap {
         case statement: Table.CreateStatement => Some(currentDatabase -> List(statement))
         case statement: Database.CreateStatement =>
           currentDatabase = statement.name
           Some(currentDatabase -> List(statement))
         case _ => None
+      }
     }
 
   def parse(sql: String): ParseResult[List[(String, List[Statements])]] =

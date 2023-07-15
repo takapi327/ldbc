@@ -21,10 +21,10 @@ private[ldbc] object LdbcGenerator:
     sourceManaged:      File,
     baseDirectory:      File
   ): Array[File] =
-    val classNameFormatter = Naming.fromString(classNameFormat)
+    val classNameFormatter    = Naming.fromString(classNameFormat)
     val propertyNameFormatter = Naming.fromString(propertyNameFormat)
 
-    val parsed = sqlFilePaths.flatMap: file =>
+    val parsed = sqlFilePaths.flatMap { file =>
 
       val content = new String(
         Files.readAllBytes(file.toPath),
@@ -32,21 +32,33 @@ private[ldbc] object LdbcGenerator:
       )
 
       Parser.parse(content) match
-        case Parser.Success(parsed, _) => parsed
+        case Parser.Success(parsed, _)         => parsed
         case Parser.NoSuccess(errorMessage, _) => throw new IllegalArgumentException(s"NoSuccess: $errorMessage")
-        case Parser.Failure(errorMessage, _) => throw new IllegalArgumentException(s"Failure: $errorMessage")
-        case Parser.Error(errorMessage, _) => throw new IllegalArgumentException(s"Error: $errorMessage")
+        case Parser.Failure(errorMessage, _)   => throw new IllegalArgumentException(s"Failure: $errorMessage")
+        case Parser.Error(errorMessage, _)     => throw new IllegalArgumentException(s"Error: $errorMessage")
+    }
 
-    parsed.groupBy(_._1).flatMap: (name, list) =>
-      val statements = list.flatMap(_._2).toSet
-      statements.map:
-        case statement: Table.CreateStatement =>
-          TableModelGenerator.generate(name, statement, classNameFormatter, propertyNameFormatter, sourceManaged)
-        case statement: Database.CreateStatement =>
-          val tableStatements = statements.flatMap:
-            case statement: Table.CreateStatement => Some(s"${classNameFormatter.format(statement.tableName)}.table")
-            case _: Database.CreateStatement => None
-          .toList
+    parsed
+      .groupBy(_._1)
+      .flatMap { (name, list) =>
+        val statements = list.flatMap(_._2).toSet
+        statements.map {
+          case statement: Table.CreateStatement =>
+            TableModelGenerator.generate(name, statement, classNameFormatter, propertyNameFormatter, sourceManaged)
+          case statement: Database.CreateStatement =>
+            val tableStatements = statements.flatMap {
+              case statement: Table.CreateStatement =>
+                Some(s"${ classNameFormatter.format(statement.tableName) }.table")
+              case _: Database.CreateStatement => None
+            }.toList
 
-          DatabaseModelGenerator.generate(name, statement, tableStatements, classNameFormatter, propertyNameFormatter, sourceManaged)
-    .toArray
+            DatabaseModelGenerator.generate(
+              statement,
+              tableStatements,
+              classNameFormatter,
+              propertyNameFormatter,
+              sourceManaged
+            )
+        }
+      }
+      .toArray
