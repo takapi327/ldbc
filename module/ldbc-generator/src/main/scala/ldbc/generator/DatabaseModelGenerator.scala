@@ -44,7 +44,7 @@ private[ldbc] object DatabaseModelGenerator:
       Files.createDirectory(directory)
     else directory
 
-    val outputFile = new File(output.toFile, s"$className.scala")
+    val outputFile = new File(output.toFile, s"${ className }Database.scala")
 
     if !outputFile.exists() then
       outputFile.getParentFile.mkdirs()
@@ -59,7 +59,7 @@ private[ldbc] object DatabaseModelGenerator:
          |
          |import ldbc.core.*
          |
-         |case class $className(
+         |case class ${ className }Database(
          |  schemaMeta: Option[String] = None,
          |  catalog: Option[String] = Some("def"),
          |  host: String = "127.0.0.1",
