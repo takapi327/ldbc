@@ -24,7 +24,7 @@ object AutoImport extends Dependencies {
   )
 
   val excludeFiles = SettingKey[List[String]](
-    label = "excludeFiles",
+    label       = "excludeFiles",
     description = "List of file names to be excluded from the analysis."
   )
 
