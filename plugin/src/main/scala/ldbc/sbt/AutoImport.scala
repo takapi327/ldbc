@@ -19,7 +19,7 @@ object AutoImport extends Dependencies {
   )
 
   val parsedDirectories = SettingKey[List[File]](
-    label = "parsedDirectory",
+    label       = "parsedDirectory",
     description = "Directory to be parsed"
   )
 

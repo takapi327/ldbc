@@ -55,8 +55,8 @@ object Generator {
   }
 
   private def generateCode(
-    parsedFiles:       SettingKey[List[File]],
-    parsedDirectories:    SettingKey[List[File]],
+    parsedFiles:        SettingKey[List[File]],
+    parsedDirectories:  SettingKey[List[File]],
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
