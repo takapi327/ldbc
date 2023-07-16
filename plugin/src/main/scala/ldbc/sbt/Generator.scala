@@ -19,8 +19,8 @@ import ldbc.sbt.AutoImport._
 object Generator {
   val generate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
-      Compile / parsedFiles,
-      Compile / parsedDirectories,
+      Compile / parseFiles,
+      Compile / parseDirectories,
       Compile / excludeFiles,
       Compile / classNameFormat,
       Compile / propertyNameFormat,
@@ -56,8 +56,8 @@ object Generator {
   }
 
   private def generateCode(
-    parsedFiles:        SettingKey[List[File]],
-    parsedDirectories:  SettingKey[List[File]],
+    parseFiles:         SettingKey[List[File]],
+    parseDirectories:   SettingKey[List[File]],
     excludeFiles:       SettingKey[List[String]],
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
@@ -75,7 +75,7 @@ object Generator {
       ): Array[File]
     }
 
-    val sqlFilesInDirectory = parsedDirectories.value.flatMap(file => {
+    val sqlFilesInDirectory = parseDirectories.value.flatMap(file => {
       if (file.isDirectory) {
         file.listFiles(sqlFileFilter(excludeFiles.value)).toList
       } else {
@@ -83,9 +83,9 @@ object Generator {
       }
     })
 
-    val filtered = parsedFiles.value.filter(file => sqlFileFilter(excludeFiles.value).accept(file, file.getName))
+    val filtered = parseFiles.value.filter(file => sqlFileFilter(excludeFiles.value).accept(file, file.getName))
 
-    val parseFiles = (filtered ++ sqlFilesInDirectory).distinct
+    val combinedFiles = (filtered ++ sqlFilesInDirectory).distinct
 
     val projectClassLoader = new ProjectClassLoader(
       urls   = convertToUrls((Runtime / externalDependencyClasspath).value.files),
@@ -95,11 +95,11 @@ object Generator {
     val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
     val mainObject: LdbcGenerator = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
 
-    val changed = changedHits(parseFiles)
+    val changed = changedHits(combinedFiles)
 
     val executeFiles = (changed.nonEmpty, generatedCache.nonEmpty) match {
       case (true, _)      => changed
-      case (false, false) => parseFiles
+      case (false, false) => combinedFiles
       case (false, true)  => List.empty
     }
 
