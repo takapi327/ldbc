@@ -21,6 +21,7 @@ object Generator {
     generateCode(
       Compile / parsedFiles,
       Compile / parsedDirectories,
+      Compile / excludeFiles,
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
@@ -44,9 +45,9 @@ object Generator {
     }
   })
 
-  private val sqlFileFilter = new FilenameFilter {
+  private def sqlFileFilter(excludes: List[String]) = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = {
-      if (name.toLowerCase.endsWith(".sql")) {
+      if (name.toLowerCase.endsWith(".sql") && !excludes.contains(name)) {
         true
       } else {
         false
@@ -57,6 +58,7 @@ object Generator {
   private def generateCode(
     parsedFiles:        SettingKey[List[File]],
     parsedDirectories:  SettingKey[List[File]],
+    excludeFiles:       SettingKey[List[String]],
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
@@ -75,13 +77,15 @@ object Generator {
 
     val sqlFilesInDirectory = parsedDirectories.value.flatMap(file => {
       if (file.isDirectory) {
-        file.listFiles(sqlFileFilter).toList
+        file.listFiles(sqlFileFilter(excludeFiles.value)).toList
       } else {
         List.empty
       }
     })
 
-    val parseFiles = (parsedFiles.value ++ sqlFilesInDirectory).distinct
+    val filtered = parsedFiles.value.filter(file => sqlFileFilter(excludeFiles.value).accept(file, file.getName))
+
+    val parseFiles = (filtered ++ sqlFilesInDirectory).distinct
 
     val projectClassLoader = new ProjectClassLoader(
       urls   = convertToUrls((Runtime / externalDependencyClasspath).value.files),
