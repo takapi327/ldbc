@@ -5,6 +5,7 @@
 package ldbc.sbt
 
 import java.nio.file.Files
+import java.nio.file.attribute.FileTime
 
 import scala.language.reflectiveCalls
 
@@ -26,8 +27,8 @@ object Generator {
 
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
 
-  private var cacheMap: Map[String, java.nio.file.attribute.FileTime] = Map.empty
-  private var generatedCache: Set[File] = Set.empty
+  private var cacheMap:       Map[String, FileTime] = Map.empty
+  private var generatedCache: Set[File]             = Set.empty
 
   private def changedHits(files: List[File]): List[File] = files.filter(file => {
     val hit = cacheMap.get(file.getName)
@@ -70,9 +71,9 @@ object Generator {
     val changed = changedHits(sqlFilePaths.value)
 
     val executeFiles = (changed.nonEmpty, generatedCache.nonEmpty) match {
-      case (true, _) => changed
+      case (true, _)      => changed
       case (false, false) => sqlFilePaths.value
-      case (false, true) => List.empty
+      case (false, true)  => List.empty
     }
 
     if (executeFiles.nonEmpty) {
