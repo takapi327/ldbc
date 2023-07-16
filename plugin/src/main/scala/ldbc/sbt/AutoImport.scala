@@ -23,6 +23,11 @@ object AutoImport extends Dependencies {
     description = "Directory to be parsed"
   )
 
+  val excludeFiles = SettingKey[List[String]](
+    label = "excludeFiles",
+    description = "List of file names to be excluded from the analysis."
+  )
+
   val classNameFormat = SettingKey[Format](
     label       = "classNameFormat",
     description = "A value to specify the format of the Class name."

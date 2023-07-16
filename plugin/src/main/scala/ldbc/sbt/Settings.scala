@@ -18,6 +18,7 @@ object Settings {
     baseClassloader    := Commands.baseClassloaderTask.value,
     parsedFiles        := List.empty,
     parsedDirectories  := List.empty,
+    excludeFiles       := List.empty,
     classNameFormat    := Format.PASCAL,
     propertyNameFormat := Format.CAMEL,
     (Compile / sourceGenerators) += Generator.generate.taskValue
