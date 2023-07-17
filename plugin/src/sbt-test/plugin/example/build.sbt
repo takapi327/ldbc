@@ -10,6 +10,6 @@ lazy val root = (project in file("."))
     scalaVersion := sys.props.get("scala.version").getOrElse("3.3.0"),
     version      := "0.1",
     run / fork   := true,
-    Compile / sqlFiles := List(baseDirectory.value / "test.sql")
+    Compile / parseFiles := List(baseDirectory.value / "test.sql")
   )
   .enablePlugins(Ldbc)

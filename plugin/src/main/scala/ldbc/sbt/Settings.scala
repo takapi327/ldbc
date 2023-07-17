@@ -15,9 +15,12 @@ object Settings {
   lazy val projectSettings = Def.settings(
     resolvers += "Lepus Maven" at "s3://com.github.takapi327.s3-ap-northeast-1.amazonaws.com/lepus/",
     libraryDependencies += ldbcGenerator,
-    baseClassloader := Commands.baseClassloaderTask.value,
-    (Compile / sourceGenerators) += Generator.generate.taskValue,
+    baseClassloader    := Commands.baseClassloaderTask.value,
+    parseFiles         := List.empty,
+    parseDirectories   := List.empty,
+    excludeFiles       := List.empty,
     classNameFormat    := Format.PASCAL,
-    propertyNameFormat := Format.CAMEL
+    propertyNameFormat := Format.CAMEL,
+    (Compile / sourceGenerators) += Generator.generate.taskValue
   )
 }

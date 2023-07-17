@@ -6,6 +6,7 @@ package ldbc.sbt
 
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
+import java.io.FilenameFilter
 
 import scala.language.reflectiveCalls
 
@@ -18,7 +19,9 @@ import ldbc.sbt.AutoImport._
 object Generator {
   val generate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
-      Compile / sqlFiles,
+      Compile / parseFiles,
+      Compile / parseDirectories,
+      Compile / excludeFiles,
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
@@ -42,8 +45,20 @@ object Generator {
     }
   })
 
+  private def sqlFileFilter(excludes: List[String]) = new FilenameFilter {
+    override def accept(dir: File, name: String): Boolean = {
+      if (name.toLowerCase.endsWith(".sql") && !excludes.contains(name)) {
+        true
+      } else {
+        false
+      }
+    }
+  }
+
   private def generateCode(
-    sqlFilePaths:       SettingKey[List[File]],
+    parseFiles:         SettingKey[List[File]],
+    parseDirectories:   SettingKey[List[File]],
+    excludeFiles:       SettingKey[List[String]],
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
@@ -60,6 +75,18 @@ object Generator {
       ): Array[File]
     }
 
+    val sqlFilesInDirectory = parseDirectories.value.flatMap(file => {
+      if (file.isDirectory) {
+        file.listFiles(sqlFileFilter(excludeFiles.value)).toList
+      } else {
+        List.empty
+      }
+    })
+
+    val filtered = parseFiles.value.filter(file => sqlFileFilter(excludeFiles.value).accept(file, file.getName))
+
+    val combinedFiles = (filtered ++ sqlFilesInDirectory).distinct
+
     val projectClassLoader = new ProjectClassLoader(
       urls   = convertToUrls((Runtime / externalDependencyClasspath).value.files),
       parent = baseClassloader.value
@@ -68,12 +95,12 @@ object Generator {
     val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
     val mainObject: LdbcGenerator = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
 
-    val changed = changedHits(sqlFilePaths.value)
+    val changed = changedHits(combinedFiles)
 
-    val executeFiles = (changed.nonEmpty, generatedCache.nonEmpty) match {
+    val executeFiles = (changed.nonEmpty, generatedCache.count(_.exists()) == 0) match {
       case (true, _)      => changed
-      case (false, false) => sqlFilePaths.value
-      case (false, true)  => List.empty
+      case (false, true)  => combinedFiles
+      case (false, false) => List.empty
     }
 
     if (executeFiles.nonEmpty) {
