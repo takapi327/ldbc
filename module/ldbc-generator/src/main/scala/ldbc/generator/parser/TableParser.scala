@@ -73,17 +73,7 @@ trait TableParser extends KeyParser:
   private def avgRowLength: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("avg_row_length"), digit) ^^ Table.Options.AVGRowLength.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the avg_row_length format.
-        |Please correct the format according to the following.
-        |
-        |Only numbers can be set for size.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: AVG_ROW_LENGTH[=]'size'
-        |======================================================
-        |""".stripMargin
+      failureMessage("avg_row_length", "AVG_ROW_LENGTH[=]'number'")
     )
 
   /** Specifies the default character set for the table. CHARSET is a synonym for CHARACTER SET. If the character set
@@ -92,17 +82,7 @@ trait TableParser extends KeyParser:
   private def characterSet: Parser[Table.Options] =
     customError(
       opt(caseSensitivity("default")) ~> character ^^ Table.Options.Character.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the character format.
-        |Please correct the format according to the following.
-        |
-        |Only numbers can be set for size.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: [DEFAULT] {CHARACTER [SET] | CHARSET} [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("character", " [DEFAULT] {CHARACTER [SET] | CHARSET} [=] 'string'")
     )
 
   /** The CHECKSUM option is one of the features used in the MySQL database. It is used to check data integrity.
@@ -117,15 +97,7 @@ trait TableParser extends KeyParser:
         case "0" => Table.Options.CheckSum(0)
         case "1" => Table.Options.CheckSum(1)
       },
-      input => s"""
-        |======================================================
-        |There is an error in the checksum format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: CHECKSUM [=] {0 | 1}
-        |======================================================
-        |""".stripMargin
+      failureMessage("checksum", "CHECKSUM [=] {0 | 1}")
     )
 
   /** Specifies the default collation for the table.
@@ -133,15 +105,7 @@ trait TableParser extends KeyParser:
   private def collateSet: Parser[Table.Options] =
     customError(
       opt(caseSensitivity("default")) ~> collate ^^ Table.Options.Collate.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the collate format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: [DEFAULT] COLLATE [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("collate", "[DEFAULT] COLLATE[=]'string'")
     )
 
   /** It is a comment of the table and can be up to 2048 characters in length.
@@ -149,15 +113,7 @@ trait TableParser extends KeyParser:
   private def commentOption: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the comment format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: COMMENT [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("comment", "COMMENT[=]'string'")
     )
 
   /** The COMPRESSION option is a feature for compressing and storing data. This reduces the size of the database and
@@ -174,15 +130,7 @@ trait TableParser extends KeyParser:
         case str if str.toUpperCase == "LZ4"  => Table.Options.Compression("LZ4")
         case str if str.toUpperCase == "NONE" => Table.Options.Compression("NONE")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the compression format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: COMPRESSION [=] {ZLIB | LZ4 | NONE}
-        |======================================================
-        |""".stripMargin
+      failureMessage("compression", "COMPRESSION[=]{ZLIB | LZ4 | NONE}")
     )
 
   /** The CONNECTION option is one of the settings used by the MySQL database. It is used to configure settings related
@@ -225,15 +173,7 @@ trait TableParser extends KeyParser:
         (caseSensitivity("data") | caseSensitivity("index")) ~> caseSensitivity("directory"),
         stringLiteral
       ) ^^ Table.Options.Directory.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the directory format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: {DATA | INDEX} DIRECTORY [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("directory", "{DATA | INDEX} DIRECTORY[=]'string'")
     )
 
   /** Specifies how to use delayed key writing. This applies only to MyISAM tables. Delayed key writes do not flush the
@@ -245,15 +185,7 @@ trait TableParser extends KeyParser:
         case "0" => Table.Options.DelayKeyWrite(0)
         case "1" => Table.Options.DelayKeyWrite(1)
       },
-      input => s"""
-        |======================================================
-        |There is an error in the delay_key_write format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: DELAY_KEY_WRITE [=] {0 | 1}
-        |======================================================
-        |""".stripMargin
+      failureMessage("delay_key_write", "DELAY_KEY_WRITE[=]{0 | 1}")
     )
 
   /** The ENCRYPTION option is one of the settings used in the MySQL database. It is used to encrypt (encode) data.
@@ -264,15 +196,7 @@ trait TableParser extends KeyParser:
         case str if str.toUpperCase == "Y" => Table.Options.Encryption("Y")
         case str if str.toUpperCase == "N" => Table.Options.Encryption("N")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the encryption format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: ENCRYPTION [=] {Y | N}
-        |======================================================
-        |""".stripMargin
+      failureMessage("encryption", "ENCRYPTION[=]{Y | N}")
     )
 
   /** Option to specify storage engine for table
@@ -294,15 +218,10 @@ trait TableParser extends KeyParser:
         case "MERGE"     => Table.Options.Engine("MERGE")
         case "NDB"       => Table.Options.Engine("NDB")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the engine format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: ENGINE [=] {InnoDB | MyISAM | MEMORY | CSV | ARCHIVE | EXAMPLE | FEDERATED | HEAP | MERGE | NDB}
-        |======================================================
-        |""".stripMargin
+      failureMessage(
+        "engine",
+        "ENGINE[=]{InnoDB | MyISAM | MEMORY | CSV | ARCHIVE | EXAMPLE | FEDERATED | HEAP | MERGE | NDB}"
+      )
     )
 
   /** When inserting data into a MERGE table, INSERT_METHOD must be used to specify the table into which the rows are to
@@ -318,15 +237,7 @@ trait TableParser extends KeyParser:
         case str if str.toUpperCase == "FIRST" => Table.Options.InsertMethod("FIRST")
         case str if str.toUpperCase == "LAST"  => Table.Options.InsertMethod("LAST")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the insert_method format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: INSERT_METHOD [=] {NO | FIRST | LAST}
-        |======================================================
-        |""".stripMargin
+      failureMessage("insert_method", "INSERT_METHOD[=]{NO | FIRST | LAST}")
     )
 
   /** The maximum number of rows you plan to store in the table. This is not a strong limit, but rather a hint to the
@@ -337,17 +248,7 @@ trait TableParser extends KeyParser:
       keyValue(caseSensitivity("max_rows"), """-?\d+""".r.filter(_.toLong < 4294967296L)) ^^ { digit =>
         Table.Options.MaxRows(digit.toLong)
       },
-      input => s"""
-        |======================================================
-        |There is an error in the max_rows format.
-        |Please correct the format according to the following.
-        |
-        |size must be less than 4294967295.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: MAX_ROWS [=] 'size'
-        |======================================================
-        |""".stripMargin
+      failureMessage("max_rows", "MAX_ROWS[=]'size'")
     )
 
   /** The minimum number of rows you plan to store in the table. MEMORY The storage engine uses this option as a hint
@@ -358,15 +259,7 @@ trait TableParser extends KeyParser:
       keyValue(caseSensitivity("min_rows"), """-?\d+""".r) ^^ { digit =>
         Table.Options.MinRows(digit.toLong)
       },
-      input => s"""
-        |======================================================
-        |There is an error in the min_rows format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: MIN_ROWS [=] 'size'
-        |======================================================
-        |""".stripMargin
+      failureMessage("min_rows", "MIN_ROWS[=]'size'")
     )
 
   /** Valid only for MyISAM tables. Set this option to 1 for smaller indexes. This usually results in slower updates and
@@ -383,15 +276,7 @@ trait TableParser extends KeyParser:
         case "1"                                 => Table.Options.PackKeys("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.PackKeys("DEFAULT")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the pack_keys format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: PACK_KEYS [=] {0 | 1 | DEFAULT}
-        |======================================================
-        |""".stripMargin
+      failureMessage("pack_keys", "PACK_KEYS[=]{0 | 1 | DEFAULT}")
     )
 
   /** Defines the physical format in which the rows will be stored.
@@ -411,15 +296,7 @@ trait TableParser extends KeyParser:
         case str if str.toUpperCase == "REDUNDANT"  => Table.Options.RowFormat("REDUNDANT")
         case str if str.toUpperCase == "COMPACT"    => Table.Options.RowFormat("COMPACT")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the row_format format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: ROW_FORMAT [=] {DEFAULT | DYNAMIC | FIXED | COMPRESSED | REDUNDANT | COMPACT}
-        |======================================================
-        |""".stripMargin
+      failureMessage("row_format", "ROW_FORMAT[=]{DEFAULT | DYNAMIC | FIXED | COMPRESSED | REDUNDANT | COMPACT}")
     )
 
   /** Specifies whether the persistent statistics for InnoDB tables should be automatically recalculated. With the value
@@ -438,15 +315,7 @@ trait TableParser extends KeyParser:
         case "1"                                 => Table.Options.StatsAutoRecalc("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsAutoRecalc("DEFAULT")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the stats_auto_recalc format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: STATS_AUTO_RECALC [=] {0 | 1 | DEFAULT}
-        |======================================================
-        |""".stripMargin
+      failureMessage("stats_auto_recalc", "STATS_AUTO_RECALC[=]{0 | 1 | DEFAULT}")
     )
 
   /** Specifies whether to enable persistent statistics for InnoDB tables. With the value DEFAULT, the table persistent
@@ -463,15 +332,7 @@ trait TableParser extends KeyParser:
         case "1"                                 => Table.Options.StatsPersistent("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsPersistent("DEFAULT")
       },
-      input => s"""
-        |======================================================
-        |There is an error in the stats_persistent format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: STATS_PERSISTENT [=] {0 | 1 | DEFAULT}
-        |======================================================
-        |""".stripMargin
+      failureMessage("stats_persistent", "STATS_PERSISTENT[=]{0 | 1 | DEFAULT}")
     )
 
   /** Number of index pages to sample when estimating cardinality and other statistics (such as those computed by
@@ -480,15 +341,7 @@ trait TableParser extends KeyParser:
   private def statsSamplePages: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("stats_sample_pages"), digit) ^^ Table.Options.StatsSamplePages.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the stats_sample_pages format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: STATS_SAMPLE_PAGES [=] 'size'
-        |======================================================
-        |""".stripMargin
+      failureMessage("stats_sample_pages", "STATS_SAMPLE_PAGES[=]'size'")
     )
 
   /** The TABLESPACE clause can be used to create tables in an existing general tablespace, file-per-table tablespace,
@@ -508,15 +361,7 @@ trait TableParser extends KeyParser:
             }
           )
       },
-      input => s"""
-        |======================================================
-        |There is an error in the tablespace format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: TABLESPACE [=] 'string' [STORAGE {DISK | MEMORY}]
-        |======================================================
-        |""".stripMargin
+      failureMessage("tablespace", "TABLESPACE[=]'string' [STORAGE {DISK | MEMORY}]")
     )
 
   /** Used to access collections of identical MyISAM tables. This only works with MERGE tables.
@@ -524,15 +369,7 @@ trait TableParser extends KeyParser:
   private def union: Parser[Table.Options] =
     customError(
       keyValue(caseSensitivity("union"), "(" ~> repsep(sqlIdent, ",") <~ ")") ^^ Table.Options.Union.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the union format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: UNION [=] (table_name, table_name, ...)
-        |======================================================
-        |""".stripMargin
+      failureMessage("union", "UNION[=](table_name, table_name, ...)")
     )
 
   private def tableOption: Parser[Table.Options] =
@@ -577,13 +414,5 @@ trait TableParser extends KeyParser:
         <~ opt(comment) <~ opt(caseSensitivity("restrict") | caseSensitivity("cascade")) <~ ";" ^^ { tableName =>
           Table.DropStatement(tableName)
         },
-      input => s"""
-        |======================================================
-        |There is an error in the drop statement format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: DROP [TEMPORARY] TABLE [IF [NOT] EXISTS] `table_name` [RESTRICT | CASCADE];
-        |======================================================
-        |""".stripMargin
+      failureMessage("drop statement", "DROP [TEMPORARY] TABLE [IF [NOT] EXISTS] `table_name` [RESTRICT | CASCADE];")
     )
