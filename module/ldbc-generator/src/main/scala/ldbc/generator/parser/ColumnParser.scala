@@ -14,13 +14,13 @@ import ldbc.generator.model.*
 trait ColumnParser extends DataTypeParser:
 
   private def constraint: Parser[String] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL",
       failureMessage("Nullable", "[NOT] NULL")
     )
 
   private def currentTimestamp: Parser[Default.CurrentTimestamp] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("default") ~> caseSensitivity("current_timestamp") ~> opt("(" ~> digit <~ ")") ~
         opt(
           caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp") ~ opt(
@@ -37,13 +37,13 @@ trait ColumnParser extends DataTypeParser:
     )
 
   private def defaultNull: Parser[Default.Null.type] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("default") ~> caseSensitivity("null") ^^ (_ => Default.Null),
       failureMessage("default null", "DEFAULT NULL")
     )
 
   private def defaultValue: Parser[Default.Value] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("default") ~> (stringLiteral | digit) ^^ Default.Value.apply,
       failureMessage("default value", "DEFAULT `value`")
     )
@@ -57,25 +57,25 @@ trait ColumnParser extends DataTypeParser:
     caseSensitivity("auto_increment") ^^ (_.toUpperCase)
 
   protected def primaryKey: Parser[String] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("primary") <~ opt(caseSensitivity("key")) ^^ { _ => "PRIMARY_KEY" },
       failureMessage("primary key", "PRIMARY [KEY]")
     )
 
   protected def uniqueKey: Parser[String] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("unique") <~ opt(caseSensitivity("key")) ^^ { _ => "UNIQUE_KEY" },
       failureMessage("unique key", "UNIQUE [KEY]")
     )
 
   protected def columnComment: Parser[Comment] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("comment") ~> stringLiteral ^^ Comment.apply,
       failureMessage("comment", "COMMENT 'string'")
     )
 
   private def columnFormat: Parser[String] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("column_format") ~> (
         caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
       ),
@@ -83,7 +83,7 @@ trait ColumnParser extends DataTypeParser:
     )
 
   private def storage: Parser[String] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")),
       failureMessage("storage", "STORAGE {DISK | MEMORY}")
     )

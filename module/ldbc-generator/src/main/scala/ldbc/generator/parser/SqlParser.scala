@@ -44,11 +44,12 @@ trait SqlParser extends JavaTokenParsers:
   protected def ifNotExists: Parser[String] =
     customError(
       caseSensitivity("if") ~> opt(caseSensitivity("not")) ~> caseSensitivity("exists") ^^ (_.toUpperCase),
-      """
+      input => s"""
         |======================================================
         |There is an error in the if not exists format.
         |Please correct the format according to the following.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: IF [NOT] EXISTS
         |======================================================
         |""".stripMargin
@@ -58,13 +59,14 @@ trait SqlParser extends JavaTokenParsers:
     customError(
       ((caseSensitivity("character") ~> caseSensitivity("set")) | caseSensitivity("charset")) ~>
         opt("=") ~> sqlIdent.filter(_ != "="),
-      """
+      input => s"""
         |======================================================
         |There is an error in the character format.
         |Please correct the format according to the following.
         |
         |Only numbers can be set for size.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: {CHARACTER [SET] | CHARSET} [=] 'string'
         |======================================================
         |""".stripMargin
@@ -73,11 +75,12 @@ trait SqlParser extends JavaTokenParsers:
   protected def collate: Parser[String] =
     customError(
       caseSensitivity("collate") ~> opt("=") ~> sqlIdent,
-      """
+      input => s"""
         |======================================================
         |There is an error in the collate format.
         |Please correct the format according to the following.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: COLLATE [=] 'string'
         |======================================================
         |""".stripMargin
@@ -101,15 +104,9 @@ trait SqlParser extends JavaTokenParsers:
 
   protected def comment: Parser[Comment] = lineComment | blockComment
 
-  protected def customErrorWithInput[A](parser: Parser[A], msg: Input => String): Parser[A] = Parser[A] { input =>
+  protected def customError[A](parser: Parser[A], msg: Input => String): Parser[A] = Parser[A] { input =>
     parser(input) match
       case Failure(_, in) => Failure(msg(in), in)
-      case result         => result
-  }
-
-  protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
-    parser(input) match
-      case Failure(_, in) => Failure(msg, in)
       case result         => result
   }
 
@@ -122,11 +119,12 @@ trait SqlParser extends JavaTokenParsers:
         case "8"  => Key.KeyBlockSize(8)
         case "16" => Key.KeyBlockSize(16)
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the key_block_size format.
         |Please correct the format according to the following.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: KEY_BLOCK_SIZE[=]{1 | 2 | 4 | 8 | 16}
         |======================================================
         |""".stripMargin
@@ -135,11 +133,12 @@ trait SqlParser extends JavaTokenParsers:
   protected def engineAttribute: Parser[Key.EngineAttribute] =
     customError(
       caseSensitivity("engine_attribute") ~> opt("=") ~> ident ^^ Key.EngineAttribute.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the engine_attribute format.
         |Please correct the format according to the following.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: ENGINE_ATTRIBUTE[=]'string'
         |======================================================
         |""".stripMargin
@@ -148,11 +147,12 @@ trait SqlParser extends JavaTokenParsers:
   protected def secondaryEngineAttribute: Parser[Key.SecondaryEngineAttribute] =
     customError(
       caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident ^^ Key.SecondaryEngineAttribute.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the secondary_engine_attribute format.
         |Please correct the format according to the following.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: SECONDARY_ENGINE_ATTRIBUTE[=]'string'
         |======================================================
         |""".stripMargin

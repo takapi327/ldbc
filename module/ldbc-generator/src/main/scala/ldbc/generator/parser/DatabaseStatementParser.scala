@@ -30,7 +30,7 @@ trait DatabaseStatementParser extends TableParser:
     * https://dev.mysql.com/doc/refman/8.0/en/drop-database.html
     */
   private[ldbc] def dropStatement: Parser[Database.DropStatement] =
-    customErrorWithInput(
+    customError(
       opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
         opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ ";" ^^ { name =>
           Database.DropStatement(name)
@@ -49,7 +49,7 @@ trait DatabaseStatementParser extends TableParser:
   /** Parser for parsing Database use statement.
     */
   private def useDatabase: Parser[Database.DropStatement] =
-    customErrorWithInput(
+    customError(
       opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
         Database.DropStatement(name)
       },

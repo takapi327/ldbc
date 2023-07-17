@@ -12,19 +12,19 @@ import ldbc.generator.model.Key.*
 trait KeyParser extends ColumnParser:
 
   private def columnsParser: Parser[List[String]] =
-    customErrorWithInput(
+    customError(
       "(" ~> repsep(sqlIdent, ",") <~ ")",
       failureMessage("column list format", "(`column_name`) or (`column_name`, `column_name`, ...)")
     )
 
   private def withParser: Parser[Key.WithParser] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("with") ~> caseSensitivity("parser") ~> ident ^^ Key.WithParser.apply,
       failureMessage("with parser type", "WITH PARSER `parser_name`")
     )
 
   private def indexType: Parser[Key.IndexType] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("using") ~> (caseSensitivity("btree") | caseSensitivity("hash")) ^^ {
         case str if "(?i)btree".r.matches(str) => Key.IndexType("BTREE")
         case str if "(?i)hash".r.matches(str)  => Key.IndexType("HASH")
@@ -33,7 +33,7 @@ trait KeyParser extends ColumnParser:
     )
 
   private def visible: Parser[Key.Visible] =
-    customErrorWithInput(
+    customError(
       (caseSensitivity("visible") | caseSensitivity("invisible")) ^^ {
         case str if "(?i)visible".r.matches(str)   => Key.Visible("VISIBLE")
         case str if "(?i)invisible".r.matches(str) => Key.Visible("INVISIBLE")
@@ -95,13 +95,13 @@ trait KeyParser extends ColumnParser:
     }
 
   private def matchParser: Parser[String ~ String] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("match") ~ (caseSensitivity("full") | caseSensitivity("partial") | caseSensitivity("simple")),
       failureMessage("match type", "MATCH {FULL | PARTIAL | SIMPLE}")
     )
 
   private def onDeleteUpdate: Parser[Key.OnDelete | Key.OnUpdate] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("on") ~> (caseSensitivity("delete") | caseSensitivity("update")) ~ referenceOption ^^ {
         case str ~ option =>
           str match
@@ -142,7 +142,7 @@ trait KeyParser extends ColumnParser:
       }
 
   private def checkConstraintDefinition: Parser[String] =
-    customErrorWithInput(
+    customError(
       opt(constraint) ~ caseSensitivity("check") ~ "(" ~ rep1(specialChars.filter(_ != ")")) ~ ")" ~
         opt(caseSensitivity("not")) ~ opt(caseSensitivity("enforced")) ^^ {
           case constraint ~ _ ~ _ ~ expr ~ _ ~ not ~ enforced =>

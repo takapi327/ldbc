@@ -22,7 +22,7 @@ trait TableParser extends KeyParser:
     * SEE: https://dev.mysql.com/doc/refman/8.0/ja/innodb-tablespace-autoextend-size.html
     */
   private def autoextendSize: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("autoextend_size"),
         """(4|8|12|16|20|24|28|32|36|40|44|48|52|56|60|64)""".r <~ caseSensitivity("m")
@@ -48,7 +48,7 @@ trait TableParser extends KeyParser:
     * the desired value after creating the table, then delete the dummy row.
     */
   private def autoIncrement: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("auto_increment"), digit) ^^ Table.Options.AutoIncrement.apply,
       input => s"""
         |======================================================
@@ -71,7 +71,7 @@ trait TableParser extends KeyParser:
     * efficient use of database space.
     */
   private def avgRowLength: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("avg_row_length"), digit) ^^ Table.Options.AVGRowLength.apply,
       input => s"""
         |======================================================
@@ -90,7 +90,7 @@ trait TableParser extends KeyParser:
     * name is DEFAULT, the database character set is used.
     */
   private def characterSet: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       opt(caseSensitivity("default")) ~> character ^^ Table.Options.Character.apply,
       input => s"""
         |======================================================
@@ -112,7 +112,7 @@ trait TableParser extends KeyParser:
     * the checksum is calculated and data integrity is checked.
     */
   private def checksum: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("checksum"), """(0|1)""".r) ^^ {
         case "0" => Table.Options.CheckSum(0)
         case "1" => Table.Options.CheckSum(1)
@@ -131,7 +131,7 @@ trait TableParser extends KeyParser:
   /** Specifies the default collation for the table.
     */
   private def collateSet: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       opt(caseSensitivity("default")) ~> collate ^^ Table.Options.Collate.apply,
       input => s"""
         |======================================================
@@ -147,7 +147,7 @@ trait TableParser extends KeyParser:
   /** It is a comment of the table and can be up to 2048 characters in length.
     */
   private def commentOption: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply,
       input => s"""
         |======================================================
@@ -165,7 +165,7 @@ trait TableParser extends KeyParser:
     * speeds and efficiencies.
     */
   private def compression: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("compression"),
         caseSensitivity("zlib") | caseSensitivity("lz4") | caseSensitivity("none")
@@ -189,7 +189,7 @@ trait TableParser extends KeyParser:
     * to the connection to the database.
     */
   private def connection: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("connection"), stringLiteral) ^^ Table.Options.Connection.apply,
       input => s"""
         |======================================================
@@ -220,7 +220,7 @@ trait TableParser extends KeyParser:
     * data and indexes are stored.
     */
   private def directory: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         (caseSensitivity("data") | caseSensitivity("index")) ~> caseSensitivity("directory"),
         stringLiteral
@@ -240,7 +240,7 @@ trait TableParser extends KeyParser:
     * key buffer between writes.
     */
   private def delayKeyWrite: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("delay_key_write"), """(0|1)""".r) ^^ {
         case "0" => Table.Options.DelayKeyWrite(0)
         case "1" => Table.Options.DelayKeyWrite(1)
@@ -259,7 +259,7 @@ trait TableParser extends KeyParser:
   /** The ENCRYPTION option is one of the settings used in the MySQL database. It is used to encrypt (encode) data.
     */
   protected def encryption: Parser[Table.Options.Encryption] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("encryption"), caseSensitivity("y") | caseSensitivity("n")) ^^ {
         case str if str.toUpperCase == "Y" => Table.Options.Encryption("Y")
         case str if str.toUpperCase == "N" => Table.Options.Encryption("N")
@@ -278,7 +278,7 @@ trait TableParser extends KeyParser:
   /** Option to specify storage engine for table
     */
   private def engine: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("engine"),
         "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
@@ -309,7 +309,7 @@ trait TableParser extends KeyParser:
     * be inserted. INSERT_METHOD is a useful option only for MERGE tables.
     */
   private def insertMethod: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("insert_method"),
         caseSensitivity("NO") | caseSensitivity("FIRST") | caseSensitivity("LAST")
@@ -333,7 +333,7 @@ trait TableParser extends KeyParser:
     * storage engine that the table must be able to store at least this number of rows.
     */
   private def maxRows: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("max_rows"), """-?\d+""".r.filter(_.toLong < 4294967296L)) ^^ { digit =>
         Table.Options.MaxRows(digit.toLong)
       },
@@ -354,7 +354,7 @@ trait TableParser extends KeyParser:
     * regarding memory usage.
     */
   private def minRows: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("min_rows"), """-?\d+""".r) ^^ { digit =>
         Table.Options.MinRows(digit.toLong)
       },
@@ -374,7 +374,7 @@ trait TableParser extends KeyParser:
     * engine to pack only long CHAR, VARCHAR, BINARY, or VARBINARY columns.
     */
   private def packKeys: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("pack_keys"),
         "0" | "1" | caseSensitivity("default")
@@ -397,7 +397,7 @@ trait TableParser extends KeyParser:
   /** Defines the physical format in which the rows will be stored.
     */
   private def rowFormat: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("row_format"),
         caseSensitivity("default") | caseSensitivity("dynamic") | caseSensitivity("fixed") | caseSensitivity(
@@ -429,7 +429,7 @@ trait TableParser extends KeyParser:
     * statistics after making significant changes to the table, issue an ANALYZE TABLE statement.
     */
   private def statsAutoRecalc: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("stats_auto_recalc"),
         "0" | "1" | caseSensitivity("default")
@@ -454,7 +454,7 @@ trait TableParser extends KeyParser:
     * persistent statistics for the table, while a value of 0 disables this feature.
     */
   private def statsPersistent: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(
         caseSensitivity("stats_persistent"),
         "0" | "1" | caseSensitivity("default")
@@ -478,7 +478,7 @@ trait TableParser extends KeyParser:
     * ANALYZE TABLE) for indexed columns.
     */
   private def statsSamplePages: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("stats_sample_pages"), digit) ^^ Table.Options.StatsSamplePages.apply,
       input => s"""
         |======================================================
@@ -495,7 +495,7 @@ trait TableParser extends KeyParser:
     * or system tablespace.
     */
   private def tablespace: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       caseSensitivity("tablespace") ~> sqlIdent ~ opt(
         caseSensitivity("storage") ~> caseSensitivity("disk") | caseSensitivity("memory")
       ) ^^ {
@@ -522,7 +522,7 @@ trait TableParser extends KeyParser:
   /** Used to access collections of identical MyISAM tables. This only works with MERGE tables.
     */
   private def union: Parser[Table.Options] =
-    customErrorWithInput(
+    customError(
       keyValue(caseSensitivity("union"), "(" ~> repsep(sqlIdent, ",") <~ ")") ^^ Table.Options.Union.apply,
       input => s"""
         |======================================================
@@ -570,7 +570,7 @@ trait TableParser extends KeyParser:
     * https://dev.mysql.com/doc/refman/8.0/en/drop-table.html
     */
   private[ldbc] def dropTableStatement: Parser[Table.DropStatement] =
-    customErrorWithInput(
+    customError(
       opt(comment) ~> drop ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> table ~> opt(comment) ~> opt(
         ifNotExists
       ) ~> opt(comment) ~> sqlIdent
