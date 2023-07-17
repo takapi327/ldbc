@@ -35,7 +35,7 @@ trait TableParser extends KeyParser:
         |The value set for AUTOEXTEND_SIZE must be a multiple of 4.
         |The minimum is 4 and the maximum is 64.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: AUTOEXTEND_SIZE[=]'size'M
         |======================================================
         |""".stripMargin
@@ -58,7 +58,7 @@ trait TableParser extends KeyParser:
         |Only numbers can be set for size.
         |It cannot be set smaller than the maximum value currently in the column.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: AUTO_INCREMENT[=]'size'
         |======================================================
         |""".stripMargin
@@ -80,7 +80,7 @@ trait TableParser extends KeyParser:
         |
         |Only numbers can be set for size.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: AVG_ROW_LENGTH[=]'size'
         |======================================================
         |""".stripMargin
@@ -99,7 +99,7 @@ trait TableParser extends KeyParser:
         |
         |Only numbers can be set for size.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: [DEFAULT] {CHARACTER [SET] | CHARSET} [=] 'string'
         |======================================================
         |""".stripMargin
@@ -122,7 +122,7 @@ trait TableParser extends KeyParser:
         |There is an error in the checksum format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: CHECKSUM [=] {0 | 1}
         |======================================================
         |""".stripMargin
@@ -138,7 +138,7 @@ trait TableParser extends KeyParser:
         |There is an error in the collate format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: [DEFAULT] COLLATE [=] 'string'
         |======================================================
         |""".stripMargin
@@ -154,7 +154,7 @@ trait TableParser extends KeyParser:
         |There is an error in the comment format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: COMMENT [=] 'string'
         |======================================================
         |""".stripMargin
@@ -179,7 +179,7 @@ trait TableParser extends KeyParser:
         |There is an error in the compression format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: COMPRESSION [=] {ZLIB | LZ4 | NONE}
         |======================================================
         |""".stripMargin
@@ -210,7 +210,7 @@ trait TableParser extends KeyParser:
         |
         |tbl_name: Name of the remote table. The names of the local and remote tables do not need to match.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: CONNECTION [=] 'scheme://user_name[:password]@host_name[:port_num]/db_name/tbl_name'
         |======================================================
         |""".stripMargin
@@ -230,7 +230,7 @@ trait TableParser extends KeyParser:
         |There is an error in the directory format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: {DATA | INDEX} DIRECTORY [=] 'string'
         |======================================================
         |""".stripMargin
@@ -250,7 +250,7 @@ trait TableParser extends KeyParser:
         |There is an error in the delay_key_write format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DELAY_KEY_WRITE [=] {0 | 1}
         |======================================================
         |""".stripMargin
@@ -269,7 +269,7 @@ trait TableParser extends KeyParser:
         |There is an error in the encryption format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: ENCRYPTION [=] {Y | N}
         |======================================================
         |""".stripMargin
@@ -299,7 +299,7 @@ trait TableParser extends KeyParser:
         |There is an error in the engine format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: ENGINE [=] {InnoDB | MyISAM | MEMORY | CSV | ARCHIVE | EXAMPLE | FEDERATED | HEAP | MERGE | NDB}
         |======================================================
         |""".stripMargin
@@ -323,7 +323,7 @@ trait TableParser extends KeyParser:
         |There is an error in the insert_method format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: INSERT_METHOD [=] {NO | FIRST | LAST}
         |======================================================
         |""".stripMargin
@@ -344,7 +344,7 @@ trait TableParser extends KeyParser:
         |
         |size must be less than 4294967295.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: MAX_ROWS [=] 'size'
         |======================================================
         |""".stripMargin
@@ -363,7 +363,7 @@ trait TableParser extends KeyParser:
         |There is an error in the min_rows format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: MIN_ROWS [=] 'size'
         |======================================================
         |""".stripMargin
@@ -388,7 +388,7 @@ trait TableParser extends KeyParser:
         |There is an error in the pack_keys format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: PACK_KEYS [=] {0 | 1 | DEFAULT}
         |======================================================
         |""".stripMargin
@@ -416,7 +416,7 @@ trait TableParser extends KeyParser:
         |There is an error in the row_format format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: ROW_FORMAT [=] {DEFAULT | DYNAMIC | FIXED | COMPRESSED | REDUNDANT | COMPACT}
         |======================================================
         |""".stripMargin
@@ -443,7 +443,7 @@ trait TableParser extends KeyParser:
         |There is an error in the stats_auto_recalc format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: STATS_AUTO_RECALC [=] {0 | 1 | DEFAULT}
         |======================================================
         |""".stripMargin
@@ -468,7 +468,7 @@ trait TableParser extends KeyParser:
         |There is an error in the stats_persistent format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: STATS_PERSISTENT [=] {0 | 1 | DEFAULT}
         |======================================================
         |""".stripMargin
@@ -485,7 +485,7 @@ trait TableParser extends KeyParser:
         |There is an error in the stats_sample_pages format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: STATS_SAMPLE_PAGES [=] 'size'
         |======================================================
         |""".stripMargin
@@ -513,7 +513,7 @@ trait TableParser extends KeyParser:
         |There is an error in the tablespace format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TABLESPACE [=] 'string' [STORAGE {DISK | MEMORY}]
         |======================================================
         |""".stripMargin
@@ -529,7 +529,7 @@ trait TableParser extends KeyParser:
         |There is an error in the union format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: UNION [=] (table_name, table_name, ...)
         |======================================================
         |""".stripMargin
@@ -582,7 +582,7 @@ trait TableParser extends KeyParser:
         |There is an error in the drop statement format.
         |Please correct the format according to the following.
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DROP [TEMPORARY] TABLE [IF [NOT] EXISTS] `table_name` [RESTRICT | CASCADE];
         |======================================================
         |""".stripMargin
