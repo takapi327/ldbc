@@ -12,7 +12,7 @@ import ldbc.generator.model.{ Comment, Key }
 /** Parser to parse common definitions in MySQL.
   */
 trait SqlParser extends JavaTokenParsers:
-  
+
   def fileName: String
 
   def failureMessage(format: String, example: String, input: Input): String
@@ -110,7 +110,7 @@ trait SqlParser extends JavaTokenParsers:
   protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
     parser(input) match
       case Failure(_, in) => Failure(msg, in)
-      case result => result
+      case result         => result
   }
 
   protected def keyBlockSize: Parser[Key.KeyBlockSize] =

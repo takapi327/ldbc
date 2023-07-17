@@ -21,12 +21,11 @@ trait DataTypeParser extends SqlParser:
   private def argument(name: String, min: Int, max: Int, default: Int): Parser[Int] =
     customErrorWithInput(
       "(" ~> digit.filter(n => n >= min && n <= max) <~ ")",
-      input =>
-        s"""
+      input => s"""
            |======================================================
            |Failed to parse $name data type.
            |
-           |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
            |M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default.
            |======================================================
            |""".stripMargin
@@ -40,12 +39,11 @@ trait DataTypeParser extends SqlParser:
           case m: Long => n <= m
         )
       ) <~ ")",
-      input =>
-        s"""
+      input => s"""
            |======================================================
            |Failed to parse $name data type.
            |
-           |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
            |M in $name[(M)] is the number of bits per value ($min to $max)
            |======================================================
            |""".stripMargin
@@ -63,8 +61,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("bit") ~> opt(argument("BIT", 1, 64, 1)) ^^ { n =>
         DataType.BIT(n)
       },
-      input =>
-        s"""
+      input => s"""
           |===============================================================================
           |Failed to parse Bit data type.
           |The Bit Data type must be defined as follows
@@ -74,7 +71,7 @@ trait DataTypeParser extends SqlParser:
           |
           |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
           |
-          |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+          |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
           |example: BIT[(M)]
           |==============================================================================
           |""".stripMargin
@@ -96,7 +93,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TINYINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -118,7 +115,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: SMALLINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -140,7 +137,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: MEDIUMINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -163,7 +160,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: INT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -185,7 +182,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: BIGINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -211,7 +208,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DECIMAL[(M[,D])] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -233,7 +230,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: FLOAT(p) [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -259,7 +256,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DOUBLE[(M,D)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -283,7 +280,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: [NATIONAL] CHAR[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -305,7 +302,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: [NATIONAL] VARCHAR(M) [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -326,7 +323,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: BINARY[(M)]
         |==============================================================================
         |""".stripMargin
@@ -347,7 +344,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: VARBINARY(M)
         |==============================================================================
         |""".stripMargin
@@ -364,7 +361,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TINYBLOB
         |==============================================================================
         |""".stripMargin
@@ -383,7 +380,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TINYTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -402,7 +399,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: BLOB[(M)]
         |==============================================================================
         |""".stripMargin
@@ -421,7 +418,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TEXT[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -438,7 +435,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: MEDIUMBLOB
         |==============================================================================
         |""".stripMargin
@@ -474,7 +471,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: LONGBLOB
         |==============================================================================
         |""".stripMargin
@@ -493,7 +490,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: LONGTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -512,7 +509,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://dev.mysql.com/doc/refman/8.0/en/enum.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: ENUM('string', ...)
         |==============================================================================
         |""".stripMargin
@@ -529,7 +526,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DATE
         |==============================================================================
         |""".stripMargin
@@ -550,7 +547,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DATETIME[(fsp)]
         |==============================================================================
         |""".stripMargin
@@ -571,7 +568,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TIMESTAMP[(fsp)]
         |==============================================================================
         |""".stripMargin
@@ -592,7 +589,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TIME[(fsp)]
         |==============================================================================
         |""".stripMargin
@@ -614,7 +611,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
-        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: YEAR[(4)]
         |==============================================================================
         |""".stripMargin

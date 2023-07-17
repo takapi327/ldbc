@@ -30,7 +30,12 @@ trait ColumnParser extends DataTypeParser:
           case _ ~ Some(attribute ~ _) => Default.CurrentTimestamp(true)
           case _ ~ None                => Default.CurrentTimestamp(false)
         },
-      input => failureMessage("default current timestamp", "DEFAULT CURRENT_TIMESTAMP[({0 ~ 6})] [ON UPDATE CURRENT_TIMESTAMP[({0 ~ 6})]]", input)
+      input =>
+        failureMessage(
+          "default current timestamp",
+          "DEFAULT CURRENT_TIMESTAMP[({0 ~ 6})] [ON UPDATE CURRENT_TIMESTAMP[({0 ~ 6})]]",
+          input
+        )
     )
 
   private def defaultNull: Parser[Default.Null.type] =
@@ -75,7 +80,7 @@ trait ColumnParser extends DataTypeParser:
     customErrorWithInput(
       caseSensitivity("column_format") ~> (
         caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
-        ),
+      ),
       input => failureMessage("column format", "COLUMN_FORMAT {FIXED | DYNAMIC | DEFAULT}", input)
     )
 
