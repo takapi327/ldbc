@@ -8,6 +8,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
 
+  override def fileName: String = "test.sql"
+
   it should "BIT data type parsing test succeeds." in {
     assert(parseAll(bitType, "bit").successful)
     assert(parseAll(bitType, "Bit(1)").successful)

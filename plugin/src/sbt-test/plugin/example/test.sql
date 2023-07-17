@@ -23,7 +23,7 @@
 
 DROP TABLE IF EXISTS `country`;
 CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
-  /* Comment */ code1 /* Comment */ BIT /* Comment */ PRIMARY KEY /* Comment */ UNIQUE KEY /* Comment */ COMMENT 'test',
+  /* Comment */ code1 /* Comment */ BIT /* Comment */ PRIMARY KEY UNIQUE KEY COMMENT 'test',
   code2 bit(24) NOT NULL,
   code3 Bit(64) DEFAULT 1
 );

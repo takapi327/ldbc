@@ -8,7 +8,7 @@ import scala.util.parsing.input.*
 
 import ldbc.generator.model.{ Database, Table }
 
-object Parser extends DatabaseStatementParser:
+case class Parser(fileName: String) extends DatabaseStatementParser:
 
   private def end: util.matching.Regex = """\s*""".r
 

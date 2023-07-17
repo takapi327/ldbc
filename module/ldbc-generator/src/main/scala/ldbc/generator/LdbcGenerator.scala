@@ -31,11 +31,13 @@ private[ldbc] object LdbcGenerator:
         Charset.defaultCharset()
       )
 
-      Parser.parse(content) match
-        case Parser.Success(parsed, _)         => parsed
-        case Parser.NoSuccess(errorMessage, _) => throw new IllegalArgumentException(s"Parsed NoSuccess: $errorMessage")
-        case Parser.Failure(errorMessage, _)   => throw new IllegalArgumentException(s"Parsed Failure: $errorMessage")
-        case Parser.Error(errorMessage, _)     => throw new IllegalArgumentException(s"Parsed Error: $errorMessage")
+      val parser = Parser(file.getName)
+
+      parser.parse(content) match
+        case parser.Success(parsed, _)         => parsed
+        case parser.NoSuccess(errorMessage, _) => throw new IllegalArgumentException(s"Parsed NoSuccess: $errorMessage")
+        case parser.Failure(errorMessage, _)   => throw new IllegalArgumentException(s"Parsed Failure: $errorMessage")
+        case parser.Error(errorMessage, _)     => throw new IllegalArgumentException(s"Parsed Error: $errorMessage")
     }
 
     parsed

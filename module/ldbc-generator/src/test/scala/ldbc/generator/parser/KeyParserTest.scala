@@ -8,6 +8,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class KeyParserTest extends AnyFlatSpec, KeyParser:
 
+  override def fileName: String = "test.sql"
+
   it should "Key definitions parsing test succeeds." in {
     assert(parseAll(keyDefinitions, "INDEX (`column`)").successful)
     assert(parseAll(keyDefinitions, "KEY (`column`)").successful)

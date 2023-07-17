@@ -35,14 +35,7 @@ trait DatabaseStatementParser extends TableParser:
         opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ ";" ^^ { name =>
           Database.DropStatement(name)
         },
-      """
-        |======================================================
-        |There is an error in the if drop database statement format.
-        |Please correct the format according to the following.
-        |
-        |example: DROP {DATABASE | SCHEMA} [IF EXISTS] `database_name`
-        |======================================================
-        |""".stripMargin
+      failureMessage("drop database statement", "DROP {DATABASE | SCHEMA} [IF EXISTS] `database_name`")
     )
 
   /** Parser for parsing Database use statement.
@@ -52,14 +45,7 @@ trait DatabaseStatementParser extends TableParser:
       opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
         Database.DropStatement(name)
       },
-      """
-        |======================================================
-        |There is an error in the if use database statement format.
-        |Please correct the format according to the following.
-        |
-        |example: USE `database_name`
-        |======================================================
-        |""".stripMargin
+      failureMessage("use database statement", "USE `database_name`")
     )
 
   protected def databaseStatements: Parser[Database.CreateStatement | Database.DropStatement | Database.UseStatement] =
