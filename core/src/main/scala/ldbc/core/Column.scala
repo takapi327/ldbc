@@ -52,7 +52,7 @@ object Column:
 
     override def attributes: Seq[Attribute[T]] = _dataType match
       case data: DataType.Alias[T] => data.attributes
-      case _ => Seq.empty
+      case _                       => Seq.empty
 
   def apply[T](
     _label:    String,
@@ -68,7 +68,7 @@ object Column:
 
     override def attributes: Seq[Attribute[T]] = _dataType match
       case data: DataType.Alias[T] => data.attributes
-      case _ => Seq.empty
+      case _                       => Seq.empty
 
   def apply[T](
     _label:      String,
@@ -84,7 +84,7 @@ object Column:
 
     override def attributes: Seq[Attribute[T]] = _dataType match
       case data: DataType.Alias[T] => data.attributes ++ _attributes
-      case _ => _attributes
+      case _                       => _attributes
 
   def apply[T](
     _label:      String,
@@ -101,4 +101,4 @@ object Column:
 
     override def attributes: Seq[Attribute[T]] = _dataType match
       case data: DataType.Alias[T] => data.attributes ++ _attributes
-      case _ => _attributes
+      case _                       => _attributes

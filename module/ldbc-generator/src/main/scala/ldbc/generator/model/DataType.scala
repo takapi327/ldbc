@@ -290,8 +290,8 @@ object DataType:
     override def toCode(typeParam: String): String = digit.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
 
   def SERIAL(): DataType = new DataType:
-    override val name: String = "SERIAL"
-    override val jdbcType: JdbcType = JdbcType.BigInt
+    override val name:      String    = "SERIAL"
+    override val jdbcType:  JdbcType  = JdbcType.BigInt
     override val scalaType: ScalaType = ScalaType.BigInt
 
     override def propertyType(isOptional: Boolean): String = scalaType.code

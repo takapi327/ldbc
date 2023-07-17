@@ -516,7 +516,7 @@ trait DataTypeParser extends SqlParser:
     )
 
   /** Date data type parsing
-   */
+    */
   private[ldbc] def dateType: Parser[DataType] =
     customError(
       caseSensitivity("date") ^^ (_ => DataType.DATE()),
@@ -620,18 +620,17 @@ trait DataTypeParser extends SqlParser:
     )
 
   /** Alias data type parsing
-   */
+    */
   private[ldbc] def serialType: Parser[DataType] =
     customError(
       caseSensitivity("serial") ^^ (_ => DataType.SERIAL()),
-      input =>
-        s"""
+      input => s"""
            |===============================================================================
            |Failed to parse serial data type.
            |The serial Data type must be defined as follows
            |※ serial strings are case-insensitive.
            |
-           |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
            |example: SERIAL
            |==============================================================================
            |""".stripMargin
