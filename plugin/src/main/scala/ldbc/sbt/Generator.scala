@@ -97,10 +97,10 @@ object Generator {
 
     val changed = changedHits(combinedFiles)
 
-    val executeFiles = (changed.nonEmpty, generatedCache.nonEmpty) match {
+    val executeFiles = (changed.nonEmpty, generatedCache.count(_.exists()) == 0) match {
       case (true, _)      => changed
-      case (false, false) => combinedFiles
-      case (false, true)  => List.empty
+      case (false, true) => combinedFiles
+      case (false, false)  => List.empty
     }
 
     if (executeFiles.nonEmpty) {
