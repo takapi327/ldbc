@@ -30,16 +30,17 @@ trait DatabaseStatementParser extends TableParser:
     * https://dev.mysql.com/doc/refman/8.0/en/drop-database.html
     */
   private[ldbc] def dropStatement: Parser[Database.DropStatement] =
-    customError(
+    customErrorWithInput(
       opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
         opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent <~ ";" ^^ { name =>
           Database.DropStatement(name)
         },
-      """
+      input => s"""
         |======================================================
         |There is an error in the if drop database statement format.
         |Please correct the format according to the following.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DROP {DATABASE | SCHEMA} [IF EXISTS] `database_name`
         |======================================================
         |""".stripMargin
@@ -48,15 +49,16 @@ trait DatabaseStatementParser extends TableParser:
   /** Parser for parsing Database use statement.
     */
   private def useDatabase: Parser[Database.DropStatement] =
-    customError(
+    customErrorWithInput(
       opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>
         Database.DropStatement(name)
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the if use database statement format.
         |Please correct the format according to the following.
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: USE `database_name`
         |======================================================
         |""".stripMargin
