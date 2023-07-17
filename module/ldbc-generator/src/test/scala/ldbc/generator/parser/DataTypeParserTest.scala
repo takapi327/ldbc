@@ -472,3 +472,12 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(yearType, "failed").successful)
     assert(!parseAll(yearType, "YEAR(0)").successful)
   }
+
+  it should "SERIAL data type parsing test succeeds." in {
+    assert(parseAll(serialType, "SERIAL").successful)
+  }
+
+  it should "SERIAL data type parsing test fails." in {
+    assert(!parseAll(serialType, "failed").successful)
+    assert(!parseAll(serialType, "SERIAL(0)").successful)
+  }

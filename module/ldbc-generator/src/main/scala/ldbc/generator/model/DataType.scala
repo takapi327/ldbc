@@ -30,6 +30,9 @@ trait DataType:
 
   val scalaType: ScalaType
 
+  def propertyType(isOptional: Boolean): String =
+    if isOptional then s"Option[${ scalaType.code }]" else scalaType.code
+
   def toCode(typeParam: String): String
 
 object DataType:
@@ -285,3 +288,12 @@ object DataType:
     override val scalaType: ScalaType = ScalaType.YEAR
 
     override def toCode(typeParam: String): String = digit.fold(s"$name[$typeParam]")(n => s"$name[$typeParam]($n)")
+
+  def SERIAL(): DataType = new DataType:
+    override val name: String = "SERIAL"
+    override val jdbcType: JdbcType = JdbcType.BigInt
+    override val scalaType: ScalaType = ScalaType.BigInt
+
+    override def propertyType(isOptional: Boolean): String = scalaType.code
+
+    override def toCode(typeParam: String): String = s"$name[$scalaType]"

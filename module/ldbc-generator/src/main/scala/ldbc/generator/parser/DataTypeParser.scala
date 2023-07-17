@@ -52,7 +52,7 @@ trait DataTypeParser extends SqlParser:
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType
+      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType | serialType
 
   /** Numeric data type parsing
     */
@@ -515,6 +515,8 @@ trait DataTypeParser extends SqlParser:
         |""".stripMargin
     )
 
+  /** Date data type parsing
+   */
   private[ldbc] def dateType: Parser[DataType] =
     customError(
       caseSensitivity("date") ^^ (_ => DataType.DATE()),
@@ -615,4 +617,22 @@ trait DataTypeParser extends SqlParser:
         |example: YEAR[(4)]
         |==============================================================================
         |""".stripMargin
+    )
+
+  /** Alias data type parsing
+   */
+  private[ldbc] def serialType: Parser[DataType] =
+    customError(
+      caseSensitivity("serial") ^^ (_ => DataType.SERIAL()),
+      input =>
+        s"""
+           |===============================================================================
+           |Failed to parse serial data type.
+           |The serial Data type must be defined as follows
+           |※ serial strings are case-insensitive.
+           |
+           |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+           |example: SERIAL
+           |==============================================================================
+           |""".stripMargin
     )

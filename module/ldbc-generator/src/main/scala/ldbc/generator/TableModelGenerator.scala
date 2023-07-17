@@ -101,12 +101,18 @@ private[ldbc] object TableModelGenerator:
   ): String =
 
     val name = propertyNameFormatter.format(column.name)
+    
+    val isOptional = column.attributes.forall(_.constraint)
 
-    (column.attributes.forall(_.constraint), column.dataType.scalaType) match
-      case (true, _: ScalaType.Enum)  => s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
-      case (false, _: ScalaType.Enum) => s"$name: $className.${ classNameFormatter.format(column.name) }"
-      case (true, _)                  => s"$name: Option[${ column.dataType.scalaType.code }]"
-      case (false, _)                 => s"$name: ${ column.dataType.scalaType.code }"
+    //(column.attributes.forall(_.constraint), column.dataType.scalaType) match
+    //  case (true, _: ScalaType.Enum)  => s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
+    //  case (false, _: ScalaType.Enum) => s"$name: $className.${ classNameFormatter.format(column.name) }"
+    //  case (true, _)                  => s"$name: Option[${ column.dataType.scalaType.code }]"
+    //  case (false, _)                 => s"$name: ${ column.dataType.scalaType.code }"
+    column.dataType.scalaType match
+      case _: ScalaType.Enum => if isOptional then s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
+        else s"$name: $className.${ classNameFormatter.format(column.name) }"
+      case _ => s"$name: ${ column.dataType.propertyType(isOptional) }"
 
   private def enumGenerator(column: ColumnDefinition, formatter: Naming): String =
     column.dataType.scalaType match
