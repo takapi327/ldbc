@@ -8,7 +8,7 @@ import scala.util.parsing.input.*
 
 import ldbc.generator.model.{ Database, Table }
 
-class Parser(fileName: String) extends DatabaseStatementParser:
+case class Parser(fileName: String) extends DatabaseStatementParser:
 
   override def failureMessage(format: String, example: String, input: Input): String =
     s"""

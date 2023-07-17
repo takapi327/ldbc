@@ -12,6 +12,8 @@ import ldbc.generator.model.{ Comment, Key }
 /** Parser to parse common definitions in MySQL.
   */
 trait SqlParser extends JavaTokenParsers:
+  
+  def fileName: String
 
   def failureMessage(format: String, example: String, input: Input): String
 
