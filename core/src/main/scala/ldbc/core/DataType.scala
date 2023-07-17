@@ -1505,7 +1505,7 @@ object DataType:
       override def isOptional: Boolean = false
 
       override val queryString: String =
-        s"$typeName UNSIGNED $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+        s"$typeName UNSIGNED $nullType"
 
       override def default: Option[Default] = None
 
