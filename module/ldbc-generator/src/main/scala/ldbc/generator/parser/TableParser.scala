@@ -22,12 +22,12 @@ trait TableParser extends KeyParser:
     * SEE: https://dev.mysql.com/doc/refman/8.0/ja/innodb-tablespace-autoextend-size.html
     */
   private def autoextendSize: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("autoextend_size"),
         """(4|8|12|16|20|24|28|32|36|40|44|48|52|56|60|64)""".r <~ caseSensitivity("m")
       ) ^^ (v => Table.Options.AutoExtendSize(v.toInt)),
-      """
+      input => s"""
         |======================================================
         |There is an error in the autoextend_size format.
         |Please correct the format according to the following.
@@ -35,6 +35,7 @@ trait TableParser extends KeyParser:
         |The value set for AUTOEXTEND_SIZE must be a multiple of 4.
         |The minimum is 4 and the maximum is 64.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: AUTOEXTEND_SIZE[=]'size'M
         |======================================================
         |""".stripMargin
@@ -47,9 +48,9 @@ trait TableParser extends KeyParser:
     * the desired value after creating the table, then delete the dummy row.
     */
   private def autoIncrement: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("auto_increment"), digit) ^^ Table.Options.AutoIncrement.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the auto_increment format.
         |Please correct the format according to the following.
@@ -57,6 +58,7 @@ trait TableParser extends KeyParser:
         |Only numbers can be set for size.
         |It cannot be set smaller than the maximum value currently in the column.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: AUTO_INCREMENT[=]'size'
         |======================================================
         |""".stripMargin
@@ -69,15 +71,16 @@ trait TableParser extends KeyParser:
     * efficient use of database space.
     */
   private def avgRowLength: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("avg_row_length"), digit) ^^ Table.Options.AVGRowLength.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the avg_row_length format.
         |Please correct the format according to the following.
         |
         |Only numbers can be set for size.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: AVG_ROW_LENGTH[=]'size'
         |======================================================
         |""".stripMargin
@@ -87,15 +90,16 @@ trait TableParser extends KeyParser:
     * name is DEFAULT, the database character set is used.
     */
   private def characterSet: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       opt(caseSensitivity("default")) ~> character ^^ Table.Options.Character.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the character format.
         |Please correct the format according to the following.
         |
         |Only numbers can be set for size.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: [DEFAULT] {CHARACTER [SET] | CHARSET} [=] 'string'
         |======================================================
         |""".stripMargin
@@ -108,16 +112,17 @@ trait TableParser extends KeyParser:
     * the checksum is calculated and data integrity is checked.
     */
   private def checksum: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("checksum"), """(0|1)""".r) ^^ {
         case "0" => Table.Options.CheckSum(0)
         case "1" => Table.Options.CheckSum(1)
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the checksum format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: CHECKSUM [=] {0 | 1}
         |======================================================
         |""".stripMargin
@@ -126,13 +131,14 @@ trait TableParser extends KeyParser:
   /** Specifies the default collation for the table.
     */
   private def collateSet: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       opt(caseSensitivity("default")) ~> collate ^^ Table.Options.Collate.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the collate format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: [DEFAULT] COLLATE [=] 'string'
         |======================================================
         |""".stripMargin
@@ -141,13 +147,14 @@ trait TableParser extends KeyParser:
   /** It is a comment of the table and can be up to 2048 characters in length.
     */
   private def commentOption: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("comment"), stringLiteral) ^^ Table.Options.Comment.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the comment format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: COMMENT [=] 'string'
         |======================================================
         |""".stripMargin
@@ -158,7 +165,7 @@ trait TableParser extends KeyParser:
     * speeds and efficiencies.
     */
   private def compression: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("compression"),
         caseSensitivity("zlib") | caseSensitivity("lz4") | caseSensitivity("none")
@@ -167,11 +174,12 @@ trait TableParser extends KeyParser:
         case str if str.toUpperCase == "LZ4"  => Table.Options.Compression("LZ4")
         case str if str.toUpperCase == "NONE" => Table.Options.Compression("NONE")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the compression format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: COMPRESSION [=] {ZLIB | LZ4 | NONE}
         |======================================================
         |""".stripMargin
@@ -181,9 +189,9 @@ trait TableParser extends KeyParser:
     * to the connection to the database.
     */
   private def connection: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("connection"), stringLiteral) ^^ Table.Options.Connection.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the connection format.
         |Please correct the format according to the following.
@@ -202,6 +210,7 @@ trait TableParser extends KeyParser:
         |
         |tbl_name: Name of the remote table. The names of the local and remote tables do not need to match.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: CONNECTION [=] 'scheme://user_name[:password]@host_name[:port_num]/db_name/tbl_name'
         |======================================================
         |""".stripMargin
@@ -211,16 +220,17 @@ trait TableParser extends KeyParser:
     * data and indexes are stored.
     */
   private def directory: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         (caseSensitivity("data") | caseSensitivity("index")) ~> caseSensitivity("directory"),
         stringLiteral
       ) ^^ Table.Options.Directory.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the directory format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: {DATA | INDEX} DIRECTORY [=] 'string'
         |======================================================
         |""".stripMargin
@@ -230,16 +240,17 @@ trait TableParser extends KeyParser:
     * key buffer between writes.
     */
   private def delayKeyWrite: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("delay_key_write"), """(0|1)""".r) ^^ {
         case "0" => Table.Options.DelayKeyWrite(0)
         case "1" => Table.Options.DelayKeyWrite(1)
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the delay_key_write format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: DELAY_KEY_WRITE [=] {0 | 1}
         |======================================================
         |""".stripMargin
@@ -248,16 +259,17 @@ trait TableParser extends KeyParser:
   /** The ENCRYPTION option is one of the settings used in the MySQL database. It is used to encrypt (encode) data.
     */
   protected def encryption: Parser[Table.Options.Encryption] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("encryption"), caseSensitivity("y") | caseSensitivity("n")) ^^ {
         case str if str.toUpperCase == "Y" => Table.Options.Encryption("Y")
         case str if str.toUpperCase == "N" => Table.Options.Encryption("N")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the encryption format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: ENCRYPTION [=] {Y | N}
         |======================================================
         |""".stripMargin
@@ -266,7 +278,7 @@ trait TableParser extends KeyParser:
   /** Option to specify storage engine for table
     */
   private def engine: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("engine"),
         "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
@@ -282,11 +294,12 @@ trait TableParser extends KeyParser:
         case "MERGE"     => Table.Options.Engine("MERGE")
         case "NDB"       => Table.Options.Engine("NDB")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the engine format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: ENGINE [=] {InnoDB | MyISAM | MEMORY | CSV | ARCHIVE | EXAMPLE | FEDERATED | HEAP | MERGE | NDB}
         |======================================================
         |""".stripMargin
@@ -296,7 +309,7 @@ trait TableParser extends KeyParser:
     * be inserted. INSERT_METHOD is a useful option only for MERGE tables.
     */
   private def insertMethod: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("insert_method"),
         caseSensitivity("NO") | caseSensitivity("FIRST") | caseSensitivity("LAST")
@@ -305,11 +318,12 @@ trait TableParser extends KeyParser:
         case str if str.toUpperCase == "FIRST" => Table.Options.InsertMethod("FIRST")
         case str if str.toUpperCase == "LAST"  => Table.Options.InsertMethod("LAST")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the insert_method format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: INSERT_METHOD [=] {NO | FIRST | LAST}
         |======================================================
         |""".stripMargin
@@ -319,17 +333,18 @@ trait TableParser extends KeyParser:
     * storage engine that the table must be able to store at least this number of rows.
     */
   private def maxRows: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("max_rows"), """-?\d+""".r.filter(_.toLong < 4294967296L)) ^^ { digit =>
         Table.Options.MaxRows(digit.toLong)
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the max_rows format.
         |Please correct the format according to the following.
         |
         |size must be less than 4294967295.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: MAX_ROWS [=] 'size'
         |======================================================
         |""".stripMargin
@@ -339,15 +354,16 @@ trait TableParser extends KeyParser:
     * regarding memory usage.
     */
   private def minRows: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("min_rows"), """-?\d+""".r) ^^ { digit =>
         Table.Options.MinRows(digit.toLong)
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the min_rows format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: MIN_ROWS [=] 'size'
         |======================================================
         |""".stripMargin
@@ -358,7 +374,7 @@ trait TableParser extends KeyParser:
     * engine to pack only long CHAR, VARCHAR, BINARY, or VARBINARY columns.
     */
   private def packKeys: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("pack_keys"),
         "0" | "1" | caseSensitivity("default")
@@ -367,11 +383,12 @@ trait TableParser extends KeyParser:
         case "1"                                 => Table.Options.PackKeys("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.PackKeys("DEFAULT")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the pack_keys format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: PACK_KEYS [=] {0 | 1 | DEFAULT}
         |======================================================
         |""".stripMargin
@@ -380,7 +397,7 @@ trait TableParser extends KeyParser:
   /** Defines the physical format in which the rows will be stored.
     */
   private def rowFormat: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("row_format"),
         caseSensitivity("default") | caseSensitivity("dynamic") | caseSensitivity("fixed") | caseSensitivity(
@@ -394,11 +411,12 @@ trait TableParser extends KeyParser:
         case str if str.toUpperCase == "REDUNDANT"  => Table.Options.RowFormat("REDUNDANT")
         case str if str.toUpperCase == "COMPACT"    => Table.Options.RowFormat("COMPACT")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the row_format format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: ROW_FORMAT [=] {DEFAULT | DYNAMIC | FIXED | COMPRESSED | REDUNDANT | COMPACT}
         |======================================================
         |""".stripMargin
@@ -411,7 +429,7 @@ trait TableParser extends KeyParser:
     * statistics after making significant changes to the table, issue an ANALYZE TABLE statement.
     */
   private def statsAutoRecalc: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("stats_auto_recalc"),
         "0" | "1" | caseSensitivity("default")
@@ -420,11 +438,12 @@ trait TableParser extends KeyParser:
         case "1"                                 => Table.Options.StatsAutoRecalc("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsAutoRecalc("DEFAULT")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the stats_auto_recalc format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: STATS_AUTO_RECALC [=] {0 | 1 | DEFAULT}
         |======================================================
         |""".stripMargin
@@ -435,7 +454,7 @@ trait TableParser extends KeyParser:
     * persistent statistics for the table, while a value of 0 disables this feature.
     */
   private def statsPersistent: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(
         caseSensitivity("stats_persistent"),
         "0" | "1" | caseSensitivity("default")
@@ -444,11 +463,12 @@ trait TableParser extends KeyParser:
         case "1"                                 => Table.Options.StatsPersistent("1")
         case str if str.toUpperCase == "DEFAULT" => Table.Options.StatsPersistent("DEFAULT")
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the stats_persistent format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: STATS_PERSISTENT [=] {0 | 1 | DEFAULT}
         |======================================================
         |""".stripMargin
@@ -458,13 +478,14 @@ trait TableParser extends KeyParser:
     * ANALYZE TABLE) for indexed columns.
     */
   private def statsSamplePages: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("stats_sample_pages"), digit) ^^ Table.Options.StatsSamplePages.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the stats_sample_pages format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: STATS_SAMPLE_PAGES [=] 'size'
         |======================================================
         |""".stripMargin
@@ -474,7 +495,7 @@ trait TableParser extends KeyParser:
     * or system tablespace.
     */
   private def tablespace: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       caseSensitivity("tablespace") ~> sqlIdent ~ opt(
         caseSensitivity("storage") ~> caseSensitivity("disk") | caseSensitivity("memory")
       ) ^^ {
@@ -487,11 +508,12 @@ trait TableParser extends KeyParser:
             }
           )
       },
-      """
+      input => s"""
         |======================================================
         |There is an error in the tablespace format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: TABLESPACE [=] 'string' [STORAGE {DISK | MEMORY}]
         |======================================================
         |""".stripMargin
@@ -500,13 +522,14 @@ trait TableParser extends KeyParser:
   /** Used to access collections of identical MyISAM tables. This only works with MERGE tables.
     */
   private def union: Parser[Table.Options] =
-    customError(
+    customErrorWithInput(
       keyValue(caseSensitivity("union"), "(" ~> repsep(sqlIdent, ",") <~ ")") ^^ Table.Options.Union.apply,
-      """
+      input => s"""
         |======================================================
         |There is an error in the union format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: UNION [=] (table_name, table_name, ...)
         |======================================================
         |""".stripMargin
@@ -547,18 +570,19 @@ trait TableParser extends KeyParser:
     * https://dev.mysql.com/doc/refman/8.0/en/drop-table.html
     */
   private[ldbc] def dropTableStatement: Parser[Table.DropStatement] =
-    customError(
+    customErrorWithInput(
       opt(comment) ~> drop ~> opt(comment) ~> opt(temporary) ~> opt(comment) ~> table ~> opt(comment) ~> opt(
         ifNotExists
       ) ~> opt(comment) ~> sqlIdent
         <~ opt(comment) <~ opt(caseSensitivity("restrict") | caseSensitivity("cascade")) <~ ";" ^^ { tableName =>
           Table.DropStatement(tableName)
         },
-      """
+      input => s"""
         |======================================================
         |There is an error in the drop statement format.
         |Please correct the format according to the following.
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: DROP [TEMPORARY] TABLE [IF [NOT] EXISTS] `table_name` [RESTRICT | CASCADE];
         |======================================================
         |""".stripMargin
