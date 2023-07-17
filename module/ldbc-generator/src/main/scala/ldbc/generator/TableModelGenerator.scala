@@ -104,11 +104,6 @@ private[ldbc] object TableModelGenerator:
 
     val isOptional = column.attributes.forall(_.constraint)
 
-    // (column.attributes.forall(_.constraint), column.dataType.scalaType) match
-    //  case (true, _: ScalaType.Enum)  => s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
-    //  case (false, _: ScalaType.Enum) => s"$name: $className.${ classNameFormatter.format(column.name) }"
-    //  case (true, _)                  => s"$name: Option[${ column.dataType.scalaType.code }]"
-    //  case (false, _)                 => s"$name: ${ column.dataType.scalaType.code }"
     column.dataType.scalaType match
       case _: ScalaType.Enum =>
         if isOptional then s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
