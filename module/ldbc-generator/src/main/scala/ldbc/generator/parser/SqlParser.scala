@@ -13,6 +13,8 @@ import ldbc.generator.model.{ Comment, Key }
   */
 trait SqlParser extends JavaTokenParsers:
 
+  def failureMessage(format: String, example: String, input: Input): String
+
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
   private def symbol: Parser[String] =
@@ -97,10 +99,16 @@ trait SqlParser extends JavaTokenParsers:
 
   protected def comment: Parser[Comment] = lineComment | blockComment
 
+  protected def customErrorWithInput[A](parser: Parser[A], msg: Input => String): Parser[A] = Parser[A] { input =>
+    parser(input) match
+      case Failure(_, in) => Failure(msg(in), in)
+      case result         => result
+  }
+
   protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
     parser(input) match
       case Failure(_, in) => Failure(msg, in)
-      case result         => result
+      case result => result
   }
 
   protected def keyBlockSize: Parser[Key.KeyBlockSize] =
