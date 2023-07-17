@@ -22,13 +22,13 @@ trait DataTypeParser extends SqlParser:
     customErrorWithInput(
       "(" ~> digit.filter(n => n >= min && n <= max) <~ ")",
       input => s"""
-           |======================================================
-           |Failed to parse $name data type.
-           |
-           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-           |M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default.
-           |======================================================
-           |""".stripMargin
+        |======================================================
+        |Failed to parse $name data type.
+        |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+        |M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default.
+        |======================================================
+        |""".stripMargin
     )
 
   private def argument(name: String, min: Int, max: Int | Long): Parser[Int] =
@@ -40,13 +40,13 @@ trait DataTypeParser extends SqlParser:
         )
       ) <~ ")",
       input => s"""
-           |======================================================
-           |Failed to parse $name data type.
-           |
-           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-           |M in $name[(M)] is the number of bits per value ($min to $max)
-           |======================================================
-           |""".stripMargin
+        |======================================================
+        |Failed to parse $name data type.
+        |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+        |M in $name[(M)] is the number of bits per value ($min to $max)
+        |======================================================
+        |""".stripMargin
     )
 
   protected def dataType: Parser[DataType] =
@@ -62,19 +62,19 @@ trait DataTypeParser extends SqlParser:
         DataType.BIT(n)
       },
       input => s"""
-          |===============================================================================
-          |Failed to parse Bit data type.
-          |The Bit Data type must be defined as follows
-          |※ Bit strings are case-insensitive.
-          |
-          |M is the number of bits per value (1 to 64). If M is omitted.
-          |
-          |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
-          |
-          |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-          |example: BIT[(M)]
-          |==============================================================================
-          |""".stripMargin
+        |===============================================================================
+        |Failed to parse Bit data type.
+        |The Bit Data type must be defined as follows
+        |※ Bit strings are case-insensitive.
+        |
+        |M is the number of bits per value (1 to 64). If M is omitted.
+        |
+        |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
+        |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+        |example: BIT[(M)]
+        |==============================================================================
+        |""".stripMargin
     )
 
   private[ldbc] def tinyintType: Parser[DataType] =

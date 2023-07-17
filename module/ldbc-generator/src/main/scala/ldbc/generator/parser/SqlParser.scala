@@ -15,7 +15,7 @@ trait SqlParser extends JavaTokenParsers:
 
   def fileName: String
 
-  def failureMessage(format: String, example: String, input: Input): String
+  def failureMessage(format: String, example: String): Input => String
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 

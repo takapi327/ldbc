@@ -10,8 +10,8 @@ import ldbc.generator.model.{ Database, Table }
 
 case class Parser(fileName: String) extends DatabaseStatementParser:
 
-  override def failureMessage(format: String, example: String, input: Input): String =
-    s"""
+  override def failureMessage(format: String, example: String): Input => String =
+    input => s"""
        |======================================================
        |There is an error in the format of the $format.
        |Please correct the format according to the following.

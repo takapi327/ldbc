@@ -16,7 +16,7 @@ trait ColumnParser extends DataTypeParser:
   private def constraint: Parser[String] =
     customErrorWithInput(
       caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL",
-      input => failureMessage("Nullable", "[NOT] NULL", input)
+      failureMessage("Nullable", "[NOT] NULL")
     )
 
   private def currentTimestamp: Parser[Default.CurrentTimestamp] =
@@ -30,24 +30,22 @@ trait ColumnParser extends DataTypeParser:
           case _ ~ Some(attribute ~ _) => Default.CurrentTimestamp(true)
           case _ ~ None                => Default.CurrentTimestamp(false)
         },
-      input =>
-        failureMessage(
-          "default current timestamp",
-          "DEFAULT CURRENT_TIMESTAMP[({0 ~ 6})] [ON UPDATE CURRENT_TIMESTAMP[({0 ~ 6})]]",
-          input
-        )
+      failureMessage(
+        "default current timestamp",
+        "DEFAULT CURRENT_TIMESTAMP[({0 ~ 6})] [ON UPDATE CURRENT_TIMESTAMP[({0 ~ 6})]]"
+      )
     )
 
   private def defaultNull: Parser[Default.Null.type] =
     customErrorWithInput(
       caseSensitivity("default") ~> caseSensitivity("null") ^^ (_ => Default.Null),
-      input => failureMessage("default null", "DEFAULT NULL", input)
+      failureMessage("default null", "DEFAULT NULL")
     )
 
   private def defaultValue: Parser[Default.Value] =
     customErrorWithInput(
       caseSensitivity("default") ~> (stringLiteral | digit) ^^ Default.Value.apply,
-      input => failureMessage("default value", "DEFAULT `value`", input)
+      failureMessage("default value", "DEFAULT `value`")
     )
 
   private def default: Parser[Default] = defaultValue | currentTimestamp | defaultNull
@@ -61,19 +59,19 @@ trait ColumnParser extends DataTypeParser:
   protected def primaryKey: Parser[String] =
     customErrorWithInput(
       caseSensitivity("primary") <~ opt(caseSensitivity("key")) ^^ { _ => "PRIMARY_KEY" },
-      input => failureMessage("primary key", "PRIMARY [KEY]", input)
+      failureMessage("primary key", "PRIMARY [KEY]")
     )
 
   protected def uniqueKey: Parser[String] =
     customErrorWithInput(
       caseSensitivity("unique") <~ opt(caseSensitivity("key")) ^^ { _ => "UNIQUE_KEY" },
-      input => failureMessage("unique key", "UNIQUE [KEY]", input)
+      failureMessage("unique key", "UNIQUE [KEY]")
     )
 
   protected def columnComment: Parser[Comment] =
     customErrorWithInput(
       caseSensitivity("comment") ~> stringLiteral ^^ Comment.apply,
-      input => failureMessage("comment", "COMMENT 'string'", input)
+      failureMessage("comment", "COMMENT 'string'")
     )
 
   private def columnFormat: Parser[String] =
@@ -81,13 +79,13 @@ trait ColumnParser extends DataTypeParser:
       caseSensitivity("column_format") ~> (
         caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
       ),
-      input => failureMessage("column format", "COLUMN_FORMAT {FIXED | DYNAMIC | DEFAULT}", input)
+      failureMessage("column format", "COLUMN_FORMAT {FIXED | DYNAMIC | DEFAULT}")
     )
 
   private def storage: Parser[String] =
     customErrorWithInput(
       caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")),
-      input => failureMessage("storage", "STORAGE {DISK | MEMORY}", input)
+      failureMessage("storage", "STORAGE {DISK | MEMORY}")
     )
 
   private def attributes: Parser[Option[Attributes]] =
