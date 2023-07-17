@@ -8,6 +8,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class TableParserTest extends AnyFlatSpec, TableParser:
 
+  override def fileName: String = "test.sql"
+
   it should "Table create statement parsing test succeeds." in {
     assert(
       parseAll(
