@@ -89,9 +89,9 @@ trait KeyParser extends ColumnParser:
       caseSensitivity("restrict") | caseSensitivity("cascade") | (caseSensitivity("set") ~
         (caseSensitivity("null") | caseSensitivity("default"))) | (caseSensitivity("no") ~
         caseSensitivity("action"))
-      ) ^^ {
-      case set ~ option => s"Reference.ReferenceOption.${set.toUpperCase}_${option.toUpperCase}"
-      case option: String => s"Reference.ReferenceOption.${option.toUpperCase}"
+    ) ^^ {
+      case set ~ option   => s"Reference.ReferenceOption.${ set.toUpperCase }_${ option.toUpperCase }"
+      case option: String => s"Reference.ReferenceOption.${ option.toUpperCase }"
     }
 
   private def matchParser: Parser[String ~ String] =
@@ -108,7 +108,10 @@ trait KeyParser extends ColumnParser:
             case str if "(?i)delete".r.matches(str) => Key.OnDelete(option)
             case str if "(?i)update".r.matches(str) => Key.OnUpdate(option)
       },
-      failureMessage("on delete/update type", "ON {DELETE | UPDATE} [RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT]")
+      failureMessage(
+        "on delete/update type",
+        "ON {DELETE | UPDATE} [RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT]"
+      )
     )
 
   private def referenceDefinition: Parser[Reference] =
