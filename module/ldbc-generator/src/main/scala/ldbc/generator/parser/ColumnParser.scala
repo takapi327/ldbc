@@ -14,10 +14,13 @@ import ldbc.generator.model.*
 trait ColumnParser extends DataTypeParser:
 
   private def constraint: Parser[String] =
-    caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL"
+    customErrorWithInput(
+      caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL",
+      input => failureMessage("Nullable", "[NOT] NULL", input)
+    )
 
   private def currentTimestamp: Parser[Default.CurrentTimestamp] =
-    customError(
+    customErrorWithInput(
       caseSensitivity("default") ~> caseSensitivity("current_timestamp") ~> opt("(" ~> digit <~ ")") ~
         opt(
           caseSensitivity("on") ~> caseSensitivity("update") ~> caseSensitivity("current_timestamp") ~ opt(
@@ -27,66 +30,60 @@ trait ColumnParser extends DataTypeParser:
           case _ ~ Some(attribute ~ _) => Default.CurrentTimestamp(true)
           case _ ~ None                => Default.CurrentTimestamp(false)
         },
-      """
-        |======================================================
-        |There is an error in the format of the default current timestamp.
-        |Please correct the format according to the following.
-        |
-        |example: DEFAULT CURRENT_TIMESTAMP[({0 ~ 6})] [ON UPDATE CURRENT_TIMESTAMP[({0 ~ 6})]]
-        |======================================================
-        |""".stripMargin
+      input => failureMessage("default current timestamp", "DEFAULT CURRENT_TIMESTAMP[({0 ~ 6})] [ON UPDATE CURRENT_TIMESTAMP[({0 ~ 6})]]", input)
     )
 
   private def defaultNull: Parser[Default.Null.type] =
-    customError(
+    customErrorWithInput(
       caseSensitivity("default") ~> caseSensitivity("null") ^^ (_ => Default.Null),
-      """
-        |======================================================
-        |There is an error in the format of the default null.
-        |Please correct the format according to the following.
-        |
-        |example: DEFAULT NULL
-        |======================================================
-        |""".stripMargin
+      input => failureMessage("default null", "DEFAULT NULL", input)
     )
 
   private def defaultValue: Parser[Default.Value] =
-    customError(
+    customErrorWithInput(
       caseSensitivity("default") ~> (stringLiteral | digit) ^^ Default.Value.apply,
-      """
-        |======================================================
-        |There is an error in the format of the default value.
-        |Please correct the format according to the following.
-        |
-        |example: DEFAULT `value`
-        |======================================================
-        |""".stripMargin
+      input => failureMessage("default value", "DEFAULT `value`", input)
     )
 
-  private def default: Parser[Default] = defaultValue | defaultNull | currentTimestamp
+  private def default: Parser[Default] = defaultValue | currentTimestamp | defaultNull
 
   private def visible: Parser[String] =
-    caseSensitivity("visible") | caseSensitivity("invisible") ^^ { i => i }
+    caseSensitivity("visible") | caseSensitivity("invisible")
 
   private def autoInc: Parser[String] =
-    caseSensitivity("auto_increment") <~ opt(comment) ^^ (_.toUpperCase)
+    caseSensitivity("auto_increment") ^^ (_.toUpperCase)
 
   protected def primaryKey: Parser[String] =
-    caseSensitivity("primary") <~ opt(caseSensitivity("key")) <~ opt(comment) ^^ { _ => "PRIMARY_KEY" }
+    customErrorWithInput(
+      caseSensitivity("primary") <~ opt(caseSensitivity("key")) ^^ { _ => "PRIMARY_KEY" },
+      input => failureMessage("primary key", "PRIMARY [KEY]", input)
+    )
 
   protected def uniqueKey: Parser[String] =
-    caseSensitivity("unique") <~ opt(caseSensitivity("key")) <~ opt(comment) ^^ { _ => "UNIQUE_KEY" }
+    customErrorWithInput(
+      caseSensitivity("unique") <~ opt(caseSensitivity("key")) ^^ { _ => "UNIQUE_KEY" },
+      input => failureMessage("unique key", "UNIQUE [KEY]", input)
+    )
 
   protected def columnComment: Parser[Comment] =
-    caseSensitivity("comment") ~> stringLiteral ^^ Comment.apply
+    customErrorWithInput(
+      caseSensitivity("comment") ~> stringLiteral ^^ Comment.apply,
+      input => failureMessage("comment", "COMMENT 'string'", input)
+    )
 
   private def columnFormat: Parser[String] =
-    caseSensitivity("column_format") ~> (
-      caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
-    ) ^^ { i => i }
+    customErrorWithInput(
+      caseSensitivity("column_format") ~> (
+        caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
+        ),
+      input => failureMessage("column format", "COLUMN_FORMAT {FIXED | DYNAMIC | DEFAULT}", input)
+    )
 
   private def storage: Parser[String] =
-    caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")) ^^ { i => i }
+    customErrorWithInput(
+      caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")),
+      input => failureMessage("storage", "STORAGE {DISK | MEMORY}", input)
+    )
 
   private def attributes: Parser[Option[Attributes]] =
     opt(constraint) ~ opt(comment) ~ opt(default) ~ opt(comment) ~ opt(visible) ~
