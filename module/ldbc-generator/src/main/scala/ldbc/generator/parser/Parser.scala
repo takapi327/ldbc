@@ -10,17 +10,6 @@ import ldbc.generator.model.{ Database, Table }
 
 case class Parser(fileName: String) extends DatabaseStatementParser:
 
-  override def failureMessage(format: String, example: String): Input => String =
-    input => s"""
-       |======================================================
-       |There is an error in the format of the $format.
-       |Please correct the format according to the following.
-       |
-       |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-       |example: $example
-       |======================================================
-       |""".stripMargin
-
   private def end: util.matching.Regex = """\s*""".r
 
   private def sentence: Parser[Product] =

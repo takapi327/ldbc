@@ -15,7 +15,22 @@ trait SqlParser extends JavaTokenParsers:
 
   def fileName: String
 
-  def failureMessage(format: String, example: String): Input => String
+  def failureMessage(format: String, example: String): Input => String =
+    input => s"""
+      |======================================================
+      |There is an error in the format of the $format.
+      |Please correct the format according to the following.
+      |
+      |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+      |example: $example
+      |======================================================
+      |""".stripMargin
+
+  protected def customError[A](parser: Parser[A], msg: Input => String): Parser[A] = Parser[A] { input =>
+    parser(input) match
+      case Failure(_, in) => Failure(msg(in), in)
+      case result         => result
+  }
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
@@ -44,46 +59,20 @@ trait SqlParser extends JavaTokenParsers:
   protected def ifNotExists: Parser[String] =
     customError(
       caseSensitivity("if") ~> opt(caseSensitivity("not")) ~> caseSensitivity("exists") ^^ (_.toUpperCase),
-      input => s"""
-        |======================================================
-        |There is an error in the if not exists format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: IF [NOT] EXISTS
-        |======================================================
-        |""".stripMargin
+      failureMessage("if not exists", "IF [NOT] EXISTS")
     )
 
   protected def character: Parser[String] =
     customError(
       ((caseSensitivity("character") ~> caseSensitivity("set")) | caseSensitivity("charset")) ~>
         opt("=") ~> sqlIdent.filter(_ != "="),
-      input => s"""
-        |======================================================
-        |There is an error in the character format.
-        |Please correct the format according to the following.
-        |
-        |Only numbers can be set for size.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: {CHARACTER [SET] | CHARSET} [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("character", "{CHARACTER [SET] | CHARSET}[=]'string'")
     )
 
   protected def collate: Parser[String] =
     customError(
       caseSensitivity("collate") ~> opt("=") ~> sqlIdent,
-      input => s"""
-        |======================================================
-        |There is an error in the collate format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: COLLATE [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("collate", "COLLATE[=]'string'")
     )
 
   /** Rules for allowing upper and lower case letters. */
@@ -104,12 +93,6 @@ trait SqlParser extends JavaTokenParsers:
 
   protected def comment: Parser[Comment] = lineComment | blockComment
 
-  protected def customError[A](parser: Parser[A], msg: Input => String): Parser[A] = Parser[A] { input =>
-    parser(input) match
-      case Failure(_, in) => Failure(msg(in), in)
-      case result         => result
-  }
-
   protected def keyBlockSize: Parser[Key.KeyBlockSize] =
     customError(
       caseSensitivity("key_block_size") ~> opt("=") ~> ("1" | "2" | "4" | "8" | "16") ^^ {
@@ -119,41 +102,17 @@ trait SqlParser extends JavaTokenParsers:
         case "8"  => Key.KeyBlockSize(8)
         case "16" => Key.KeyBlockSize(16)
       },
-      input => s"""
-        |======================================================
-        |There is an error in the key_block_size format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: KEY_BLOCK_SIZE[=]{1 | 2 | 4 | 8 | 16}
-        |======================================================
-        |""".stripMargin
+      failureMessage("key_block_size", "KEY_BLOCK_SIZE[=]{1 | 2 | 4 | 8 | 16}")
     )
 
   protected def engineAttribute: Parser[Key.EngineAttribute] =
     customError(
       caseSensitivity("engine_attribute") ~> opt("=") ~> ident ^^ Key.EngineAttribute.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the engine_attribute format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: ENGINE_ATTRIBUTE[=]'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("engine_attribute", "ENGINE_ATTRIBUTE[=]'string'")
     )
 
   protected def secondaryEngineAttribute: Parser[Key.SecondaryEngineAttribute] =
     customError(
       caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident ^^ Key.SecondaryEngineAttribute.apply,
-      input => s"""
-        |======================================================
-        |There is an error in the secondary_engine_attribute format.
-        |Please correct the format according to the following.
-        |
-        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: SECONDARY_ENGINE_ATTRIBUTE[=]'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("secondary_engine_attribute", "SECONDARY_ENGINE_ATTRIBUTE[=]'string'")
     )
