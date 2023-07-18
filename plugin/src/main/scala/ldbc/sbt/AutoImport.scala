@@ -27,6 +27,11 @@ object AutoImport extends Dependencies {
     label       = "excludeFiles",
     description = "List of file names to be excluded from the analysis."
   )
+  
+  val customYamlFiles = SettingKey[List[File]](
+    label = "customYamlFiles",
+    description = "List of yaml files to customize types."
+  )
 
   val classNameFormat = SettingKey[Format](
     label       = "classNameFormat",
