@@ -24,11 +24,10 @@ case class ColumnDefinition(
 ):
 
   private val scalaType =
-    val `type` = dataType.scalaType match
-      case ScalaType.Enum(types) => name
-      case _                     => dataType.scalaType.code
-    if attributes.forall(_.constraint) then s"Option[${ `type` }]"
-    else s"${ `type` }"
+    val isOptional = attributes.forall(_.constraint)
+    dataType.scalaType match
+      case ScalaType.Enum(types) => if isOptional then s"Option[$name]" else name
+      case _                     => dataType.propertyType(isOptional)
 
   private val default =
     attributes.fold("")(attribute =>

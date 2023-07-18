@@ -50,7 +50,9 @@ object Column:
 
     override def comment: Option[String] = None
 
-    override def attributes: Seq[Attribute[T]] = Seq.empty
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes
+      case _                       => Seq.empty
 
   def apply[T](
     _label:    String,
@@ -64,7 +66,9 @@ object Column:
 
     override def comment: Option[String] = Some(_comment)
 
-    override def attributes: Seq[Attribute[T]] = Seq.empty
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes
+      case _                       => Seq.empty
 
   def apply[T](
     _label:      String,
@@ -78,7 +82,9 @@ object Column:
 
     override def comment: Option[String] = None
 
-    override def attributes: Seq[Attribute[T]] = _attributes.toSeq
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes ++ _attributes
+      case _                       => _attributes
 
   def apply[T](
     _label:      String,
@@ -93,4 +99,6 @@ object Column:
 
     override def comment: Option[String] = Some(_comment)
 
-    override def attributes: Seq[Attribute[T]] = _attributes.toSeq
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes ++ _attributes
+      case _                       => _attributes

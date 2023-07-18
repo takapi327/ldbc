@@ -185,3 +185,6 @@ trait DataTypes:
 
   inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] =
     Year(None, isOptional[T])
+
+  /** ===== List of Alias Date Data Types ===== */
+  def SERIAL[T <: BigInt] = Alias.Serial[T]()

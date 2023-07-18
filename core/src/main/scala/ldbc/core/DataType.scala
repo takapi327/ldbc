@@ -10,6 +10,7 @@ import java.time.Year as JYear
 import scala.compiletime.error
 
 import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
+import ldbc.core.attribute.Attribute
 
 /** Trait for representing SQL DataType
   *
@@ -1476,3 +1477,39 @@ object DataType:
     def DEFAULT(value: T): Year[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
+
+  /** Alias for DataType
+    *
+    * @tparam T
+    *   Scala types that match SQL DataType
+    */
+  private[ldbc] trait Alias[T] extends DataType[T]:
+
+    /** Extra attribute of column
+      */
+    def attributes: Seq[Attribute[T]]
+
+  private[ldbc] object Alias:
+
+    /** Alias for BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE
+      *
+      * @tparam T
+      *   Scala types that match SQL DataType
+      */
+    case class Serial[T <: BigInt]() extends Alias[T]:
+
+      override def typeName: String = "BIGINT"
+
+      override def jdbcType: JdbcType = JdbcType.BigInt
+
+      override def isOptional: Boolean = false
+
+      override val queryString: String =
+        s"$typeName UNSIGNED $nullType"
+
+      override def default: Option[Default] = None
+
+      override def attributes: Seq[Attribute[T]] = Seq(
+        AUTO_INCREMENT,
+        UNIQUE_KEY
+      )

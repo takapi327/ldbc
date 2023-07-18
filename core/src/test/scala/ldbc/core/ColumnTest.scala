@@ -56,4 +56,8 @@ object ColumnTest extends Specification:
         "name"
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     }
+
+    "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
+      column[BigInt]("id", SERIAL).queryString === "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY"
+    }
   }
