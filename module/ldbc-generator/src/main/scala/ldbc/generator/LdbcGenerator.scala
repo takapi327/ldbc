@@ -15,7 +15,7 @@ import ldbc.generator.model.{ Database, Table }
 private[ldbc] object LdbcGenerator:
 
   def generate(
-    sqlFilePaths:       Array[File],
+    parseFiles:         Array[File],
     classNameFormat:    String,
     propertyNameFormat: String,
     sourceManaged:      File,
@@ -24,7 +24,7 @@ private[ldbc] object LdbcGenerator:
     val classNameFormatter    = Naming.fromString(classNameFormat)
     val propertyNameFormatter = Naming.fromString(propertyNameFormat)
 
-    val parsed = sqlFilePaths.flatMap { file =>
+    val parsed = parseFiles.flatMap { file =>
 
       val content = new String(
         Files.readAllBytes(file.toPath),

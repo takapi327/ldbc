@@ -67,7 +67,7 @@ object Generator {
 
     type LdbcGenerator = {
       def generate(
-        sqlFilePaths:       Array[File],
+        parseFiles:         Array[File],
         classNameFormat:    String,
         propertyNameFormat: String,
         sourceManaged:      File,
