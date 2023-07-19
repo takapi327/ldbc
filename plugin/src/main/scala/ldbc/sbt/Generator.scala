@@ -100,10 +100,13 @@ object Generator {
 
     val changed = changedHits(combinedFiles)
 
-    val executeFiles = (changed.nonEmpty, generatedCache.count(_.exists()) == 0) match {
-      case (true, _)      => changed
-      case (false, true)  => combinedFiles
-      case (false, false) => List.empty
+    val customChanged = changedHits(customYamlFiles.value)
+
+    val executeFiles = (changed.nonEmpty, generatedCache.count(_.exists()) == 0, customChanged.nonEmpty) match {
+      case (_, _, true)      => combinedFiles
+      case (true, _, _)      => changed
+      case (false, true, _)  => combinedFiles
+      case (false, false, _) => List.empty
     }
 
     if (executeFiles.nonEmpty) {
