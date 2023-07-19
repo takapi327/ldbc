@@ -22,6 +22,7 @@ object Generator {
       Compile / parseFiles,
       Compile / parseDirectories,
       Compile / excludeFiles,
+      Compile / customYamlFiles,
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
@@ -59,6 +60,7 @@ object Generator {
     parseFiles:         SettingKey[List[File]],
     parseDirectories:   SettingKey[List[File]],
     excludeFiles:       SettingKey[List[String]],
+    customYamlFiles:    SettingKey[List[File]],
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
@@ -68,6 +70,7 @@ object Generator {
     type LdbcGenerator = {
       def generate(
         parseFiles:         Array[File],
+        customYamlFiles:    Array[File],
         classNameFormat:    String,
         propertyNameFormat: String,
         sourceManaged:      File,
@@ -111,6 +114,7 @@ object Generator {
 
     val generated = mainObject.generate(
       executeFiles.toArray,
+      customYamlFiles.value.toArray,
       classNameFormat.value.toString,
       propertyNameFormat.value.toString,
       sourceManaged.value,
