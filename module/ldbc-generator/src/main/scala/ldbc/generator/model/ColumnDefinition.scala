@@ -62,4 +62,4 @@ case class ColumnDefinition(
 
   def toCode(customType: String): String =
     val `type` = if isOptional then s"Option[$customType]" else customType
-    s"column[${ `type` }](\"$name\", ${dataType.toCode(`type`)}" + default + _attributes + ")"
+    s"column[${ `type` }](\"$name\", ${ dataType.toCode(`type`) }" + default + _attributes + ")"

@@ -45,14 +45,22 @@ private[ldbc] object TableModelGenerator:
 
     val className = classNameFormatter.format(statement.tableName)
     val properties = statement.columnDefinitions.map(column =>
-      propertyGenerator(className, column, propertyNameFormatter, classNameFormatter, custom.flatMap(_.findColumn(column.name)))
+      propertyGenerator(
+        className,
+        column,
+        propertyNameFormatter,
+        classNameFormatter,
+        custom.flatMap(_.findColumn(column.name))
+      )
     )
 
     val objects =
       statement.columnDefinitions.flatMap(column =>
-        custom.flatMap(_.findColumn(column.name)).fold(
-          enumGenerator(column, classNameFormatter)
-        )(_ => None)
+        custom
+          .flatMap(_.findColumn(column.name))
+          .fold(
+            enumGenerator(column, classNameFormatter)
+          )(_ => None)
       )
 
     val directory = sourceManaged.toPath.resolve(database)
@@ -77,18 +85,15 @@ private[ldbc] object TableModelGenerator:
       statement.columnDefinitions.map((column: ColumnDefinition) =>
         custom.flatMap(_.findColumn(column.name)) match
           case Some(value) => column.toCode(value.`type`)
-          case None => column.dataType.scalaType match
-            case ScalaType.Enum(types) => column.copy(name = classNameFormatter.format(column.name)).toCode
-            case _ => column.toCode
+          case None =>
+            column.dataType.scalaType match
+              case ScalaType.Enum(types) => column.copy(name = classNameFormatter.format(column.name)).toCode
+              case _                     => column.toCode
       )
 
-    val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str =>
-      s" extends $str"
-    )
+    val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
 
-    val objectExtends = custom.flatMap(_.`object`.map(_.`extends`.mkString(", "))).fold("")(str =>
-      s" extends $str"
-    )
+    val objectExtends = custom.flatMap(_.`object`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
 
     val scalaSource =
       s"""
@@ -127,9 +132,9 @@ private[ldbc] object TableModelGenerator:
     custom.fold(
       column.dataType.scalaType match
         case _: ScalaType.Enum =>
-          if isOptional then s"$name: Option[$className.${classNameFormatter.format(column.name)}]"
-          else s"$name: $className.${classNameFormatter.format(column.name)}"
-        case _ => s"$name: ${column.dataType.propertyType(isOptional)}"
+          if isOptional then s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
+          else s"$name: $className.${ classNameFormatter.format(column.name) }"
+        case _ => s"$name: ${ column.dataType.propertyType(isOptional) }"
     )(v => if isOptional then s"$name: Option[${ v.`type` }]" else s"$name: ${ v.`type` }")
 
   private def enumGenerator(column: ColumnDefinition, formatter: Naming): Option[String] =

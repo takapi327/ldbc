@@ -58,7 +58,14 @@ private[ldbc] object LdbcGenerator:
         statements.map {
           case statement: Table.CreateStatement =>
             val customTables = custom.find(_.database.name == name).map(_.database.tables)
-            TableModelGenerator.generate(name, statement, classNameFormatter, propertyNameFormatter, sourceManaged, customTables)
+            TableModelGenerator.generate(
+              name,
+              statement,
+              classNameFormatter,
+              propertyNameFormatter,
+              sourceManaged,
+              customTables
+            )
           case statement: Database.CreateStatement =>
             val tableStatements = statements.flatMap {
               case statement: Table.CreateStatement =>
