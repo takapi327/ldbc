@@ -11,6 +11,7 @@ import scala.io.Codec
 
 import ldbc.generator.formatter.Naming
 import ldbc.generator.model.*
+import ldbc.generator.parser.yml.Parser
 
 /** An object for generating a model about Table.
   */
@@ -36,15 +37,23 @@ private[ldbc] object TableModelGenerator:
     statement:             Table.CreateStatement,
     classNameFormatter:    Naming,
     propertyNameFormatter: Naming,
-    sourceManaged:         File
+    sourceManaged:         File,
+    customParser:          Option[Seq[Parser.Table]]
   ): File =
+
+    val custom = customParser.flatMap(_.find(_.name == statement.tableName))
+
     val className = classNameFormatter.format(statement.tableName)
     val properties = statement.columnDefinitions.map(column =>
-      propertyGenerator(className, column, propertyNameFormatter, classNameFormatter)
+      propertyGenerator(className, column, propertyNameFormatter, classNameFormatter, custom.flatMap(_.findColumn(column.name)))
     )
 
     val objects =
-      statement.columnDefinitions.map(column => enumGenerator(column, classNameFormatter)).filter(_.nonEmpty)
+      statement.columnDefinitions.flatMap(column =>
+        custom.flatMap(_.findColumn(column.name)).fold(
+          enumGenerator(column, classNameFormatter)
+        )(_ => None)
+      )
 
     val directory = sourceManaged.toPath.resolve(database)
     val output = if !directory.toFile.exists() then
@@ -66,10 +75,20 @@ private[ldbc] object TableModelGenerator:
 
     val columns =
       statement.columnDefinitions.map((column: ColumnDefinition) =>
-        column.dataType.scalaType match
-          case ScalaType.Enum(types) => column.copy(name = classNameFormatter.format(column.name))
-          case _                     => column
+        custom.flatMap(_.findColumn(column.name)) match
+          case Some(value) => column.toCode(value.`type`)
+          case None => column.dataType.scalaType match
+            case ScalaType.Enum(types) => column.copy(name = classNameFormatter.format(column.name)).toCode
+            case _ => column.toCode
       )
+
+    val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str =>
+      s" extends $str"
+    )
+
+    val objectExtends = custom.flatMap(_.`object`.map(_.`extends`.mkString(", "))).fold("")(str =>
+      s" extends $str"
+    )
 
     val scalaSource =
       s"""
@@ -79,13 +98,13 @@ private[ldbc] object TableModelGenerator:
          |
          |case class $className(
          |  ${ properties.mkString(",\n  ") }
-         |)
+         |)$classExtends
          |
-         |object $className:
+         |object $className$objectExtends:
          |
          |  ${ objects.mkString("\n  ") }
          |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
-         |    ${ columns.map(_.toCode).mkString(",\n    ") }
+         |    ${ columns.mkString(",\n    ") }
          |  )
          |  ${ keyDefinitions.mkString("\n  ") }
          |""".stripMargin
@@ -97,25 +116,28 @@ private[ldbc] object TableModelGenerator:
     className:             String,
     column:                ColumnDefinition,
     propertyNameFormatter: Naming,
-    classNameFormatter:    Naming
+    classNameFormatter:    Naming,
+    custom:                Option[Parser.Column]
   ): String =
 
     val name = propertyNameFormatter.format(column.name)
 
     val isOptional = column.attributes.forall(_.constraint)
 
-    column.dataType.scalaType match
-      case _: ScalaType.Enum =>
-        if isOptional then s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
-        else s"$name: $className.${ classNameFormatter.format(column.name) }"
-      case _ => s"$name: ${ column.dataType.propertyType(isOptional) }"
+    custom.fold(
+      column.dataType.scalaType match
+        case _: ScalaType.Enum =>
+          if isOptional then s"$name: Option[$className.${classNameFormatter.format(column.name)}]"
+          else s"$name: $className.${classNameFormatter.format(column.name)}"
+        case _ => s"$name: ${column.dataType.propertyType(isOptional)}"
+    )(v => if isOptional then s"$name: Option[${ v.`type` }]" else s"$name: ${ v.`type` }")
 
-  private def enumGenerator(column: ColumnDefinition, formatter: Naming): String =
+  private def enumGenerator(column: ColumnDefinition, formatter: Naming): Option[String] =
     column.dataType.scalaType match
       case ScalaType.Enum(types) =>
         val enumName = formatter.format(column.name)
-        s"""enum $enumName extends ldbc.core.model.Enum:
+        Some(s"""enum $enumName extends model.Enum:
            |    case ${ types.mkString(", ") }
-           |  object $enumName extends ldbc.core.model.EnumDataType[$enumName]
-           |""".stripMargin
-      case _ => ""
+           |  object $enumName extends model.EnumDataType[$enumName]
+           |""".stripMargin)
+      case _ => None
