@@ -10,12 +10,14 @@ import java.nio.charset.Charset
 
 import ldbc.generator.formatter.Naming
 import ldbc.generator.parser.Parser
+import ldbc.generator.parser.yml.Parser as YmlParser
 import ldbc.generator.model.{ Database, Table }
 
 private[ldbc] object LdbcGenerator:
 
   def generate(
-    sqlFilePaths:       Array[File],
+    parseFiles:         Array[File],
+    customYamlFiles:    Array[File],
     classNameFormat:    String,
     propertyNameFormat: String,
     sourceManaged:      File,
@@ -24,7 +26,16 @@ private[ldbc] object LdbcGenerator:
     val classNameFormatter    = Naming.fromString(classNameFormat)
     val propertyNameFormatter = Naming.fromString(propertyNameFormat)
 
-    val parsed = sqlFilePaths.flatMap { file =>
+    val custom = customYamlFiles.map { file =>
+      val content = new String(
+        Files.readAllBytes(file.toPath),
+        Charset.defaultCharset()
+      )
+
+      YmlParser.parse(content)
+    }
+
+    val parsed = parseFiles.flatMap { file =>
 
       val content = new String(
         Files.readAllBytes(file.toPath),
@@ -46,7 +57,15 @@ private[ldbc] object LdbcGenerator:
         val statements = list.flatMap(_._2).toSet
         statements.map {
           case statement: Table.CreateStatement =>
-            TableModelGenerator.generate(name, statement, classNameFormatter, propertyNameFormatter, sourceManaged)
+            val customTables = custom.find(_.database.name == name).map(_.database.tables)
+            TableModelGenerator.generate(
+              name,
+              statement,
+              classNameFormatter,
+              propertyNameFormatter,
+              sourceManaged,
+              customTables
+            )
           case statement: Database.CreateStatement =>
             val tableStatements = statements.flatMap {
               case statement: Table.CreateStatement =>

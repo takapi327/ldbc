@@ -22,6 +22,7 @@ object Generator {
       Compile / parseFiles,
       Compile / parseDirectories,
       Compile / excludeFiles,
+      Compile / customYamlFiles,
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
@@ -59,6 +60,7 @@ object Generator {
     parseFiles:         SettingKey[List[File]],
     parseDirectories:   SettingKey[List[File]],
     excludeFiles:       SettingKey[List[String]],
+    customYamlFiles:    SettingKey[List[File]],
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
@@ -67,7 +69,8 @@ object Generator {
 
     type LdbcGenerator = {
       def generate(
-        sqlFilePaths:       Array[File],
+        parseFiles:         Array[File],
+        customYamlFiles:    Array[File],
         classNameFormat:    String,
         propertyNameFormat: String,
         sourceManaged:      File,
@@ -97,10 +100,13 @@ object Generator {
 
     val changed = changedHits(combinedFiles)
 
-    val executeFiles = (changed.nonEmpty, generatedCache.count(_.exists()) == 0) match {
-      case (true, _)      => changed
-      case (false, true)  => combinedFiles
-      case (false, false) => List.empty
+    val customChanged = changedHits(customYamlFiles.value)
+
+    val executeFiles = (changed.nonEmpty, generatedCache.count(_.exists()) == 0, customChanged.nonEmpty) match {
+      case (_, _, true)      => combinedFiles
+      case (true, _, _)      => changed
+      case (false, true, _)  => combinedFiles
+      case (false, false, _) => List.empty
     }
 
     if (executeFiles.nonEmpty) {
@@ -111,6 +117,7 @@ object Generator {
 
     val generated = mainObject.generate(
       executeFiles.toArray,
+      customYamlFiles.value.toArray,
       classNameFormat.value.toString,
       propertyNameFormat.value.toString,
       sourceManaged.value,

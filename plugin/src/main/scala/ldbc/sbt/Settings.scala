@@ -19,6 +19,7 @@ object Settings {
     parseFiles         := List.empty,
     parseDirectories   := List.empty,
     excludeFiles       := List.empty,
+    customYamlFiles    := List.empty,
     classNameFormat    := Format.PASCAL,
     propertyNameFormat := Format.CAMEL,
     (Compile / sourceGenerators) += Generator.generate.taskValue

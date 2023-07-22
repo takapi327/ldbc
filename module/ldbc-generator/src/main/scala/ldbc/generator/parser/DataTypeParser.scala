@@ -216,9 +216,9 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def floatType: Parser[DataType] =
     customError(
-      caseSensitivity("float") ~> "(" ~> digit.filter(n => n >= 0 && n <= 24) ~ ")" ~
+      caseSensitivity("float") ~> opt("(" ~> digit.filter(n => n >= 0 && n <= 24) <~ ")") ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.FLOAT(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.FLOAT(n.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
         },
       input => s"""
         |===============================================================================
@@ -231,7 +231,7 @@ trait DataTypeParser extends SqlParser:
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
         |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
-        |example: FLOAT(p) [UNSIGNED] [ZEROFILL]
+        |example: FLOAT[(p)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
     )

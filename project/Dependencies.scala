@@ -15,6 +15,9 @@ object Dependencies {
 
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 
+  val circeYaml = "io.circe" %% "circe-yaml" % "0.14.2"
+  val circeGeneric = "io.circe" %% "circe-generic" % "0.14.5"
+
   val specs2Version = "5.2.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",

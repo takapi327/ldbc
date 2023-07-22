@@ -18,9 +18,13 @@ object Default:
     *   Value set as the default value for DataType
     */
   case class Value(value: String | Int) extends Default:
+    private val str = value match
+      case v: String => s"\"$v\""
+      case v: Int    => s"$v"
+
     override def toCode(isOptional: Boolean): String =
-      if isOptional then s".DEFAULT(Some('$value'))"
-      else s".DEFAULT('$value')"
+      if isOptional then s".DEFAULT(Some($str))"
+      else s".DEFAULT($str)"
 
   /** Object for setting NULL as the Default value when the SQL DataType is NULL-allowed.
     */

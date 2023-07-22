@@ -23,8 +23,9 @@ case class ColumnDefinition(
   attributes: Option[Attributes]
 ):
 
+  val isOptional = attributes.forall(_.constraint)
+
   private val scalaType =
-    val isOptional = attributes.forall(_.constraint)
     dataType.scalaType match
       case ScalaType.Enum(types) => if isOptional then s"Option[$name]" else name
       case _                     => dataType.propertyType(isOptional)
@@ -55,6 +56,11 @@ case class ColumnDefinition(
   def toCode: String =
     dataType.scalaType match
       case ScalaType.Enum(types) =>
-        s"column[$scalaType](\"$name\", ${ dataType.toCode(scalaType) }(using $name)" + default + _attributes + ")"
+        s"column(\"$name\", ${ dataType.toCode(scalaType) }(using $name)" + default + _attributes + ")"
       case _ =>
-        s"column[$scalaType](\"$name\", ${ dataType.toCode(scalaType) }" + default + _attributes + ")"
+        s"column(\"$name\", ${ dataType.toCode(scalaType) }" + default + _attributes + ")"
+
+  def toCode(customType: String): String =
+    val `type` =
+      if isOptional then s"Option[${ dataType.getTypeMatches(customType) }]" else dataType.getTypeMatches(customType)
+    s"column(\"$name\", ${ dataType.toCode(`type`) }" + default + _attributes + ")"

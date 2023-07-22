@@ -42,9 +42,11 @@ trait ColumnParser extends DataTypeParser:
       failureMessage("default null", "DEFAULT NULL")
     )
 
+  private def bitValue: Parser[Int] = opt("b") ~> "'" ~> digit <~ "'"
+
   private def defaultValue: Parser[Default.Value] =
     customError(
-      caseSensitivity("default") ~> (stringLiteral | digit) ^^ Default.Value.apply,
+      caseSensitivity("default") ~> (bitValue | digit | stringLiteral) ^^ Default.Value.apply,
       failureMessage("default value", "DEFAULT `value`")
     )
 

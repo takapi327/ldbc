@@ -26,17 +26,11 @@ trait DataTypes:
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "Ldbc-Core 0.1.0"
   )
-  inline def BIT[
-    T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
-      Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
-  ](inline length: Int): Bit[T] =
+  inline def BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]](inline length: Int): Bit[T] =
     inline if length < 1 || length > 64 then error("The length of the BIT must be in the range 1 to 64.")
     else Bit(Some(length), isOptional[T])
 
-  inline def BIT[
-    T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
-      Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
-  ]: Bit[T] = Bit(None, isOptional[T])
+  inline def BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]]: Bit[T] = Bit(None, isOptional[T])
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
