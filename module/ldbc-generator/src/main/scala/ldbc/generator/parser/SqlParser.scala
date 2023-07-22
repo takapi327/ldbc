@@ -7,7 +7,7 @@ package ldbc.generator.parser
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
 
-import ldbc.generator.model.{ Comment, Key }
+import ldbc.generator.model.*
 
 /** Parser to parse common definitions in MySQL.
   */
@@ -81,17 +81,23 @@ trait SqlParser extends JavaTokenParsers:
 
   private def chrExcept(cs: Char*) = elem("", ch => !cs.contains(ch))
 
-  private def lineComment: Parser[Comment] =
+  private def lineComment: Parser[CommentOut] =
     "--+".r ~> rep(chrExcept(EofCh, '\n')) ^^ { str =>
-      Comment(str.mkString(" "))
+      CommentOut(str.mkString(" "))
     }
 
-  private def blockComment: Parser[Comment] =
+  private def blockComment: Parser[CommentOut] =
     "/*" ~> rep(chrExcept(EofCh, '*')) <~ "*/" <~ opt(";") ^^ { str =>
-      Comment(str.mkString(" "))
+      CommentOut(str.mkString(" "))
     }
 
-  protected def comment: Parser[Comment] = lineComment | blockComment
+  protected def comment: Parser[CommentOut] = lineComment | blockComment
+
+  protected def commentSet: Parser[CommentSet] =
+    customError(
+      caseSensitivity("comment") ~> stringLiteral ^^ CommentSet.apply,
+      failureMessage("comment", "COMMENT 'string'")
+    )
 
   protected def keyBlockSize: Parser[Key.KeyBlockSize] =
     customError(
