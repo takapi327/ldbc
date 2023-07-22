@@ -56,7 +56,8 @@ case class ColumnDefinition(
   def toCode: String =
     dataType.scalaType match
       case ScalaType.Enum(types) =>
-        s"column(\"$name\", ${ dataType.toCode(scalaType) }(using $name)" + default + _attributes + ")"
+        val strings = dataType.toCode(scalaType).split('.')
+        s"column(\"$name\", ${ strings.head }(using $name)${ strings.tail.map(str => s".$str").mkString("") }" + default + _attributes + ")"
       case _ =>
         s"column(\"$name\", ${ dataType.toCode(scalaType) }" + default + _attributes + ")"
 
