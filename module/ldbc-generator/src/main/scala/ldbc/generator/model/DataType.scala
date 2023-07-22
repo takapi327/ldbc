@@ -227,9 +227,9 @@ object DataType:
     override def toCode(typeParam: String): String =
       (character, collate) match
         case (Some(ch), Some(co)) => s"$name[$typeParam].CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
-        case (Some(ch), None) => s"$name[$typeParam].CHARACTER_SET(\"$ch\")"
-        case (None, Some(co)) => s"$name[$typeParam].COLLATE(\"$co\")"
-        case (None, None) => s"$name[$typeParam]"
+        case (Some(ch), None)     => s"$name[$typeParam].CHARACTER_SET(\"$ch\")"
+        case (None, Some(co))     => s"$name[$typeParam].COLLATE(\"$co\")"
+        case (None, None)         => s"$name[$typeParam]"
 
   def BLOB(length: Option[Int]): DataType = new DataType:
     override val name:       String         = "BLOB"
