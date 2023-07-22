@@ -5,3 +5,5 @@
 package ldbc.generator.model
 
 case class Comment(message: String)
+
+case class CommentSet(message: String)
