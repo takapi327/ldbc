@@ -11,7 +11,7 @@ trait Key:
 
 object Key:
 
-  type IndexOptions = KeyBlockSize | IndexType | WithParser | Comment | Visible | EngineAttribute |
+  type IndexOptions = KeyBlockSize | IndexType | WithParser | CommentSet | Visible | EngineAttribute |
     SecondaryEngineAttribute
 
   trait On:
@@ -35,7 +35,7 @@ object Key:
     size:       Option[KeyBlockSize],
     indexType:  Option[IndexType],
     parserName: Option[WithParser],
-    comment:    Option[Comment],
+    comment:    Option[CommentSet],
     engine:     Option[EngineAttribute],
     secondary:  Option[SecondaryEngineAttribute]
   ):
@@ -43,7 +43,7 @@ object Key:
     def setSize(value: KeyBlockSize):                                 IndexOption = this.copy(size = Some(value))
     def setIndexType(value: IndexType):                               IndexOption = this.copy(indexType = Some(value))
     def setWithParser(value: WithParser):                             IndexOption = this.copy(parserName = Some(value))
-    def setComment(value: Comment):                                   IndexOption = this.copy(comment = Some(value))
+    def setComment(value: CommentSet):                                IndexOption = this.copy(comment = Some(value))
     def setEngineAttribute(value: EngineAttribute):                   IndexOption = this.copy(engine = Some(value))
     def setSecondaryEngineAttribute(value: SecondaryEngineAttribute): IndexOption = this.copy(secondary = Some(value))
 
