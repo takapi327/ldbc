@@ -88,9 +88,7 @@ trait ColumnParser extends DataTypeParser:
       failureMessage("storage", "STORAGE {DISK | MEMORY}")
     )
 
-  private def attribute: Parser[
-    ColumnDefinition.Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | CommentOut
-  ] =
+  private def attribute: Parser[ColumnDefinition.Attributes] =
     condition | keys | default | visible | commentSet | collate ^^ Attribute.Collate.apply | columnFormat | engineAttribute | secondaryEngineAttribute | storage | comment
 
   protected def columnDefinition: Parser[ColumnDefinition] =

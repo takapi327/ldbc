@@ -5,11 +5,9 @@
 package ldbc.generator.model
 
 case class ColumnDefinition(
-  name:     String,
-  dataType: DataType,
-  attributes: Option[
-    List[ColumnDefinition.Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | CommentOut]
-  ]
+  name:       String,
+  dataType:   DataType,
+  attributes: Option[List[ColumnDefinition.Attributes]]
 ):
 
   val isOptional: Boolean = attributes.fold(true)(_.map {
@@ -68,6 +66,8 @@ case class ColumnDefinition(
     s"column(\"$name\", ${ dataType.toCode(`type`) }" + default + _attributes + ")"
 
 object ColumnDefinition:
+
+  type Attributes = Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | CommentOut
 
   trait Attribute
 
