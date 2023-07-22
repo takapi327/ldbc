@@ -78,7 +78,7 @@ trait ColumnParser extends DataTypeParser:
     customError(
       caseSensitivity("column_format") ~> (
         caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
-        ) ^^ Attribute.ColumnFormat.apply,
+      ) ^^ Attribute.ColumnFormat.apply,
       failureMessage("column format", "COLUMN_FORMAT {FIXED | DYNAMIC | DEFAULT}")
     )
 
@@ -88,7 +88,9 @@ trait ColumnParser extends DataTypeParser:
       failureMessage("storage", "STORAGE {DISK | MEMORY}")
     )
 
-  private def attribute: Parser[ColumnDefinition.Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | CommentOut] =
+  private def attribute: Parser[
+    ColumnDefinition.Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | CommentOut
+  ] =
     condition | keys | default | visible | commentSet | collate ^^ Attribute.Collate.apply | columnFormat | engineAttribute | secondaryEngineAttribute | storage | comment
 
   protected def columnDefinition: Parser[ColumnDefinition] =
