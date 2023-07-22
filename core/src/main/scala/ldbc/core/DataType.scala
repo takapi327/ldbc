@@ -144,10 +144,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Bit[
-    T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
-      Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
-  ](
+  private[ldbc] case class Bit[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]](
     length:     Option[Int],
     isOptional: Boolean,
     default:    Option[Default] = None

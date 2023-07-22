@@ -185,10 +185,7 @@ private[ldbc] trait Alias:
     )
     Reference(table, columns.toList, None, None)
 
-  type BIT[
-    T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
-      Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
-  ] = DataType.Bit[T]
+  type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
 
   type TINYINT[T <: Byte | Short | Option[Byte | Short]] = DataType.Tinyint[T]
 
