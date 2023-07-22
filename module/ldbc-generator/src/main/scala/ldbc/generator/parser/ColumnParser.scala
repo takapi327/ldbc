@@ -46,7 +46,7 @@ trait ColumnParser extends DataTypeParser:
 
   private def defaultValue: Parser[Default.Value] =
     customError(
-      caseSensitivity("default") ~>(bitValue | digit | stringLiteral) ^^ Default.Value.apply,
+      caseSensitivity("default") ~> (bitValue | digit | stringLiteral) ^^ Default.Value.apply,
       failureMessage("default value", "DEFAULT `value`")
     )
 

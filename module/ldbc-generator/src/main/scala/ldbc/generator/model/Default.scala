@@ -20,7 +20,7 @@ object Default:
   case class Value(value: String | Int) extends Default:
     private val str = value match
       case v: String => s"\"$v\""
-      case v: Int => s"$v"
+      case v: Int    => s"$v"
 
     override def toCode(isOptional: Boolean): String =
       if isOptional then s".DEFAULT(Some($str))"

@@ -61,5 +61,6 @@ case class ColumnDefinition(
         s"column(\"$name\", ${ dataType.toCode(scalaType) }" + default + _attributes + ")"
 
   def toCode(customType: String): String =
-    val `type` = if isOptional then s"Option[${ dataType.getTypeMatches(customType) }]" else dataType.getTypeMatches(customType)
+    val `type` =
+      if isOptional then s"Option[${ dataType.getTypeMatches(customType) }]" else dataType.getTypeMatches(customType)
     s"column(\"$name\", ${ dataType.toCode(`type`) }" + default + _attributes + ")"
