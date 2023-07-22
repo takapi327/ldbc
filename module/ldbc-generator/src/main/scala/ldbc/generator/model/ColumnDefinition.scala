@@ -7,7 +7,7 @@ package ldbc.generator.model
 case class ColumnDefinition(
   name:       String,
   dataType:   DataType,
-  attributes: Option[List[ColumnDefinition.Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | Comment]]
+  attributes: Option[List[ColumnDefinition.Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | CommentOut]]
 ):
 
   val isOptional: Boolean = attributes.fold(true)(_.map {
