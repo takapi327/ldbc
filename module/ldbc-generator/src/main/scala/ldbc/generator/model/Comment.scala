@@ -4,6 +4,18 @@
 
 package ldbc.generator.model
 
-case class Comment(message: String)
+/**
+ * Model for storing commented out strings in SQL files.
+ *
+ * @param message
+ *   Commented out string
+ */
+case class CommentOut(message: String)
 
+/**
+ * A model for storing the values of comment attributes to be set on columns and tables.
+ *
+ * @param message
+ *   Comments to be set on columns and tables
+ */
 case class CommentSet(message: String)
