@@ -70,10 +70,16 @@ object ColumnDefinition:
 
   type Attributes = Attribute | CommentSet | Key.EngineAttribute | Key.SecondaryEngineAttribute | CommentOut
 
+  /** Trait representing the attribute to be set on the column. */
   trait Attribute
 
   object Attribute:
 
+    /** A model for determining if a data type is null tolerant.
+      *
+      * @param bool
+      *   true: NULL, false: NOT NULL
+      */
     case class Condition(bool: Boolean) extends Attribute
 
     /** Trait for setting SQL Default values
@@ -116,12 +122,37 @@ object ColumnDefinition:
           if onUpdate then ".DEFAULT_CURRENT_TIMESTAMP(true)"
           else ".DEFAULT_CURRENT_TIMESTAMP(false)"
 
+    /** A model representing the VISIBLE attribute to be set on the column.
+      *
+      * @param kind
+      *   VISIBLE or INVISIBLE
+      */
     case class Visible(kind: String) extends Attribute
 
+    /** A model representing the KEY attribute to be set on the column.
+      *
+      * @param kind
+      *   KEY Type
+      */
     case class Key(kind: String) extends Attribute
 
+    /** A model representing the Collate attribute to be set on the column.
+      *
+      * @param set
+      *   String to be set for Collate.
+      */
     case class Collate(set: String) extends Attribute
 
+    /** A model representing the COLUMN_FORMAT attribute to be set on the column.
+      *
+      * @param format
+      *   FIXED, DYNAMIC or DEFAULT
+      */
     case class ColumnFormat(format: String) extends Attribute
 
+    /** A model representing the STORAGE attribute to be set on the column.
+      *
+      * @param kind
+      *   DISK or MEMORY
+      */
     case class Storage(kind: String) extends Attribute
