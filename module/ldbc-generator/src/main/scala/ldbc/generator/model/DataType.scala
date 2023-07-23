@@ -40,9 +40,6 @@ trait DataType:
   def getTypeMatches(custom: String): String =
     scalaTypes.find(_.toString == custom).getOrElse(scalaType).code
 
-  def propertyType(isOptional: Boolean): String =
-    if isOptional then s"Option[${ scalaType.code }]" else scalaType.code
-
 object DataType:
 
   trait NumberDataType extends DataType:
@@ -226,5 +223,3 @@ object DataType:
     override val jdbcType:   JdbcType       = JdbcType.BigInt
     override val scalaType:  ScalaType      = ScalaType.BigInt
     override val scalaTypes: Seq[ScalaType] = Seq.empty
-
-    override def propertyType(isOptional: Boolean): String = scalaType.code

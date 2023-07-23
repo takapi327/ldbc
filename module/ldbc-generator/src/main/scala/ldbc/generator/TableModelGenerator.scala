@@ -121,15 +121,18 @@ private[ldbc] object TableModelGenerator:
     custom:                Option[Parser.Column]
   ): String =
 
-    val name = propertyNameFormatter.format(column.name)
-
-    custom.fold(
+    val scalaType = custom.fold(
       column.dataType.scalaType match
-        case _: ScalaType.Enum =>
-          if column.isOptional then s"$name: Option[$className.${ classNameFormatter.format(column.name) }]"
-          else s"$name: $className.${ classNameFormatter.format(column.name) }"
-        case _ => s"$name: ${ column.dataType.propertyType(column.isOptional) }"
-    )(v => if column.isOptional then s"$name: Option[${ v.`type` }]" else s"$name: ${ v.`type` }")
+        case _: ScalaType.Enum => s"$className.${ classNameFormatter.format(column.name) }"
+        case _ => column.dataType.scalaType.code
+    )(_.`type`)
+
+    val `type` = (column.isOptional, column.dataType) match
+      case (_, _: DataType.SERIAL) => scalaType
+      case (true, _) => s"Option[$scalaType]"
+      case (false, _) => scalaType
+
+    s"${ propertyNameFormatter.format(column.name) }: ${ `type` }"
 
   private def enumGenerator(column: ColumnDefinition, formatter: Naming): Option[String] =
     column.dataType.scalaType match
