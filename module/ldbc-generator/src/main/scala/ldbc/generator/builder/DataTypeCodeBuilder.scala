@@ -7,6 +7,14 @@ package ldbc.generator.builder
 import ldbc.generator.model.DataType
 import ldbc.generator.formatter.Naming
 
+/**
+ * DataType model for constructing code strings.
+ *
+ * @param scalaType
+ *   Scala types passed to the DataType type parameter
+ * @param formatter
+ *   A formatter that converts strings to an arbitrary format
+ */
 case class DataTypeCodeBuilder(scalaType: String, formatter: Naming):
 
   def build(dataType: DataType): String =

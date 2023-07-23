@@ -8,6 +8,12 @@ import ldbc.generator.model.*
 import ldbc.generator.parser.yml.Parser
 import ldbc.generator.formatter.Naming
 
+/**
+ * Column model for constructing code strings.
+ * 
+ * @param formatter
+ *   A formatter that converts strings to an arbitrary format
+ */
 case class ColumnCodeBuilder(formatter: Naming):
 
   def build(column: ColumnDefinition, customColumn: Option[Parser.Column]): String =
