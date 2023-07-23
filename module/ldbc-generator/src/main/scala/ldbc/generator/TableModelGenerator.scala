@@ -124,13 +124,13 @@ private[ldbc] object TableModelGenerator:
     val scalaType = custom.fold(
       column.dataType.scalaType match
         case _: ScalaType.Enum => s"$className.${ classNameFormatter.format(column.name) }"
-        case _ => column.dataType.scalaType.code
+        case _                 => column.dataType.scalaType.code
     )(_.`type`)
 
     val `type` = (column.isOptional, column.dataType) match
       case (_, _: DataType.SERIAL) => scalaType
-      case (true, _) => s"Option[$scalaType]"
-      case (false, _) => scalaType
+      case (true, _)               => s"Option[$scalaType]"
+      case (false, _)              => scalaType
 
     s"${ propertyNameFormatter.format(column.name) }: ${ `type` }"
 
