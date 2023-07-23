@@ -98,7 +98,6 @@ object DataType:
     override val scalaType:  ScalaType      = if unsigned then ScalaType.BigInt else ScalaType.Long
     override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Long, ScalaType.BigInt)
 
-
   case class DECIMAL(accuracy: Int, scale: Int, unsigned: Boolean, zerofill: Boolean) extends DataType:
     override val name:       String         = "DECIMAL"
     override val jdbcType:   JdbcType       = JdbcType.Decimal
@@ -110,7 +109,6 @@ object DataType:
     override val jdbcType:   JdbcType       = JdbcType.Float
     override val scalaType:  ScalaType      = ScalaType.Float
     override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Float, ScalaType.Double)
-
 
   case class CHAR(length: Int, character: Option[String], collate: Option[String]) extends StringDataType:
     override val name:       String         = "CHAR"

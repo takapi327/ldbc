@@ -84,7 +84,8 @@ private[ldbc] object TableModelGenerator:
 
     val builder = ColumnCodeBuilder(classNameFormatter)
 
-    val columns = statement.columnDefinitions.map(column => builder.build(column, custom.flatMap(_.findColumn(column.name))))
+    val columns =
+      statement.columnDefinitions.map(column => builder.build(column, custom.flatMap(_.findColumn(column.name))))
 
     val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
 
