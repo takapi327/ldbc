@@ -15,32 +15,7 @@ case class ColumnDefinition(
     case _                                       => true
   }.headOption.getOrElse(true))
 
-  private val defaultAttribute: Option[ColumnDefinition.Attribute.Default] = attributes.fold(None)(_.flatMap {
-    case v: ColumnDefinition.Attribute.Default => Some(v)
-    case _                                     => None
-  }.headOption)
-
-  private val scalaType =
-    dataType.scalaType match
-      case ScalaType.Enum(types) => if isOptional then s"Option[$name]" else name
-      case _                     => dataType.propertyType(isOptional)
-
-  private val default =
-    attributes.fold("")(attribute =>
-      dataType.scalaType match
-        case ScalaType.Enum(types) =>
-          defaultAttribute
-            .map {
-              case ColumnDefinition.Attribute.Default.Value(value) =>
-                if isOptional then s".DEFAULT(Some($name.$value))"
-                else s".DEFAULT($name.$value)"
-              case default => default.toCode(isOptional)
-            }
-            .getOrElse("")
-        case _ => defaultAttribute.map(_.toCode(isOptional)).getOrElse("")
-    )
-
-  private val _attributes = attributes.fold("")(attributes =>
+  val _attributes = attributes.fold("")(attributes =>
     /** Only comments need to be brought to the top because the definition method is different. */
     val comment = attributes.flatMap {
       case comment: CommentSet => Some(s"\"${ comment.message }\"")
@@ -52,19 +27,6 @@ case class ColumnDefinition(
     }
     if result.nonEmpty then ", " + result.mkString(", ") else ""
   )
-
-  def toCode: String =
-    dataType.scalaType match
-      case ScalaType.Enum(types) =>
-        val strings = dataType.toCode(scalaType).split('.')
-        s"column(\"$name\", ${ strings.head }(using $name)${ strings.tail.map(str => s".$str").mkString("") }" + default + _attributes + ")"
-      case _ =>
-        s"column(\"$name\", ${ dataType.toCode(scalaType) }" + default + _attributes + ")"
-
-  def toCode(customType: String): String =
-    val `type` =
-      if isOptional then s"Option[${ dataType.getTypeMatches(customType) }]" else dataType.getTypeMatches(customType)
-    s"column(\"$name\", ${ dataType.toCode(`type`) }" + default + _attributes + ")"
 
 object ColumnDefinition:
 
