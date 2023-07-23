@@ -5,6 +5,7 @@
 package ldbc.generator.parser
 
 import ldbc.generator.model.*
+import ldbc.generator.model.ColumnDefinition.*
 
 /** Parser for parsing column definitions.
   *
@@ -13,13 +14,13 @@ import ldbc.generator.model.*
   */
 trait ColumnParser extends DataTypeParser:
 
-  private def constraint: Parser[String] =
+  private def condition: Parser[Attribute.Condition] =
     customError(
-      caseSensitivity("not") ~> caseSensitivity("null") ^^ (_ => "NOT NULL") | "NULL",
+      opt(caseSensitivity("not")) <~ caseSensitivity("null") ^^ (v => Attribute.Condition(v.isEmpty)),
       failureMessage("Nullable", "[NOT] NULL")
     )
 
-  private def currentTimestamp: Parser[Default.CurrentTimestamp] =
+  private def currentTimestamp: Parser[Attribute.Default.CurrentTimestamp] =
     customError(
       caseSensitivity("default") ~> caseSensitivity("current_timestamp") ~> opt("(" ~> digit <~ ")") ~
         opt(
@@ -27,8 +28,8 @@ trait ColumnParser extends DataTypeParser:
             "(" ~> digit <~ ")"
           )
         ) ^^ {
-          case _ ~ Some(attribute ~ _) => Default.CurrentTimestamp(true)
-          case _ ~ None                => Default.CurrentTimestamp(false)
+          case _ ~ Some(attribute ~ _) => Attribute.Default.CurrentTimestamp(true)
+          case _ ~ None                => Attribute.Default.CurrentTimestamp(false)
         },
       failureMessage(
         "default current timestamp",
@@ -36,27 +37,27 @@ trait ColumnParser extends DataTypeParser:
       )
     )
 
-  private def defaultNull: Parser[Default.Null.type] =
+  private def defaultNull: Parser[Attribute.Default.Null.type] =
     customError(
-      caseSensitivity("default") ~> caseSensitivity("null") ^^ (_ => Default.Null),
+      caseSensitivity("default") ~> caseSensitivity("null") ^^ (_ => Attribute.Default.Null),
       failureMessage("default null", "DEFAULT NULL")
     )
 
   private def bitValue: Parser[Int] = opt("b") ~> "'" ~> digit <~ "'"
 
-  private def defaultValue: Parser[Default.Value] =
+  private def defaultValue: Parser[Attribute.Default.Value] =
     customError(
-      caseSensitivity("default") ~> (bitValue | digit | stringLiteral) ^^ Default.Value.apply,
+      caseSensitivity("default") ~> (bitValue | digit | stringLiteral) ^^ Attribute.Default.Value.apply,
       failureMessage("default value", "DEFAULT `value`")
     )
 
-  private def default: Parser[Default] = defaultValue | currentTimestamp | defaultNull
+  private def default: Parser[Attribute.Default] = defaultValue | currentTimestamp | defaultNull
 
-  private def visible: Parser[String] =
-    caseSensitivity("visible") | caseSensitivity("invisible")
+  private def visible: Parser[Attribute.Visible] =
+    (caseSensitivity("visible") | caseSensitivity("invisible")) ^^ Attribute.Visible.apply
 
-  private def autoInc: Parser[String] =
-    caseSensitivity("auto_increment") ^^ (_.toUpperCase)
+  private def autoInc: Parser[Attribute.Key] =
+    caseSensitivity("auto_increment") ^^ (v => Attribute.Key(v.toUpperCase))
 
   protected def primaryKey: Parser[String] =
     customError(
@@ -70,64 +71,27 @@ trait ColumnParser extends DataTypeParser:
       failureMessage("unique key", "UNIQUE [KEY]")
     )
 
-  protected def columnComment: Parser[Comment] =
-    customError(
-      caseSensitivity("comment") ~> stringLiteral ^^ Comment.apply,
-      failureMessage("comment", "COMMENT 'string'")
-    )
+  private def keys: Parser[Attribute.Key] =
+    autoInc | primaryKey ^^ (v => Attribute.Key(v.toUpperCase)) | uniqueKey ^^ (v => Attribute.Key(v.toUpperCase))
 
-  private def columnFormat: Parser[String] =
+  private def columnFormat: Parser[Attribute.ColumnFormat] =
     customError(
       caseSensitivity("column_format") ~> (
         caseSensitivity("fixed") | caseSensitivity("dynamic") | caseSensitivity("default")
-      ),
+      ) ^^ Attribute.ColumnFormat.apply,
       failureMessage("column format", "COLUMN_FORMAT {FIXED | DYNAMIC | DEFAULT}")
     )
 
-  private def storage: Parser[String] =
+  private def storage: Parser[Attribute.Storage] =
     customError(
-      caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")),
+      caseSensitivity("storage") ~> (caseSensitivity("disk") | caseSensitivity("memory")) ^^ Attribute.Storage.apply,
       failureMessage("storage", "STORAGE {DISK | MEMORY}")
     )
 
-  private def attributes: Parser[Option[Attributes]] =
-    opt(constraint) ~ opt(comment) ~ opt(default) ~ opt(comment) ~ opt(visible) ~
-      opt(comment) ~ opt(rep(autoInc | primaryKey | uniqueKey)) ~ opt(comment) ~
-      opt(columnComment) ~ opt(comment) ~ opt(collate) ~ opt(comment) ~ opt(columnFormat) ~
-      opt(comment) ~ opt(engineAttribute) ~ opt(comment) ~ opt(secondaryEngineAttribute) ~ opt(comment) ~
-      opt(storage) ^^ {
-        case constraint ~ _ ~ default ~ _ ~ visible ~ _ ~ key ~ _ ~ comment ~ _ ~ collate ~ _ ~ columnFormat ~ _ ~ engineAttribute ~ _ ~ secondaryEngineAttribute ~ _ ~ storage =>
-          (
-            constraint,
-            default,
-            visible,
-            key,
-            comment,
-            collate,
-            columnFormat,
-            engineAttribute,
-            secondaryEngineAttribute,
-            storage
-          ) match
-            case (None, None, None, None, None, None, None, None, None, None) => None
-            case _ =>
-              Some(
-                Attributes(
-                  constraint.forall(_ == "NULL"),
-                  default,
-                  visible,
-                  key,
-                  comment,
-                  collate,
-                  columnFormat,
-                  engineAttribute,
-                  secondaryEngineAttribute,
-                  storage
-                )
-              )
-      }
+  private def attribute: Parser[ColumnDefinition.Attributes] =
+    condition | keys | default | visible | commentSet | collate ^^ Attribute.Collate.apply | columnFormat | engineAttribute | secondaryEngineAttribute | storage | comment
 
   protected def columnDefinition: Parser[ColumnDefinition] =
-    opt(comment) ~> sqlIdent ~ opt(comment) ~ dataType ~ opt(comment) ~ attributes <~ opt(comment) ^^ {
+    opt(comment) ~> sqlIdent ~ opt(comment) ~ dataType ~ opt(comment) ~ opt(rep1(attribute)) <~ opt(comment) ^^ {
       case columnName ~ _ ~ dataType ~ _ ~ attributes => ColumnDefinition(columnName, dataType, attributes)
     }

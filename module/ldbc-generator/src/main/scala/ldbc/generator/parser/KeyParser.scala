@@ -4,7 +4,7 @@
 
 package ldbc.generator.parser
 
-import ldbc.generator.model.{ Comment, Key }
+import ldbc.generator.model.*
 import ldbc.generator.model.Key.*
 
 /** Parser for parsing create table key definitions.
@@ -42,7 +42,7 @@ trait KeyParser extends ColumnParser:
     )
 
   private def indexOptions: Parser[Key.IndexOptions] =
-    keyBlockSize | indexType | withParser | columnComment | visible |
+    keyBlockSize | indexType | withParser | commentSet | visible |
       engineAttribute | secondaryEngineAttribute
 
   private def indexOption: Parser[IndexOption] =
@@ -52,7 +52,7 @@ trait KeyParser extends ColumnParser:
           case value: Key.KeyBlockSize             => prev.setSize(value)
           case value: Key.IndexType                => prev.setIndexType(value)
           case value: Key.WithParser               => prev.setWithParser(value)
-          case value: Comment                      => prev.setComment(value)
+          case value: CommentSet                   => prev.setComment(value)
           case value: Key.EngineAttribute          => prev.setEngineAttribute(value)
           case value: Key.SecondaryEngineAttribute => prev.setSecondaryEngineAttribute(value)
           case value: Key.Visible                  => prev

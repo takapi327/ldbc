@@ -498,8 +498,8 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def enumType: Parser[DataType] =
     customError(
-      caseSensitivity("enum") ~> "(" ~> rep1sep(stringLiteral, ",") <~ ")" ^^ { types =>
-        DataType.ENUM(types)
+      caseSensitivity("enum") ~> "(" ~> rep1sep(stringLiteral, ",") ~ ")" ~ opt(character) ~ opt(collate) ^^ {
+        case types ~ _ ~ character ~ collate => DataType.ENUM(types, character, collate)
       },
       input => s"""
         |===============================================================================

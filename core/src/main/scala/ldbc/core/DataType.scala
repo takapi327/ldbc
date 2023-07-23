@@ -1268,7 +1268,9 @@ object DataType:
     */
   private[ldbc] case class Enum[T <: EnumModel | Option[?]](
     isOptional:         Boolean,
-    default:            Option[Default] = None
+    character:          Option[Character] = None,
+    collate:            Option[Collate]   = None,
+    default:            Option[Default]   = None
   )(using enumDataType: EnumDataType[?])
     extends DataType[T]:
 
@@ -1277,7 +1279,37 @@ object DataType:
     override def jdbcType: JdbcType = JdbcType.Char
 
     override def queryString: String =
-      typeName ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+      typeName ++ character.fold("")(v => s" ${ v.queryString }") ++ collate.fold("")(v =>
+        s" ${ v.queryString }"
+      ) ++ s" $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+
+    /** Method for setting Character Set to DataType in SQL.
+      *
+      * @param character
+      *   Character Set
+      */
+    def CHARACTER_SET(character: Character): Enum[T] = this.copy(character = Some(character))
+
+    /** Method for setting Character Set to DataType in SQL.
+      *
+      * @param character
+      *   Character Set
+      */
+    def CHARACTER_SET(character: String): Enum[T] = CHARACTER_SET(Character(character))
+
+    /** Method for setting Collation to DataType in SQL.
+      *
+      * @param collate
+      *   Collation
+      */
+    def COLLATE(collate: Collate): Enum[T] = this.copy(collate = Some(collate))
+
+    /** Method for setting Collation to DataType in SQL.
+      *
+      * @param collate
+      *   Collation
+      */
+    def COLLATE(collate: String): Enum[T] = COLLATE(Collate(collate))
 
     /** Method for setting Default value to DataType in SQL.
       *
