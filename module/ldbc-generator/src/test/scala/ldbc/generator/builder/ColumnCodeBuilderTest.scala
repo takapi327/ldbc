@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.generator.builder
 
@@ -29,11 +29,13 @@ object ColumnCodeBuilderTest extends Specification:
       val column = ColumnDefinition(
         "p1",
         DataType.BIGINT(None, false, false),
-        Some(List(
-          Attribute.Condition(false),
-          Attribute.Key("AUTO_INCREMENT"),
-          Attribute.Key("PRIMARY_KEY")
-        ))
+        Some(
+          List(
+            Attribute.Condition(false),
+            Attribute.Key("AUTO_INCREMENT"),
+            Attribute.Key("PRIMARY_KEY")
+          )
+        )
       )
       builder.build(column, None) === "column(\"p1\", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY)"
     }
@@ -42,10 +44,12 @@ object ColumnCodeBuilderTest extends Specification:
       val column = ColumnDefinition(
         "p1",
         DataType.BIGINT(None, false, false),
-        Some(List(
-          Attribute.Condition(false),
-          CommentSet("identifier")
-        ))
+        Some(
+          List(
+            Attribute.Condition(false),
+            CommentSet("identifier")
+          )
+        )
       )
       builder.build(column, None) === "column(\"p1\", BIGINT[Long], \"identifier\")"
     }
@@ -54,10 +58,12 @@ object ColumnCodeBuilderTest extends Specification:
       val column = ColumnDefinition(
         "p1",
         DataType.VARCHAR(255, None, None),
-        Some(List(
-          Attribute.Condition(false),
-          Attribute.Collate("utf8mb4_bin")
-        ))
+        Some(
+          List(
+            Attribute.Condition(false),
+            Attribute.Collate("utf8mb4_bin")
+          )
+        )
       )
       builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
     }
@@ -66,10 +72,12 @@ object ColumnCodeBuilderTest extends Specification:
       val column = ColumnDefinition(
         "p1",
         DataType.VARCHAR(255, None, None),
-        Some(List(
-          Attribute.Condition(false),
-          Attribute.Visible("VISIBLE")
-        ))
+        Some(
+          List(
+            Attribute.Condition(false),
+            Attribute.Visible("VISIBLE")
+          )
+        )
       )
       builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
     }
@@ -78,10 +86,12 @@ object ColumnCodeBuilderTest extends Specification:
       val column = ColumnDefinition(
         "p1",
         DataType.VARCHAR(255, None, None),
-        Some(List(
-          Attribute.Condition(false),
-          Attribute.ColumnFormat("FIXED")
-        ))
+        Some(
+          List(
+            Attribute.Condition(false),
+            Attribute.ColumnFormat("FIXED")
+          )
+        )
       )
       builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
     }
@@ -90,10 +100,12 @@ object ColumnCodeBuilderTest extends Specification:
       val column = ColumnDefinition(
         "p1",
         DataType.VARCHAR(255, None, None),
-        Some(List(
-          Attribute.Condition(false),
-          Attribute.Storage("DISK")
-        ))
+        Some(
+          List(
+            Attribute.Condition(false),
+            Attribute.Storage("DISK")
+          )
+        )
       )
       builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
     }
