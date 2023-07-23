@@ -12,6 +12,7 @@ import scala.io.Codec
 import ldbc.generator.formatter.Naming
 import ldbc.generator.model.*
 import ldbc.generator.parser.yml.Parser
+import ldbc.generator.builder.ColumnCodeBuilder
 
 /** An object for generating a model about Table.
   */
@@ -81,15 +82,9 @@ private[ldbc] object TableModelGenerator:
 
     val packageName = if database.nonEmpty then s"ldbc.generated.$database" else "ldbc.generated"
 
-    val columns =
-      statement.columnDefinitions.map((column: ColumnDefinition) =>
-        custom.flatMap(_.findColumn(column.name)) match
-          case Some(value) => column.toCode(value.`type`)
-          case None =>
-            column.dataType.scalaType match
-              case ScalaType.Enum(types) => column.copy(name = classNameFormatter.format(column.name)).toCode
-              case _                     => column.toCode
-      )
+    val builder = ColumnCodeBuilder(classNameFormatter)
+
+    val columns = statement.columnDefinitions.map(column => builder.build(column, custom.flatMap(_.findColumn(column.name))))
 
     val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
 
