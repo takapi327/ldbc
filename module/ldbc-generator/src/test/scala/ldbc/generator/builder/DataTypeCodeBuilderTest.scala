@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.generator.builder
 
@@ -134,7 +134,9 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType3 = DataType.CHAR(255, None, Some("utf8mb4_bin"))
       val dataType4 = DataType.CHAR(255, None, None)
       builder("String").build(dataType1) === "CHAR[String](255).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
-        builder("Option[String]").build(dataType1) === "CHAR[Option[String]](255).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+        builder("Option[String]").build(
+          dataType1
+        ) === "CHAR[Option[String]](255).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
         builder("String").build(dataType2) === "CHAR[String](255).CHARACTER_SET(\"utf8mb4\")" and
         builder("Option[String]").build(dataType2) === "CHAR[Option[String]](255).CHARACTER_SET(\"utf8mb4\")" and
         builder("String").build(dataType3) === "CHAR[String](255).COLLATE(\"utf8mb4_bin\")" and
@@ -148,8 +150,12 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType2 = DataType.VARCHAR(255, Some("utf8mb4"), None)
       val dataType3 = DataType.VARCHAR(255, None, Some("utf8mb4_bin"))
       val dataType4 = DataType.VARCHAR(255, None, None)
-      builder("String").build(dataType1) === "VARCHAR[String](255).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
-        builder("Option[String]").build(dataType1) === "VARCHAR[Option[String]](255).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+      builder("String").build(
+        dataType1
+      ) === "VARCHAR[String](255).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+        builder("Option[String]").build(
+          dataType1
+        ) === "VARCHAR[Option[String]](255).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
         builder("String").build(dataType2) === "VARCHAR[String](255).CHARACTER_SET(\"utf8mb4\")" and
         builder("Option[String]").build(dataType2) === "VARCHAR[Option[String]](255).CHARACTER_SET(\"utf8mb4\")" and
         builder("String").build(dataType3) === "VARCHAR[String](255).COLLATE(\"utf8mb4_bin\")" and
@@ -181,8 +187,12 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType2 = DataType.TINYTEXT(Some("utf8mb4"), None)
       val dataType3 = DataType.TINYTEXT(None, Some("utf8mb4_bin"))
       val dataType4 = DataType.TINYTEXT(None, None)
-      builder("String").build(dataType1) === "TINYTEXT[String]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
-        builder("Option[String]").build(dataType1) === "TINYTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+      builder("String").build(
+        dataType1
+      ) === "TINYTEXT[String]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+        builder("Option[String]").build(
+          dataType1
+        ) === "TINYTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
         builder("String").build(dataType2) === "TINYTEXT[String]().CHARACTER_SET(\"utf8mb4\")" and
         builder("Option[String]").build(dataType2) === "TINYTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\")" and
         builder("String").build(dataType3) === "TINYTEXT[String]().COLLATE(\"utf8mb4_bin\")" and
@@ -196,10 +206,16 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType2 = DataType.ENUM(List("Active", "InActive"), Some("utf8mb4"), None)
       val dataType3 = DataType.ENUM(List("Active", "InActive"), None, Some("utf8mb4_bin"))
       val dataType4 = DataType.ENUM(List("Active", "InActive"), None, None)
-      builder("Status").build(dataType1) === "ENUM[Status](using Status).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
-        builder("Option[Status]").build(dataType1) === "ENUM[Option[Status]](using Status).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+      builder("Status").build(
+        dataType1
+      ) === "ENUM[Status](using Status).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+        builder("Option[Status]").build(
+          dataType1
+        ) === "ENUM[Option[Status]](using Status).CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
         builder("Status").build(dataType2) === "ENUM[Status](using Status).CHARACTER_SET(\"utf8mb4\")" and
-        builder("Option[Status]").build(dataType2) === "ENUM[Option[Status]](using Status).CHARACTER_SET(\"utf8mb4\")" and
+        builder("Option[Status]").build(
+          dataType2
+        ) === "ENUM[Option[Status]](using Status).CHARACTER_SET(\"utf8mb4\")" and
         builder("Status").build(dataType3) === "ENUM[Status](using Status).COLLATE(\"utf8mb4_bin\")" and
         builder("Option[Status]").build(dataType3) === "ENUM[Option[Status]](using Status).COLLATE(\"utf8mb4_bin\")" and
         builder("Status").build(dataType4) === "ENUM[Status](using Status)" and
@@ -221,7 +237,9 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType3 = DataType.TEXT(Some(255), None, Some("utf8mb4_bin"))
       val dataType4 = DataType.TEXT(None, None, None)
       builder("String").build(dataType1) === "TEXT[String]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
-        builder("Option[String]").build(dataType1) === "TEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+        builder("Option[String]").build(
+          dataType1
+        ) === "TEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
         builder("String").build(dataType2) === "TEXT[String]().CHARACTER_SET(\"utf8mb4\")" and
         builder("Option[String]").build(dataType2) === "TEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\")" and
         builder("String").build(dataType3) === "TEXT[String]().COLLATE(\"utf8mb4_bin\")" and
@@ -241,8 +259,12 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType2 = DataType.MEDIUMTEXT(Some("utf8mb4"), None)
       val dataType3 = DataType.MEDIUMTEXT(None, Some("utf8mb4_bin"))
       val dataType4 = DataType.MEDIUMTEXT(None, None)
-      builder("String").build(dataType1) === "MEDIUMTEXT[String]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
-        builder("Option[String]").build(dataType1) === "MEDIUMTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+      builder("String").build(
+        dataType1
+      ) === "MEDIUMTEXT[String]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+        builder("Option[String]").build(
+          dataType1
+        ) === "MEDIUMTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
         builder("String").build(dataType2) === "MEDIUMTEXT[String]().CHARACTER_SET(\"utf8mb4\")" and
         builder("Option[String]").build(dataType2) === "MEDIUMTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\")" and
         builder("String").build(dataType3) === "MEDIUMTEXT[String]().COLLATE(\"utf8mb4_bin\")" and
@@ -262,8 +284,12 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType2 = DataType.LONGTEXT(Some("utf8mb4"), None)
       val dataType3 = DataType.LONGTEXT(None, Some("utf8mb4_bin"))
       val dataType4 = DataType.LONGTEXT(None, None)
-      builder("String").build(dataType1) === "LONGTEXT[String]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
-        builder("Option[String]").build(dataType1) === "LONGTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+      builder("String").build(
+        dataType1
+      ) === "LONGTEXT[String]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
+        builder("Option[String]").build(
+          dataType1
+        ) === "LONGTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\").COLLATE(\"utf8mb4_bin\")" and
         builder("String").build(dataType2) === "LONGTEXT[String]().CHARACTER_SET(\"utf8mb4\")" and
         builder("Option[String]").build(dataType2) === "LONGTEXT[Option[String]]().CHARACTER_SET(\"utf8mb4\")" and
         builder("String").build(dataType3) === "LONGTEXT[String]().COLLATE(\"utf8mb4_bin\")" and
