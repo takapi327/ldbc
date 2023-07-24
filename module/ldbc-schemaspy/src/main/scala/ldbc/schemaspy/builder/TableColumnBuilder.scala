@@ -8,6 +8,7 @@ import org.schemaspy.model.TableColumn
 import org.schemaspy.model.Table as SchemaspyTable
 
 import ldbc.core.Column
+import ldbc.core.attribute.Comment
 
 /** Object to generate a TableColumn model for SchemaSpy.
   */
@@ -31,6 +32,8 @@ object TableColumnBuilder:
     column.setNullable(_column.dataType.isOptional)
     _column.dataType.default.map(_.value) foreach column.setDefaultValue
 
-    _column.comment foreach column.setComments
+    _column.attributes.foreach {
+      case comment: Comment[?] => column.setComments(comment.message)
+    }
     column.setId(index)
     column

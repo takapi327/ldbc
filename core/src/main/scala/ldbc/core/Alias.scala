@@ -7,7 +7,7 @@ package ldbc.core
 import java.time.*
 import java.time.Year as JYear
 
-import ldbc.core.attribute.{ Attribute, AutoInc }
+import ldbc.core.attribute.{ Attribute, AutoInc, Comment }
 
 private[ldbc] trait Alias:
 
@@ -19,23 +19,12 @@ private[ldbc] trait Alias:
   ): Column[T] = Column[T](label, dataType)
 
   def column[T](
-    label:    String,
-    dataType: DataType[T],
-    comment:  String
-  ): Column[T] = Column[T](label, dataType, comment)
-
-  def column[T](
     label:      String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
   ): Column[T] = Column[T](label, dataType, attributes: _*)
 
-  def column[T](
-    label:      String,
-    dataType:   DataType[T],
-    comment:    String,
-    attributes: Attribute[T]*
-  ): Column[T] = Column[T](label, dataType, comment, attributes: _*)
+  def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 
   def AUTO_INCREMENT[T <: Byte | Short | Int | Long | BigInt | Option[Byte | Short | Int | Long | BigInt]]: AutoInc[T] =
     AutoInc[T]()

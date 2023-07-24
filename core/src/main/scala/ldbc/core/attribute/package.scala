@@ -14,3 +14,7 @@ package object attribute:
       *   SQL query string
       */
     def queryString: String
+
+  private[ldbc] case class Comment[T](message: String) extends Attribute[T]:
+
+    override def queryString: String = s"COMMENT '$message'"
