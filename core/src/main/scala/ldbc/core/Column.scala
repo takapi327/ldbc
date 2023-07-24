@@ -28,7 +28,7 @@ trait Column[T]:
     *   SQL query string
     */
   def queryString: String =
-    s"`$label` ${dataType.queryString}" + attributes.map(v => s" ${v.queryString}").mkString("")
+    s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
 
   override def toString: String = s"`$label`"
 

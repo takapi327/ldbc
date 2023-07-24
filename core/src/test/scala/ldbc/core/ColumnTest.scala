@@ -18,7 +18,11 @@ object ColumnTest extends Specification:
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
-      column[Long]("id", BIGINT(64), COMMENT("identifier")).queryString === "`id` BIGINT(64) NOT NULL COMMENT 'identifier'"
+      column[Long](
+        "id",
+        BIGINT(64),
+        COMMENT("identifier")
+      ).queryString === "`id` BIGINT(64) NOT NULL COMMENT 'identifier'"
     }
 
     "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {
