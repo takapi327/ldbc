@@ -51,7 +51,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", BIGINT[Long], \"identifier\")"
+      builder.build(column, None) === "column(\"p1\", BIGINT[Long], COMMENT(\"identifier\"))"
     }
 
     "The construction of Column into a code string matches the specified string." in {

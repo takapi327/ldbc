@@ -16,12 +16,8 @@ case class ColumnDefinition(
   }.headOption.getOrElse(true))
 
   val _attributes = attributes.fold("")(attributes =>
-    /** Only comments need to be brought to the top because the definition method is different. */
-    val comment = attributes.flatMap {
-      case comment: CommentSet => Some(s"\"${ comment.message }\"")
-      case _                   => None
-    }
-    val result = comment ++ attributes.flatMap {
+    val result = attributes.flatMap {
+      case comment: CommentSet                 => Some(s"COMMENT(\"${ comment.message }\")")
       case key: ColumnDefinition.Attribute.Key => Some(s"${ key.kind }")
       case _                                   => None
     }
