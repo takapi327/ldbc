@@ -65,7 +65,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
+      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), COLLATE(\"utf8mb4_bin\"))"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -79,7 +79,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
+      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), VISIBLE)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -93,7 +93,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
+      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), FIXED)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -107,7 +107,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
+      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), DISK)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
