@@ -71,7 +71,7 @@ object ColumnTest extends Specification:
         FIXED,
         COLLATE("ascii_bin"),
         MEMORY
-      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name' UNIQUE KEY VISIBLE COLUMN_FORMAT FIXED COLLATE ascii_bin STORAGE MEMORY"
+      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name' UNIQUE KEY /*!80023 VISIBLE */ /*!50606 COLUMN_FORMAT FIXED */ COLLATE ascii_bin /*!50606 STORAGE MEMORY */"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {

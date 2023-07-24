@@ -20,26 +20,26 @@ package object attribute:
     override def queryString: String = s"COMMENT '$message'"
 
   private[ldbc] case class Visible[T]() extends Attribute[T]:
-    override def queryString: String = "VISIBLE"
+    override def queryString: String = "/*!80023 VISIBLE */"
 
   private[ldbc] case class InVisible[T]() extends Attribute[T]:
-    override def queryString: String = "INVISIBLE"
+    override def queryString: String = "/*!80023 INVISIBLE */"
 
   private[ldbc] trait ColumnFormat[T] extends Attribute[T]
   object ColumnFormat:
     case class Fixed[T]() extends ColumnFormat[T]:
-      override def queryString: String = "COLUMN_FORMAT FIXED"
+      override def queryString: String = "/*!50606 COLUMN_FORMAT FIXED */"
 
     case class Dynamic[T]() extends ColumnFormat[T]:
-      override def queryString: String = "COLUMN_FORMAT DYNAMIC"
+      override def queryString: String = "/*!50606 COLUMN_FORMAT DYNAMIC */"
 
     case class Default[T]() extends ColumnFormat[T]:
-      override def queryString: String = "COLUMN_FORMAT DEFAULT"
+      override def queryString: String = "/*!50606 COLUMN_FORMAT DEFAULT */"
 
   private[ldbc] trait Storage[T] extends Attribute[T]
   object Storage:
     case class Disk[T]() extends Storage[T]:
-      override def queryString: String = "STORAGE DISK"
+      override def queryString: String = "/*!50606 STORAGE DISK */"
 
     case class Memory[T]() extends Storage[T]:
-      override def queryString: String = "STORAGE MEMORY"
+      override def queryString: String = "/*!50606 STORAGE MEMORY */"
