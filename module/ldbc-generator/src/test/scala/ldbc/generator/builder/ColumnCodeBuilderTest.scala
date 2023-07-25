@@ -93,7 +93,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), FIXED)"
+      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), COLUMN_FORMAT.FIXED)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -107,7 +107,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), DISK)"
+      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), STORAGE.DISK)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
