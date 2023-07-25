@@ -7,7 +7,7 @@ package ldbc.core
 import java.time.*
 import java.time.Year as JYear
 
-import ldbc.core.attribute.{ Attribute, AutoInc }
+import ldbc.core.attribute.*
 
 private[ldbc] trait Alias:
 
@@ -19,23 +19,26 @@ private[ldbc] trait Alias:
   ): Column[T] = Column[T](label, dataType)
 
   def column[T](
-    label:    String,
-    dataType: DataType[T],
-    comment:  String
-  ): Column[T] = Column[T](label, dataType, comment)
-
-  def column[T](
     label:      String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
   ): Column[T] = Column[T](label, dataType, attributes: _*)
 
-  def column[T](
-    label:      String,
-    dataType:   DataType[T],
-    comment:    String,
-    attributes: Attribute[T]*
-  ): Column[T] = Column[T](label, dataType, comment, attributes: _*)
+  def COMMENT[T](message: String): Comment[T] = Comment[T](message)
+
+  def VISIBLE[T]:   Visible[T]   = Visible[T]()
+  def INVISIBLE[T]: InVisible[T] = InVisible[T]()
+
+  def COLLATE[T <: String | Option[String]](name: String): Collate & Attribute[T] = new Collate(name) with Attribute[T]
+
+  object COLUMN_FORMAT:
+    def FIXED[T]:   ColumnFormat.Fixed[T]   = ColumnFormat.Fixed[T]()
+    def DYNAMIC[T]: ColumnFormat.Dynamic[T] = ColumnFormat.Dynamic[T]()
+    def DEFAULT[T]: ColumnFormat.Default[T] = ColumnFormat.Default[T]()
+
+  object STORAGE:
+    def DISK[T]:   Storage.Disk[T]   = Storage.Disk[T]()
+    def MEMORY[T]: Storage.Memory[T] = Storage.Memory[T]()
 
   def AUTO_INCREMENT[T <: Byte | Short | Int | Long | BigInt | Option[Byte | Short | Int | Long | BigInt]]: AutoInc[T] =
     AutoInc[T]()
