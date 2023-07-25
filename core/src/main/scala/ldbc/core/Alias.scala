@@ -31,12 +31,14 @@ private[ldbc] trait Alias:
 
   def COLLATE[T <: String | Option[String]](name: String): Collate & Attribute[T] = new Collate(name) with Attribute[T]
 
-  def FIXED[T]:   ColumnFormat.Fixed[T]   = ColumnFormat.Fixed[T]()
-  def DYNAMIC[T]: ColumnFormat.Dynamic[T] = ColumnFormat.Dynamic[T]()
-  def DEFAULT[T]: ColumnFormat.Default[T] = ColumnFormat.Default[T]()
+  object COLUMN_FORMAT:
+    def FIXED[T]:   ColumnFormat.Fixed[T]   = ColumnFormat.Fixed[T]()
+    def DYNAMIC[T]: ColumnFormat.Dynamic[T] = ColumnFormat.Dynamic[T]()
+    def DEFAULT[T]: ColumnFormat.Default[T] = ColumnFormat.Default[T]()
 
-  def DISK[T]:   Storage.Disk[T]   = Storage.Disk[T]()
-  def MEMORY[T]: Storage.Memory[T] = Storage.Memory[T]()
+  object STORAGE:
+    def DISK[T]:   Storage.Disk[T]   = Storage.Disk[T]()
+    def MEMORY[T]: Storage.Memory[T] = Storage.Memory[T]()
 
   def AUTO_INCREMENT[T <: Byte | Short | Int | Long | BigInt | Option[Byte | Short | Int | Long | BigInt]]: AutoInc[T] =
     AutoInc[T]()

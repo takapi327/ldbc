@@ -33,7 +33,7 @@ object ColumnTest extends Specification:
       column[Long](
         "id",
         BIGINT(64),
-        AutoInc[Long](),
+        AUTO_INCREMENT,
         COMMENT("identifier")
       ).queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
     }
@@ -68,9 +68,9 @@ object ColumnTest extends Specification:
         COMMENT("name"),
         UNIQUE_KEY,
         VISIBLE,
-        FIXED,
+        COLUMN_FORMAT.FIXED,
         COLLATE("ascii_bin"),
-        MEMORY
+        STORAGE.MEMORY
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name' UNIQUE KEY /*!80023 VISIBLE */ /*!50606 COLUMN_FORMAT FIXED */ COLLATE ascii_bin /*!50606 STORAGE MEMORY */"
     }
 
