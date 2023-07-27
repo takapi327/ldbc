@@ -21,7 +21,14 @@ trait DataTypeParser extends SqlParser:
   private def argument(name: String, min: Int, max: Int, default: Int): Parser[Int] =
     customError(
       "(" ~> digit.filter(n => n >= min && n <= max) <~ ")",
-      s"M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default."
+      input => s"""
+        |======================================================
+        |Failed to parse $name data type.
+        |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+        |M in $name[(M)] is the number of bits per value ($min to $max); if M is omitted, the default is $default.
+        |======================================================
+        |""".stripMargin
     )
 
   private def argument(name: String, min: Int, max: Int | Long): Parser[Int] =
@@ -32,13 +39,20 @@ trait DataTypeParser extends SqlParser:
           case m: Long => n <= m
         )
       ) <~ ")",
-      s"M in $name[(M)] is the number of bits per value ($min to $max)"
+      input => s"""
+        |======================================================
+        |Failed to parse $name data type.
+        |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+        |M in $name[(M)] is the number of bits per value ($min to $max)
+        |======================================================
+        |""".stripMargin
     )
 
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType
+      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType | serialType
 
   /** Numeric data type parsing
     */
@@ -47,7 +61,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("bit") ~> opt(argument("BIT", 1, 64, 1)) ^^ { n =>
         DataType.BIT(n)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse Bit data type.
         |The Bit Data type must be defined as follows
@@ -57,6 +71,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: BIT[(M)]
         |==============================================================================
         |""".stripMargin
@@ -68,7 +83,7 @@ trait DataTypeParser extends SqlParser:
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.TINYINT(n, unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse tinyint data type.
         |The tinyint Data type must be defined as follows
@@ -78,6 +93,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TINYINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -89,7 +105,7 @@ trait DataTypeParser extends SqlParser:
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.SMALLINT(n, unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse smallint data type.
         |The smallint Data type must be defined as follows
@@ -99,6 +115,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: SMALLINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -110,7 +127,7 @@ trait DataTypeParser extends SqlParser:
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.MEDIUMINT(n, unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse mediumint data type.
         |The mediumint Data type must be defined as follows
@@ -120,6 +137,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: MEDIUMINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -132,7 +150,7 @@ trait DataTypeParser extends SqlParser:
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.INT(n, unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse int data type.
         |The int Data type must be defined as follows
@@ -142,6 +160,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: INT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -153,7 +172,7 @@ trait DataTypeParser extends SqlParser:
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.BIGINT(n, unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse bigint data type.
         |The bigint Data type must be defined as follows
@@ -163,6 +182,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: BIGINT[(M)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -178,7 +198,7 @@ trait DataTypeParser extends SqlParser:
               case Some(m ~ d) => DataType.DECIMAL(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
               case None        => DataType.DECIMAL(10, 0, unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse decimal data type.
         |The decimal Data type must be defined as follows
@@ -188,6 +208,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DECIMAL[(M[,D])] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -195,11 +216,11 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def floatType: Parser[DataType] =
     customError(
-      caseSensitivity("float") ~> "(" ~> digit.filter(n => n >= 0 && n <= 24) ~ ")" ~
+      caseSensitivity("float") ~> opt("(" ~> digit.filter(n => n >= 0 && n <= 24) <~ ")") ~
         opt(unsigned) ~ opt(zerofill) ^^ {
-          case n ~ _ ~ unsigned ~ zerofill => DataType.FLOAT(n, unsigned.isDefined, zerofill.isDefined)
+          case n ~ unsigned ~ zerofill => DataType.FLOAT(n.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse float data type.
         |The float Data type must be defined as follows
@@ -209,7 +230,8 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
-        |example: FLOAT(p) [UNSIGNED] [ZEROFILL]
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+        |example: FLOAT[(p)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
     )
@@ -224,7 +246,7 @@ trait DataTypeParser extends SqlParser:
               case Some(m ~ _ ~ d) => DataType.FLOAT(m, unsigned.isDefined, zerofill.isDefined)
               case None            => DataType.FLOAT(10, unsigned.isDefined, zerofill.isDefined)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse double data type.
         |The double Data type must be defined as follows
@@ -234,6 +256,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/numeric-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DOUBLE[(M,D)] [UNSIGNED] [ZEROFILL]
         |==============================================================================
         |""".stripMargin
@@ -247,7 +270,7 @@ trait DataTypeParser extends SqlParser:
         opt(argument("CHAR", 0, 255, 1)) ~ opt(character) ~ opt(collate) ^^ {
           case n ~ character ~ collate => DataType.CHAR(n.getOrElse(1), character, collate)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse char data type.
         |The char Data type must be defined as follows
@@ -257,6 +280,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: [NATIONAL] CHAR[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -268,7 +292,7 @@ trait DataTypeParser extends SqlParser:
         argument("VARCHAR", 0, 65535) ~ opt(character) ~ opt(collate) ^^ {
           case n ~ character ~ collate => DataType.VARCHAR(n, character, collate)
         },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse varchar data type.
         |The varchar Data type must be defined as follows
@@ -278,6 +302,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: [NATIONAL] VARCHAR(M) [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -288,7 +313,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("binary") ~> opt(argument("BINARY", 0, 255, 1)) ^^ { n =>
         DataType.BINARY(n.getOrElse(1))
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse binary data type.
         |The binary Data type must be defined as follows
@@ -298,6 +323,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: BINARY[(M)]
         |==============================================================================
         |""".stripMargin
@@ -308,7 +334,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("varbinary") ~> argument("VARBINARY", 0, Int.MaxValue) ^^ { n =>
         DataType.VARBINARY(n)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse varbinary data type.
         |The varbinary Data type must be defined as follows
@@ -318,6 +344,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: VARBINARY(M)
         |==============================================================================
         |""".stripMargin
@@ -326,7 +353,7 @@ trait DataTypeParser extends SqlParser:
   private[ldbc] def tinyblobType: Parser[DataType] =
     customError(
       caseSensitivity("tinyblob") ^^ (_ => DataType.TINYBLOB()),
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse tinyblob data type.
         |The tinyblob Data type must be defined as follows
@@ -334,6 +361,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TINYBLOB
         |==============================================================================
         |""".stripMargin
@@ -344,7 +372,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("tinytext") ~> opt(character) ~ opt(collate) ^^ {
         case character ~ collate => DataType.TINYTEXT(character, collate)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse tinytext data type.
         |The tinytext Data type must be defined as follows
@@ -352,6 +380,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TINYTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -362,7 +391,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("blob") ~> opt(argument("BLOB", 0, 4294967295L)) ^^ { n =>
         DataType.BLOB(n)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse blob data type.
         |The blob Data type must be defined as follows
@@ -370,6 +399,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: BLOB[(M)]
         |==============================================================================
         |""".stripMargin
@@ -380,7 +410,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("text") ~> opt(argument("TEXT", 0, 255)) ~ opt(character) ~ opt(collate) ^^ {
         case n ~ character ~ collate => DataType.TEXT(n, character, collate)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse text data type.
         |The text Data type must be defined as follows
@@ -388,6 +418,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TEXT[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -396,7 +427,7 @@ trait DataTypeParser extends SqlParser:
   private[ldbc] def mediumblobType: Parser[DataType] =
     customError(
       caseSensitivity("mediumblob") ^^ (_ => DataType.TINYBLOB()),
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse mediumblob data type.
         |The mediumblob Data type must be defined as follows
@@ -404,6 +435,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: MEDIUMBLOB
         |==============================================================================
         |""".stripMargin
@@ -414,7 +446,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("mediumtext") ~> opt(character) ~ opt(collate) ^^ {
         case character ~ collate => DataType.MEDIUMTEXT(character, collate)
       },
-      """
+      input => """
         |===============================================================================
         |Failed to parse mediumtext data type.
         |The mediumtext Data type must be defined as follows
@@ -422,6 +454,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
         |example: MEDIUMTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -430,7 +463,7 @@ trait DataTypeParser extends SqlParser:
   private[ldbc] def longblobType: Parser[DataType] =
     customError(
       caseSensitivity("longblob") ^^ (_ => DataType.LONGBLOB()),
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse longblob data type.
         |The longblob Data type must be defined as follows
@@ -438,6 +471,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: LONGBLOB
         |==============================================================================
         |""".stripMargin
@@ -448,7 +482,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("longtext") ~> opt(character) ~ opt(collate) ^^ {
         case character ~ collate => DataType.LONGTEXT(character, collate)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse longtext data type.
         |The longtext Data type must be defined as follows
@@ -456,6 +490,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/string-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: LONGTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
         |==============================================================================
         |""".stripMargin
@@ -463,10 +498,10 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def enumType: Parser[DataType] =
     customError(
-      caseSensitivity("enum") ~> "(" ~> rep1sep(stringLiteral, ",") <~ ")" ^^ { types =>
-        DataType.ENUM(types)
+      caseSensitivity("enum") ~> "(" ~> rep1sep(stringLiteral, ",") ~ ")" ~ opt(character) ~ opt(collate) ^^ {
+        case types ~ _ ~ character ~ collate => DataType.ENUM(types, character, collate)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse enum data type.
         |The enum Data type must be defined as follows
@@ -474,15 +509,18 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://dev.mysql.com/doc/refman/8.0/en/enum.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: ENUM('string', ...)
         |==============================================================================
         |""".stripMargin
     )
 
+  /** Date data type parsing
+    */
   private[ldbc] def dateType: Parser[DataType] =
     customError(
       caseSensitivity("date") ^^ (_ => DataType.DATE()),
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse date data type.
         |The date Data type must be defined as follows
@@ -490,6 +528,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DATE
         |==============================================================================
         |""".stripMargin
@@ -500,7 +539,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("datetime") ~> opt(argument("DATETIME", 0, 6)) ^^ { fsp =>
         DataType.DATETIME(fsp)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse datetime data type.
         |The datetime Data type must be defined as follows
@@ -510,6 +549,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: DATETIME[(fsp)]
         |==============================================================================
         |""".stripMargin
@@ -520,7 +560,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("timestamp") ~> opt(argument("TIMESTAMP", 0, 6)) ^^ { fsp =>
         DataType.TIMESTAMP(fsp)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse timestamp data type.
         |The timestamp Data type must be defined as follows
@@ -530,6 +570,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TIMESTAMP[(fsp)]
         |==============================================================================
         |""".stripMargin
@@ -540,7 +581,7 @@ trait DataTypeParser extends SqlParser:
       caseSensitivity("time") ~> opt(argument("TIME", 0, 6)) ^^ { fsp =>
         DataType.TIME(fsp)
       },
-      """
+      input => s"""
         |===============================================================================
         |Failed to parse time data type.
         |The time Data type must be defined as follows
@@ -550,6 +591,7 @@ trait DataTypeParser extends SqlParser:
         |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: TIME[(fsp)]
         |==============================================================================
         |""".stripMargin
@@ -557,16 +599,39 @@ trait DataTypeParser extends SqlParser:
 
   private[ldbc] def yearType: Parser[DataType] =
     customError(
-      caseSensitivity("year") ~> opt("(" ~> "4" ~> ")") ^^ (_ => DataType.YEAR()),
-      """
+      caseSensitivity("year") ~> opt("(" ~> "4" <~ ")") ^^ {
+        case Some("4") => DataType.YEAR(Some(4))
+        case _         => DataType.YEAR(None)
+      },
+      input => s"""
         |===============================================================================
         |Failed to parse year data type.
         |The year Data type must be defined as follows
         |※ year strings are case-insensitive.
         |
+        |※ As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.
+        |
         |SEE: https://man.plustar.jp/mysql/date-and-time-type-syntax.html
         |
+        |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
         |example: YEAR[(4)]
         |==============================================================================
         |""".stripMargin
+    )
+
+  /** Alias data type parsing
+    */
+  private[ldbc] def serialType: Parser[DataType] =
+    customError(
+      caseSensitivity("serial") ^^ (_ => DataType.SERIAL()),
+      input => s"""
+           |===============================================================================
+           |Failed to parse serial data type.
+           |The serial Data type must be defined as follows
+           |※ serial strings are case-insensitive.
+           |
+           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+           |example: SERIAL
+           |==============================================================================
+           |""".stripMargin
     )

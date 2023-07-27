@@ -11,7 +11,7 @@ trait Key:
 
 object Key:
 
-  type IndexOptions = KeyBlockSize | IndexType | WithParser | Comment | Visible | EngineAttribute |
+  type IndexOptions = KeyBlockSize | IndexType | WithParser | CommentSet | Visible | EngineAttribute |
     SecondaryEngineAttribute
 
   trait On:
@@ -35,7 +35,7 @@ object Key:
     size:       Option[KeyBlockSize],
     indexType:  Option[IndexType],
     parserName: Option[WithParser],
-    comment:    Option[Comment],
+    comment:    Option[CommentSet],
     engine:     Option[EngineAttribute],
     secondary:  Option[SecondaryEngineAttribute]
   ):
@@ -43,7 +43,7 @@ object Key:
     def setSize(value: KeyBlockSize):                                 IndexOption = this.copy(size = Some(value))
     def setIndexType(value: IndexType):                               IndexOption = this.copy(indexType = Some(value))
     def setWithParser(value: WithParser):                             IndexOption = this.copy(parserName = Some(value))
-    def setComment(value: Comment):                                   IndexOption = this.copy(comment = Some(value))
+    def setComment(value: CommentSet):                                IndexOption = this.copy(comment = Some(value))
     def setEngineAttribute(value: EngineAttribute):                   IndexOption = this.copy(engine = Some(value))
     def setSecondaryEngineAttribute(value: SecondaryEngineAttribute): IndexOption = this.copy(secondary = Some(value))
 
@@ -65,8 +65,8 @@ object Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       s"INDEX_KEY(${ indexName.fold("None")(str => s"Some(\"$str\")") }, ${ indexType
-          .fold("None")(v => s"Some(${ v.toCode })") }, cats.data.NonEmptyList.of(${ columns
-          .mkString(",") }), ${ indexOption.fold("None")(option => s"Some(${ option.toCode })") })"
+          .fold("None")(v => s"Some(${ v.toCode })") }, ${ indexOption
+          .fold("None")(option => s"Some(${ option.toCode })") }, ${ columns.mkString(", ") })"
 
   case class Primary(
     constraint:  Option[Constraint],
@@ -76,13 +76,16 @@ object Key:
   ) extends Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
-      val key = indexType.fold(s"PRIMARY_KEY(cats.data.NonEmptyList.of(${ columns.mkString(",") }))")(v =>
+      val key = indexType.fold(s"PRIMARY_KEY(${ columns.mkString(", ") })")(v =>
         indexOption match
-          case None => s"PRIMARY_KEY(${ v.toCode }, cats.data.NonEmptyList.of(${ columns.mkString(",") }))"
+          case None => s"PRIMARY_KEY(${ v.toCode }, ${ columns.mkString(", ") })"
           case Some(o) =>
-            s"PRIMARY_KEY(${ v.toCode }, cats.data.NonEmptyList.of(${ columns.mkString(",") }), ${ o.toCode })"
+            s"PRIMARY_KEY(${ v.toCode }, ${ o.toCode }, ${ columns.mkString(", ") })"
       )
-      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
+      constraint.fold(key)(_.name match
+        case Some(name) => s"CONSTRAINT(\"$name\", $key)"
+        case None       => s"CONSTRAINT($key)"
+      )
 
   case class Unique(
     constraint:  Option[Constraint],
@@ -94,10 +97,13 @@ object Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key =
-        s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") },${ indexType
-            .fold("None")(v => s"Some(${ v.toCode })") },cats.data.NonEmptyList.of(${ columns
-            .mkString(",") }),${ indexOption.fold("None")(v => s"Some(${ v.toCode })") })"
-      constraint.fold(key)(v => s"CONSTRAINT(${ v.name.getOrElse(keyParts.mkString("_")) }, $key)")
+        s"UNIQUE_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") }, ${ indexType
+            .fold("None")(v => s"Some(${ v.toCode })") }, ${ indexOption
+            .fold("None")(v => s"Some(${ v.toCode })") }, ${ columns.mkString(", ") })"
+      constraint.fold(key)(_.name match
+        case Some(name) => s"CONSTRAINT(\"$name\", $key)"
+        case None       => s"CONSTRAINT($key)"
+      )
 
   case class Foreign(
     constraint: Option[Constraint],
@@ -108,13 +114,12 @@ object Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key =
-        s"""FOREIGN_KEY(
-           |  ${ indexName.fold("None")(v => s"Some(\"$v\")") },
-           |  cats.data.NonEmptyList.of(${ columns.mkString(",") }),
-           |  ${ reference.toCode(classNameFormatter, propertyFormatter) }
-           |)
-           |""".stripMargin
-      constraint.fold(key)(v => s"CONSTRAINT(\"${ v.name.getOrElse(keyParts.mkString("_")) }\", $key)")
+        s"FOREIGN_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") }, List(${ columns
+            .mkString(", ") }), ${ reference.toCode(classNameFormatter, propertyFormatter) })"
+      constraint.fold(key)(_.name match
+        case Some(name) => s"CONSTRAINT(\"$name\", $key)"
+        case None       => s"CONSTRAINT($key)"
+      )
 
   case class Reference(tableName: String, keyParts: List[String], on: Option[List[On]]):
     def toCode(classNameFormatter: Naming, propertyFormatter: Naming): String =
@@ -125,9 +130,9 @@ object Key:
           (list.find(_.isInstanceOf[OnDelete]), list.find(_.isInstanceOf[OnUpdate])) match
             case (None, None) => s"REFERENCE($className.table)(${ columns.mkString(",") })"
             case (Some(delete), None) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some(${ delete.option }), None)"
+              s"REFERENCE($className.table, ${ columns.mkString(", ") }).onDelete(${ delete.option })"
             case (None, Some(update)) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), None, Some(${ update.option }))"
+              s"REFERENCE($className.table, ${ columns.mkString(", ") }).onUpdate(${ update.option })"
             case (Some(delete), Some(update)) =>
-              s"REFERENCE($className.table, cats.data.NonEmptyList.of(${ columns.mkString(",") }), Some(${ delete.option }), Some(${ update.option }))"
-        case None => s"REFERENCE($className.table)(${ columns.mkString(",") })"
+              s"REFERENCE($className.table, ${ columns.mkString(", ") }).onDelete(${ delete.option }).onUpdate(${ update.option })"
+        case None => s"REFERENCE($className.table, ${ columns.mkString(",") })"

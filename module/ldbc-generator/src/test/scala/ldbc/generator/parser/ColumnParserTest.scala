@@ -8,6 +8,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class ColumnParserTest extends AnyFlatSpec, ColumnParser:
 
+  override def fileName: String = "test.sql"
+
   it should "Column parsing test succeeds." in {
     assert(parseAll(columnDefinition, "`id` BIGINT(64)").successful)
     assert(parseAll(columnDefinition, "id BIGINT").successful)

@@ -23,7 +23,7 @@
 
 DROP TABLE IF EXISTS `country`;
 CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
-  /* Comment */ code1 /* Comment */ BIT /* Comment */ PRIMARY KEY /* Comment */ UNIQUE KEY /* Comment */ COMMENT 'test',
+  /* Comment */ code1 /* Comment */ BIT /* Comment */ PRIMARY KEY UNIQUE KEY COMMENT 'test',
   code2 bit(24) NOT NULL,
   code3 Bit(64) DEFAULT 1
 );
@@ -76,7 +76,8 @@ CREATE TABLE `test` (
   `p19` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `p20` TIME(6) NOT NULL,
   `p21` YEAR(4) NOT NULL,
-  `p22` ENUM('Active', 'InActive') NOT NULL DEFAULT 'Active',
+  `p22` YEAR NULL DEFAULT NULL,
+  `p23` ENUM('Active', 'InActive') NOT NULL DEFAULT 'Active',
   PRIMARY KEY (`id`),
   INDEX (`sub_id`) KEY_BLOCK_SIZE=1,
   INDEX (`id`),
@@ -85,3 +86,14 @@ CREATE TABLE `test` (
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+--
+-- Table structure for table `serial`
+--
+
+DROP TABLE IF EXISTS `serial`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `serial` (
+  `id` SERIAL
+);

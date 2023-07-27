@@ -13,9 +13,24 @@ object AutoImport extends Dependencies {
   val SNAKE  = Format.SNAKE
   val KEBAB  = Format.KEBAB
 
-  val sqlFiles = SettingKey[List[File]](
-    label       = "sqlFiles",
+  val parseFiles = SettingKey[List[File]](
+    label       = "parseFiles",
     description = "List of SQL files to be read"
+  )
+
+  val parseDirectories = SettingKey[List[File]](
+    label       = "parseDirectories",
+    description = "Directory to be parsed"
+  )
+
+  val excludeFiles = SettingKey[List[String]](
+    label       = "excludeFiles",
+    description = "List of file names to be excluded from the analysis."
+  )
+
+  val customYamlFiles = SettingKey[List[File]](
+    label       = "customYamlFiles",
+    description = "List of yaml files to customize types."
   )
 
   val classNameFormat = SettingKey[Format](

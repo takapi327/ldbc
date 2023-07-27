@@ -7,11 +7,30 @@ package ldbc.generator.parser
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
 
-import ldbc.generator.model.{ Comment, Key }
+import ldbc.generator.model.*
 
 /** Parser to parse common definitions in MySQL.
   */
 trait SqlParser extends JavaTokenParsers:
+
+  def fileName: String
+
+  def failureMessage(format: String, example: String): Input => String =
+    input => s"""
+      |======================================================
+      |There is an error in the format of the $format.
+      |Please correct the format according to the following.
+      |
+      |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+      |example: $example
+      |======================================================
+      |""".stripMargin
+
+  protected def customError[A](parser: Parser[A], msg: Input => String): Parser[A] = Parser[A] { input =>
+    parser(input) match
+      case Failure(_, in) => Failure(msg(in), in)
+      case result         => result
+  }
 
   override def stringLiteral: Parser[String] = "'" ~> """[^']*""".r <~ "'"
 
@@ -40,43 +59,20 @@ trait SqlParser extends JavaTokenParsers:
   protected def ifNotExists: Parser[String] =
     customError(
       caseSensitivity("if") ~> opt(caseSensitivity("not")) ~> caseSensitivity("exists") ^^ (_.toUpperCase),
-      """
-        |======================================================
-        |There is an error in the if not exists format.
-        |Please correct the format according to the following.
-        |
-        |example: IF [NOT] EXISTS
-        |======================================================
-        |""".stripMargin
+      failureMessage("if not exists", "IF [NOT] EXISTS")
     )
 
   protected def character: Parser[String] =
     customError(
       ((caseSensitivity("character") ~> caseSensitivity("set")) | caseSensitivity("charset")) ~>
         opt("=") ~> sqlIdent.filter(_ != "="),
-      """
-        |======================================================
-        |There is an error in the character format.
-        |Please correct the format according to the following.
-        |
-        |Only numbers can be set for size.
-        |
-        |example: {CHARACTER [SET] | CHARSET} [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("character", "{CHARACTER [SET] | CHARSET}[=]'string'")
     )
 
   protected def collate: Parser[String] =
     customError(
       caseSensitivity("collate") ~> opt("=") ~> sqlIdent,
-      """
-        |======================================================
-        |There is an error in the collate format.
-        |Please correct the format according to the following.
-        |
-        |example: COLLATE [=] 'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("collate", "COLLATE[=]'string'")
     )
 
   /** Rules for allowing upper and lower case letters. */
@@ -85,23 +81,23 @@ trait SqlParser extends JavaTokenParsers:
 
   private def chrExcept(cs: Char*) = elem("", ch => !cs.contains(ch))
 
-  private def lineComment: Parser[Comment] =
+  private def lineComment: Parser[CommentOut] =
     "--+".r ~> rep(chrExcept(EofCh, '\n')) ^^ { str =>
-      Comment(str.mkString(" "))
+      CommentOut(str.mkString(" "))
     }
 
-  private def blockComment: Parser[Comment] =
+  private def blockComment: Parser[CommentOut] =
     "/*" ~> rep(chrExcept(EofCh, '*')) <~ "*/" <~ opt(";") ^^ { str =>
-      Comment(str.mkString(" "))
+      CommentOut(str.mkString(" "))
     }
 
-  protected def comment: Parser[Comment] = lineComment | blockComment
+  protected def comment: Parser[CommentOut] = lineComment | blockComment
 
-  protected def customError[A](parser: Parser[A], msg: String): Parser[A] = Parser[A] { input =>
-    parser(input) match
-      case Failure(_, in) => Failure(msg, in)
-      case result         => result
-  }
+  protected def commentSet: Parser[CommentSet] =
+    customError(
+      caseSensitivity("comment") ~> stringLiteral ^^ CommentSet.apply,
+      failureMessage("comment", "COMMENT 'string'")
+    )
 
   protected def keyBlockSize: Parser[Key.KeyBlockSize] =
     customError(
@@ -112,38 +108,17 @@ trait SqlParser extends JavaTokenParsers:
         case "8"  => Key.KeyBlockSize(8)
         case "16" => Key.KeyBlockSize(16)
       },
-      """
-        |======================================================
-        |There is an error in the key_block_size format.
-        |Please correct the format according to the following.
-        |
-        |example: KEY_BLOCK_SIZE[=]{1 | 2 | 4 | 8 | 16}
-        |======================================================
-        |""".stripMargin
+      failureMessage("key_block_size", "KEY_BLOCK_SIZE[=]{1 | 2 | 4 | 8 | 16}")
     )
 
   protected def engineAttribute: Parser[Key.EngineAttribute] =
     customError(
       caseSensitivity("engine_attribute") ~> opt("=") ~> ident ^^ Key.EngineAttribute.apply,
-      """
-        |======================================================
-        |There is an error in the engine_attribute format.
-        |Please correct the format according to the following.
-        |
-        |example: ENGINE_ATTRIBUTE[=]'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("engine_attribute", "ENGINE_ATTRIBUTE[=]'string'")
     )
 
   protected def secondaryEngineAttribute: Parser[Key.SecondaryEngineAttribute] =
     customError(
       caseSensitivity("secondary_engine_attribute") ~> opt("=") ~> ident ^^ Key.SecondaryEngineAttribute.apply,
-      """
-        |======================================================
-        |There is an error in the secondary_engine_attribute format.
-        |Please correct the format according to the following.
-        |
-        |example: SECONDARY_ENGINE_ATTRIBUTE[=]'string'
-        |======================================================
-        |""".stripMargin
+      failureMessage("secondary_engine_attribute", "SECONDARY_ENGINE_ATTRIBUTE[=]'string'")
     )

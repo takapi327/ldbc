@@ -26,17 +26,11 @@ trait DataTypes:
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "Ldbc-Core 0.1.0"
   )
-  inline def BIT[
-    T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
-      Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
-  ](inline length: Int): Bit[T] =
+  inline def BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]](inline length: Int): Bit[T] =
     inline if length < 1 || length > 64 then error("The length of the BIT must be in the range 1 to 64.")
     else Bit(Some(length), isOptional[T])
 
-  inline def BIT[
-    T <: Byte | Short | Int | Long | Float | Double | BigDecimal |
-      Option[Byte | Short | Int | Long | Float | Double | BigDecimal]
-  ]: Bit[T] = Bit(None, isOptional[T])
+  inline def BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]]: Bit[T] = Bit(None, isOptional[T])
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -173,8 +167,18 @@ trait DataTypes:
   ](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): TimeStamp[T] = TimeStamp(Some(fsp), isOptional[T])
 
   inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(None, isOptional[T])
-  inline def TIME[T <: LocalTime | Option[LocalTime]](inline fsp: Int): Time[T] =
-    inline if fsp < 0 || fsp > 6 then error("If an fsp value is specified for TIME, it must be in the range of 0 to 6.")
-    else Time(Some(fsp), isOptional[T])
+  inline def TIME[T <: LocalTime | Option[LocalTime]](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Time[T] =
+    Time(Some(fsp), isOptional[T])
 
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] = Year(isOptional[T])
+  @deprecated(
+    "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
+    "Ldbc-Core 0.1.0"
+  )
+  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](digit: 4): Year[T] =
+    Year(Some(digit), isOptional[T])
+
+  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] =
+    Year(None, isOptional[T])
+
+  /** ===== List of Alias Date Data Types ===== */
+  def SERIAL[T <: BigInt] = Alias.Serial[T]()

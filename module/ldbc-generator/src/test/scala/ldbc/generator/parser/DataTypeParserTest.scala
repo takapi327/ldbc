@@ -8,6 +8,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
 
+  override def fileName: String = "test.sql"
+
   it should "BIT data type parsing test succeeds." in {
     assert(parseAll(bitType, "bit").successful)
     assert(parseAll(bitType, "Bit(1)").successful)
@@ -148,6 +150,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
   }
 
   it should "FLOAT data type parsing test succeeds." in {
+    assert(parseAll(floatType, "float").successful)
     assert(parseAll(floatType, "float(0)").successful)
     assert(parseAll(floatType, "Float(24)").successful)
     assert(parseAll(floatType, "FLOAT(10) UNSIGNED").successful)
@@ -157,7 +160,6 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
 
   it should "FLOAT data type parsing test fails." in {
     assert(!parseAll(floatType, "failed").successful)
-    assert(!parseAll(floatType, "float").successful)
     assert(!parseAll(floatType, "Float(-1)").successful)
     assert(!parseAll(floatType, "Float(25)").successful)
     assert(!parseAll(floatType, "FLOAT(10) failed").successful)
@@ -469,4 +471,13 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
   it should "YEAR data type parsing test fails." in {
     assert(!parseAll(yearType, "failed").successful)
     assert(!parseAll(yearType, "YEAR(0)").successful)
+  }
+
+  it should "SERIAL data type parsing test succeeds." in {
+    assert(parseAll(serialType, "SERIAL").successful)
+  }
+
+  it should "SERIAL data type parsing test fails." in {
+    assert(!parseAll(serialType, "failed").successful)
+    assert(!parseAll(serialType, "SERIAL(0)").successful)
   }

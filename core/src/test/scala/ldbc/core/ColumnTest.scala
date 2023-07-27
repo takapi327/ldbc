@@ -18,7 +18,11 @@ object ColumnTest extends Specification:
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
-      column[Long]("id", BIGINT(64), "identifier").queryString === "`id` BIGINT(64) NOT NULL COMMENT 'identifier'"
+      column[Long](
+        "id",
+        BIGINT(64),
+        COMMENT("identifier")
+      ).queryString === "`id` BIGINT(64) NOT NULL COMMENT 'identifier'"
     }
 
     "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {
@@ -29,8 +33,8 @@ object ColumnTest extends Specification:
       column[Long](
         "id",
         BIGINT(64),
-        "identifier",
-        AutoInc[Long]()
+        AUTO_INCREMENT,
+        COMMENT("identifier")
       ).queryString === "`id` BIGINT(64) NOT NULL AUTO_INCREMENT COMMENT 'identifier'"
     }
 
@@ -45,7 +49,7 @@ object ColumnTest extends Specification:
       column[String](
         "name",
         VARCHAR(255).CHARACTER_SET(Character("ascii")),
-        "name"
+        COMMENT("name")
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'"
     }
 
@@ -53,7 +57,24 @@ object ColumnTest extends Specification:
       column[String](
         "name",
         VARCHAR(255).CHARACTER_SET(Character("ascii")).COLLATE(Collate("ascii_bin")),
-        "name"
+        COMMENT("name")
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
+    }
+
+    "The query string of the column with all Attributes set matches the specified string." in {
+      column[String](
+        "name",
+        VARCHAR(255).CHARACTER_SET(Character("ascii")),
+        COMMENT("name"),
+        UNIQUE_KEY,
+        VISIBLE,
+        COLUMN_FORMAT.FIXED,
+        COLLATE("ascii_bin"),
+        STORAGE.MEMORY
+      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name' UNIQUE KEY /*!80023 VISIBLE */ /*!50606 COLUMN_FORMAT FIXED */ COLLATE ascii_bin /*!50606 STORAGE MEMORY */"
+    }
+
+    "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
+      column[BigInt]("id", SERIAL).queryString === "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY"
     }
   }

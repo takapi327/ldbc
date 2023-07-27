@@ -22,18 +22,13 @@ trait Column[T]:
   /** Extra attribute of column */
   def attributes: Seq[Attribute[T]]
 
-  /** Column comment */
-  def comment: Option[String]
-
   /** Define SQL query string for each Column
     *
     * @return
     *   SQL query string
     */
   def queryString: String =
-    s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("") + comment.fold("")(
-      str => s" COMMENT '$str'"
-    )
+    s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
 
   override def toString: String = s"`$label`"
 
@@ -48,23 +43,9 @@ object Column:
 
     override def dataType: DataType[T] = _dataType
 
-    override def comment: Option[String] = None
-
-    override def attributes: Seq[Attribute[T]] = Seq.empty
-
-  def apply[T](
-    _label:    String,
-    _dataType: DataType[T],
-    _comment:  String
-  ): Column[T] = new Column[T]:
-
-    override def label: String = _label
-
-    override def dataType: DataType[T] = _dataType
-
-    override def comment: Option[String] = Some(_comment)
-
-    override def attributes: Seq[Attribute[T]] = Seq.empty
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes
+      case _                       => Seq.empty
 
   def apply[T](
     _label:      String,
@@ -76,21 +57,6 @@ object Column:
 
     override def dataType: DataType[T] = _dataType
 
-    override def comment: Option[String] = None
-
-    override def attributes: Seq[Attribute[T]] = _attributes.toSeq
-
-  def apply[T](
-    _label:      String,
-    _dataType:   DataType[T],
-    _comment:    String,
-    _attributes: Attribute[T]*
-  ): Column[T] = new Column[T]:
-
-    override def label: String = _label
-
-    override def dataType: DataType[T] = _dataType
-
-    override def comment: Option[String] = Some(_comment)
-
-    override def attributes: Seq[Attribute[T]] = _attributes.toSeq
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes ++ _attributes
+      case _                       => _attributes

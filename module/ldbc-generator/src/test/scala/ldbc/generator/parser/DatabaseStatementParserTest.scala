@@ -8,6 +8,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
 
+  override def fileName: String = "test.sql"
+
   it should "Database create statement parsing test succeeds." in {
     assert(parseAll(databaseStatements, "CREATE DATABASE `database`;").successful)
     assert(parseAll(databaseStatements, "CREATE DATABASE `database` DEFAULT CHARACTER SET utf8mb4;").successful)
