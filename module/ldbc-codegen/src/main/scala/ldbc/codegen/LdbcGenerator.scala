@@ -21,7 +21,8 @@ private[ldbc] object LdbcGenerator:
     classNameFormat:    String,
     propertyNameFormat: String,
     sourceManaged:      File,
-    baseDirectory:      File
+    baseDirectory:      File,
+    packageName:        String
   ): Array[File] =
     val classNameFormatter    = Naming.fromString(classNameFormat)
     val propertyNameFormatter = Naming.fromString(propertyNameFormat)
@@ -64,7 +65,8 @@ private[ldbc] object LdbcGenerator:
               classNameFormatter,
               propertyNameFormatter,
               sourceManaged,
-              customTables
+              customTables,
+              packageName
             )
           case statement: Database.CreateStatement =>
             val tableStatements = statements.flatMap {
@@ -78,7 +80,8 @@ private[ldbc] object LdbcGenerator:
               tableStatements,
               classNameFormatter,
               propertyNameFormatter,
-              sourceManaged
+              sourceManaged,
+              packageName
             )
         }
       }

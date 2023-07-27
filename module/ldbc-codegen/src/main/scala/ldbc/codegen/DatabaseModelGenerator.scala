@@ -24,6 +24,8 @@ private[ldbc] object DatabaseModelGenerator:
     *   Value for formatting Property name.
     * @param sourceManaged
     *   The file to which the model will be generated.
+   * @param packageName
+   *    A value to specify the package name of the generated file.
     * @return
     *   A file containing the generated database model.
     */
@@ -32,7 +34,8 @@ private[ldbc] object DatabaseModelGenerator:
     statements:            List[String],
     classNameFormatter:    Naming,
     propertyNameFormatter: Naming,
-    sourceManaged:         File
+    sourceManaged:         File,
+    packageName:           String
   ): File =
     val className = classNameFormatter.format(statement.name)
 
@@ -53,7 +56,7 @@ private[ldbc] object DatabaseModelGenerator:
 
     val scalaSource =
       s"""
-         |package ldbc.generated.${ statement.name }
+         |package $packageName.${ statement.name }
          |
          |import ldbc.core.*
          |

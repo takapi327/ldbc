@@ -42,4 +42,9 @@ object AutoImport extends Dependencies {
     label       = "propertyNameFormat",
     description = "A value to specify the format of the Property name."
   )
+
+  val ldbcPackage = SettingKey[String](
+    label       = "ldbcPackage",
+    description = "A value to specify the package name of the generated file."
+  )
 }

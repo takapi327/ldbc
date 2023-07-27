@@ -30,6 +30,10 @@ private[ldbc] object TableModelGenerator:
     *   Value for formatting Property name.
     * @param sourceManaged
     *   The file to which the model will be generated.
+    * @param customParser
+   * Value to customize the code to be generated.
+   * @param packageName
+   *   A value to specify the package name of the generated file.
     * @return
     *   A file containing the generated table model.
     */
@@ -39,7 +43,8 @@ private[ldbc] object TableModelGenerator:
     classNameFormatter:    Naming,
     propertyNameFormatter: Naming,
     sourceManaged:         File,
-    customParser:          Option[Seq[Parser.Table]]
+    customParser:          Option[Seq[Parser.Table]],
+    packageName:           String
   ): File =
 
     val custom = customParser.flatMap(_.find(_.name == statement.tableName))
@@ -80,7 +85,7 @@ private[ldbc] object TableModelGenerator:
       s".keySet(table => ${ key.toCode("table", classNameFormatter, propertyNameFormatter) })"
     )
 
-    val packageName = if database.nonEmpty then s"ldbc.generated.$database" else "ldbc.generated"
+    //val packageName = if database.nonEmpty then s"ldbc.generated.$database" else "ldbc.generated"
 
     val builder = ColumnCodeBuilder(classNameFormatter)
 
@@ -93,7 +98,7 @@ private[ldbc] object TableModelGenerator:
 
     val scalaSource =
       s"""
-         |package $packageName
+         |package ${ if database.nonEmpty then s"$packageName.$database" else packageName }
          |
          |import ldbc.core.*
          |

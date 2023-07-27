@@ -22,6 +22,7 @@ object Settings {
     customYamlFiles    := List.empty,
     classNameFormat    := Format.PASCAL,
     propertyNameFormat := Format.CAMEL,
+    ldbcPackage        := "ldbc.generated",
     (Compile / sourceGenerators) += Generator.generate.taskValue
   )
 }
