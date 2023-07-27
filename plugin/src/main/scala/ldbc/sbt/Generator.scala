@@ -26,7 +26,8 @@ object Generator {
       Compile / classNameFormat,
       Compile / propertyNameFormat,
       Compile / sourceManaged,
-      Compile / baseDirectory
+      Compile / baseDirectory,
+      Compile / ldbcPackage
     )
 
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
@@ -64,7 +65,8 @@ object Generator {
     classNameFormat:    SettingKey[Format],
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
-    baseDirectory:      SettingKey[File]
+    baseDirectory:      SettingKey[File],
+    packageName:        SettingKey[String]
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
 
     type LdbcGenerator = {
@@ -74,7 +76,8 @@ object Generator {
         classNameFormat:    String,
         propertyNameFormat: String,
         sourceManaged:      File,
-        baseDirectory:      File
+        baseDirectory:      File,
+        packageName:        String
       ): Array[File]
     }
 
@@ -95,7 +98,7 @@ object Generator {
       parent = baseClassloader.value
     )
 
-    val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
+    val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.codegen.LdbcGenerator$")
     val mainObject: LdbcGenerator = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
 
     val changed = changedHits(combinedFiles)
@@ -121,7 +124,8 @@ object Generator {
       classNameFormat.value.toString,
       propertyNameFormat.value.toString,
       sourceManaged.value,
-      baseDirectory.value
+      baseDirectory.value,
+      packageName.value
     )
 
     if (generatedCache.isEmpty) {
