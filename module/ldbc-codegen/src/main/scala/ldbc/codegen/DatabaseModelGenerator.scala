@@ -24,8 +24,8 @@ private[ldbc] object DatabaseModelGenerator:
     *   Value for formatting Property name.
     * @param sourceManaged
     *   The file to which the model will be generated.
-   * @param packageName
-   *    A value to specify the package name of the generated file.
+    * @param packageName
+    *   A value to specify the package name of the generated file.
     * @return
     *   A file containing the generated database model.
     */

@@ -31,9 +31,9 @@ private[ldbc] object TableModelGenerator:
     * @param sourceManaged
     *   The file to which the model will be generated.
     * @param customParser
-   * Value to customize the code to be generated.
-   * @param packageName
-   *   A value to specify the package name of the generated file.
+    *   Value to customize the code to be generated.
+    * @param packageName
+    *   A value to specify the package name of the generated file.
     * @return
     *   A file containing the generated table model.
     */
@@ -84,8 +84,6 @@ private[ldbc] object TableModelGenerator:
     val keyDefinitions = statement.keyDefinitions.map(key =>
       s".keySet(table => ${ key.toCode("table", classNameFormatter, propertyNameFormatter) })"
     )
-
-    //val packageName = if database.nonEmpty then s"ldbc.generated.$database" else "ldbc.generated"
 
     val builder = ColumnCodeBuilder(classNameFormatter)
 
