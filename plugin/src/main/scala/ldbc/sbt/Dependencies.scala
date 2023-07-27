@@ -11,7 +11,7 @@ trait Dependencies {
 
   val ldbcCore      = component("ldbc-core")
   val ldbcDslIO     = component("ldbc-dsl-io")
-  val ldbcGenerator = component("ldbc-generator")
+  val ldbcCodegen   = component("ldbc-codegen")
   val ldbcSchemaSPY = component("ldbc-schemaspy")
   val ldbcSql       = component("ldbc-sql")
 }
