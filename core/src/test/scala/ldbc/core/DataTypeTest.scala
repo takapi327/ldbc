@@ -281,4 +281,17 @@ object DataTypeTest extends Specification:
         YEAR[Option[JYear]].DEFAULT(None).queryString === "YEAR NULL DEFAULT NULL" and
         YEAR[Option[JYear]].DEFAULT(Some(JYear.of(2023))).queryString === "YEAR NULL DEFAULT '2023'"
     }
+
+    "The query string generated from the Serial DataType model matches the specified one." in {
+      SERIAL[BigInt].queryString === "BIGINT UNSIGNED NOT NULL"
+    }
+
+    "The query string generated from the Boolean DataType model matches the specified one." in {
+      BOOLEAN[Boolean].queryString === "BOOLEAN NOT NULL" and
+        BOOLEAN[Boolean].DEFAULT(true).queryString === "BOOLEAN NOT NULL DEFAULT true" and
+        BOOLEAN[Boolean].DEFAULT(false).queryString === "BOOLEAN NOT NULL DEFAULT false" and
+        BOOLEAN[Option[Boolean]].queryString === "BOOLEAN NULL" and
+        BOOLEAN[Option[Boolean]].DEFAULT(None).queryString === "BOOLEAN NULL DEFAULT NULL" and
+        BOOLEAN[Option[Boolean]].DEFAULT(Some(true)).queryString === "BOOLEAN NULL DEFAULT true"
+    }
   }
