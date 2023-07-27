@@ -52,7 +52,7 @@ trait DataTypeParser extends SqlParser:
   protected def dataType: Parser[DataType] =
     bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
       charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType | serialType
+      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType | serialType | booleanType
 
   /** Numeric data type parsing
     */
@@ -632,6 +632,22 @@ trait DataTypeParser extends SqlParser:
            |
            |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
            |example: SERIAL
+           |==============================================================================
+           |""".stripMargin
+    )
+
+  private[ldbc] def booleanType: Parser[DataType] =
+    customError(
+      (caseSensitivity("boolean") | caseSensitivity("bool")) ^^ (_ => DataType.BOOLEAN()),
+      input =>
+        s"""
+           |===============================================================================
+           |Failed to parse boolean data type.
+           |The boolean Data type must be defined as follows
+           |※ boolean strings are case-insensitive.
+           |
+           |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+           |example: BOOLEAN
            |==============================================================================
            |""".stripMargin
     )
