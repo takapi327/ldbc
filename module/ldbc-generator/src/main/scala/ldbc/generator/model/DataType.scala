@@ -16,6 +16,7 @@ enum ScalaType(val code: String):
   case Float                     extends ScalaType("Float")
   case Double                    extends ScalaType("Double")
   case BigInt                    extends ScalaType("BigInt")
+  case Boolean                   extends ScalaType("Boolean")
   case ArrayByte                 extends ScalaType("Array[Byte]")
   case Instant                   extends ScalaType("java.time.Instant")
   case LocalDate                 extends ScalaType("java.time.LocalDate")
@@ -222,4 +223,10 @@ object DataType:
     override val name:       String         = "SERIAL"
     override val jdbcType:   JdbcType       = JdbcType.BigInt
     override val scalaType:  ScalaType      = ScalaType.BigInt
+    override val scalaTypes: Seq[ScalaType] = Seq.empty
+
+  case class BOOLEAN() extends DataType:
+    override val name:       String         = "BOOLEAN"
+    override val jdbcType:   JdbcType       = JdbcType.Boolean
+    override val scalaType:  ScalaType      = ScalaType.Boolean
     override val scalaTypes: Seq[ScalaType] = Seq.empty

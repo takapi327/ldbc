@@ -481,3 +481,13 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(serialType, "failed").successful)
     assert(!parseAll(serialType, "SERIAL(0)").successful)
   }
+
+  it should "BOOLEAN data type parsing test succeeds." in {
+    assert(parseAll(booleanType, "boolean").successful)
+    assert(parseAll(booleanType, "bool").successful)
+  }
+
+  it should "BOOLEAN data type parsing test fails." in {
+    assert(!parseAll(booleanType, "failed").successful)
+    assert(!parseAll(booleanType, "tinyint(1)").successful)
+  }

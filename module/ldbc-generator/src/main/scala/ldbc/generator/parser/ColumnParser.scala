@@ -44,10 +44,14 @@ trait ColumnParser extends DataTypeParser:
     )
 
   private def bitValue: Parser[Int] = opt("b") ~> "'" ~> digit <~ "'"
+  private def boolValue: Parser[Boolean] = (caseSensitivity("true") | caseSensitivity("false")) ^^ {
+    case str if "(?i)true".r.matches(str)  => true
+    case str if "(?i)false".r.matches(str) => false
+  }
 
   private def defaultValue: Parser[Attribute.Default.Value] =
     customError(
-      caseSensitivity("default") ~> (bitValue | digit | stringLiteral) ^^ Attribute.Default.Value.apply,
+      caseSensitivity("default") ~> (bitValue | digit | stringLiteral | boolValue) ^^ Attribute.Default.Value.apply,
       failureMessage("default value", "DEFAULT `value`")
     )
 

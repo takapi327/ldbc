@@ -91,9 +91,10 @@ CREATE TABLE `test` (
 -- Table structure for table `serial`
 --
 
-DROP TABLE IF EXISTS `serial`;
+DROP TABLE IF EXISTS `alias`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `serial` (
-  `id` SERIAL
+CREATE TABLE `alias` (
+  `id` SERIAL,
+  `bool` BOOLEAN NOT NULL DEFAULT true
 );

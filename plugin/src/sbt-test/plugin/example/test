@@ -12,4 +12,4 @@ $ exists target/scala-3.3.0/src_managed/main/location/Country.scala
 $ exists target/scala-3.3.0/src_managed/main/test/TestDatabase.scala
 $ exists target/scala-3.3.0/src_managed/main/test/SubTest.scala
 $ exists target/scala-3.3.0/src_managed/main/test/Test.scala
-$ exists target/scala-3.3.0/src_managed/main/test/Serial.scala
+$ exists target/scala-3.3.0/src_managed/main/test/Alias.scala
