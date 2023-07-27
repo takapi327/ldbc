@@ -1542,3 +1542,35 @@ object DataType:
         AUTO_INCREMENT,
         UNIQUE_KEY
       )
+
+    /**
+     * Alias for TINYINT(1)
+     *
+     * @param isOptional
+     * Value indicating whether DataType is null-allowed or not.
+     * @param default
+     * SQL Default values
+     * @tparam T
+     *   Scala types that match SQL DataType
+     */
+    case class Bool[T <: Boolean | Option[Boolean]](
+      isOptional: Boolean,
+      default: Option[Default] = None
+    ) extends Alias[T]:
+
+      override def typeName: String = "BOOLEAN"
+
+      override def jdbcType: JdbcType = JdbcType.Boolean
+
+      override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
+
+      override def attributes: Seq[Attribute[T]] = Seq.empty
+
+      /** Method for setting Default value to DataType in SQL.
+       *
+       * @param value
+       * Value set as the default value for DataType
+       */
+      def DEFAULT(value: T): Bool[T] = value match
+        case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
+        case v => this.copy(default = Some(Default.Value(v)))

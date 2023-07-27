@@ -182,3 +182,5 @@ trait DataTypes:
 
   /** ===== List of Alias Date Data Types ===== */
   def SERIAL[T <: BigInt] = Alias.Serial[T]()
+
+  inline def BOOLEAN[T <: Boolean | Option[Boolean]] = Alias.Bool[T](isOptional[T])

@@ -41,7 +41,9 @@ object Default:
 
     override def value: String = _value.toString
 
-    override def queryString: String = s"DEFAULT '$value'"
+    override def queryString: String = _value match
+      case _: Boolean => s"DEFAULT $value"
+      case _ => s"DEFAULT '$value'"
 
   /** Model for setting TimeStamp-specific Default values.
     *
