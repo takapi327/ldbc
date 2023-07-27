@@ -50,9 +50,26 @@ trait DataTypeParser extends SqlParser:
     )
 
   protected def dataType: Parser[DataType] =
-    bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
-      charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
-      mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType | serialType | booleanType
+    customError(
+      bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
+        charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
+        mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType | serialType | booleanType,
+      input => s"""
+           |===============================================================================
+           |The corresponding DataType did not exist.
+           |
+           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
+           |
+           |The currently supported data types are
+           |numeric type:
+           |  BIT, TINYINT, SMALLINT, MEDIUMINT, BIGINT, INT, DECIMAL, FLOAT, DOUBLE, SERIAL, BOOLEAN
+           |string type:
+           |  CHAR, VARCHAR, BINARY, VARBINARY, TINYBLOB, TINYTEXT, BLOB, TEXT, MEDIUMBLOB, MEDIUMTEXT, LONGBLOB, LONGTEXT, ENUM
+           |date type:
+           |  DATE, TIMESTAMP, TIME, YEAR
+           |==============================================================================
+           |""".stripMargin
+    )
 
   /** Numeric data type parsing
     */
