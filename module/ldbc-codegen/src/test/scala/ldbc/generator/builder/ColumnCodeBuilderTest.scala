@@ -2,13 +2,13 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.builder
+package ldbc.codegen.builder
 
 import org.specs2.mutable.Specification
 
-import ldbc.generator.formatter.Naming
-import ldbc.generator.model.*
-import ldbc.generator.model.ColumnDefinition.*
+import ldbc.codegen.formatter.Naming
+import ldbc.codegen.model.*
+import ldbc.codegen.model.ColumnDefinition.*
 
 object ColumnCodeBuilderTest extends Specification:
 

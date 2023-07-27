@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.model
+package ldbc.codegen.model
 
 /** Model for storing commented out strings in SQL files.
   *

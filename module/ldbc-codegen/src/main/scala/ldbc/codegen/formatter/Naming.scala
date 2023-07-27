@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.formatter
+package ldbc.codegen.formatter
 
 import scala.annotation.tailrec
 

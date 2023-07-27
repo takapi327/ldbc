@@ -2,10 +2,10 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.parser
+package ldbc.codegen.parser
 
-import ldbc.generator.model.*
-import ldbc.generator.model.ColumnDefinition.*
+import ldbc.codegen.model.*
+import ldbc.codegen.model.ColumnDefinition.*
 
 /** Parser for parsing column definitions.
   *

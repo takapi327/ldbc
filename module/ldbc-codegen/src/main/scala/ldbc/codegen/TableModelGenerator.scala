@@ -2,17 +2,17 @@
   * distributed with this source code.
   */
 
-package ldbc.generator
+package ldbc.codegen
 
 import java.io.File
 import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.generator.formatter.Naming
-import ldbc.generator.model.*
-import ldbc.generator.parser.yml.Parser
-import ldbc.generator.builder.ColumnCodeBuilder
+import ldbc.codegen.formatter.Naming
+import ldbc.codegen.model.*
+import ldbc.codegen.parser.yml.Parser
+import ldbc.codegen.builder.ColumnCodeBuilder
 
 /** An object for generating a model about Table.
   */

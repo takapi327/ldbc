@@ -2,12 +2,12 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.parser
+package ldbc.codegen.parser
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
 
-import ldbc.generator.model.*
+import ldbc.codegen.model.*
 
 /** Parser to parse common definitions in MySQL.
   */

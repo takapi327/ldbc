@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.parser.yml
+package ldbc.codegen.parser.yml
 
 import org.specs2.mutable.Specification
 

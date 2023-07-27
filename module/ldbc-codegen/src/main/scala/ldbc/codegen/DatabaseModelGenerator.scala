@@ -2,15 +2,15 @@
   * distributed with this source code.
   */
 
-package ldbc.generator
+package ldbc.codegen
 
 import java.io.File
 import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.generator.formatter.Naming
-import ldbc.generator.model.*
+import ldbc.codegen.formatter.Naming
+import ldbc.codegen.model.*
 
 private[ldbc] object DatabaseModelGenerator:
 

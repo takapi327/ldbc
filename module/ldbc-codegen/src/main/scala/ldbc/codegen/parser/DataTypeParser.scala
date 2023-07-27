@@ -2,9 +2,9 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.parser
+package ldbc.codegen.parser
 
-import ldbc.generator.model.DataType
+import ldbc.codegen.model.DataType
 
 /** Parser for parsing data type definitions.
   *

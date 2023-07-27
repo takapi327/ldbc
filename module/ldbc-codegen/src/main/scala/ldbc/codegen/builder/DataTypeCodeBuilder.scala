@@ -2,10 +2,10 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.builder
+package ldbc.codegen.builder
 
-import ldbc.generator.model.DataType
-import ldbc.generator.formatter.Naming
+import ldbc.codegen.model.DataType
+import ldbc.codegen.formatter.Naming
 
 /** DataType model for constructing code strings.
   *

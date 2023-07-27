@@ -2,10 +2,10 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.parser
+package ldbc.codegen.parser
 
-import ldbc.generator.model.*
-import ldbc.generator.model.Key.*
+import ldbc.codegen.model.*
+import ldbc.codegen.model.Key.*
 
 /** Parser for parsing create table key definitions.
   */

@@ -2,11 +2,11 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.parser
+package ldbc.codegen.parser
 
 import scala.util.parsing.input.*
 
-import ldbc.generator.model.{ Database, Table }
+import ldbc.codegen.model.{ Database, Table }
 
 case class Parser(fileName: String) extends DatabaseStatementParser:
 

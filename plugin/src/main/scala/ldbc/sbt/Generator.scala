@@ -95,7 +95,7 @@ object Generator {
       parent = baseClassloader.value
     )
 
-    val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.generator.LdbcGenerator$")
+    val mainClass:  Class[_]      = projectClassLoader.loadClass("ldbc.codegen.LdbcGenerator$")
     val mainObject: LdbcGenerator = mainClass.getField("MODULE$").get(null).asInstanceOf[LdbcGenerator]
 
     val changed = changedHits(combinedFiles)

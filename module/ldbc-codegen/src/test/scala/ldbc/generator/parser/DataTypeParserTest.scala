@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-package ldbc.generator.parser
+package ldbc.codegen.parser
 
 import org.scalatest.flatspec.AnyFlatSpec
 
