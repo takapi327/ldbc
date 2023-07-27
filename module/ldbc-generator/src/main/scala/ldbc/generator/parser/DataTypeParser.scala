@@ -639,14 +639,13 @@ trait DataTypeParser extends SqlParser:
   private[ldbc] def booleanType: Parser[DataType] =
     customError(
       (caseSensitivity("boolean") | caseSensitivity("bool")) ^^ (_ => DataType.BOOLEAN()),
-      input =>
-        s"""
+      input => s"""
            |===============================================================================
            |Failed to parse boolean data type.
            |The boolean Data type must be defined as follows
            |※ boolean strings are case-insensitive.
            |
-           |${input.pos.longString} ($fileName:${input.pos.line}:${input.pos.column})
+           |${ input.pos.longString } ($fileName:${ input.pos.line }:${ input.pos.column })
            |example: BOOLEAN
            |==============================================================================
            |""".stripMargin

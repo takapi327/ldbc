@@ -226,7 +226,7 @@ object DataType:
     override val scalaTypes: Seq[ScalaType] = Seq.empty
 
   case class BOOLEAN() extends DataType:
-    override val name: String = "BOOLEAN"
-    override val jdbcType: JdbcType = JdbcType.Boolean
-    override val scalaType: ScalaType = ScalaType.Boolean
+    override val name:       String         = "BOOLEAN"
+    override val jdbcType:   JdbcType       = JdbcType.Boolean
+    override val scalaType:  ScalaType      = ScalaType.Boolean
     override val scalaTypes: Seq[ScalaType] = Seq.empty

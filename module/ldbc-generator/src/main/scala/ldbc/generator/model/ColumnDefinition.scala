@@ -59,8 +59,8 @@ object ColumnDefinition:
         */
       case class Value(value: String | Int | Boolean) extends Default:
         private val str = value match
-          case v: String  => s"\"$v\""
-          case v: _       => v
+          case v: String => s"\"$v\""
+          case v         => v
 
         override def toCode(isOptional: Boolean): String =
           if isOptional then s".DEFAULT(Some($str))"
