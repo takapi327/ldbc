@@ -13,6 +13,9 @@ import ldbc.sql.PreparedStatement
   */
 trait ParameterBinder[F[_]]:
 
+  /** Query parameters to be plugged into the Statement. */
+  def parameter: Any
+
   /** Methods for setting Scala and Java values to the specified position in PreparedStatement.
     *
     * @param statement
@@ -26,6 +29,7 @@ object ParameterBinder:
 
   def apply[F[_], T](value: T)(using param: Parameter[F, T]): ParameterBinder[F] =
     new ParameterBinder[F]:
+      override def parameter: Any = value
       override def bind(statement: PreparedStatement[F], index: Int): F[Unit] =
         param.bind(statement, index, value)
 

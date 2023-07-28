@@ -8,6 +8,7 @@ import cats.data.Kleisli
 
 import ldbc.sql.{ Connection, ResultSetConsumer }
 import ldbc.dsl.{ ParameterBinder, SQL }
+import ldbc.dsl.logging.LogHandler
 
 /** Trait for generating SQL models from string completion knowledge.
   *
@@ -23,6 +24,6 @@ trait SQLSyntax[F[_]]:
       SQL(strings.mkString("?"), expressions.toSeq)
 
   extension (sql: SQL[F])
-    def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, Connection[F], T]
+    def query[T](using consumer: ResultSetConsumer[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], T]
 
-    def update(): Kleisli[F, Connection[F], Int]
+    def update()(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int]
