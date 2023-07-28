@@ -20,21 +20,21 @@ trait LogHandler[F[_]]:
 
 object LogHandler:
 
-  /**
-   * LogHandler for simple log output using Console.
-   *
-   * In a production environment, it is recommended to use a customized LogHandler using log4j, etc. instead of this one.
-   *
-   * @tparam F
-   *   The effect type
-   */
-  def consoleLogger[F[_]: Console: Sync]: LogHandler[F] = {
+  /** LogHandler for simple log output using Console.
+    *
+    * In a production environment, it is recommended to use a customized LogHandler using log4j, etc. instead of this
+    * one.
+    *
+    * @tparam F
+    *   The effect type
+    */
+  def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
     case LogEvent.Success(sql, args) =>
       Console[F].println(
         s"""Successful Statement Execution:
            |  $sql
            |
-           | arguments = [${args.mkString(",")}]
+           | arguments = [${ args.mkString(",") }]
            |""".stripMargin
       )
     case LogEvent.ProcessingFailure(sql, args, failure) =>
@@ -42,7 +42,7 @@ object LogHandler:
         s"""Failed ResultSet Processing:
            |  $sql
            |
-           | arguments = [${args.mkString(",")}]
+           | arguments = [${ args.mkString(",") }]
            |""".stripMargin
       ) >> Console[F].printStackTrace(failure)
     case LogEvent.ExecFailure(sql, args, failure) =>
@@ -50,7 +50,6 @@ object LogHandler:
         s"""Failed Statement Execution:
            |  $sql
            |
-           | arguments = [${args.mkString(",")}]
+           | arguments = [${ args.mkString(",") }]
            |""".stripMargin
       ) >> Console[F].printStackTrace(failure)
-  }
