@@ -26,4 +26,4 @@ trait SQLSyntax[F[_]]:
   extension (sql: SQL[F])
     def query[T](using consumer: ResultSetConsumer[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], T]
 
-    def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int]
+    def update()(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int]
