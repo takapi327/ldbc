@@ -26,15 +26,24 @@ package object dsl:
     extension (sql: SQL[F])
       def query[T](using consumer: ResultSetConsumer[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] =
         Kleisli { connection =>
-          (for
+          for
             statement <- connection.prepareStatement(sql.statement)
             resultSet <- sql.params.zipWithIndex.traverse {
                            case (param, index) => param.bind(statement, index + 1)
-                         } >> statement.executeQuery()
-            result <- consumer.consume(resultSet) <* statement.close()
-          yield result)
-            .onError(ex => logHandler.run(LogEvent.ExecFailure(sql.statement, sql.params.map(_.parameter).toList, ex)))
-            <* logHandler.run(LogEvent.Success(sql.statement, sql.params.map(_.parameter).toList))
+                         } >> statement
+                           .executeQuery()
+                           .onError(ex =>
+                             logHandler.run(LogEvent.ExecFailure(sql.statement, sql.params.map(_.parameter).toList, ex))
+                           )
+            result <-
+              consumer
+                .consume(resultSet)
+                .onError(ex =>
+                  logHandler.run(LogEvent.ProcessingFailure(sql.statement, sql.params.map(_.parameter).toList, ex))
+                )
+                <* statement.close()
+                <* logHandler.run(LogEvent.Success(sql.statement, sql.params.map(_.parameter).toList))
+          yield result
         }
 
       def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>

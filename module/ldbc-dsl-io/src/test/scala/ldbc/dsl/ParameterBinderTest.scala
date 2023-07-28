@@ -19,7 +19,10 @@ object ParameterBinderTest extends Specification:
 
   given SQLSyntax[Id] = new SQLSyntax[Id]:
     extension (sql: SQL[Id])
-      def query[T](using consumer: ResultSetConsumer[Id, T], logHandler: LogHandler[Id]): Kleisli[Id, Connection[Id], T] =
+      def query[T](using
+        consumer:   ResultSetConsumer[Id, T],
+        logHandler: LogHandler[Id]
+      ): Kleisli[Id, Connection[Id], T] =
         throw new IllegalStateException("This method is never called in this test.")
       def update(using logHandler: LogHandler[Id]): Kleisli[Id, Connection[Id], Int] = throw new IllegalStateException(
         "This method is never called in this test."

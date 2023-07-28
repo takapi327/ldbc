@@ -20,5 +20,6 @@ sealed trait LogEvent:
 
 object LogEvent:
 
-  final case class Success(sql: String, args: List[Any])                         extends LogEvent
-  final case class ExecFailure(sql: String, args: List[Any], failure: Throwable) extends LogEvent
+  final case class Success(sql: String, args: List[Any])                               extends LogEvent
+  final case class ProcessingFailure(sql: String, args: List[Any], failure: Throwable) extends LogEvent
+  final case class ExecFailure(sql: String, args: List[Any], failure: Throwable)       extends LogEvent
