@@ -24,7 +24,7 @@ object ParameterBinderTest extends Specification:
         logHandler: LogHandler[Id]
       ): Kleisli[Id, Connection[Id], T] =
         throw new IllegalStateException("This method is never called in this test.")
-      def update(using logHandler: LogHandler[Id]): Kleisli[Id, Connection[Id], Int] = throw new IllegalStateException(
+      def update()(using logHandler: LogHandler[Id]): Kleisli[Id, Connection[Id], Int] = throw new IllegalStateException(
         "This method is never called in this test."
       )
 
