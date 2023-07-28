@@ -14,6 +14,7 @@ import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.sql.{ Connection, ResultSetConsumer }
 import ldbc.dsl.syntax.{ ConnectionSyntax, SQLSyntax }
+import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 package object dsl:
 
@@ -23,23 +24,27 @@ package object dsl:
       Resource.make(acquire)(release)
 
     extension (sql: SQL[F])
-      def query[T](using consumer: ResultSetConsumer[F, T]): Kleisli[F, Connection[F], T] = Kleisli { connection =>
-        for
+      def query[T](using consumer: ResultSetConsumer[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] = Kleisli { connection =>
+        (for
           statement <- connection.prepareStatement(sql.statement)
           resultSet <- sql.params.zipWithIndex.traverse {
                          case (param, index) => param.bind(statement, index + 1)
                        } >> statement.executeQuery()
           result <- consumer.consume(resultSet) <* statement.close()
-        yield result
+        yield result)
+          .onError(ex => logHandler.run(LogEvent.ExecFailure(sql.statement, sql.params.map(_.parameter).toList, ex)))
+          <* logHandler.run(LogEvent.Success(sql.statement, sql.params.map(_.parameter).toList))
       }
 
-      def update(): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
-        for
+      def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
+        (for
           statement <- connection.prepareStatement(sql.statement)
           result <- sql.params.zipWithIndex.traverse {
                       case (param, index) => param.bind(statement, index + 1)
                     } >> statement.executeUpdate()
-        yield result
+        yield result)
+          .onError(ex => logHandler.run(LogEvent.ExecFailure(sql.statement, sql.params.map(_.parameter).toList, ex)))
+          <* logHandler.run(LogEvent.Success(sql.statement, sql.params.map(_.parameter).toList))
       }
 
     extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
