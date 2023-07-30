@@ -4,71 +4,199 @@
 
 package ldbc.dsl.statement
 
+import ldbc.dsl.Parameter
+
 /**
  * Trait for the syntax of expressions available in MySQL.
  *
  * SEE: https://dev.mysql.com/doc/refman/8.0/en/expressions.html
  */
-private[ldbc] trait ExpressionSyntax:
+private[ldbc] trait ExpressionSyntax[F[_], T]:
+
+  /**
+   * Formula to determine
+   */
   def flag: String
-  val statement: String
+
+  /**
+   * Column name to be judged
+   */
+  def column: String
+
+  /**
+   * Statement of the expression to be judged
+   */
+  def statement: String
+
+  /**
+   * Trait for setting Scala and Java values to PreparedStatement.
+   */
+  def parameter: Option[Parameter[F, T]]
 
 object ExpressionSyntax:
-  
-  private[ldbc] trait WithValue extends ExpressionSyntax:
-    override val statement: String = s" $flag ?"
-  object WithValue:
-    def apply(_flag: String): WithValue = new WithValue:
-      override def flag: String = _flag
 
-  private[ldbc] trait NoValue extends ExpressionSyntax:
-    override val statement: String = s" $flag"
-  object NoValue:
-    def apply(_flag: String): NoValue = new NoValue:
-      override def flag: String = _flag
+  private[ldbc] trait SingleValue[F[_], T] extends ExpressionSyntax[F, T]:
+    def value: T
 
-  val OR = WithValue("OR")
-  val || = WithValue("||")
-  val AND = WithValue("AND")
-  val && = WithValue("&&")
-  val NOT = NoValue("NOT")
-  val ! = NoValue("!")
-  val IS_NULL = NoValue("IS NULL")
-  val IS_NOT_NULL = NoValue("IS NOT NULL")
-  val <=> = WithValue("<=>")
+    def NOT: Not[F, T] = Not[F, T]("NOT", this)
+    def ! : Not[F, T] = Not[F, T]("!", this)
+    def |(expr: SingleValue[F, T]) : BitOr[F, T] = BitOr[F, T](this, expr)
+
+  private[ldbc] trait MultiValue[F[_], T] extends ExpressionSyntax[F, T]:
+    def value: Seq[T]
 
   /** comparison operator */
-  val === = WithValue("=")
-  val >= = WithValue(">=")
-  val > = WithValue(">")
-  val <= = WithValue("<=")
-  val < = WithValue("<")
-  val <> = WithValue("<>")
-  val !== = WithValue("!=")
+  private[ldbc] case class MatchCondition[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "="
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
 
-  /** predicate */
-  val IN = WithValue("IN")
-  val NOT_IN = WithValue("NOT IN")
-  val BETWEEN = WithValue("BETWEEN")
-  val NOT_BETWEEN = WithValue("NOT BETWEEN")
-  val SOUNDS_LIKE = WithValue("SOUNDS LIKE")
-  val LIKE = WithValue("LIKE")
-  val NOT_LIKE = WithValue("NOT LIKE")
-  val LIKE_ESCAPE = WithValue("LIKE")
-  val NOT_LIKE_ESCAPE = WithValue("NOT LIKE")
-  val REGEXP = WithValue("REGEXP")
-  val NOT_REGEXP = WithValue("NOT REGEXP")
+  private[ldbc] case class OrMore[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends ExpressionSyntax[F, T]:
+    override def flag: String = ">="
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s" $flag NULL"
+      case _ => s" $flag ?"
 
-  /** bit expr */
-  val | = WithValue("|")
-  val & = WithValue("&")
-  val << = WithValue("<<")
-  val >> = WithValue(">>")
-  val + = WithValue("+")
-  val - = WithValue("-")
-  val * = WithValue("*")
-  val / = WithValue("/")
-  val DIV = WithValue("DIV")
-  val MOD = WithValue("MOD")
-  val % = WithValue("%")
-  val ^ = WithValue("^")
+  private[ldbc] case class Over[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = ">"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s" $flag NULL"
+      case _ => s" $flag ?"
+
+  private[ldbc] case class LessThanOrEqualTo[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "<="
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s" $flag NULL"
+      case _ => s" $flag ?"
+
+  private[ldbc] case class LessThan[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "<"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s" $flag NULL"
+      case _ => s" $flag ?"
+
+  private[ldbc] case class NotEqual[F[_], T](flag: String, column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s" $flag NULL"
+      case _ => s" $flag ?"
+
+  private[ldbc] case class Not[F[_], T](flag: String, expr: SingleValue[F, T]) extends SingleValue[F, T]:
+    override def column: String = expr.column
+    override def value: T = expr.value
+    override def parameter: Option[Parameter[F, T]] = expr.parameter
+    override def statement: String = s"$column NOT ${ expr.statement.replace(column, "") }"
+
+  private[ldbc] case class Is[F[_], T <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](column: String, value: T) extends SingleValue[F, T]:
+    override def flag: String = "IS"
+    override def parameter: Option[Parameter[F, T]] = None
+    override def statement: String = s"$column $flag $value"
+
+  private[ldbc] case class IsNot[F[_], T <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](column: String, value: T) extends SingleValue[F, T]:
+    override def flag: String = "IS NOT"
+    override def parameter: Option[Parameter[F, T]] = None
+    override def statement: String = s"$column $flag $value"
+
+  private[ldbc] case class NullSafeEqual[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "<=>"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
+
+  private[ldbc] case class In[F[_], T](column: String, value: T*)(using _parameter: Parameter[F, T]) extends MultiValue[F, T]:
+    override def flag: String = "IN"
+    override def parameter: Option[Parameter[F, T]] = Some(_parameter)
+    override def statement: String = s"$column $flag (${ value.map(_ => "?").mkString(", ") })"
+
+  private[ldbc] case class Between[F[_], T](column: String, value: T*)(using _parameter: Parameter[F, T]) extends MultiValue[F, T]:
+    override def flag: String = "BETWEEN"
+    override def parameter: Option[Parameter[F, T]] = Some(_parameter)
+    override def statement: String = s"$column $flag ? AND ?"
+
+  private[ldbc] case class Like[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "LIKE"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
+
+  private[ldbc] case class LikeEscape[F[_], T](column: String, value: T*)(using _parameter: Parameter[F, T]) extends MultiValue[F, T]:
+    override def flag: String = "LIKE"
+    override def parameter: Option[Parameter[F, T]] = Some(_parameter)
+    override def statement: String = s"$column $flag ? ESCAPE ?"
+
+  private[ldbc] case class Regexp[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "REGEXP"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
+
+  private[ldbc] case class LeftShift[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "<<"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
+
+  private[ldbc] case class RightShift[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = ">>"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
+
+  private[ldbc] case class Div[F[_], T](column: String, value: T*)(using _parameter: Parameter[F, T]) extends MultiValue[F, T]:
+    override def flag: String = "DIV"
+    override def parameter: Option[Parameter[F, T]] = Some(_parameter)
+    override def statement: String = s"$column $flag ? = ?"
+
+  private[ldbc] case class Mod[F[_], T](flag: String, column: String, value: T*)(using _parameter: Parameter[F, T]) extends MultiValue[F, T]:
+    override def parameter: Option[Parameter[F, T]] = Some(_parameter)
+    override def statement: String = s"$column $flag ? = ?"
+
+  private[ldbc] case class BitXOR[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
+    override def flag: String = "^"
+    override def parameter: Option[Parameter[F, T]] = value match
+      case None => None
+      case _ => Some(_parameter)
+    override def statement: String = value match
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
+
+  private[ldbc] case class BitOr[F[_], T](expr1: SingleValue[F, T], expr2: SingleValue[F, T]) extends MultiValue[F, T]:
+    override def flag: String = "|"
+    override def column: String = expr1.column
+    override def value: Seq[T] = Seq(expr1.value, expr2.value)
+    override def parameter: Option[Parameter[F, T]] = expr2.parameter
+
+    override def statement: String = s"${ expr1.statement } $flag ${ expr2.statement }"
