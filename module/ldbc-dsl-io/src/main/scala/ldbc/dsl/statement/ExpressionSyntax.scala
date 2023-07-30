@@ -70,8 +70,8 @@ object ExpressionSyntax:
       case None => None
       case _ => Some(_parameter)
     override def statement: String = value match
-      case None => s" $flag NULL"
-      case _ => s" $flag ?"
+      case None => s"$column $flag NULL"
+      case _ => s"$column $flag ?"
 
   private[ldbc] case class LessThanOrEqualTo[F[_], T](column: String, value: T)(using _parameter: Parameter[F, T]) extends SingleValue[F, T]:
     override def flag: String = "<="
@@ -103,7 +103,7 @@ object ExpressionSyntax:
     override def column: String = expr.column
     override def value: T = expr.value
     override def parameter: Option[Parameter[F, T]] = expr.parameter
-    override def statement: String = s"$column NOT ${ expr.statement.replace(column, "") }"
+    override def statement: String = s"$flag ${ expr.statement }"
 
   private[ldbc] case class Is[F[_], T <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](column: String, value: T) extends SingleValue[F, T]:
     override def flag: String = "IS"
