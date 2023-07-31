@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl.syntax
 
@@ -74,8 +74,8 @@ object ColumnSyntaxTest extends Specification, ColumnSyntax[Id]:
     "The string constructed by the expression syntax that determines whether it contains at least one of the specified values matches the specified string." in {
       val id1 = column[Long]("id", BIGINT)
       val id2 = column[Option[Long]]("id", BIGINT)
-      (id1 IN(1L, 2L)).statement === "id IN (?, ?)" and (id1 IN(1L, 2L)).NOT.statement === "id NOT IN (?, ?)" and
-        (id2 IN(1L, 2L)).statement === "id IN (?, ?)" and (id2 IN(1L, 2L, 3L)).NOT.statement === "id NOT IN (?, ?, ?)"
+      (id1 IN (1L, 2L)).statement === "id IN (?, ?)" and (id1 IN (1L, 2L)).NOT.statement === "id NOT IN (?, ?)" and
+        (id2 IN (1L, 2L)).statement === "id IN (?, ?)" and (id2 IN (1L, 2L, 3L)).NOT.statement === "id NOT IN (?, ?, ?)"
     }
 
     "The string constructed by the expression syntax that determines whether the value falls within the specified range matches the specified string." in {
@@ -95,8 +95,8 @@ object ColumnSyntaxTest extends Specification, ColumnSyntax[Id]:
     "The string constructed by the expression syntax that determines whether it contains a matching string matches the specified string." in {
       val name1 = column[String]("name", VARCHAR(255))
       val name2 = column[Option[String]]("name", VARCHAR(255))
-      (name1 LIKE_ESCAPE("T%", "$")).statement === "name LIKE ? ESCAPE ?" and (name1 LIKE_ESCAPE("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?" and
-        (name2 LIKE_ESCAPE("T%", "$")).statement === "name LIKE ? ESCAPE ?" and (name2 LIKE_ESCAPE("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?"
+      (name1 LIKE_ESCAPE ("T%", "$")).statement === "name LIKE ? ESCAPE ?" and (name1 LIKE_ESCAPE ("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?" and
+        (name2 LIKE_ESCAPE ("T%", "$")).statement === "name LIKE ? ESCAPE ?" and (name2 LIKE_ESCAPE ("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?"
     }
 
     "The string constructed by the expression syntax that determines whether it matches the regular expression pattern matches the specified string." in {
@@ -109,25 +109,25 @@ object ColumnSyntaxTest extends Specification, ColumnSyntax[Id]:
     "The string constructed by the expression syntax that performs the integer division operation to determine if it matches matches the specified string." in {
       val id1 = column[Long]("id", BIGINT)
       val id2 = column[Option[Long]]("id", BIGINT)
-      (id1 DIV(5, 10)).statement === "id DIV ? = ?" and (id1 DIV(5, 10)).NOT.statement === "NOT id DIV ? = ?" and
-        (id2 DIV(5, 10)).statement === "id DIV ? = ?" and (id2 DIV(5, 10)).NOT.statement === "NOT id DIV ? = ?"
+      (id1 DIV (5, 10)).statement === "id DIV ? = ?" and (id1 DIV (5, 10)).NOT.statement === "NOT id DIV ? = ?" and
+        (id2 DIV (5, 10)).statement === "id DIV ? = ?" and (id2 DIV (5, 10)).NOT.statement === "NOT id DIV ? = ?"
     }
 
     "The string constructed by the expression syntax that performs the operation to find the remainder and determines whether it matches matches the specified string." in {
       val id1 = column[Long]("id", BIGINT)
       val id2 = column[Option[Long]]("id", BIGINT)
-      (id1 MOD(5, 0)).statement === "id MOD ? = ?" and (id1 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?" and
-        (id1 %(5, 0)).statement === "id % ? = ?" and (id1 %(5, 0)).NOT.statement === "NOT id % ? = ?" and
-        (id2 MOD(5, 0)).statement === "id MOD ? = ?" and (id2 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?" and
-        (id2 %(5, 0)).statement === "id % ? = ?" and (id2 %(5, 0)).NOT.statement === "NOT id % ? = ?"
+      (id1 MOD (5, 0)).statement === "id MOD ? = ?" and (id1 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?" and
+        (id1 % (5, 0)).statement === "id % ? = ?" and (id1 % (5, 0)).NOT.statement === "NOT id % ? = ?" and
+        (id2 MOD (5, 0)).statement === "id MOD ? = ?" and (id2 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?" and
+        (id2 % (5, 0)).statement === "id % ? = ?" and (id2 % (5, 0)).NOT.statement === "NOT id % ? = ?"
     }
 
     "The string constructed by the expression syntax that performs the bit XOR operation to determine if it matches matches the specified string." in {
       val id1 = column[Long]("id", BIGINT)
       val id2 = column[Option[Long]]("id", BIGINT)
-      (id1 MOD(5, 0)).statement === "id MOD ? = ?" and (id1 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?" and
-        (id1 % (5, 0)).statement === "id % ? = ?" and (id1 %(5, 0)).NOT.statement === "NOT id % ? = ?" and
-        (id2 MOD(5, 0)).statement === "id MOD ? = ?" and (id2 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?" and
+      (id1 MOD (5, 0)).statement === "id MOD ? = ?" and (id1 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?" and
+        (id1 % (5, 0)).statement === "id % ? = ?" and (id1 % (5, 0)).NOT.statement === "NOT id % ? = ?" and
+        (id2 MOD (5, 0)).statement === "id MOD ? = ?" and (id2 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?" and
         (id2 % (5, 0)).statement === "id % ? = ?" and (id2 % (5, 0)).NOT.statement === "NOT id % ? = ?"
     }
 
