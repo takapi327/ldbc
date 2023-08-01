@@ -172,4 +172,11 @@ object ColumnSyntaxTest extends Specification, ColumnSyntax[Id]:
       ((id1 / id1) < 1L).statement === "id / id < ?" and ((id1 / id1) < 1L).NOT.statement === "NOT id / id < ?" and
         ((id2 / id2) < 1L).statement === "id / id < ?" and ((id2 / id2) < 1L).NOT.statement === "NOT id / id < ?"
     }
+
+    "The string constructed by the expression syntax, which performs bit inversion to determine if it matches, matches the specified string." in {
+      val id1 = column[Long]("id", BIGINT)
+      val id2 = column[Option[Long]]("id", BIGINT)
+      (id1 ~ 1L).statement === "~id = ?" and (id1 ~ 1L).NOT.statement === "NOT ~id = ?" and
+        (id2 ~ 1L).statement === "~id = ?" and (id2 ~ 1L).NOT.statement === "NOT ~id = ?"
+    }
   }

@@ -230,7 +230,6 @@ object ExpressionSyntax:
   ) extends SingleValue[F, T]:
     override def flag:      String                           = "^"
     override def parameter: Option[Parameter[F, Extract[T]]] = Some(_parameter)
-
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -248,3 +247,14 @@ object ExpressionSyntax:
       s"$not${ expr1.statement } $flag ${ expr2.statement }"
 
     def NOT: BitOr[F, T] = BitOr[F, T](true, this.expr1, this.expr2)
+
+  private[ldbc] case class BitFlip[F[_], T](column: String, isNot: Boolean, value: Extract[T])(
+    using _parameter: Parameter[F, Extract[T]]
+  ) extends SingleValue[F, T]:
+    override def flag: String = "~"
+    override def parameter: Option[Parameter[F, Extract[T]]] = Some(_parameter)
+    override def statement: String =
+      val not = if isNot then "NOT " else ""
+      s"$not$flag$column = ?"
+
+    def NOT: BitFlip[F, T] = BitFlip[F, T](this.column, true, this.value)

@@ -45,6 +45,7 @@ trait ColumnSyntax[F[_]]:
     def MOD(cond: Extract[T], result: Extract[T]): Mod[F, T]    = Mod[F, T]("MOD", column.label, false, cond, result)
     def %(cond: Extract[T], result: Extract[T]):   Mod[F, T]    = Mod[F, T]("%", column.label, false, cond, result)
     def ^(value: Extract[T]):                      BitXOR[F, T] = BitXOR[F, T](column.label, false, value)
+    def ~(value: Extract[T]):                      BitFlip[F, T] = BitFlip[F, T](column.label, false, value)
 
     def ++(other: Column[T]): MultiColumn[T] = MultiColumn[T]("+", column, other)
     def --(other: Column[T]): MultiColumn[T] = MultiColumn[T]("-", column, other)
@@ -74,3 +75,4 @@ trait ColumnSyntax[F[_]]:
     def MOD(cond: Extract[T], result: Extract[T]): Mod[F, T]    = Mod[F, T]("MOD", column.label, false, cond, result)
     def %(cond: Extract[T], result: Extract[T]):   Mod[F, T]    = Mod[F, T]("%", column.label, false, cond, result)
     def ^(value: Extract[T]):                      BitXOR[F, T] = BitXOR[F, T](column.label, false, value)
+    def ~(value: Extract[T]):                      BitFlip[F, T] = BitFlip[F, T](column.label, false, value)
