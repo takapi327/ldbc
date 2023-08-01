@@ -179,4 +179,11 @@ object ColumnSyntaxTest extends Specification, ColumnSyntax[Id]:
       (id1 ~ 1L).statement === "~id = ?" and (id1 ~ 1L).NOT.statement === "NOT ~id = ?" and
         (id2 ~ 1L).statement === "~id = ?" and (id2 ~ 1L).NOT.statement === "NOT ~id = ?"
     }
+
+    "The query string of the combined expression matches the specified string." in {
+      val id = column[Long]("id", BIGINT)
+      val name = column[String]("name", VARCHAR(255))
+      val age = column[Option[Int]]("age", INT)
+      (id === 1L && name === "name" || age > 25).statement === "(id = ? AND name = ? OR age > ?)"
+    }
   }
