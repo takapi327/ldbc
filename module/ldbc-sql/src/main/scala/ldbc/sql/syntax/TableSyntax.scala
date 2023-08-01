@@ -8,12 +8,13 @@ import scala.deriving.Mirror
 
 import cats.data.Kleisli
 
+import ldbc.core.Table
 import ldbc.core.interpreter.*
 import ldbc.sql.{ ResultSet, ResultSetReader }
 
 trait TableSyntax:
 
-  extension [F[_], P <: Product](table: ldbc.core.Table[P])
+  extension [F[_], P <: Product](table: Table[P])
     def applyDynamic[Tag <: Singleton](
       tag: Tag
     )()(using

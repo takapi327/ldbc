@@ -181,9 +181,9 @@ object ColumnSyntaxTest extends Specification, ColumnSyntax[Id]:
     }
 
     "The query string of the combined expression matches the specified string." in {
-      val id = column[Long]("id", BIGINT)
+      val id   = column[Long]("id", BIGINT)
       val name = column[String]("name", VARCHAR(255))
-      val age = column[Option[Int]]("age", INT)
+      val age  = column[Option[Int]]("age", INT)
       (id === 1L && name === "name" || age > 25).statement === "(id = ? AND name = ? OR age > ?)"
     }
   }
