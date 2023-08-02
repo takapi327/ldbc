@@ -4,7 +4,7 @@
 
 package ldbc.dsl.statement
 
-import ldbc.core.Table
+import ldbc.core.{ Table, Column }
 import ldbc.dsl.ParameterBinder
 
 /** A model for constructing SELECT statements in MySQL.
@@ -44,4 +44,12 @@ private[ldbc] case class Select[F[_], P <: Product, T](
       statement = statement ++ s" WHERE ${ expressionSyntax.statement }",
       columns   = columns,
       params    = params ++ expressionSyntax.parameter
+    )
+
+  def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
+    GroupBy(
+      table = table,
+      statement = statement ++ s" GROUP BY ${ func(columns).label }",
+      columns = columns,
+      params = params
     )

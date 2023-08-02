@@ -4,7 +4,7 @@
 
 package ldbc.dsl.statement
 
-import ldbc.core.Table
+import ldbc.core.{ Table, Column }
 import ldbc.dsl.ParameterBinder
 
 /** A model for constructing WHERE statements in MySQL.
@@ -52,3 +52,11 @@ private[ldbc] case class Where[F[_], P <: Product, T](
   def ||(func: Table[P] => ExpressionSyntax[F]):  Where[F, P, T] = union("||", func(table))
   def xor(func: Table[P] => ExpressionSyntax[F]): Where[F, P, T] = union("XOR", func(table))
   def &&(func: Table[P] => ExpressionSyntax[F]):  Where[F, P, T] = union("&&", func(table))
+
+  def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
+    GroupBy(
+      table = table,
+      statement = statement ++ s" GROUP BY ${func(columns).label}",
+      columns = columns,
+      params = params
+    )
