@@ -18,7 +18,7 @@ import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 package object dsl:
 
-  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F], TableSyntax[F], ColumnSyntax[F]:
+  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F], TableSyntax[F], ColumnSyntax[F], QuerySyntax[F]:
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
       val release: Connection[F] => F[Unit] = connection => connection.close()
       Resource.make(acquire)(release)
