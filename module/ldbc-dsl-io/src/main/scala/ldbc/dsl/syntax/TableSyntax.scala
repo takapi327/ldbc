@@ -31,7 +31,9 @@ trait TableSyntax[F[_]: Sync]:
     def columns:     T
     def params:      Seq[ParameterBinder[F]]
 
-    private def query[A](consumer: ResultSetConsumer[F, A])(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], A] =
+    private def query[A](consumer: ResultSetConsumer[F, A])(using
+      logHandler:                  LogHandler[F]
+    ): Kleisli[F, Connection[F], A] =
       Kleisli { connection =>
         for
           statement <- connection.prepareStatement(queryString)
@@ -53,20 +55,16 @@ trait TableSyntax[F[_]: Sync]:
       }
 
     def headOption[A](func: T => Kleisli[F, ResultSet[F], A])(using
-      logHandler: LogHandler[F]
+      LogHandler[F]
     ): Kleisli[F, Connection[F], Option[A]] =
       given Kleisli[F, ResultSet[F], A] = func(columns)
       query[Option[A]](summon[ResultSetConsumer[F, Option[A]]])
 
-    def toList[A](func: T => Kleisli[F, ResultSet[F], A])(using
-      logHandler: LogHandler[F]
-    ): Kleisli[F, Connection[F], List[A]] =
+    def toList[A](func: T => Kleisli[F, ResultSet[F], A])(using LogHandler[F]): Kleisli[F, Connection[F], List[A]] =
       given Kleisli[F, ResultSet[F], A] = func(columns)
       query[List[A]](summon[ResultSetConsumer[F, List[A]]])
 
-    def unsafe[A](func: T => Kleisli[F, ResultSet[F], A])(using
-      logHandler: LogHandler[F]
-    ): Kleisli[F, Connection[F], A] =
+    def unsafe[A](func: T => Kleisli[F, ResultSet[F], A])(using LogHandler[F]): Kleisli[F, Connection[F], A] =
       given Kleisli[F, ResultSet[F], A] = func(columns)
       query[A](summon[ResultSetConsumer[F, A]])
 
