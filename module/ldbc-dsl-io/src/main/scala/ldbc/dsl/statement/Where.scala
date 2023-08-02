@@ -55,8 +55,8 @@ private[ldbc] case class Where[F[_], P <: Product, T](
 
   def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
     GroupBy(
-      table = table,
-      statement = statement ++ s" GROUP BY ${func(columns).label}",
-      columns = columns,
-      params = params
+      table     = table,
+      statement = statement ++ s" GROUP BY ${ func(columns).label }",
+      columns   = columns,
+      params    = params
     )
