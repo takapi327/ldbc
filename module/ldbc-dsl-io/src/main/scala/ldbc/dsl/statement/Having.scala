@@ -4,7 +4,7 @@
 
 package ldbc.dsl.statement
 
-import ldbc.core.Table
+import ldbc.core.*
 import ldbc.dsl.ParameterBinder
 
 /** A model for constructing HAVING statements in MySQL.
@@ -30,4 +30,4 @@ private[ldbc] case class Having[F[_], P <: Product, T](
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
-) extends Query[F, T]
+) extends Query[F, T], OrderByProvider[F, P, T](table)

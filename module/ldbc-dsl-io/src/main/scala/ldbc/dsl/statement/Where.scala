@@ -4,7 +4,7 @@
 
 package ldbc.dsl.statement
 
-import ldbc.core.{ Table, Column }
+import ldbc.core.*
 import ldbc.dsl.ParameterBinder
 
 /** A model for constructing WHERE statements in MySQL.
@@ -30,7 +30,7 @@ private[ldbc] case class Where[F[_], P <: Product, T](
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
-) extends Query[F, T]:
+) extends Query[F, T], OrderByProvider[F, P, T](table):
 
   /** A method for combining WHERE statements.
     *

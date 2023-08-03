@@ -10,7 +10,7 @@ import ldbc.core.Column
 import ldbc.core.interpreter.Extract
 import ldbc.sql.{ ResultSet, ResultSetReader }
 import ldbc.dsl.Parameter
-import ldbc.dsl.statement.ExpressionSyntax
+import ldbc.dsl.statement.*
 import ldbc.dsl.statement.ExpressionSyntax.*
 
 trait ColumnSyntax[F[_]]:
@@ -23,6 +23,9 @@ trait ColumnSyntax[F[_]]:
     def get(using reader: ResultSetReader[F, T]): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       reader.read(resultSet, column.label)
     }
+
+    def asc: OrderBy.Asc = OrderBy.Asc(column)
+    def desc: OrderBy.Desc = OrderBy.Desc(column)
 
     def ===(value: Extract[T]): MatchCondition[F, T]    = MatchCondition[F, T](column.label, false, value)
     def >=(value: Extract[T]):  OrMore[F, T]            = OrMore[F, T](column.label, false, value)

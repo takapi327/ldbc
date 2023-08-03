@@ -4,7 +4,7 @@
 
 package ldbc.dsl.statement
 
-import ldbc.core.Table
+import ldbc.core.*
 import ldbc.dsl.ParameterBinder
 
 /** A model for constructing GROUP BY statements in MySQL.
@@ -30,7 +30,7 @@ private[ldbc] case class GroupBy[F[_], P <: Product, T](
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
-) extends Query[F, T]:
+) extends Query[F, T], OrderByProvider[F, P, T](table):
 
   def having[A](func: T => ExpressionSyntax[F]): Having[F, P, T] =
     val expressionSyntax = func(columns)
