@@ -30,7 +30,8 @@ private[ldbc] case class Select[F[_], P <: Product, T](
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
-) extends Query[F, T], OrderByProvider[F, P, T](table):
+) extends Query[F, T],
+          OrderByProvider[F, P, T](table):
 
   /** A method for setting the WHERE condition in a SELECT statement.
     *

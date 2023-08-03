@@ -30,7 +30,8 @@ private[ldbc] case class GroupBy[F[_], P <: Product, T](
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
-) extends Query[F, T], OrderByProvider[F, P, T](table):
+) extends Query[F, T],
+          OrderByProvider[F, P, T](table):
 
   def having[A](func: T => ExpressionSyntax[F]): Having[F, P, T] =
     val expressionSyntax = func(columns)

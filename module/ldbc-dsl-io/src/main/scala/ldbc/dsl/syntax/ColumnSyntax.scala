@@ -24,7 +24,7 @@ trait ColumnSyntax[F[_]]:
       reader.read(resultSet, column.label)
     }
 
-    def asc: OrderBy.Asc = OrderBy.Asc(column)
+    def asc:  OrderBy.Asc  = OrderBy.Asc(column)
     def desc: OrderBy.Desc = OrderBy.Desc(column)
 
     def ===(value: Extract[T]): MatchCondition[F, T]    = MatchCondition[F, T](column.label, false, value)
