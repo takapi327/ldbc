@@ -35,8 +35,8 @@ private[ldbc] case class GroupBy[F[_], P <: Product, T](
   def having[A](func: T => ExpressionSyntax[F]): Having[F, P, T] =
     val expressionSyntax = func(columns)
     Having(
-      table = table,
-      statement = statement ++ s" HAVING ${expressionSyntax.statement}",
-      columns = columns,
-      params = params ++ expressionSyntax.parameter
+      table     = table,
+      statement = statement ++ s" HAVING ${ expressionSyntax.statement }",
+      columns   = columns,
+      params    = params ++ expressionSyntax.parameter
     )
