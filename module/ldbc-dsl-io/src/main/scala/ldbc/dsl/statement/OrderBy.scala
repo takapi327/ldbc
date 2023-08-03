@@ -63,8 +63,12 @@ object OrderBy:
   * @tparam T
   *   Union type of column
   */
-transparent private[ldbc] trait OrderByProvider[F[_], P <: Product, T](table: Table[P]):
+transparent private[ldbc] trait OrderByProvider[F[_], P <: Product, T]:
   self: Query[F, T] =>
+
+  /** Trait for generating SQL table information.
+    */
+  def table: Table[P]
 
   def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](func: Table[P] => A): OrderBy[F, P, T] =
     val order = func(table) match

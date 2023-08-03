@@ -31,7 +31,7 @@ private[ldbc] case class Where[F[_], P <: Product, T](
   columns:   T,
   params:    Seq[ParameterBinder[F]]
 ) extends Query[F, T],
-          OrderByProvider[F, P, T](table):
+          OrderByProvider[F, P, T]:
 
   /** A method for combining WHERE statements.
     *
