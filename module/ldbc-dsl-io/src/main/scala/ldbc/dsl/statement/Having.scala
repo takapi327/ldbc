@@ -7,7 +7,7 @@ package ldbc.dsl.statement
 import ldbc.core.Table
 import ldbc.dsl.ParameterBinder
 
-/** A model for constructing GROUP BY statements in MySQL.
+/** A model for constructing HAVING statements in MySQL.
   *
   * @param table
   *   Trait for generating SQL table information.
@@ -25,18 +25,9 @@ import ldbc.dsl.ParameterBinder
   * @tparam T
   *   Union type of column
   */
-private[ldbc] case class GroupBy[F[_], P <: Product, T](
+private[ldbc] case class Having[F[_], P <: Product, T](
   table:     Table[P],
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
-) extends Query[F, T]:
-
-  def having[A](func: T => ExpressionSyntax[F]): Having[F, P, T] =
-    val expressionSyntax = func(columns)
-    Having(
-      table = table,
-      statement = statement ++ s" HAVING ${expressionSyntax.statement}",
-      columns = columns,
-      params = params ++ expressionSyntax.parameter
-    )
+) extends Query[F, T]
