@@ -51,7 +51,7 @@ private[ldbc] case class Limit[F[_], P <: Product, T](
   * @tparam T
   *   Union type of column
   */
-transparent private[ldbc] trait LimitProvider[F[_], P <: Product, T]:
+private[ldbc] transparent trait LimitProvider[F[_], P <: Product, T]:
   self: Query[F, T] =>
 
   /** Trait for generating SQL table information.
