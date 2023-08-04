@@ -31,4 +31,5 @@ private[ldbc] case class Having[F[_], P <: Product, T](
   columns:   T,
   params:    Seq[ParameterBinder[F]]
 ) extends Query[F, T],
-          OrderByProvider[F, P, T]
+          OrderByProvider[F, P, T],
+          LimitProvider[F, P, T]
