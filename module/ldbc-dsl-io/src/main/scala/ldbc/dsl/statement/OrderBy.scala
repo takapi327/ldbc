@@ -31,7 +31,7 @@ private[ldbc] case class OrderBy[F[_], P <: Product, T](
   columns:   T,
   params:    Seq[ParameterBinder[F]]
 ) extends Query[F, T],
-  LimitProvider[F, P, T]
+          LimitProvider[F, P, T]
 
 object OrderBy:
 
@@ -72,10 +72,10 @@ transparent private[ldbc] trait OrderByProvider[F[_], P <: Product, T]:
   def table: Table[P]
 
   /** A method for setting the ORDER BY condition in a statement.
-   *
-   * @param func
-   * Function to construct an expression using the columns that Table has.
-   */
+    *
+    * @param func
+    *   Function to construct an expression using the columns that Table has.
+    */
   def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](func: Table[P] => A): OrderBy[F, P, T] =
     val order = func(table) match
       case v: Tuple         => v.toList.mkString(", ")
