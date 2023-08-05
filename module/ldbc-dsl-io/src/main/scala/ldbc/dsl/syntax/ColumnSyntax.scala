@@ -18,11 +18,12 @@ trait ColumnSyntax[F[_]]:
   private[ldbc] case class MultiColumn[T](flag: String, column1: Column[T], column2: Column[T]):
     val label: String = s"${ column1.label } $flag ${ column2.label }"
 
-  extension [T](column: Column[T])(using Parameter[F, Extract[T]])
-
-    def get(using reader: ResultSetReader[F, T]): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-      reader.read(resultSet, column.label)
+  given [T](using reader: ResultSetReader[F, T]): Conversion[Column[T], Kleisli[F, ResultSet[F], T]] with
+    override def apply(x: Column[T]): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
+      reader.read(resultSet, x.label)
     }
+
+  extension [T](column: Column[T])(using Parameter[F, Extract[T]])
 
     def asc:  OrderBy.Asc  = OrderBy.Asc(column)
     def desc: OrderBy.Desc = OrderBy.Desc(column)
