@@ -12,8 +12,22 @@ import ldbc.dsl.statement.Select
 trait TableSyntax[F[_]]:
 
   extension [P <: Product](table: Table[P])(using mirror: Mirror.ProductOf[P])
-    def select[T <: Tuple.Union[Tuple.Map[mirror.MirroredElemTypes, Column]] *: NonEmptyTuple](
-      columns: T
+
+    def selectAll: Select[F, P, Tuple.Map[mirror.MirroredElemTypes, Column]] =
+      val statement = s"SELECT ${ table.*.mkString(", ") } FROM ${ table._name }"
+      Select[F, P, Tuple.Map[mirror.MirroredElemTypes, Column]](
+        table,
+        statement,
+        Tuple.fromArray(table.*.toArray).asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]],
+        Seq.empty
+      )
+
+    def select[T <: Tuple.Union[Tuple.Map[mirror.MirroredElemTypes, Column]] | Tuple.Union[Tuple.Map[mirror.MirroredElemTypes, Column]] *: NonEmptyTuple](
+      func: Table[P] => T
     ): Select[F, P, T] =
-      val statement = s"SELECT ${ columns.toArray.distinct.mkString(", ") } FROM ${ table._name }"
+      val columns = func(table)
+      val str = columns match
+        case v: Tuple => v.toArray.distinct.mkString(", ")
+        case v => v
+      val statement = s"SELECT $str FROM ${table._name}"
       Select[F, P, T](table, statement, columns, Seq.empty)
