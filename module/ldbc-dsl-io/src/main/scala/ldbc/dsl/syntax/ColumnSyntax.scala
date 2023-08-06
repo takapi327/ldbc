@@ -23,55 +23,67 @@ trait ColumnSyntax[F[_]]:
       reader.read(resultSet, x.alias.fold(x.label)(name => s"$name.${ x.label }"))
     }
 
-  extension [T](column: Column[T])(using Parameter[F, Extract[T]])
+  /**
+   * When implementing a method with the same method name but different arguments, an implementation using extension will result in a compile error on the user side.
+   * Therefore, an implementation using implicit class is used.
+   *
+   * In addition, if a method is implemented with a union type, the method is implemented individually because pattern matching of the received type is not possible.
+   *
+   * example:
+   * {{{
+   *   [error]  |value === is not a member of ldbc.core.Column[Option[String]].
+   *   [error]  |An extension method was tried, but could not be fully constructed:
+   *   [error]  |
+   *   [error]  |    ldbc.dsl.io.===()
+   *   [error]  |
+   *   [error]  |    failed with:
+   *   [error]  |
+   *   [error]  |        value ===: <overloaded ldbc.dsl.io.===> does not take parameters
+   * }}}
+   */
+  implicit class ColumnStatement[T](column: Column[T])(using Parameter[F, Extract[T]]):
 
-    def asc:  OrderBy.Asc  = OrderBy.Asc(column)
+    def asc: OrderBy.Asc = OrderBy.Asc(column)
+
     def desc: OrderBy.Desc = OrderBy.Desc(column)
 
-    def ===(value: Extract[T]): MatchCondition[F, T]    = MatchCondition[F, T](column.label, false, value)
-    def >=(value: Extract[T]):  OrMore[F, T]            = OrMore[F, T](column.label, false, value)
-    def >(value: Extract[T]):   Over[F, T]              = Over[F, T](column.label, false, value)
-    def <=(value: Extract[T]):  LessThanOrEqualTo[F, T] = LessThanOrEqualTo[F, T](column.label, false, value)
-    def <(value: Extract[T]):   LessThan[F, T]          = LessThan[F, T](column.label, false, value)
-    def <>(value: Extract[T]):  NotEqual[F, T]          = NotEqual[F, T]("<>", column.label, false, value)
-    def !==(value: Extract[T]): NotEqual[F, T]          = NotEqual[F, T]("!=", column.label, false, value)
+    def ===(value: Extract[T]): MatchCondition[F, T] = MatchCondition[F, T](column.label, false, value)
+    def >=(value: Extract[T]): OrMore[F, T] = OrMore[F, T](column.label, false, value)
+    def >(value: Extract[T]): Over[F, T] = Over[F, T](column.label, false, value)
+    def <=(value: Extract[T]): LessThanOrEqualTo[F, T] = LessThanOrEqualTo[F, T](column.label, false, value)
+    def <(value: Extract[T]): LessThan[F, T] = LessThan[F, T](column.label, false, value)
+    def <>(value: Extract[T]): NotEqual[F, T] = NotEqual[F, T]("<>", column.label, false, value)
+    def !==(value: Extract[T]): NotEqual[F, T] = NotEqual[F, T]("!=", column.label, false, value)
     def IS[A <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: A): Is[F, A] = Is[F, A](column.label, false, value)
     def <=>(value: Extract[T]): NullSafeEqual[F, T] = NullSafeEqual[F, T](column.label, false, value)
-    def IN(value: Extract[T]*): In[F, T]            = In[F, T](column.label, false, value: _*)
+    def IN(value: Extract[T]*): In[F, T] = In[F, T](column.label, false, value: _*)
     def BETWEEN(start: Extract[T], end: Extract[T]): Between[F, T] = Between[F, T](column.label, false, start, end)
-    def LIKE(value: Extract[T]):                     Like[F, T]    = Like[F, T](column.label, false, value)
+    def LIKE(value: Extract[T]): Like[F, T] = Like[F, T](column.label, false, value)
     def LIKE_ESCAPE(like: Extract[T], escape: Extract[T]): LikeEscape[F, T] =
       LikeEscape[F, T](column.label, false, like, escape)
-    def REGEXP(value: Extract[T]):                 Regexp[F, T]     = Regexp[F, T](column.label, false, value)
-    def <<(value: Extract[T]):                     LeftShift[F, T]  = LeftShift[F, T](column.label, false, value)
-    def >>(value: Extract[T]):                     RightShift[F, T] = RightShift[F, T](column.label, false, value)
-    def DIV(cond: Extract[T], result: Extract[T]): Div[F, T]        = Div[F, T](column.label, false, cond, result)
-    def MOD(cond: Extract[T], result: Extract[T]): Mod[F, T]     = Mod[F, T]("MOD", column.label, false, cond, result)
-    def %(cond: Extract[T], result: Extract[T]):   Mod[F, T]     = Mod[F, T]("%", column.label, false, cond, result)
-    def ^(value: Extract[T]):                      BitXOR[F, T]  = BitXOR[F, T](column.label, false, value)
-    def ~(value: Extract[T]):                      BitFlip[F, T] = BitFlip[F, T](column.label, false, value)
+    def REGEXP(value: Extract[T]): Regexp[F, T] = Regexp[F, T](column.label, false, value)
+    def <<(value: Extract[T]): LeftShift[F, T] = LeftShift[F, T](column.label, false, value)
+    def >>(value: Extract[T]): RightShift[F, T] = RightShift[F, T](column.label, false, value)
+    def DIV(cond: Extract[T], result: Extract[T]): Div[F, T] = Div[F, T](column.label, false, cond, result)
+    def MOD(cond: Extract[T], result: Extract[T]): Mod[F, T] = Mod[F, T]("MOD", column.label, false, cond, result)
+    def %(cond: Extract[T], result: Extract[T]): Mod[F, T] = Mod[F, T]("%", column.label, false, cond, result)
+    def ^(value: Extract[T]): BitXOR[F, T] = BitXOR[F, T](column.label, false, value)
+    def ~(value: Extract[T]): BitFlip[F, T] = BitFlip[F, T](column.label, false, value)
 
     def ++(other: Column[T]): MultiColumn[T] = MultiColumn[T]("+", column, other)
     def --(other: Column[T]): MultiColumn[T] = MultiColumn[T]("-", column, other)
-    def *(other: Column[T]):  MultiColumn[T] = MultiColumn[T]("*", column, other)
-    def /(other: Column[T]):  MultiColumn[T] = MultiColumn[T]("/", column, other)
+    def *(other: Column[T]): MultiColumn[T] = MultiColumn[T]("*", column, other)
+    def /(other: Column[T]): MultiColumn[T] = MultiColumn[T]("/", column, other)
 
-    /** List of sub query methods.
-      *
-      * I want it to be the same as the existing method name, but it does not work well for extended methods. In
-      * addition, if the method is implemented with a union type, pattern matching of the received type cannot be
-      * performed, so a method name that does not cover the union type but is easy to understand was used for the
-      * implementation.
-      */
-    def =:=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
-    def :>=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
-    def :>(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
-    def :<=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
-    def :<(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
-    def <:>(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
-    def InSet(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)
+    def ===(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
+    def >=(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
+    def >(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
+    def <=(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
+    def <(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
+    def <>(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
+    def IN(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)
 
-  extension [T](column: MultiColumn[T])(using Parameter[F, Extract[T]])
+  implicit class MultiColumnStatement[T](column: MultiColumn[T])(using Parameter[F, Extract[T]]):
 
     def ===(value: Extract[T]): MatchCondition[F, T]    = MatchCondition[F, T](column.label, false, value)
     def >=(value: Extract[T]):  OrMore[F, T]            = OrMore[F, T](column.label, false, value)
@@ -96,17 +108,10 @@ trait ColumnSyntax[F[_]]:
     def ^(value: Extract[T]):                      BitXOR[F, T]  = BitXOR[F, T](column.label, false, value)
     def ~(value: Extract[T]):                      BitFlip[F, T] = BitFlip[F, T](column.label, false, value)
 
-    /** List of sub query methods.
-      *
-      * I want it to be the same as the existing method name, but it does not work well for extended methods. In
-      * addition, if the method is implemented with a union type, pattern matching of the received type cannot be
-      * performed, so a method name that does not cover the union type but is easy to understand was used for the
-      * implementation.
-      */
-    def =:=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
-    def :>=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
-    def :>(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
-    def :<=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
-    def :<(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
-    def <:>(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
-    def InSet(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)
+    def ===(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
+    def >=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
+    def >(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
+    def <=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
+    def <(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
+    def <>(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
+    def IN(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)
