@@ -45,7 +45,15 @@ object TableSyntaxTest extends Specification, TableSyntax[Id], ColumnSyntax[Id]:
         table.select[Column[Long]](_.p1).orderBy(_.p1.desc).statement === "SELECT `p1` FROM test ORDER BY p1 DESC" and
         table.select[Column[Long]](_.p1).limit(10).statement === "SELECT `p1` FROM test LIMIT ?" and
         table.select[Column[Long]](_.p1).limit(10).offset(0).statement === "SELECT `p1` FROM test LIMIT ? OFFSET ?" and
-        table.select[Column[Long]](_.p1).where(_.p1 =:= table.select[Column[Long]](_.p1).where(_.p1 > 1)).statement === "SELECT `p1` FROM test WHERE p1 = (SELECT `p1` FROM test WHERE p1 > ?)" and
-        table.select[Column[Long]](_.p1).where(v => (v.p1 :>= table.select[Column[Long]](_.p1).where(_.p1 > 1)) || (v.p2 =:= table.select[Column[String]](_.p2))).statement === "SELECT `p1` FROM test WHERE (p1 >= (SELECT `p1` FROM test WHERE p1 > ?) OR p2 = (SELECT `p2` FROM test))"
+        table
+          .select[Column[Long]](_.p1)
+          .where(_.p1 =:= table.select[Column[Long]](_.p1).where(_.p1 > 1))
+          .statement === "SELECT `p1` FROM test WHERE p1 = (SELECT `p1` FROM test WHERE p1 > ?)" and
+        table
+          .select[Column[Long]](_.p1)
+          .where(v =>
+            (v.p1 :>= table.select[Column[Long]](_.p1).where(_.p1 > 1)) || (v.p2 =:= table.select[Column[String]](_.p2))
+          )
+          .statement === "SELECT `p1` FROM test WHERE (p1 >= (SELECT `p1` FROM test WHERE p1 > ?) OR p2 = (SELECT `p2` FROM test))"
     }
   }
