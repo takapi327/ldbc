@@ -6,8 +6,8 @@ package ldbc.dsl.syntax
 
 import scala.deriving.Mirror
 
-import ldbc.core.{ Table, Column }
-import ldbc.dsl.statement.Select
+import ldbc.core.{ Column, Table }
+import ldbc.dsl.statement.*
 
 trait TableSyntax[F[_]]:
 
@@ -34,3 +34,5 @@ trait TableSyntax[F[_]]:
         case v        => v
       val statement = s"SELECT $str FROM ${ table._name }"
       Select[F, P, T](table, statement, columns, Seq.empty)
+
+    def join[O <: Product](other: Table[O]): Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
