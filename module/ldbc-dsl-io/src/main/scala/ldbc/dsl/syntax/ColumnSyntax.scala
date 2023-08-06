@@ -20,7 +20,7 @@ trait ColumnSyntax[F[_]]:
 
   given [T](using reader: ResultSetReader[F, T]): Conversion[Column[T], Kleisli[F, ResultSet[F], T]] with
     override def apply(x: Column[T]): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-      reader.read(resultSet, x.label)
+      reader.read(resultSet, x.alias.fold(x.label)(name => s"$name.${ x.label }"))
     }
 
   extension [T](column: Column[T])(using Parameter[F, Extract[T]])

@@ -27,5 +27,5 @@ trait TableSyntax:
     ): Kleisli[F, ResultSet[F], Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
       Kleisli { resultSet =>
         val column = table.selectDynamic[Tag](tag)
-        reader.read(resultSet, column.label)
+        reader.read(resultSet, column.alias.fold(column.label)(name => s"$name.${ column.label }"))
       }

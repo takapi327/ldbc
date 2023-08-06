@@ -22,15 +22,21 @@ trait Column[T]:
   /** Extra attribute of column */
   def attributes: Seq[Attribute[T]]
 
+  /** Column alias name */
+  private[ldbc] def alias: Option[String] = None
+
   /** Define SQL query string for each Column
     *
     * @return
     *   SQL query string
     */
   def queryString: String =
-    s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
+    val str = s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
+    alias.fold(str)(name => s"$name.$str")
 
-  override def toString: String = s"`$label`"
+  def as(name: String): Column[T] = Column[T](label, dataType, attributes, Some(name))
+
+  override def toString: String = alias.fold(s"`$label`")(name => s"$name.`$label`")
 
 object Column:
 
@@ -60,3 +66,18 @@ object Column:
     override def attributes: Seq[Attribute[T]] = _dataType match
       case data: DataType.Alias[T] => data.attributes ++ _attributes
       case _                       => _attributes
+
+  private[ldbc] def apply[T](
+    _label: String,
+    _dataType: DataType[T],
+    _attributes: Seq[Attribute[T]],
+    _alias: Option[String],
+  ): Column[T] = new Column[T]:
+
+    override def label: String = _label
+
+    override def dataType: DataType[T] = _dataType
+
+    override def attributes: Seq[Attribute[T]] = _attributes
+
+    override private[ldbc] def alias = _alias
