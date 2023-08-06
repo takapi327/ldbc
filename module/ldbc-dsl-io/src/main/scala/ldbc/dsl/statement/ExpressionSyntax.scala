@@ -101,20 +101,19 @@ object ExpressionSyntax:
 
     override def parameter: Seq[ParameterBinder[F]] = left.parameter ++ right.parameter
 
-  /**
-   * Model for building subqueries.
-   *
-   * @param flag
-   * Subquery Conditional Expressions
-   * @param column
-   * Name of the column for which the subquery is to be set
-   * @param value
-   * Trait for constructing Statements that set conditions
-   * @tparam F
-   * The effect type
-   * @tparam T
-   * Scala types that match SQL DataType
-   */
+  /** Model for building subqueries.
+    *
+    * @param flag
+    *   Subquery Conditional Expressions
+    * @param column
+    *   Name of the column for which the subquery is to be set
+    * @param value
+    *   Trait for constructing Statements that set conditions
+    * @tparam F
+    *   The effect type
+    * @tparam T
+    *   Scala types that match SQL DataType
+    */
   private[ldbc] case class SubQuery[F[_], T](
     flag:   String,
     column: String,

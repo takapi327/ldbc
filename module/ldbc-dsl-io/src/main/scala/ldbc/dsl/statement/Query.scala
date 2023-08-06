@@ -6,10 +6,9 @@ package ldbc.dsl.statement
 
 import ldbc.dsl.ParameterBinder
 
-/** 
- * Trait for constructing Statements that set conditions.
- * 
- * @tparam F
+/** Trait for constructing Statements that set conditions.
+  *
+  * @tparam F
   *   The effect type
   * @tparam T
   *   Union type of column
