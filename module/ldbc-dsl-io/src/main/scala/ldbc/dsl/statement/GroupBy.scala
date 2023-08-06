@@ -32,7 +32,7 @@ private[ldbc] case class GroupBy[F[_], P <: Product, T](
   params:    Seq[ParameterBinder[F]]
 ) extends Query[F, T],
           OrderByProvider[F, P, T],
-          LimitProvider[F, P, T]:
+          LimitProvider[F, T]:
 
   def having[A](func: T => ExpressionSyntax[F]): Having[F, P, T] =
     val expressionSyntax = func(columns)

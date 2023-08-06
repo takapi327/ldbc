@@ -4,13 +4,10 @@
 
 package ldbc.dsl.statement
 
-import ldbc.core.Table
 import ldbc.dsl.{ Parameter, ParameterBinder }
 
 /** A model for constructing LIMIT statements in MySQL.
   *
-  * @param table
-  *   Trait for generating SQL table information.
   * @param statement
   *   SQL statement string
   * @param columns
@@ -20,13 +17,10 @@ import ldbc.dsl.{ Parameter, ParameterBinder }
   *   only.
   * @tparam F
   *   The effect type
-  * @tparam P
-  *   Base trait for all products
   * @tparam T
   *   Union type of column
   */
-private[ldbc] case class Limit[F[_], P <: Product, T](
-  table:     Table[P],
+private[ldbc] case class Limit[F[_], T](
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
@@ -34,9 +28,8 @@ private[ldbc] case class Limit[F[_], P <: Product, T](
 
   /** A method for setting the OFFSET condition in a statement.
     */
-  def offset(length: Long): Parameter[F, Long] ?=> Limit[F, P, T] =
+  def offset(length: Long): Parameter[F, Long] ?=> Limit[F, T] =
     Limit(
-      table     = table,
       statement = statement ++ " OFFSET ?",
       columns   = columns,
       params    = params :+ ParameterBinder(length)
@@ -46,23 +39,16 @@ private[ldbc] case class Limit[F[_], P <: Product, T](
   *
   * @tparam F
   *   The effect type
-  * @tparam P
-  *   Base trait for all products
   * @tparam T
   *   Union type of column
   */
-private[ldbc] transparent trait LimitProvider[F[_], P <: Product, T]:
+private[ldbc] transparent trait LimitProvider[F[_], T]:
   self: Query[F, T] =>
-
-  /** Trait for generating SQL table information.
-    */
-  def table: Table[P]
 
   /** A method for setting the LIMIT condition in a statement.
     */
-  def limit(length: Long): Parameter[F, Long] ?=> Limit[F, P, T] =
+  def limit(length: Long): Parameter[F, Long] ?=> Limit[F, T] =
     Limit(
-      table     = table,
       statement = statement ++ " LIMIT ?",
       columns   = columns,
       params    = params :+ ParameterBinder(length)

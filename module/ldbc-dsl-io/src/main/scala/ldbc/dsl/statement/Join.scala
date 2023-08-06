@@ -50,18 +50,49 @@ object Join:
     statement: String,
     columns:   T,
     params:    Seq[ParameterBinder[F]]
-  ) extends Query[F, T]:
+  ) extends Query[F, T], LimitProvider[F, T]:
 
     def where(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       val expressionSyntax = func(left, right)
       JoinWhere(
+        left      = left,
+        right     = right,
         statement = statement ++ s" WHERE ${ expressionSyntax.statement }",
         columns   = columns,
         params    = expressionSyntax.parameter
       )
 
   private[ldbc] case class JoinWhere[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
+    left:      Table[P1],
+    right:     Table[P2],
     statement: String,
     columns:   T,
     params:    Seq[ParameterBinder[F]]
-  ) extends Query[F, T]
+  ) extends Query[F, T], LimitProvider[F, T]:
+
+    /** A method for combining WHERE statements.
+      *
+      * @param label
+      *   A conjunctive expression to join WHERE statements together.
+      * @param expressionSyntax
+      *   Trait for the syntax of expressions available in MySQL.
+      */
+    private def union(label: String, expressionSyntax: ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+      JoinWhere[F, P1, P2, T](
+        left      = left,
+        right     = right,
+        statement = statement ++ s" $label ${ expressionSyntax.statement }",
+        columns   = columns,
+        params    = params ++ expressionSyntax.parameter
+      )
+
+    def and(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+      union("AND", func(left, right))
+    def or(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+      union("OR", func(left, right))
+    def ||(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+      union("||", func(left, right))
+    def xor(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+      union("XOR", func(left, right))
+    def &&(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+      union("&&", func(left, right))
