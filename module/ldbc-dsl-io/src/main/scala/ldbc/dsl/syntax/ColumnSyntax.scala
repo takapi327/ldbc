@@ -56,6 +56,21 @@ trait ColumnSyntax[F[_]]:
     def *(other: Column[T]):  MultiColumn[T] = MultiColumn[T]("*", column, other)
     def /(other: Column[T]):  MultiColumn[T] = MultiColumn[T]("/", column, other)
 
+    /** List of sub query methods.
+      *
+      * I want it to be the same as the existing method name, but it does not work well for extended methods. In
+      * addition, if the method is implemented with a union type, pattern matching of the received type cannot be
+      * performed, so a method name that does not cover the union type but is easy to understand was used for the
+      * implementation.
+      */
+    def =:=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
+    def :>=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
+    def :>(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
+    def :<=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
+    def :<(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
+    def <:>(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
+    def InSet(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)
+
   extension [T](column: MultiColumn[T])(using Parameter[F, Extract[T]])
 
     def ===(value: Extract[T]): MatchCondition[F, T]    = MatchCondition[F, T](column.label, false, value)
@@ -80,3 +95,18 @@ trait ColumnSyntax[F[_]]:
     def %(cond: Extract[T], result: Extract[T]):   Mod[F, T]     = Mod[F, T]("%", column.label, false, cond, result)
     def ^(value: Extract[T]):                      BitXOR[F, T]  = BitXOR[F, T](column.label, false, value)
     def ~(value: Extract[T]):                      BitFlip[F, T] = BitFlip[F, T](column.label, false, value)
+
+    /** List of sub query methods.
+      *
+      * I want it to be the same as the existing method name, but it does not work well for extended methods. In
+      * addition, if the method is implemented with a union type, pattern matching of the received type cannot be
+      * performed, so a method name that does not cover the union type but is easy to understand was used for the
+      * implementation.
+      */
+    def =:=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
+    def :>=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
+    def :>(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
+    def :<=(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
+    def :<(value: Query[F, Column[T]]):    SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
+    def <:>(value: Query[F, Column[T]]):   SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
+    def InSet(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)

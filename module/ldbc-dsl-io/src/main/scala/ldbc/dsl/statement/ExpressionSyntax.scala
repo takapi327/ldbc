@@ -4,6 +4,7 @@
 
 package ldbc.dsl.statement
 
+import ldbc.core.Column
 import ldbc.core.interpreter.Extract
 import ldbc.dsl.{ Parameter, ParameterBinder }
 
@@ -99,6 +100,29 @@ object ExpressionSyntax:
       s"($result)"
 
     override def parameter: Seq[ParameterBinder[F]] = left.parameter ++ right.parameter
+
+  /**
+   * Model for building subqueries.
+   *
+   * @param flag
+   * Subquery Conditional Expressions
+   * @param column
+   * Name of the column for which the subquery is to be set
+   * @param value
+   * Trait for constructing Statements that set conditions
+   * @tparam F
+   * The effect type
+   * @tparam T
+   * Scala types that match SQL DataType
+   */
+  private[ldbc] case class SubQuery[F[_], T](
+    flag:   String,
+    column: String,
+    value:  Query[F, Column[T]]
+  ) extends ExpressionSyntax[F]:
+
+    override def statement: String                  = s"$column $flag (${ value.statement })"
+    override def parameter: Seq[ParameterBinder[F]] = value.params
 
   /** comparison operator */
   private[ldbc] case class MatchCondition[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
