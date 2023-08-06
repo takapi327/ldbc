@@ -101,12 +101,12 @@ object ExpressionSyntax:
 
     override def parameter: Seq[ParameterBinder[F]] = left.parameter ++ right.parameter
 
-  /** Model for building subqueries.
+  /** Model for building sub queries.
     *
     * @param flag
-    *   Subquery Conditional Expressions
+    *   Sub query Conditional Expressions
     * @param column
-    *   Name of the column for which the subquery is to be set
+    *   Name of the column for which the sub query is to be set
     * @param value
     *   Trait for constructing Statements that set conditions
     * @tparam F
@@ -122,6 +122,28 @@ object ExpressionSyntax:
 
     override def statement: String                  = s"$column $flag (${ value.statement })"
     override def parameter: Seq[ParameterBinder[F]] = value.params
+
+  /** Model for building join queries.
+   *
+   * @param flag
+   * Join query Conditional Expressions
+   * @param left
+   *   The left-hand column where the join join will be performed.
+   * @param right
+   *   The right-hand column where the join join will be performed.
+   * @tparam F
+   * The effect type
+   * @tparam T
+   * Scala types that match SQL DataType
+   */
+  private[ldbc] case class JoinQuery[F[_], T](
+    flag: String,
+    left: Column[?],
+    right: Column[?],
+  ) extends ExpressionSyntax[F]:
+
+    override def statement = s"${ left.alias.fold(left.label)(name => s"$name.${ left.label }") } $flag ${ right.alias.fold(right.label)(name => s"$name.${ right.label }") }"
+    override def parameter: Seq[ParameterBinder[F]] = Seq.empty
 
   /** comparison operator */
   private[ldbc] case class MatchCondition[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
