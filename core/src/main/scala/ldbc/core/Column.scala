@@ -68,10 +68,10 @@ object Column:
       case _                       => _attributes
 
   private[ldbc] def apply[T](
-    _label: String,
-    _dataType: DataType[T],
+    _label:      String,
+    _dataType:   DataType[T],
     _attributes: Seq[Attribute[T]],
-    _alias: Option[String],
+    _alias:      Option[String]
   ): Column[T] = new Column[T]:
 
     override def label: String = _label

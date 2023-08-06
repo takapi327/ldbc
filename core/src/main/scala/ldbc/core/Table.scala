@@ -63,7 +63,7 @@ object Table extends Dynamic:
     columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key],
     comment:        Option[String],
-    alias: Option[String] = None
+    alias:          Option[String] = None
   ) extends Table[P]:
 
     override def selectDynamic[Tag <: Singleton](
