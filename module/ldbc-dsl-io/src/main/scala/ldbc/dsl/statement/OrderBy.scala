@@ -80,7 +80,7 @@ private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T]:
     val order = func(table) match
       case v: Tuple         => v.toList.mkString(", ")
       case v: OrderBy.Order => v.statement
-      case v: Column[?]     => v.label
+      case v: Column[?]     => v.alias.fold(v.label)(name => s"$name.${ v.label }")
     OrderBy(
       table     = table,
       statement = self.statement ++ s" ORDER BY $order",
