@@ -55,7 +55,8 @@ lazy val LdbcDslIOProject = LepusSbtProject("Ldbc-Dsl-IO", "module/ldbc-dsl-io")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
     catsEffect,
-    mockito
+    mockito,
+    scalaTest
   ) ++ specs2)
   .dependsOn(LdbcSqlProject)
 
