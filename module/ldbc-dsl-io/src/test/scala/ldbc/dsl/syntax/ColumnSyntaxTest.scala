@@ -91,19 +91,19 @@ class ColumnSyntaxTest extends AnyFlatSpec, ColumnSyntax[Id]:
   it should "The string constructed by the expression syntax that determines whether it contains at least one of the specified values matches the specified string." in {
     val id1 = column[Long]("id", BIGINT)
     val id2 = column[Option[Long]]("id", BIGINT)
-    assert((id1 IN(1L, 2L)).statement === "id IN (?, ?)")
-    assert((id1 IN(1L, 2L)).NOT.statement === "id NOT IN (?, ?)")
-    assert((id2 IN(1L, 2L)).statement === "id IN (?, ?)")
-    assert((id2 IN(1L, 2L, 3L)).NOT.statement === "id NOT IN (?, ?, ?)")
+    assert((id1 IN (1L, 2L)).statement === "id IN (?, ?)")
+    assert((id1 IN (1L, 2L)).NOT.statement === "id NOT IN (?, ?)")
+    assert((id2 IN (1L, 2L)).statement === "id IN (?, ?)")
+    assert((id2 IN (1L, 2L, 3L)).NOT.statement === "id NOT IN (?, ?, ?)")
   }
 
   it should "The string constructed by the expression syntax that determines whether the value falls within the specified range matches the specified string." in {
     val id1 = column[Long]("id", BIGINT)
     val id2 = column[Option[Long]]("id", BIGINT)
-    assert((id1 BETWEEN(1L, 10L)).statement === "id BETWEEN ? AND ?")
-    assert((id1 BETWEEN(1L, 10L)).NOT.statement === "id NOT BETWEEN ? AND ?")
-    assert((id2 BETWEEN(1L, 10L)).statement === "id BETWEEN ? AND ?")
-    assert((id2 BETWEEN(1L, 10L)).NOT.statement === "id NOT BETWEEN ? AND ?")
+    assert((id1 BETWEEN (1L, 10L)).statement === "id BETWEEN ? AND ?")
+    assert((id1 BETWEEN (1L, 10L)).NOT.statement === "id NOT BETWEEN ? AND ?")
+    assert((id2 BETWEEN (1L, 10L)).statement === "id BETWEEN ? AND ?")
+    assert((id2 BETWEEN (1L, 10L)).NOT.statement === "id NOT BETWEEN ? AND ?")
   }
 
   it should "The string constructed by the expression syntax that determines whether it contains a matching string matches the specified string." in {
@@ -113,10 +113,10 @@ class ColumnSyntaxTest extends AnyFlatSpec, ColumnSyntax[Id]:
     assert((name1 LIKE "ldbc").NOT.statement === "NOT name LIKE ?")
     assert((name2 LIKE "ldbc").statement === "name LIKE ?")
     assert((name2 LIKE "ldbc").NOT.statement === "NOT name LIKE ?")
-    assert((name1 LIKE_ESCAPE("T%", "$")).statement === "name LIKE ? ESCAPE ?")
-    assert((name1 LIKE_ESCAPE("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?")
-    assert((name2 LIKE_ESCAPE("T%", "$")).statement === "name LIKE ? ESCAPE ?")
-    assert((name2 LIKE_ESCAPE("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?")
+    assert((name1 LIKE_ESCAPE ("T%", "$")).statement === "name LIKE ? ESCAPE ?")
+    assert((name1 LIKE_ESCAPE ("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?")
+    assert((name2 LIKE_ESCAPE ("T%", "$")).statement === "name LIKE ? ESCAPE ?")
+    assert((name2 LIKE_ESCAPE ("T%", "$")).NOT.statement === "NOT name LIKE ? ESCAPE ?")
   }
 
   it should "The string constructed by the expression syntax that determines whether it matches the regular expression pattern matches the specified string." in {
@@ -131,21 +131,21 @@ class ColumnSyntaxTest extends AnyFlatSpec, ColumnSyntax[Id]:
   it should "The string constructed by the expression syntax that performs the integer division operation to determine if it matches matches the specified string." in {
     val id1 = column[Long]("id", BIGINT)
     val id2 = column[Option[Long]]("id", BIGINT)
-    assert((id1 DIV(5, 10)).statement === "id DIV ? = ?")
-    assert((id1 DIV(5, 10)).NOT.statement === "NOT id DIV ? = ?")
-    assert((id2 DIV(5, 10)).statement === "id DIV ? = ?")
-    assert((id2 DIV(5, 10)).NOT.statement === "NOT id DIV ? = ?")
+    assert((id1 DIV (5, 10)).statement === "id DIV ? = ?")
+    assert((id1 DIV (5, 10)).NOT.statement === "NOT id DIV ? = ?")
+    assert((id2 DIV (5, 10)).statement === "id DIV ? = ?")
+    assert((id2 DIV (5, 10)).NOT.statement === "NOT id DIV ? = ?")
   }
 
   it should "The string constructed by the expression syntax that performs the operation to find the remainder and determines whether it matches matches the specified string." in {
     val id1 = column[Long]("id", BIGINT)
     val id2 = column[Option[Long]]("id", BIGINT)
-    assert((id1 MOD(5, 0)).statement === "id MOD ? = ?")
-    assert((id1 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?")
+    assert((id1 MOD (5, 0)).statement === "id MOD ? = ?")
+    assert((id1 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?")
     assert((id1 % (5, 0)).statement === "id % ? = ?")
     assert((id1 % (5, 0)).NOT.statement === "NOT id % ? = ?")
-    assert((id2 MOD(5, 0)).statement === "id MOD ? = ?")
-    assert((id2 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?")
+    assert((id2 MOD (5, 0)).statement === "id MOD ? = ?")
+    assert((id2 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?")
     assert((id2 % (5, 0)).statement === "id % ? = ?")
     assert((id2 % (5, 0)).NOT.statement === "NOT id % ? = ?")
   }
@@ -153,12 +153,12 @@ class ColumnSyntaxTest extends AnyFlatSpec, ColumnSyntax[Id]:
   it should "The string constructed by the expression syntax that performs the bit XOR operation to determine if it matches matches the specified string." in {
     val id1 = column[Long]("id", BIGINT)
     val id2 = column[Option[Long]]("id", BIGINT)
-    assert((id1 MOD(5, 0)).statement === "id MOD ? = ?")
-    assert((id1 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?")
+    assert((id1 MOD (5, 0)).statement === "id MOD ? = ?")
+    assert((id1 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?")
     assert((id1 % (5, 0)).statement === "id % ? = ?")
     assert((id1 % (5, 0)).NOT.statement === "NOT id % ? = ?")
-    assert((id2 MOD(5, 0)).statement === "id MOD ? = ?")
-    assert((id2 MOD(5, 0)).NOT.statement === "NOT id MOD ? = ?")
+    assert((id2 MOD (5, 0)).statement === "id MOD ? = ?")
+    assert((id2 MOD (5, 0)).NOT.statement === "NOT id MOD ? = ?")
     assert((id2 % (5, 0)).statement === "id % ? = ?")
     assert((id2 % (5, 0)).NOT.statement === "NOT id % ? = ?")
   }
@@ -227,8 +227,8 @@ class ColumnSyntaxTest extends AnyFlatSpec, ColumnSyntax[Id]:
   }
 
   it should "The query string of the combined expression matches the specified string." in {
-    val id = column[Long]("id", BIGINT)
+    val id   = column[Long]("id", BIGINT)
     val name = column[String]("name", VARCHAR(255))
-    val age = column[Option[Int]]("age", INT)
+    val age  = column[Option[Int]]("age", INT)
     assert((id === 1L && name === "name" || age > 25).statement === "(id = ? AND name = ? OR age > ?)")
   }
