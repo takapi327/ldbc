@@ -57,21 +57,25 @@ trait ColumnSyntax[F[_]]:
     def <(value: Extract[T]):   LessThan[F, T]          = LessThan[F, T](buildColumnName(column), false, value)
     def <>(value: Extract[T]):  NotEqual[F, T]          = NotEqual[F, T]("<>", buildColumnName(column), false, value)
     def !==(value: Extract[T]): NotEqual[F, T]          = NotEqual[F, T]("!=", buildColumnName(column), false, value)
-    def IS[A <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: A): Is[F, A] = Is[F, A](buildColumnName(column), false, value)
+    def IS[A <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: A): Is[F, A] =
+      Is[F, A](buildColumnName(column), false, value)
     def <=>(value: Extract[T]): NullSafeEqual[F, T] = NullSafeEqual[F, T](buildColumnName(column), false, value)
     def IN(value: Extract[T]*): In[F, T]            = In[F, T](buildColumnName(column), false, value: _*)
-    def BETWEEN(start: Extract[T], end: Extract[T]): Between[F, T] = Between[F, T](buildColumnName(column), false, start, end)
-    def LIKE(value: Extract[T]):                     Like[F, T]    = Like[F, T](buildColumnName(column), false, value)
+    def BETWEEN(start: Extract[T], end: Extract[T]): Between[F, T] =
+      Between[F, T](buildColumnName(column), false, start, end)
+    def LIKE(value: Extract[T]): Like[F, T] = Like[F, T](buildColumnName(column), false, value)
     def LIKE_ESCAPE(like: Extract[T], escape: Extract[T]): LikeEscape[F, T] =
       LikeEscape[F, T](buildColumnName(column), false, like, escape)
-    def REGEXP(value: Extract[T]):                 Regexp[F, T]     = Regexp[F, T](buildColumnName(column), false, value)
-    def <<(value: Extract[T]):                     LeftShift[F, T]  = LeftShift[F, T](buildColumnName(column), false, value)
-    def >>(value: Extract[T]):                     RightShift[F, T] = RightShift[F, T](buildColumnName(column), false, value)
-    def DIV(cond: Extract[T], result: Extract[T]): Div[F, T]        = Div[F, T](buildColumnName(column), false, cond, result)
-    def MOD(cond: Extract[T], result: Extract[T]): Mod[F, T]     = Mod[F, T]("MOD", buildColumnName(column), false, cond, result)
-    def %(cond: Extract[T], result: Extract[T]):   Mod[F, T]     = Mod[F, T]("%", buildColumnName(column), false, cond, result)
-    def ^(value: Extract[T]):                      BitXOR[F, T]  = BitXOR[F, T](buildColumnName(column), false, value)
-    def ~(value: Extract[T]):                      BitFlip[F, T] = BitFlip[F, T](buildColumnName(column), false, value)
+    def REGEXP(value: Extract[T]): Regexp[F, T]     = Regexp[F, T](buildColumnName(column), false, value)
+    def <<(value: Extract[T]):     LeftShift[F, T]  = LeftShift[F, T](buildColumnName(column), false, value)
+    def >>(value: Extract[T]):     RightShift[F, T] = RightShift[F, T](buildColumnName(column), false, value)
+    def DIV(cond: Extract[T], result: Extract[T]): Div[F, T] = Div[F, T](buildColumnName(column), false, cond, result)
+    def MOD(cond: Extract[T], result: Extract[T]): Mod[F, T] =
+      Mod[F, T]("MOD", buildColumnName(column), false, cond, result)
+    def %(cond: Extract[T], result: Extract[T]): Mod[F, T] =
+      Mod[F, T]("%", buildColumnName(column), false, cond, result)
+    def ^(value: Extract[T]): BitXOR[F, T]  = BitXOR[F, T](buildColumnName(column), false, value)
+    def ~(value: Extract[T]): BitFlip[F, T] = BitFlip[F, T](buildColumnName(column), false, value)
 
     def ++(other: Column[T]): MultiColumn[T] = MultiColumn[T]("+", column, other)
     def --(other: Column[T]): MultiColumn[T] = MultiColumn[T]("-", column, other)
