@@ -46,7 +46,7 @@ object OrderBy:
     def column: Column[?]
 
     /** SQL query string */
-    def statement: String = s"${ column.label } $name"
+    def statement: String = column.alias.fold(s"${ column.label } $name")(as => s"$as.${ column.label } $name")
 
     override def toString: String = statement
 
