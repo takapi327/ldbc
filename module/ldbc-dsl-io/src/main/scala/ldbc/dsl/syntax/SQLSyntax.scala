@@ -6,8 +6,8 @@ package ldbc.dsl.syntax
 
 import cats.data.Kleisli
 
-import ldbc.sql.{ Connection, ResultSetConsumer }
-import ldbc.dsl.{ ParameterBinder, SQL }
+import ldbc.sql.*
+import ldbc.dsl.SQL
 import ldbc.dsl.logging.LogHandler
 
 /** Trait for generating SQL models from string completion knowledge.
