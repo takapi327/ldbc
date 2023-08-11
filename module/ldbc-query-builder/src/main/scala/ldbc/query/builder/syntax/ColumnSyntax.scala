@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.query.builder.syntax
 
@@ -10,44 +10,43 @@ import ldbc.core.Column
 import ldbc.core.interpreter.Extract
 import ldbc.sql.*
 import ldbc.query.builder.ColumnReader
-import ldbc.query.builder.statement.{ExpressionSyntax, OrderBy, Query}
+import ldbc.query.builder.statement.{ ExpressionSyntax, OrderBy, Query }
 import ldbc.query.builder.statement.ExpressionSyntax.*
 
 trait ColumnSyntax[F[_]]:
 
   private def buildColumnName[T](column: Column[T]): String =
-    column.alias.fold(column.label)(name => s"$name.${column.label}")
+    column.alias.fold(column.label)(name => s"$name.${ column.label }")
 
   private[ldbc] case class MultiColumn[T](flag: String, column1: Column[T], column2: Column[T]):
-    val label: String = s"${buildColumnName(column1)} $flag ${buildColumnName(column2)}"
+    val label: String = s"${ buildColumnName(column1) } $flag ${ buildColumnName(column2) }"
 
-  given[T] (using reader: ResultSetReader[F, T]): Conversion[Column[T], Kleisli[F, ResultSet[F], T]] with
+  given [T](using reader: ResultSetReader[F, T]): Conversion[Column[T], Kleisli[F, ResultSet[F], T]] with
     override def apply(x: Column[T]): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-      reader.read(resultSet, x.alias.fold(x.label)(name => s"$name.${x.label}"))
+      reader.read(resultSet, x.alias.fold(x.label)(name => s"$name.${ x.label }"))
     }
 
-  given[T] (using reader: ResultSetReader[F, T]): Conversion[Column[T], ColumnReader[F, T]] with
+  given [T](using reader: ResultSetReader[F, T]): Conversion[Column[T], ColumnReader[F, T]] with
     override def apply(x: Column[T]): ColumnReader[F, T] = ColumnReader(x, reader)
 
-
   /** When implementing a method with the same method name but different arguments, an implementation using extension
-   * will result in a compile error on the user side. Therefore, an implementation using implicit class is used.
-   *
-   * In addition, if a method is implemented with a union type, the method is implemented individually because pattern
-   * matching of the received type is not possible.
-   *
-   * example:
-   * {{{
-   *   [error]  |value === is not a member of ldbc.core.Column[Option[String]].
-   *   [error]  |An extension method was tried, but could not be fully constructed:
-   *   [error]  |
-   *   [error]  |    ldbc.dsl.io.===()
-   *   [error]  |
-   *   [error]  |    failed with:
-   *   [error]  |
-   *   [error]  |        value ===: <overloaded ldbc.dsl.io.===> does not take parameters
-   * }}}
-   */
+    * will result in a compile error on the user side. Therefore, an implementation using implicit class is used.
+    *
+    * In addition, if a method is implemented with a union type, the method is implemented individually because pattern
+    * matching of the received type is not possible.
+    *
+    * example:
+    * {{{
+    *   [error]  |value === is not a member of ldbc.core.Column[Option[String]].
+    *   [error]  |An extension method was tried, but could not be fully constructed:
+    *   [error]  |
+    *   [error]  |    ldbc.dsl.io.===()
+    *   [error]  |
+    *   [error]  |    failed with:
+    *   [error]  |
+    *   [error]  |        value ===: <overloaded ldbc.dsl.io.===> does not take parameters
+    * }}}
+    */
   implicit class ColumnStatement[T](column: Column[T])(using Parameter[F, Extract[T]]):
 
     def asc: OrderBy.Asc = OrderBy.Asc(column)

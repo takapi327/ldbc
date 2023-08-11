@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.query.builder.statement
 
@@ -8,18 +8,18 @@ import ldbc.core.*
 import ldbc.sql.ParameterBinder
 
 /** A model for constructing JOIN statements in MySQL.
- *
- * @param left
- *   The left-hand column where the join join will be performed.
- * @param right
- *   The right-hand column where the join join will be performed.
- * @tparam F
- *   The effect type
- * @tparam P1
- *   Base trait for all products
- * @tparam P2
- *   Base trait for all products
- */
+  *
+  * @param left
+  *   The left-hand column where the join join will be performed.
+  * @param right
+  *   The right-hand column where the join join will be performed.
+  * @tparam F
+  *   The effect type
+  * @tparam P1
+  *   Base trait for all products
+  * @tparam P2
+  *   Base trait for all products
+  */
 case class Join[F[_], P1 <: Product, P2 <: Product](left: Table[P1], right: Table[P2]):
   def on(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.On[F, P1, P2] =
     Join.On[F, P1, P2](left, right, func(left, right))
@@ -27,11 +27,13 @@ case class Join[F[_], P1 <: Product, P2 <: Product](left: Table[P1], right: Tabl
 object Join:
 
   private[ldbc] case class On[F[_], P1 <: Product, P2 <: Product](
-                                                                   left:       Table[P1],
-                                                                   right:      Table[P2],
-                                                                   expression: ExpressionSyntax[F]
-                                                                 ):
-    def select[T <: Tuple](func: (Table[P1], Table[P2]) => Tuple.Map[T, Column]): JoinSelect[F, P1, P2, Tuple.Map[T, Column]] =
+    left:       Table[P1],
+    right:      Table[P2],
+    expression: ExpressionSyntax[F]
+  ):
+    def select[T <: Tuple](
+      func: (Table[P1], Table[P2]) => Tuple.Map[T, Column]
+    ): JoinSelect[F, P1, P2, Tuple.Map[T, Column]] =
       val leftTableName  = left.alias.fold(left._name)(name => s"${ left._name } AS $name")
       val rightTableName = right.alias.fold(left._name)(name => s"${ right._name } AS $name")
       val columns        = func(left, right)
@@ -45,14 +47,14 @@ object Join:
       )
 
   private[ldbc] case class JoinSelect[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
-                                                                                       left:      Table[P1],
-                                                                                       right:     Table[P2],
-                                                                                       statement: String,
-                                                                                       columns:   T,
-                                                                                       params:    Seq[ParameterBinder[F]]
-                                                                                     ) extends Query[F, T],
-    JoinOrderByProvider[F, P1, P2, T],
-    LimitProvider[F, T]:
+    left:      Table[P1],
+    right:     Table[P2],
+    statement: String,
+    columns:   T,
+    params:    Seq[ParameterBinder[F]]
+  ) extends Query[F, T],
+            JoinOrderByProvider[F, P1, P2, T],
+            LimitProvider[F, T]:
 
     def where(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       val expressionSyntax = func(left, right)
@@ -74,14 +76,14 @@ object Join:
       )
 
   private[ldbc] case class JoinWhere[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
-                                                                                      left:      Table[P1],
-                                                                                      right:     Table[P2],
-                                                                                      statement: String,
-                                                                                      columns:   T,
-                                                                                      params:    Seq[ParameterBinder[F]]
-                                                                                    ) extends Query[F, T],
-    JoinOrderByProvider[F, P1, P2, T],
-    LimitProvider[F, T]:
+    left:      Table[P1],
+    right:     Table[P2],
+    statement: String,
+    columns:   T,
+    params:    Seq[ParameterBinder[F]]
+  ) extends Query[F, T],
+            JoinOrderByProvider[F, P1, P2, T],
+            LimitProvider[F, T]:
 
     private def union(label: String, expressionSyntax: ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       JoinWhere[F, P1, P2, T](
@@ -113,13 +115,13 @@ object Join:
       )
 
   private[ldbc] case class JoinOrderBy[F[_], P1 <: Product, P2 <: Product, T](
-                                                                               left:      Table[P1],
-                                                                               right:     Table[P2],
-                                                                               statement: String,
-                                                                               columns:   T,
-                                                                               params:    Seq[ParameterBinder[F]]
-                                                                             ) extends Query[F, T],
-    LimitProvider[F, T]
+    left:      Table[P1],
+    right:     Table[P2],
+    statement: String,
+    columns:   T,
+    params:    Seq[ParameterBinder[F]]
+  ) extends Query[F, T],
+            LimitProvider[F, T]
 
   private[ldbc] transparent trait JoinOrderByProvider[F[_], P1 <: Product, P2 <: Product, T]:
     self: Query[F, T] =>
@@ -128,8 +130,8 @@ object Join:
     def right: Table[P2]
 
     def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](
-                                                                                  func: (Table[P1], Table[P2]) => A
-                                                                                ): JoinOrderBy[F, P1, P2, T] =
+      func: (Table[P1], Table[P2]) => A
+    ): JoinOrderBy[F, P1, P2, T] =
       val order = func(left, right) match
         case v: Tuple         => v.toList.mkString(", ")
         case v: OrderBy.Order => v.statement
@@ -143,24 +145,24 @@ object Join:
       )
 
   private[ldbc] case class JoinHaving[F[_], P1 <: Product, P2 <: Product, T](
-                                                                              left:      Table[P1],
-                                                                              right:     Table[P2],
-                                                                              statement: String,
-                                                                              columns:   T,
-                                                                              params:    Seq[ParameterBinder[F]]
-                                                                            ) extends Query[F, T],
-    JoinOrderByProvider[F, P1, P2, T],
-    LimitProvider[F, T]
+    left:      Table[P1],
+    right:     Table[P2],
+    statement: String,
+    columns:   T,
+    params:    Seq[ParameterBinder[F]]
+  ) extends Query[F, T],
+            JoinOrderByProvider[F, P1, P2, T],
+            LimitProvider[F, T]
 
   private[ldbc] case class JoinGroupBy[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
-                                                                                        left:      Table[P1],
-                                                                                        right:     Table[P2],
-                                                                                        statement: String,
-                                                                                        columns:   T,
-                                                                                        params:    Seq[ParameterBinder[F]]
-                                                                                      ) extends Query[F, T],
-    JoinOrderByProvider[F, P1, P2, T],
-    LimitProvider[F, T]:
+    left:      Table[P1],
+    right:     Table[P2],
+    statement: String,
+    columns:   T,
+    params:    Seq[ParameterBinder[F]]
+  ) extends Query[F, T],
+            JoinOrderByProvider[F, P1, P2, T],
+            LimitProvider[F, T]:
 
     def having[A](func: T => ExpressionSyntax[F]): JoinHaving[F, P1, P2, T] =
       val expressionSyntax = func(columns)
