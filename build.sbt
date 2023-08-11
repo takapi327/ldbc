@@ -62,7 +62,7 @@ lazy val LdbcDslIOProject = LepusSbtProject("Ldbc-Dsl-IO", "module/ldbc-dsl-io")
     mockito,
     scalaTest
   ) ++ specs2)
-  .dependsOn(LdbcSqlProject)
+  .dependsOn(LdbcQueryBuilderProject)
 
 lazy val LdbcSchemaSpyProject = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
