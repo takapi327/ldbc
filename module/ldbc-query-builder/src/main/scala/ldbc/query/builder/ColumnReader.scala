@@ -11,11 +11,11 @@ import ldbc.core.attribute.Attribute
 import ldbc.sql.{ ResultSet, ResultSetReader }
 
 private[ldbc] case class ColumnReader[F[_], T](
-  label: String,
-  dataType: DataType[T],
+  label:      String,
+  dataType:   DataType[T],
   attributes: Seq[Attribute[T]],
-  _alias: Option[String],
-  reader: ResultSetReader[F, T]
+  _alias:     Option[String],
+  reader:     ResultSetReader[F, T]
 ) extends Column[T]:
 
   override private[ldbc] def alias = _alias

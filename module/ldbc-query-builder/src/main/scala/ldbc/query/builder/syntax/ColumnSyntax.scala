@@ -109,19 +109,26 @@ trait ColumnSyntax[F[_]]:
     def /(other: Column[T]): MultiColumn[T] = MultiColumn[T]("/", column, other)
 
     /** List of sub query methods */
-    def ===(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] = SubQuery[F, T]("=", buildColumnName(column), value)
+    def ===(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] =
+      SubQuery[F, T]("=", buildColumnName(column), value)
 
-    def hoge(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] = SubQuery[F, T](">=", buildColumnName(column), value)
+    def hoge(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] =
+      SubQuery[F, T](">=", buildColumnName(column), value)
 
-    def >(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] = SubQuery[F, T](">", buildColumnName(column), value)
+    def >(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] =
+      SubQuery[F, T](">", buildColumnName(column), value)
 
-    def <=(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<=", buildColumnName(column), value)
+    def <=(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] =
+      SubQuery[F, T]("<=", buildColumnName(column), value)
 
-    def <(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<", buildColumnName(column), value)
+    def <(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] =
+      SubQuery[F, T]("<", buildColumnName(column), value)
 
-    def <>(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<>", buildColumnName(column), value)
+    def <>(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] =
+      SubQuery[F, T]("<>", buildColumnName(column), value)
 
-    def IN(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", buildColumnName(column), value)
+    def IN(value: Query[F, ColumnReader[F, T] & Column[T]]): SubQuery[F, T] =
+      SubQuery[F, T]("IN", buildColumnName(column), value)
 
     /** List of join query methods */
     def ===(other: Column[?]): ExpressionSyntax[F] = JoinQuery("=", column, other)
