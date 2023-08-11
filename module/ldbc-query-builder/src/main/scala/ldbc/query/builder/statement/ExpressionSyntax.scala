@@ -7,6 +7,7 @@ package ldbc.query.builder.statement
 import ldbc.core.Column
 import ldbc.core.interpreter.Extract
 import ldbc.sql.{ Parameter, ParameterBinder }
+import ldbc.query.builder.ColumnReader
 
 /** Trait for the syntax of expressions available in MySQL.
   *
@@ -117,7 +118,7 @@ object ExpressionSyntax:
   private[ldbc] case class SubQuery[F[_], T](
     flag:   String,
     column: String,
-    value:  Query[F, Column[T]]
+    value:  Query[F, ColumnReader[F, T] & Column[T]]
   ) extends ExpressionSyntax[F]:
 
     override def statement: String                  = s"$column $flag (${ value.statement })"

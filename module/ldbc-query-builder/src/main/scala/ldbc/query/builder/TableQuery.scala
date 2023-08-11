@@ -10,9 +10,14 @@ import ldbc.query.builder.interpreter.Tuples
 
 case class TableQuery[F[_], P <: Product](table: Table[P]):
 
-  def select[T <: Tuple](
-    func: Table[P] => Tuples.MapToColumn[T, F]
-  ): Select[F, P, Tuples.MapToColumn[T, F]] =
+  type ToColumn[T] = T match
+    case Tuple => Tuples.MapToColumn[T, F]
+    case _ => ColumnReader[F, T]
+
+  def select[T](func: Table[P] => ToColumn[T]): Select[F, P, ToColumn[T]] =
     val columns = func(table)
-    val statement = s"SELECT ${columns.toArray.distinct.mkString(", ")} FROM ${table._name}"
-    Select[F, P, Tuples.MapToColumn[T, F]](table, statement, columns, Seq.empty)
+    val str = columns match
+      case v: Tuple => v.toArray.distinct.mkString(", ")
+      case v => v
+    val statement = s"SELECT $str FROM ${table._name}"
+    Select[F, P, ToColumn[T]](table, statement, columns, Seq.empty)

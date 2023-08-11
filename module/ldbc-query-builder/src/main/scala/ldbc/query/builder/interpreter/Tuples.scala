@@ -10,8 +10,9 @@ object Tuples:
 
   type MapToColumn[T <: Tuple, F[_]] <: Tuple = T match
     case EmptyTuple => EmptyTuple
+    case h *: EmptyTuple => ColumnReader[F, h] *: EmptyTuple
     case h *: t => ColumnReader[F, h] *: MapToColumn[t, F]
-  
+
   type InverseColumnMap[F[_], T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
     case ColumnReader[F, h] *: t => h *: InverseColumnMap[F, t]

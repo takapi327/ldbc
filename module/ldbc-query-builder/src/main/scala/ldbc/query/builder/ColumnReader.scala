@@ -21,7 +21,7 @@ private[ldbc] case class ColumnReader[F[_], T](
   override private[ldbc] def alias = _alias
 
   val read: Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-    reader.read(resultSet, alias.fold(label)(name => s"$name.${ label }"))
+    reader.read(resultSet, alias.fold(label)(name => s"$name.$label"))
   }
 
   override def toString: String = alias.fold(s"`$label`")(name => s"$name.`$label`")
