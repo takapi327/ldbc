@@ -13,7 +13,7 @@ import ldbc.sql.ParameterBinder
   * @tparam T
   *   Column Tuples
   */
-private[ldbc] trait Query[F[_], T <: Tuple]:
+private[ldbc] trait Query[F[_], T]:
 
   /** SQL statement string
     */

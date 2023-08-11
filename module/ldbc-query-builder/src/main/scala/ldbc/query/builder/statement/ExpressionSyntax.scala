@@ -117,7 +117,7 @@ object ExpressionSyntax:
   private[ldbc] case class SubQuery[F[_], T](
     flag:   String,
     column: String,
-    value:  Query[F, Column[T] *: EmptyTuple]
+    value:  Query[F, Column[T]]
   ) extends ExpressionSyntax[F]:
 
     override def statement: String                  = s"$column $flag (${ value.statement })"

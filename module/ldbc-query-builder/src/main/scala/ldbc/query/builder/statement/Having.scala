@@ -25,7 +25,7 @@ import ldbc.sql.ParameterBinder
   * @tparam T
   *   Union type of column
   */
-private[ldbc] case class Having[F[_], P <: Product, T <: Tuple](
+private[ldbc] case class Having[F[_], P <: Product, T](
   table:     Table[P],
   statement: String,
   columns:   T,

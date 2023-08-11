@@ -109,19 +109,19 @@ trait ColumnSyntax[F[_]]:
     def /(other: Column[T]): MultiColumn[T] = MultiColumn[T]("/", column, other)
 
     /** List of sub query methods */
-    def ===(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("=", buildColumnName(column), value)
+    def ===(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("=", buildColumnName(column), value)
 
-    def >=(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T](">=", buildColumnName(column), value)
+    def >=(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T](">=", buildColumnName(column), value)
 
-    def >(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T](">", buildColumnName(column), value)
+    def >(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T](">", buildColumnName(column), value)
 
-    def <=(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("<=", buildColumnName(column), value)
+    def <=(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<=", buildColumnName(column), value)
 
-    def <(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("<", buildColumnName(column), value)
+    def <(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<", buildColumnName(column), value)
 
-    def <>(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("<>", buildColumnName(column), value)
+    def <>(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<>", buildColumnName(column), value)
 
-    def IN(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("IN", buildColumnName(column), value)
+    def IN(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", buildColumnName(column), value)
 
     /** List of join query methods */
     def ===(other: Column[?]): ExpressionSyntax[F] = JoinQuery("=", column, other)
@@ -184,16 +184,16 @@ trait ColumnSyntax[F[_]]:
     def ~(value: Extract[T]): BitFlip[F, T] = BitFlip[F, T](column.label, false, value)
 
     /** List of sub query methods */
-    def ===(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
+    def ===(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("=", column.label, value)
 
-    def >=(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
+    def >=(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T](">=", column.label, value)
 
-    def >(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
+    def >(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T](">", column.label, value)
 
-    def <=(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
+    def <=(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<=", column.label, value)
 
-    def <(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
+    def <(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<", column.label, value)
 
-    def <>(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
+    def <>(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("<>", column.label, value)
 
-    def IN(value: Query[F, Column[T] *: EmptyTuple]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)
+    def IN(value: Query[F, Column[T]]): SubQuery[F, T] = SubQuery[F, T]("IN", column.label, value)

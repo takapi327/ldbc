@@ -114,7 +114,7 @@ object Join:
         params    = params
       )
 
-  private[ldbc] case class JoinOrderBy[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
+  private[ldbc] case class JoinOrderBy[F[_], P1 <: Product, P2 <: Product, T](
     left:      Table[P1],
     right:     Table[P2],
     statement: String,
@@ -123,7 +123,7 @@ object Join:
   ) extends Query[F, T],
             LimitProvider[F, T]
 
-  private[ldbc] transparent trait JoinOrderByProvider[F[_], P1 <: Product, P2 <: Product, T <: Tuple]:
+  private[ldbc] transparent trait JoinOrderByProvider[F[_], P1 <: Product, P2 <: Product, T]:
     self: Query[F, T] =>
 
     def left:  Table[P1]
@@ -144,7 +144,7 @@ object Join:
         params    = self.params
       )
 
-  private[ldbc] case class JoinHaving[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
+  private[ldbc] case class JoinHaving[F[_], P1 <: Product, P2 <: Product, T](
     left:      Table[P1],
     right:     Table[P2],
     statement: String,
@@ -154,7 +154,7 @@ object Join:
             JoinOrderByProvider[F, P1, P2, T],
             LimitProvider[F, T]
 
-  private[ldbc] case class JoinGroupBy[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
+  private[ldbc] case class JoinGroupBy[F[_], P1 <: Product, P2 <: Product, T](
     left:      Table[P1],
     right:     Table[P2],
     statement: String,
