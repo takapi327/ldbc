@@ -6,13 +6,27 @@ package ldbc.query.builder
 
 import cats.data.Kleisli
 
-import ldbc.core.Column
+import ldbc.core.*
+import ldbc.core.attribute.Attribute
 import ldbc.sql.{ ResultSet, ResultSetReader }
 
-private[ldbc] case class ColumnReader[F[_], T](column: Column[T], reader: ResultSetReader[F, T]):
+private[ldbc] case class ColumnReader[F[_], T](
+  label: String,
+  dataType: DataType[T],
+  attributes: Seq[Attribute[T]],
+  _alias: Option[String],
+  reader: ResultSetReader[F, T]
+) extends Column[T]:
+
+  override private[ldbc] def alias = _alias
 
   val read: Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-    reader.read(resultSet, column.alias.fold(column.label)(name => s"$name.${ column.label }"))
+    reader.read(resultSet, alias.fold(label)(name => s"$name.${ label }"))
   }
 
   override def toString: String = column.toString
+
+object ColumnReader:
+
+  def apply[F[_], T](column: Column[T], reader: ResultSetReader[F, T]): ColumnReader[F, T] =
+    ColumnReader(column.label, column.dataType, column.attributes, column.alias, reader)
