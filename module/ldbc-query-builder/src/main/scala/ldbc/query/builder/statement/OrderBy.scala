@@ -25,7 +25,7 @@ import ldbc.sql.ParameterBinder
   * @tparam T
   *   Union type of column
   */
-private[ldbc] case class OrderBy[F[_], P <: Product, T](
+private[ldbc] case class OrderBy[F[_], P <: Product, T <: Tuple](
   table:     Table[P],
   statement: String,
   columns:   T,
@@ -64,7 +64,7 @@ object OrderBy:
   * @tparam T
   *   Union type of column
   */
-private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T]:
+private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T <: Tuple]:
   self: Query[F, T] =>
 
   /** Trait for generating SQL table information.

@@ -20,7 +20,7 @@ import ldbc.sql.{ Parameter, ParameterBinder }
   * @tparam T
   *   Union type of column
   */
-private[ldbc] case class Limit[F[_], T](
+private[ldbc] case class Limit[F[_], T <: Tuple](
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
@@ -42,7 +42,7 @@ private[ldbc] case class Limit[F[_], T](
   * @tparam T
   *   Union type of column
   */
-private[ldbc] transparent trait LimitProvider[F[_], T]:
+private[ldbc] transparent trait LimitProvider[F[_], T <: Tuple]:
   self: Query[F, T] =>
 
   /** A method for setting the LIMIT condition in a statement.

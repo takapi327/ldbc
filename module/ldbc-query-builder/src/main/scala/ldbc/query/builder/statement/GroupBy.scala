@@ -25,7 +25,7 @@ import ldbc.sql.ParameterBinder
   * @tparam T
   *   Union type of column
   */
-private[ldbc] case class GroupBy[F[_], P <: Product, T](
+private[ldbc] case class GroupBy[F[_], P <: Product, T <: Tuple](
   table:     Table[P],
   statement: String,
   columns:   T,
