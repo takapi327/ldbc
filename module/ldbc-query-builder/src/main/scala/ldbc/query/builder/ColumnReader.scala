@@ -24,7 +24,7 @@ private[ldbc] case class ColumnReader[F[_], T](
     reader.read(resultSet, alias.fold(label)(name => s"$name.${ label }"))
   }
 
-  override def toString: String = column.toString
+  override def toString: String = alias.fold(s"`$label`")(name => s"$name.`$label`")
 
 object ColumnReader:
 
