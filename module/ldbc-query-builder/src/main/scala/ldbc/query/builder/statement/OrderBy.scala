@@ -2,9 +2,9 @@
  * distributed with this source code.
  */
 
-package ldbc.query.builder
+package ldbc.query.builder.statement
 
-import ldbc.core.{ Column, Table }
+import ldbc.core.{Column, Table}
 import ldbc.sql.ParameterBinder
 
 /** A model for constructing ORDER BY statements in MySQL.

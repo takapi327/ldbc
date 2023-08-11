@@ -9,8 +9,9 @@ import cats.data.Kleisli
 import ldbc.core.Column
 import ldbc.core.interpreter.Extract
 import ldbc.sql.*
-import ldbc.query.builder.*
-import ldbc.query.builder.ExpressionSyntax.*
+import ldbc.query.builder.ColumnReader
+import ldbc.query.builder.statement.{ExpressionSyntax, OrderBy, Query}
+import ldbc.query.builder.statement.ExpressionSyntax.*
 
 trait ColumnSyntax[F[_]]:
 

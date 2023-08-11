@@ -2,7 +2,7 @@
  * distributed with this source code.
  */
 
-package ldbc.query.builder
+package ldbc.query.builder.statement
 
 import ldbc.sql.ParameterBinder
 
@@ -13,7 +13,7 @@ import ldbc.sql.ParameterBinder
  * @tparam T
  *   Column Tuples
  */
-private[ldbc] trait Query[F[_], T <: Tuple]:
+private[ldbc] trait Query[F[_], T]:
 
   /** SQL statement string
    */

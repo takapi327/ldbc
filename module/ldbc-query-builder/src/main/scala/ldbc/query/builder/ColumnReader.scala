@@ -9,7 +9,7 @@ import cats.data.Kleisli
 import ldbc.core.Column
 import ldbc.sql.{ ResultSet, ResultSetReader }
 
-case class ColumnReader[F[_], T](column: Column[T], reader: ResultSetReader[F, T]):
+private[ldbc] case class ColumnReader[F[_], T](column: Column[T], reader: ResultSetReader[F, T]):
 
   val read: Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
     reader.read(resultSet, column.alias.fold(column.label)(name => s"$name.${ column.label }"))

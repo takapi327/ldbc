@@ -2,11 +2,11 @@
  * distributed with this source code.
  */
 
-package ldbc.query.builder
+package ldbc.query.builder.statement
 
 import ldbc.core.Column
 import ldbc.core.interpreter.Extract
-import ldbc.sql.{ Parameter, ParameterBinder }
+import ldbc.sql.{Parameter, ParameterBinder}
 
 /** Trait for the syntax of expressions available in MySQL.
  *

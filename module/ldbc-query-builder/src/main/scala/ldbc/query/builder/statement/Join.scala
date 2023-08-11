@@ -2,7 +2,7 @@
  * distributed with this source code.
  */
 
-package ldbc.query.builder
+package ldbc.query.builder.statement
 
 import ldbc.core.*
 import ldbc.sql.ParameterBinder
