@@ -6,6 +6,8 @@ package ldbc.dsl
 
 import scala.annotation.targetName
 
+import ldbc.sql.ParameterBinder
+
 /** A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,
   * etc.
   *
