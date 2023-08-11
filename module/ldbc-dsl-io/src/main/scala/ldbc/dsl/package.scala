@@ -15,13 +15,13 @@ import cats.effect.kernel.Resource.ExitCase
 import ldbc.sql.{ Connection, ResultSetConsumer }
 import ldbc.dsl.syntax.*
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
+import ldbc.query.builder.syntax.ColumnSyntax
 
 package object dsl:
 
   private trait SyncSyntax[F[_]: Sync]
     extends SQLSyntax[F],
             ConnectionSyntax[F],
-            TableSyntax[F],
             ColumnSyntax[F],
             QuerySyntax[F]:
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
