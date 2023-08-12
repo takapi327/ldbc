@@ -20,4 +20,4 @@ object Tuples:
 
   type ToColumn[F[_], T] = T match
     case Tuple => MapToColumn[T, F]
-    case _ => ColumnReader[F, T]
+    case _     => ColumnReader[F, T]

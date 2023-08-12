@@ -18,5 +18,5 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
     val statement = s"SELECT $str FROM ${ table._name }"
     Select[F, P, Tuples.ToColumn[F, T]](table, statement, columns, Seq.empty)
 
-  def join[O <: Product](other: Table[O]): Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
+  def join[O <: Product](other: Table[O]):         Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
   def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = Join(table.as("x1"), other.table.as("x2"))
