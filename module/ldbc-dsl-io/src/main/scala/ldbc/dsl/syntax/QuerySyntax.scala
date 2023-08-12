@@ -4,6 +4,8 @@
 
 package ldbc.dsl.syntax
 
+import scala.deriving.Mirror
+
 import cats.data.Kleisli
 import cats.implicits.*
 import cats.effect.Sync
@@ -16,7 +18,7 @@ import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Sync]:
 
-  extension [T <: Tuple](query: Query[F, T])
+  implicit class QueryOps[T <: Tuple](query: Query[F, T]):
 
     private def connection[A](consumer: ResultSetConsumer[F, A])(using
       logHandler:                       LogHandler[F]
@@ -50,7 +52,7 @@ trait QuerySyntax[F[_]: Sync]:
       given Kleisli[F, ResultSet[F], A] = func(query.columns)
       connection[Option[A]](summon[ResultSetConsumer[F, Option[A]]])
 
-    def headOption(using LogHandler[F]): Kleisli[F, Connection[F], Option[Tuples.InverseColumnMap[F, T]]] =
+    lazy val headOption: LogHandler[F] ?=> Kleisli[F, Connection[F], Option[Tuples.InverseColumnMap[F, T]]] =
       given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = query.columns.productIterator.toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
@@ -62,8 +64,8 @@ trait QuerySyntax[F[_]: Sync]:
       )
 
     def headOption[P <: Product](using
-      mirror: scala.deriving.Mirror.ProductOf[P],
-      i:      Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
+      mirror: Mirror.ProductOf[P],
+      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
       log:    LogHandler[F]
     ): Kleisli[F, Connection[F], Option[P]] =
       given Kleisli[F, ResultSet[F], P] = query.columns.toList
@@ -78,7 +80,7 @@ trait QuerySyntax[F[_]: Sync]:
       given Kleisli[F, ResultSet[F], A] = func(query.columns)
       connection[List[A]](summon[ResultSetConsumer[F, List[A]]])
 
-    def toList(using LogHandler[F]): Kleisli[F, Connection[F], List[Tuples.InverseColumnMap[F, T]]] =
+    lazy val toList: LogHandler[F] ?=> Kleisli[F, Connection[F], List[Tuples.InverseColumnMap[F, T]]] =
       given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = query.columns.productIterator.toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
@@ -88,8 +90,8 @@ trait QuerySyntax[F[_]: Sync]:
       connection[List[Tuples.InverseColumnMap[F, T]]](summon[ResultSetConsumer[F, List[Tuples.InverseColumnMap[F, T]]]])
 
     def toList[P <: Product](using
-      mirror: scala.deriving.Mirror.ProductOf[P],
-      i:      Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
+      mirror: Mirror.ProductOf[P],
+      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
       log:    LogHandler[F]
     ): Kleisli[F, Connection[F], List[P]] =
       given Kleisli[F, ResultSet[F], P] = query.columns.toList
@@ -105,7 +107,7 @@ trait QuerySyntax[F[_]: Sync]:
       connection[A](summon[ResultSetConsumer[F, A]])
 
     def unsafe[P <: Product](using
-      mirror: scala.deriving.Mirror.ProductOf[P],
+      mirror: Mirror.ProductOf[P],
       i:      Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
       log:    LogHandler[F]
     ): Kleisli[F, Connection[F], P] =
