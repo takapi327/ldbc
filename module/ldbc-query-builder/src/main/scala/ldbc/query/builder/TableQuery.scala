@@ -4,8 +4,6 @@
 
 package ldbc.query.builder
 
-import scala.deriving.Mirror
-
 import ldbc.core.Table
 import ldbc.query.builder.statement.{ Select, Join }
 import ldbc.query.builder.interpreter.Tuples
