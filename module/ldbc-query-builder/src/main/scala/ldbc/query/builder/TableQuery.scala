@@ -4,20 +4,21 @@
 
 package ldbc.query.builder
 
+import scala.deriving.Mirror
+
 import ldbc.core.Table
-import ldbc.query.builder.statement.Select
+import ldbc.query.builder.statement.{ Select, Join }
 import ldbc.query.builder.interpreter.Tuples
 
 case class TableQuery[F[_], P <: Product](table: Table[P]):
 
-  type ToColumn[T] = T match
-    case Tuple => Tuples.MapToColumn[T, F]
-    case _     => ColumnReader[F, T]
-
-  def select[T](func: Table[P] => ToColumn[T]): Select[F, P, ToColumn[T]] =
+  def select[T](func: Table[P] => Tuples.ToColumn[F, T]): Select[F, P, Tuples.ToColumn[F, T]] =
     val columns = func(table)
     val str = columns match
       case v: Tuple => v.toArray.distinct.mkString(", ")
       case v        => v
     val statement = s"SELECT $str FROM ${ table._name }"
-    Select[F, P, ToColumn[T]](table, statement, columns, Seq.empty)
+    Select[F, P, Tuples.ToColumn[F, T]](table, statement, columns, Seq.empty)
+
+  def join[O <: Product](other: Table[O]): Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
+  def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = Join(table.as("x1"), other.table.as("x2"))

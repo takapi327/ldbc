@@ -6,6 +6,7 @@ package ldbc.query.builder.statement
 
 import ldbc.core.*
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.interpreter.Tuples
 
 /** A model for constructing JOIN statements in MySQL.
   *
@@ -32,12 +33,12 @@ object Join:
     expression: ExpressionSyntax[F]
   ):
     def select[T <: Tuple](
-      func: (Table[P1], Table[P2]) => Tuple.Map[T, Column]
-    ): JoinSelect[F, P1, P2, Tuple.Map[T, Column]] =
+      func: (Table[P1], Table[P2]) => Tuples.ToColumn[F, T]
+    ): JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
       val leftTableName  = left.alias.fold(left._name)(name => s"${ left._name } AS $name")
       val rightTableName = right.alias.fold(left._name)(name => s"${ right._name } AS $name")
       val columns        = func(left, right)
-      JoinSelect[F, P1, P2, Tuple.Map[T, Column]](
+      JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
         left  = left,
         right = right,
         statement =
