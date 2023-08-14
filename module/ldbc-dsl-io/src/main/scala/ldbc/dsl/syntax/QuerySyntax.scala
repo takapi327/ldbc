@@ -54,17 +54,14 @@ trait QuerySyntax[F[_]: Sync]:
 
     lazy val headOption: LogHandler[F] ?=> Kleisli[F, Connection[F], Option[Tuples.InverseColumnMap[F, T]]] =
       given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (query.columns match
-        case h *: t => (h *: t).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        case h => (h *: EmptyTuple).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        ).map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnReader[F, ?]]]
+        .traverse {
+          case x: ColumnReader[F, ?] => x.read
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
       connection[Option[Tuples.InverseColumnMap[F, T]]](
         summon[ResultSetConsumer[F, Option[Tuples.InverseColumnMap[F, T]]]]
       )
@@ -75,17 +72,14 @@ trait QuerySyntax[F[_]: Sync]:
       log:    LogHandler[F]
     ): Kleisli[F, Connection[F], Option[P]] =
       given Kleisli[F, ResultSet[F], P] = (query.columns match
-        case h *: t => (h *: t).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        case h => (h *: EmptyTuple).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        ).map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnReader[F, ?]]]
+        .traverse {
+          case x: ColumnReader[F, ?] => x.read
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       connection[Option[P]](summon[ResultSetConsumer[F, Option[P]]])
 
     def toList[A](func: T => Kleisli[F, ResultSet[F], A])(using LogHandler[F]): Kleisli[F, Connection[F], List[A]] =
@@ -94,17 +88,14 @@ trait QuerySyntax[F[_]: Sync]:
 
     lazy val toList: LogHandler[F] ?=> Kleisli[F, Connection[F], List[Tuples.InverseColumnMap[F, T]]] =
       given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (query.columns match
-        case h *: t => (h *: t).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        case h => (h *: EmptyTuple).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        ).map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnReader[F, ?]]]
+        .traverse {
+          case x: ColumnReader[F, ?] => x.read
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
       connection[List[Tuples.InverseColumnMap[F, T]]](summon[ResultSetConsumer[F, List[Tuples.InverseColumnMap[F, T]]]])
 
     def toList[P <: Product](using
@@ -113,17 +104,14 @@ trait QuerySyntax[F[_]: Sync]:
       log:    LogHandler[F]
     ): Kleisli[F, Connection[F], List[P]] =
       given Kleisli[F, ResultSet[F], P] = (query.columns match
-        case h *: t => (h *: t).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        case h => (h *: EmptyTuple).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        ).map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnReader[F, ?]]]
+        .traverse {
+          case x: ColumnReader[F, ?] => x.read
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       connection[List[P]](summon[ResultSetConsumer[F, List[P]]])
 
     def unsafe[A](func: T => Kleisli[F, ResultSet[F], A])(using LogHandler[F]): Kleisli[F, Connection[F], A] =
@@ -136,15 +124,12 @@ trait QuerySyntax[F[_]: Sync]:
       log:    LogHandler[F]
     ): Kleisli[F, Connection[F], P] =
       given Kleisli[F, ResultSet[F], P] = (query.columns match
-        case h *: t => (h *: t).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        case h => (h *: EmptyTuple).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
-          .traverse {
-            case x: ColumnReader[F, ?] => x.read
-          }
-        ).map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnReader[F, ?]]]
+        .traverse {
+          case x: ColumnReader[F, ?] => x.read
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       connection[P](summon[ResultSetConsumer[F, P]])

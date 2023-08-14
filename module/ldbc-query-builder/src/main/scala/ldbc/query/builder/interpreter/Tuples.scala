@@ -15,16 +15,16 @@ object Tuples:
 
   type InverseColumnMap[F[_], T] <: Tuple = T match
     case EmptyTuple                       => EmptyTuple
-    case ColumnReader[F, h] => h *: EmptyTuple
+    case ColumnReader[F, h]               => h *: EmptyTuple
     case ColumnReader[F, h] *: EmptyTuple => h *: EmptyTuple
     case ColumnReader[F, h] *: t          => h *: InverseColumnMap[F, t]
 
   type IsColumnReader[F[_], T] <: Boolean = T match
-    case EmptyTuple => false
-    case ColumnReader[F, h] => true
+    case EmptyTuple                       => false
+    case ColumnReader[F, h]               => true
     case ColumnReader[F, h] *: EmptyTuple => true
-    case ColumnReader[F, h] *: t => IsColumnReader[F, t]
-    case _ => false
+    case ColumnReader[F, h] *: t          => IsColumnReader[F, t]
+    case _                                => false
 
   type ToColumn[F[_], T] = T match
     case Tuple => MapToColumn[T, F]
