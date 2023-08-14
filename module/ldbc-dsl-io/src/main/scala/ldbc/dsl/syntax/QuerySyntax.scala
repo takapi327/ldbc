@@ -18,7 +18,7 @@ import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Sync]:
 
-  implicit class QueryOps[T](query: Query[F, T]):
+  implicit class QueryOps[T](query: Query[F, T])(using Tuples.IsColumnReader[F, T] =:= true):
 
     private def connection[A](consumer: ResultSetConsumer[F, A])(using
       logHandler:                       LogHandler[F]
