@@ -83,7 +83,8 @@ object Table extends Dynamic:
       columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
 
     override def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column] =
-      columns.asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]]
+      alias.fold(columns)(name => columns.map[Column]([t] => (x: t) => x.asInstanceOf[Column[t]].as(name)))
+        .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]]
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
