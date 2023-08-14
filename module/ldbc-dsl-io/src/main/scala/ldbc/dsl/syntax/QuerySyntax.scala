@@ -59,7 +59,7 @@ trait QuerySyntax[F[_]: Sync]:
       ).toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
-          case x: ColumnReader[F, ?] => x.read
+          case reader: ColumnReader[F, ?] => reader.read
         }
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
       connection[Option[Tuples.InverseColumnMap[F, T]]](
@@ -77,7 +77,7 @@ trait QuerySyntax[F[_]: Sync]:
       ).toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
-          case x: ColumnReader[F, ?] => x.read
+          case reader: ColumnReader[F, ?] => reader.read
         }
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       connection[Option[P]](summon[ResultSetConsumer[F, Option[P]]])
@@ -93,7 +93,7 @@ trait QuerySyntax[F[_]: Sync]:
       ).toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
-          case x: ColumnReader[F, ?] => x.read
+          case reader: ColumnReader[F, ?] => reader.read
         }
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
       connection[List[Tuples.InverseColumnMap[F, T]]](summon[ResultSetConsumer[F, List[Tuples.InverseColumnMap[F, T]]]])
@@ -109,7 +109,7 @@ trait QuerySyntax[F[_]: Sync]:
       ).toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
-          case x: ColumnReader[F, ?] => x.read
+          case reader: ColumnReader[F, ?] => reader.read
         }
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       connection[List[P]](summon[ResultSetConsumer[F, List[P]]])
@@ -129,7 +129,7 @@ trait QuerySyntax[F[_]: Sync]:
       ).toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
-          case x: ColumnReader[F, ?] => x.read
+          case reader: ColumnReader[F, ?] => reader.read
         }
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       connection[P](summon[ResultSetConsumer[F, P]])
