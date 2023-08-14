@@ -48,7 +48,9 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Method to retrieve an array of column information that a table has.
     */
-  def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]
+  private[ldbc] def all: List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]
+
+  def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
   def keySet(func: Table[P] => Key): Table[P]
 
@@ -77,8 +79,11 @@ object Table extends Dynamic:
         .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
       alias.fold(column)(name => column.as(name))
 
-    override def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
+    override private[ldbc] def all: List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
       columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
+
+    override def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column] =
+      columns.asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]]
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
