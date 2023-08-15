@@ -4,6 +4,7 @@
 
 package ldbc.query.builder.interpreter
 
+import ldbc.sql.ResultSetReader
 import ldbc.query.builder.ColumnReader
 
 object Tuples:
@@ -29,3 +30,7 @@ object Tuples:
   type ToColumn[F[_], T] = T match
     case Tuple => MapToColumn[T, F]
     case _     => ColumnReader[F, T]
+
+  type MapToResultSetReader[F[_], T <: Tuple] <: Tuple = T match
+    case EmptyTuple => EmptyTuple
+    case h *: t => ResultSetReader[F, h] *: MapToResultSetReader[F, t]
