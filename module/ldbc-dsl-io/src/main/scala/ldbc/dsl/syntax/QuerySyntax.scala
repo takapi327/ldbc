@@ -120,7 +120,7 @@ trait QuerySyntax[F[_]: Sync]:
 
     def unsafe[P <: Product](using
       mirror: Mirror.ProductOf[P],
-      i:      Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
+      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
       log:    LogHandler[F]
     ): Kleisli[F, Connection[F], P] =
       given Kleisli[F, ResultSet[F], P] = (query.columns match
