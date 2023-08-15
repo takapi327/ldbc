@@ -33,4 +33,4 @@ object Tuples:
 
   type MapToResultSetReader[F[_], T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
-    case h *: t => ResultSetReader[F, h] *: MapToResultSetReader[F, t]
+    case h *: t     => ResultSetReader[F, h] *: MapToResultSetReader[F, t]
