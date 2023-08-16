@@ -7,6 +7,7 @@ package ldbc.query.builder
 import org.scalatest.flatspec.AnyFlatSpec
 
 import cats.Id
+
 import ldbc.core.*
 import ldbc.query.builder.syntax.ColumnSyntax
 
@@ -19,7 +20,15 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
     column("p3", VARCHAR(255))
   )
 
-  private val query = TableQuery[Id, Test](table)
+  case class JoinTest(p1: Long, p2: String, p3: Option[String])
+  private val joinTable = Table[JoinTest]("join_test")(
+    column("p1", BIGINT),
+    column("p2", VARCHAR(255)),
+    column("p3", VARCHAR(255))
+  )
+
+  private val query     = TableQuery[Id, Test](table)
+  private val joinQuery = TableQuery[Id, JoinTest](joinTable)
 
   it should "The query statement generated from Table is equal to the specified query statement." in {
     assert(query.select[Long](_.p1).statement === "SELECT `p1` FROM test")
@@ -67,4 +76,12 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
         .where(v => (v.p1 hoge query.select[Long](_.p1).where(_.p1 > 1)) || (v.p2 === query.select[String](_.p2)))
         .statement === "SELECT `p1` FROM test WHERE (p1 >= (SELECT `p1` FROM test WHERE p1 > ?) OR p2 = (SELECT `p2` FROM test))"
     )
+    assert(
+      query
+        .join(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .select[(String, String)]((test, joinTest) => (test.p2, joinTest.p2))
+        .statement === "SELECT x1.`p2`, x2.`p2` FROM test AS x1 JOIN join_test AS x2 ON x1.p1 = x2.p1"
+    )
+    assert(query.selectAll.statement === "SELECT `p1`, `p2`, `p3` FROM test")
   }
