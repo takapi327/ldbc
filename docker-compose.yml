@@ -1,0 +1,14 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0.33
+    container_name: ldbc
+    platform: linux/amd64 # Setting for M1 mac
+    environment:
+      MYSQL_USER: 'ldbc'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+    ports:
+      - 13306:3306
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
