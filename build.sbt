@@ -8,40 +8,15 @@ import ScalaVersions._
 import JavaVersions._
 import BuildSettings._
 import Dependencies._
+import Workflows._
 
 ThisBuild / crossScalaVersions         := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin(java11))
-
+ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(
-  WorkflowJob(
-    "scalafmt",
-    "Scalafmt",
-    githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Run(
-        List("sbt scalafmtCheck"),
-        name = Some("Scalafmt check"),
-      )
-    ),
-    scalas = List(scala3),
-    javas  = List(JavaSpec.temurin(java11)),
-  ),
-  WorkflowJob(
-    "sbtScripted",
-    "sbt scripted",
-    githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Run(
-        List("sbt +publishLocal"),
-        name = Some("sbt publishLocal"),
-      ),
-      WorkflowStep.Run(
-        List("sbt scripted"),
-        name = Some("sbt scripted"),
-      )
-    ),
-    scalas = List(scala3),
-    javas = List(JavaSpec.temurin(java11)),
-  )
+  scalaFmt.value, sbtScripted.value
 )
+ThisBuild / githubWorkflowBuildPostamble += dockerStop
 
 lazy val LdbcCoreProject = LepusSbtProject("Ldbc-Core", "core")
   .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
