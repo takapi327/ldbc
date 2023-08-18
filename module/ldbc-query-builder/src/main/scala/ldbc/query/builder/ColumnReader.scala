@@ -10,15 +10,9 @@ import ldbc.core.*
 import ldbc.core.attribute.Attribute
 import ldbc.sql.{ ResultSet, ResultSetReader }
 
-private[ldbc] case class ColumnReader[F[_], T](
-  label:      String,
-  dataType:   DataType[T],
-  attributes: Seq[Attribute[T]],
-  _alias:     Option[String],
-  reader:     ResultSetReader[F, T]
-) extends Column[T]:
+private[ldbc] trait ColumnReader[F[_], T] extends Column[T]:
 
-  override private[ldbc] def alias = _alias
+  def reader: ResultSetReader[F, T]
 
   val read: Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
     reader.read(resultSet, alias.fold(label)(name => s"$name.$label"))
@@ -28,5 +22,10 @@ private[ldbc] case class ColumnReader[F[_], T](
 
 object ColumnReader:
 
-  def apply[F[_], T](column: Column[T], reader: ResultSetReader[F, T]): ColumnReader[F, T] =
-    ColumnReader(column.label, column.dataType, column.attributes, column.alias, reader)
+  def apply[F[_], T](column: Column[T], _reader: ResultSetReader[F, T]): ColumnReader[F, T] =
+    new ColumnReader[F, T]:
+      override def label: String = column.label
+      override def dataType: DataType[T] = column.dataType
+      override def attributes: Seq[Attribute[T]] = column.attributes
+      override private[ldbc] def alias = column.alias
+      override def reader: ResultSetReader[F, T] = _reader
