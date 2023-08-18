@@ -8,12 +8,13 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.specs2.mutable.Specification
 
+import cats.data.Kleisli
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.core.*
 import ldbc.core.model.*
-import ldbc.sql.ResultSetReader
+import ldbc.sql.{ ResultSetReader, Connection }
 import ldbc.dsl.io.{ *, given }
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
@@ -26,7 +27,7 @@ case class Country(
   surfaceArea:    BigDecimal,
   indepYear:      Option[Short],
   population:     Int,
-  LifeExpectancy: Option[BigDecimal],
+  lifeExpectancy: Option[BigDecimal],
   gnp:            Option[BigDecimal],
   gnpOld:         Option[BigDecimal],
   localName:      String,
@@ -213,5 +214,56 @@ object DatabaseConnectionTest extends Specification:
         .run(dataSource)
         .unsafeRunSync()
       result === Some(("Tokyo", "Japan"))
+    }
+
+    "The data retrieved by Join matches the specified model." in {
+      case class CountryCity(cityName: String, countryName: String)
+
+      val result = (city join country)
+        .on((city, country) => city.countryCode _equals country.code)
+        .select[(String, String)]((city, country) => (city.name, country.name))
+        .where((_, country) => country.code _equals "JPN")
+        .and((city, _) => city.name _equals "Tokyo")
+        .headOption[CountryCity]
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
+      result === Some(CountryCity("Tokyo", "Japan"))
+    }
+
+    "The retrieved data matches the specified value." in {
+      val result = city.select[(String, Int)](v => (v.countryCode, v.id.count))
+        .where(_.countryCode _equals "JPN")
+        .headOption
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
+      result === Some(("JPN", 248))
+    }
+
+    "The acquired data matches the specified model." in {
+      case class CountryCodeGroup(countryCode: String, length: Int)
+
+      val result = city.select[(String, Int)](v => (v.countryCode, v.id.count))
+        .groupBy(_._1)
+        .toList[CountryCodeGroup]
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
+      result.length === 232
+    }
+
+    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
+      (for
+        codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").headOption
+        cities <- codeOpt match
+          case None => Kleisli.pure[IO, Connection[IO], List[(String, String)]](List.empty[(String, String)])
+          case Some(code *: EmptyTuple) =>
+            city.select[(String, String)](v => (v.name, v.countryCode))
+              .where(_.countryCode _equals code)
+              .toList
+      yield cities.length === 248).readOnly
+        .run(dataSource)
+        .unsafeRunSync()
     }
   }
