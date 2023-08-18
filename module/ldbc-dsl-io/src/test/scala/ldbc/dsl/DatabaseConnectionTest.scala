@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl
 
@@ -19,21 +19,21 @@ import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
 
 case class Country(
-  code: String,
-  name: String,
-  continent: Country.Continent,
-  region: String,
-  surfaceArea: BigDecimal,
-  indepYear: Option[Short],
-  population: Int,
+  code:           String,
+  name:           String,
+  continent:      Country.Continent,
+  region:         String,
+  surfaceArea:    BigDecimal,
+  indepYear:      Option[Short],
+  population:     Int,
   LifeExpectancy: Option[BigDecimal],
-  gnp: Option[BigDecimal],
-  gnpOld: Option[BigDecimal],
-  localName: String,
+  gnp:            Option[BigDecimal],
+  gnpOld:         Option[BigDecimal],
+  localName:      String,
   governmentForm: String,
-  headOfState: Option[String],
-  capital: Option[Int],
-  code2: String,
+  headOfState:    Option[String],
+  capital:        Option[Int],
+  code2:          String
 )
 
 object Country:
@@ -60,15 +60,15 @@ object Country:
     column("GovernmentForm", CHAR(45).DEFAULT("")),
     column("HeadOfState", CHAR(60).DEFAULT(None)),
     column("Capital", INT.DEFAULT(None)),
-    column("Code2", CHAR(2).DEFAULT("")),
+    column("Code2", CHAR(2).DEFAULT(""))
   )
 
 case class City(
-  id: Int,
-  name: String,
+  id:          Int,
+  name:        String,
   countryCode: String,
-  district: String,
-  population: Int
+  district:    String,
+  population:  Int
 )
 
 object City:
@@ -85,9 +85,9 @@ object City:
 
 case class CountryLanguage(
   countryCode: String,
-  language: String,
-  isOfficial: CountryLanguage.IsOfficial,
-  percentage: BigDecimal
+  language:    String,
+  isOfficial:  CountryLanguage.IsOfficial,
+  percentage:  BigDecimal
 )
 
 object CountryLanguage:
@@ -103,11 +103,13 @@ object CountryLanguage:
     column("CountryCode", CHAR(3).DEFAULT("")),
     column("Language", CHAR(30).DEFAULT("")),
     column("IsOfficial", ENUM(using IsOfficial).DEFAULT(IsOfficial.F)),
-    column("Percentage", DECIMAL(4, 1).DEFAULT(0.0)),
+    column("Percentage", DECIMAL(4, 1).DEFAULT(0.0))
   )
     .keySet(v => PRIMARY_KEY(v.countryCode, v.language))
     .keySet(v => INDEX_KEY(v.countryCode))
-    .keySet(v => CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(v.countryCode, REFERENCE(Country.table, Country.table.code))))
+    .keySet(v =>
+      CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(v.countryCode, REFERENCE(Country.table, Country.table.code)))
+    )
 
 object DatabaseConnectionTest extends Specification:
 
@@ -120,8 +122,8 @@ object DatabaseConnectionTest extends Specification:
 
   given LogHandler[IO] = LogHandler.consoleLogger
 
-  private val country = TableQuery[IO, Country](Country.table)
-  private val city = TableQuery[IO, City](City.table)
+  private val country         = TableQuery[IO, Country](Country.table)
+  private val city            = TableQuery[IO, City](City.table)
   private val countryLanguage = TableQuery[IO, CountryLanguage](CountryLanguage.table)
 
   "Database Connection Test" should {
@@ -141,39 +143,51 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The number of cases retrieved using the subquery matches the specified value." in {
-      val result = city.select[(String, String)](v => (v.name, v.countryCode))
+      val result = city
+        .select[(String, String)](v => (v.name, v.countryCode))
         .where(_.countryCode _equals country.select[String](_.code).where(_.code _equals "JPN"))
-        .toList.readOnly.run(dataSource).unsafeRunSync()
+        .toList
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
       result.length === 248
     }
 
     "The acquired data matches the specified model." in {
       val result = country.selectAll
         .where(_.code _equals "JPN")
-        .headOption[Country].readOnly.run(dataSource).unsafeRunSync()
-      result === Some(Country(
-        "JPN",
-        "Japan",
-        Country.Continent.Asia,
-        "Eastern Asia",
-        BigDecimal.decimal(377829.00),
-        Some(-660),
-        126714000,
-        Some(BigDecimal.decimal(80.7)),
-        Some(BigDecimal.decimal(3787042.00)),
-        Some(BigDecimal.decimal(4192638.00)),
-        "Nihon/Nippon",
-        "Constitutional Monarchy",
-        Some("Akihito"),
-        Some(1532),
-        "JP"
-      ))
+        .headOption[Country]
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
+      result === Some(
+        Country(
+          "JPN",
+          "Japan",
+          Country.Continent.Asia,
+          "Eastern Asia",
+          BigDecimal.decimal(377829.00),
+          Some(-660),
+          126714000,
+          Some(BigDecimal.decimal(80.7)),
+          Some(BigDecimal.decimal(3787042.00)),
+          Some(BigDecimal.decimal(4192638.00)),
+          "Nihon/Nippon",
+          "Constitutional Monarchy",
+          Some("Akihito"),
+          Some(1532),
+          "JP"
+        )
+      )
     }
 
     "The acquired data matches the specified model." in {
       val result = city.selectAll
         .where(_.id _equals 1532)
-        .headOption[City].readOnly.run(dataSource).unsafeRunSync()
+        .headOption[City]
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
       result === Some(City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230))
     }
 
@@ -181,16 +195,23 @@ object DatabaseConnectionTest extends Specification:
       val result = countryLanguage.selectAll
         .where(_.countryCode _equals "JPN")
         .and(_.language _equals "Japanese")
-        .headOption[CountryLanguage].readOnly.run(dataSource).unsafeRunSync()
+        .headOption[CountryLanguage]
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
       result === Some(CountryLanguage("JPN", "Japanese", CountryLanguage.IsOfficial.T, BigDecimal.decimal(99.1)))
     }
 
     "The data retrieved by Join matches the specified model." in {
-      val result = (city join country).on((city, country) => city.countryCode _equals country.code)
+      val result = (city join country)
+        .on((city, country) => city.countryCode _equals country.code)
         .select[(String, String)]((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .headOption.readOnly.run(dataSource).unsafeRunSync()
+        .headOption
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
       result === Some(("Tokyo", "Japan"))
     }
   }
