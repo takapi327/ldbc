@@ -11,7 +11,7 @@ import cats.data.Kleisli
 import ldbc.core.Column
 import ldbc.core.interpreter.Extract
 import ldbc.sql.*
-import ldbc.query.builder.ColumnReader
+import ldbc.query.builder.{ ColumnReader, Count }
 import ldbc.query.builder.statement.{ ExpressionSyntax, OrderBy, Query }
 import ldbc.query.builder.statement.ExpressionSyntax.*
 
@@ -50,6 +50,8 @@ trait ColumnSyntax[F[_]]:
     * }}}
     */
   implicit class ColumnStatement[T](column: Column[T])(using Parameter[F, Extract[T]]):
+
+    def count = Count[F](column.label)
 
     def asc: OrderBy.Asc = OrderBy.Asc(column)
 
