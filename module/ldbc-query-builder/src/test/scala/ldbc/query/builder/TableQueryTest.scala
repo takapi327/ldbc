@@ -73,7 +73,7 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
     assert(
       query
         .select[Long](_.p1)
-        .where(v => (v.p1 hoge query.select[Long](_.p1).where(_.p1 > 1)) || (v.p2 === query.select[String](_.p2)))
+        .where(v => (v.p1 >= query.select[Long](_.p1).where(_.p1 > 1)) || (v.p2 === query.select[String](_.p2)))
         .statement === "SELECT `p1` FROM test WHERE (p1 >= (SELECT `p1` FROM test WHERE p1 > ?) OR p2 = (SELECT `p2` FROM test))"
     )
     assert(
