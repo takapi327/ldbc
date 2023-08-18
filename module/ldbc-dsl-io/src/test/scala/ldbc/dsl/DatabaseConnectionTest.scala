@@ -232,7 +232,8 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The retrieved data matches the specified value." in {
-      val result = city.select[(String, Int)](v => (v.countryCode, v.id.count))
+      val result = city
+        .select[(String, Int)](v => (v.countryCode, v.id.count))
         .where(_.countryCode _equals "JPN")
         .headOption
         .readOnly
@@ -244,7 +245,8 @@ object DatabaseConnectionTest extends Specification:
     "The acquired data matches the specified model." in {
       case class CountryCodeGroup(countryCode: String, length: Int)
 
-      val result = city.select[(String, Int)](v => (v.countryCode, v.id.count))
+      val result = city
+        .select[(String, Int)](v => (v.countryCode, v.id.count))
         .groupBy(_._1)
         .toList[CountryCodeGroup]
         .readOnly
@@ -257,11 +259,12 @@ object DatabaseConnectionTest extends Specification:
       (for
         codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").headOption
         cities <- codeOpt match
-          case None => Kleisli.pure[IO, Connection[IO], List[(String, String)]](List.empty[(String, String)])
-          case Some(code *: EmptyTuple) =>
-            city.select[(String, String)](v => (v.name, v.countryCode))
-              .where(_.countryCode _equals code)
-              .toList
+                    case None => Kleisli.pure[IO, Connection[IO], List[(String, String)]](List.empty[(String, String)])
+                    case Some(code *: EmptyTuple) =>
+                      city
+                        .select[(String, String)](v => (v.name, v.countryCode))
+                        .where(_.countryCode _equals code)
+                        .toList
       yield cities.length === 248).readOnly
         .run(dataSource)
         .unsafeRunSync()

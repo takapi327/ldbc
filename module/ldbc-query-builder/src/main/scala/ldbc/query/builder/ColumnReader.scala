@@ -24,8 +24,8 @@ object ColumnReader:
 
   def apply[F[_], T](column: Column[T], _reader: ResultSetReader[F, T]): ColumnReader[F, T] =
     new ColumnReader[F, T]:
-      override def label: String = column.label
-      override def dataType: DataType[T] = column.dataType
+      override def label:      String            = column.label
+      override def dataType:   DataType[T]       = column.dataType
       override def attributes: Seq[Attribute[T]] = column.attributes
       override private[ldbc] def alias = column.alias
       override def reader: ResultSetReader[F, T] = _reader
