@@ -48,26 +48,31 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
   def join[O <: Product](other: Table[O]):         Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
   def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = Join(table.as("x1"), other.table.as("x2"))
 
-  private inline def inferParameter[T]: Parameter[F, T] =
-    summonFrom[Parameter[F, T]] {
-      case parameter: Parameter[F, T] => parameter
-      case _                          => error("Parameter cannot be inferred")
-    }
-
-  private inline def foldParameter[T <: Tuple]: Tuples.MapToParameter[F, T] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => EmptyTuple
-      case _: (h *: t)   => inferParameter[h] *: foldParameter[t]
-
-  type Test[T <: Tuple, Index <: Int] = Tuple.Elem[T, Index]
-
   // TODO: In the following implementation, Warning occurs at the time of Compile, so it is cast by asInstanceOf.
   // case (value: Any, parameter: Parameter[F, Any]) => ???
-  inline def insert(using mirror: Mirror.ProductOf[P])(
-    value:                        mirror.MirroredElemTypes
-  ): Insert[F, P, mirror.MirroredElemTypes] =
-    val parameterBinders = value.zip(foldParameter[mirror.MirroredElemTypes]).toArray.map {
+  inline def insert(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): Insert[F, P] =
+    val tuples = values.map(Tuple.fromProduct)
+    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
+      case (value: Any, parameter: Any) =>
+        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+    })
+    new Insert.Multi[F, P, Tuple](table, tuples.toList, parameterBinders.toList)
+
+  def selectInsert[T <: Tuple](func: Table[P] => Tuple.Map[T, Column]): Insert.Simple[F, P, T] =
+    Insert.Simple[F, P, T](table, func(table))
+
+  inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
+    val tuples = Tuple.fromProduct(value)
+    val parameterBinders = tuples.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
       case (value: Any, parameter: Any) =>
         ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
     }
-    new Insert[F, P, mirror.MirroredElemTypes](table, value, parameterBinders.toList.asInstanceOf)
+    new Insert.Single[F, P, Tuple](table, tuples, parameterBinders.toList)
+
+  inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
+    val tuples = values.map(Tuple.fromProduct)
+    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
+      case (value: Any, parameter: Any) =>
+        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+    })
+    new Insert.Multi[F, P, Tuple](table, tuples, parameterBinders)
