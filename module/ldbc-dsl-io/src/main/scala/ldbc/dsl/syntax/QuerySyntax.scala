@@ -121,14 +121,13 @@ trait QuerySyntax[F[_]: Sync]:
     lazy val unsafe: LogHandler[F] ?=> Kleisli[F, Connection[F], Tuples.InverseColumnMap[F, T]] =
       given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (query.columns match
         case h *: t => h *: t
-        case h => h *: EmptyTuple
-        ).toList
+        case h      => h *: EmptyTuple
+      ).toList
         .asInstanceOf[List[ColumnReader[F, ?]]]
         .traverse {
           case reader: ColumnReader[F, ?] => reader.read
         }
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
-
       connection[Tuples.InverseColumnMap[F, T]](
         summon[ResultSetConsumer[F, Tuples.InverseColumnMap[F, T]]]
       )
