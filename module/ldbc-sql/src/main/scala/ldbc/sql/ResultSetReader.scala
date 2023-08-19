@@ -26,9 +26,7 @@ trait ResultSetReader[F[_], T]:
 object ResultSetReader:
 
   def apply[F[_], T](func: ResultSet[F] => String => F[T]): ResultSetReader[F, T] =
-    new ResultSetReader[F, T]:
-      override def read(resultSet: ResultSet[F], columnLabel: String): F[T] =
-        func(resultSet)(columnLabel)
+    (resultSet: ResultSet[F], columnLabel: String) => func(resultSet)(columnLabel)
 
   /** A method to convert the specified Scala type to an arbitrary type so that it can be handled by ResultSetReader.
     *

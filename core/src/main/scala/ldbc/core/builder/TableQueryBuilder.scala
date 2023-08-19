@@ -15,7 +15,7 @@ import ldbc.core.validator.TableValidator
 private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidator:
 
   private val columnDefinitions: Seq[String] =
-    table.*.map {
+    table.all.map {
       case c: Column[?] => c.queryString
       case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
     }

@@ -2,14 +2,12 @@
   * distributed with this source code.
   */
 
-package ldbc.dsl
+package ldbc.sql
 
 import java.net.URL
 import java.sql.{ Date, Time, Timestamp }
 import java.util.Date as UtilDate
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
-
-import ldbc.sql.PreparedStatement
 
 /** Trait for setting Scala and Java values to PreparedStatement.
   *

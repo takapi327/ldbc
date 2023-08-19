@@ -8,40 +8,15 @@ import ScalaVersions._
 import JavaVersions._
 import BuildSettings._
 import Dependencies._
+import Workflows._
 
 ThisBuild / crossScalaVersions         := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin(java11))
-
+ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(
-  WorkflowJob(
-    "scalafmt",
-    "Scalafmt",
-    githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Run(
-        List("sbt scalafmtCheck"),
-        name = Some("Scalafmt check"),
-      )
-    ),
-    scalas = List(scala3),
-    javas  = List(JavaSpec.temurin(java11)),
-  ),
-  WorkflowJob(
-    "sbtScripted",
-    "sbt scripted",
-    githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Run(
-        List("sbt +publishLocal"),
-        name = Some("sbt publishLocal"),
-      ),
-      WorkflowStep.Run(
-        List("sbt scripted"),
-        name = Some("sbt scripted"),
-      )
-    ),
-    scalas = List(scala3),
-    javas = List(JavaSpec.temurin(java11)),
-  )
+  scalaFmt.value, sbtScripted.value
 )
+ThisBuild / githubWorkflowBuildPostamble += dockerStop
 
 lazy val LdbcCoreProject = LepusSbtProject("Ldbc-Core", "core")
   .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
@@ -51,13 +26,20 @@ lazy val LdbcSqlProject = LepusSbtProject("Ldbc-Sql", "module/ldbc-sql")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .dependsOn(LdbcCoreProject)
 
+lazy val LdbcQueryBuilderProject = LepusSbtProject("Ldbc-Query-Builder", "module/ldbc-query-builder")
+  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+  .settings(libraryDependencies += scalaTest)
+  .dependsOn(LdbcSqlProject)
+
 lazy val LdbcDslIOProject = LepusSbtProject("Ldbc-Dsl-IO", "module/ldbc-dsl-io")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
     catsEffect,
-    mockito
+    mockito,
+    scalaTest,
+    mysql % Test
   ) ++ specs2)
-  .dependsOn(LdbcSqlProject)
+  .dependsOn(LdbcQueryBuilderProject)
 
 lazy val LdbcSchemaSpyProject = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
@@ -86,6 +68,7 @@ lazy val coreProjects: Seq[ProjectReference] = Seq(
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
   LdbcSqlProject,
   LdbcDslIOProject,
+  LdbcQueryBuilderProject,
   LdbcSchemaSpyProject,
   LdbcCodegenProject
 )

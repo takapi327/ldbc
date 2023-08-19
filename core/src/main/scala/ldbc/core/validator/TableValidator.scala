@@ -14,12 +14,12 @@ private[ldbc] trait TableValidator:
   /** Trait for generating SQL table information. */
   def table: Table[?]
 
-  protected val autoInc = table.*.filter {
+  protected val autoInc = table.all.filter {
     case c: Column[?] => c.attributes.contains(AutoInc())
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
 
-  protected val primaryKey = table.*.filter {
+  protected val primaryKey = table.all.filter {
     case c: Column[?] => c.attributes.exists(_.isInstanceOf[PrimaryKey])
     case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
   }
@@ -36,10 +36,10 @@ private[ldbc] trait TableValidator:
   }
 
   require(
-    table.*.distinctBy {
+    table.all.distinctBy {
       case c: Column[?] => c.label
       case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
-    }.length == table.*.length,
+    }.length == table.all.length,
     "Columns with the same name cannot be defined in a single table."
   )
 

@@ -10,7 +10,9 @@ import java.util.concurrent.Executor
 
 import scala.jdk.CollectionConverters.*
 
+import cats.Applicative
 import cats.implicits.*
+import cats.data.Kleisli
 
 import cats.effect.Sync
 
@@ -141,3 +143,8 @@ case class ConnectionIO[F[_]: Sync](connection: java.sql.Connection) extends Con
     Sync[F].blocking(connection.setNetworkTimeout(executor, milliseconds))
 
   override def getNetworkTimeout(): F[Int] = Sync[F].blocking(connection.getNetworkTimeout)
+
+object ConnectionIO:
+
+  def pure[F[_]: Applicative, T](value: T): Kleisli[F, Connection[F], T] =
+    Kleisli.pure[F, Connection[F], T](value)

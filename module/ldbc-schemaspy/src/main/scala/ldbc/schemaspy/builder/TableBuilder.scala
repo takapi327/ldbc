@@ -32,7 +32,7 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
     *   Trait for generating SQL table information.
     */
   private def detectPrimaryKeyColumn(table: Table[?]): Seq[Column[?]] =
-    (table.*.flatMap {
+    (table.all.flatMap {
       case c: Column[?] if c.attributes.exists(_.isInstanceOf[PrimaryKey]) => Some(c)
       case _                                                               => None
     } ++ table.keyDefinitions.flatMap {
@@ -115,7 +115,7 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
     schemaTable
 
   lazy val build: SchemaspyTable =
-    table.*.zipWithIndex.map {
+    table.all.zipWithIndex.map {
       case (column: Column[?], index: Int) =>
         val result = initColumns(column, index)
         db.getTablesMap.put(result.getName, result)
