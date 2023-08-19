@@ -8,8 +8,8 @@ import scala.deriving.Mirror
 import scala.compiletime.*
 
 import ldbc.core.*
-import ldbc.sql.ResultSetReader
-import ldbc.query.builder.statement.{ Select, Join }
+import ldbc.sql.*
+import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.Tuples
 
 case class TableQuery[F[_], P <: Product](table: Table[P]):
@@ -47,3 +47,25 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
 
   def join[O <: Product](other: Table[O]):         Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
   def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = Join(table.as("x1"), other.table.as("x2"))
+
+  private inline def inferParameter[T]: Parameter[F, T] =
+    summonFrom[Parameter[F, T]] {
+      case parameter: Parameter[F, T] => parameter
+      case _ => error("Parameter cannot be inferred")
+    }
+
+  private inline def foldParameter[T <: Tuple]: Tuples.MapToParameter[F, T] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => EmptyTuple
+      case _: (h *: t) => inferParameter[h] *: foldParameter[t]
+
+  type Test[T <: Tuple, Index <: Int] = Tuple.Elem[T, Index]
+
+  // TODO: In the following implementation, Warning occurs at the time of Compile, so it is cast by asInstanceOf.
+  // case (value: Any, parameter: Parameter[F, Any]) => ???
+  inline def insert(using mirror: Mirror.ProductOf[P])(value: mirror.MirroredElemTypes): Insert[F, P, mirror.MirroredElemTypes] =
+    val parameterBinders = value.zip(foldParameter[mirror.MirroredElemTypes]).toArray.map {
+      case (value: Any, parameter: Any) =>
+        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+    }
+    new Insert[F, P, mirror.MirroredElemTypes](table, value, parameterBinders.toList.asInstanceOf)
