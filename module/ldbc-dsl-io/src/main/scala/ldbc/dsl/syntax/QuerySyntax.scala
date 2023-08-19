@@ -118,6 +118,21 @@ trait QuerySyntax[F[_]: Sync]:
       given Kleisli[F, ResultSet[F], A] = func(query.columns)
       connection[A](summon[ResultSetConsumer[F, A]])
 
+    lazy val unsafe: LogHandler[F] ?=> Kleisli[F, Connection[F], Tuples.InverseColumnMap[F, T]] =
+      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (query.columns match
+        case h *: t => h *: t
+        case h => h *: EmptyTuple
+        ).toList
+        .asInstanceOf[List[ColumnReader[F, ?]]]
+        .traverse {
+          case reader: ColumnReader[F, ?] => reader.read
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
+
+      connection[Tuples.InverseColumnMap[F, T]](
+        summon[ResultSetConsumer[F, Tuples.InverseColumnMap[F, T]]]
+      )
+
     def unsafe[P <: Product](using
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
