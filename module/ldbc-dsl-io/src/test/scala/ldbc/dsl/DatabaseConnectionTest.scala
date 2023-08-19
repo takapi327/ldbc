@@ -8,13 +8,12 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.specs2.mutable.Specification
 
-import cats.data.Kleisli
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.core.*
 import ldbc.core.model.*
-import ldbc.sql.{ ResultSetReader, Connection }
+import ldbc.sql.ResultSetReader
 import ldbc.dsl.io.{ *, given }
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
@@ -259,7 +258,7 @@ object DatabaseConnectionTest extends Specification:
       (for
         codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").headOption
         cities <- codeOpt match
-                    case None => Kleisli.pure[IO, Connection[IO], List[(String, String)]](List.empty[(String, String)])
+                    case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
                         .select[(String, String)](v => (v.name, v.countryCode))
