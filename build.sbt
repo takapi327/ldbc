@@ -31,7 +31,7 @@ lazy val LdbcQueryBuilderProject = LepusSbtProject("Ldbc-Query-Builder", "module
   .settings(libraryDependencies += scalaTest)
   .dependsOn(LdbcSqlProject)
 
-lazy val LdbcDslIOProject = LepusSbtProject("Ldbc-Dsl-IO", "module/ldbc-dsl-io")
+lazy val LdbcDslProject = LepusSbtProject("Ldbc-Dsl", "module/ldbc-dsl")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
     catsEffect,
@@ -67,7 +67,7 @@ lazy val coreProjects: Seq[ProjectReference] = Seq(
 
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
   LdbcSqlProject,
-  LdbcDslIOProject,
+  LdbcDslProject,
   LdbcQueryBuilderProject,
   LdbcSchemaSpyProject,
   LdbcCodegenProject
