@@ -86,6 +86,7 @@ private[ldbc] object Insert:
       val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
       new Insert[F, P]:
-        override def table: Table[P] = _table
-        override def statement: String = s"$_statement VALUES${ values.mkString(", ") }"
-        override def params: Seq[ParameterBinder[F]] = Parameter.fold[F, T].toList.toSeq.asInstanceOf[Seq[ldbc.sql.ParameterBinder[F]]]
+        override def table:     Table[P] = _table
+        override def statement: String   = s"$_statement VALUES${ values.mkString(", ") }"
+        override def params: Seq[ParameterBinder[F]] =
+          Parameter.fold[F, T].toList.toSeq.asInstanceOf[Seq[ldbc.sql.ParameterBinder[F]]]
