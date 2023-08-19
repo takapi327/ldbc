@@ -37,4 +37,4 @@ object Tuples:
 
   type MapToParameter[F[_], T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
-    case h *: t => Parameter[F, h] *: MapToParameter[F, t]
+    case h *: t     => Parameter[F, h] *: MapToParameter[F, t]

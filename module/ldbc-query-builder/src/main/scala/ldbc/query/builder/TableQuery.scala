@@ -51,19 +51,21 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
   private inline def inferParameter[T]: Parameter[F, T] =
     summonFrom[Parameter[F, T]] {
       case parameter: Parameter[F, T] => parameter
-      case _ => error("Parameter cannot be inferred")
+      case _                          => error("Parameter cannot be inferred")
     }
 
   private inline def foldParameter[T <: Tuple]: Tuples.MapToParameter[F, T] =
     inline erasedValue[T] match
       case _: EmptyTuple => EmptyTuple
-      case _: (h *: t) => inferParameter[h] *: foldParameter[t]
+      case _: (h *: t)   => inferParameter[h] *: foldParameter[t]
 
   type Test[T <: Tuple, Index <: Int] = Tuple.Elem[T, Index]
 
   // TODO: In the following implementation, Warning occurs at the time of Compile, so it is cast by asInstanceOf.
   // case (value: Any, parameter: Parameter[F, Any]) => ???
-  inline def insert(using mirror: Mirror.ProductOf[P])(value: mirror.MirroredElemTypes): Insert[F, P, mirror.MirroredElemTypes] =
+  inline def insert(using mirror: Mirror.ProductOf[P])(
+    value:                        mirror.MirroredElemTypes
+  ): Insert[F, P, mirror.MirroredElemTypes] =
     val parameterBinders = value.zip(foldParameter[mirror.MirroredElemTypes]).toArray.map {
       case (value: Any, parameter: Any) =>
         ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
