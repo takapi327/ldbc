@@ -5,7 +5,7 @@
 package ldbc.query.builder.statement
 
 import ldbc.core.*
-import ldbc.sql.ParameterBinder
+import ldbc.sql.*
 
 /** Trait for building Statements to be added.
   *
@@ -72,3 +72,20 @@ private[ldbc] object Insert:
 
     override def statement: String =
       s"INSERT INTO ${ table._name } (${ table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
+
+  case class Simple[F[_], P <: Product, T <: Tuple](
+    _table:  Table[P],
+    columns: Tuple
+  ):
+
+    private def _statement: String =
+      s"INSERT INTO ${ _table._name } (${ columns.toArray.mkString(", ") })"
+
+    inline def values(tuples: T*): Insert[F, P] =
+
+      val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
+
+      new Insert[F, P]:
+        override def table: Table[P] = _table
+        override def statement: String = s"$_statement VALUES${ values.mkString(", ") }"
+        override def params: Seq[ParameterBinder[F]] = Parameter.fold[F, T].toList.toSeq.asInstanceOf[Seq[ldbc.sql.ParameterBinder[F]]]
