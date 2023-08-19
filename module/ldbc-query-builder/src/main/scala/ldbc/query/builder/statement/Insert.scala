@@ -7,27 +7,68 @@ package ldbc.query.builder.statement
 import ldbc.core.*
 import ldbc.sql.ParameterBinder
 
-/** A model for constructing INSERT statements in MySQL.
+/** Trait for building Statements to be added.
   *
-  * @param table
-  *   Trait for generating SQL table information.
-  * @param value
-  *   Tuple type value of the property with type parameter P.
-  * @param params
-  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
-  *   only.
   * @tparam F
   *   The effect type
   * @tparam P
   *   Base trait for all products
-  * @tparam T
-  *   Tuple type of the property with type parameter P
   */
-private[ldbc] case class Insert[F[_], P <: Product, T <: Tuple](
-  table:  Table[P],
-  value:  T,
-  params: Seq[ParameterBinder[F]]
-) extends Command[F]:
+private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
 
-  override def statement: String =
-    s"INSERT INTO ${ table._name } (${ table.all.mkString(", ") }) VALUES(${ value.toArray.map(_ => "?").mkString(", ") })"
+  /** Trait for generating SQL table information. */
+  def table: Table[P]
+
+private[ldbc] object Insert:
+
+  /** A model for constructing INSERT statements that insert single values in MySQL.
+    *
+    * @param table
+    *   Trait for generating SQL table information.
+    * @param tuple
+    *   Tuple type value of the property with type parameter P.
+    * @param params
+    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+    *   only.
+    * @tparam F
+    *   The effect type
+    * @tparam P
+    *   Base trait for all products
+    * @tparam T
+    *   Tuple type of the property with type parameter P
+    */
+  case class Single[F[_], P <: Product, T <: Tuple](
+    table:  Table[P],
+    tuple:  T,
+    params: Seq[ParameterBinder[F]]
+  ) extends Insert[F, P]:
+
+    override def statement: String =
+      s"INSERT INTO ${ table._name } (${ table.all.mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
+
+  /** A model for constructing INSERT statements that insert multiple values in MySQL.
+    *
+    * @param table
+    *   Trait for generating SQL table information.
+    * @param tuples
+    *   Tuple type value of the property with type parameter P.
+    * @param params
+    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+    *   only.
+    * @tparam F
+    *   The effect type
+    * @tparam P
+    *   Base trait for all products
+    * @tparam T
+    *   Tuple type of the property with type parameter P
+    */
+  case class Multi[F[_], P <: Product, T <: Tuple](
+    table:  Table[P],
+    tuples: List[T],
+    params: Seq[ParameterBinder[F]]
+  ) extends Insert[F, P]:
+
+    private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
+
+    override def statement: String =
+      s"INSERT INTO ${ table._name } (${ table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
