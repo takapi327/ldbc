@@ -9,6 +9,8 @@ import java.sql.{ Date, Time, Timestamp }
 import java.util.Date as UtilDate
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
+import scala.compiletime.*
+
 /** Trait for setting Scala and Java values to PreparedStatement.
   *
   * @tparam F
@@ -121,3 +123,18 @@ object Parameter:
       value match
         case Some(value) => parameter.bind(statement, index, value)
         case None        => nullParameter.bind(statement, index, null)
+
+  type MapToTuple[F[_], T <: Tuple] <: Tuple = T match
+    case EmptyTuple => EmptyTuple
+    case h *: t => Parameter[F, h] *: MapToTuple[F, t]
+
+  private inline def infer[F[_], A]: Parameter[F, A] =
+    summonFrom[Parameter[F, A]] {
+      case parameter: Parameter[F, A] => parameter
+      case _ => error("Parameter cannot be inferred")
+    }
+
+  inline def fold[F[_], A <: Tuple]: MapToTuple[F, A] =
+    inline erasedValue[A] match
+      case _: EmptyTuple => EmptyTuple
+      case _: (h *: t) => infer[F, h] *: fold[F, t]

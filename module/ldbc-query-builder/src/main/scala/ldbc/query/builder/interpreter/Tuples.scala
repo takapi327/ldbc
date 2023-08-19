@@ -34,7 +34,3 @@ object Tuples:
   type MapToResultSetReader[F[_], T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
     case h *: t     => ResultSetReader[F, h] *: MapToResultSetReader[F, t]
-
-  type MapToParameter[F[_], T <: Tuple] <: Tuple = T match
-    case EmptyTuple => EmptyTuple
-    case h *: t     => Parameter[F, h] *: MapToParameter[F, t]
