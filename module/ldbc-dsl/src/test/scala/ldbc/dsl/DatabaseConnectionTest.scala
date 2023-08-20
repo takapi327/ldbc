@@ -41,8 +41,6 @@ object Country:
     case Asia, Europe, North_America, Africa, Oceania, Antarctica, South_America
   object Continent extends EnumDataType[Continent]
 
-  given Parameter[IO, Continent] = Parameter.convert(_.toString)
-
   given ResultSetReader[IO, Continent] =
     ResultSetReader.mapping[IO, String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
 

@@ -7,9 +7,11 @@ package ldbc.sql
 import java.net.URL
 import java.sql.{ Date, Time, Timestamp }
 import java.util.Date as UtilDate
-import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneId, ZonedDateTime }
 
 import scala.compiletime.*
+
+import ldbc.core.model.Enum
 
 /** Trait for setting Scala and Java values to PreparedStatement.
   *
@@ -34,9 +36,7 @@ trait Parameter[F[_], -T]:
 object Parameter:
 
   def convert[F[_], A, B](f: B => A)(using parameter: Parameter[F, A]): Parameter[F, B] =
-    new Parameter[F, B]:
-      override def bind(statement: PreparedStatement[F], index: Int, value: B): F[Unit] =
-        parameter.bind(statement, index, f(value))
+    (statement: PreparedStatement[F], index: Int, value: B) => parameter.bind(statement, index, f(value))
 
   given [F[_]]: Parameter[F, Boolean] with
     override def bind(statement: PreparedStatement[F], index: Int, value: Boolean): F[Unit] =
@@ -123,6 +123,10 @@ object Parameter:
       value match
         case Some(value) => parameter.bind(statement, index, value)
         case None        => nullParameter.bind(statement, index, null)
+
+  given [F[_]]: Parameter[F, Enum] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] =
+      statement.setString(index, value.toString)
 
   type MapToTuple[F[_], T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
