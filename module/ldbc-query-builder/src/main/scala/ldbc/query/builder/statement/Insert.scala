@@ -89,16 +89,18 @@ private[ldbc] object Insert:
         override def table:     Table[P] = _table
         override def statement: String   = s"$_statement VALUES${ values.mkString(", ") }"
         override def params: Seq[ParameterBinder[F]] =
-          tuples.map(Tuple.fromProduct).flatMap(_.zip(Parameter.fold[F, T]).toArray.map {
-            case (value: Any, parameter: Any) =>
-              ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-          })
+          tuples
+            .map(Tuple.fromProduct)
+            .flatMap(_.zip(Parameter.fold[F, T]).toArray.map {
+              case (value: Any, parameter: Any) =>
+                ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+            })
 
   case class Pick[F[_], P <: Product, T <: Tuple](
-    table: Table[P],
+    table:   Table[P],
     columns: Tuple,
     tuple:   T,
-    params: Seq[ParameterBinder[F]]
+    params:  Seq[ParameterBinder[F]]
   ) extends Insert[F, P]:
 
     override def statement: String =
@@ -106,15 +108,17 @@ private[ldbc] object Insert:
 
     import scala.deriving.Mirror
     import ldbc.core.interpreter.Tuples as CoreTuples
-    inline def set[Tag <: Singleton, T1](tag: Tag, value: T1)(
-      using
-      mirror: Mirror.ProductOf[P],
-      index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    inline def set[Tag <: Singleton, T1](tag: Tag, value: T1)(using
+      mirror:                                 Mirror.ProductOf[P],
+      index:                                  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
       check: T1 =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    ): Pick[F, P, Tuple.Concat[T, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]] *: EmptyTuple]] =
+    ): Pick[F, P, Tuple.Concat[
+      T,
+      Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]] *: EmptyTuple
+    ]] =
       this.copy(
         columns = columns ++ table.selectDynamic[Tag](tag) *: EmptyTuple,
-        tuple = tuple ++ check(value) *: EmptyTuple,
+        tuple   = tuple ++ check(value) *: EmptyTuple,
         params = params ++ Tuple1(value).zip(Parameter.fold[F, T1 *: EmptyTuple]).toArray.map {
           case (value: Any, parameter: Any) =>
             ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
