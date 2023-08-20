@@ -268,4 +268,80 @@ object DatabaseConnectionTest extends Specification:
         .run(dataSource)
         .unsafeRunSync()
     }
+
+    "New data can be registered with the value of Tuple." in {
+      val result = country.insert(
+        ("TEST1", "Test", Country.Continent.Asia, "Northeast", BigDecimal.decimal(390757.00), None, 1, None, None, None, "Test", "Test", None, None, "Test")
+      )
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "New data can be registered from multiple tuple values." in {
+      val result = country.insert(
+          ("TEST2", "Test", Country.Continent.Asia, "Northeast", BigDecimal.decimal(390757.00), None, 1, None, None, None, "Test", "Test", None, None, "Test"),
+          ("TEST3", "Test", Country.Continent.Asia, "Northeast", BigDecimal.decimal(390757.00), None, 1, None, None, None, "Test", "Test", None, None, "Test")
+        )
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 2
+    }
+
+    "New data can be registered from the model." in {
+      val newCountry = Country(
+        "TEST4", "Test", Country.Continent.Asia, "Northeast", BigDecimal.decimal(390757.00), None, 1, None, None, None, "Test", "Test", None, None, "Test"
+      )
+      val result = (country += newCountry)
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "New data can be registered from multiple models." in {
+      val newCountry1 = Country(
+        "TEST5", "Test", Country.Continent.Asia, "Northeast", BigDecimal.decimal(390757.00), None, 1, None, None, None, "Test", "Test", None, None, "Test"
+      )
+      val newCountry2 = Country(
+        "TEST6", "Test", Country.Continent.Asia, "Northeast", BigDecimal.decimal(390757.00), None, 1, None, None, None, "Test", "Test", None, None, "Test"
+      )
+      val result = (country ++= List(newCountry1, newCountry2))
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 2
+    }
+
+    "Only specified items can be added to the data." in {
+      val result = city.selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
+        .values(("Test", "TEST", "T", 1))
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "Multiple additions of data can be made only for specified items." in {
+      val result = city.selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
+        .values(("Test", "TEST", "T", 1), ("Test2", "TEST2", "T2", 2))
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 2
+    }
   }
