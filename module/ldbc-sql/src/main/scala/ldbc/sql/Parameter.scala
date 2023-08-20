@@ -132,13 +132,13 @@ object Parameter:
     case EmptyTuple => EmptyTuple
     case h *: t     => Parameter[F, h] *: MapToTuple[F, t]
 
-  private inline def infer[F[_], A]: Parameter[F, A] =
-    summonFrom[Parameter[F, A]] {
-      case parameter: Parameter[F, A] => parameter
+  private inline def infer[F[_], T]: Parameter[F, T] =
+    summonFrom[Parameter[F, T]] {
+      case parameter: Parameter[F, T] => parameter
       case _                          => error("Parameter cannot be inferred")
     }
 
-  inline def fold[F[_], A <: Tuple]: MapToTuple[F, A] =
-    inline erasedValue[A] match
+  inline def fold[F[_], T <: Tuple]: MapToTuple[F, T] =
+    inline erasedValue[T] match
       case _: EmptyTuple => EmptyTuple
       case _: (h *: t)   => infer[F, h] *: fold[F, t]
