@@ -37,8 +37,16 @@ case class Country(
 
 object Country:
 
-  enum Continent extends Enum:
-    case Asia, Europe, North_America, Africa, Oceania, Antarctica, South_America
+  enum Continent(val value: String) extends Enum:
+    case Asia extends Continent("Asia")
+    case Europe extends Continent("Europe")
+    case North_America extends Continent("North America")
+    case Africa extends Continent("Africa")
+    case Oceania extends Continent("Oceania")
+    case Antarctica extends Continent("Antarctica")
+    case South_America extends Continent("South America")
+
+    override def toString: String = value
   object Continent extends EnumDataType[Continent]
 
   given ResultSetReader[IO, Continent] =
@@ -389,7 +397,7 @@ object DatabaseConnectionTest extends Specification:
       val newCountry2 = Country(
         "T6",
         "Test",
-        Country.Continent.Asia,
+        Country.Continent.North_America,
         "Northeast",
         BigDecimal.decimal(390757.00),
         None,
