@@ -38,12 +38,12 @@ case class Country(
 object Country:
 
   enum Continent(val value: String) extends Enum:
-    case Asia extends Continent("Asia")
-    case Europe extends Continent("Europe")
+    case Asia          extends Continent("Asia")
+    case Europe        extends Continent("Europe")
     case North_America extends Continent("North America")
-    case Africa extends Continent("Africa")
-    case Oceania extends Continent("Oceania")
-    case Antarctica extends Continent("Antarctica")
+    case Africa        extends Continent("Africa")
+    case Oceania       extends Continent("Oceania")
+    case Antarctica    extends Continent("Antarctica")
     case South_America extends Continent("South America")
 
     override def toString: String = value
