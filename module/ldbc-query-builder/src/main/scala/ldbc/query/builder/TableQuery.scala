@@ -6,10 +6,12 @@ package ldbc.query.builder
 
 import scala.deriving.Mirror
 import scala.compiletime.*
+import scala.annotation.targetName
 
 import ldbc.core.*
-import ldbc.sql.ResultSetReader
-import ldbc.query.builder.statement.{ Select, Join }
+import ldbc.core.interpreter.Tuples as CoreTuples
+import ldbc.sql.*
+import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.Tuples
 
 case class TableQuery[F[_], P <: Product](table: Table[P]):
@@ -47,3 +49,53 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
 
   def join[O <: Product](other: Table[O]):         Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
   def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = Join(table.as("x1"), other.table.as("x2"))
+
+  // TODO: In the following implementation, Warning occurs at the time of Compile, so it is cast by asInstanceOf.
+  // case (value: Any, parameter: Parameter[F, Any]) => ???
+  inline def insert(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): Insert[F, P] =
+    val tuples = values.map(Tuple.fromProduct)
+    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
+      case (value: Any, parameter: Any) =>
+        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+    })
+    new Insert.Multi[F, P, Tuple](table, tuples.toList, parameterBinders.toList)
+
+  def selectInsert[T <: Tuple](func: Table[P] => Tuple.Map[T, Column]): Insert.Select[F, P, T] =
+    Insert.Select[F, P, T](table, func(table))
+
+  inline def pickInsert[Tag <: Singleton, T](tag: Tag, value: T)(using
+    mirror:                                       Mirror.ProductOf[P],
+    index:                                        ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check: T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+  ): Insert.Pick[
+    F,
+    P,
+    Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]] *: EmptyTuple
+  ] =
+    new Insert.Pick(
+      table,
+      table.selectDynamic[Tag](tag) *: EmptyTuple,
+      check(value) *: EmptyTuple,
+      (value *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toList.map {
+        case (value: Any, parameter: Any) =>
+          ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+      }
+    )
+
+  @targetName("insertProduct")
+  inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
+    val tuples = Tuple.fromProduct(value)
+    val parameterBinders = tuples.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
+      case (value: Any, parameter: Any) =>
+        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+    }
+    new Insert.Single[F, P, Tuple](table, tuples, parameterBinders.toList)
+
+  @targetName("insertProducts")
+  inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
+    val tuples = values.map(Tuple.fromProduct)
+    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
+      case (value: Any, parameter: Any) =>
+        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+    })
+    new Insert.Multi[F, P, Tuple](table, tuples, parameterBinders)

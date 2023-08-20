@@ -4,7 +4,7 @@
 
 package ldbc.query.builder.interpreter
 
-import ldbc.sql.ResultSetReader
+import ldbc.sql.*
 import ldbc.query.builder.ColumnReader
 
 object Tuples:

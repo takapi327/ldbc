@@ -19,7 +19,12 @@ import ldbc.query.builder.syntax.ColumnSyntax
 
 package object dsl:
 
-  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F], ColumnSyntax[F], QuerySyntax[F]:
+  private trait SyncSyntax[F[_]: Sync]
+    extends SQLSyntax[F],
+            ConnectionSyntax[F],
+            ColumnSyntax[F],
+            QuerySyntax[F],
+            CommandSyntax[F]:
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
       val release: Connection[F] => F[Unit] = connection => connection.close()
       Resource.make(acquire)(release)

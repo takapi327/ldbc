@@ -11,9 +11,8 @@ import org.specs2.mutable.Specification
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
-import ldbc.core.*
 import ldbc.core.model.*
-import ldbc.sql.ResultSetReader
+import ldbc.sql.*
 import ldbc.dsl.io.{ *, given }
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
@@ -38,8 +37,16 @@ case class Country(
 
 object Country:
 
-  enum Continent extends Enum:
-    case Asia, Europe, North_America, Africa, Oceania, Antarctica, South_America
+  enum Continent(val value: String) extends Enum:
+    case Asia          extends Continent("Asia")
+    case Europe        extends Continent("Europe")
+    case North_America extends Continent("North America")
+    case Africa        extends Continent("Africa")
+    case Oceania       extends Continent("Oceania")
+    case Antarctica    extends Continent("Antarctica")
+    case South_America extends Continent("South America")
+
+    override def toString: String = value
   object Continent extends EnumDataType[Continent]
 
   given ResultSetReader[IO, Continent] =
@@ -267,5 +274,171 @@ object DatabaseConnectionTest extends Specification:
       yield cities.length === 248).readOnly
         .run(dataSource)
         .unsafeRunSync()
+    }
+
+    "New data can be registered with the value of Tuple." in {
+      val result = country
+        .insert(
+          (
+            "T1",
+            "Test",
+            Country.Continent.Asia,
+            "Northeast",
+            BigDecimal.decimal(390757.00),
+            None,
+            1,
+            None,
+            None,
+            None,
+            "Test",
+            "Test",
+            None,
+            None,
+            "T1"
+          )
+        )
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "New data can be registered from multiple tuple values." in {
+      val result = country
+        .insert(
+          (
+            "T2",
+            "Test",
+            Country.Continent.Asia,
+            "Northeast",
+            BigDecimal.decimal(390757.00),
+            None,
+            1,
+            None,
+            None,
+            None,
+            "Test",
+            "Test",
+            None,
+            None,
+            "T2"
+          ),
+          (
+            "T3",
+            "Test",
+            Country.Continent.Asia,
+            "Northeast",
+            BigDecimal.decimal(390757.00),
+            None,
+            1,
+            None,
+            None,
+            None,
+            "Test",
+            "Test",
+            None,
+            None,
+            "T3"
+          )
+        )
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 2
+    }
+
+    "New data can be registered from the model." in {
+      val newCountry = Country(
+        "T4",
+        "Test",
+        Country.Continent.Asia,
+        "Northeast",
+        BigDecimal.decimal(390757.00),
+        None,
+        1,
+        None,
+        None,
+        None,
+        "Test",
+        "Test",
+        None,
+        None,
+        "T4"
+      )
+      val result = (country += newCountry).update.autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "New data can be registered from multiple models." in {
+      val newCountry1 = Country(
+        "T5",
+        "Test",
+        Country.Continent.Asia,
+        "Northeast",
+        BigDecimal.decimal(390757.00),
+        None,
+        1,
+        None,
+        None,
+        None,
+        "Test",
+        "Test",
+        None,
+        None,
+        "T5"
+      )
+      val newCountry2 = Country(
+        "T6",
+        "Test",
+        Country.Continent.North_America,
+        "Northeast",
+        BigDecimal.decimal(390757.00),
+        None,
+        1,
+        None,
+        None,
+        None,
+        "Test",
+        "Test",
+        None,
+        None,
+        "T6"
+      )
+      val result = (country ++= List(newCountry1, newCountry2)).update.autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 2
+    }
+
+    "Only specified items can be added to the data." in {
+      val result = city
+        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
+        .values(("Test", "T1", "T", 1))
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "Multiple additions of data can be made only for specified items." in {
+      val result = city
+        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
+        .values(("Test", "T1", "T", 1), ("Test2", "T2", "T2", 2))
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 2
     }
   }
