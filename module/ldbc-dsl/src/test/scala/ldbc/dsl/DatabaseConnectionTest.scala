@@ -273,7 +273,7 @@ object DatabaseConnectionTest extends Specification:
       val result = country
         .insert(
           (
-            "TEST1",
+            "T1",
             "Test",
             Country.Continent.Asia,
             "Northeast",
@@ -302,7 +302,7 @@ object DatabaseConnectionTest extends Specification:
       val result = country
         .insert(
           (
-            "TEST2",
+            "T2",
             "Test",
             Country.Continent.Asia,
             "Northeast",
@@ -346,7 +346,7 @@ object DatabaseConnectionTest extends Specification:
 
     "New data can be registered from the model." in {
       val newCountry = Country(
-        "TEST4",
+        "T4",
         "Test",
         Country.Continent.Asia,
         "Northeast",
@@ -371,7 +371,7 @@ object DatabaseConnectionTest extends Specification:
 
     "New data can be registered from multiple models." in {
       val newCountry1 = Country(
-        "TEST5",
+        "T5",
         "Test",
         Country.Continent.Asia,
         "Northeast",
@@ -388,7 +388,7 @@ object DatabaseConnectionTest extends Specification:
         "Test"
       )
       val newCountry2 = Country(
-        "TEST6",
+        "T6",
         "Test",
         Country.Continent.Asia,
         "Northeast",
@@ -414,7 +414,7 @@ object DatabaseConnectionTest extends Specification:
     "Only specified items can be added to the data." in {
       val result = city
         .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test", "TEST", "T", 1))
+        .values(("Test", "T1", "T", 1))
         .update
         .autoCommit
         .run(dataSource)
@@ -426,7 +426,7 @@ object DatabaseConnectionTest extends Specification:
     "Multiple additions of data can be made only for specified items." in {
       val result = city
         .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test", "TEST", "T", 1), ("Test2", "TEST2", "T2", 2))
+        .values(("Test", "T1", "T", 1), ("Test2", "T2", "T2", 2))
         .update
         .autoCommit
         .run(dataSource)
