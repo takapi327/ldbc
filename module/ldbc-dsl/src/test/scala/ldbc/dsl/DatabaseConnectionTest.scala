@@ -11,9 +11,8 @@ import org.specs2.mutable.Specification
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
-import ldbc.core.*
 import ldbc.core.model.*
-import ldbc.sql.ResultSetReader
+import ldbc.sql.*
 import ldbc.dsl.io.{ *, given }
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
@@ -41,6 +40,8 @@ object Country:
   enum Continent extends Enum:
     case Asia, Europe, North_America, Africa, Oceania, Antarctica, South_America
   object Continent extends EnumDataType[Continent]
+
+  given Parameter[IO, Continent] = Parameter.convert(_.toString)
 
   given ResultSetReader[IO, Continent] =
     ResultSetReader.mapping[IO, String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
@@ -287,7 +288,7 @@ object DatabaseConnectionTest extends Specification:
             "Test",
             None,
             None,
-            "Test"
+            "T1"
           )
         )
         .update
@@ -316,10 +317,10 @@ object DatabaseConnectionTest extends Specification:
             "Test",
             None,
             None,
-            "Test"
+            "T2"
           ),
           (
-            "TEST3",
+            "T3",
             "Test",
             Country.Continent.Asia,
             "Northeast",
@@ -333,7 +334,7 @@ object DatabaseConnectionTest extends Specification:
             "Test",
             None,
             None,
-            "Test"
+            "T3"
           )
         )
         .update
@@ -360,7 +361,7 @@ object DatabaseConnectionTest extends Specification:
         "Test",
         None,
         None,
-        "Test"
+        "T4"
       )
       val result = (country += newCountry).update.autoCommit
         .run(dataSource)
@@ -385,7 +386,7 @@ object DatabaseConnectionTest extends Specification:
         "Test",
         None,
         None,
-        "Test"
+        "T5"
       )
       val newCountry2 = Country(
         "T6",
@@ -402,7 +403,7 @@ object DatabaseConnectionTest extends Specification:
         "Test",
         None,
         None,
-        "Test"
+        "T6"
       )
       val result = (country ++= List(newCountry1, newCountry2)).update.autoCommit
         .run(dataSource)
