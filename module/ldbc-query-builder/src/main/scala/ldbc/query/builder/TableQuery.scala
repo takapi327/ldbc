@@ -6,6 +6,7 @@ package ldbc.query.builder
 
 import scala.deriving.Mirror
 import scala.compiletime.*
+import scala.annotation.targetName
 
 import ldbc.core.*
 import ldbc.sql.*
@@ -61,6 +62,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
   def selectInsert[T <: Tuple](func: Table[P] => Tuple.Map[T, Column]): Insert.Simple[F, P, T] =
     Insert.Simple[F, P, T](table, func(table))
 
+  @targetName("insertProduct")
   inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
     val tuples = Tuple.fromProduct(value)
     val parameterBinders = tuples.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
@@ -69,6 +71,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
     }
     new Insert.Single[F, P, Tuple](table, tuples, parameterBinders.toList)
 
+  @targetName("insertProducts")
   inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
     val tuples = values.map(Tuple.fromProduct)
     val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
