@@ -26,7 +26,7 @@ case class Update[F[_], P <: Product](
   ): Update[F, P] =
     this.copy(
       columns = columns :+ table.selectDynamic[Tag](tag).label,
-      params = params ++ (value *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toArray.map {
+      params = params ++ (check(value) *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toArray.map {
         case (value: Any, parameter: Any) =>
           ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
       }

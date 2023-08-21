@@ -89,7 +89,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
     new Update[F, P](
       table   = table,
       columns = List(table.selectDynamic[Tag](tag).label),
-      params = (value *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toList.map {
+      params = (check(value) *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toList.map {
         case (value: Any, parameter: Any) =>
           ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
       }
