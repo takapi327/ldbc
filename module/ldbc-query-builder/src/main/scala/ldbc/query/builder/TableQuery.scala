@@ -16,6 +16,8 @@ import ldbc.query.builder.interpreter.Tuples
 
 case class TableQuery[F[_], P <: Product](table: Table[P]):
 
+  private type ParamBind[A] = ParameterBinder[F]
+
   private inline def inferResultSetReader[T]: ResultSetReader[F, T] =
     summonFrom[ResultSetReader[F, T]] {
       case reader: ResultSetReader[F, T] => reader
@@ -54,11 +56,11 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
   // case (value: Any, parameter: Parameter[F, Any]) => ???
   inline def insert(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): Insert[F, P] =
     val tuples = values.map(Tuple.fromProduct)
-    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
-      case (value: Any, parameter: Any) =>
-        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-    })
-    new Insert.Multi[F, P, Tuple](table, tuples.toList, parameterBinders.toList)
+    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).map[ParamBind]([t] => (x: t) =>
+      val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
+      ParameterBinder[F, t](value)(using parameter)
+    ).toList).toList.asInstanceOf[List[ParameterBinder[F]]]
+    new Insert.Multi[F, P, Tuple](table, tuples.toList, parameterBinders)
 
   def selectInsert[T <: Tuple](func: Table[P] => Tuple.Map[T, Column]): Insert.Select[F, P, T] =
     Insert.Select[F, P, T](table, func(table))
@@ -66,19 +68,19 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
   @targetName("insertProduct")
   inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
     val tuples = Tuple.fromProduct(value)
-    val parameterBinders = tuples.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
-      case (value: Any, parameter: Any) =>
-        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-    }
-    new Insert.Single[F, P, Tuple](table, tuples, parameterBinders.toList)
+    val parameterBinders = tuples.zip(Parameter.fold[F, mirror.MirroredElemTypes]).map[ParamBind]([t] => (x: t) =>
+      val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
+      ParameterBinder[F, t](value)(using parameter)
+    ).toList.asInstanceOf[List[ParameterBinder[F]]]
+    new Insert.Single[F, P, Tuple](table, tuples, parameterBinders)
 
   @targetName("insertProducts")
   inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
     val tuples = values.map(Tuple.fromProduct)
-    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toArray.map {
-      case (value: Any, parameter: Any) =>
-        ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-    })
+    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[F, mirror.MirroredElemTypes]).map[ParamBind]([t] => (x: t) =>
+      val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
+      ParameterBinder[F, t](value)(using parameter)
+    ).toList).asInstanceOf[List[ParameterBinder[F]]]
     new Insert.Multi[F, P, Tuple](table, tuples, parameterBinders)
 
   inline def update[Tag <: Singleton, T](tag: Tag, value: T)(using
@@ -86,21 +88,21 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
     index:                                    ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check: T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[F, P] =
+    type PARAM = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    val params = List(ParameterBinder[F, PARAM](check(value))(using Parameter.infer[F, PARAM]))
     new Update[F, P](
       table   = table,
       columns = List(table.selectDynamic[Tag](tag).label),
-      params = (check(value) *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toList.map {
-        case (value: Any, parameter: Any) =>
-          ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-      }
+      params = params
     )
 
   inline def update(value: P)(using mirror: Mirror.ProductOf[P]): Update[F, P] =
+    val params = Tuple.fromProduct(value).zip(Parameter.fold[F, mirror.MirroredElemTypes]).map[ParamBind]([t] => (x: t) =>
+      val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
+      ParameterBinder[F, t](value)(using parameter)
+    ).toList.asInstanceOf[List[ParameterBinder[F]]]
     new Update[F, P](
       table   = table,
       columns = table.all.map(_.label),
-      params = table.*.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toList.map {
-        case (value: Any, parameter: Any) =>
-          ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-      }
+      params = params
     )
