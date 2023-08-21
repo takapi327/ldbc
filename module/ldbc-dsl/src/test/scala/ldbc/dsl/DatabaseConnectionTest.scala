@@ -454,6 +454,18 @@ object DatabaseConnectionTest extends Specification:
       result === 1
     }
 
+    "A stand-alone update from the model will be successful." in {
+      (for
+        cityOpt <- city.selectAll.where(_.code === "JPN").and("Tokyo").headOption
+        result <- cityOpt match
+                    case None => ConnectionIO.pure(0)
+                    case Some(city) =>
+                      city.update(city.copy(district = "Tokyo-to")).where(_.code === "JPN").and("Tokyo").update
+      yield result === 1).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+    }
+
     "Multiple columns are successfully updated." in {
       val result = city
         .update("name", "Yokohama")
