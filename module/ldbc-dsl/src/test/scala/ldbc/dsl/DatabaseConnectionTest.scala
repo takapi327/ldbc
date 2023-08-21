@@ -441,4 +441,62 @@ object DatabaseConnectionTest extends Specification:
 
       result === 2
     }
+
+    "A stand-alone update succeeds." in {
+      val result = city
+        .update("countryCode", "T2")
+        .where(_.name _equals "Test")
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "Multiple columns are successfully updated." in {
+      val result = city
+        .update("name", "Test1")
+        .set("countryCode", "T1")
+        .set("district", "TT")
+        .set("population", 2)
+        .where(_.name _equals "Test")
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "The update succeeds in the combined processing of multiple queries." in {
+      (for
+        codeOpt <- country.select[String](_.code).where(_.name _equals "Test").and(_.continent _equals Country.Continent.Asia).headOption
+        result <- codeOpt match
+          case None => ConnectionIO.pure[IO, Int](0)
+          case Some(code *: EmptyTuple) =>
+            city
+              .update("name", "Test1")
+              .set("countryCode", code)
+              .set("district", "TT")
+              .set("population", 2)
+              .where(_.name _equals "Test")
+              .update
+      yield result === 1)
+        .transaction
+        .run(dataSource)
+        .unsafeRunSync()
+    }
+
+    "Bulk renewal succeeds." in {
+      val result = countryLanguage
+        .update("language", "Test Language")
+        .where(_.countryCode _equals "JPN")
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 6
+    }
   }
