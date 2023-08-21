@@ -444,8 +444,8 @@ object DatabaseConnectionTest extends Specification:
 
     "A stand-alone update succeeds." in {
       val result = city
-        .update("countryCode", "T2")
-        .where(_.name _equals "Test")
+        .update("district", "T2")
+        .where(_.name _equals "Test2")
         .update
         .autoCommit
         .run(dataSource)
