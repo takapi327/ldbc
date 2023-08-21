@@ -28,19 +28,19 @@ case class Update[F[_], P <: Product](
     val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
     this.copy(
       columns = columns :+ table.selectDynamic[Tag](tag).label,
-      params = params :+ param
+      params  = params :+ param
     )
 
   inline def set[Tag <: Singleton, T](tag: Tag, value: Option[T])(using
-    mirror: Mirror.ProductOf[P],
-    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    mirror:                                Mirror.ProductOf[P],
+    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check: Option[T] =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[F, P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
     this.copy(
       columns = columns :+ table.selectDynamic[Tag](tag).label,
-      params = params :+ param
+      params  = params :+ param
     )
 
   def where(func: Table[P] => ExpressionSyntax[F]): Update.Where[F] =
