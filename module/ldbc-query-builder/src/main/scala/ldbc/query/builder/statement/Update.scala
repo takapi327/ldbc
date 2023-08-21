@@ -24,12 +24,23 @@ case class Update[F[_], P <: Product](
     index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check: T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[F, P] =
+    type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
     this.copy(
       columns = columns :+ table.selectDynamic[Tag](tag).label,
-      params = params ++ (check(value) *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toArray.map {
-        case (value: Any, parameter: Any) =>
-          ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-      }
+      params = params :+ param
+    )
+
+  inline def set[Tag <: Singleton, T](tag: Tag, value: Option[T])(using
+    mirror: Mirror.ProductOf[P],
+    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check: Option[T] =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+  ): Update[F, P] =
+    type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
+    this.copy(
+      columns = columns :+ table.selectDynamic[Tag](tag).label,
+      params = params :+ param
     )
 
   def where(func: Table[P] => ExpressionSyntax[F]): Update.Where[F] =
