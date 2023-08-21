@@ -493,7 +493,7 @@ object DatabaseConnectionTest extends Specification:
 
     "Bulk renewal succeeds." in {
       val result = countryLanguage
-        .update("language", "Test Language")
+        .update("isOfficial", CountryLanguage.IsOfficial.T)
         .where(_.countryCode _equals "JPN")
         .update
         .autoCommit
