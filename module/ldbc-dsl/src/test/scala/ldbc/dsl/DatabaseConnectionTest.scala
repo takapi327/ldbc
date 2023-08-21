@@ -471,19 +471,22 @@ object DatabaseConnectionTest extends Specification:
 
     "The update succeeds in the combined processing of multiple queries." in {
       (for
-        codeOpt <- country.select[String](_.code).where(_.name _equals "Test").and(_.continent _equals Country.Continent.Asia).headOption
+        codeOpt <- country
+                     .select[String](_.code)
+                     .where(_.name _equals "Test")
+                     .and(_.continent _equals Country.Continent.Asia)
+                     .headOption
         result <- codeOpt match
-          case None => ConnectionIO.pure[IO, Int](0)
-          case Some(code *: EmptyTuple) =>
-            city
-              .update("name", "Test1")
-              .set("countryCode", code)
-              .set("district", "TT")
-              .set("population", 2)
-              .where(_.name _equals "Test")
-              .update
-      yield result === 1)
-        .transaction
+                    case None => ConnectionIO.pure[IO, Int](0)
+                    case Some(code *: EmptyTuple) =>
+                      city
+                        .update("name", "Test1")
+                        .set("countryCode", code)
+                        .set("district", "TT")
+                        .set("population", 2)
+                        .where(_.name _equals "Test")
+                        .update
+      yield result === 1).transaction
         .run(dataSource)
         .unsafeRunSync()
     }
