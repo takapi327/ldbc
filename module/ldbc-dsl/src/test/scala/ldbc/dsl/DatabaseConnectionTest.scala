@@ -444,8 +444,8 @@ object DatabaseConnectionTest extends Specification:
 
     "A stand-alone update succeeds." in {
       val result = city
-        .update("district", "T2")
-        .where(_.name _equals "Test2")
+        .update("district", "Tokyo-test")
+        .where(_.name _equals "Tokyo")
         .update
         .autoCommit
         .run(dataSource)
@@ -456,11 +456,11 @@ object DatabaseConnectionTest extends Specification:
 
     "Multiple columns are successfully updated." in {
       val result = city
-        .update("name", "Test1")
-        .set("countryCode", "T1")
-        .set("district", "TT")
+        .update("name", "Yokohama")
+        .set("countryCode", "JPN")
+        .set("district", "Kanagawa")
         .set("population", 2)
-        .where(_.name _equals "Test")
+        .where(_.name _equals "Jokohama [Yokohama]")
         .update
         .autoCommit
         .run(dataSource)
