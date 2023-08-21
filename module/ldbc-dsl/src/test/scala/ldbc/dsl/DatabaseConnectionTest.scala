@@ -281,7 +281,7 @@ object DatabaseConnectionTest extends Specification:
         .insert(
           (
             "T1",
-            "Test",
+            "Test1",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -310,7 +310,7 @@ object DatabaseConnectionTest extends Specification:
         .insert(
           (
             "T2",
-            "Test",
+            "Test2",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -327,7 +327,7 @@ object DatabaseConnectionTest extends Specification:
           ),
           (
             "T3",
-            "Test",
+            "Test3",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -354,7 +354,7 @@ object DatabaseConnectionTest extends Specification:
     "New data can be registered from the model." in {
       val newCountry = Country(
         "T4",
-        "Test",
+        "Test4",
         Country.Continent.Asia,
         "Northeast",
         BigDecimal.decimal(390757.00),
@@ -379,7 +379,7 @@ object DatabaseConnectionTest extends Specification:
     "New data can be registered from multiple models." in {
       val newCountry1 = Country(
         "T5",
-        "Test",
+        "Test5",
         Country.Continent.Asia,
         "Northeast",
         BigDecimal.decimal(390757.00),
@@ -396,7 +396,7 @@ object DatabaseConnectionTest extends Specification:
       )
       val newCountry2 = Country(
         "T6",
-        "Test",
+        "Test6",
         Country.Continent.North_America,
         "Northeast",
         BigDecimal.decimal(390757.00),
@@ -433,7 +433,7 @@ object DatabaseConnectionTest extends Specification:
     "Multiple additions of data can be made only for specified items." in {
       val result = city
         .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test", "T1", "T", 1), ("Test2", "T2", "T2", 2))
+        .values(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2))
         .update
         .autoCommit
         .run(dataSource)
@@ -473,7 +473,7 @@ object DatabaseConnectionTest extends Specification:
       (for
         codeOpt <- country
                      .select[String](_.code)
-                     .where(_.name _equals "Test")
+                     .where(_.name _equals "Test1")
                      .and(_.continent _equals Country.Continent.Asia)
                      .headOption
         result <- codeOpt match
@@ -484,7 +484,7 @@ object DatabaseConnectionTest extends Specification:
                         .set("countryCode", code)
                         .set("district", "TT")
                         .set("population", 2)
-                        .where(_.name _equals "Test")
+                        .where(_.name _equals "Test2")
                         .update
       yield result === 1).transaction
         .run(dataSource)
