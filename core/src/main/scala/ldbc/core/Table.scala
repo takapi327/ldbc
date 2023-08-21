@@ -48,7 +48,7 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Method to retrieve an array of column information that a table has.
     */
-  private[ldbc] def all: List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]
+  private[ldbc] def all: List[Column[[A] => A => A]]
 
   def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
@@ -79,8 +79,8 @@ object Table extends Dynamic:
         .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
       alias.fold(column)(name => column.as(name))
 
-    override private[ldbc] def all: List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
-      columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
+    override private[ldbc] def all: List[Column[[A] => A => A]] =
+      columns.toList.asInstanceOf[List[Column[[A] => A => A]]]
 
     override def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column] =
       alias
