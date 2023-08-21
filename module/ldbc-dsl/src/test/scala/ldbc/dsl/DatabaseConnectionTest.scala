@@ -456,11 +456,11 @@ object DatabaseConnectionTest extends Specification:
 
     "A stand-alone update from the model will be successful." in {
       (for
-        cityOpt <- city.selectAll.where(_.code === "JPN").and("Tokyo").headOption
+        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption
         result <- cityOpt match
                     case None => ConnectionIO.pure(0)
                     case Some(city) =>
-                      city.update(city.copy(district = "Tokyo-to")).where(_.code === "JPN").and("Tokyo").update
+                      city.update(city.copy(district = "Tokyo-to")).where(v => v.countryCode _equals "JPN" && v.name _equals "Tokyo").update
       yield result === 1).transaction
         .run(dataSource)
         .unsafeRunSync()
