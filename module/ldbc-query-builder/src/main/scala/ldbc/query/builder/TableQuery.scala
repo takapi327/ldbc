@@ -94,3 +94,13 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
           ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
       }
     )
+
+  inline def update(value: P)(using mirror: Mirror.ProductOf[P]): Update[F, P] =
+    new Update[F, P](
+      table = table,
+      columns = table.all.map(_.label),
+      params = table.*.zip(Parameter.fold[F, mirror.MirroredElemTypes]).toList.map {
+        case (value: Any, parameter: Any) =>
+          ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+      }
+    )
