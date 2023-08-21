@@ -63,25 +63,6 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
   def selectInsert[T <: Tuple](func: Table[P] => Tuple.Map[T, Column]): Insert.Select[F, P, T] =
     Insert.Select[F, P, T](table, func(table))
 
-  inline def pickInsert[Tag <: Singleton, T](tag: Tag, value: T)(using
-    mirror:                                       Mirror.ProductOf[P],
-    index:                                        ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    check: T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Insert.Pick[
-    F,
-    P,
-    Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]] *: EmptyTuple
-  ] =
-    new Insert.Pick(
-      table,
-      table.selectDynamic[Tag](tag) *: EmptyTuple,
-      check(value) *: EmptyTuple,
-      (value *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toList.map {
-        case (value: Any, parameter: Any) =>
-          ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-      }
-    )
-
   @targetName("insertProduct")
   inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
     val tuples = Tuple.fromProduct(value)
