@@ -82,12 +82,12 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
     new Insert.Multi[F, P, Tuple](table, tuples, parameterBinders)
 
   inline def update[Tag <: Singleton, T](tag: Tag, value: T)(using
-    mirror: Mirror.ProductOf[P],
-    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    mirror:                                   Mirror.ProductOf[P],
+    index:                                    ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check: T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[F, P] =
     new Update[F, P](
-      table = table,
+      table   = table,
       columns = List(table.selectDynamic[Tag](tag).label),
       params = (value *: EmptyTuple).zip(Parameter.fold[F, T *: EmptyTuple]).toList.map {
         case (value: Any, parameter: Any) =>
