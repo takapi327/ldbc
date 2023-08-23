@@ -91,15 +91,19 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
       query.insert((1L, "p2", Some("p3"))).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?)"
     )
     assert(
-      query.insert((1L, "p2", Some("p3")), (2L, "p2", None)).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
+      query
+        .insert((1L, "p2", Some("p3")), (2L, "p2", None))
+        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
     )
     assert(
-      query.selectInsert[(Long, String, Option[String])](v => (v.p1, v.p2, v.p3))
+      query
+        .selectInsert[(Long, String, Option[String])](v => (v.p1, v.p2, v.p3))
         .values((1L, "p2", Some("p3")))
         .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?)"
     )
     assert(
-      query.selectInsert[(Long, String, Option[String])](v => (v.p1, v.p2, v.p3))
+      query
+        .selectInsert[(Long, String, Option[String])](v => (v.p1, v.p2, v.p3))
         .values((1L, "p2", Some("p3")), (2L, "p2", None))
         .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
     )
@@ -107,23 +111,32 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
       (query += Test(1L, "p2", Some("p3"))).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?)"
     )
     assert(
-      (query ++= List(Test(1L, "p2", Some("p3")), Test(2L, "p2", None))).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
+      (query ++= List(
+        Test(1L, "p2", Some("p3")),
+        Test(2L, "p2", None)
+      )).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
     )
   }
 
   it should "The update query statement generated from Table is equal to the specified query statement." in {
     assert(
-      query.update("p1", 1L).set("p2", "p2").set("p3", Some("p3"))
+      query
+        .update("p1", 1L)
+        .set("p2", "p2")
+        .set("p3", Some("p3"))
         .where(_.p1 === 1L)
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE p1 = ?"
     )
     assert(
-      query.update("p1", 1L).set("p2", "p2")
+      query
+        .update("p1", 1L)
+        .set("p2", "p2")
         .where(_.p1 === 1L)
         .statement === "UPDATE test SET p1 = ?, p2 = ? WHERE p1 = ?"
     )
     assert(
-      query.update(Test(1L, "p2", Some("p3")))
+      query
+        .update(Test(1L, "p2", Some("p3")))
         .where(_.p1 === 1L)
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE p1 = ?"
     )

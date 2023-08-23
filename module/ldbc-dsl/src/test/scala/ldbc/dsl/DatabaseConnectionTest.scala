@@ -460,7 +460,10 @@ object DatabaseConnectionTest extends Specification:
         result <- cityOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
                     case Some(cityModel) =>
-                      city.update(cityModel.copy(district = "Tokyo-to")).where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo")).update
+                      city
+                        .update(cityModel.copy(district = "Tokyo-to"))
+                        .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
+                        .update
       yield result === 1).transaction
         .run(dataSource)
         .unsafeRunSync()
