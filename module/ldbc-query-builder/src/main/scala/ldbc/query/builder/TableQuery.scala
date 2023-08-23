@@ -55,8 +55,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
   // TODO: In the following implementation, Warning occurs at the time of Compile, so it is cast by asInstanceOf.
   // case (value: Any, parameter: Parameter[F, Any]) => ???
   inline def insert(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): Insert[F, P] =
-    val tuples = values.map(Tuple.fromProduct)
-    val parameterBinders = tuples
+    val parameterBinders = values
       .flatMap(
         _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
           .map[ParamBind](
@@ -69,14 +68,14 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
       )
       .toList
       .asInstanceOf[List[ParameterBinder[F]]]
-    new Insert.Multi[F, P, Tuple](table, tuples.toList, parameterBinders)
+    new Insert.Multi[F, P, Tuple](table, values.toList, parameterBinders)
 
   def selectInsert[T <: Tuple](func: Table[P] => Tuple.Map[T, Column]): Insert.Select[F, P, T] =
     Insert.Select[F, P, T](table, func(table))
 
   @targetName("insertProduct")
   inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
-    val tuples = Tuple.fromProduct(value)
+    val tuples = Tuple.fromProductTyped(value)
     val parameterBinders = tuples
       .zip(Parameter.fold[F, mirror.MirroredElemTypes])
       .map[ParamBind](
@@ -91,7 +90,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
 
   @targetName("insertProducts")
   inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
-    val tuples = values.map(Tuple.fromProduct)
+    val tuples = values.map(Tuple.fromProductTyped)
     val parameterBinders = tuples
       .flatMap(
         _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
@@ -121,7 +120,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
 
   inline def update(value: P)(using mirror: Mirror.ProductOf[P]): Update[F, P] =
     val params = Tuple
-      .fromProduct(value)
+      .fromProductTyped(value)
       .zip(Parameter.fold[F, mirror.MirroredElemTypes])
       .map[ParamBind](
         [t] =>
