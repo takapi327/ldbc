@@ -10,6 +10,13 @@ import ldbc.core.*
 import ldbc.core.attribute.Attribute
 import ldbc.sql.{ ResultSet, ResultSetReader }
 
+/** Trait for retrieving data from a ResultSet using the column's information.
+  *
+  * @tparam F
+  *   The effect type
+  * @tparam T
+  *   Scala types that match SQL DataType
+  */
 private[ldbc] trait ColumnReader[F[_], T] extends Column[T]:
 
   def reader: ResultSetReader[F, T]
