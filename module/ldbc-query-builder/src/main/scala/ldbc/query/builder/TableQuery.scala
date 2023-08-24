@@ -5,7 +5,6 @@
 package ldbc.query.builder
 
 import scala.deriving.Mirror
-import scala.compiletime.*
 import scala.annotation.targetName
 
 import ldbc.core.*
@@ -14,23 +13,23 @@ import ldbc.sql.*
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.Tuples
 
+/**
+ * A model for generating queries from Table information.
+ *
+ * @param table
+ *   Trait for generating SQL table information.
+ * @tparam F
+ *   The effect type
+ * @tparam P
+ *   A class that implements a [[Product]] that is one-to-one with the table definition.
+ */
 case class TableQuery[F[_], P <: Product](table: Table[P]):
 
+  /** Type alias for ParameterBinder. Mainly for use with Tuple.map. */
   private type ParamBind[A] = ParameterBinder[F]
 
-  private inline def inferResultSetReader[T]: ResultSetReader[F, T] =
-    summonFrom[ResultSetReader[F, T]] {
-      case reader: ResultSetReader[F, T] => reader
-      case _                             => error("ResultSetReader cannot be inferred")
-    }
-
-  private inline def foldResultSetReader[T <: Tuple]: Tuples.MapToResultSetReader[F, T] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => EmptyTuple
-      case _: (h *: t)   => inferResultSetReader[h] *: foldResultSetReader[t]
-
   inline def selectAll(using mirror: Mirror.ProductOf[P]): Select[F, P, Tuples.ToColumn[F, mirror.MirroredElemTypes]] =
-    val columns = table.*.zip(foldResultSetReader[mirror.MirroredElemTypes])
+    val columns = table.*.zip(ResultSetReader.fold[F, mirror.MirroredElemTypes])
       .map(
         [t] =>
           (x: t) =>

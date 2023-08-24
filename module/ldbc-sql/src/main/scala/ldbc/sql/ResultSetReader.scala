@@ -9,6 +9,8 @@ import java.sql.{ Date, Time, Timestamp }
 import java.util.Date as UtilDate
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
+import scala.compiletime.*
+
 import cats.{ Functor, Monad }
 import cats.implicits.*
 
@@ -93,3 +95,18 @@ object ResultSetReader:
         result <- reader.read(resultSet, columnLabel)
         bool   <- resultSet.wasNull()
       yield if bool then None else Some(result)
+
+  type MapToTuple[F[_], T <: Tuple] <: Tuple = T match
+    case EmptyTuple => EmptyTuple
+    case h *: t => ResultSetReader[F, h] *: MapToTuple[F, t]
+
+  inline def infer[F[_], T]: ResultSetReader[F, T] =
+    summonFrom[ResultSetReader[F, T]] {
+      case reader: ResultSetReader[F, T] => reader
+      case _ => error("ResultSetReader cannot be inferred")
+    }
+
+  inline def fold[F[_], T <: Tuple]: MapToTuple[F, T] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => EmptyTuple
+      case _: (h *: t) => infer[F, h] *: fold[F, t]
