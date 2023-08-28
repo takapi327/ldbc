@@ -140,4 +140,20 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
         .where(_.p1 === 1L)
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE p1 = ?"
     )
+    assert(
+      query
+        .update("p1", 1L)
+        .set("p2", "p2")
+        .set("p3", Some("p3"))
+        .where(_.p1 === 1L)
+        .limit(1)
+        .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE p1 = ? LIMIT ?"
+    )
+    assert(
+      query
+        .update(Test(1L, "p2", Some("p3")))
+        .where(_.p1 === 1L)
+        .limit(1)
+        .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE p1 = ? LIMIT ?"
+    )
   }
