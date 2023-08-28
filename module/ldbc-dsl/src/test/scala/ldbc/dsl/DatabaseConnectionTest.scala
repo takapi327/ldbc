@@ -517,4 +517,17 @@ object DatabaseConnectionTest extends Specification:
 
       result === 6
     }
+
+    "Successful batch update with specified number." in {
+      val result = countryLanguage
+        .update("isOfficial", CountryLanguage.IsOfficial.T)
+        .where(_.countryCode _equals "JPN")
+        .limit(3)
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 3
+    }
   }
