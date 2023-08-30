@@ -281,7 +281,7 @@ object DatabaseConnectionTest extends Specification:
         .insert(
           (
             "T1",
-            "Test",
+            "Test1",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -310,7 +310,7 @@ object DatabaseConnectionTest extends Specification:
         .insert(
           (
             "T2",
-            "Test",
+            "Test2",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -327,7 +327,7 @@ object DatabaseConnectionTest extends Specification:
           ),
           (
             "T3",
-            "Test",
+            "Test3",
             Country.Continent.Asia,
             "Northeast",
             BigDecimal.decimal(390757.00),
@@ -354,7 +354,7 @@ object DatabaseConnectionTest extends Specification:
     "New data can be registered from the model." in {
       val newCountry = Country(
         "T4",
-        "Test",
+        "Test4",
         Country.Continent.Asia,
         "Northeast",
         BigDecimal.decimal(390757.00),
@@ -379,7 +379,7 @@ object DatabaseConnectionTest extends Specification:
     "New data can be registered from multiple models." in {
       val newCountry1 = Country(
         "T5",
-        "Test",
+        "Test5",
         Country.Continent.Asia,
         "Northeast",
         BigDecimal.decimal(390757.00),
@@ -396,7 +396,7 @@ object DatabaseConnectionTest extends Specification:
       )
       val newCountry2 = Country(
         "T6",
-        "Test",
+        "Test6",
         Country.Continent.North_America,
         "Northeast",
         BigDecimal.decimal(390757.00),
@@ -433,12 +433,101 @@ object DatabaseConnectionTest extends Specification:
     "Multiple additions of data can be made only for specified items." in {
       val result = city
         .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test", "T1", "T", 1), ("Test2", "T2", "T2", 2))
+        .values(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2))
         .update
         .autoCommit
         .run(dataSource)
         .unsafeRunSync()
 
       result === 2
+    }
+
+    "A stand-alone update succeeds." in {
+      val result = city
+        .update("district", "Tokyo-test")
+        .where(_.name _equals "Tokyo")
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "A stand-alone update from the model will be successful." in {
+      (for
+        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption[City]
+        result <- cityOpt match
+                    case None => ConnectionIO.pure[IO, Int](0)
+                    case Some(cityModel) =>
+                      city
+                        .update(cityModel.copy(district = "Tokyo-to"))
+                        .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
+                        .update
+      yield result === 1).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+    }
+
+    "Multiple columns are successfully updated." in {
+      val result = city
+        .update("name", "Yokohama")
+        .set("countryCode", "JPN")
+        .set("district", "Kanagawa")
+        .set("population", 2)
+        .where(_.name _equals "Jokohama [Yokohama]")
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 1
+    }
+
+    "The update succeeds in the combined processing of multiple queries." in {
+      (for
+        codeOpt <- country
+                     .select[String](_.code)
+                     .where(_.name _equals "Test1")
+                     .and(_.continent _equals Country.Continent.Asia)
+                     .headOption
+        result <- codeOpt match
+                    case None => ConnectionIO.pure[IO, Int](0)
+                    case Some(code *: EmptyTuple) =>
+                      city
+                        .update("name", "Test1")
+                        .set("countryCode", code)
+                        .set("district", "TT")
+                        .set("population", 2)
+                        .where(_.name _equals "Test2")
+                        .update
+      yield result === 1).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+    }
+
+    "Bulk renewal succeeds." in {
+      val result = countryLanguage
+        .update("isOfficial", CountryLanguage.IsOfficial.T)
+        .where(_.countryCode _equals "JPN")
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 6
+    }
+
+    "Successful batch update with specified number." in {
+      val result = countryLanguage
+        .update("isOfficial", CountryLanguage.IsOfficial.T)
+        .where(_.countryCode _equals "JPN")
+        .limit(3)
+        .update
+        .autoCommit
+        .run(dataSource)
+        .unsafeRunSync()
+
+      result === 3
     }
   }

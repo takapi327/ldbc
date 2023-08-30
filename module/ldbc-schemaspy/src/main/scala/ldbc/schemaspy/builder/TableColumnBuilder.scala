@@ -34,6 +34,7 @@ object TableColumnBuilder:
 
     _column.attributes.foreach {
       case comment: Comment[?] => column.setComments(comment.message)
+      case _                   =>
     }
     column.setId(index)
     column

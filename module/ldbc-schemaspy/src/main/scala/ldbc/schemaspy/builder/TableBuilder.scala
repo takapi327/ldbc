@@ -115,11 +115,9 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
     schemaTable
 
   lazy val build: SchemaspyTable =
-    table.all.zipWithIndex.map {
-      case (column: Column[?], index: Int) =>
-        val result = initColumns(column, index)
-        db.getTablesMap.put(result.getName, result)
-      case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
-    }
+    table.all.zipWithIndex.map((column: Column[?], index: Int) =>
+      val result = initColumns(column, index)
+      db.getTablesMap.put(result.getName, result)
+    )
 
     schemaTable

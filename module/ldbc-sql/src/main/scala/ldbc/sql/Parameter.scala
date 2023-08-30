@@ -132,7 +132,7 @@ object Parameter:
     case EmptyTuple => EmptyTuple
     case h *: t     => Parameter[F, h] *: MapToTuple[F, t]
 
-  private inline def infer[F[_], T]: Parameter[F, T] =
+  inline def infer[F[_], T]: Parameter[F, T] =
     summonFrom[Parameter[F, T]] {
       case parameter: Parameter[F, T] => parameter
       case _                          => error("Parameter cannot be inferred")
