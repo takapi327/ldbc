@@ -153,6 +153,7 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select[(String, String)](v => (v.name, v.countryCode))
         .where(_.countryCode _equals country.select[String](_.code).where(_.code _equals "JPN"))
+        .query
         .toList
         .readOnly
         .run(dataSource)
@@ -218,7 +219,7 @@ object DatabaseConnectionTest extends Specification:
         .select[(String, String)]((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .query[(String, String)]
+        .query
         .headOption
         .readOnly
         .run(dataSource)
@@ -246,7 +247,7 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select[(String, Int)](v => (v.countryCode, v.id.count))
         .where(_.countryCode _equals "JPN")
-        .query[(String, Int)]
+        .query
         .headOption
         .readOnly
         .run(dataSource)
@@ -270,14 +271,14 @@ object DatabaseConnectionTest extends Specification:
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       (for
-        codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").query[String].headOption
+        codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").query.headOption
         cities <- codeOpt match
                     case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
                         .select[(String, String)](v => (v.name, v.countryCode))
                         .where(_.countryCode _equals code)
-                        .query[(String, String)]
+                        .query
                         .toList
       yield cities.length === 248).readOnly
         .run(dataSource)
