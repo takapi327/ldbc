@@ -465,7 +465,7 @@ object DatabaseConnectionTest extends Specification:
 
     "A stand-alone update from the model will be successful." in {
       (for
-        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption[City]
+        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query[City].headOption
         result <- cityOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
                     case Some(cityModel) =>
@@ -499,6 +499,7 @@ object DatabaseConnectionTest extends Specification:
                      .select[String](_.code)
                      .where(_.name _equals "Test1")
                      .and(_.continent _equals Country.Continent.Asia)
+                     .query
                      .headOption
         result <- codeOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
