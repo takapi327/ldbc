@@ -30,25 +30,43 @@ package object dsl:
 
     implicit class SqlOps(sql: SQL[F]):
       inline def query[T <: Tuple]: Command[F, T] =
-        Command(sql.statement, sql.params, Kleisli { resultSet =>
-          ResultSetReader.fold[F, T].toList.zipWithIndex.traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
-          }.map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
-        })
+        Command(
+          sql.statement,
+          sql.params,
+          Kleisli { resultSet =>
+            ResultSetReader
+              .fold[F, T]
+              .toList
+              .zipWithIndex
+              .traverse {
+                case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+              }
+              .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
+          }
+        )
 
       inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Command[F, P] =
-        Command(sql.statement, sql.params, Kleisli { resultSet =>
-          ResultSetReader.fold[F, mirror.MirroredElemTypes].toList.zipWithIndex.traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
-          }.map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
-        })
+        Command(
+          sql.statement,
+          sql.params,
+          Kleisli { resultSet =>
+            ResultSetReader
+              .fold[F, mirror.MirroredElemTypes]
+              .toList
+              .zipWithIndex
+              .traverse {
+                case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+              }
+              .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+          }
+        )
 
       def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
         (for
           statement <- connection.prepareStatement(sql.statement)
           result <- sql.params.zipWithIndex.traverse {
-            case (param, index) => param.bind(statement, index + 1)
-          } >> statement.executeUpdate()
+                      case (param, index) => param.bind(statement, index + 1)
+                    } >> statement.executeUpdate()
         yield result)
           .onError(ex => logHandler.run(LogEvent.ExecFailure(sql.statement, sql.params.map(_.parameter).toList, ex)))
           <* logHandler.run(LogEvent.Success(sql.statement, sql.params.map(_.parameter).toList))

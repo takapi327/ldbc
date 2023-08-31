@@ -26,7 +26,7 @@ trait QuerySyntax[F[_]: Sync]:
         buildQuery.params,
         (buildQuery.columns match
           case h *: t => h *: t
-          case h => h *: EmptyTuple
+          case h      => h *: EmptyTuple
         ).toList
           .asInstanceOf[List[ColumnReader[F, ?]]]
           .traverse {
@@ -37,14 +37,14 @@ trait QuerySyntax[F[_]: Sync]:
 
     def query[P <: Product](using
       mirror: Mirror.ProductOf[P],
-      check: Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
+      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
     ): Command[F, P] =
       Command(
         buildQuery.statement,
         buildQuery.params,
         (buildQuery.columns match
           case h *: t => h *: t
-          case h => h *: EmptyTuple
+          case h      => h *: EmptyTuple
         ).toList
           .asInstanceOf[List[ColumnReader[F, ?]]]
           .traverse {

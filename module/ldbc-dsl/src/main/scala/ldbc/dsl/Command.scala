@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl
 
@@ -19,26 +19,24 @@ case class Command[F[_]: Sync, T](
 ):
 
   private def connection[A](consumer: ResultSetConsumer[F, A])(using
-    logHandler: LogHandler[F]
+    logHandler:                       LogHandler[F]
   ): Kleisli[F, Connection[F], A] =
     Kleisli { connection =>
       for
         prepareStatement <- connection.prepareStatement(statement)
         resultSet <- params.zipWithIndex.traverse {
-          case (param, index) => param.bind(prepareStatement, index + 1)
-        } >> prepareStatement
-          .executeQuery()
-          .onError(ex =>
-            logHandler.run(
-              LogEvent.ExecFailure(statement, params.map(_.parameter).toList, ex)
-            )
-          )
+                       case (param, index) => param.bind(prepareStatement, index + 1)
+                     } >> prepareStatement
+                       .executeQuery()
+                       .onError(ex =>
+                         logHandler.run(
+                           LogEvent.ExecFailure(statement, params.map(_.parameter).toList, ex)
+                         )
+                       )
         result <-
           consumer
             .consume(resultSet)
-            .onError(ex =>
-              logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.parameter).toList, ex))
-            )
+            .onError(ex => logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.parameter).toList, ex)))
             <* prepareStatement.close()
             <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter).toList))
       yield result
