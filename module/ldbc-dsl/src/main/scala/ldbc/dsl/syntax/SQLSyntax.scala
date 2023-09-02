@@ -4,11 +4,8 @@
 
 package ldbc.dsl.syntax
 
-import cats.data.Kleisli
-
 import ldbc.sql.*
 import ldbc.dsl.SQL
-import ldbc.dsl.logging.LogHandler
 
 /** Trait for generating SQL models from string completion knowledge.
   *
@@ -22,8 +19,3 @@ trait SQLSyntax[F[_]]:
       val strings     = sc.parts.iterator
       val expressions = args.iterator
       SQL(strings.mkString("?"), expressions.toSeq)
-
-  extension (sql: SQL[F])
-    def query[T](using consumer: ResultSetConsumer[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], T]
-
-    def update()(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int]

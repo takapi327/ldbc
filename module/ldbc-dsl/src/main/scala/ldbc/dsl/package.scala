@@ -6,13 +6,15 @@ package ldbc
 
 import javax.sql.DataSource
 
+import scala.deriving.Mirror
+
 import cats.data.Kleisli
 import cats.implicits.*
 
 import cats.effect.{ IO, Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
-import ldbc.sql.{ Connection, ResultSetConsumer }
+import ldbc.sql.*
 import ldbc.dsl.syntax.*
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
 import ldbc.query.builder.syntax.ColumnSyntax
@@ -25,34 +27,41 @@ package object dsl:
             ColumnSyntax[F],
             QuerySyntax[F],
             CommandSyntax[F]:
-    private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
-      val release: Connection[F] => F[Unit] = connection => connection.close()
-      Resource.make(acquire)(release)
 
-    extension (sql: SQL[F])
-      def query[T](using consumer: ResultSetConsumer[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] =
-        Kleisli { connection =>
-          for
-            statement <- connection.prepareStatement(sql.statement)
-            resultSet <- sql.params.zipWithIndex.traverse {
-                           case (param, index) => param.bind(statement, index + 1)
-                         } >> statement
-                           .executeQuery()
-                           .onError(ex =>
-                             logHandler.run(LogEvent.ExecFailure(sql.statement, sql.params.map(_.parameter).toList, ex))
-                           )
-            result <-
-              consumer
-                .consume(resultSet)
-                .onError(ex =>
-                  logHandler.run(LogEvent.ProcessingFailure(sql.statement, sql.params.map(_.parameter).toList, ex))
-                )
-                <* statement.close()
-                <* logHandler.run(LogEvent.Success(sql.statement, sql.params.map(_.parameter).toList))
-          yield result
-        }
+    implicit class SqlOps(sql: SQL[F]):
+      inline def query[T <: Tuple]: Command[F, T] =
+        Command(
+          sql.statement,
+          sql.params,
+          Kleisli { resultSet =>
+            ResultSetReader
+              .fold[F, T]
+              .toList
+              .zipWithIndex
+              .traverse {
+                case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+              }
+              .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
+          }
+        )
 
-      def update()(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
+      inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Command[F, P] =
+        Command(
+          sql.statement,
+          sql.params,
+          Kleisli { resultSet =>
+            ResultSetReader
+              .fold[F, mirror.MirroredElemTypes]
+              .toList
+              .zipWithIndex
+              .traverse {
+                case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+              }
+              .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+          }
+        )
+
+      def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
         (for
           statement <- connection.prepareStatement(sql.statement)
           result <- sql.params.zipWithIndex.traverse {
@@ -62,6 +71,10 @@ package object dsl:
           .onError(ex => logHandler.run(LogEvent.ExecFailure(sql.statement, sql.params.map(_.parameter).toList, ex)))
           <* logHandler.run(LogEvent.Success(sql.statement, sql.params.map(_.parameter).toList))
       }
+
+    private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
+      val release: Connection[F] => F[Unit] = connection => connection.close()
+      Resource.make(acquire)(release)
 
     extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
 

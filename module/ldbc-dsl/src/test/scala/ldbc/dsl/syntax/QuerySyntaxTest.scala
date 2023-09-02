@@ -29,7 +29,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query = user.selectAll.toList[User]
+        |val query = user.selectAll.query[User].toList
         |""".stripMargin
     )
   }
@@ -56,7 +56,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
         |case class FailedUser(id: Long, name: String, age: Option[Int])
-        |val query = user.selectAll.toList[FailedUser]
+        |val query = user.selectAll.query[FailedUser].toList
         |""".stripMargin
     )
   }
@@ -84,7 +84,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], List[(Long, String, Int)]] = user.selectAll.toList
+        |val query: Kleisli[IO, Connection[IO], List[(Long, String, Int)]] = user.selectAll.query.toList
         |""".stripMargin
     )
   }
@@ -110,7 +110,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query = user.selectAll.where(_.id === 1).headOption[User]
+        |val query = user.selectAll.where(_.id === 1).query[User].headOption
         |""".stripMargin
     )
   }
@@ -137,7 +137,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
         |case class FailedUser(id: Long, name: String, age: Option[Int])
-        |val query = user.selectAll.where(_.id === 1).headOption[FailedUser]
+        |val query = user.selectAll.where(_.id === 1).query[FailedUser].headOption
         |""".stripMargin
     )
   }
@@ -165,7 +165,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], Option[(Long, String, Int)]] = user.selectAll.where(_.id === 1).headOption
+        |val query: Kleisli[IO, Connection[IO], Option[(Long, String, Int)]] = user.selectAll.where(_.id === 1).query.headOption
         |""".stripMargin
     )
   }
@@ -193,7 +193,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], User] = user.selectAll.where(_.id === 1).unsafe[User]
+        |val query: Kleisli[IO, Connection[IO], User] = user.selectAll.where(_.id === 1).query[User].unsafe
         |""".stripMargin
     )
   }
@@ -220,7 +220,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
         |case class FailedUser(id: Long, name: String, age: Option[Int])
-        |val query = user.selectAll.where(_.id === 1).unsafe[FailedUser]
+        |val query = user.selectAll.where(_.id === 1).query[FailedUser].unsafe
         |""".stripMargin
     )
   }
@@ -248,7 +248,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], (Long, String, Int)] = user.selectAll.where(_.id === 1).unsafe
+        |val query: Kleisli[IO, Connection[IO], (Long, String, Int)] = user.selectAll.where(_.id === 1).query.unsafe
         |""".stripMargin
     )
   }
@@ -290,6 +290,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val query: Kleisli[IO, Connection[IO], List[(String, String)]] = (user join category).on((user, category) => user.categoryId === category.id)
         |  .select[(String, String)]((user, category) => (user.name, category.name))
+        |  .query
         |  .toList
         |""".stripMargin
     )
@@ -332,7 +333,8 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val query = (user join category).on((user, category) => user.categoryId === category.id)
         |  .select[(String, String)]((user, category) => (user.name, category.name))
-        |  .toList[UserCategory]
+        |  .query[UserCategory]
+        |  .toList
         |""".stripMargin
     )
   }

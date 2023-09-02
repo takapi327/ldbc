@@ -135,17 +135,17 @@ object DatabaseConnectionTest extends Specification:
 
   "Database Connection Test" should {
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = country.selectAll.toList[Country].readOnly.run(dataSource).unsafeRunSync()
+      val result = country.selectAll.query[Country].toList.readOnly.run(dataSource).unsafeRunSync()
       result.length === 239
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = city.selectAll.toList[City].readOnly.run(dataSource).unsafeRunSync()
+      val result = city.selectAll.query[City].toList.readOnly.run(dataSource).unsafeRunSync()
       result.length === 4079
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = countryLanguage.selectAll.toList[CountryLanguage].readOnly.run(dataSource).unsafeRunSync()
+      val result = countryLanguage.selectAll.query[CountryLanguage].toList.readOnly.run(dataSource).unsafeRunSync()
       result.length === 984
     }
 
@@ -153,6 +153,7 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select[(String, String)](v => (v.name, v.countryCode))
         .where(_.countryCode _equals country.select[String](_.code).where(_.code _equals "JPN"))
+        .query
         .toList
         .readOnly
         .run(dataSource)
@@ -163,7 +164,8 @@ object DatabaseConnectionTest extends Specification:
     "The acquired data matches the specified model." in {
       val result = country.selectAll
         .where(_.code _equals "JPN")
-        .headOption[Country]
+        .query[Country]
+        .headOption
         .readOnly
         .run(dataSource)
         .unsafeRunSync()
@@ -191,7 +193,8 @@ object DatabaseConnectionTest extends Specification:
     "The acquired data matches the specified model." in {
       val result = city.selectAll
         .where(_.id _equals 1532)
-        .headOption[City]
+        .query[City]
+        .headOption
         .readOnly
         .run(dataSource)
         .unsafeRunSync()
@@ -202,7 +205,8 @@ object DatabaseConnectionTest extends Specification:
       val result = countryLanguage.selectAll
         .where(_.countryCode _equals "JPN")
         .and(_.language _equals "Japanese")
-        .headOption[CountryLanguage]
+        .query[CountryLanguage]
+        .headOption
         .readOnly
         .run(dataSource)
         .unsafeRunSync()
@@ -215,6 +219,7 @@ object DatabaseConnectionTest extends Specification:
         .select[(String, String)]((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
+        .query
         .headOption
         .readOnly
         .run(dataSource)
@@ -230,7 +235,8 @@ object DatabaseConnectionTest extends Specification:
         .select[(String, String)]((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .headOption[CountryCity]
+        .query[CountryCity]
+        .headOption
         .readOnly
         .run(dataSource)
         .unsafeRunSync()
@@ -241,6 +247,7 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select[(String, Int)](v => (v.countryCode, v.id.count))
         .where(_.countryCode _equals "JPN")
+        .query
         .headOption
         .readOnly
         .run(dataSource)
@@ -254,7 +261,8 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select[(String, Int)](v => (v.countryCode, v.id.count))
         .groupBy(_._1)
-        .toList[CountryCodeGroup]
+        .query[CountryCodeGroup]
+        .toList
         .readOnly
         .run(dataSource)
         .unsafeRunSync()
@@ -263,13 +271,14 @@ object DatabaseConnectionTest extends Specification:
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       (for
-        codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").headOption
+        codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").query.headOption
         cities <- codeOpt match
                     case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
                         .select[(String, String)](v => (v.name, v.countryCode))
                         .where(_.countryCode _equals code)
+                        .query
                         .toList
       yield cities.length === 248).readOnly
         .run(dataSource)
@@ -456,7 +465,7 @@ object DatabaseConnectionTest extends Specification:
 
     "A stand-alone update from the model will be successful." in {
       (for
-        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption[City]
+        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query[City].headOption
         result <- cityOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
                     case Some(cityModel) =>
@@ -490,6 +499,7 @@ object DatabaseConnectionTest extends Specification:
                      .select[String](_.code)
                      .where(_.name _equals "Test1")
                      .and(_.continent _equals Country.Continent.Asia)
+                     .query
                      .headOption
         result <- codeOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
