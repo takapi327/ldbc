@@ -243,6 +243,36 @@ object DatabaseConnectionTest extends Specification:
       result === Some(CountryCity("Tokyo", "Japan"))
     }
 
+    "The data retrieved by Left Join matches the specified model." in {
+      val result = (city join country)
+        .left((city, country) => city.countryCode _equals country.code)
+        .select[(String, Option[String])]((city, country) => (city.name, country.name))
+        .where((_, country) => country.code _equals "JPN")
+        .and((city, _) => city.name _equals "Tokyo")
+        .query
+        .headOption
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
+      result === Some(("Tokyo", Some("Japan")))
+    }
+
+    "The data retrieved by Left Join matches the specified model." in {
+      case class CountryCity(cityName: String, countryName: Option[String])
+
+      val result = (city join country)
+        .left((city, country) => city.countryCode _equals country.code)
+        .select[(String, Option[String])]((city, country) => (city.name, country.name))
+        .where((_, country) => country.code _equals "JPN")
+        .and((city, _) => city.name _equals "Tokyo")
+        .query[CountryCity]
+        .headOption
+        .readOnly
+        .run(dataSource)
+        .unsafeRunSync()
+      result === Some(CountryCity("Tokyo", "Japan"))
+    }
+
     "The retrieved data matches the specified value." in {
       val result = city
         .select[(String, Int)](v => (v.countryCode, v.id.count))
