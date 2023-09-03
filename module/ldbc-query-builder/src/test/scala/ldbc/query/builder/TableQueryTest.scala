@@ -83,6 +83,13 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
         .select[(String, String)]((test, joinTest) => (test.p2, joinTest.p2))
         .statement === "SELECT x1.`p2`, x2.`p2` FROM test AS x1 JOIN join_test AS x2 ON x1.p1 = x2.p1"
     )
+    assert(
+      query
+        .join(joinQuery)
+        .left((test, joinTest) => test.p1 === joinTest.p1)
+        .select[(String, Option[String])]((test, joinTest) => (test.p2, joinTest.p2))
+        .statement === "SELECT x1.`p2`, x2.`p2` FROM test AS x1 LEFT JOIN join_test AS x2 ON x1.p1 = x2.p1"
+    )
     assert(query.selectAll.statement === "SELECT `p1`, `p2`, `p3` FROM test")
   }
 
