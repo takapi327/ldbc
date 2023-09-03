@@ -35,6 +35,9 @@ class Join[F[_], P1 <: Product, P2 <: Product](
   def left(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.LeftOn[F, P1, P2] =
     Join.LeftOn[F, P1, P2](left, right, func(left, right))
 
+  def right(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.RightOn[F, P1, P2] =
+    Join.RightOn[F, P1, P2](left, right, func(left, right))
+
 object Join:
 
   private[ldbc] case class On[F[_], P1 <: Product, P2 <: Product](
@@ -77,6 +80,27 @@ object Join:
         statement = statement,
         columns   = columns,
         params    = expression.parameter
+      )
+
+  private[ldbc] case class RightOn[F[_], P1 <: Product, P2 <: Product](
+                                                                       left: Table[P1],
+                                                                       right: Table[P2],
+                                                                       expression: ExpressionSyntax[F]
+                                                                     ):
+    def select[T <: Tuple](
+                            func: (TableOpt[P1], Table[P2]) => Tuples.ToColumn[F, T]
+                          ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
+      val leftTableName = left.alias.fold(left._name)(name => s"${left._name} AS $name")
+      val rightTableName = right.alias.fold(left._name)(name => s"${right._name} AS $name")
+      val columns = func(TableOpt(left), right)
+      val statement =
+        s"SELECT ${columns.toArray.mkString(", ")} FROM $leftTableName RIGHT JOIN $rightTableName ON ${expression.statement}"
+      Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
+        left = left,
+        right = right,
+        statement = statement,
+        columns = columns,
+        params = expression.parameter
       )
 
   private[ldbc] case class JoinSelect[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
