@@ -62,11 +62,11 @@ sealed trait DataType[T]:
   /** Methods for overriding the DataType type with the Option type. */
   private[ldbc] def toOption: DataType[Option[T]] =
     new DataType[Option[T]]:
-      override def typeName: String = self.typeName
-      override def jdbcType: JdbcType = self.jdbcType
-      override def queryString: String = self.queryString
-      override def isOptional: Boolean = true
-      override def default: Option[Default] = self.default
+      override def typeName:    String          = self.typeName
+      override def jdbcType:    JdbcType        = self.jdbcType
+      override def queryString: String          = self.queryString
+      override def isOptional:  Boolean         = true
+      override def default:     Option[Default] = self.default
 
 object DataType:
 

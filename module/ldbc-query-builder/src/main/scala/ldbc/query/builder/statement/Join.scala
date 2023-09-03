@@ -25,10 +25,10 @@ import ldbc.query.builder.interpreter.Tuples
   * @tparam P2
   *   Base trait for all products
   */
-class Join[F[_], P1 <: Product, P2 <: Product] (
-                                                      left: Table[P1],
-                                                      right: Table[P2]
-                                                    ):
+class Join[F[_], P1 <: Product, P2 <: Product](
+  left:  Table[P1],
+  right: Table[P2]
+):
   def on(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.On[F, P1, P2] =
     Join.On[F, P1, P2](left, right, func(left, right))
 
@@ -48,33 +48,35 @@ object Join:
       val leftTableName  = left.alias.fold(left._name)(name => s"${ left._name } AS $name")
       val rightTableName = right.alias.fold(left._name)(name => s"${ right._name } AS $name")
       val columns        = func(left, right)
-      val statement = s"SELECT ${ columns.toArray.mkString(", ") } FROM $leftTableName JOIN $rightTableName ON ${ expression.statement }"
+      val statement =
+        s"SELECT ${ columns.toArray.mkString(", ") } FROM $leftTableName JOIN $rightTableName ON ${ expression.statement }"
       JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
-        left  = left,
-        right = right,
+        left      = left,
+        right     = right,
         statement = statement,
-        columns = columns,
-        params  = expression.parameter
+        columns   = columns,
+        params    = expression.parameter
       )
 
   private[ldbc] case class LeftOn[F[_], P1 <: Product, P2 <: Product](
-                                                                       left: Table[P1],
-                                                                       right: Table[P2],
-                                                                       expression: ExpressionSyntax[F]
-                                                                     ):
+    left:       Table[P1],
+    right:      Table[P2],
+    expression: ExpressionSyntax[F]
+  ):
     def select[T <: Tuple](
-                            func: (Table[P1], TableOpt[P2]) => Tuples.ToColumn[F, T]
-                          ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
-      val leftTableName = left.alias.fold(left._name)(name => s"${left._name} AS $name")
-      val rightTableName = right.alias.fold(left._name)(name => s"${right._name} AS $name")
-      val columns = func(left, TableOpt(right))
-      val statement = s"SELECT ${columns.toArray.mkString(", ")} FROM $leftTableName LEFT JOIN $rightTableName ON ${expression.statement}"
+      func: (Table[P1], TableOpt[P2]) => Tuples.ToColumn[F, T]
+    ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
+      val leftTableName  = left.alias.fold(left._name)(name => s"${ left._name } AS $name")
+      val rightTableName = right.alias.fold(left._name)(name => s"${ right._name } AS $name")
+      val columns        = func(left, TableOpt(right))
+      val statement =
+        s"SELECT ${ columns.toArray.mkString(", ") } FROM $leftTableName LEFT JOIN $rightTableName ON ${ expression.statement }"
       Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
-        left = left,
-        right = right,
+        left      = left,
+        right     = right,
         statement = statement,
-        columns = columns,
-        params = expression.parameter
+        columns   = columns,
+        params    = expression.parameter
       )
 
   private[ldbc] case class JoinSelect[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
@@ -205,17 +207,16 @@ object Join:
         params    = params ++ expressionSyntax.parameter
       )
 
-
 case class TableOpt[P <: Product](table: Table[P]) extends Dynamic:
 
   def selectDynamic[Tag <: Singleton](tag: Tag)(using
-    mirror: Mirror.ProductOf[P],
-    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    mirror:                                Mirror.ProductOf[P],
+    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Column[Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]] =
     val column = table.selectDynamic[Tag](tag)
     Column[Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]](
-      _label = column.label,
-      _dataType = column.dataType.toOption,
+      _label      = column.label,
+      _dataType   = column.dataType.toOption,
       _attributes = Seq.empty,
-      _alias = column.alias
+      _alias      = column.alias
     )
