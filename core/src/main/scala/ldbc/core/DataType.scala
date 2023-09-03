@@ -18,6 +18,7 @@ import ldbc.core.attribute.Attribute
   *   Scala types that match SQL DataType
   */
 sealed trait DataType[T]:
+  self =>
 
   /** Define a TYPE_NAME string for each DataType.
     *
@@ -57,6 +58,15 @@ sealed trait DataType[T]:
   /** Value to indicate whether NULL is acceptable as a query string in SQL
     */
   protected def nullType: String = if isOptional then "NULL" else "NOT NULL"
+
+  /** Methods for overriding the DataType type with the Option type. */
+  private[ldbc] def toOption: DataType[Option[T]] =
+    new DataType[Option[T]]:
+      override def typeName: String = self.typeName
+      override def jdbcType: JdbcType = self.jdbcType
+      override def queryString: String = self.queryString
+      override def isOptional: Boolean = true
+      override def default: Option[Default] = self.default
 
 object DataType:
 
