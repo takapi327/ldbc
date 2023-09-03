@@ -270,7 +270,7 @@ object DatabaseConnectionTest extends Specification:
         .readOnly
         .run(dataSource)
         .unsafeRunSync()
-      result === Some(CountryCity("Tokyo", "Japan"))
+      result === Some(CountryCity("Tokyo", Some("Japan")))
     }
 
     "The retrieved data matches the specified value." in {
