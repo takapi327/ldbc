@@ -66,7 +66,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
     * @tparam O
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
-  def join[O <: Product](other: Table[O]): Join[F, P, O] = Join(table.as("x1"), other.as("x2"))
+  def join[O <: Product](other: Table[O]): Join[F, P, O] = new Join(table.as("x1"), other.as("x2"))
 
   /** A method to join another table to itself.
     *
@@ -75,7 +75,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
     * @tparam O
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
-  def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = Join(table.as("x1"), other.table.as("x2"))
+  def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = new Join(table.as("x1"), other.table.as("x2"))
 
   // TODO: In the following implementation, Warning occurs at the time of Compile, so it is cast by asInstanceOf.
   // case (value: Any, parameter: Parameter[F, Any]) => ???
