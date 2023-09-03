@@ -4,7 +4,11 @@
 
 package ldbc.query.builder.statement
 
+import scala.language.dynamics
+import scala.deriving.Mirror
+
 import ldbc.core.*
+import ldbc.core.interpreter.Tuples as CoreTuples
 import ldbc.sql.ParameterBinder
 import ldbc.query.builder.interpreter.Tuples
 
@@ -21,30 +25,100 @@ import ldbc.query.builder.interpreter.Tuples
   * @tparam P2
   *   Base trait for all products
   */
-case class Join[F[_], P1 <: Product, P2 <: Product](left: Table[P1], right: Table[P2]):
+class Join[F[_], P1 <: Product, P2 <: Product](
+  left:  Table[P1],
+  right: Table[P2]
+):
   def on(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.On[F, P1, P2] =
     Join.On[F, P1, P2](left, right, func(left, right))
 
+  def left(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.LeftOn[F, P1, P2] =
+    Join.LeftOn[F, P1, P2](left, right, func(left, right))
+
+  def right(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.RightOn[F, P1, P2] =
+    Join.RightOn[F, P1, P2](left, right, func(left, right))
+
 object Join:
+
+  enum JoinType(val statement: String):
+    case JOIN       extends JoinType("JOIN")
+    case LEFT_JOIN  extends JoinType("LEFT JOIN")
+    case RIGHT_JOIN extends JoinType("RIGHT JOIN")
+
+  private[ldbc] transparent trait JoinOn[F[_], P1 <: Product, P2 <: Product]:
+    def left:       Table[P1]
+    def right:      Table[P2]
+    def expression: ExpressionSyntax[F]
+
+    def joinType: JoinType
+
+    private val leftTableName  = left.alias.fold(left._name)(name => s"${ left._name } AS $name")
+    private val rightTableName = right.alias.fold(left._name)(name => s"${ right._name } AS $name")
+
+    protected val fromStatement =
+      s"FROM $leftTableName ${ joinType.statement } $rightTableName ON ${ expression.statement }"
 
   private[ldbc] case class On[F[_], P1 <: Product, P2 <: Product](
     left:       Table[P1],
     right:      Table[P2],
     expression: ExpressionSyntax[F]
-  ):
+  ) extends JoinOn[F, P1, P2]:
+
+    override def joinType: JoinType = JoinType.JOIN
+
     def select[T <: Tuple](
       func: (Table[P1], Table[P2]) => Tuples.ToColumn[F, T]
     ): JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
-      val leftTableName  = left.alias.fold(left._name)(name => s"${ left._name } AS $name")
-      val rightTableName = right.alias.fold(left._name)(name => s"${ right._name } AS $name")
-      val columns        = func(left, right)
+      val columns   = func(left, right)
+      val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
       JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
-        left  = left,
-        right = right,
-        statement =
-          s"SELECT ${ columns.toArray.mkString(", ") } FROM $leftTableName JOIN $rightTableName ON ${ expression.statement }",
-        columns = columns,
-        params  = expression.parameter
+        left      = left,
+        right     = right,
+        statement = statement,
+        columns   = columns,
+        params    = expression.parameter
+      )
+
+  private[ldbc] case class LeftOn[F[_], P1 <: Product, P2 <: Product](
+    left:       Table[P1],
+    right:      Table[P2],
+    expression: ExpressionSyntax[F]
+  ) extends JoinOn[F, P1, P2]:
+
+    override def joinType: JoinType = JoinType.LEFT_JOIN
+
+    def select[T <: Tuple](
+      func: (Table[P1], TableOpt[P2]) => Tuples.ToColumn[F, T]
+    ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
+      val columns   = func(left, TableOpt(right))
+      val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
+      Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
+        left      = left,
+        right     = right,
+        statement = statement,
+        columns   = columns,
+        params    = expression.parameter
+      )
+
+  private[ldbc] case class RightOn[F[_], P1 <: Product, P2 <: Product](
+    left:       Table[P1],
+    right:      Table[P2],
+    expression: ExpressionSyntax[F]
+  ) extends JoinOn[F, P1, P2]:
+
+    override def joinType: JoinType = JoinType.RIGHT_JOIN
+
+    def select[T <: Tuple](
+      func: (TableOpt[P1], Table[P2]) => Tuples.ToColumn[F, T]
+    ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
+      val columns   = func(TableOpt(left), right)
+      val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
+      Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
+        left      = left,
+        right     = right,
+        statement = statement,
+        columns   = columns,
+        params    = expression.parameter
       )
 
   private[ldbc] case class JoinSelect[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
@@ -174,3 +248,17 @@ object Join:
         columns   = columns,
         params    = params ++ expressionSyntax.parameter
       )
+
+case class TableOpt[P <: Product](table: Table[P]) extends Dynamic:
+
+  def selectDynamic[Tag <: Singleton](tag: Tag)(using
+    mirror:                                Mirror.ProductOf[P],
+    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+  ): Column[Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]] =
+    val column = table.selectDynamic[Tag](tag)
+    Column[Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]](
+      _label      = column.label,
+      _dataType   = column.dataType.toOption,
+      _attributes = Seq.empty,
+      _alias      = column.alias
+    )

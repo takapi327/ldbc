@@ -24,12 +24,12 @@ trait ColumnSyntax[F[_]]:
     val label: String = s"${ buildColumnName(column1) } $flag ${ buildColumnName(column2) }"
 
   given [T](using reader: ResultSetReader[F, T]): Conversion[Column[T], Kleisli[F, ResultSet[F], T]] with
-    override def apply(x: Column[T]): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-      reader.read(resultSet, x.alias.fold(x.label)(name => s"$name.${ x.label }"))
+    override def apply(column: Column[T]): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
+      reader.read(resultSet, column.alias.fold(column.label)(name => s"$name.${ column.label }"))
     }
 
   given [T](using reader: ResultSetReader[F, T]): Conversion[Column[T], ColumnReader[F, T]] with
-    override def apply(x: Column[T]): ColumnReader[F, T] = ColumnReader(x, reader)
+    override def apply(column: Column[T]): ColumnReader[F, T] = ColumnReader(column, reader)
 
   /** When implementing a method with the same method name but different arguments, an implementation using extension
     * will result in a compile error on the user side. Therefore, an implementation using implicit class is used.
