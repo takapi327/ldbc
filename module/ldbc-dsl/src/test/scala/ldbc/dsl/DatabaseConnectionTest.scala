@@ -600,4 +600,14 @@ object DatabaseConnectionTest extends Specification:
 
       result === 3
     }
+
+    "Deletion by itself is successful." in {
+      val result = country.delete.where(_.code _equals "T5").update.autoCommit.run(dataSource).unsafeRunSync()
+      result === 1
+    }
+
+    "The number of deletions in multiple cases matches the number specified." in {
+      val result = countryLanguage.delete.where(_.countryCode _equals "AFG").update.autoCommit.run(dataSource).unsafeRunSync()
+      result === 5
+    }
   }

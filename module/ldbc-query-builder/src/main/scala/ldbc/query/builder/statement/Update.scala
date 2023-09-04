@@ -28,7 +28,7 @@ case class Update[F[_], P <: Product](
   columns: List[String],
   params:  Seq[ParameterBinder[F]]
 ) extends Command[F],
-          Update.LimitProvider[F]:
+          Command.LimitProvider[F]:
 
   private val values = columns.map(column => s"$column = ?")
 
@@ -99,67 +99,10 @@ case class Update[F[_], P <: Product](
     * @param func
     *   Function to construct an expression using the columns that Table has.
     */
-  def where(func: Table[P] => ExpressionSyntax[F]): Update.Where[F] =
+  def where(func: Table[P] => ExpressionSyntax[F]): Command.Where[F] =
     val expressionSyntax = func(table)
-    Update.Where[F](
+    Command.Where[F](
       _statement       = statement,
       expressionSyntax = expressionSyntax,
       params           = params ++ expressionSyntax.parameter
     )
-
-object Update:
-
-  /** A model for constructing WHERE statements in MySQL.
-    *
-    * @param _statement
-    *   SQL statement string
-    * @param expressionSyntax
-    *   Trait for the syntax of expressions available in MySQL.
-    * @param params
-    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
-    *   only.
-    * @tparam F
-    *   The effect type
-    */
-  case class Where[F[_]](
-    _statement:       String,
-    expressionSyntax: ExpressionSyntax[F],
-    params:           Seq[ParameterBinder[F]]
-  ) extends Command[F],
-            LimitProvider[F]:
-
-    override def statement: String = _statement ++ s" WHERE ${ expressionSyntax.statement }"
-
-  /** @param _statement
-    *   SQL statement string
-    * @param params
-    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
-    *   only.
-    * @tparam F
-    *   The effect type
-    */
-  case class Limit[F[_]](
-    _statement: String,
-    params:     Seq[ParameterBinder[F]]
-  ) extends Command[F]:
-
-    override def statement: String = _statement ++ " LIMIT ?"
-
-  /** Transparent Trait to provide limit method.
-    *
-    * @tparam F
-    *   The effect type
-    */
-  private[ldbc] transparent trait LimitProvider[F[_]]:
-    self: Command[F] =>
-
-    /** A method for setting the LIMIT condition in a statement.
-      *
-      * @param length
-      *   Upper limit to be updated
-      */
-    def limit(length: Long): Parameter[F, Long] ?=> Update.Limit[F] =
-      Update.Limit[F](
-        _statement = statement,
-        params     = params :+ ParameterBinder(length)
-      )
