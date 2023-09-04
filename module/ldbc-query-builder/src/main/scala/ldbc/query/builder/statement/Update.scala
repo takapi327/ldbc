@@ -28,7 +28,7 @@ case class Update[F[_], P <: Product](
   columns: List[String],
   params:  Seq[ParameterBinder[F]]
 ) extends Command[F],
-  Command.LimitProvider[F]:
+          Command.LimitProvider[F]:
 
   private val values = columns.map(column => s"$column = ?")
 

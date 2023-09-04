@@ -213,7 +213,6 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
       params  = params
     )
 
-  /**
-   * Method to construct a query to delete a table.
-   */
+  /** Method to construct a query to delete a table.
+    */
   def delete: Delete[F, P] = Delete[F, P](table)
