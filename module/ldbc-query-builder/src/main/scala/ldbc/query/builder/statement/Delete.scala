@@ -23,3 +23,16 @@ case class Delete[F[_], P <: Product](
   override def params: Seq[ParameterBinder[F]] = Seq.empty
 
   override def statement: String = s"DELETE ${ table._name }"
+
+  /** A method for setting the WHERE condition in a DELETE statement.
+   *
+   * @param func
+   * Function to construct an expression using the columns that Table has.
+   */
+  def where(func: Table[P] => ExpressionSyntax[F]): Command.Where[F] =
+    val expressionSyntax = func(table)
+    Command.Where[F](
+      _statement = statement,
+      expressionSyntax = expressionSyntax,
+      params = params ++ expressionSyntax.parameter
+    )
