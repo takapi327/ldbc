@@ -212,3 +212,8 @@ case class TableQuery[F[_], P <: Product](table: Table[P]):
       columns = table.all.map(_.label),
       params  = params
     )
+
+  /**
+   * Method to construct a query to delete a table.
+   */
+  def delete: Delete[F, P] = Delete[F, P](table)
