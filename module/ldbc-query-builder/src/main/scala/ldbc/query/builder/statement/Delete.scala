@@ -22,7 +22,7 @@ case class Delete[F[_], P <: Product](
 
   override def params: Seq[ParameterBinder[F]] = Seq.empty
 
-  override def statement: String = s"DELETE ${ table._name }"
+  override def statement: String = s"DELETE FROM ${ table._name }"
 
   /** A method for setting the WHERE condition in a DELETE statement.
     *
