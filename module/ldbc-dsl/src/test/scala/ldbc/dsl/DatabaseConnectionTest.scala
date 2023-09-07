@@ -607,7 +607,8 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The number of deletions in multiple cases matches the number specified." in {
-      val result = countryLanguage.delete.where(_.countryCode _equals "AFG").update.autoCommit.run(dataSource).unsafeRunSync()
+      val result =
+        countryLanguage.delete.where(_.countryCode _equals "AFG").update.autoCommit.run(dataSource).unsafeRunSync()
       result === 5
     }
   }

@@ -31,17 +31,20 @@ trait CommandSyntax[F[_]: Sync]:
     }
 
   extension [P <: Product](insert: Insert[F, P])
-    def update[T](func: Table[P] => ColumnReader[F, T])(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] = Kleisli { connection =>
-      val column = func(insert.table)
-      require(column.attributes.contains(AutoInc()), "Auto Increment is not set for the specified column.")
-      given Kleisli[F, ResultSet[F], T] = column.read(1)
-      (for
-        statement <- connection.prepareStatement(insert.statement, Statement.Generated.RETURN_GENERATED_KEYS)
-        resultSet <- insert.params.zipWithIndex.traverse {
-          case (param, index) => param.bind(statement, index + 1)
-        } >> statement.executeUpdate() >> statement.getGeneratedKeys()
-        result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* statement.close()
-      yield result)
-        .onError(ex => logHandler.run(LogEvent.ExecFailure(insert.statement, insert.params.map(_.parameter).toList, ex)))
-        <* logHandler.run(LogEvent.Success(insert.statement, insert.params.map(_.parameter).toList))
-    }
+    def update[T](func: Table[P] => ColumnReader[F, T])(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] =
+      Kleisli { connection =>
+        val column = func(insert.table)
+        require(column.attributes.contains(AutoInc()), "Auto Increment is not set for the specified column.")
+        given Kleisli[F, ResultSet[F], T] = column.read(1)
+        (for
+          statement <- connection.prepareStatement(insert.statement, Statement.Generated.RETURN_GENERATED_KEYS)
+          resultSet <- insert.params.zipWithIndex.traverse {
+                         case (param, index) => param.bind(statement, index + 1)
+                       } >> statement.executeUpdate() >> statement.getGeneratedKeys()
+          result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* statement.close()
+        yield result)
+          .onError(ex =>
+            logHandler.run(LogEvent.ExecFailure(insert.statement, insert.params.map(_.parameter).toList, ex))
+          )
+          <* logHandler.run(LogEvent.Success(insert.statement, insert.params.map(_.parameter).toList))
+      }
