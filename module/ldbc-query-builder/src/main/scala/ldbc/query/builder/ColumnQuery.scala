@@ -15,6 +15,14 @@ import ldbc.sql.*
 import ldbc.query.builder.statement.{ ExpressionSyntax, OrderBy, Query }
 import ldbc.query.builder.statement.ExpressionSyntax.*
 
+/**
+ * Trait for retrieving data from a ResultSet using the column's information.
+ *
+ * @tparam F
+ *   The effect type
+ * @tparam T
+ *   Scala types that match SQL DataType
+ */
 private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
 
   def reader: ResultSetReader[F, T]
