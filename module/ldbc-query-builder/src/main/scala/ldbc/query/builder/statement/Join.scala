@@ -53,8 +53,6 @@ object Join:
 
     def joinType: JoinType
 
-    // private val leftTableName  = left.table.alias.fold(left.table._name)(name => s"${ left.table._name } AS $name")
-    // private val rightTableName = right.table.alias.fold(left.table._name)(name => s"${ right.table._name } AS $name")
     private val leftTableName  = s"${ left.table._name } AS ${ left.alias.alias.getOrElse("") }"
     private val rightTableName = s"${ right.table._name } AS ${ right.alias.alias.getOrElse("") }"
 
@@ -263,9 +261,9 @@ case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
   ): ColumnQuery[F, Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]] =
     val column = table.selectDynamic[Tag](tag)
     ColumnQuery[F, Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]](
-      label      = column.label,
-      dataType   = column.dataType.toOption,
-      attributes = Seq.empty,
+      _label      = column.label,
+      _dataType   = column.dataType.toOption,
+      _attributes = Seq.empty,
       _alias     = column.alias,
-      reader     = reader
+      _reader     = reader
     )

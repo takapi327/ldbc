@@ -15,15 +15,9 @@ import ldbc.sql.*
 import ldbc.query.builder.statement.{ ExpressionSyntax, OrderBy, Query }
 import ldbc.query.builder.statement.ExpressionSyntax.*
 
-private[ldbc] case class ColumnQuery[F[_], T](
-  label:      String,
-  dataType:   DataType[T],
-  attributes: Seq[Attribute[T]],
-  _alias:     Option[String],
-  reader:     ResultSetReader[F, T]
-) extends Column[T]:
+private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
 
-  override private[ldbc] def alias = _alias
+  def reader: ResultSetReader[F, T]
 
   val read: Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
     reader.read(resultSet, alias.fold(label)(name => s"$name.$label"))
@@ -36,13 +30,7 @@ private[ldbc] case class ColumnQuery[F[_], T](
   private val noBagQuotLabel: String =
     alias.fold(label)(name => s"$name.$label")
 
-  def count: ColumnQuery[F, Int] = this.copy(
-    label      = s"COUNT($label)",
-    dataType   = DataType.Integer(None, false),
-    attributes = Seq.empty,
-    _alias     = alias,
-    reader     = ResultSetReader.given_ResultSetReader_F_Int
-  )
+  def count: Count[F] = Count[F](label)
 
   def asc: OrderBy.Asc = OrderBy.Asc(this)
 
@@ -245,14 +233,27 @@ private[ldbc] case class ColumnQuery[F[_], T](
 
 object ColumnQuery:
 
-  def fromColumn[F[_], T](column: Column[T])(using reader: ResultSetReader[F, T]): ColumnQuery[F, T] =
-    ColumnQuery[F, T](
-      label      = column.label,
-      dataType   = column.dataType,
-      attributes = column.attributes,
-      _alias     = column.alias,
-      reader     = reader
-    )
+  def apply[F[_], T](
+                      _label: String,
+                      _dataType: DataType[T],
+                      _attributes: Seq[Attribute[T]],
+                      _alias: Option[String],
+                      _reader: ResultSetReader[F, T]
+                    ): ColumnQuery[F, T] =
+    new ColumnQuery[F, T]:
+      override def label: String = _label
+      override def dataType: DataType[T] = _dataType
+      override def attributes: Seq[Attribute[T]] = _attributes
+      override private[ldbc] def alias = _alias
+      override def reader: ResultSetReader[F, T] = _reader
+
+  def fromColumn[F[_], T](column: Column[T])(using _reader: ResultSetReader[F, T]): ColumnQuery[F, T] =
+    new ColumnQuery[F, T]:
+      override def label: String = column.label
+      override def dataType: DataType[T] = column.dataType
+      override def attributes: Seq[Attribute[T]] = column.attributes
+      override private[ldbc] def alias = column.alias
+      override def reader: ResultSetReader[F, T] = _reader
 
   private[ldbc] case class MultiColumn[F[_], T](flag: String, left: ColumnQuery[F, T], right: ColumnQuery[F, T]):
     val label: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"

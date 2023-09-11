@@ -14,7 +14,7 @@ import ldbc.sql.ResultSetReader
   * @tparam F
   *   The effect type
   */
-case class Count[F[_]](_label: String) extends Column[Int]:
+case class Count[F[_]](_label: String) extends ColumnQuery[F, Int]:
 
   override def label: String = s"COUNT($_label)"
 
