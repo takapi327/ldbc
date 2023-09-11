@@ -4,13 +4,15 @@
 
 package ldbc.dsl.syntax
 
+import scala.deriving.Mirror
+
 import cats.data.Kleisli
 import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.core.attribute.AutoInc
+import ldbc.core.interpreter.Tuples as CoreTuples
 import ldbc.sql.*
-import ldbc.query.builder.ColumnReader
 import ldbc.query.builder.statement.{ Command, Insert }
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
@@ -44,17 +46,26 @@ trait CommandSyntax[F[_]: Sync]:
         <* logHandler.run(LogEvent.Success(insert.statement, insert.params.map(_.parameter).toList))
     }
 
-    def update[T](func: Table[P] => ColumnReader[F, T])(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] =
+    def returning[Tag <: Singleton](tag: Tag)(using
+                                           mirror: Mirror.ProductOf[P],
+                                           index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+                                           reader: ResultSetReader[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]],
+                                           logHandler: LogHandler[F]
+    ): Kleisli[F, Connection[F], Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
       Kleisli { connection =>
-        val column = func(insert.table)
-        require(column.attributes.contains(AutoInc()), "Auto Increment is not set for the specified column.")
-        given Kleisli[F, ResultSet[F], T] = column.read(1)
+        val column = insert.tableQuery.selectDynamic[Tag](tag)
+        require(
+          column.attributes.contains(AutoInc()), 
+          s"Auto Increment is not set on the ${ column.label } column of the ${ insert.tableQuery.table._name } table."
+        )
+        given Kleisli[F, ResultSet[F], Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
+          column.read(1)
         (for
           statement <- connection.prepareStatement(insert.statement, Statement.Generated.RETURN_GENERATED_KEYS)
           resultSet <- insert.params.zipWithIndex.traverse {
                          case (param, index) => param.bind(statement, index + 1)
                        } >> statement.executeUpdate() >> statement.getGeneratedKeys()
-          result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* statement.close()
+          result <- summon[ResultSetConsumer[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]].consume(resultSet) <* statement.close()
         yield result)
           .onError(ex =>
             logHandler.run(LogEvent.ExecFailure(insert.statement, insert.params.map(_.parameter).toList, ex))
