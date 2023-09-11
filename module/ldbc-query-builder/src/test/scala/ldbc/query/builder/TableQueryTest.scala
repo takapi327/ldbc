@@ -9,9 +9,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import cats.Id
 
 import ldbc.core.*
-import ldbc.query.builder.syntax.ColumnSyntax
 
-class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
+class TableQueryTest extends AnyFlatSpec:
 
   case class Test(p1: Long, p2: String, p3: Option[String])
   private val table = Table[Test]("test")(
@@ -81,21 +80,21 @@ class TableQueryTest extends AnyFlatSpec, ColumnSyntax[Id]:
         .join(joinQuery)
         .on((test, joinTest) => test.p1 === joinTest.p1)
         .select[(String, String)]((test, joinTest) => (test.p2, joinTest.p2))
-        .statement === "SELECT x1.`p2`, x2.`p2` FROM test AS x1 JOIN join_test AS x2 ON x1.p1 = x2.p1"
+        .statement === "SELECT test_alias.`p2`, join_test_alias.`p2` FROM test AS test_alias JOIN join_test AS join_test_alias ON test_alias.p1 = join_test_alias.p1"
     )
     assert(
       query
         .join(joinQuery)
         .left((test, joinTest) => test.p1 === joinTest.p1)
         .select[(String, Option[String])]((test, joinTest) => (test.p2, joinTest.p2))
-        .statement === "SELECT x1.`p2`, x2.`p2` FROM test AS x1 LEFT JOIN join_test AS x2 ON x1.p1 = x2.p1"
+        .statement === "SELECT test_alias.`p2`, join_test_alias.`p2` FROM test AS test_alias LEFT JOIN join_test AS join_test_alias ON test_alias.p1 = join_test_alias.p1"
     )
     assert(
       query
         .join(joinQuery)
         .right((test, joinTest) => test.p1 === joinTest.p1)
         .select[(Option[String], String)]((test, joinTest) => (test.p2, joinTest.p2))
-        .statement === "SELECT x1.`p2`, x2.`p2` FROM test AS x1 RIGHT JOIN join_test AS x2 ON x1.p1 = x2.p1"
+        .statement === "SELECT test_alias.`p2`, join_test_alias.`p2` FROM test AS test_alias RIGHT JOIN join_test AS join_test_alias ON test_alias.p1 = join_test_alias.p1"
     )
     assert(query.selectAll.statement === "SELECT `p1`, `p2`, `p3` FROM test")
   }
