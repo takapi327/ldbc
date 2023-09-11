@@ -9,8 +9,9 @@ import scala.deriving.Mirror
 
 import ldbc.core.*
 import ldbc.core.interpreter.Tuples as CoreTuples
-import ldbc.sql.ParameterBinder
+import ldbc.sql.*
 import ldbc.query.builder.interpreter.Tuples
+import ldbc.query.builder.{ TableQuery, ColumnQuery }
 
 /** A model for constructing JOIN statements in MySQL.
   *
@@ -26,16 +27,16 @@ import ldbc.query.builder.interpreter.Tuples
   *   Base trait for all products
   */
 class Join[F[_], P1 <: Product, P2 <: Product](
-  left:  Table[P1],
-  right: Table[P2]
+  left:  TableQuery[F, P1],
+  right: TableQuery[F, P2]
 ):
-  def on(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.On[F, P1, P2] =
+  def on(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): Join.On[F, P1, P2] =
     Join.On[F, P1, P2](left, right, func(left, right))
 
-  def left(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.LeftOn[F, P1, P2] =
+  def left(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): Join.LeftOn[F, P1, P2] =
     Join.LeftOn[F, P1, P2](left, right, func(left, right))
 
-  def right(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): Join.RightOn[F, P1, P2] =
+  def right(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): Join.RightOn[F, P1, P2] =
     Join.RightOn[F, P1, P2](left, right, func(left, right))
 
 object Join:
@@ -46,28 +47,30 @@ object Join:
     case RIGHT_JOIN extends JoinType("RIGHT JOIN")
 
   private[ldbc] transparent trait JoinOn[F[_], P1 <: Product, P2 <: Product]:
-    def left:       Table[P1]
-    def right:      Table[P2]
+    def left:       TableQuery[F, P1]
+    def right:      TableQuery[F, P2]
     def expression: ExpressionSyntax[F]
 
     def joinType: JoinType
 
-    private val leftTableName  = left.alias.fold(left._name)(name => s"${ left._name } AS $name")
-    private val rightTableName = right.alias.fold(left._name)(name => s"${ right._name } AS $name")
+    //private val leftTableName  = left.table.alias.fold(left.table._name)(name => s"${ left.table._name } AS $name")
+    //private val rightTableName = right.table.alias.fold(left.table._name)(name => s"${ right.table._name } AS $name")
+    private val leftTableName  = s"${left.table._name} AS ${left.alias.alias.getOrElse("")}"
+    private val rightTableName = s"${right.table._name} AS ${right.alias.alias.getOrElse("")}"
 
     protected val fromStatement =
       s"FROM $leftTableName ${ joinType.statement } $rightTableName ON ${ expression.statement }"
 
   private[ldbc] case class On[F[_], P1 <: Product, P2 <: Product](
-    left:       Table[P1],
-    right:      Table[P2],
+                                                                   left: TableQuery[F, P1],
+                                                                   right: TableQuery[F, P2],
     expression: ExpressionSyntax[F]
   ) extends JoinOn[F, P1, P2]:
 
     override def joinType: JoinType = JoinType.JOIN
 
     def select[T <: Tuple](
-      func: (Table[P1], Table[P2]) => Tuples.ToColumn[F, T]
+      func: (TableQuery[F, P1], TableQuery[F, P2]) => Tuples.ToColumn[F, T]
     ): JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
       val columns   = func(left, right)
       val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
@@ -80,17 +83,17 @@ object Join:
       )
 
   private[ldbc] case class LeftOn[F[_], P1 <: Product, P2 <: Product](
-    left:       Table[P1],
-    right:      Table[P2],
+                                                                       left: TableQuery[F, P1],
+                                                                       right: TableQuery[F, P2],
     expression: ExpressionSyntax[F]
   ) extends JoinOn[F, P1, P2]:
 
     override def joinType: JoinType = JoinType.LEFT_JOIN
 
     def select[T <: Tuple](
-      func: (Table[P1], TableOpt[P2]) => Tuples.ToColumn[F, T]
+      func: (TableQuery[F, P1], TableOpt[F, P2]) => Tuples.ToColumn[F, T]
     ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
-      val columns   = func(left, TableOpt(right))
+      val columns   = func(left, TableOpt(right.table))
       val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
       Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
         left      = left,
@@ -101,17 +104,17 @@ object Join:
       )
 
   private[ldbc] case class RightOn[F[_], P1 <: Product, P2 <: Product](
-    left:       Table[P1],
-    right:      Table[P2],
+                                                                        left: TableQuery[F, P1],
+                                                                        right: TableQuery[F, P2],
     expression: ExpressionSyntax[F]
   ) extends JoinOn[F, P1, P2]:
 
     override def joinType: JoinType = JoinType.RIGHT_JOIN
 
     def select[T <: Tuple](
-      func: (TableOpt[P1], Table[P2]) => Tuples.ToColumn[F, T]
+      func: (TableOpt[F, P1], TableQuery[F, P2]) => Tuples.ToColumn[F, T]
     ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
-      val columns   = func(TableOpt(left), right)
+      val columns   = func(TableOpt(left.table), right)
       val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
       Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
         left      = left,
@@ -122,8 +125,8 @@ object Join:
       )
 
   private[ldbc] case class JoinSelect[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
-    left:      Table[P1],
-    right:     Table[P2],
+                                                                                       left: TableQuery[F, P1],
+                                                                                       right: TableQuery[F, P2],
     statement: String,
     columns:   T,
     params:    Seq[ParameterBinder[F]]
@@ -131,7 +134,7 @@ object Join:
             JoinOrderByProvider[F, P1, P2, T],
             LimitProvider[F, T]:
 
-    def where(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+    def where(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       val expressionSyntax = func(left, right)
       JoinWhere(
         left      = left,
@@ -151,8 +154,8 @@ object Join:
       )
 
   private[ldbc] case class JoinWhere[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
-    left:      Table[P1],
-    right:     Table[P2],
+                                                                                      left: TableQuery[F, P1],
+                                                                                      right: TableQuery[F, P2],
     statement: String,
     columns:   T,
     params:    Seq[ParameterBinder[F]]
@@ -169,15 +172,15 @@ object Join:
         params    = params ++ expressionSyntax.parameter
       )
 
-    def and(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+    def and(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       union("AND", func(left, right))
-    def or(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+    def or(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       union("OR", func(left, right))
-    def ||(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+    def ||(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       union("||", func(left, right))
-    def xor(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+    def xor(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       union("XOR", func(left, right))
-    def &&(func: (Table[P1], Table[P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
+    def &&(func: (TableQuery[F, P1], TableQuery[F, P2]) => ExpressionSyntax[F]): JoinWhere[F, P1, P2, T] =
       union("&&", func(left, right))
 
     def groupBy[A](func: T => Column[A]): JoinGroupBy[F, P1, P2, T] =
@@ -190,8 +193,8 @@ object Join:
       )
 
   private[ldbc] case class JoinOrderBy[F[_], P1 <: Product, P2 <: Product, T](
-    left:      Table[P1],
-    right:     Table[P2],
+                                                                               left: TableQuery[F, P1],
+                                                                               right: TableQuery[F, P2],
     statement: String,
     columns:   T,
     params:    Seq[ParameterBinder[F]]
@@ -201,11 +204,11 @@ object Join:
   private[ldbc] transparent trait JoinOrderByProvider[F[_], P1 <: Product, P2 <: Product, T]:
     self: Query[F, T] =>
 
-    def left:  Table[P1]
-    def right: Table[P2]
+    def left:  TableQuery[F, P1]
+    def right: TableQuery[F, P2]
 
     def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](
-      func: (Table[P1], Table[P2]) => A
+      func: (TableQuery[F, P1], TableQuery[F, P2]) => A
     ): JoinOrderBy[F, P1, P2, T] =
       val order = func(left, right) match
         case v: Tuple         => v.toList.mkString(", ")
@@ -220,8 +223,8 @@ object Join:
       )
 
   private[ldbc] case class JoinHaving[F[_], P1 <: Product, P2 <: Product, T](
-    left:      Table[P1],
-    right:     Table[P2],
+                                                                              left: TableQuery[F, P1],
+                                                                              right: TableQuery[F, P2],
     statement: String,
     columns:   T,
     params:    Seq[ParameterBinder[F]]
@@ -230,8 +233,8 @@ object Join:
             LimitProvider[F, T]
 
   private[ldbc] case class JoinGroupBy[F[_], P1 <: Product, P2 <: Product, T](
-    left:      Table[P1],
-    right:     Table[P2],
+                                                                               left: TableQuery[F, P1],
+                                                                               right: TableQuery[F, P2],
     statement: String,
     columns:   T,
     params:    Seq[ParameterBinder[F]]
@@ -249,16 +252,18 @@ object Join:
         params    = params ++ expressionSyntax.parameter
       )
 
-case class TableOpt[P <: Product](table: Table[P]) extends Dynamic:
+case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   def selectDynamic[Tag <: Singleton](tag: Tag)(using
     mirror:                                Mirror.ProductOf[P],
-    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Column[Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]] =
+    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    reader: ResultSetReader[F, Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+  ): ColumnQuery[F, Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]] =
     val column = table.selectDynamic[Tag](tag)
-    Column[Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]](
-      _label      = column.label,
-      _dataType   = column.dataType.toOption,
-      _attributes = Seq.empty,
-      _alias      = column.alias
+    ColumnQuery[F, Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]](
+      label = column.label,
+      dataType = column.dataType.toOption,
+      attributes = Seq.empty,
+      _alias = column.alias,
+      reader = reader
     )

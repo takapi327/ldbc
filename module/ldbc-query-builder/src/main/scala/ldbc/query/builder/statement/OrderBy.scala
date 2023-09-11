@@ -4,8 +4,9 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.{ Column, Table }
+import ldbc.core.Column
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.TableQuery
 
 /** A model for constructing ORDER BY statements in MySQL.
   *
@@ -26,7 +27,7 @@ import ldbc.sql.ParameterBinder
   *   Union type of column
   */
 private[ldbc] case class OrderBy[F[_], P <: Product, T](
-  table:     Table[P],
+  table:     TableQuery[F, P],
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
@@ -69,14 +70,14 @@ private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T]:
 
   /** Trait for generating SQL table information.
     */
-  def table: Table[P]
+  def table: TableQuery[F, P]
 
   /** A method for setting the ORDER BY condition in a statement.
     *
     * @param func
     *   Function to construct an expression using the columns that Table has.
     */
-  def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](func: Table[P] => A): OrderBy[F, P, T] =
+  def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](func: TableQuery[F, P] => A): OrderBy[F, P, T] =
     val order = func(table) match
       case v: Tuple         => v.toList.mkString(", ")
       case v: OrderBy.Order => v.statement

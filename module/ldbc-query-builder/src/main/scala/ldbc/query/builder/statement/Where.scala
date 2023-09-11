@@ -6,6 +6,7 @@ package ldbc.query.builder.statement
 
 import ldbc.core.*
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.TableQuery
 
 /** A model for constructing WHERE statements in MySQL.
   *
@@ -26,7 +27,7 @@ import ldbc.sql.ParameterBinder
   *   Union type of column
   */
 private[ldbc] case class Where[F[_], P <: Product, T](
-  table:     Table[P],
+  table:     TableQuery[F, P],
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
@@ -49,11 +50,11 @@ private[ldbc] case class Where[F[_], P <: Product, T](
       params    = params ++ expressionSyntax.parameter
     )
 
-  def and(func: Table[P] => ExpressionSyntax[F]): Where[F, P, T] = union("AND", func(table))
-  def or(func: Table[P] => ExpressionSyntax[F]):  Where[F, P, T] = union("OR", func(table))
-  def ||(func: Table[P] => ExpressionSyntax[F]):  Where[F, P, T] = union("||", func(table))
-  def xor(func: Table[P] => ExpressionSyntax[F]): Where[F, P, T] = union("XOR", func(table))
-  def &&(func: Table[P] => ExpressionSyntax[F]):  Where[F, P, T] = union("&&", func(table))
+  def and(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("AND", func(table))
+  def or(func: TableQuery[F, P] => ExpressionSyntax[F]):  Where[F, P, T] = union("OR", func(table))
+  def ||(func: TableQuery[F, P] => ExpressionSyntax[F]):  Where[F, P, T] = union("||", func(table))
+  def xor(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("XOR", func(table))
+  def &&(func: TableQuery[F, P] => ExpressionSyntax[F]):  Where[F, P, T] = union("&&", func(table))
 
   def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
     GroupBy(

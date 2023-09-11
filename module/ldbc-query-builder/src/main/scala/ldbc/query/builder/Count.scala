@@ -4,7 +4,7 @@
 
 package ldbc.query.builder
 
-import ldbc.core.{ DataType, attribute }
+import ldbc.core.*
 import ldbc.sql.ResultSetReader
 
 /** Model used to obtain the number of specific columns.
@@ -14,7 +14,7 @@ import ldbc.sql.ResultSetReader
   * @tparam F
   *   The effect type
   */
-case class Count[F[_]](_label: String) extends ColumnReader[F, Int]:
+case class Count[F[_]](_label: String) extends Column[Int]:
 
   override def label: String = s"COUNT($_label)"
 
@@ -24,7 +24,7 @@ case class Count[F[_]](_label: String) extends ColumnReader[F, Int]:
 
   override private[ldbc] def alias = None
 
-  override def reader: ResultSetReader[F, Int] = ResultSetReader.given_ResultSetReader_F_Int
+  def reader: ResultSetReader[F, Int] = ResultSetReader.given_ResultSetReader_F_Int
 
   override def toString: String = label
 

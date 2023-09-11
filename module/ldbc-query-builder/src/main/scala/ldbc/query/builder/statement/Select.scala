@@ -6,6 +6,7 @@ package ldbc.query.builder.statement
 
 import ldbc.core.*
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.TableQuery
 
 /** A model for constructing SELECT statements in MySQL.
   *
@@ -26,7 +27,7 @@ import ldbc.sql.ParameterBinder
   *   Union type of column
   */
 private[ldbc] case class Select[F[_], P <: Product, T](
-  table:     Table[P],
+  table:     TableQuery[F, P],
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
@@ -39,7 +40,7 @@ private[ldbc] case class Select[F[_], P <: Product, T](
     * @param func
     *   Function to construct an expression using the columns that Table has.
     */
-  def where(func: Table[P] => ExpressionSyntax[F]): Where[F, P, T] =
+  def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] =
     val expressionSyntax = func(table)
     Where[F, P, T](
       table     = table,

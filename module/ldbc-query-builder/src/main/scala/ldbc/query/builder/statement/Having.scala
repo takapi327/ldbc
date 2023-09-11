@@ -4,8 +4,8 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.*
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.TableQuery
 
 /** A model for constructing HAVING statements in MySQL.
   *
@@ -26,7 +26,7 @@ import ldbc.sql.ParameterBinder
   *   Union type of column
   */
 private[ldbc] case class Having[F[_], P <: Product, T](
-  table:     Table[P],
+  table:     TableQuery[F, P],
   statement: String,
   columns:   T,
   params:    Seq[ParameterBinder[F]]
