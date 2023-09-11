@@ -25,9 +25,9 @@ import ldbc.query.builder.TableQuery
   *   Base trait for all products
   */
 case class Update[F[_], P <: Product](
-  tableQuery:   TableQuery[F, P],
-  columns: List[String],
-  params:  Seq[ParameterBinder[F]]
+  tableQuery: TableQuery[F, P],
+  columns:    List[String],
+  params:     Seq[ParameterBinder[F]]
 ) extends Command[F],
           Command.LimitProvider[F]:
 

@@ -38,13 +38,14 @@ private[ldbc] object Insert:
     *   Tuple type of the property with type parameter P
     */
   case class Single[F[_], P <: Product, T <: Tuple](
-    tableQuery:  TableQuery[F, P],
-    tuple:  T,
-    params: Seq[ParameterBinder[F]]
+    tableQuery: TableQuery[F, P],
+    tuple:      T,
+    params:     Seq[ParameterBinder[F]]
   ) extends Insert[F, P]:
 
     override def statement: String =
-      s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
+      s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
+          .mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
 
   /** A model for constructing INSERT statements that insert multiple values in MySQL.
     *
@@ -63,9 +64,9 @@ private[ldbc] object Insert:
     *   Tuple type of the property with type parameter P
     */
   case class Multi[F[_], P <: Product, T <: Tuple](
-    tableQuery:  TableQuery[F, P],
-    tuples: List[T],
-    params: Seq[ParameterBinder[F]]
+    tableQuery: TableQuery[F, P],
+    tuples:     List[T],
+    params:     Seq[ParameterBinder[F]]
   ) extends Insert[F, P]:
 
     private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
@@ -74,8 +75,8 @@ private[ldbc] object Insert:
       s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
 
   case class Select[F[_], P <: Product, T <: Tuple](
-    _tableQuery:  TableQuery[F, P],
-    columns: Tuple
+    _tableQuery: TableQuery[F, P],
+    columns:     Tuple
   ):
 
     private def _statement: String =
@@ -86,8 +87,8 @@ private[ldbc] object Insert:
       val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
       new Insert[F, P]:
-        override def tableQuery:     TableQuery[F, P] = _tableQuery
-        override def statement: String   = s"$_statement VALUES${ values.mkString(", ") }"
+        override def tableQuery: TableQuery[F, P] = _tableQuery
+        override def statement:  String           = s"$_statement VALUES${ values.mkString(", ") }"
         override def params: Seq[ParameterBinder[F]] =
           tuples
             .map(Tuple.fromProduct)

@@ -77,7 +77,9 @@ private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T]:
     * @param func
     *   Function to construct an expression using the columns that Table has.
     */
-  def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](func: TableQuery[F, P] => A): OrderBy[F, P, T] =
+  def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](
+    func: TableQuery[F, P] => A
+  ): OrderBy[F, P, T] =
     val order = func(table) match
       case v: Tuple         => v.toList.mkString(", ")
       case v: OrderBy.Order => v.statement

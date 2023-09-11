@@ -20,11 +20,7 @@ import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 package object dsl:
 
-  private trait SyncSyntax[F[_]: Sync]
-    extends SQLSyntax[F],
-            ConnectionSyntax[F],
-            QuerySyntax[F],
-            CommandSyntax[F]:
+  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F], QuerySyntax[F], CommandSyntax[F]:
 
     implicit class SqlOps(sql: SQL[F]):
       inline def query[T <: Tuple]: Command[F, T] =

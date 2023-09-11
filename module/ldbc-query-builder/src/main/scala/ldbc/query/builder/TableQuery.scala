@@ -25,17 +25,19 @@ import ldbc.query.builder.interpreter.Tuples
   */
 case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
-  private[ldbc] val alias: Table[P] = table.as(s"${table._name}_alias")
+  private[ldbc] val alias: Table[P] = table.as(s"${ table._name }_alias")
 
   def selectDynamic[Tag <: Singleton](
     tag: Tag
   )(using
     mirror: Mirror.ProductOf[P],
-    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     reader: ResultSetReader[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ): ColumnQuery[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
     val column = table.selectDynamic[Tag](tag)
-    ColumnQuery.fromColumn[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]](column)
+    ColumnQuery.fromColumn[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]](
+      column
+    )
 
   /** Type alias for ParameterBinder. Mainly for use with Tuple.map. */
   private type ParamBind[A] = ParameterBinder[F]
@@ -79,7 +81,8 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     * @tparam O
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
-  def join[O <: Product](other: Table[O]): Join[F, P, O] = new Join(TableQuery(alias), TableQuery(other.as(s"${other._name}_alias")))
+  def join[O <: Product](other: Table[O]): Join[F, P, O] =
+    new Join(TableQuery(alias), TableQuery(other.as(s"${ other._name }_alias")))
 
   /** A method to join another table to itself.
     *
@@ -196,9 +199,9 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     type PARAM = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val params = List(ParameterBinder[F, PARAM](check(value))(using Parameter.infer[F, PARAM]))
     new Update[F, P](
-      tableQuery   = this,
-      columns = List(table.selectDynamic[Tag](tag).label),
-      params  = params
+      tableQuery = this,
+      columns    = List(table.selectDynamic[Tag](tag).label),
+      params     = params
     )
 
   /** A method to build a query model that updates all columns defined in the table using the model.
@@ -221,9 +224,9 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
       .toList
       .asInstanceOf[List[ParameterBinder[F]]]
     new Update[F, P](
-      tableQuery   = this,
-      columns = table.all.map(_.label),
-      params  = params
+      tableQuery = this,
+      columns    = table.all.map(_.label),
+      params     = params
     )
 
   /** Method to construct a query to delete a table.

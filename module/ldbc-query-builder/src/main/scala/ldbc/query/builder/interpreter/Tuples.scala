@@ -14,17 +14,17 @@ object Tuples:
     case h *: t          => ColumnQuery[F, h] *: MapToColumn[t, F]
 
   type InverseColumnMap[F[_], T] <: Tuple = T match
-    case EmptyTuple                       => EmptyTuple
+    case EmptyTuple                      => EmptyTuple
     case ColumnQuery[F, h]               => h *: EmptyTuple
     case ColumnQuery[F, h] *: EmptyTuple => h *: EmptyTuple
     case ColumnQuery[F, h] *: t          => h *: InverseColumnMap[F, t]
 
   type IsColumnQuery[F[_], T] <: Boolean = T match
-    case EmptyTuple                       => false
+    case EmptyTuple                      => false
     case ColumnQuery[F, h]               => true
     case ColumnQuery[F, h] *: EmptyTuple => true
     case ColumnQuery[F, h] *: t          => IsColumnQuery[F, t]
-    case _                                => false
+    case _                               => false
 
   type ToColumn[F[_], T] = T match
     case Tuple => MapToColumn[T, F]
