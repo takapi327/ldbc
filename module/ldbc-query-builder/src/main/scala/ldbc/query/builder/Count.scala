@@ -24,7 +24,7 @@ case class Count[F[_]](_label: String) extends ColumnQuery[F, Int]:
 
   override private[ldbc] def alias = None
 
-  def reader: ResultSetReader[F, Int] = ResultSetReader.given_ResultSetReader_F_Int
+  override def reader: ResultSetReader[F, Int] = ResultSetReader.given_ResultSetReader_F_Int
 
   override def toString: String = label
 
