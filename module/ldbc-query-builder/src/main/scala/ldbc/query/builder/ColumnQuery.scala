@@ -15,14 +15,13 @@ import ldbc.sql.*
 import ldbc.query.builder.statement.{ ExpressionSyntax, OrderBy, Query }
 import ldbc.query.builder.statement.ExpressionSyntax.*
 
-/**
- * Trait for retrieving data from a ResultSet using the column's information.
- *
- * @tparam F
- *   The effect type
- * @tparam T
- *   Scala types that match SQL DataType
- */
+/** Trait for retrieving data from a ResultSet using the column's information.
+  *
+  * @tparam F
+  *   The effect type
+  * @tparam T
+  *   Scala types that match SQL DataType
+  */
 private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
 
   def reader: ResultSetReader[F, T]
@@ -242,23 +241,23 @@ private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
 object ColumnQuery:
 
   def apply[F[_], T](
-                      _label: String,
-                      _dataType: DataType[T],
-                      _attributes: Seq[Attribute[T]],
-                      _alias: Option[String],
-                      _reader: ResultSetReader[F, T]
-                    ): ColumnQuery[F, T] =
+    _label:      String,
+    _dataType:   DataType[T],
+    _attributes: Seq[Attribute[T]],
+    _alias:      Option[String],
+    _reader:     ResultSetReader[F, T]
+  ): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label: String = _label
-      override def dataType: DataType[T] = _dataType
+      override def label:      String            = _label
+      override def dataType:   DataType[T]       = _dataType
       override def attributes: Seq[Attribute[T]] = _attributes
       override private[ldbc] def alias = _alias
       override def reader: ResultSetReader[F, T] = _reader
 
   def fromColumn[F[_], T](column: Column[T])(using _reader: ResultSetReader[F, T]): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label: String = column.label
-      override def dataType: DataType[T] = column.dataType
+      override def label:      String            = column.label
+      override def dataType:   DataType[T]       = column.dataType
       override def attributes: Seq[Attribute[T]] = column.attributes
       override private[ldbc] def alias = column.alias
       override def reader: ResultSetReader[F, T] = _reader

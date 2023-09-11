@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.query.builder
 
@@ -10,8 +10,8 @@ import cats.Id
 import ldbc.core.*
 
 class ColumnQueryTest extends AnyFlatSpec:
-  private val id1 = ColumnQuery.fromColumn[Id, Long](column[Long]("id", BIGINT))
-  private val id2 = ColumnQuery.fromColumn[Id, Option[Long]](column[Option[Long]]("id", BIGINT))
+  private val id1   = ColumnQuery.fromColumn[Id, Long](column[Long]("id", BIGINT))
+  private val id2   = ColumnQuery.fromColumn[Id, Option[Long]](column[Option[Long]]("id", BIGINT))
   private val name1 = ColumnQuery.fromColumn[Id, String](column[String]("name", VARCHAR(255)))
   private val name2 = ColumnQuery.fromColumn[Id, Option[String]](column[Option[String]]("name", VARCHAR(255)))
 
