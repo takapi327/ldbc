@@ -9,7 +9,7 @@ import ldbc.query.builder.TableQuery
 
 /** A model for constructing GROUP BY statements in MySQL.
   *
-  * @param table
+  * @param tableQuery
   *   Trait for generating SQL table information.
   * @param statement
   *   SQL statement string
@@ -26,10 +26,10 @@ import ldbc.query.builder.TableQuery
   *   Union type of column
   */
 private[ldbc] case class GroupBy[F[_], P <: Product, T](
-  table:     TableQuery[F, P],
-  statement: String,
-  columns:   T,
-  params:    Seq[ParameterBinder[F]]
+  tableQuery: TableQuery[F, P],
+  statement:  String,
+  columns:    T,
+  params:     Seq[ParameterBinder[F]]
 ) extends Query[F, T],
           OrderByProvider[F, P, T],
           LimitProvider[F, T]:
@@ -37,8 +37,8 @@ private[ldbc] case class GroupBy[F[_], P <: Product, T](
   def having[A](func: T => ExpressionSyntax[F]): Having[F, P, T] =
     val expressionSyntax = func(columns)
     Having(
-      table     = table,
-      statement = statement ++ s" HAVING ${ expressionSyntax.statement }",
-      columns   = columns,
-      params    = params ++ expressionSyntax.parameter
+      tableQuery = tableQuery,
+      statement  = statement ++ s" HAVING ${ expressionSyntax.statement }",
+      columns    = columns,
+      params     = params ++ expressionSyntax.parameter
     )

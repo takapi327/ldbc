@@ -10,7 +10,7 @@ import ldbc.query.builder.TableQuery
 
 /** A model for constructing SELECT statements in MySQL.
   *
-  * @param table
+  * @param tableQuery
   *   Trait for generating SQL table information.
   * @param statement
   *   SQL statement string
@@ -27,10 +27,10 @@ import ldbc.query.builder.TableQuery
   *   Union type of column
   */
 private[ldbc] case class Select[F[_], P <: Product, T](
-  table:     TableQuery[F, P],
-  statement: String,
-  columns:   T,
-  params:    Seq[ParameterBinder[F]]
+  tableQuery: TableQuery[F, P],
+  statement:  String,
+  columns:    T,
+  params:     Seq[ParameterBinder[F]]
 ) extends Query[F, T],
           OrderByProvider[F, P, T],
           LimitProvider[F, T]:
@@ -41,18 +41,18 @@ private[ldbc] case class Select[F[_], P <: Product, T](
     *   Function to construct an expression using the columns that Table has.
     */
   def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] =
-    val expressionSyntax = func(table)
+    val expressionSyntax = func(tableQuery)
     Where[F, P, T](
-      table     = table,
-      statement = statement ++ s" WHERE ${ expressionSyntax.statement }",
-      columns   = columns,
-      params    = params ++ expressionSyntax.parameter
+      tableQuery = tableQuery,
+      statement  = statement ++ s" WHERE ${ expressionSyntax.statement }",
+      columns    = columns,
+      params     = params ++ expressionSyntax.parameter
     )
 
   def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
     GroupBy(
-      table     = table,
-      statement = statement ++ s" GROUP BY ${ func(columns).label }",
-      columns   = columns,
-      params    = params
+      tableQuery = tableQuery,
+      statement  = statement ++ s" GROUP BY ${ func(columns).label }",
+      columns    = columns,
+      params     = params
     )

@@ -12,7 +12,7 @@ import ldbc.query.builder.TableQuery
 
 /** A model for constructing UPDATE statements in MySQL.
   *
-  * @param table
+  * @param tableQuery
   *   Trait for generating SQL table information.
   * @param columns
   *   Column name list
