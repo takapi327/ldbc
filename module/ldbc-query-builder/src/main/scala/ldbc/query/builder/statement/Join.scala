@@ -53,8 +53,8 @@ object Join:
 
     def joinType: JoinType
 
-    private val leftTableName  = s"${ left.table._name } AS ${ left.alias.alias.getOrElse("") }"
-    private val rightTableName = s"${ right.table._name } AS ${ right.alias.alias.getOrElse("") }"
+    private val leftTableName  = left.alias.alias.fold(left.table._name)(name => s"${ left.table._name } AS $name")
+    private val rightTableName = right.alias.alias.fold(right.table._name)(name => s"${ right.table._name } AS $name")
 
     protected val fromStatement =
       s"FROM $leftTableName ${ joinType.statement } $rightTableName ON ${ expression.statement }"
