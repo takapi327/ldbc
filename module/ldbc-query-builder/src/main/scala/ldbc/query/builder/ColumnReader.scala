@@ -25,6 +25,10 @@ private[ldbc] trait ColumnReader[F[_], T] extends Column[T]:
     reader.read(resultSet, alias.fold(label)(name => s"$name.$label"))
   }
 
+  def read(index: Int): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
+    reader.read(resultSet, index)
+  }
+
   override def toString: String = alias.fold(s"`$label`")(name => s"$name.`$label`")
 
 object ColumnReader:
