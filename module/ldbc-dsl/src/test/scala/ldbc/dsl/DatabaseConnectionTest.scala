@@ -556,15 +556,14 @@ object DatabaseConnectionTest extends Specification:
     "The values of columns that do not satisfy the condition are not updated." in {
       val result = (for
         _ <- city
-          .update("name", "Yokohama")
-            .set("countryCode", "JPN")
-            .set("district", "not update Kanagawa", false)
-            .set("population", 2)
-            .where(_.name _equals "Jokohama [Yokohama]")
-            .update
+               .update("name", "Yokohama")
+               .set("countryCode", "JPN")
+               .set("district", "not update Kanagawa", false)
+               .set("population", 2)
+               .where(_.name _equals "Jokohama [Yokohama]")
+               .update
         updated <- city.select[String](_.district).where(_.name _equals "Jokohama [Yokohama]").query.headOption
-      yield updated)
-        .transaction
+      yield updated).transaction
         .run(dataSource)
         .unsafeRunSync()
 
