@@ -8,10 +8,11 @@ import scala.deriving.Mirror
 
 import ldbc.sql.*
 import ldbc.core.interpreter.Tuples as CoreTuples
+import ldbc.query.builder.TableQuery
 
 /** A model for constructing UPDATE statements in MySQL.
   *
-  * @param table
+  * @param tableQuery
   *   Trait for generating SQL table information.
   * @param columns
   *   Column name list
@@ -24,15 +25,15 @@ import ldbc.core.interpreter.Tuples as CoreTuples
   *   Base trait for all products
   */
 case class Update[F[_], P <: Product](
-  table:   Table[P],
-  columns: List[String],
-  params:  Seq[ParameterBinder[F]]
+  tableQuery: TableQuery[F, P],
+  columns:    List[String],
+  params:     Seq[ParameterBinder[F]]
 ) extends Command[F],
           Command.LimitProvider[F]:
 
   private val values = columns.map(column => s"$column = ?")
 
-  override def statement: String = s"UPDATE ${ table._name } SET ${ values.mkString(", ") }"
+  override def statement: String = s"UPDATE ${ tableQuery.table._name } SET ${ values.mkString(", ") }"
 
   /** A method that sets additional values to be updated in the query model that updates specific columns defined in the
     * table.
@@ -60,7 +61,7 @@ case class Update[F[_], P <: Product](
     type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
     this.copy(
-      columns = columns :+ table.selectDynamic[Tag](tag).label,
+      columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
       params  = params :+ param
     )
 
@@ -90,7 +91,7 @@ case class Update[F[_], P <: Product](
     type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
     this.copy(
-      columns = columns :+ table.selectDynamic[Tag](tag).label,
+      columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
       params  = params :+ param
     )
 
@@ -99,8 +100,8 @@ case class Update[F[_], P <: Product](
     * @param func
     *   Function to construct an expression using the columns that Table has.
     */
-  def where(func: Table[P] => ExpressionSyntax[F]): Command.Where[F] =
-    val expressionSyntax = func(table)
+  def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Command.Where[F] =
+    val expressionSyntax = func(tableQuery)
     Command.Where[F](
       _statement       = statement,
       expressionSyntax = expressionSyntax,

@@ -13,7 +13,7 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.core.model.*
 import ldbc.sql.*
-import ldbc.dsl.io.{ *, given }
+import ldbc.dsl.io.*
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
 

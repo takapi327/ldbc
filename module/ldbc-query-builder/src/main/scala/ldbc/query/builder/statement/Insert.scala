@@ -4,8 +4,8 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.*
 import ldbc.sql.*
+import ldbc.query.builder.TableQuery
 
 /** Trait for building Statements to be added.
   *
@@ -17,13 +17,13 @@ import ldbc.sql.*
 private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
 
   /** Trait for generating SQL table information. */
-  def table: Table[P]
+  def tableQuery: TableQuery[F, P]
 
 private[ldbc] object Insert:
 
   /** A model for constructing INSERT statements that insert single values in MySQL.
     *
-    * @param table
+    * @param tableQuery
     *   Trait for generating SQL table information.
     * @param tuple
     *   Tuple type value of the property with type parameter P.
@@ -38,17 +38,18 @@ private[ldbc] object Insert:
     *   Tuple type of the property with type parameter P
     */
   case class Single[F[_], P <: Product, T <: Tuple](
-    table:  Table[P],
-    tuple:  T,
-    params: Seq[ParameterBinder[F]]
+    tableQuery: TableQuery[F, P],
+    tuple:      T,
+    params:     Seq[ParameterBinder[F]]
   ) extends Insert[F, P]:
 
     override def statement: String =
-      s"INSERT INTO ${ table._name } (${ table.all.mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
+      s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
+          .mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
 
   /** A model for constructing INSERT statements that insert multiple values in MySQL.
     *
-    * @param table
+    * @param tableQuery
     *   Trait for generating SQL table information.
     * @param tuples
     *   Tuple type value of the property with type parameter P.
@@ -63,31 +64,31 @@ private[ldbc] object Insert:
     *   Tuple type of the property with type parameter P
     */
   case class Multi[F[_], P <: Product, T <: Tuple](
-    table:  Table[P],
-    tuples: List[T],
-    params: Seq[ParameterBinder[F]]
+    tableQuery: TableQuery[F, P],
+    tuples:     List[T],
+    params:     Seq[ParameterBinder[F]]
   ) extends Insert[F, P]:
 
     private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
     override def statement: String =
-      s"INSERT INTO ${ table._name } (${ table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
+      s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
 
   case class Select[F[_], P <: Product, T <: Tuple](
-    _table:  Table[P],
-    columns: Tuple
+    _tableQuery: TableQuery[F, P],
+    columns:     Tuple
   ):
 
     private def _statement: String =
-      s"INSERT INTO ${ _table._name } (${ columns.toArray.mkString(", ") })"
+      s"INSERT INTO ${ _tableQuery.table._name } (${ columns.toArray.mkString(", ") })"
 
     inline def values(tuples: T*): Insert[F, P] =
 
       val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
       new Insert[F, P]:
-        override def table:     Table[P] = _table
-        override def statement: String   = s"$_statement VALUES${ values.mkString(", ") }"
+        override def tableQuery: TableQuery[F, P] = _tableQuery
+        override def statement:  String           = s"$_statement VALUES${ values.mkString(", ") }"
         override def params: Seq[ParameterBinder[F]] =
           tuples
             .map(Tuple.fromProduct)

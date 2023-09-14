@@ -4,12 +4,13 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.{ Column, Table }
+import ldbc.core.Column
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.TableQuery
 
 /** A model for constructing ORDER BY statements in MySQL.
   *
-  * @param table
+  * @param tableQuery
   *   Trait for generating SQL table information.
   * @param statement
   *   SQL statement string
@@ -26,10 +27,10 @@ import ldbc.sql.ParameterBinder
   *   Union type of column
   */
 private[ldbc] case class OrderBy[F[_], P <: Product, T](
-  table:     Table[P],
-  statement: String,
-  columns:   T,
-  params:    Seq[ParameterBinder[F]]
+  tableQuery: TableQuery[F, P],
+  statement:  String,
+  columns:    T,
+  params:     Seq[ParameterBinder[F]]
 ) extends Query[F, T],
           LimitProvider[F, T]
 
@@ -69,21 +70,23 @@ private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T]:
 
   /** Trait for generating SQL table information.
     */
-  def table: Table[P]
+  def tableQuery: TableQuery[F, P]
 
   /** A method for setting the ORDER BY condition in a statement.
     *
     * @param func
     *   Function to construct an expression using the columns that Table has.
     */
-  def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](func: Table[P] => A): OrderBy[F, P, T] =
-    val order = func(table) match
+  def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](
+    func: TableQuery[F, P] => A
+  ): OrderBy[F, P, T] =
+    val order = func(tableQuery) match
       case v: Tuple         => v.toList.mkString(", ")
       case v: OrderBy.Order => v.statement
       case v: Column[?]     => v.alias.fold(v.label)(name => s"$name.${ v.label }")
     OrderBy(
-      table     = table,
-      statement = self.statement ++ s" ORDER BY $order",
-      columns   = self.columns,
-      params    = self.params
+      tableQuery = tableQuery,
+      statement  = self.statement ++ s" ORDER BY $order",
+      columns    = self.columns,
+      params     = self.params
     )

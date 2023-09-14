@@ -12,13 +12,13 @@ import cats.effect.Sync
 
 import ldbc.sql.*
 import ldbc.dsl.Command
-import ldbc.query.builder.ColumnReader
+import ldbc.query.builder.ColumnQuery
 import ldbc.query.builder.statement.Query
 import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Sync]:
 
-  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnReader[F, T] =:= true):
+  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true):
 
     def query: Command[F, Tuples.InverseColumnMap[F, T]] =
       Command(
@@ -28,9 +28,9 @@ trait QuerySyntax[F[_]: Sync]:
           case h *: t => h *: t
           case h      => h *: EmptyTuple
         ).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
+          .asInstanceOf[List[ColumnQuery[F, ?]]]
           .traverse {
-            case reader: ColumnReader[F, ?] => reader.read
+            case reader: ColumnQuery[F, ?] => reader.read
           }
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
       )
@@ -46,9 +46,9 @@ trait QuerySyntax[F[_]: Sync]:
           case h *: t => h *: t
           case h      => h *: EmptyTuple
         ).toList
-          .asInstanceOf[List[ColumnReader[F, ?]]]
+          .asInstanceOf[List[ColumnQuery[F, ?]]]
           .traverse {
-            case reader: ColumnReader[F, ?] => reader.read
+            case reader: ColumnQuery[F, ?] => reader.read
           }
           .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       )

@@ -4,12 +4,12 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.*
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.TableQuery
 
 /** A model for constructing HAVING statements in MySQL.
   *
-  * @param table
+  * @param tableQuery
   *   Trait for generating SQL table information.
   * @param statement
   *   SQL statement string
@@ -26,10 +26,10 @@ import ldbc.sql.ParameterBinder
   *   Union type of column
   */
 private[ldbc] case class Having[F[_], P <: Product, T](
-  table:     Table[P],
-  statement: String,
-  columns:   T,
-  params:    Seq[ParameterBinder[F]]
+  tableQuery: TableQuery[F, P],
+  statement:  String,
+  columns:    T,
+  params:     Seq[ParameterBinder[F]]
 ) extends Query[F, T],
           OrderByProvider[F, P, T],
           LimitProvider[F, T]

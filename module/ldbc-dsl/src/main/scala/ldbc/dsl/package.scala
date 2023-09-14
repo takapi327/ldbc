@@ -17,16 +17,10 @@ import cats.effect.kernel.Resource.ExitCase
 import ldbc.sql.*
 import ldbc.dsl.syntax.*
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
-import ldbc.query.builder.syntax.ColumnSyntax
 
 package object dsl:
 
-  private trait SyncSyntax[F[_]: Sync]
-    extends SQLSyntax[F],
-            ConnectionSyntax[F],
-            ColumnSyntax[F],
-            QuerySyntax[F],
-            CommandSyntax[F]:
+  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F], QuerySyntax[F], CommandSyntax[F]:
 
     implicit class SqlOps(sql: SQL[F]):
       inline def query[T <: Tuple]: Command[F, T] =
