@@ -308,8 +308,7 @@ class LdbcSchemaAnalyzer(
 
     outputProducer.generate(db, outputDirectory)
 
-    val orderer = new InsertionOrdered(db)
-    val orderedTables = orderer.getTablesOrderedByRI()
+    val orderedTables = new InsertionOrdered(db).getTablesOrderedByRI()
 
     new OrderingReport(outputDirectory, orderedTables).write()
 
