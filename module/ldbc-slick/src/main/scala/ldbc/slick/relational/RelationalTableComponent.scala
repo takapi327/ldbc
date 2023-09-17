@@ -33,7 +33,8 @@ private[ldbc] trait RelationalTableComponent:
       tag:            Tag,
       _name:          String,
       keyDefinitions: Seq[Key],
-      comment:        Option[String]
+      comment:        Option[String],
+      alias:          Option[String] = None
     )(using
       mirror:   Mirror.ProductOf[P],
       classTag: ClassTag[P],
@@ -72,8 +73,6 @@ private[ldbc] trait RelationalTableComponent:
                   override def label: String = column.label
 
                   override def dataType: DataType[Extract[column.type]] = column.dataType
-
-                  override def comment: Option[String] = column.comment
 
                   override def attributes: Seq[Attribute[Extract[column.type]]] = column.attributes
 
@@ -126,13 +125,20 @@ private[ldbc] trait RelationalTableComponent:
           .productElement(index.value)
           .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
 
-      override def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
-        columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
+      override private[ldbc] def all: List[Column[[A] => A => A]] =
+        columns.toList.asInstanceOf[List[Column[[A] => A => A]]]
+
+      override def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column] =
+        alias
+          .fold(columns)(name => columns.map[Column]([t] => (x: t) => x.asInstanceOf[Column[t]].as(name)))
+          .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]]
 
       override def keySet(func: TABLE[P] => Key): TABLE[P] =
         this.copy(keyDefinitions = this.keyDefinitions :+ func(this))(columns)
 
       override def comment(str: String): TABLE[P] = this.copy(comment = Some(str))(columns)
+
+      override def as(name: String): TABLE[P] = this.copy(alias = Some(name))
 
     def applyDynamic[P <: Product](using
       mirror:    Mirror.ProductOf[P],

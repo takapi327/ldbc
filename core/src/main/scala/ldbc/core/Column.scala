@@ -22,8 +22,8 @@ trait Column[T]:
   /** Extra attribute of column */
   def attributes: Seq[Attribute[T]]
 
-  /** Column comment */
-  def comment: Option[String]
+  /** Column alias name */
+  private[ldbc] def alias: Option[String] = None
 
   /** Define SQL query string for each Column
     *
@@ -31,11 +31,12 @@ trait Column[T]:
     *   SQL query string
     */
   def queryString: String =
-    s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("") + comment.fold("")(
-      str => s" COMMENT '$str'"
-    )
+    val str = s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
+    alias.fold(str)(name => s"$name.$str")
 
-  override def toString: String = s"`$label`"
+  def as(name: String): Column[T] = Column[T](label, dataType, attributes, Some(name))
+
+  override def toString: String = alias.fold(s"`$label`")(name => s"$name.`$label`")
 
 object Column:
 
@@ -48,23 +49,9 @@ object Column:
 
     override def dataType: DataType[T] = _dataType
 
-    override def comment: Option[String] = None
-
-    override def attributes: Seq[Attribute[T]] = Seq.empty
-
-  def apply[T](
-    _label:    String,
-    _dataType: DataType[T],
-    _comment:  String
-  ): Column[T] = new Column[T]:
-
-    override def label: String = _label
-
-    override def dataType: DataType[T] = _dataType
-
-    override def comment: Option[String] = Some(_comment)
-
-    override def attributes: Seq[Attribute[T]] = Seq.empty
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes
+      case _                       => Seq.empty
 
   def apply[T](
     _label:      String,
@@ -76,21 +63,21 @@ object Column:
 
     override def dataType: DataType[T] = _dataType
 
-    override def comment: Option[String] = None
+    override def attributes: Seq[Attribute[T]] = _dataType match
+      case data: DataType.Alias[T] => data.attributes ++ _attributes
+      case _                       => _attributes
 
-    override def attributes: Seq[Attribute[T]] = _attributes.toSeq
-
-  def apply[T](
+  private[ldbc] def apply[T](
     _label:      String,
     _dataType:   DataType[T],
-    _comment:    String,
-    _attributes: Attribute[T]*
+    _attributes: Seq[Attribute[T]],
+    _alias:      Option[String]
   ): Column[T] = new Column[T]:
 
     override def label: String = _label
 
     override def dataType: DataType[T] = _dataType
 
-    override def comment: Option[String] = Some(_comment)
+    override def attributes: Seq[Attribute[T]] = _attributes
 
-    override def attributes: Seq[Attribute[T]] = _attributes.toSeq
+    override private[ldbc] def alias = _alias

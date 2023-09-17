@@ -25,6 +25,9 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
   /** Table comment */
   private[ldbc] def comment: Option[String]
 
+  /** Table alias name */
+  private[ldbc] def alias: Option[String]
+
   /** Methods for statically accessing column information held by a Table.
     *
     * @param tag
@@ -45,11 +48,15 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Method to retrieve an array of column information that a table has.
     */
-  def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]
+  private[ldbc] def all: List[Column[[A] => A => A]]
+
+  def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
   def keySet(func: Table[P] => Key): Table[P]
 
   def comment(str: String): Table[P]
+
+  def as(name: String): Table[P]
 
 object Table extends Dynamic:
 
@@ -57,7 +64,8 @@ object Table extends Dynamic:
     _name:          String,
     columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key],
-    comment:        Option[String]
+    comment:        Option[String],
+    alias:          Option[String] = None
   ) extends Table[P]:
 
     override def selectDynamic[Tag <: Singleton](
@@ -66,16 +74,24 @@ object Table extends Dynamic:
       mirror: Mirror.ProductOf[P],
       index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-      columns
+      val column = columns
         .productElement(index.value)
         .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+      alias.fold(column)(name => column.as(name))
 
-    override def selectDynamic(label: "*"): List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]] =
-      columns.toList.asInstanceOf[List[Tuple.Union[Tuple.Map[Any *: NonEmptyTuple, Column]]]]
+    override private[ldbc] def all: List[Column[[A] => A => A]] =
+      columns.toList.asInstanceOf[List[Column[[A] => A => A]]]
+
+    override def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column] =
+      alias
+        .fold(columns)(name => columns.map[Column]([t] => (x: t) => x.asInstanceOf[Column[t]].as(name)))
+        .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]]
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
     override def comment(str: String): Table[P] = this.copy(comment = Some(str))
+
+    override def as(name: String): Table[P] = this.copy(alias = Some(name))
 
   /** Methods for static Table construction using Dynamic.
     *

@@ -1,0 +1,7 @@
+database:
+  name: 'test'
+  tables:
+    - name: 'test'
+      columns:
+        - name: 'id'
+          type: 'Long'

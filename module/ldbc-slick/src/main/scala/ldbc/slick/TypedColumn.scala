@@ -24,8 +24,6 @@ object TypedColumn:
 
     override def dataType: DataType[T] = _dataType
 
-    override def comment: Option[String] = None
-
     override def attributes: Seq[Attribute[T]] = Seq.empty
 
     override def typedType: TypedType[T] = tt
@@ -40,8 +38,6 @@ object TypedColumn:
 
     override def dataType: DataType[T] = _dataType
 
-    override def comment: Option[String] = Some(_comment)
-
     override def attributes: Seq[Attribute[T]] = Seq.empty
 
     override def typedType: TypedType[T] = tt
@@ -55,8 +51,6 @@ object TypedColumn:
     override def label: String = _label
 
     override def dataType: DataType[T] = _dataType
-
-    override def comment: Option[String] = None
 
     override def attributes: Seq[Attribute[T]] = _attributes.toSeq
 
@@ -72,8 +66,6 @@ object TypedColumn:
     override def label: String = _label
 
     override def dataType: DataType[T] = _dataType
-
-    override def comment: Option[String] = Some(_comment)
 
     override def attributes: Seq[Attribute[T]] = _attributes.toSeq
 

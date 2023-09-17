@@ -23,8 +23,11 @@ trait Database:
   /** Database Catalog */
   val catalog: Option[String]
 
-  /** A value to represent the character set and collation. */
-  val characterSet: Option[Character]
+  /** A value to represent the character set. */
+  val character: Option[Character]
+
+  /** A value to represent the collation. */
+  val collate: Option[Collate]
 
   /** Connection host to database */
   val host: String

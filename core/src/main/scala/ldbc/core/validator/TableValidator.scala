@@ -14,15 +14,9 @@ private[ldbc] trait TableValidator:
   /** Trait for generating SQL table information. */
   def table: Table[?]
 
-  protected val autoInc = table.*.filter {
-    case c: Column[?] => c.attributes.contains(AutoInc())
-    case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
-  }
+  protected val autoInc = table.all.filter(_.attributes.contains(AutoInc()))
 
-  protected val primaryKey = table.*.filter {
-    case c: Column[?] => c.attributes.exists(_.isInstanceOf[PrimaryKey])
-    case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
-  }
+  protected val primaryKey = table.all.filter(_.attributes.exists(_.isInstanceOf[PrimaryKey]))
 
   protected val keyPart = table.keyDefinitions.flatMap {
     case key: PrimaryKey with Index => key.keyPart.toList
@@ -36,10 +30,7 @@ private[ldbc] trait TableValidator:
   }
 
   require(
-    table.*.distinctBy {
-      case c: Column[?] => c.label
-      case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
-    }.length == table.*.length,
+    table.all.distinctBy(_.label).length == table.all.length,
     "Columns with the same name cannot be defined in a single table."
   )
 
@@ -57,16 +48,11 @@ private[ldbc] trait TableValidator:
 
   require(
     !(autoInc.nonEmpty &&
-      (autoInc.count {
-        case column: Column[?] =>
-          column.attributes.exists(_.isInstanceOf[PrimaryKey]) || column.attributes.exists(_.isInstanceOf[UniqueKey])
-        case unknown => throw new IllegalStateException(s"$unknown is not a Column.")
-      } >= 1 || keyPart.count(key =>
+      (autoInc.count(column =>
+        column.attributes.exists(_.isInstanceOf[PrimaryKey]) || column.attributes.exists(_.isInstanceOf[UniqueKey])
+      ) >= 1 || keyPart.count(key =>
         autoInc
-          .map {
-            case c: Column[?] => c.label
-            case unknown      => throw new IllegalStateException(s"$unknown is not a Column.")
-          }
+          .map(_.label)
           .contains(key.label)
       ) == 0)),
     "The columns with AUTO_INCREMENT must have a Primary Key or Unique Key."

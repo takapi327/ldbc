@@ -9,12 +9,13 @@ import sbt._
 trait Dependencies {
   private def component(id: String): ModuleID = "com.github.takapi327" %% id % ldbc.build.Version.current
 
-  val ldbcCore      = component("ldbc-core")
-  val ldbcDslIO     = component("ldbc-dsl-io")
-  val ldbcGenerator = component("ldbc-generator")
-  val ldbcSchemaSPY = component("ldbc-schemaspy")
-  val ldbcSql       = component("ldbc-sql")
-  val ldbcSlick     = component("ldbc-slick")
+  val ldbcCore         = component("ldbc-core")
+  val ldbcSql          = component("ldbc-sql")
+  val ldbcQueryBuilder = component("ldbc-query-builder")
+  val ldbcDsl          = component("ldbc-dsl")
+  val ldbcCodegen      = component("ldbc-codegen")
+  val ldbcSchemaSPY    = component("ldbc-schemaspy")
+  val ldbcSlick        = component("ldbc-slick")
 }
 
 object Dependencies extends Dependencies

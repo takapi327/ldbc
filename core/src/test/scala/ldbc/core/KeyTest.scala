@@ -6,8 +6,6 @@ package ldbc.core
 
 import org.specs2.mutable.Specification
 
-import cats.data.NonEmptyList
-
 object KeyTest extends Specification:
 
   private val column1 = column[Long]("id", BIGINT(64))
@@ -15,17 +13,17 @@ object KeyTest extends Specification:
 
   "IndexKey Test" should {
     "The query string of the generated IndexKey model matches the specified string." in {
-      val key = IndexKey(None, None, NonEmptyList.of(column1, column2), None)
+      val key = IndexKey(None, None, List(column1, column2), None)
       key.queryString === "INDEX (`id`, `name`)"
     }
 
     "The query string of the generated IndexKey model matches the specified string." in {
-      val key = IndexKey(Some("key_id"), None, NonEmptyList.of(column1, column2), None)
+      val key = IndexKey(Some("key_id"), None, List(column1, column2), None)
       key.queryString === "INDEX `key_id` (`id`, `name`)"
     }
 
     "The query string of the generated IndexKey model matches the specified string." in {
-      val key = IndexKey(Some("key_id"), Some(Index.Type.BTREE), NonEmptyList.of(column1, column2), None)
+      val key = IndexKey(Some("key_id"), Some(Index.Type.BTREE), List(column1, column2), None)
       key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE"
     }
 
@@ -33,7 +31,7 @@ object KeyTest extends Specification:
       val key = IndexKey(
         Some("key_id"),
         Some(Index.Type.BTREE),
-        NonEmptyList.of(column1, column2),
+        List(column1, column2),
         Some(Index.IndexOption(Some(1), None, None, None, None, None))
       )
       key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1"
@@ -43,7 +41,7 @@ object KeyTest extends Specification:
       val key = IndexKey(
         Some("key_id"),
         Some(Index.Type.BTREE),
-        NonEmptyList.of(column1, column2),
+        List(column1, column2),
         Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), None, None, None, None))
       )
       key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE"
@@ -53,7 +51,7 @@ object KeyTest extends Specification:
       val key = IndexKey(
         Some("key_id"),
         Some(Index.Type.BTREE),
-        NonEmptyList.of(column1, column2),
+        List(column1, column2),
         Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), None, None, None))
       )
       key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser"
@@ -63,7 +61,7 @@ object KeyTest extends Specification:
       val key = IndexKey(
         Some("key_id"),
         Some(Index.Type.BTREE),
-        NonEmptyList.of(column1, column2),
+        List(column1, column2),
         Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), Some("comment"), None, None))
       )
       key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment'"
@@ -73,7 +71,7 @@ object KeyTest extends Specification:
       val key = IndexKey(
         Some("key_id"),
         Some(Index.Type.BTREE),
-        NonEmptyList.of(column1, column2),
+        List(column1, column2),
         Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), Some("comment"), Some("InnoDB"), None))
       )
       key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment' ENGINE_ATTRIBUTE = 'InnoDB'"
