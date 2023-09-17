@@ -11,7 +11,7 @@ object Dependencies {
   val cats = "org.typelevel" %% "cats-core" % "2.10.0"
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.1"
 
-  val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.3"
+  val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
 
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 
