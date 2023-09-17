@@ -7,7 +7,7 @@ package ldbc.schemaspy
 import java.io.{ File, IOException }
 import java.sql.SQLException
 
-import org.schemaspy.{ LayoutFolder, SchemaAnalyzer, TableOrderer }
+import org.schemaspy.{ LayoutFolder, SchemaAnalyzer }
 import org.schemaspy.model.{ EmptySchemaException, InvalidConfigurationException }
 import org.schemaspy.input.dbms.MissingParameterException
 import org.schemaspy.input.dbms.service.{ DatabaseServiceFactory, SqlService }
@@ -64,7 +64,6 @@ object SchemaSpyGenerator:
   private val layoutFolder             = new LayoutFolder(this.getClass.getClassLoader)
   private val commandLineArguments     = new CommandLineArguments
   private val outputProducer           = new XmlProducerUsingDOM
-  private val orderer                  = new TableOrderer()
   private val factory                  = new DefaultProviderFactory
   private val configFileArgumentParser = new ConfigFileArgumentParser
 
@@ -102,7 +101,6 @@ object SchemaSpyGenerator:
       builder,
       commandLineArguments,
       outputProducer,
-      orderer,
       outputDirectory
     )
 

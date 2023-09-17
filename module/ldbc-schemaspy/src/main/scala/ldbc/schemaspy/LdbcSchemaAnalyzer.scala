@@ -12,18 +12,18 @@ import java.time.format.DateTimeFormatter
 import java.lang.invoke.MethodHandles
 
 import scala.util.Using
-import scala.jdk.CollectionConverters.*
 
 import org.slf4j.LoggerFactory
 
 import org.apache.commons.io.filefilter.FileFilterUtils
 
-import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, TableOrderer, OrderingReport }
+import org.schemaspy.{ DbAnalyzer, SimpleRuntimeDotConfig, LayoutFolder, InsertionOrdered, OrderingReport }
 import org.schemaspy.model.Database as SchemaspyDatabase
 import org.schemaspy.model.Table as SchemaspyTable
 import org.schemaspy.model.{ ProgressListener, Tracked, Console, ForeignKeyConstraint }
-import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPrintWriter, Jar }
+import org.schemaspy.util.{ Markdown, ManifestUtils, DataTableConfig, DefaultPrintWriter }
 import org.schemaspy.util.naming.FileNameGenerator
+import org.schemaspy.util.copy.CopyFromUrl
 import org.schemaspy.view.*
 import org.schemaspy.output.OutputProducer
 import org.schemaspy.output.dot.schemaspy.{ DefaultFontConfig, DotFormatter, OrphanGraph }
@@ -47,7 +47,6 @@ class LdbcSchemaAnalyzer(
   builder:              DbmsMetaBuilder,
   commandLineArguments: CommandLineArguments,
   outputProducer:       OutputProducer,
-  orderer:              TableOrderer,
   outputDirectory:      File
 ):
 
@@ -90,7 +89,7 @@ class LdbcSchemaAnalyzer(
 
     Markdown.registryPage(new java.util.ArrayList[SchemaspyTable](tables))
 
-    new Jar(layoutFolder.url(), outputDirectory, notHtml()).copyJarResourceToPath()
+    new CopyFromUrl(layoutFolder.url(), outputDirectory, notHtml()).copy()
 
     val renderer = new VizJSDot()
 
@@ -309,7 +308,8 @@ class LdbcSchemaAnalyzer(
 
     outputProducer.generate(db, outputDirectory)
 
-    val orderedTables = orderer.getTablesOrderedByRI(db.getTables, List.empty.asJava)
+    val orderer = new InsertionOrdered(db)
+    val orderedTables = orderer.getTablesOrderedByRI()
 
     new OrderingReport(outputDirectory, orderedTables).write()
 
