@@ -7,6 +7,7 @@ package ldbc.dsl
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.specs2.mutable.Specification
+import org.specs2.execute.Result
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -551,6 +552,20 @@ object DatabaseConnectionTest extends Specification:
         .unsafeRunSync()
 
       result === 1
+    }
+
+    "The values of columns that do not satisfy the condition are not updated." in {
+      val result = (for
+        _ <- city
+               .update("name", "update Odawara")
+               .set("district", "not update Kanagawa", false)
+               .where(_.id _equals 1637)
+               .update
+        updated <- city.select[(String, String)](v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
+      yield updated).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+      (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
 
     "The update succeeds in the combined processing of multiple queries." in {

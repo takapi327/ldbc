@@ -169,6 +169,31 @@ class TableQueryTest extends AnyFlatSpec:
         .limit(1)
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE p1 = ? LIMIT ?"
     )
+    assert(
+      query
+        .update("p1", 1L)
+        .set("p2", "p2", false)
+        .where(_.p1 === 1L)
+        .limit(1)
+        .statement === "UPDATE test SET p1 = ? WHERE p1 = ? LIMIT ?"
+    )
+    assert(
+      query
+        .update("p1", 1L)
+        .set("p2", "p2", true)
+        .where(_.p1 === 1L)
+        .limit(1)
+        .statement === "UPDATE test SET p1 = ?, p2 = ? WHERE p1 = ? LIMIT ?"
+    )
+    assert(
+      query
+        .update("p1", 1L)
+        .set("p2", "p2", false)
+        .set("p3", Some("p3"))
+        .where(_.p1 === 1L)
+        .limit(1)
+        .statement === "UPDATE test SET p1 = ?, p3 = ? WHERE p1 = ? LIMIT ?"
+    )
   }
 
   it should "The delete query statement generated from Table is equal to the specified query statement." in {

@@ -95,6 +95,40 @@ case class Update[F[_], P <: Product](
       params  = params :+ param
     )
 
+  /** A method that sets additional values to be updated in the query model that updates specific columns defined in the
+    * table.
+    *
+    * @param tag
+    *   A type with a single instance. Here, Column is passed.
+    * @param value
+    *   A value of type T to be inserted into the specified column.
+    * @param bool
+    *   Conditional value of whether or not to update the value.
+    * @param mirror
+    *   product isomorphism map
+    * @param index
+    *   Position of the specified type in tuple X
+    * @param check
+    *   A value to verify that the specified type matches the type of the specified column that the Table has.
+    * @tparam Tag
+    *   Type with a single instance
+    * @tparam T
+    *   Scala types that match SQL DataType
+    */
+  inline def set[Tag <: Singleton, T](tag: Tag, value: T, bool: Boolean)(using
+    mirror:                                Mirror.ProductOf[P],
+    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check: T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+  ): Update[F, P] =
+    if bool then
+      type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+      val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
+      this.copy(
+        columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
+        params  = params :+ param
+      )
+    else this
+
   /** A method for setting the WHERE condition in a UPDATE statement.
     *
     * @param func
