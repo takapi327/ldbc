@@ -6,19 +6,16 @@ package ldbc.slick.jdbc
 
 import slick.jdbc.MySQLProfile as SlickMySQLProfile
 
-import ldbc.core.DataTypes
+import ldbc.core.{ DataTypes, Alias, Table as CoreTable }
+import ldbc.slick.lifted.TableQueryBuilder
 
-import ldbc.slick.Alias
-import ldbc.slick.syntax.TableSyntax
-import ldbc.slick.relational.RelationalTableComponent
+trait MySQLProfile extends SlickMySQLProfile:
+  self =>
 
-trait MySQLProfile extends SlickMySQLProfile, RelationalTableComponent:
-  self: RelationalTableComponent =>
+  trait LdbcAPI extends JdbcAPI, Alias, DataTypes:
+    val Table: CoreTable.type = CoreTable
 
-  trait LdbcAPI extends JdbcAPI, Alias, TableSyntax, DataTypes:
-    val Table = self.SlickTable
-
-    val SlickTableQuery = ldbc.slick.lifted.TableQuery
+    val SlickTableQuery: TableQueryBuilder = TableQueryBuilder(self)
 
   override val api: LdbcAPI = new LdbcAPI {}
 
