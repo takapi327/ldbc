@@ -53,7 +53,7 @@ lazy val LdbcSchemaSpyProject = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-s
 
 lazy val LdbcSlickProject = LepusSbtProject("Ldbc-Slick", "module/ldbc-slick")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
-  .settings(libraryDependencies += slick)
+  .settings(libraryDependencies ++= Seq(slick, mysql % Test, scalaTest))
   .dependsOn(LdbcCoreProject)
 
 lazy val LdbcPluginProject = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
