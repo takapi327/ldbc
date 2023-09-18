@@ -7,16 +7,23 @@ package ldbc.slick.lifted
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
 
+import slick.ast.Node
 import slick.lifted.{ Query, ShapedValue, RepShape, FlatShapeLevel, ToTuple }
 import slick.relational.RelationalProfile
 
 import ldbc.core.Table
 import ldbc.slick.SlickTable
 
-class TableQuery[P <: Product](table: SlickTable[P]) extends Query[SlickTable[P], P, Seq]:
+class TableQuery[P <: Product](cons: Tag => SlickTable[P]) extends Query[SlickTable[P], P, Seq]:
 
   override lazy val shaped: ShapedValue[SlickTable[P], P] =
-    ShapedValue(table, RepShape[FlatShapeLevel, SlickTable[P], P])
+    val baseTable = cons(new BaseTag:
+      base =>
+      override def taggedAs(path: Node): SlickTable[?] = cons(new RefTag(path):
+        override def taggedAs(path: Node) = base.taggedAs(path)
+      )
+    )
+    ShapedValue(baseTable, RepShape[FlatShapeLevel, SlickTable[P], P])
 
   override lazy val toNode = shaped.toNode
 
@@ -26,4 +33,4 @@ case class TableQueryBuilder(profile: RelationalProfile):
     classTag:                           ClassTag[P],
     tt:                                 ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
   ): TableQuery[P] =
-    new TableQuery[P](SlickTable[P](table, profile))
+    new TableQuery[P](tag => SlickTable[P](table, tag, profile))

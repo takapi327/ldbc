@@ -24,16 +24,16 @@ final class SlickTable[P <: Product](using
   tt:       ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
 )(
   table:          Table[P],
-  profile:        RelationalProfile,
   tableTag:       Tag,
+  profile:        RelationalProfile,
   typedTypeTuple: TypedTypeTuple[mirror.MirroredElemTypes]
 ) extends Rep[P],
           Dynamic:
 
-  private def tableIdentitySymbol: TableIdentitySymbol =
+  private val tableIdentitySymbol: TableIdentitySymbol =
     SimpleTableIdentitySymbol(profile, "_", table._name)
 
-  private lazy val tableNode =
+  private val tableNode =
     TableNode(None, table._name, tableIdentitySymbol, tableIdentitySymbol)(table)
 
   override def encodeRef(path: Node): SlickTable[P] =
@@ -89,7 +89,7 @@ final class SlickTable[P <: Product](using
 
     shapedValue <> (mirror.fromTuple, Tuple.fromProductTyped)
 
-  def selectDynamic[Tag <: Singleton](tag: Tag)(using
+  transparent inline def selectDynamic[Tag <: Singleton](tag: Tag)(using
     mirror:                                Mirror.ProductOf[P],
     index:                                 ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     tt: TypedType[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
@@ -111,19 +111,9 @@ object SlickTable:
   type Extract[T] = T match
     case Column[t] => t
 
-  inline def apply[P <: Product](table: Table[P], profile: RelationalProfile)(using
+  inline def apply[P <: Product](table: Table[P], tag: Tag, profile: RelationalProfile)(using
     mirror:                             Mirror.ProductOf[P],
     classTag:                           ClassTag[P],
     tt:                                 ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
   ): SlickTable[P] =
-
-    val typedTypeTuple = TypedTypeTuple.fold[mirror.MirroredElemTypes]
-
-    val tableTag: Tag = new BaseTag:
-      base =>
-      override def taggedAs(path: Node) =
-        val tag = new RefTag(path):
-          override def taggedAs(path: Node) = base.taggedAs(path)
-        new SlickTable[P](table, profile, tag, typedTypeTuple)
-
-    new SlickTable[P](table, profile, tableTag, typedTypeTuple)
+    new SlickTable[P](table, tag, profile, TypedTypeTuple.fold[mirror.MirroredElemTypes])
