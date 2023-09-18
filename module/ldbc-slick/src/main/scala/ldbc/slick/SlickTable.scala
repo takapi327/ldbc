@@ -18,14 +18,17 @@ import ldbc.core.interpreter.Tuples
 import ldbc.slick.lifted.{ Tag, BaseTag, RefTag }
 import ldbc.slick.ast.TypedTypeTuple
 
-final class SlickTable[P <: Product](
-  using mirror: Mirror.ProductOf[P], classTag: ClassTag[P], tt: ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
+final class SlickTable[P <: Product](using
+  mirror:   Mirror.ProductOf[P],
+  classTag: ClassTag[P],
+  tt:       ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
 )(
-  table: Table[P],
-  profile: RelationalProfile,
-  tableTag: Tag,
+  table:          Table[P],
+  profile:        RelationalProfile,
+  tableTag:       Tag,
   typedTypeTuple: TypedTypeTuple[mirror.MirroredElemTypes]
-) extends Rep[P], Dynamic:
+) extends Rep[P],
+          Dynamic:
 
   private def tableIdentitySymbol: TableIdentitySymbol =
     SimpleTableIdentitySymbol(profile, "_", table._name)
@@ -46,23 +49,26 @@ final class SlickTable[P <: Product](
   @targetName("allColumnShape")
   private def * : ProvenShape[P] =
     val repColumns: Tuple.Map[mirror.MirroredElemTypes, Rep] =
-      table.*.zip(typedTypeTuple).map[Rep](
-        [t] => (tuple: t) =>
-          val (column, typedType) = tuple.asInstanceOf[(Column[t], TypedType[t])]
-          new Rep[t]:
-            override def encodeRef(path: Node): Rep[t] =
-              Rep.forNode(path)(using typedType)
+      table.*.zip(typedTypeTuple)
+        .map[Rep](
+          [t] =>
+            (tuple: t) =>
+              val (column, typedType) = tuple.asInstanceOf[(Column[t], TypedType[t])]
+              new Rep[t]:
+                override def encodeRef(path: Node): Rep[t] =
+                  Rep.forNode(path)(using typedType)
 
-            val node = tableTag match
-              case r: RefTag => r.path
-              case _ => tableNode
-            override def toNode = Select(node, FieldSymbol(column.label)(Seq.empty, typedType)) :@ typedType
+                val node = tableTag match
+                  case r: RefTag => r.path
+                  case _         => tableNode
+                override def toNode = Select(node, FieldSymbol(column.label)(Seq.empty, typedType)) :@ typedType
 
-            override def toString: String = (tableTag match
-              case r: RefTag => "(" + table._name + " " + r.path + ")"
-              case _ => table._name
-              ) + "." + column.label
-      ).asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Rep]]
+                override def toString: String = (tableTag match
+                  case r: RefTag => "(" + table._name + " " + r.path + ")"
+                  case _         => table._name
+                ) + "." + column.label
+        )
+        .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Rep]]
 
     val tupleShape = new TupleShape[
       FlatShapeLevel,
@@ -71,7 +77,9 @@ final class SlickTable[P <: Product](
       P
     ](
       table.all
-        .map(column => RepShape[FlatShapeLevel, Rep[SlickTable.Extract[column.type]], SlickTable.Extract[column.type]]): _*
+        .map(column =>
+          RepShape[FlatShapeLevel, Rep[SlickTable.Extract[column.type]], SlickTable.Extract[column.type]]
+        ): _*
     )
 
     val shapedValue = new ShapedValue[Tuple.Map[mirror.MirroredElemTypes, Rep], mirror.MirroredElemTypes](
@@ -82,21 +90,21 @@ final class SlickTable[P <: Product](
     shapedValue <> (mirror.fromTuple, Tuple.fromProductTyped)
 
   def selectDynamic[Tag <: Singleton](tag: Tag)(using
-                                                mirror: Mirror.ProductOf[P],
-                                                index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-                                                tt: TypedType[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+    mirror:                                Mirror.ProductOf[P],
+    index:                                 ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    tt: TypedType[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ): Rep[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
     val column = table.selectDynamic[Tag](tag)
     new Rep.TypedRep[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]:
       val node = tableTag match
         case r: RefTag => r.path
-        case _ => tableNode
+        case _         => tableNode
 
       override def toNode = Select(node, FieldSymbol(column.label)(Seq.empty, tt)) :@ tt
       override def toString: String = (tableTag match
         case r: RefTag => "(" + table._name + " " + r.path + ")"
-        case _ => table._name
-        ) + "." + column.label
+        case _         => table._name
+      ) + "." + column.label
 
 object SlickTable:
 
@@ -104,9 +112,9 @@ object SlickTable:
     case Column[t] => t
 
   inline def apply[P <: Product](table: Table[P], profile: RelationalProfile)(using
-                                                                       mirror: Mirror.ProductOf[P],
-                                                                       classTag: ClassTag[P],
-                                                                       tt:       ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
+    mirror:                             Mirror.ProductOf[P],
+    classTag:                           ClassTag[P],
+    tt:                                 ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
   ): SlickTable[P] =
 
     val typedTypeTuple = TypedTypeTuple.fold[mirror.MirroredElemTypes]

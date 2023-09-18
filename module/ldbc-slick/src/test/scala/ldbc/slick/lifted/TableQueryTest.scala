@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.slick.lifted
 
@@ -15,22 +15,22 @@ import ldbc.core.model.*
 import ldbc.slick.jdbc.MySQLProfile.api.*
 
 case class Country(
-                    code:           String,
-                    name:           String,
-                    continent:      Country.Continent,
-                    region:         String,
-                    surfaceArea:    BigDecimal,
-                    indepYear:      Option[Short],
-                    population:     Int,
-                    lifeExpectancy: Option[BigDecimal],
-                    gnp:            Option[BigDecimal],
-                    gnpOld:         Option[BigDecimal],
-                    localName:      String,
-                    governmentForm: String,
-                    headOfState:    Option[String],
-                    capital:        Option[Int],
-                    code2:          String
-                  )
+  code:           String,
+  name:           String,
+  continent:      Country.Continent,
+  region:         String,
+  surfaceArea:    BigDecimal,
+  indepYear:      Option[Short],
+  population:     Int,
+  lifeExpectancy: Option[BigDecimal],
+  gnp:            Option[BigDecimal],
+  gnpOld:         Option[BigDecimal],
+  localName:      String,
+  governmentForm: String,
+  headOfState:    Option[String],
+  capital:        Option[Int],
+  code2:          String
+)
 
 object Country:
 
@@ -79,28 +79,33 @@ class TableQueryTest extends AnyFlatSpec:
   dataSource.setPassword("password")
 
   private val table = SlickTableQuery[Country](Country.table)
-  private val db = Database.forDataSource(dataSource, None)
+  private val db    = Database.forDataSource(dataSource, None)
 
   it should "TableQuery Test" in {
-    val result = Await.result(db.run(table.filter(_.population > 126713999).filter(_.population < 126714001).result.headOption), Duration.Inf)
+    val result = Await.result(
+      db.run(table.filter(_.population > 126713999).filter(_.population < 126714001).result.headOption),
+      Duration.Inf
+    )
     db.close
-    assert(result === Some(
-      Country(
-        "JPN",
-        "Japan",
-        Country.Continent.Asia,
-        "Eastern Asia",
-        BigDecimal.decimal(377829.00),
-        Some(-660),
-        126714000,
-        Some(BigDecimal.decimal(80.7)),
-        Some(BigDecimal.decimal(3787042.00)),
-        Some(BigDecimal.decimal(4192638.00)),
-        "Nihon/Nippon",
-        "Constitutional Monarchy",
-        Some("Akihito"),
-        Some(1532),
-        "JP"
+    assert(
+      result === Some(
+        Country(
+          "JPN",
+          "Japan",
+          Country.Continent.Asia,
+          "Eastern Asia",
+          BigDecimal.decimal(377829.00),
+          Some(-660),
+          126714000,
+          Some(BigDecimal.decimal(80.7)),
+          Some(BigDecimal.decimal(3787042.00)),
+          Some(BigDecimal.decimal(4192638.00)),
+          "Nihon/Nippon",
+          "Constitutional Monarchy",
+          Some("Akihito"),
+          Some(1532),
+          "JP"
+        )
       )
-    ))
+    )
   }

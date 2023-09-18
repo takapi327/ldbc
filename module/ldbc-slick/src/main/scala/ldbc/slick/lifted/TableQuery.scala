@@ -22,8 +22,8 @@ class TableQuery[P <: Product](table: SlickTable[P]) extends Query[SlickTable[P]
 
 case class TableQueryBuilder(profile: RelationalProfile):
   inline def apply[P <: Product](table: Table[P])(using
-                                                            mirror: Mirror.ProductOf[P],
-                                                            classTag: ClassTag[P],
-                                                            tt: ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
+    mirror:                             Mirror.ProductOf[P],
+    classTag:                           ClassTag[P],
+    tt:                                 ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
   ): TableQuery[P] =
     new TableQuery[P](SlickTable[P](table, profile))
