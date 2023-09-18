@@ -4,21 +4,24 @@
 
 package ldbc.slick.lifted
 
-import slick.lifted.{ Query, ShapedValue, FlatShapeLevel }
+import scala.deriving.Mirror
+import scala.reflect.ClassTag
+
+import slick.lifted.{ Query, ShapedValue, FlatShapeLevel, ToTuple }
 
 import ldbc.slick.SlickTable
 
-class TableQuery[T <: SlickTable[?]](table: T) extends Query[T, TableQuery.Extract[T], Seq]:
+class TableQuery[P <: Product](table: SlickTable[P]) extends Query[SlickTable[P], P, Seq]:
 
-  override lazy val shaped: ShapedValue[T, TableQuery.Extract[T]] =
-    ShapedValue(table, slick.lifted.RepShape[FlatShapeLevel, T, TableQuery.Extract[T]])
+  override lazy val shaped: ShapedValue[SlickTable[P], P] =
+    ShapedValue(table, slick.lifted.RepShape[FlatShapeLevel, SlickTable[P], P])
 
   override lazy val toNode = shaped.toNode
 
-object TableQuery:
-
-  type Extract[T] = T match
-    case SlickTable[t] => t
-
-  def apply[T <: SlickTable[?]](table: T): TableQuery[T] =
-    new TableQuery[T](table)
+case class TableQueryBuilder(profile: slick.relational.RelationalProfile):
+  inline def apply[P <: Product](table: ldbc.core.Table[P])(using
+                                                            mirror: Mirror.ProductOf[P],
+                                                            classTag: ClassTag[P],
+                                                            tt: ToTuple[mirror.MirroredElemTypes, mirror.MirroredElemTypes]
+  ): TableQuery[P] =
+    new TableQuery[P](SlickTable[P](table, profile))
