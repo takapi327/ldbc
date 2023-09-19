@@ -17,11 +17,13 @@ import ldbc.slick.SlickTable
 class TableQuery[P <: Product](cons: Tag => SlickTable[P]) extends Query[SlickTable[P], P, Seq]:
 
   override lazy val shaped: ShapedValue[SlickTable[P], P] =
-    val baseTable = cons(new BaseTag:
-      base =>
-      override def taggedAs(path: Node): SlickTable[?] = cons(new RefTag(path):
-        override def taggedAs(path: Node) = base.taggedAs(path)
-      )
+    val baseTable = cons(
+      new BaseTag:
+        base =>
+        override def taggedAs(path: Node): SlickTable[?] = cons(
+          new RefTag(path):
+            override def taggedAs(path: Node) = base.taggedAs(path)
+        )
     )
     ShapedValue(baseTable, RepShape[FlatShapeLevel, SlickTable[P], P])
 

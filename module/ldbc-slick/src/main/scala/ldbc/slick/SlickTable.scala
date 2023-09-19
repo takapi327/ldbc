@@ -90,8 +90,8 @@ final class SlickTable[P <: Product](using
     shapedValue <> (mirror.fromTuple, Tuple.fromProductTyped)
 
   transparent inline def selectDynamic[Tag <: Singleton](tag: Tag)(using
-    mirror:                                Mirror.ProductOf[P],
-    index:                                 ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    mirror:                                                   Mirror.ProductOf[P],
+    index:                                                    ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     tt: TypedType[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ): Rep[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
     val column = table.selectDynamic[Tag](tag)
