@@ -27,16 +27,15 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   private[ldbc] val alias: Table[P] = table.as(s"${ table._name }_alias")
 
-  def selectDynamic[Tag <: Singleton](
+  transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
   )(using
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     reader: ResultSetReader[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ): ColumnQuery[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-    val column = table.selectDynamic[Tag](tag)
     ColumnQuery.fromColumn[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]](
-      column
+      table.selectDynamic[Tag](tag)
     )
 
   /** Type alias for ParameterBinder. Mainly for use with Tuple.map. */
@@ -66,13 +65,13 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     * @tparam T
     *   Type of value to be obtained
     */
-  def select[T](func: TableQuery[F, P] => Tuples.ToColumn[F, T]): Select[F, P, Tuples.ToColumn[F, T]] =
+  def select[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): Select[F, P, T] =
     val columns = func(this)
     val str = columns match
       case v: Tuple => v.toArray.distinct.mkString(", ")
       case v        => v
     val statement = s"SELECT $str FROM ${ table._name }"
-    Select[F, P, Tuples.ToColumn[F, T]](this, statement, columns, Seq.empty)
+    Select[F, P, T](this, statement, columns, Seq.empty)
 
   /** A method to join another table to itself.
     *
