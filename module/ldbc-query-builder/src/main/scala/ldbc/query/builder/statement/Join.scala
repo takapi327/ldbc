@@ -67,11 +67,13 @@ object Join:
 
     override def joinType: JoinType = JoinType.JOIN
 
-    def select[T](func: (TableQuery[F, P1], TableQuery[F, P2]) => T)(using Tuples.IsColumnQuery[F, T] =:= true): JoinSelect[F, P1, P2, T] =
-      val columns   = func(left, right)
+    def select[T](func: (TableQuery[F, P1], TableQuery[F, P2]) => T)(using
+      Tuples.IsColumnQuery[F, T] =:= true
+    ): JoinSelect[F, P1, P2, T] =
+      val columns = func(left, right)
       val str = columns match
         case v: Tuple => v.toArray.distinct.mkString(", ")
-        case v => v
+        case v        => v
       val statement = s"SELECT $str $fromStatement"
       JoinSelect[F, P1, P2, T](
         left      = left,
@@ -89,11 +91,13 @@ object Join:
 
     override def joinType: JoinType = JoinType.LEFT_JOIN
 
-    def select[T](func: (TableQuery[F, P1], TableOpt[F, P2]) => T)(using Tuples.IsColumnQuery[F, T] =:= true): Join.JoinSelect[F, P1, P2, T] =
-      val columns   = func(left, TableOpt(right.table))
+    def select[T](func: (TableQuery[F, P1], TableOpt[F, P2]) => T)(using
+      Tuples.IsColumnQuery[F, T] =:= true
+    ): Join.JoinSelect[F, P1, P2, T] =
+      val columns = func(left, TableOpt(right.table))
       val str = columns match
         case v: Tuple => v.toArray.distinct.mkString(", ")
-        case v => v
+        case v        => v
       val statement = s"SELECT $str $fromStatement"
       Join.JoinSelect[F, P1, P2, T](
         left      = left,
@@ -114,10 +118,10 @@ object Join:
     def select[T](
       func: (TableOpt[F, P1], TableQuery[F, P2]) => T
     )(using Tuples.IsColumnQuery[F, T] =:= true): Join.JoinSelect[F, P1, P2, T] =
-      val columns   = func(TableOpt(left.table), right)
+      val columns = func(TableOpt(left.table), right)
       val str = columns match
         case v: Tuple => v.toArray.distinct.mkString(", ")
-        case v => v
+        case v        => v
       val statement = s"SELECT $str $fromStatement"
       Join.JoinSelect[F, P1, P2, T](
         left      = left,
@@ -258,8 +262,8 @@ object Join:
 case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   transparent inline def selectDynamic[Tag <: Singleton](tag: Tag)(using
-    mirror:                                Mirror.ProductOf[P],
-    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    mirror:                                                   Mirror.ProductOf[P],
+    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     reader: ResultSetReader[F, Option[
       Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     ]]
