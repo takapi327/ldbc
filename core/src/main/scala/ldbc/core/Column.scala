@@ -23,7 +23,7 @@ trait Column[T]:
   def attributes: Seq[Attribute[T]]
 
   /** Column alias name */
-  private[ldbc] def alias: Option[String] = None
+  def alias: Option[String] = None
 
   /** Define SQL query string for each Column
     *
@@ -80,4 +80,4 @@ object Column:
 
     override def attributes: Seq[Attribute[T]] = _attributes
 
-    override private[ldbc] def alias = _alias
+    override def alias: Option[String] = _alias

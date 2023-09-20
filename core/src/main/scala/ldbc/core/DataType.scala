@@ -60,7 +60,7 @@ sealed trait DataType[T]:
   protected def nullType: String = if isOptional then "NULL" else "NOT NULL"
 
   /** Methods for overriding the DataType type with the Option type. */
-  private[ldbc] def toOption: DataType[Option[T]] =
+  def toOption: DataType[Option[T]] =
     new DataType[Option[T]]:
       override def typeName:    String          = self.typeName
       override def jdbcType:    JdbcType        = self.jdbcType
