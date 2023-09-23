@@ -124,7 +124,9 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     * @tparam T
     *   Type of value to be obtained
     */
-  inline def insertInto[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): SelectInsert[F, P, T] =
+  inline def insertInto[T](func: TableQuery[F, P] => T)(using
+    Tuples.IsColumnQuery[F, T] =:= true
+  ): SelectInsert[F, P, T] =
     val parameter: Parameter.MapToTuple[F, Column.Extract[T]] = Parameter.fold[F, Column.Extract[T]]
     SelectInsert[F, P, T](this, func(this), parameter)
 

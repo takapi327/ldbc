@@ -141,6 +141,6 @@ object Parameter:
 
   inline def fold[F[_], T]: MapToTuple[F, T] =
     inline erasedValue[T] match
-      case _: EmptyTuple => EmptyTuple
-      case _: (h *: EmptyTuple)   => infer[F, h] *: EmptyTuple
-      case _: (h *: t)   => infer[F, h] *: fold[F, t]
+      case _: EmptyTuple        => EmptyTuple
+      case _: (h *: EmptyTuple) => infer[F, h] *: EmptyTuple
+      case _: (h *: t)          => infer[F, h] *: fold[F, t]

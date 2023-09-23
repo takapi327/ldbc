@@ -74,14 +74,14 @@ case class MultiInsert[F[_], P <: Product, T <: Tuple](
     s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
 
 case class SelectInsert[F[_], P <: Product, T](
-  query: TableQuery[F, P],
-  columns:     T,
+  query:     TableQuery[F, P],
+  columns:   T,
   parameter: Parameter.MapToTuple[F, Column.Extract[T]]
 ):
 
   private val columnStatement = columns match
     case v: Tuple => v.toArray.distinct.mkString(", ")
-    case v => v
+    case v        => v
 
   private val insertStatement: String =
     s"INSERT INTO ${ query.table._name } ($columnStatement)"
@@ -89,10 +89,11 @@ case class SelectInsert[F[_], P <: Product, T](
   def values(tuple: Column.Extract[T]): Insert[F, P] =
     new Insert[F, P]:
       override def tableQuery: TableQuery[F, P] = query
-      override def statement: String = s"$insertStatement VALUES(${tuple.toArray.map(_ => "?").mkString(", ")})"
+      override def statement: String = s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
       override def params: Seq[ParameterBinder[F]] =
         tuple.zip(parameter).toArray.toSeq.map {
-          case (value: Any, parameter: Any) => ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+          case (value: Any, parameter: Any) =>
+            ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
         }
 
   def values(tuples: List[Column.Extract[T]]): Insert[F, P] =
@@ -102,5 +103,6 @@ case class SelectInsert[F[_], P <: Product, T](
       override def statement:  String           = s"$insertStatement VALUES${ values.mkString(", ") }"
       override def params: Seq[ParameterBinder[F]] =
         tuples.flatMap(_.zip(parameter).toArray.map {
-          case (value: Any, parameter: Any) => ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+          case (value: Any, parameter: Any) =>
+            ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
         })
