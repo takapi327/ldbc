@@ -490,7 +490,7 @@ object DatabaseConnectionTest extends Specification:
 
     "Only specified items can be added to the data." in {
       val result = city
-        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
+        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
         .values(("Test", "T1", "T", 1))
         .update
         .autoCommit
@@ -502,8 +502,8 @@ object DatabaseConnectionTest extends Specification:
 
     "Multiple additions of data can be made only for specified items." in {
       val result = city
-        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2))
+        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
+        .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
         .update
         .autoCommit
         .run(dataSource)
