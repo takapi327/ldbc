@@ -39,6 +39,11 @@ trait Column[T]:
   override def toString: String = alias.fold(s"`$label`")(name => s"$name.`$label`")
 
 object Column:
+  
+  type Extract[T] <: Tuple = T match
+    case Column[t] => t *: EmptyTuple
+    case Column[t] *: EmptyTuple => t *: EmptyTuple
+    case Column[t] *: ts => t *: Extract[ts]
 
   def apply[T](
     _label:    String,
