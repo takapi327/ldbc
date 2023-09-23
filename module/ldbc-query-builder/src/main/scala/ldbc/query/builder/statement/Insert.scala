@@ -42,7 +42,7 @@ case class SingleInsert[F[_], P <: Product, T <: Tuple](
   params:     Seq[ParameterBinder[F]]
 ) extends Insert[F, P]:
 
-  override def statement: String =
+  override val statement: String =
     s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
         .mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
 
@@ -73,6 +73,21 @@ case class MultiInsert[F[_], P <: Product, T <: Tuple](
   override val statement: String =
     s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
 
+/** A model for constructing INSERT statements that insert values into specified columns in MySQL.
+  *
+  * @param query
+  *   Trait for generating SQL table information.
+  * @param columns
+  *   List of columns into which values are to be inserted.
+  * @param parameter
+  *   Parameters of the value to be inserted
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  * @tparam T
+  *   Tuple type of the property with type parameter P
+  */
 case class SelectInsert[F[_], P <: Product, T](
   query:     TableQuery[F, P],
   columns:   T,
