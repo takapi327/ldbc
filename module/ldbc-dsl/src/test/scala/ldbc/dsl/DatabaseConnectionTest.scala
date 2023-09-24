@@ -152,8 +152,8 @@ object DatabaseConnectionTest extends Specification:
 
     "The number of cases retrieved using the subquery matches the specified value." in {
       val result = city
-        .select[(String, String)](v => (v.name, v.countryCode))
-        .where(_.countryCode _equals country.select[String](_.code).where(_.code _equals "JPN"))
+        .select(v => (v.name, v.countryCode))
+        .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
         .query
         .toList
         .readOnly
@@ -217,7 +217,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Join matches the specified model." in {
       val result = (city join country)
         .on((city, country) => city.countryCode _equals country.code)
-        .select[(String, String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query
@@ -233,7 +233,7 @@ object DatabaseConnectionTest extends Specification:
 
       val result = (city join country)
         .on((city, country) => city.countryCode _equals country.code)
-        .select[(String, String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query[CountryCity]
@@ -247,7 +247,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Left Join matches the specified model." in {
       val result = (city join country)
         .left((city, country) => city.countryCode _equals country.code)
-        .select[(String, Option[String])]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query
@@ -263,7 +263,7 @@ object DatabaseConnectionTest extends Specification:
 
       val result = (city join country)
         .left((city, country) => city.countryCode _equals country.code)
-        .select[(String, Option[String])]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query[CountryCity]
@@ -277,7 +277,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Right Join matches the specified model." in {
       val result = (city join country)
         .right((city, country) => city.countryCode _equals country.code)
-        .select[(Option[String], String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query
@@ -293,7 +293,7 @@ object DatabaseConnectionTest extends Specification:
 
       val result = (city join country)
         .right((city, country) => city.countryCode _equals country.code)
-        .select[(Option[String], String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query[CountryCity]
@@ -306,7 +306,7 @@ object DatabaseConnectionTest extends Specification:
 
     "The retrieved data matches the specified value." in {
       val result = city
-        .select[(String, Int)](v => (v.countryCode, v.id.count))
+        .select(v => (v.countryCode, v.id.count))
         .where(_.countryCode _equals "JPN")
         .query
         .headOption
@@ -320,7 +320,7 @@ object DatabaseConnectionTest extends Specification:
       case class CountryCodeGroup(countryCode: String, length: Int)
 
       val result = city
-        .select[(String, Int)](v => (v.countryCode, v.id.count))
+        .select(v => (v.countryCode, v.id.count))
         .groupBy(_._1)
         .query[CountryCodeGroup]
         .toList
@@ -332,12 +332,12 @@ object DatabaseConnectionTest extends Specification:
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       (for
-        codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").query.headOption
+        codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.headOption
         cities <- codeOpt match
                     case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
-                        .select[(String, String)](v => (v.name, v.countryCode))
+                        .select(v => (v.name, v.countryCode))
                         .where(_.countryCode _equals code)
                         .query
                         .toList
@@ -490,7 +490,7 @@ object DatabaseConnectionTest extends Specification:
 
     "Only specified items can be added to the data." in {
       val result = city
-        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
+        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
         .values(("Test", "T1", "T", 1))
         .update
         .autoCommit
@@ -502,8 +502,8 @@ object DatabaseConnectionTest extends Specification:
 
     "Multiple additions of data can be made only for specified items." in {
       val result = city
-        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2))
+        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
+        .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
         .update
         .autoCommit
         .run(dataSource)
@@ -561,7 +561,7 @@ object DatabaseConnectionTest extends Specification:
                .set("district", "not update Kanagawa", false)
                .where(_.id _equals 1637)
                .update
-        updated <- city.select[(String, String)](v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
       yield updated).transaction
         .run(dataSource)
         .unsafeRunSync()
@@ -571,7 +571,7 @@ object DatabaseConnectionTest extends Specification:
     "The update succeeds in the combined processing of multiple queries." in {
       (for
         codeOpt <- country
-                     .select[String](_.code)
+                     .select(_.code)
                      .where(_.name _equals "Test1")
                      .and(_.continent _equals Country.Continent.Asia)
                      .query

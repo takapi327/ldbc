@@ -22,7 +22,7 @@ case class Count[F[_]](_label: String) extends ColumnQuery[F, Int]:
 
   override def attributes: Seq[attribute.Attribute[Int]] = Seq.empty
 
-  override private[ldbc] def alias = None
+  override def alias: Option[String] = None
 
   override def reader: ResultSetReader[F, Int] = ResultSetReader.given_ResultSetReader_F_Int
 

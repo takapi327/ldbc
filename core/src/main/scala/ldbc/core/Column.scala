@@ -23,7 +23,7 @@ trait Column[T]:
   def attributes: Seq[Attribute[T]]
 
   /** Column alias name */
-  private[ldbc] def alias: Option[String] = None
+  def alias: Option[String] = None
 
   /** Define SQL query string for each Column
     *
@@ -39,6 +39,11 @@ trait Column[T]:
   override def toString: String = alias.fold(s"`$label`")(name => s"$name.`$label`")
 
 object Column:
+
+  type Extract[T] <: Tuple = T match
+    case Column[t]               => t *: EmptyTuple
+    case Column[t] *: EmptyTuple => t *: EmptyTuple
+    case Column[t] *: ts         => t *: Extract[ts]
 
   def apply[T](
     _label:    String,
@@ -80,4 +85,4 @@ object Column:
 
     override def attributes: Seq[Attribute[T]] = _attributes
 
-    override private[ldbc] def alias = _alias
+    override def alias: Option[String] = _alias
