@@ -128,6 +128,18 @@ object Parameter:
     override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] =
       statement.setString(index, value.toString)
 
+  given[F[_], T] (using parameter: Parameter[F, String]): Parameter[F, List[T]] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: List[T]): F[Unit] =
+      parameter.bind(statement, index, value.mkString(","))
+
+  given [F[_], T](using parameter: Parameter[F, String]): Parameter[F, Seq[T]] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: Seq[T]): F[Unit] =
+      parameter.bind(statement, index, value.mkString(","))
+
+  given[F[_], T] (using parameter: Parameter[F, String]): Parameter[F, Set[T]] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: Set[T]): F[Unit] =
+      parameter.bind(statement, index, value.mkString(","))
+
   type MapToTuple[F[_], T] <: Tuple = T match
     case EmptyTuple      => EmptyTuple
     case h *: EmptyTuple => Parameter[F, h] *: EmptyTuple
