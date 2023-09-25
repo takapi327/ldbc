@@ -61,9 +61,27 @@ lazy val plugin = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
     )
   }.taskValue)
 
+lazy val docs = (project in file("docs"))
+  .settings(
+    scalaVersion := (core / scalaVersion).value,
+    scalacOptions := Nil,
+    publish / skip := true
+  )
+  .settings(commonSettings)
+  .dependsOn(
+    core,
+    sql,
+    dsl,
+    queryBuilder,
+    schemaSpy,
+    codegen
+  )
+  .enablePlugins(MdocPlugin)
+
 lazy val projects: Seq[ProjectReference] = Seq(
   core,
   plugin,
+  docs
 )
 
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
