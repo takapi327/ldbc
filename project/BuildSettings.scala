@@ -81,8 +81,8 @@ object BuildSettings {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
         .settings(scalacOptions ++= scala3Settings)
-        .settings(commonSettings: _*)
-        .settings(publishSettings: _*)
+        .settings(commonSettings)
+        .settings(publishSettings)
   }
 
   /** A project that is an sbt plugin. */
@@ -91,9 +91,9 @@ object BuildSettings {
       Project(name, file(dir))
         .settings(scalaVersion := scala2)
         .settings(scalacOptions ++= baseScalaSettings)
-        .settings(commonSettings: _*)
-        .settings(publishSettings: _*)
-        .settings(scriptedSettings: _*)
+        .settings(commonSettings)
+        .settings(publishSettings)
+        .settings(scriptedSettings)
         .enablePlugins(SbtPlugin)
   }
 }
