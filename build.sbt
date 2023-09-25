@@ -65,7 +65,8 @@ lazy val docs = (project in file("docs"))
   .settings(
     scalaVersion := (core / scalaVersion).value,
     scalacOptions := Nil,
-    publish / skip := true
+    publish / skip := true,
+    mdocIn := baseDirectory.value / "src" / "main" / "mdoc"
   )
   .settings(commonSettings)
   .dependsOn(
