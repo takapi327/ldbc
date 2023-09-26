@@ -66,7 +66,14 @@ lazy val docs = (project in file("docs"))
     scalaVersion := (core / scalaVersion).value,
     scalacOptions := Nil,
     publish / skip := true,
-    mdocIn := baseDirectory.value / "src" / "main" / "mdoc"
+    mdocIn := baseDirectory.value / "src" / "main" / "mdoc",
+    paradoxTheme := Some(builtinParadoxTheme("generic")),
+    paradoxProperties ++= Map(
+      "scalaVersion" -> scalaVersion.value,
+      "version"      -> version.value.replace("-SNAPSHOT", ""),
+    ),
+    Compile / paradox / sourceDirectory := mdocOut.value,
+    makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
   )
   .settings(commonSettings)
   .dependsOn(
@@ -77,7 +84,7 @@ lazy val docs = (project in file("docs"))
     schemaSpy,
     codegen
   )
-  .enablePlugins(MdocPlugin)
+  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin)
 
 lazy val projects: Seq[ProjectReference] = Seq(
   core,
