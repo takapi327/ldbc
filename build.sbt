@@ -73,6 +73,7 @@ lazy val docs = (project in file("docs"))
       "version"      -> version.value.replace("-SNAPSHOT", ""),
     ),
     Compile / paradox / sourceDirectory := mdocOut.value,
+    Compile / paradoxRoots := List("index.html", "en/index.html", "ja/index.html"),
     makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
   )
   .settings(commonSettings)
