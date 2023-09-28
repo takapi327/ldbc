@@ -165,7 +165,54 @@ val table = Table[User]("user")(
 
 ### UNIQUE KEY
 
-Coming soon...
+一意キー（unique key）とはMySQLにおいてデータを一意に識別するための項目のことです。カラムに一意性制約を設定すると、カラムには他のデータの値を重複することのない値しか格納することができなくなります。
+
+Ldbcではこの一意性制約を2つの方法で設定することができます。
+
+1. columnメソッドの属性として設定する
+2. tableのkeySetメソッドで設定する
+
+**columnメソッドの属性として設定する**
+
+columnメソッドの属性として設定する方法は非常に簡単で、columnメソッドの第3引数以降に`UNIQUE_KEY`を渡すだけです。これによって以下の場合 `id`カラムを一意キーとして設定することができます。
+
+```scala 3
+column("id", BIGINT, AUTO_INCREMENT, UNIQUE_KEY)
+```
+
+**tableのkeySetメソッドで設定する**
+
+Ldbcのテーブル定義には `keySet`というメソッドが生えており、ここで`UNIQUE_KEY`に一意キーとして設定したいカラムを渡すことで一意キーとして設定することができます。
+
+```scala 3
+val table: TABLE[User] = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table => UNIQUE_KEY(table.id))
+```
+
+`UNIQUE_KEY`メソッドにはカラム意外にも以下のパラメーターを設定することができます。
+
+- `Index Name` String
+- `Index Type` ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH
+- `Index Option` ldbc.core.Index.IndexOption
+
+#### 複合キー
+
+1つのカラムだけではなく、複数のカラムを一意キーとして組み合わせ一意キーとして設定することもできます。`UNIQUE_KEY`に一意キーとして設定したいカラムを複数渡すだけで複合一意キーとして設定することができます。
+
+```scala 3
+val table = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table => UNIQUE_KEY(table.id, table.name))
+```
+
+複合キーは`keySet`メソッドでの`UNIQUE_KEY`でしか設定することはできません。仮にcolumnメソッドの属性として複数設定を行うと複合キーとしてではなく、それぞれを一意キーとして設定されてしまいます。
 
 ### INDEX KEY
 
