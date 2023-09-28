@@ -21,3 +21,17 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 - [English](http://localhost:4000/en/index.html)
 - [Japanese](http://localhost:4000/ja/index.html)
+
+## Contributing
+
+All suggestions welcome :)!
+
+If you’d like to contribute, see the list of [issues](https://github.com/takapi327/ldbc/issues) and pick one! Or report your own. If you have an idea you’d like to discuss, that’s always a good option.
+
+If you have any questions about why or how it works, feel free to ask on github. This probably means that the documentation, scaladocs, and code are unclear and can be improved for the benefit of all.
+
+### Testing
+
+If you want to build and run the tests for yourself, you'll need a local MySQL database. The easiest way to do this is to run `docker-compose up` from the project root.
+
+## Acknowledgments
