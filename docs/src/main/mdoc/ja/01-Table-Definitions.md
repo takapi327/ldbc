@@ -1,0 +1,176 @@
+# テーブル定義
+
+この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator]() を使ってこの作業を省略することもできます。
+
+以下のコード例では、以下のimportを想定しています。
+
+```scala 3
+import ldbc.core.*
+import ldbc.core.attribute.*
+```
+
+ldbcは、Scalaモデルとデータベースのテーブル定義を1対1のマッピングで管理します。モデルが保持するプロパティとテーブルが保持するカラムのマッピングは、定義順に行われます。テーブル定義は、Create文の構造と非常によく似ています。このため、テーブル定義の構築はユーザーにとって直感的なものとなります。
+
+ldbc は、このテーブル定義をさまざまな目的で使用します。型安全なクエリの生成、ドキュメントの生成など。
+
+```scala 3
+case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val table = Table[User]("user")(                     // CREATE TABLE `user` (
+  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
+  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
+)                                                    // );
+```
+
+すべてのカラムはcolumnメソッドで定義される。各カラムにはカラム名、データ型、属性があります。以下のプリミティブ型が標準でサポートされており、すぐに使用できます。
+
+- Numeric types: Byte, Short, Int, Long, Float, Double, BigDecimal, BigInt
+- LOB types: java.sql.Blob, java.sql.Clob, Array[Byte]
+- Date types: java.sql.Date, java.sql.Time, java.sql.Timestamp
+- String
+- Boolean
+- java.time.*
+
+Null可能な列はOption[T]で表現され、Tはサポートされるプリミティブ型の1つである。Option型でない列はすべてNot Nullであることに注意。
+
+## データ型
+
+モデルが持つプロパティのScala型とカラムが持つデータ型の対応付けは、定義されたデータ型がScala型をサポートしている必要があります。サポートされていない型を割り当てようとするとコンパイルエラーが発生します。
+
+データ型がサポートするScalaの型は以下の表の通りです。
+
+| Data Type  | Scala Type                                                                                    |
+|------------|-----------------------------------------------------------------------------------------------|
+| BIT        | Byte, Short, Int, Long                                                                        |
+| TINYINT    | Byte, Short                                                                                   |
+| SMALLINT   | Short, Int                                                                                    |
+| MEDIUMINT  | Int                                                                                           |
+| INT        | Int, Long                                                                                     |
+| BIGINT     | Long, BigInt                                                                                  |
+| DECIMAL    | BigDecimal                                                                                    |
+| FLOAT      | Float                                                                                         |
+| DOUBLE     | Double                                                                                        |
+| CHAR       | String                                                                                        |
+| VARCHAR    | String                                                                                        |
+| BINARY     | Array[Byte]                                                                                   |
+| VARBINARY  | Array[Byte]                                                                                   |
+| TINYBLOB   | Array[Byte]                                                                                   |
+| BLOB       | Array[Byte]                                                                                   |
+| MEDIUMBLOB | Array[Byte]                                                                                   |
+| LONGBLOB   | Array[Byte]                                                                                   |
+| TINYTEXT   | String                                                                                        |
+| TEXT       | String                                                                                        |
+| MEDIUMTEXT | String                                                                                        |
+| DATE       | java.time.LocalDate                                                                           |
+| DATETIME   | java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime                              |
+| TIMESTAMP  | java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime |
+| TIME       | java.time.LocalTime                                                                           |
+| YEAR       | java.time.Instant, java.time.LocalDate, java.time.Year                                        |
+| BOOLEAN    | Boolean                                                                                       |
+
+整数型を扱う際の注意点。符号あり、符号なしに応じて、扱えるデータの範囲がScalaの型に収まらないことに注意。
+
+| Data Type | signed range                               | unsigned range           | Scala Type     | range                                                              |
+|-----------|--------------------------------------------|--------------------------|----------------|--------------------------------------------------------------------|
+| TINYINT   | -128 ~ 127                                 | 0 ~ 255                  | Byte<br>Short  | -128 ~ 127<br>-32768～32767                                         |
+| SMALLINT  | -32768 ~ 32767                             | 0 ~ 65535                | Short<br>Int   | -32768～32767<br>-2147483648～2147483647                             |
+| MEDIUMINT | -8388608 ~ 8388607                         | 0 ~ 16777215             | Int            | -2147483648～2147483647                                             |
+| INT       | -2147483648	~ 2147483647                   | 0 ~ 4294967295           | Int<br>Long    | -2147483648～2147483647<br>-9223372036854775808～9223372036854775807 |
+| BIGINT    | -9223372036854775808 ~ 9223372036854775807 | 0 ~ 18446744073709551615 | Long<br>BigInt | -9223372036854775808～9223372036854775807<br>...                    |
+
+ユーザー定義の独自型やサポートされていない型を扱う場合は、[カスタム型]() を参照してください。
+
+## 属性
+
+カラムにはさまざまな属性を割り当てることができます。
+
+- `AUTO_INCREMENT`
+  DDL文を作成し、SchemaSPYを文書化する際に、列を自動インクリメント・キーとしてマークする。
+  MySQLでは、データ挿入時にAutoIncでないカラムを返すことはできません。そのため、必要に応じて、Ldbcは戻りカラムがAutoIncとして適切にマークされているかどうかを確認します。
+- `PRIMARY_KEY`
+  DDL文やSchemaSPYドキュメントを作成する際に、列を主キーとしてマークする。
+- `UNIQUE_KEY`
+  DDL文やSchemaSPYドキュメントを作成する際に、列を一意キーとしてマークする。
+- `COMMENT`
+  DDL文やSchemaSPY文書を作成する際に、列にコメントを設定する。
+
+## キーの設定
+
+MySQLではテーブルに対してUniqueキーやIndexキー、外部キーなどの様々なキーを設定することができます。Ldbcで構築したテーブル定義でこれらのキーを設定する方法を見ていきましょう。
+
+### PRIMARY KEY
+
+主キー（primary key）とはMySQLにおいてデータを一意に識別するための項目のことです。カラムにプライマリーキー制約を設定すると、カラムには他のデータの値を重複することのない値しか格納することができなくなります。また NULL も格納することができません。その結果、プライマリーキー制約が設定されたカラムの値を検索することで、テーブルの中でただ一つのデータを特定することができます。
+
+Ldbcではこのプライマリーキー制約を2つの方法で設定することができます。
+
+1. columnメソッドの属性として設定する
+2. tableのkeySetメソッドで設定する
+
+**columnメソッドの属性として設定する**
+
+columnメソッドの属性として設定する方法は非常に簡単で、columnメソッドの第3引数以降に`PRIMARY_KEY`を渡すだけです。これによって以下の場合 `id`カラムを主キーとして設定することができます。
+
+```scala 3
+column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+```
+
+**tableのkeySetメソッドで設定する**
+
+Ldbcのテーブル定義には `keySet`というメソッドが生えており、ここで`PRIMARY_KEY`に主キーとして設定したいカラムを渡すことで主キーとして設定することができます。
+
+```scala 3
+val table: TABLE[User] = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table => PRIMARY_KEY(table.id))
+```
+
+`PRIMARY_KEY`メソッドにはカラム意外にも以下のパラメーターを設定することができます。
+
+- `Index Type` ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH
+- `Index Option` ldbc.core.Index.IndexOption
+
+#### 複合キー
+
+1つのカラムだけではなく、複数のカラムを主キーとして組み合わせ主キーとして設定することもできます。`PRIMARY_KEY`に主キーとして設定したいカラムを複数渡すだけで複合主キーとして設定することができます。
+
+```scala 3
+val table = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table => PRIMARY_KEY(table.id, table.name))
+```
+
+複合キーは`keySet`メソッドでの`PRIMARY_KEY`でしか設定することはできません。仮に以下のようにcolumnメソッドの属性として複数設定を行うと複合キーとしてではなく、それぞれを主キーとして設定されてしまいます。
+
+Ldbcではテーブル定義に複数`PRIMARY_KEY`を設定したとしてもコンパイルエラーにすることはできません。しかし、テーブル定義をクエリの生成やドキュメントの生成などで使用する場合エラーとなります。これはPRIMARY KEYはテーブルごとに1つしか設定することができないという制約によるものです。
+
+```scala 3
+val table = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(255), PRIMARY_KEY),
+  column("age", INT.UNSIGNED.DEFAULT(None))
+)
+```
+
+### UNIQUE KEY
+
+Coming soon...
+
+### INDEX KEY
+
+Coming soon...
+
+### FOREIGN KEY
+
+Coming soon...
