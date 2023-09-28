@@ -1,6 +1,6 @@
 # テーブル定義
 
-この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator]() を使ってこの作業を省略することもできます。
+この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator]() を使ってこの作業を省略することもできます。
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -125,7 +125,7 @@ column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
 Ldbcのテーブル定義には `keySet`というメソッドが生えており、ここで`PRIMARY_KEY`に主キーとして設定したいカラムを渡すことで主キーとして設定することができます。
 
 ```scala 3
-val table: TABLE[User] = Table[User]("user")(
+val table = Table[User]("user")(
   column("id", BIGINT[Long], AUTO_INCREMENT),
   column("name", VARCHAR(255)),
   column("age", INT.UNSIGNED.DEFAULT(None))
@@ -138,7 +138,7 @@ val table: TABLE[User] = Table[User]("user")(
 - `Index Type` ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH
 - `Index Option` ldbc.core.Index.IndexOption
 
-#### 複合キー
+#### 複合キー (primary key)
 
 1つのカラムだけではなく、複数のカラムを主キーとして組み合わせ主キーとして設定することもできます。`PRIMARY_KEY`に主キーとして設定したいカラムを複数渡すだけで複合主キーとして設定することができます。
 
@@ -185,7 +185,7 @@ column("id", BIGINT, AUTO_INCREMENT, UNIQUE_KEY)
 Ldbcのテーブル定義には `keySet`というメソッドが生えており、ここで`UNIQUE_KEY`に一意キーとして設定したいカラムを渡すことで一意キーとして設定することができます。
 
 ```scala 3
-val table: TABLE[User] = Table[User]("user")(
+val table = Table[User]("user")(
   column("id", BIGINT[Long], AUTO_INCREMENT),
   column("name", VARCHAR(255)),
   column("age", INT.UNSIGNED.DEFAULT(None))
@@ -199,7 +199,7 @@ val table: TABLE[User] = Table[User]("user")(
 - `Index Type` ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH
 - `Index Option` ldbc.core.Index.IndexOption
 
-#### 複合キー
+#### 複合キー (unique key)
 
 1つのカラムだけではなく、複数のカラムを一意キーとして組み合わせ一意キーとして設定することもできます。`UNIQUE_KEY`に一意キーとして設定したいカラムを複数渡すだけで複合一意キーとして設定することができます。
 
@@ -216,7 +216,54 @@ val table = Table[User]("user")(
 
 ### INDEX KEY
 
-Coming soon...
+インデックスキー（index key）とはMySQLにおいて目的のレコードを効率よく取得するための「索引」のことです。
+
+Ldbcではこのインデックスを2つの方法で設定することができます。
+
+1. columnメソッドの属性として設定する
+2. tableのkeySetメソッドで設定する
+
+**columnメソッドの属性として設定する**
+
+columnメソッドの属性として設定する方法は非常に簡単で、columnメソッドの第3引数以降に`INDEX_KEY`を渡すだけです。これによって以下の場合 `id`カラムをインデックスとして設定することができます。
+
+```scala 3
+column("id", BIGINT, AUTO_INCREMENT, INDEX_KEY)
+```
+
+**tableのkeySetメソッドで設定する**
+
+Ldbcのテーブル定義には `keySet`というメソッドが生えており、ここで`INDEX_KEY`にインデックスとして設定したいカラムを渡すことでインデックスキーとして設定することができます。
+
+```scala 3
+val table = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table => INDEX_KEY(table.id))
+```
+
+`INDEX_KEY`メソッドにはカラム意外にも以下のパラメーターを設定することができます。
+
+- `Index Name` String
+- `Index Type` ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH
+- `Index Option` ldbc.core.Index.IndexOption
+
+#### 複合キー (index key)
+
+1つのカラムだけではなく、複数のカラムをインデックスキーとして組み合わせインデックスキーとして設定することもできます。`INDEX_KEY`にインデックスキーとして設定したいカラムを複数渡すだけで複合インデックスとして設定することができます。
+
+```scala 3
+val table = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table => INDEX_KEY(table.id, table.name))
+```
+
+複合キーは`keySet`メソッドでの`INDEX_KEY`でしか設定することはできません。仮にcolumnメソッドの属性として複数設定を行うと複合インデックスとしてではなく、それぞれをインデックスキーとして設定されてしまいます。
 
 ### FOREIGN KEY
 
