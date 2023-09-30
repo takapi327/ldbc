@@ -267,4 +267,72 @@ val table = Table[User]("user")(
 
 ### FOREIGN KEY
 
+外部キー（foreign key）とは、MySQLにおいてデータの整合性を保つための制約（参照整合性制約）です。  外部キーに設定されているカラムには、参照先となるテーブルのカラム内に存在している値しか設定できません。
+
+LDBCではこの外部キー制約をtableのkeySetメソッドを使用する方法で設定することができます。
+
+```scala 3
+val post = Table[Post]("post")(
+  column("id", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(255))
+)
+
+val user = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None)),
+  column("post_id", BIGINT[Long])
+)
+  .keySet(table => FOREIGN_KEY(table.postId, REFERENCE(post, post.id)))
+```
+
+`FOREIGN_KEY`メソッドにはカラムとReference値意外にも以下のパラメーターを設定することができます。
+
+- `Index Name` String
+
+外部キー制約には親テーブルの削除時と更新時の挙動を設定することができます。`REFERENCE`メソッドに`onDelete`と`onUpdate`メソッドが提供されているのでこちらを使用することでそれぞれ設定することができます。
+
+設定することのできる値は`ldbc.core.Reference.ReferenceOption`から取得することができます。
+
+```scala 3
+val user = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None)),
+  column("post_id", BIGINT[Long])
+)
+  .keySet(table => FOREIGN_KEY(table.postId, REFERENCE(post, post.id).onDelete(Reference.ReferenceOption.RESTRICT)))
+```
+
+設定することのできる値は以下になります。
+
+- `RESTRICT`: 親テーブルに対する削除または更新操作を拒否します。
+- `CASCADE`: 親テーブルから行を削除または更新し、子テーブル内の一致する行を自動的に削除または更新します。
+- `SET_NULL`: 親テーブルから行を削除または更新し、子テーブルの外部キーカラムを NULL に設定します。
+- `NO_ACTION`: 標準 SQL のキーワード。 MySQLでは、RESTRICT と同等です。
+- `SET_DEFAULT`: このアクションは MySQL パーサーによって認識されますが、InnoDB と NDB はどちらも、ON DELETE SET DEFAULT または ON UPDATE SET DEFAULT 句を含むテーブル定義を拒否します。
+
+#### 複合キー (foreign key)
+
+1つのカラムだけではなく、複数のカラムを外部キーとして組み合わせて設定することもできます。`FOREIGN_KEY`に外部キーとして設定したいカラムを複数渡すだけで複合外部キーとして設定することができます。
+
+```scala 3
+val post = Table[Post]("post")(
+  column("id", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(255)),
+  column("category", SMALLINT[Short])
+)
+
+val user = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None)),
+  column("post_id", BIGINT[Long]),
+  column("post_category", SMALLINT[Short])
+)
+  .keySet(table => FOREIGN_KEY(List(table.postId, table.postCategory), REFERENCE(post, post.id, post.category)))
+```
+
+### 制約
+
 Coming soon...
