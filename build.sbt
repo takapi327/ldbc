@@ -69,6 +69,7 @@ lazy val docs = (project in file("docs"))
     mdocIn := baseDirectory.value / "src" / "main" / "mdoc",
     paradoxTheme := Some(builtinParadoxTheme("generic")),
     paradoxProperties ++= Map(
+      "org"          -> organization.value,
       "scalaVersion" -> scalaVersion.value,
       "version"      -> version.value.replace("-SNAPSHOT", ""),
     ),
