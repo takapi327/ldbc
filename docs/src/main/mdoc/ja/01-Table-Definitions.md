@@ -333,6 +333,18 @@ val user = Table[User]("user")(
   .keySet(table => FOREIGN_KEY(List(table.postId, table.postCategory), REFERENCE(post, post.id, post.category)))
 ```
 
-### 制約
+### 制約名
 
-Coming soon...
+MySQLではCONSTRAINTを使用することで制約に対して任意の名前を付与することができます。この制約名はデータベース単位で一意の値である必要があります。
+
+LdbcではCONSTRAINTメソッドが提供されているのでキー制約などの制約を設定する処理をCONSTRAINTメソッドに渡すだけで設定することができます。
+
+```scala 3
+val user = Table[User]("user")(
+  column("id", BIGINT[Long], AUTO_INCREMENT),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None)),
+  column("post_id", BIGINT[Long])
+)
+  .keySet(table => CONSTRAINT("fk_post_id", FOREIGN_KEY(table.postId, REFERENCE(post, post.id))))
+```
