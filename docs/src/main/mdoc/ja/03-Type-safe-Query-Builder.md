@@ -35,12 +35,44 @@ val table = Table[User]("user")(
   column("age", INT.UNSIGNED.DEFAULT(None)),
 )
 
-val user = TableQuery[IO, User](table)
+val userQuery = TableQuery[IO, User](table)
 ```
 
 ## SELECT
 
-Coming soon...
+型安全にSELECT文を構築する方法はTableQueryが提供する`select`メソッドを使用することです。LDBCではプレーンなクエリに似せて実装されているため直感的にクエリ構築が行えます。またどのようなクエリが構築されているかも一目でわかるような作りになっています。
+
+特定のカラムのみ取得を行うSELECT文を構築するには`select`メソッドで取得したいカラムを指定するだけです。
+
+```scala 3
+val select = userQuery.select(_.id)
+
+select.statement === "SELECT `id` FROM user"
+```
+
+複数のカラムを指定する場合は`select`メソッドで取得したいカラムを指定して指定したカラムのタプルを返すだけです。
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name))
+
+select.statement === "SELECT `id`, `name` FROM user"
+```
+
+全てのカラムを指定したい場合はTableQueryが提供する`selectAll`メソッドを使用することで構築できます。
+
+```scala 3
+val select = userQuery.selectAll
+
+select.statement === "SELECT `id`, `name`, `age` FROM user"
+```
+
+特定のカラムの数を取得したい場合は、指定したカラムで`count`を使用することで構築できます。　
+
+```scala 3
+val select = userQuery.select(_.id.count)
+
+select.statement === "SELECT COUNT(id) FROM user"
+```
 
 ## INSERT
 
