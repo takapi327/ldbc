@@ -74,6 +74,41 @@ val select = userQuery.select(_.id.count)
 select.statement === "SELECT COUNT(id) FROM user"
 ```
 
+### WHERE
+
+クエリに型安全にWhere条件を設定する方法は`where`メソッドを使用することです。
+
+```scala 3
+val select = userQuery.select(_.id).where(_.name === "Test")
+
+select.statement === "SELECT `id` FROM user WHERE name = ?"
+```
+
+`where`メソッドで使用できる条件の一覧は以下です。
+
+| 条件                                   | ステートメント                               |
+|--------------------------------------|---------------------------------------|
+| ===                                  | `column = ?`                          |
+| >=                                   | `column >= ?`                         |
+| >                                    | `column > ?`                          |
+| <=                                   | `column <= ?`                         |
+| <                                    | `column < ?`                          |
+| <>                                   | `column <> ?`                         |
+| !==                                  | `column != ?`                         |
+| IS ("TRUE"/"FALSE"/"UNKNOWN"/"NULL") | `column IS {TRUE/FALSE/UNKNOWN/NULL}` |
+| <=>                                  | `column <=> ?`                        |
+| IN (value, value, ...)               | `column IN (?, ?, ...)`               |
+| BETWEEN (start, end)                 | `column BETWEEN ? AND ?`              |
+| LIKE (value)                         | `column LIKE ?`                       |
+| LIKE_ESCAPE (like, escape)           | `column LIKE ? ESCAPE ?`              |
+| REGEXP (value)                       | `column REGEXP ?`                     |
+| `<<` (value)                         | `column << ?`                         |
+| `>>` (value)                         | `column >> ?`                         |
+| DIV (cond, result)                   | `column DIV ? = ?`                    |
+| MOD (cond, result)                   | `column MOD ? = ?`                    |
+| ^ (value)                            | `column ^ ?`                          |
+| ~ (value)                            | `~column = ?`                         |
+
 ## INSERT
 
 Coming soon...
