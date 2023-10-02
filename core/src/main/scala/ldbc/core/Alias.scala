@@ -199,7 +199,7 @@ private[ldbc] trait Alias:
   def REFERENCE[T <: Tuple](table: Table[?], columns: Tuple.Map[T, Column]): Reference[T] =
     Reference[T](table, columns, None, None)
 
-  def REFERENCETest[T <: Tuple](table: Table[?], columns: Tuple.Map[T, Column]): Reference[T] =
+  def REFERENCES[T <: Tuple](table: Table[?], columns: Tuple.Map[T, Column]): Reference[T] =
     Reference[T](table, columns, None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
