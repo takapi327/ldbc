@@ -153,40 +153,54 @@ private[ldbc] trait Alias:
     )
     IndexKey(indexName, indexType, keyPart.toList, indexOption)
 
-  def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey): Constraint = Constraint(None, key)
+  def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey[?]): Constraint = Constraint(None, key)
 
   def CONSTRAINT(
     symbol: String,
-    key:    PrimaryKey | UniqueKey | ForeignKey
+    key:    PrimaryKey | UniqueKey | ForeignKey[?]
   ): Constraint = Constraint(Some(symbol), key)
 
-  def FOREIGN_KEY(
-    colName:   Column[?],
-    reference: Reference
-  ): ForeignKey = ForeignKey(None, List(colName), reference)
+  def FOREIGN_KEY[T](
+    column:    Column[T],
+    reference: Reference[T *: EmptyTuple]
+  ): ForeignKey[T *: EmptyTuple] = ForeignKey[T *: EmptyTuple](None, column *: EmptyTuple, reference)
 
-  def FOREIGN_KEY(
-    indexName: Option[String],
-    colName:   List[Column[?]],
-    reference: Reference
-  ): ForeignKey =
-    require(
-      colName.nonEmpty,
-      "At least one column must always be specified."
-    )
-    ForeignKey(indexName, colName, reference)
+  def FOREIGN_KEY[T](
+                    name: String,
+    column: Column[T],
+    reference: Reference[T *: EmptyTuple]
+  ): ForeignKey[T *: EmptyTuple] = ForeignKey[T *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
 
-  def REFERENCE(
-    table:   Table[?],
-    keyPart: Column[?]
-  ): Reference = Reference(table, List(keyPart), None, None)
+  def FOREIGN_KEY[T <: Tuple](
+    columns: Tuple.Map[T, Column],
+    reference: Reference[T]
+  ): ForeignKey[T] =
+    ForeignKey[T](None, columns, reference)
 
-  def REFERENCE(table: Table[?], columns: Column[?]*): Reference =
-    require(
-      columns.nonEmpty,
-      "For Reference settings, at least one COLUMN must always be specified."
-    )
-    Reference(table, columns.toList, None, None)
+  def FOREIGN_KEY[T <: Tuple](
+                               name: String,
+                               columns: Tuple.Map[T, Column],
+                               reference: Reference[T]
+                             ): ForeignKey[T] =
+    ForeignKey[T](Some(name), columns, reference)
+
+  def FOREIGN_KEY[T <: Tuple](
+    name: Option[String],
+    columns:   Tuple.Map[T, Column],
+    reference: Reference[T]
+  ): ForeignKey[T] =
+    ForeignKey[T](name, columns, reference)
+
+  def REFERENCE[T](
+    table:  Table[?],
+    column: Column[T]
+  ): Reference[T *: EmptyTuple] = Reference[T *: EmptyTuple](table, column *: EmptyTuple, None, None)
+
+  def REFERENCE[T <: Tuple](table: Table[?], columns: Tuple.Map[T, Column]): Reference[T] =
+    Reference[T](table, columns, None, None)
+
+  def REFERENCETest[T <: Tuple](table: Table[?], columns: Tuple.Map[T, Column]): Reference[T] =
+    Reference[T](table, columns, None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
 
