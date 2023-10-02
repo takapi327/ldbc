@@ -61,7 +61,7 @@ private[ldbc] trait TableValidator:
   if constraints.nonEmpty then
     require(
       constraints.exists(_.key match
-        case key: ForeignKey => key.colName.map(_.dataType) == key.reference.keyPart.map(_.dataType)
+        case key: ForeignKey[?] => key.columns.toList.map(_.asInstanceOf[Column[?]].dataType) == key.reference.keyPart.toList.map(_.asInstanceOf[Column[?]].dataType)
         case _               => false
       ),
       s"""
@@ -77,12 +77,12 @@ private[ldbc] trait TableValidator:
 
     require(
       constraints.exists(_.key match
-        case key: ForeignKey =>
-          key.reference.keyPart.toList.flatMap(_.attributes).exists(_.isInstanceOf[PrimaryKey]) ||
-          key.reference.table.keyDefinitions.exists(_ match
-            case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
-            case _                        => false
-          )
+        case key: ForeignKey[?] =>
+          key.reference.keyPart.toList.flatMap(_.asInstanceOf[Column[?]].attributes).exists(_.isInstanceOf[PrimaryKey]) ||
+          key.reference.table.keyDefinitions.exists {
+            case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.toList.exists(_ == c))
+            case _ => false
+          }
         case _ => false
       ),
       "The column referenced by FOREIGN KEY must be a PRIMARY KEY."
@@ -91,10 +91,10 @@ private[ldbc] trait TableValidator:
   private def initForeignKeyErrorMsg(constraints: Seq[Constraint]): String =
     constraints
       .flatMap(_.key match
-        case key: ForeignKey =>
+        case key: ForeignKey[?] =>
           for
-            (column, index)             <- key.colName.zipWithIndex.toList
-            (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
+            (column, index)             <- key.columns.toList.asInstanceOf[List[Column[?]]].zipWithIndex
+            (refColumn, refColumnIndex) <- key.reference.keyPart.toList.asInstanceOf[List[Column[?]]].zipWithIndex
           yield
             if index == refColumnIndex then s"""
              |(${ column.dataType == refColumn.dataType }) `${ column.label }` ${ column.dataType.typeName } =:= `${ refColumn.label }` ${ refColumn.dataType.typeName }
