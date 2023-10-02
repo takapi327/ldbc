@@ -169,4 +169,22 @@ update.statement === "UPDATE user SET name = ?, age = ? WHERE id = ?"
 
 ## DELETE
 
-Coming soon...
+型安全にSELECT文を構築する方法はTableQueryが提供する`delete`メソッドを使用することです。
+
+```scala 3
+val delete = userQuery.delete
+
+delete.statement === "DELETE FROM user"
+```
+
+### WHERE
+
+`where`メソッドを使用することでdelete文にもWhere条件を設定することができます。
+
+```scala 3
+val delete = userQuery.delete.where(_.id === 1)
+
+delete.statement === "DELETE FROM user WHERE id = ?"
+```
+
+`where`メソッドで使用できる条件はInsert文の[where項目](http://localhost:4000/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
