@@ -115,7 +115,57 @@ Coming soon...
 
 ## UPDATE
 
-Coming soon...
+型安全にSELECT文を構築する方法はTableQueryが提供する`update`メソッドを使用することです。
+
+`update`メソッドの第1引数にはテーブルのカラム名ではなくモデルのプロパティ名を指定し、第2引数に更新したい値を渡します。第2引数に渡す値の型は第1引数で指定したプロパティの型と同じである必要があります。
+
+```scala 3
+val update = userQuery.update("name", "update name")
+
+update.statement === "UPDATE user SET name = ?"
+```
+
+第1引数に存在しないプロパティ名を指定した場合コンパイルエラーとなります。
+
+```scala 3
+val update = userQuery.update("hoge", "update name") // Compile error
+```
+
+複数のカラムを更新したい場合は`set`メソッドを使用します。
+
+```scala 3
+val update = userQuery.update("name", "update name").set("age", Some(20))
+
+update.statement === "UPDATE user SET name = ?, age = ?"
+```
+
+`set`メソッドには条件に応じてクエリを生成させないようにすることもできます。
+
+```scala 3
+val update = userQuery.update("name", "update name").set("age", Some(20), false)
+
+update.statement === "UPDATE user SET name = ?"
+```
+
+モデルを使用してupdate文を構築することもできます。モデルを使用する場合は全てのカラムを更新してしまうことに注意してください。
+
+```scala 3
+val update = userQuery.update(User(1L, "update name", None))
+
+update.statement === "UPDATE user SET id = ?, name = ?, age = ?"
+```
+
+### WHERE
+
+`where`メソッドを使用することでupdate文にもWhere条件を設定することができます。
+
+```scala 3
+val update = userQuery.update("name", "update name").set("age", Some(20)).where(_.id === 1)
+
+update.statement === "UPDATE user SET name = ?, age = ? WHERE id = ?"
+```
+
+`where`メソッドで使用できる条件はInsert文の[where項目](http://localhost:4000/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
 
 ## DELETE
 
