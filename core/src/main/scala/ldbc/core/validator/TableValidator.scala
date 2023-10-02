@@ -61,8 +61,10 @@ private[ldbc] trait TableValidator:
   if constraints.nonEmpty then
     require(
       constraints.exists(_.key match
-        case key: ForeignKey[?] => key.columns.toList.map(_.asInstanceOf[Column[?]].dataType) == key.reference.keyPart.toList.map(_.asInstanceOf[Column[?]].dataType)
-        case _               => false
+        case key: ForeignKey[?] =>
+          key.columns.toList.map(_.asInstanceOf[Column[?]].dataType) == key.reference.keyPart.toList
+            .map(_.asInstanceOf[Column[?]].dataType)
+        case _ => false
       ),
       s"""
          |The type of the column set in FOREIGN KEY does not match.
@@ -78,10 +80,12 @@ private[ldbc] trait TableValidator:
     require(
       constraints.exists(_.key match
         case key: ForeignKey[?] =>
-          key.reference.keyPart.toList.flatMap(_.asInstanceOf[Column[?]].attributes).exists(_.isInstanceOf[PrimaryKey]) ||
+          key.reference.keyPart.toList
+            .flatMap(_.asInstanceOf[Column[?]].attributes)
+            .exists(_.isInstanceOf[PrimaryKey]) ||
           key.reference.table.keyDefinitions.exists {
             case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.toList.exists(_ == c))
-            case _ => false
+            case _                        => false
           }
         case _ => false
       ),

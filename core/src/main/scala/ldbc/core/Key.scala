@@ -219,8 +219,8 @@ private[ldbc] case class Constraint(
   def label: String = "CONSTRAINT"
 
   private val keyQueryString: String = key match
-    case p: PrimaryKey => p.queryString
-    case u: UniqueKey  => u.queryString
+    case p: PrimaryKey    => p.queryString
+    case u: UniqueKey     => u.queryString
     case f: ForeignKey[?] => f.queryString
 
   def queryString: String =

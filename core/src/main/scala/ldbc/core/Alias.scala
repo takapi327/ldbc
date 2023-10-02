@@ -166,26 +166,26 @@ private[ldbc] trait Alias:
   ): ForeignKey[T *: EmptyTuple] = ForeignKey[T *: EmptyTuple](None, column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T](
-                    name: String,
-    column: Column[T],
+    name:      String,
+    column:    Column[T],
     reference: Reference[T *: EmptyTuple]
   ): ForeignKey[T *: EmptyTuple] = ForeignKey[T *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T <: Tuple](
-    columns: Tuple.Map[T, Column],
+    columns:   Tuple.Map[T, Column],
     reference: Reference[T]
   ): ForeignKey[T] =
     ForeignKey[T](None, columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
-                               name: String,
-                               columns: Tuple.Map[T, Column],
-                               reference: Reference[T]
-                             ): ForeignKey[T] =
+    name:      String,
+    columns:   Tuple.Map[T, Column],
+    reference: Reference[T]
+  ): ForeignKey[T] =
     ForeignKey[T](Some(name), columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
-    name: Option[String],
+    name:      Option[String],
     columns:   Tuple.Map[T, Column],
     reference: Reference[T]
   ): ForeignKey[T] =
