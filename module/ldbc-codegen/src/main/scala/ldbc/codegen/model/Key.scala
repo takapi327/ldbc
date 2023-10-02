@@ -114,7 +114,7 @@ object Key:
     def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String =
       val columns = keyParts.map(v => s"$tableName.${ propertyFormatter.format(v) }")
       val key =
-        s"FOREIGN_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") }, List(${ columns
+        s"FOREIGN_KEY(${ indexName.fold("None")(v => s"Some(\"$v\")") }, (${ columns
             .mkString(", ") }), ${ reference.toCode(classNameFormatter, propertyFormatter) })"
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
@@ -128,7 +128,7 @@ object Key:
       on match
         case Some(list) =>
           (list.find(_.isInstanceOf[OnDelete]), list.find(_.isInstanceOf[OnUpdate])) match
-            case (None, None) => s"REFERENCE($className.table)(${ columns.mkString(",") })"
+            case (None, None) => s"REFERENCE($className.table, (${ columns.mkString(",") }))"
             case (Some(delete), None) =>
               s"REFERENCE($className.table, ${ columns.mkString(", ") }).onDelete(${ delete.option })"
             case (None, Some(update)) =>
