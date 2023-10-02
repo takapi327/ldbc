@@ -185,23 +185,23 @@ object UniqueKey:
   *
   * @param indexName
   *   Unique name for key
-  * @param colName
+  * @param columns
   *   List of columns for which the Index key is set
   * @param reference
   *   A model for setting reference options used for foreign key constraints, etc.
   */
-private[ldbc] case class ForeignKey(
+private[ldbc] case class ForeignKey[T <: Tuple](
   indexName: Option[String],
-  colName:   List[Column[?]],
-  reference: Reference
+  columns:   Tuple.Map[T, Column],
+  reference: Reference[T]
 ) extends Key:
 
-  override def label: String = "FOREIGN KEY"
+  override val label: String = "FOREIGN KEY"
 
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${ colName.map(column => s"`${ column.label }`").mkString(", ") })"
+      + s" (${ columns.toList.mkString(", ") })"
       + s" ${ reference.queryString }"
 
 /** A model for setting constraints on keys.
@@ -213,7 +213,7 @@ private[ldbc] case class ForeignKey(
   */
 private[ldbc] case class Constraint(
   symbol: Option[String],
-  key:    PrimaryKey | UniqueKey | ForeignKey
+  key:    PrimaryKey | UniqueKey | ForeignKey[?]
 ) extends Key:
 
   def label: String = "CONSTRAINT"
@@ -221,7 +221,7 @@ private[ldbc] case class Constraint(
   private val keyQueryString: String = key match
     case p: PrimaryKey => p.queryString
     case u: UniqueKey  => u.queryString
-    case f: ForeignKey => f.queryString
+    case f: ForeignKey[?] => f.queryString
 
   def queryString: String =
     symbol.fold(s"$label $keyQueryString")(str => s"$label `$str` $keyQueryString")
