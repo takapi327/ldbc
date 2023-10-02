@@ -6,7 +6,7 @@ package ldbc.schemaspy.builder
 
 import org.schemaspy.input.dbms.service.helper.ImportForeignKey
 
-import ldbc.core.{ ForeignKey, Reference }
+import ldbc.core.{ Column, ForeignKey, Reference }
 
 /** Object to generate the ImportForeignKey model for SchemaSpy.
   */
@@ -24,15 +24,15 @@ object ImportForeignKeyBuilder:
     *   Unique name of the constraint
     */
   def build(
-    key:            ForeignKey,
+    key:            ForeignKey[?],
     catalog:        String,
     schema:         String,
     constraintName: Option[String]
   ): Seq[ImportForeignKey] =
     val foreignKeyBuilder = new ImportForeignKey.Builder
     (for
-      (keyColumn, keyColumnIndex) <- key.colName.zipWithIndex.toList
-      (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
+      (keyColumn, keyColumnIndex) <- key.columns.toList.asInstanceOf[List[Column[?]]].zipWithIndex
+      (refColumn, refColumnIndex) <- key.reference.keyPart.toList.asInstanceOf[List[Column[?]]].zipWithIndex
     yield
       if keyColumnIndex == refColumnIndex then
         Some(
