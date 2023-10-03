@@ -169,20 +169,36 @@ val query2 = userQuery.selectAll.query[User].unsafe // User
 
 ## Update
 
-Coming soon...
+`insert/update/delete`文を構築すると`update`メソッドを使用できるようになります。`update`メソッドはデータベースへの書き込み処理件数を返却します。
 
-## Read Only
+```scala 3
+val insert = userQuery.insert((1L, "name", None)).update // Int
+val update = userQuery.update("name", "update name").update // Int
+val delete = userQuery.delete.update // Int
+```
 
-Coming soon...
+`insert`文の場合データ挿入時にAutoIncrementで生成された値を返却させてい場合があります。その場合は`update`メソッドではなく`returning`メソッドを使用して返却したいカラムを指定します。
 
-## Auto Commit
+```scala 3
+val insert = userQuery.insert((1L, "name", None)).returning("id") // Long
+```
 
-Coming soon...
+`returning`メソッドで指定する値はモデルが持つプロパティ名である必要があります。また、指定したプロパティがテーブル定義上でAutoIncrementの属性が設定されていなければエラーとなってしまいます。
 
-## Transaction
-
-Coming soon...
+MySQLではデータ挿入時に返却できる値はAutoIncrementのカラムのみであるため、LDBCでも同じような仕様となっています。
 
 ## Executing Database Actions
+
+Coming soon...
+
+### Read Only
+
+Coming soon...
+
+### Auto Commit
+
+Coming soon...
+
+### Transaction
 
 Coming soon...
