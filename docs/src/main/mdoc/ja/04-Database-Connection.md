@@ -21,6 +21,8 @@ LDBCでのクエリ構築方法をまだ読んでいない場合は、先に[型
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.IO
+// This is just for testing. Consider using cats.effect.IOApp instead of calling
+// unsafe methods directly.
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
@@ -187,18 +189,57 @@ val insert = userQuery.insert((1L, "name", None)).returning("id") // Long
 
 MySQLではデータ挿入時に返却できる値はAutoIncrementのカラムのみであるため、LDBCでも同じような仕様となっています。
 
-## Executing Database Actions
+## データベース操作の実行
 
-Coming soon...
+データベース接続を行う前にコミットのタイミングや読み書き専用などの設定を行う必要があります。
 
-### Read Only
+### 読み取り専用
 
-Coming soon...
+`readOnly`メソッドを使用することで実行するクエリの処理を読み込み専用にすることができます。`readOnly`メソッドは`insert/update/delete`文でも使用することができますが、書き込み処理を行うので実行時にエラーとなります。
 
-### Auto Commit
+```scala 3
+val read = userQuery.selectAll.query.readOnly
+```
 
-Coming soon...
+### 自動コミット
 
-### Transaction
+`autoCommit`メソッドを使用することで実行するクエリの処理をクエリ実行時ごとにコミットするように設定することができます。
 
-Coming soon...
+```scala 3
+val read = userQuery.insert((1L, "name", None)).update.autoCommit
+```
+
+### トランザクション
+
+`transaction`メソッドを使用することで複数のデータベース接続処理を1つのトランザクションにまとめることができます。
+
+`toList/headOption/unsafe/returning/update`メソッドの戻り値は`Kleisli[F, Connection[F], T]`型となっています。そのためmapやflatMapを使用して処理を1つにまとめることができます。
+
+1つにまとめた`Kleisli[F, Connection[F], T]`に対して`transaction`メソッドを使用することで、中で行われる全てのデータベース接続処理は1つのトランザクションにまとめて実行されます。
+
+```scala 3
+(for
+  result1 <- userQuery.insert((1L, "name", None)).returning("id")
+  result2 <- userQuery.update("name", "update name").update
+  ...
+yield ...).transaction
+```
+
+### 実行
+
+戻り値の型、接続方法の設定を行いましたがLDBCで構築された今までの処理は`Kleisli[F, XXX, T]`型となっているため定義を行なっただけではデータベース接続処理(副作用)は発生しません。
+データベース処理を実行するためには`Kleisli`の`run`を実行する必要があります。
+
+`readOnly/autoCommit/transaction`メソッドを使用すると戻り値の型は`Kleisli[F, DataSource, T]`となるためJDBCのDataSourceを`run`に渡すことで戻り値の型を`F`に持ち上げることができます。
+
+```scala 3
+val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource) // F[User]
+```
+
+Cats Effect IOを使用している場合は、`IOApp`内で実行を行うか`unsafeRunSync`などを使用することでデータベース接続処理を実行することができます。
+
+```scala 3
+val user: User = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+```
+
+`Kleisli`に関してはCatsの[ドキュメント](https://typelevel.org/cats/datatypes/kleisli.html)を参照してください。
