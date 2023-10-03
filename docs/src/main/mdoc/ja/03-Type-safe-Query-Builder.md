@@ -111,11 +111,74 @@ select.statement === "SELECT `id` FROM user WHERE name = ?"
 
 ## INSERT
 
-Coming soon...
+型安全にINSERT文を構築する方法はTableQueryが提供する以下のメソッドを使用することです。
+
+- insert
+- insertInto
+- +=
+- ++=
+
+**insert**
+
+`insert`メソッドには挿入するデータのタプルを渡します。タプルはモデルと同じプロパティの数と型である必要があります。また、挿入されるデータの順番はモデルのプロパティおよびテーブルのカラムと同じ順番である必要があります。
+
+```scala 3
+val insert = userQuery.insert((1L, "name", None))
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?)"
+```
+
+複数のデータを挿入したい場合は、`insert`メソッドに複数のタプルを渡すことで構築できます。
+
+```scala 3
+val insert = userQuery.insert((1L, "name", None), (2L, "name", None))
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?), (?, ?, ?)"
+```
+
+**insertInto**
+
+`insert`メソッドはテーブルが持つ全てのカラムにデータ挿入を行いますが、特定のカラムに対してのみデータを挿入したい場合は`insertInto`メソッドを使用します。
+
+これはAutoIncrementやDefault値を持つカラムへのデータ挿入を除外したい場合などに使用できます。
+
+```scala 3
+val insert = userQuery.insertInto(user => (user.name, user.age)).values(("name", None))
+
+insert.statement === "INSERT INTO user (`name`, `age`) VALUES(?, ?)"
+```
+
+複数のデータを挿入したい場合は、`values`にタプルの配列を渡すことで構築できます。
+
+```scala 3
+val insert = userQuery.insertInto(user => (user.name, user.age)).values(List(("name", None), ("name", Some(20))))
+
+insert.statement === "INSERT INTO user (`name`, `age`) VALUES(?, ?), (?, ?)"
+```
+
+**+=**
+
+`+=`メソッドを使用することでモデルを使用してinsert文を構築することができます。モデルを使用する場合は全てのカラムにデータを挿入してしまうことに注意してください。
+
+```scala 3
+val insert = userQuery += User(1L, "name", None)
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?)"
+```
+
+**++=**
+
+モデルを使用して複数のデータを挿入したい場合は`++=`メソッドを使用します。
+
+```scala 3
+val insert = userQuery ++= List(User(1L, "name", None), User(2L, "name", None))
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?), (?, ?, ?)"
+```
 
 ## UPDATE
 
-型安全にSELECT文を構築する方法はTableQueryが提供する`update`メソッドを使用することです。
+型安全にUPDATE文を構築する方法はTableQueryが提供する`update`メソッドを使用することです。
 
 `update`メソッドの第1引数にはテーブルのカラム名ではなくモデルのプロパティ名を指定し、第2引数に更新したい値を渡します。第2引数に渡す値の型は第1引数で指定したプロパティの型と同じである必要があります。
 
@@ -169,7 +232,7 @@ update.statement === "UPDATE user SET name = ?, age = ? WHERE id = ?"
 
 ## DELETE
 
-型安全にSELECT文を構築する方法はTableQueryが提供する`delete`メソッドを使用することです。
+型安全にDELETE文を構築する方法はTableQueryが提供する`delete`メソッドを使用することです。
 
 ```scala 3
 val delete = userQuery.delete
