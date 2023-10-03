@@ -72,6 +72,7 @@ lazy val docs = (project in file("docs"))
       "org"          -> organization.value,
       "scalaVersion" -> scalaVersion.value,
       "version"      -> version.value.replace("-SNAPSHOT", ""),
+      "mysqlVersion" -> mysqlVersion
     ),
     Compile / paradox / sourceDirectory := mdocOut.value,
     Compile / paradoxRoots := List("index.html", "en/index.html", "ja/index.html"),

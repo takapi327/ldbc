@@ -18,7 +18,8 @@ object Dependencies {
   val circeYaml = "io.circe" %% "circe-yaml" % "0.14.2"
   val circeGeneric = "io.circe" %% "circe-generic" % "0.14.6"
 
-  val mysql = "mysql" % "mysql-connector-java" % "8.0.33"
+  val mysqlVersion = "8.0.33"
+  val mysql = "mysql" % "mysql-connector-java" % mysqlVersion
 
   val specs2Version = "5.3.2"
   val specs2: Seq[ModuleID] = Seq(
