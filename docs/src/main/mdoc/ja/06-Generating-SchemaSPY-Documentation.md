@@ -69,6 +69,7 @@ def run(): Unit =
 SchemaSpyGeneratorには`connect`メソッドも存在しています。こちらは標準のSchemaSpyの生成方法と同様にデータベースに接続を行いドキュメントの生成を行います。
 
 ```scala 3
+@main
 def run(): Unit =
   val file = java.io.File("document")
   SchemaSpyGenerator.connect(SampleLdbcDatabase(), "user name", "password" file).generate()
