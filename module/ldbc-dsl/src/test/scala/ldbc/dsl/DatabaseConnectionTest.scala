@@ -570,7 +570,7 @@ object DatabaseConnectionTest extends Specification:
 
     "If the primary key is duplicated, the data is updated." in {
       val result = (for
-        _ <- city.insertOrUpdates(List(City(1637, "update Odawara", "JPN", "Kanagawa", 200171))).update
+        _       <- city.insertOrUpdates(List(City(1637, "update Odawara", "JPN", "Kanagawa", 200171))).update
         updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
       yield updated).transaction
         .run(dataSource)

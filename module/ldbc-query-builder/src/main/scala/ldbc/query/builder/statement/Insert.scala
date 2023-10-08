@@ -21,25 +21,25 @@ private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
   /** Trait for generating SQL table information. */
   def tableQuery: TableQuery[F, P]
 
-/**
- * Insert trait that provides a method to update in case of duplicate keys.
- *
- * @tparam F
- *   The effect type
- * @tparam P
- *   Base trait for all products
- */
+/** Insert trait that provides a method to update in case of duplicate keys.
+  *
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  */
 private[ldbc] trait DuplicateKeyUpdateInsert[F[_], P <: Product] extends Insert[F, P]:
   self =>
 
   def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): Insert[F, P] =
     val duplicateKeys = func(self.tableQuery) match
-      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${tableQuery.table._name}.$column")
-      case column => List(s"$column = new_${tableQuery.table._name}.$column")
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
+      case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
     new Insert[F, P]:
-      override def tableQuery: TableQuery[F, P] = self.tableQuery
-      override def params: Seq[ParameterBinder[F]] = self.params
-      override def statement: String = s"${self.statement} AS new_${tableQuery.table._name} ON DUPLICATE KEY UPDATE ${duplicateKeys.mkString(", ")}"
+      override def tableQuery: TableQuery[F, P]        = self.tableQuery
+      override def params:     Seq[ParameterBinder[F]] = self.params
+      override def statement: String =
+        s"${ self.statement } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
 
 /** A model for constructing INSERT statements that insert single values in MySQL.
   *

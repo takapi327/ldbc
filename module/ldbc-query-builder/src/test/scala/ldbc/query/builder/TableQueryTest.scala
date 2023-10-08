@@ -157,22 +157,28 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
     )
     assert(
-      (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate(_.p1).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`"
+      (query += Test(1L, "p2", Some("p3")))
+        .onDuplicateKeyUpdate(_.p1)
+        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`"
     )
     assert(
-      (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate(v => (v.p1, v.p2, v.p3)).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+      (query += Test(1L, "p2", Some("p3")))
+        .onDuplicateKeyUpdate(v => (v.p1, v.p2, v.p3))
+        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
-      )).onDuplicateKeyUpdate(_.p1).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`"
+      )).onDuplicateKeyUpdate(_.p1)
+        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
-      )).onDuplicateKeyUpdate(v => (v.p1, v.p2, v.p3)).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+      )).onDuplicateKeyUpdate(v => (v.p1, v.p2, v.p3))
+        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
     )
   }
 
