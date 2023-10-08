@@ -7,6 +7,7 @@ package ldbc.query.builder.statement
 import ldbc.core.Column
 import ldbc.sql.*
 import ldbc.query.builder.TableQuery
+import ldbc.query.builder.interpreter.Tuples
 
 /** Trait for building Statements to be added.
   *
@@ -19,6 +20,26 @@ private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
 
   /** Trait for generating SQL table information. */
   def tableQuery: TableQuery[F, P]
+
+/**
+ * Insert trait that provides a method to update in case of duplicate keys.
+ *
+ * @tparam F
+ *   The effect type
+ * @tparam P
+ *   Base trait for all products
+ */
+private[ldbc] trait DuplicateKeyUpdateInsert[F[_], P <: Product] extends Insert[F, P]:
+  self =>
+
+  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): Insert[F, P] =
+    val duplicateKeys = func(self.tableQuery) match
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${tableQuery.table._name}.$column")
+      case column => List(s"$column = new_${tableQuery.table._name}.$column")
+    new Insert[F, P]:
+      override def tableQuery: TableQuery[F, P] = self.tableQuery
+      override def params: Seq[ParameterBinder[F]] = self.params
+      override def statement: String = s"${self.statement} AS new_${tableQuery.table._name} ON DUPLICATE KEY UPDATE ${duplicateKeys.mkString(", ")}"
 
 /** A model for constructing INSERT statements that insert single values in MySQL.
   *
@@ -40,7 +61,7 @@ case class SingleInsert[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuple:      T,
   params:     Seq[ParameterBinder[F]]
-) extends Insert[F, P]:
+) extends DuplicateKeyUpdateInsert[F, P]:
 
   override val statement: String =
     s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
@@ -66,7 +87,7 @@ case class MultiInsert[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuples:     List[T],
   params:     Seq[ParameterBinder[F]]
-) extends Insert[F, P]:
+) extends DuplicateKeyUpdateInsert[F, P]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
