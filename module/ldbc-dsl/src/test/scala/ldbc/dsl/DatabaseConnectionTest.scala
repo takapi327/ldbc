@@ -568,6 +568,16 @@ object DatabaseConnectionTest extends Specification:
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
 
+    "If the primary key is duplicated, the data is updated." in {
+      val result = (for
+        _ <- city.insertOrUpdates(List(City(1637, "update Odawara", "JPN", "Kanagawa", 200171))).update
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
+      yield updated).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+      (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
+    }
+
     "The update succeeds in the combined processing of multiple queries." in {
       (for
         codeOpt <- country
