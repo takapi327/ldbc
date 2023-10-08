@@ -130,13 +130,19 @@ class TableQueryTest extends AnyFlatSpec:
       )).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
     )
     assert(
-      query.insertOrUpdate((1L, "p2", Some("p3"))).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+      query
+        .insertOrUpdate((1L, "p2", Some("p3")))
+        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
     )
     assert(
-      query.insertOrUpdates(List(
-        Test(1L, "p2", Some("p3")),
-        Test(2L, "p2", None)
-      )).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+      query
+        .insertOrUpdates(
+          List(
+            Test(1L, "p2", Some("p3")),
+            Test(2L, "p2", None)
+          )
+        )
+        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
     )
   }
 

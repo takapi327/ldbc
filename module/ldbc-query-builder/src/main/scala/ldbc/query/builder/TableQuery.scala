@@ -176,14 +176,14 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
       .asInstanceOf[List[ParameterBinder[F]]]
     new MultiInsert[F, P, Tuple](this, tuples, parameterBinders)
 
-  /**
-   * A method to build a query model that inserts data in all columns defined in the table or updates the data if there are duplicate primary keys.
-   *
-   * @param mirror
-   * product isomorphism map
-   * @param values
-   * A list of Tuples constructed with all the property types that Table has.
-   */
+  /** A method to build a query model that inserts data in all columns defined in the table or updates the data if there
+    * are duplicate primary keys.
+    *
+    * @param mirror
+    *   product isomorphism map
+    * @param values
+    *   A list of Tuples constructed with all the property types that Table has.
+    */
   inline def insertOrUpdate(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): Insert[F, P] =
     val parameterBinders = values
       .flatMap(
@@ -200,14 +200,14 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
       .asInstanceOf[List[ParameterBinder[F]]]
     new DuplicateKeyUpdate[F, P, Tuple](this, values.toList, parameterBinders)
 
-  /**
-   * A method to build a query model that inserts data in all columns defined in the table or updates the data if there are duplicate primary keys.
-   *
-   * @param values
-   * A class that implements a [[Product]] that is one-to-one with the table definition.
-   * @param mirror
-   * product isomorphism map
-   */
+  /** A method to build a query model that inserts data in all columns defined in the table or updates the data if there
+    * are duplicate primary keys.
+    *
+    * @param values
+    *   A class that implements a [[Product]] that is one-to-one with the table definition.
+    * @param mirror
+    *   product isomorphism map
+    */
   inline def insertOrUpdates(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
     val tuples = values.map(Tuple.fromProductTyped)
     val parameterBinders = tuples

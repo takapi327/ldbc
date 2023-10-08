@@ -122,23 +122,22 @@ case class SelectInsert[F[_], P <: Product, T](
             ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
         })
 
-/**
- * A model for constructing ON DUPLICATE KEY UPDATE statements that insert multiple values in MySQL.
- *
- * @param tableQuery
- *   Trait for generating SQL table information.
- * @param tuples
- *   Tuple type value of the property with type parameter P.
- * @param params
- *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
- *   only.
- * @tparam F
- *   The effect type
- * @tparam P
- *   Base trait for all products
- * @tparam T
- *   Tuple type of the property with type parameter P
- */
+/** A model for constructing ON DUPLICATE KEY UPDATE statements that insert multiple values in MySQL.
+  *
+  * @param tableQuery
+  *   Trait for generating SQL table information.
+  * @param tuples
+  *   Tuple type value of the property with type parameter P.
+  * @param params
+  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+  *   only.
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  * @tparam T
+  *   Tuple type of the property with type parameter P
+  */
 case class DuplicateKeyUpdate[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuples:     List[T],
@@ -150,4 +149,6 @@ case class DuplicateKeyUpdate[F[_], P <: Product, T <: Tuple](
   private val duplicateKeys = tableQuery.table.all.map(column => s"$column = new_${ tableQuery.table._name }.$column")
 
   override val statement: String =
-    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${duplicateKeys.mkString(", ")}"
+    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(
+        ", "
+      ) } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
