@@ -580,7 +580,9 @@ object DatabaseConnectionTest extends Specification:
 
     "If there are duplicate primary keys, only the specified columns are updated." in {
       val result = (for
-        _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608)).onDuplicateKeyUpdate(_.name).update
+        _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
+               .onDuplicateKeyUpdate(_.name)
+               .update
         updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1639).query.unsafe
       yield updated).transaction
         .run(dataSource)
@@ -591,8 +593,8 @@ object DatabaseConnectionTest extends Specification:
     "Data is added if the primary key is not duplicated." in {
       (for
         empty <- city.select(v => (v.name, v.district)).where(_.id _equals 4080).query.headOption
-        _ <- city.insertOrUpdate((4080, "test", "TTT", "Test", 0)).update
-        data <- city.select(v => (v.name, v.district)).where(_.id _equals 4080).query.headOption
+        _     <- city.insertOrUpdate((4080, "test", "TTT", "Test", 0)).update
+        data  <- city.select(v => (v.name, v.district)).where(_.id _equals 4080).query.headOption
       yield empty.isEmpty and data.notEmpty).transaction
         .run(dataSource)
         .unsafeRunSync()
