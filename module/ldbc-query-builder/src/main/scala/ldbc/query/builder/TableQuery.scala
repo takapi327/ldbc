@@ -101,7 +101,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     * @param values
     *   A list of Tuples constructed with all the property types that Table has.
     */
-  inline def insert(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): Insert[F, P] =
+  inline def insert(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): DuplicateKeyUpdateInsert[F, P] =
     val parameterBinders = values
       .flatMap(
         _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
@@ -138,7 +138,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   product isomorphism map
     */
   @targetName("insertProduct")
-  inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
+  inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): DuplicateKeyUpdateInsert[F, P] =
     val tuples = Tuple.fromProductTyped(value)
     val parameterBinders = tuples
       .zip(Parameter.fold[F, mirror.MirroredElemTypes])
@@ -160,7 +160,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   product isomorphism map
     */
   @targetName("insertProducts")
-  inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
+  inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): DuplicateKeyUpdateInsert[F, P] =
     val tuples = values.map(Tuple.fromProductTyped)
     val parameterBinders = tuples
       .flatMap(
