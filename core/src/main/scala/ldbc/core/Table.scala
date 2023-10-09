@@ -52,7 +52,21 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
+  /**
+   * Methods for setting key information for tables.
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
   def keySet(func: Table[P] => Key): Table[P]
+
+  /**
+   * Methods for setting multiple key information for a table.
+   *
+   * @param func
+   * Function to construct an expression using the columns that Table has.
+   */
+  def keySets(func: Table[P] => Seq[Key]): Table[P]
 
   def comment(str: String): Table[P]
 
@@ -88,6 +102,8 @@ object Table extends Dynamic:
         .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]]
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
+
+    override def keySets(func: Table[P] => Seq[Key]): Table[P] = this.copy(keyDefinitions = this.keyDefinitions ++ func(this))
 
     override def comment(str: String): Table[P] = this.copy(comment = Some(str))
 
