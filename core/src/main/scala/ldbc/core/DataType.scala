@@ -1364,7 +1364,7 @@ object DataType:
 
     /** Methods for setting default values for dates.
       */
-    def DEFAULT_DATE(): Date[T] = this.copy(default = Some(Default.Date()))
+    def DEFAULT_CURRENT_DATE(): Date[T] = this.copy(default = Some(Default.Date()))
 
   /** This model is used to represent SQL DataType DateTime data.
     *
