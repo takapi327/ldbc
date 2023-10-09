@@ -202,11 +202,13 @@ object DataTypeTest extends Specification:
         DATE[LocalDate]
           .DEFAULT(LocalDate.of(2023, 2, 10))
           .queryString === "DATE NOT NULL DEFAULT '2023-02-10'" and
+        DATE[LocalDate].DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)" and
         DATE[Option[LocalDate]].queryString === "DATE NULL" and
         DATE[Option[LocalDate]].DEFAULT(None).queryString === "DATE NULL DEFAULT NULL" and
         DATE[Option[LocalDate]]
           .DEFAULT(Some(LocalDate.of(2023, 2, 10)))
-          .queryString === "DATE NULL DEFAULT '2023-02-10'"
+          .queryString === "DATE NULL DEFAULT '2023-02-10'" and
+        DATE[Option[LocalDate]].DEFAULT_CURRENT_DATE().queryString === "DATE NULL DEFAULT (CURRENT_DATE)"
     }
 
     "The query string generated from the DateTime DataType model matches the specified one." in {
