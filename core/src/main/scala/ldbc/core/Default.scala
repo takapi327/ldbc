@@ -59,3 +59,10 @@ object Default:
     override def queryString: String =
       if withOn then s"DEFAULT $value ON UPDATE CURRENT_TIMESTAMP" ++ fsp.fold("")(v => s"($v)")
       else s"DEFAULT $value"
+
+  /** Model for setting Date-specific Default values.
+   */
+  case class Date() extends Default:
+    override def value: String = "CURRENT_DATE"
+
+    override def queryString: String = s"DEFAULT ($value)"
