@@ -52,24 +52,32 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
-  /**
-   * Methods for setting key information for tables.
-   *
-   * @param func
-   *   Function to construct an expression using the columns that Table has.
-   */
+  /** Methods for setting key information for tables.
+    *
+    * @param func
+    *   Function to construct an expression using the columns that Table has.
+    */
   def keySet(func: Table[P] => Key): Table[P]
 
-  /**
-   * Methods for setting multiple key information for a table.
-   *
-   * @param func
-   * Function to construct an expression using the columns that Table has.
-   */
+  /** Methods for setting multiple key information for a table.
+    *
+    * @param func
+    *   Function to construct an expression using the columns that Table has.
+    */
   def keySets(func: Table[P] => Seq[Key]): Table[P]
 
+  /** Methods for setting comment information on tables.
+    *
+    * @param str
+    *   Comments to be set on the table
+    */
   def comment(str: String): Table[P]
 
+  /** Methods for setting alias names for tables.
+    *
+    * @param name
+    *   Alias name to be set for the table
+    */
   def as(name: String): Table[P]
 
 object Table extends Dynamic:
@@ -103,7 +111,8 @@ object Table extends Dynamic:
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
-    override def keySets(func: Table[P] => Seq[Key]): Table[P] = this.copy(keyDefinitions = this.keyDefinitions ++ func(this))
+    override def keySets(func: Table[P] => Seq[Key]): Table[P] =
+      this.copy(keyDefinitions = this.keyDefinitions ++ func(this))
 
     override def comment(str: String): Table[P] = this.copy(comment = Some(str))
 
