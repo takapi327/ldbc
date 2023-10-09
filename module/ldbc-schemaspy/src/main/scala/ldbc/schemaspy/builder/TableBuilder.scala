@@ -26,7 +26,7 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
 
   private val comment = table.options.flatMap {
     case comment: TableOption.Comment => Some(comment.value)
-    case _ => None
+    case _                            => None
   }.headOption
 
   private val schemaTable = new SchemaspyTable(db, null, db.getSchema.getName, table._name, comment.orNull)
