@@ -61,7 +61,7 @@ object Default:
       else s"DEFAULT $value"
 
   /** Model for setting Date-specific Default values.
-   */
+    */
   case class Date() extends Default:
     override def value: String = "CURRENT_DATE"
 

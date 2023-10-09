@@ -1362,9 +1362,8 @@ object DataType:
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
 
-    /**
-     * Methods for setting default values for dates.
-     */
+    /** Methods for setting default values for dates.
+      */
     def DEFAULT_DATE(): Date[T] = this.copy(default = Some(Default.Date()))
 
   /** This model is used to represent SQL DataType DateTime data.
