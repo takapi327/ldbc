@@ -122,7 +122,7 @@ object DataTypeTest extends Specification:
         BIGINT[Option[Long]](0).UNSIGNED.queryString === "BIGINT(0) UNSIGNED NULL" and
         BIGINT[Option[Long]](255).DEFAULT(None).queryString === "BIGINT(255) NULL DEFAULT NULL" and
         BIGINT[Option[Long]](255).DEFAULT(Some(2)).queryString === "BIGINT(255) NULL DEFAULT '2'" and
-        BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.queryString === "BIGINT(255) UNSIGNED NULL DEFAULT NULL" and
+        BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.queryString === "BIGINT UNSIGNED NULL DEFAULT NULL" and
         BIGINT[Long].queryString === "BIGINT NOT NULL" and
         BIGINT[Long].UNSIGNED.queryString === "BIGINT UNSIGNED NOT NULL" and
         BIGINT[Long].DEFAULT(1).queryString === "BIGINT NOT NULL DEFAULT '1'" and
