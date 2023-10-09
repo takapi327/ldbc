@@ -22,12 +22,10 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
   /** Table Key definitions */
   private[ldbc] def keyDefinitions: Seq[Key]
 
-  /** Table comment */
-  private[ldbc] def comment: Option[String]
-
   /** Table alias name */
   private[ldbc] def alias: Option[String]
 
+  /** Additional table information */
   private[ldbc] def options: Seq[TableOption]
 
   /** Methods for statically accessing column information held by a Table.
@@ -87,13 +85,6 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     */
   def setOptions(options: Seq[TableOption]): Table[P]
 
-  /** Methods for setting comment information on tables.
-    *
-    * @param str
-    *   Comments to be set on the table
-    */
-  def comment(str: String): Table[P]
-
   /** Methods for setting alias names for tables.
     *
     * @param name
@@ -108,7 +99,6 @@ object Table extends Dynamic:
     columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key],
     options:        Seq[TableOption],
-    comment:        Option[String],
     alias:          Option[String] = None
   ) extends Table[P]:
 
@@ -139,8 +129,6 @@ object Table extends Dynamic:
     override def setOption(option: TableOption): Table[P] = this.copy(options = options :+ option)
 
     override def setOptions(options: Seq[TableOption]): Table[P] = this.copy(options = options)
-
-    override def comment(str: String): Table[P] = this.copy(comment = Some(str))
 
     override def as(name: String): Table[P] = this.copy(alias = Some(name))
 
