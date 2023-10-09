@@ -16,11 +16,14 @@ private[ldbc] trait TableValidator:
 
   protected val autoInc = table.all.filter(_.attributes.contains(AutoInc()))
 
-  protected val primaryKey = table.all.filter(_.attributes.exists(_.isInstanceOf[PrimaryKey]))
+  protected val primaryKey = table.all.filter(_.attributes.exists {
+    case _: PrimaryKey => true
+    case _ => false
+  })
 
   protected val keyPart = table.keyDefinitions.flatMap {
-    case key: PrimaryKey with Index => key.keyPart.toList
-    case key: UniqueKey with Index  => key.keyPart.toList
+    case key: PrimaryKey with Index => key.keyPart
+    case key: UniqueKey with Index  => key.keyPart
     case _                          => List.empty
   }
 
@@ -48,13 +51,17 @@ private[ldbc] trait TableValidator:
 
   require(
     !(autoInc.nonEmpty &&
-      (autoInc.count(column =>
-        column.attributes.exists(_.isInstanceOf[PrimaryKey]) || column.attributes.exists(_.isInstanceOf[UniqueKey])
-      ) >= 1 || keyPart.count(key =>
+      autoInc.count(column =>
+        column.attributes.exists {
+          case _: PrimaryKey => true
+          case _: UniqueKey => true
+          case _ => false
+        }
+      ) == 0 && keyPart.count(key =>
         autoInc
           .map(_.label)
           .contains(key.label)
-      ) == 0)),
+      ) == 0),
     "The columns with AUTO_INCREMENT must have a Primary Key or Unique Key."
   )
 
