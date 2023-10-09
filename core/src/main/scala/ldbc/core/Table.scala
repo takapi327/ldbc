@@ -52,12 +52,11 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     */
   private[ldbc] def all: List[Column[[A] => A => A]]
 
-  /**
-   * Method to retrieve all column information that a table has as a Tuple.
-   *
-   * @param mirror
-   *   product isomorphism map
-   */
+  /** Method to retrieve all column information that a table has as a Tuple.
+    *
+    * @param mirror
+    *   product isomorphism map
+    */
   def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
   /** Methods for setting key information for tables.
@@ -74,20 +73,18 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     */
   def keySets(func: Table[P] => Seq[Key]): Table[P]
 
-  /**
-   * Methods for setting additional information for the table.
-   *
-   * @param option
-   *   Additional information to be given to the table.
-   */
+  /** Methods for setting additional information for the table.
+    *
+    * @param option
+    *   Additional information to be given to the table.
+    */
   def setOption(option: TableOption): Table[P]
 
-  /**
-   * Methods for setting multiple additional information for a table.
-   *
-   * @param options
-   * Additional information to be given to the table.
-   */
+  /** Methods for setting multiple additional information for a table.
+    *
+    * @param options
+    *   Additional information to be given to the table.
+    */
   def setOptions(options: Seq[TableOption]): Table[P]
 
   /** Methods for setting comment information on tables.
@@ -110,7 +107,7 @@ object Table extends Dynamic:
     _name:          String,
     columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key],
-    options: Seq[TableOption],
+    options:        Seq[TableOption],
     comment:        Option[String],
     alias:          Option[String] = None
   ) extends Table[P]:

@@ -18,7 +18,7 @@ private[ldbc] trait TableValidator:
 
   protected val primaryKey = table.all.filter(_.attributes.exists {
     case _: PrimaryKey => true
-    case _ => false
+    case _             => false
   })
 
   protected val keyPart = table.keyDefinitions.flatMap {
@@ -54,8 +54,8 @@ private[ldbc] trait TableValidator:
       autoInc.count(column =>
         column.attributes.exists {
           case _: PrimaryKey => true
-          case _: UniqueKey => true
-          case _ => false
+          case _: UniqueKey  => true
+          case _             => false
         }
       ) == 0 && keyPart.count(key =>
         autoInc

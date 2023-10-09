@@ -304,12 +304,14 @@ object TableQueryBuilderTest extends Specification:
         column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
         column("name", VARCHAR(255))
       )
-        .setOptions(Seq(
-          TableOption.Engine("InnoDB"),
-          TableOption.Character("utf8mb4"),
-          TableOption.Collate("utf8mb4_unicode_ci"),
-          TableOption.Comment("test"),
-        ))
+        .setOptions(
+          Seq(
+            TableOption.Engine("InnoDB"),
+            TableOption.Character("utf8mb4"),
+            TableOption.Collate("utf8mb4_unicode_ci"),
+            TableOption.Comment("test")
+          )
+        )
 
       TableQueryBuilder(table).createStatement ===
         """

@@ -28,7 +28,7 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidat
     s"""
        |CREATE TABLE `${ table._name }` (
        |  ${ createDefinitions.mkString(",\n  ") }
-       |)${if tableOptions.isEmpty then ";" else s" ${tableOptions.mkString(" ")};"}
+       |)${ if tableOptions.isEmpty then ";" else s" ${ tableOptions.mkString(" ") };" }
        |""".stripMargin
 
   /** Variable that generates the Drop statement that creates the Table.

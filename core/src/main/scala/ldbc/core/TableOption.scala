@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.core
 
@@ -37,7 +37,7 @@ object TableOption:
     override def queryString: String = s"CONNECTION='$value'"
 
   case class Directory(`type`: "DATA" | "INDEX", value: String) extends TableOption:
-    override def queryString: String = s"${`type`} DIRECTORY='$value'"
+    override def queryString: String = s"${ `type` } DIRECTORY='$value'"
 
   case class DelayKeyWrite(value: 0 | 1) extends TableOption:
     override def queryString: String = s"DELAY_KEY_WRITE=$value"
@@ -46,8 +46,8 @@ object TableOption:
     override def queryString: String = s"ENCRYPTION='$value'"
 
   case class Engine(
-                     value: "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
-                   ) extends TableOption:
+    value: "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
+  ) extends TableOption:
     override def queryString: String = s"ENGINE=$value"
 
   case class EngineAttribute(value: String) extends TableOption:
@@ -88,4 +88,4 @@ object TableOption:
     override def queryString: String = storage.fold(s"TABLESPACE $name")(v => s"TABLESPACE $name STORAGE $v")
 
   case class Union(tableNames: List[String]) extends TableOption:
-    override def queryString: String = s"UNION ${tableNames.mkString(",")}"
+    override def queryString: String = s"UNION ${ tableNames.mkString(",") }"
