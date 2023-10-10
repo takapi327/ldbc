@@ -44,4 +44,4 @@ object Table:
       case TableOption.StatsPersistent(value)          => s"TableOption.StatsPersistent(\"$value\")"
       case TableOption.StatsSamplePages(value)         => s"TableOption.StatsSamplePages($value)"
       case TableOption.Tablespace(name, value)         => s"TableOption.Tablespace(\"$name\", \"$value\")"
-      case TableOption.Union(value)                    => s"TableOption.Union(List(${ value.map(str => s"\"$str\"").mkString(",") }))"
+      case TableOption.Union(value) => s"TableOption.Union(List(${ value.map(str => s"\"$str\"").mkString(",") }))"
