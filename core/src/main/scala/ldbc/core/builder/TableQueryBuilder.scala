@@ -17,16 +17,18 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidat
   private val columnDefinitions: Seq[String] =
     table.all.map(_.queryString)
 
-  private val options: Seq[String] =
+  private val createDefinitions: Seq[String] =
     columnDefinitions ++ table.keyDefinitions.map(_.queryString)
+
+  private val tableOptions: Seq[String] = table.options.map(_.queryString)
 
   /** Variable that generates the Create statement that creates the Table.
     */
   lazy val createStatement: String =
     s"""
        |CREATE TABLE `${ table._name }` (
-       |  ${ options.mkString(",\n  ") }
-       |);
+       |  ${ createDefinitions.mkString(",\n  ") }
+       |)${ if tableOptions.isEmpty then ";" else s" ${ tableOptions.mkString(" ") };" }
        |""".stripMargin
 
   /** Variable that generates the Drop statement that creates the Table.

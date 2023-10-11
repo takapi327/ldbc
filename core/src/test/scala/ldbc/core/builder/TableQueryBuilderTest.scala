@@ -297,6 +297,31 @@ object TableQueryBuilderTest extends Specification:
           |""".stripMargin
     }
 
+    "If the table option is set to Table, the query string will match the specified value." in {
+      case class Test(id: Long, name: String)
+
+      val table: Table[Test] = Table[Test]("test")(
+        column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+        column("name", VARCHAR(255))
+      )
+        .setOptions(
+          Seq(
+            TableOption.Engine("InnoDB"),
+            TableOption.Character("utf8mb4"),
+            TableOption.Collate("utf8mb4_unicode_ci"),
+            TableOption.Comment("test")
+          )
+        )
+
+      TableQueryBuilder(table).createStatement ===
+        """
+          |CREATE TABLE `test` (
+          |  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          |  `name` VARCHAR(255) NOT NULL
+          |) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci COMMENT='test';
+          |""".stripMargin
+    }
+
     "IllegalArgumentException is raised if the type of the column set in FOREIGN KEY does not match." in {
       case class Test(id: Long, subId: Long)
       case class SubTest(id: Long, test: String)
