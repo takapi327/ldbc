@@ -15,7 +15,7 @@ class TableTest extends AnyFlatSpec:
       case class User(id: Long, name: String, age: Int)
 
       val table: Table[User] = Table[User]("user")(
-        column("id", BIGINT(64)),
+        column("id", BIGINT(64), AUTO_INCREMENT),
         column("name", VARCHAR(255)),
         column("age", INT(255))
       )
@@ -31,6 +31,36 @@ class TableTest extends AnyFlatSpec:
       val table: Table[User] = Table[User]("user")(
         column("name", VARCHAR(255)),
         column("id", BIGINT(64)),
+        column("age", INT(255))
+      )
+    """.stripMargin)
+  }
+
+  it should "Setting AUTO_INCREMENT to a non-numeric type results in a compile error" in {
+    assertDoesNotCompile(
+      """
+      import ldbc.core.*
+
+      case class User(id: Long, name: String, age: Int)
+
+      val table: Table[User] = Table[User]("user")(
+        column("id", BIGINT(64)),
+        column("name", VARCHAR(255), AUTO_INCREMENT),
+        column("age", INT(255))
+      )
+    """.stripMargin)
+  }
+
+  it should "Setting Collate to anything other than a string type results in a compile error." in {
+    assertDoesNotCompile(
+      """
+      import ldbc.core.*
+
+      case class User(id: Long, name: String, age: Int)
+
+      val table: Table[User] = Table[User]("user")(
+        column("id", BIGINT(64), Collate.AsciiBin),
+        column("name", VARCHAR(255)),
         column("age", INT(255))
       )
     """.stripMargin)
