@@ -37,8 +37,7 @@ class TableTest extends AnyFlatSpec:
   }
 
   it should "Setting AUTO_INCREMENT to a non-numeric type results in a compile error" in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
       import ldbc.core.*
 
       case class User(id: Long, name: String, age: Int)
@@ -52,8 +51,7 @@ class TableTest extends AnyFlatSpec:
   }
 
   it should "Setting Collate to anything other than a string type results in a compile error." in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
       import ldbc.core.*
 
       case class User(id: Long, name: String, age: Int)

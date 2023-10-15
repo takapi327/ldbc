@@ -618,9 +618,9 @@ object DataType:
   private[ldbc] case class CChar[T <: String | Option[String]](
     length:     Int,
     isOptional: Boolean,
-    default:    Option[Default]   = None,
-    character:  Option[Character] = None,
-    collate:    Option[Collate[T]]   = None
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"CHAR($length)"
@@ -673,8 +673,8 @@ object DataType:
   private[ldbc] case class Varchar[T <: String | Option[String]](
     length:     Int,
     isOptional: Boolean,
-    default:    Option[Default]   = None,
-    character:  Option[Character] = None,
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
     collate:    Option[Collate[T]] = None
   ) extends StringType[T]:
 
@@ -728,9 +728,9 @@ object DataType:
   private[ldbc] case class Binary[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Int,
     isOptional: Boolean,
-    default:    Option[Default]   = None,
-    character:  Option[Character] = None,
-    collate:    Option[Collate[T]]   = None
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"BINARY($length)"
@@ -783,9 +783,9 @@ object DataType:
   private[ldbc] case class Varbinary[T <: Array[Byte] | Option[Array[Byte]]](
     length:     Int,
     isOptional: Boolean,
-    default:    Option[Default]   = None,
-    character:  Option[Character] = None,
-    collate:    Option[Collate[T]]   = None
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"VARBINARY($length)"
@@ -958,9 +958,9 @@ object DataType:
     */
   private[ldbc] case class TinyText[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None,
-    collate:    Option[Collate[T]]   = None,
-    default:    Option[Default]   = None
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
   ) extends StringType[T]:
 
     override def typeName: String = "TINYTEXT"
@@ -1011,9 +1011,9 @@ object DataType:
     */
   private[ldbc] case class Text[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None,
-    collate:    Option[Collate[T]]   = None,
-    default:    Option[Default]   = None
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
   ) extends StringType[T]:
 
     override def typeName: String = "TEXT"
@@ -1064,9 +1064,9 @@ object DataType:
     */
   private[ldbc] case class MediumText[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None,
-    collate:    Option[Collate[T]]   = None,
-    default:    Option[Default]   = None
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
   ) extends StringType[T]:
 
     override def typeName: String = "MEDIUMTEXT"
@@ -1117,9 +1117,9 @@ object DataType:
     */
   private[ldbc] case class LongText[T <: String | Option[String]](
     isOptional: Boolean,
-    character:  Option[Character] = None,
-    collate:    Option[Collate[T]]   = None,
-    default:    Option[Default]   = None
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
   ) extends StringType[T]:
 
     override def typeName: String = "LONGTEXT"
@@ -1166,9 +1166,9 @@ object DataType:
     */
   private[ldbc] case class Enum[T <: EnumModel | Option[EnumModel]](
     isOptional:         Boolean,
-    character:          Option[Character] = None,
-    collate:            Option[Collate[T]]   = None,
-    default:            Option[Default]   = None
+    character:          Option[Character]  = None,
+    collate:            Option[Collate[T]] = None,
+    default:            Option[Default]    = None
   )(using enumDataType: EnumDataType[?])
     extends DataType[T]:
 
