@@ -120,7 +120,7 @@ object DataType:
 
     def character: Option[Character]
 
-    def collate: Option[Collate]
+    def collate: Option[Collate[T]]
 
   /** SQL DataType to represent BLOB type of string data trait.
     *
@@ -620,7 +620,7 @@ object DataType:
     isOptional: Boolean,
     default:    Option[Default]   = None,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None
+    collate:    Option[Collate[T]]   = None
   ) extends StringType[T]:
 
     override def typeName: String = s"CHAR($length)"
@@ -648,26 +648,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): CChar[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): CChar[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): CChar[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): CChar[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): CChar[T] = this.copy(collate = Some(collate))
 
   /** Model for representing the Varchar data type, which is the string data of SQL DataType.
     *
@@ -689,7 +675,7 @@ object DataType:
     isOptional: Boolean,
     default:    Option[Default]   = None,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None
+    collate:    Option[Collate[T]] = None
   ) extends StringType[T]:
 
     override def typeName: String = s"VARCHAR($length)"
@@ -717,26 +703,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): Varchar[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): Varchar[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): Varchar[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): Varchar[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): Varchar[T] = this.copy(collate = Some(collate))
 
   /** Model for representing the Binary data type, which is the string data of SQL DataType.
     *
@@ -758,7 +730,7 @@ object DataType:
     isOptional: Boolean,
     default:    Option[Default]   = None,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None
+    collate:    Option[Collate[T]]   = None
   ) extends StringType[T]:
 
     override def typeName: String = s"BINARY($length)"
@@ -786,26 +758,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): Binary[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): Binary[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): Binary[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): Binary[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): Binary[T] = this.copy(collate = Some(collate))
 
   /** Model for representing the Varbinary data type, which is the string data of SQL DataType.
     *
@@ -827,7 +785,7 @@ object DataType:
     isOptional: Boolean,
     default:    Option[Default]   = None,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None
+    collate:    Option[Collate[T]]   = None
   ) extends StringType[T]:
 
     override def typeName: String = s"VARBINARY($length)"
@@ -855,26 +813,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): Varbinary[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): Varbinary[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): Varbinary[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): Varbinary[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): Varbinary[T] = this.copy(collate = Some(collate))
 
   /** Model for representing the Tinyblob data type, which is the string data of SQL DataType.
     *
@@ -1015,7 +959,7 @@ object DataType:
   private[ldbc] case class TinyText[T <: String | Option[String]](
     isOptional: Boolean,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None,
+    collate:    Option[Collate[T]]   = None,
     default:    Option[Default]   = None
   ) extends StringType[T]:
 
@@ -1035,26 +979,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): TinyText[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): TinyText[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): TinyText[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): TinyText[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): TinyText[T] = this.copy(collate = Some(collate))
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1082,7 +1012,7 @@ object DataType:
   private[ldbc] case class Text[T <: String | Option[String]](
     isOptional: Boolean,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None,
+    collate:    Option[Collate[T]]   = None,
     default:    Option[Default]   = None
   ) extends StringType[T]:
 
@@ -1102,26 +1032,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): Text[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): Text[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): Text[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): Text[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): Text[T] = this.copy(collate = Some(collate))
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1149,7 +1065,7 @@ object DataType:
   private[ldbc] case class MediumText[T <: String | Option[String]](
     isOptional: Boolean,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None,
+    collate:    Option[Collate[T]]   = None,
     default:    Option[Default]   = None
   ) extends StringType[T]:
 
@@ -1169,26 +1085,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): MediumText[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): MediumText[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): MediumText[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): MediumText[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): MediumText[T] = this.copy(collate = Some(collate))
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1216,7 +1118,7 @@ object DataType:
   private[ldbc] case class LongText[T <: String | Option[String]](
     isOptional: Boolean,
     character:  Option[Character] = None,
-    collate:    Option[Collate]   = None,
+    collate:    Option[Collate[T]]   = None,
     default:    Option[Default]   = None
   ) extends StringType[T]:
 
@@ -1236,26 +1138,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): LongText[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): LongText[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): LongText[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): LongText[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): LongText[T] = this.copy(collate = Some(collate))
 
     /** Method for setting Default value to DataType in SQL.
       *
@@ -1276,10 +1164,10 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Enum[T <: EnumModel | Option[?]](
+  private[ldbc] case class Enum[T <: EnumModel | Option[EnumModel]](
     isOptional:         Boolean,
     character:          Option[Character] = None,
-    collate:            Option[Collate]   = None,
+    collate:            Option[Collate[T]]   = None,
     default:            Option[Default]   = None
   )(using enumDataType: EnumDataType[?])
     extends DataType[T]:
@@ -1300,26 +1188,12 @@ object DataType:
       */
     def CHARACTER_SET(character: Character): Enum[T] = this.copy(character = Some(character))
 
-    /** Method for setting Character Set to DataType in SQL.
-      *
-      * @param character
-      *   Character Set
-      */
-    def CHARACTER_SET(character: String): Enum[T] = CHARACTER_SET(Character(character))
-
     /** Method for setting Collation to DataType in SQL.
       *
       * @param collate
       *   Collation
       */
-    def COLLATE(collate: Collate): Enum[T] = this.copy(collate = Some(collate))
-
-    /** Method for setting Collation to DataType in SQL.
-      *
-      * @param collate
-      *   Collation
-      */
-    def COLLATE(collate: String): Enum[T] = COLLATE(Collate(collate))
+    def COLLATE(collate: Collate[T]): Enum[T] = this.copy(collate = Some(collate))
 
     /** Method for setting Default value to DataType in SQL.
       *
