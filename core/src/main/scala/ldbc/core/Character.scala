@@ -437,104 +437,131 @@ object Collate:
     Collate[T]("macce_general_ci", Character.macce, 38, true, true, 1)
 
   def macroman_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("macroman_bin", Character.macroman, 53, false, true, 1)
-  def macroman_general_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("macroman_general_ci", Character.macroman, 39, true, true, 1)
+  def macroman_general_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("macroman_general_ci", Character.macroman, 39, true, true, 1)
 
   def swe7_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("swe7_bin", Character.swe7, 1, false, true, 1)
-  def swe7_swedish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("swe7_swedish_ci", Character.swe7, 10, true, true, 1)
+  def swe7_swedish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("swe7_swedish_ci", Character.swe7, 10, true, true, 1)
 
-  def tis620_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("tis620_bin", Character.swe7, 89, false, true, 1)
+  def tis620_bin[T <: COLLATION_TYPE]:     Collate[T] = Collate[T]("tis620_bin", Character.swe7, 89, false, true, 1)
   def tis620_thai_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("tis620_thai_ci", Character.swe7, 18, true, true, 4)
 
   def sjis_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("sjis_bin", Character.sjis, 88, false, true, 1)
-  def sjis_japanese_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("sjis_japanese_ci", Character.sjis, 13, true, true, 1)
+  def sjis_japanese_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("sjis_japanese_ci", Character.sjis, 13, true, true, 1)
 
   def ucs2_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_bin", Character.ucs2, 90, false, true, 1)
-  def ucs2_croatian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_croatian_ci", Character.ucs2, 149, false, true, 8)
+  def ucs2_croatian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_croatian_ci", Character.ucs2, 149, false, true, 8)
   def ucs2_czech_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_czech_ci", Character.ucs2, 138, false, true, 8)
-  def ucs2_danish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_danish_ci", Character.ucs2, 139, false, true, 8)
-  def ucs2_esperanto_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_esperanto_ci", Character.ucs2, 145, false, true, 8)
-  def ucs2_estonian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_estonian_ci", Character.ucs2, 134, false, true, 8)
-  def ucs2_general_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_general_ci", Character.ucs2, 35, true, true, 1)
-  def ucs2_general_mysql500_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_general_mysql500_ci", Character.ucs2, 159, false, true, 1)
-  def ucs2_german2_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_german2_ci", Character.ucs2, 148, false, true, 8)
-  def ucs2_hungarian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_hungarian_ci", Character.ucs2, 146, false, true, 8)
-  def ucs2_icelandic_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_icelandic_ci", Character.ucs2, 129, false, true, 8)
-  def ucs2_latvian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_latvian_ci", Character.ucs2, 130, false, true, 8)
-  def ucs2_lithuanian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_lithuanian_ci", Character.ucs2, 140, false, true, 8)
-  def ucs2_persian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_persian_ci", Character.ucs2, 144, false, true, 8)
-  def ucs2_polish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_polish_ci", Character.ucs2, 133, false, true, 8)
-  def ucs2_romanian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_romanian_ci", Character.ucs2, 131, false, true, 8)
+  def ucs2_danish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_danish_ci", Character.ucs2, 139, false, true, 8)
+  def ucs2_esperanto_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_esperanto_ci", Character.ucs2, 145, false, true, 8)
+  def ucs2_estonian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_estonian_ci", Character.ucs2, 134, false, true, 8)
+  def ucs2_general_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_general_ci", Character.ucs2, 35, true, true, 1)
+  def ucs2_general_mysql500_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_general_mysql500_ci", Character.ucs2, 159, false, true, 1)
+  def ucs2_german2_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_german2_ci", Character.ucs2, 148, false, true, 8)
+  def ucs2_hungarian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_hungarian_ci", Character.ucs2, 146, false, true, 8)
+  def ucs2_icelandic_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_icelandic_ci", Character.ucs2, 129, false, true, 8)
+  def ucs2_latvian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_latvian_ci", Character.ucs2, 130, false, true, 8)
+  def ucs2_lithuanian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_lithuanian_ci", Character.ucs2, 140, false, true, 8)
+  def ucs2_persian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_persian_ci", Character.ucs2, 144, false, true, 8)
+  def ucs2_polish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_polish_ci", Character.ucs2, 133, false, true, 8)
+  def ucs2_romanian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_romanian_ci", Character.ucs2, 131, false, true, 8)
   def ucs2_roman_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_roman_ci", Character.ucs2, 143, false, true, 8)
-  def ucs2_sinhala_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_sinhala_ci", Character.ucs2, 147, false, true, 8)
-  def ucs2_slovak_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_slovak_ci", Character.ucs2, 141, false, true, 8)
-  def ucs2_slovenian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_slovenian_ci", Character.ucs2, 132, false, true, 8)
-  def ucs2_spanish2_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_spanish2_ci", Character.ucs2, 142, false, true, 8)
-  def ucs2_spanish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_spanish_ci", Character.ucs2, 135, false, true, 8)
-  def ucs2_swedish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_swedish_ci", Character.ucs2, 136, false, true, 8)
-  def ucs2_turkish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_turkish_ci", Character.ucs2, 137, false, true, 8)
-  def ucs2_unicode_520_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_unicode_520_ci", Character.ucs2, 150, false, true, 8)
-  def ucs2_unicode_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_unicode_ci", Character.ucs2, 128, false, true, 8)
-  def ucs2_vietnamese_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ucs2_vietnamese_ci", Character.ucs2, 151, false, true, 8)
+  def ucs2_sinhala_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_sinhala_ci", Character.ucs2, 147, false, true, 8)
+  def ucs2_slovak_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_slovak_ci", Character.ucs2, 141, false, true, 8)
+  def ucs2_slovenian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_slovenian_ci", Character.ucs2, 132, false, true, 8)
+  def ucs2_spanish2_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_spanish2_ci", Character.ucs2, 142, false, true, 8)
+  def ucs2_spanish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_spanish_ci", Character.ucs2, 135, false, true, 8)
+  def ucs2_swedish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_swedish_ci", Character.ucs2, 136, false, true, 8)
+  def ucs2_turkish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_turkish_ci", Character.ucs2, 137, false, true, 8)
+  def ucs2_unicode_520_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_unicode_520_ci", Character.ucs2, 150, false, true, 8)
+  def ucs2_unicode_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_unicode_ci", Character.ucs2, 128, false, true, 8)
+  def ucs2_vietnamese_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ucs2_vietnamese_ci", Character.ucs2, 151, false, true, 8)
 
   def ujis_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ujis_bin", Character.ujis, 91, false, true, 1)
-  def ujis_japanese_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("ujis_japanese_ci", Character.ujis, 12, true, true, 1)
+  def ujis_japanese_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("ujis_japanese_ci", Character.ujis, 12, true, true, 1)
 
   def utf16le_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16le_bin", Character.utf16le, 62, false, true, 1)
-  def utf16le_general_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16le_general_ci", Character.utf16le, 56, true, true, 1)
-
-  utf16_bin            utf16 55  Yes 1 PAD SPACE
-  utf16_croatian_ci    utf16 122 Yes 8 PAD SPACE
-  utf16_czech_ci       utf16 111 Yes 8 PAD SPACE
-  utf16_danish_ci      utf16 112 Yes 8 PAD SPACE
-  utf16_esperanto_ci   utf16 118 Yes 8 PAD SPACE
-  utf16_estonian_ci    utf16 107 Yes 8 PAD SPACE
-  utf16_general_ci     utf16 54  Yes Yes 1 PAD SPACE
-  utf16_german2_ci     utf16 121 Yes 8 PAD SPACE
-  utf16_hungarian_ci   utf16 119 Yes 8 PAD SPACE
-  utf16_icelandic_ci   utf16 102 Yes 8 PAD SPACE
-  utf16_latvian_ci     utf16 103 Yes 8 PAD SPACE
-  utf16_lithuanian_ci  utf16 113 Yes 8 PAD SPACE
-  utf16_persian_ci     utf16 117 Yes 8 PAD SPACE
-  utf16_polish_ci      utf16 106 Yes 8 PAD SPACE
-  utf16_romanian_ci    utf16 104 Yes 8 PAD SPACE
-  utf16_roman_ci       utf16 116 Yes 8 PAD SPACE
-  utf16_sinhala_ci     utf16 120 Yes 8 PAD SPACE
-  utf16_slovak_ci      utf16 114 Yes 8 PAD SPACE
-  utf16_slovenian_ci   utf16 105 Yes 8 PAD SPACE
-  utf16_spanish2_ci    utf16 115 Yes 8 PAD SPACE
-  utf16_spanish_ci     utf16 108 Yes 8 PAD SPACE
-  utf16_swedish_ci     utf16 109 Yes 8 PAD SPACE
-  utf16_turkish_ci     utf16 110 Yes 8 PAD SPACE
-  utf16_unicode_520_ci utf16 123 Yes 8 PAD SPACE
-  utf16_unicode_ci     utf16 101 Yes 8 PAD SPACE
-  utf16_vietnamese_ci  utf16 124 Yes 8 PAD SPACE
+  def utf16le_general_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16le_general_ci", Character.utf16le, 56, true, true, 1)
 
   def utf16_bin[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_bin", Character.utf16, 55, false, true, 1)
-  def utf16_croatian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_croatian_ci", Character.utf16, 122, false, true, 8)
-  def utf16_czech_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_czech_ci", Character.utf16, 111, false, true, 8)
-  def utf16_danish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_danish_ci", Character.utf16, 112, false, true, 8)
-  def utf16_esperanto_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_esperanto_ci", Character.utf16, 118, false, true, 8)
-  def utf16_estonian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_estonian_ci", Character.utf16, 107, false, true, 8)
-  def utf16_general_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_general_ci", Character.utf16, 54, true, true, 1)
-  def utf16_german2_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_german2_ci", Character.utf16, 121, false, true, 8)
-  def utf16_hungarian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_hungarian_ci", Character.utf16, 119, false, true, 8)
-  def utf16_icelandic_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_icelandic_ci", Character.utf16, 102, false, true, 8)
-  def utf16_latvian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_latvian_ci", Character.utf16, 103, false, true, 8)
-  def utf16_lithuanian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_lithuanian_ci", Character.utf16, 113, false, true, 8)
-  def utf16_persian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_persian_ci", Character.utf16, 117, false, true, 8)
-  def utf16_polish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_polish_ci", Character.utf16, 106, false, true, 8)
-  def utf16_romanian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_romanian_ci", Character.utf16, 104, false, true, 8)
-  def utf16_roman_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_roman_ci", Character.utf16, 116, false, true, 8)
-  def utf16_sinhala_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_sinhala_ci", Character.utf16, 120, false, true, 8)
-  def utf16_slovak_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_slovak_ci", Character.utf16, 114, false, true, 8)
-  def utf16_slovenian_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_slovenian_ci", Character.utf16, 105, false, true, 8)
-  def utf16_spanish2_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_spanish2_ci", Character.utf16, 115, false, true, 8)
-  def utf16_spanish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_spanish_ci", Character.utf16, 108, false, true, 8)
-  def utf16_swedish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_swedish_ci", Character.utf16, 109, false, true, 8)
-  def utf16_turkish_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_turkish_ci", Character.utf16, 110, false, true, 8)
-  def utf16_unicode_520_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_unicode_520_ci", Character.utf16, 123, false, true, 8)
-  def utf16_unicode_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_unicode_ci", Character.utf16, 101, false, true, 8)
-  def utf16_vietnamese_ci[T <: COLLATION_TYPE]: Collate[T] = Collate[T]("utf16_vietnamese_ci", Character.utf16, 124, false, true, 8)
+  def utf16_croatian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_croatian_ci", Character.utf16, 122, false, true, 8)
+  def utf16_czech_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_czech_ci", Character.utf16, 111, false, true, 8)
+  def utf16_danish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_danish_ci", Character.utf16, 112, false, true, 8)
+  def utf16_esperanto_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_esperanto_ci", Character.utf16, 118, false, true, 8)
+  def utf16_estonian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_estonian_ci", Character.utf16, 107, false, true, 8)
+  def utf16_general_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_general_ci", Character.utf16, 54, true, true, 1)
+  def utf16_german2_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_german2_ci", Character.utf16, 121, false, true, 8)
+  def utf16_hungarian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_hungarian_ci", Character.utf16, 119, false, true, 8)
+  def utf16_icelandic_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_icelandic_ci", Character.utf16, 102, false, true, 8)
+  def utf16_latvian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_latvian_ci", Character.utf16, 103, false, true, 8)
+  def utf16_lithuanian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_lithuanian_ci", Character.utf16, 113, false, true, 8)
+  def utf16_persian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_persian_ci", Character.utf16, 117, false, true, 8)
+  def utf16_polish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_polish_ci", Character.utf16, 106, false, true, 8)
+  def utf16_romanian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_romanian_ci", Character.utf16, 104, false, true, 8)
+  def utf16_roman_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_roman_ci", Character.utf16, 116, false, true, 8)
+  def utf16_sinhala_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_sinhala_ci", Character.utf16, 120, false, true, 8)
+  def utf16_slovak_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_slovak_ci", Character.utf16, 114, false, true, 8)
+  def utf16_slovenian_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_slovenian_ci", Character.utf16, 105, false, true, 8)
+  def utf16_spanish2_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_spanish2_ci", Character.utf16, 115, false, true, 8)
+  def utf16_spanish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_spanish_ci", Character.utf16, 108, false, true, 8)
+  def utf16_swedish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_swedish_ci", Character.utf16, 109, false, true, 8)
+  def utf16_turkish_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_turkish_ci", Character.utf16, 110, false, true, 8)
+  def utf16_unicode_520_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_unicode_520_ci", Character.utf16, 123, false, true, 8)
+  def utf16_unicode_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_unicode_ci", Character.utf16, 101, false, true, 8)
+  def utf16_vietnamese_ci[T <: COLLATION_TYPE]: Collate[T] =
+    Collate[T]("utf16_vietnamese_ci", Character.utf16, 124, false, true, 8)
 
   def utf8mb4_general_ci[T <: COLLATION_TYPE]: Collate[T] =
     Collate[T]("utf8mb4_general_ci", Character.utf8mb4, 45, false, true, 1)
