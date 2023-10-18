@@ -133,7 +133,9 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType2 = DataType.CHAR(255, Some("utf8mb4"), None)
       val dataType3 = DataType.CHAR(255, None, Some("utf8mb4_bin"))
       val dataType4 = DataType.CHAR(255, None, None)
-      builder("String").build(dataType1) === "CHAR[String](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
+      builder("String").build(
+        dataType1
+      ) === "CHAR[String](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
         builder("Option[String]").build(
           dataType1
         ) === "CHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
@@ -157,7 +159,9 @@ object DataTypeCodeBuilderTest extends Specification:
           dataType1
         ) === "VARCHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
         builder("String").build(dataType2) === "VARCHAR[String](255).CHARACTER_SET(Character.utf8mb4)" and
-        builder("Option[String]").build(dataType2) === "VARCHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4)" and
+        builder("Option[String]").build(
+          dataType2
+        ) === "VARCHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4)" and
         builder("String").build(dataType3) === "VARCHAR[String](255).COLLATE(Collate.utf8mb4_bin)" and
         builder("Option[String]").build(dataType3) === "VARCHAR[Option[String]](255).COLLATE(Collate.utf8mb4_bin)" and
         builder("String").build(dataType4) === "VARCHAR[String](255)" and
@@ -217,7 +221,9 @@ object DataTypeCodeBuilderTest extends Specification:
           dataType2
         ) === "ENUM[Option[Status]](using Status).CHARACTER_SET(Character.utf8mb4)" and
         builder("Status").build(dataType3) === "ENUM[Status](using Status).COLLATE(Collate.utf8mb4_bin)" and
-        builder("Option[Status]").build(dataType3) === "ENUM[Option[Status]](using Status).COLLATE(Collate.utf8mb4_bin)" and
+        builder("Option[Status]").build(
+          dataType3
+        ) === "ENUM[Option[Status]](using Status).COLLATE(Collate.utf8mb4_bin)" and
         builder("Status").build(dataType4) === "ENUM[Status](using Status)" and
         builder("Option[Status]").build(dataType4) === "ENUM[Option[Status]](using Status)"
     }
@@ -236,7 +242,9 @@ object DataTypeCodeBuilderTest extends Specification:
       val dataType2 = DataType.TEXT(None, Some("utf8mb4"), None)
       val dataType3 = DataType.TEXT(Some(255), None, Some("utf8mb4_bin"))
       val dataType4 = DataType.TEXT(None, None, None)
-      builder("String").build(dataType1) === "TEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
+      builder("String").build(
+        dataType1
+      ) === "TEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
         builder("Option[String]").build(
           dataType1
         ) === "TEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
@@ -266,7 +274,9 @@ object DataTypeCodeBuilderTest extends Specification:
           dataType1
         ) === "MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)" and
         builder("String").build(dataType2) === "MEDIUMTEXT[String]().CHARACTER_SET(Character.utf8mb4)" and
-        builder("Option[String]").build(dataType2) === "MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)" and
+        builder("Option[String]").build(
+          dataType2
+        ) === "MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)" and
         builder("String").build(dataType3) === "MEDIUMTEXT[String]().COLLATE(Collate.utf8mb4_bin)" and
         builder("Option[String]").build(dataType3) === "MEDIUMTEXT[Option[String]]().COLLATE(Collate.utf8mb4_bin)" and
         builder("String").build(dataType4) === "MEDIUMTEXT[String]()" and
