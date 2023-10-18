@@ -41,14 +41,14 @@ object ColumnTest extends Specification:
     "The query string of the Column model generated with only label and DataType matches the specified string." in {
       column[String](
         "name",
-        VARCHAR(255).CHARACTER_SET(Character.Ascii)
+        VARCHAR(255).CHARACTER_SET(Character.ascii)
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
     }
 
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
       column[String](
         "name",
-        VARCHAR(255).CHARACTER_SET(Character.Ascii),
+        VARCHAR(255).CHARACTER_SET(Character.ascii),
         COMMENT("name")
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'"
     }
@@ -56,7 +56,7 @@ object ColumnTest extends Specification:
     "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
       column[String](
         "name",
-        VARCHAR(255).CHARACTER_SET(Character.Ascii).COLLATE(Collate.AsciiBin),
+        VARCHAR(255).CHARACTER_SET(Character.ascii).COLLATE(Collate.ascii_bin),
         COMMENT("name")
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     }
@@ -64,12 +64,12 @@ object ColumnTest extends Specification:
     "The query string of the column with all Attributes set matches the specified string." in {
       column[String](
         "name",
-        VARCHAR(255).CHARACTER_SET(Character.Ascii),
+        VARCHAR(255).CHARACTER_SET(Character.ascii),
         COMMENT("name"),
         UNIQUE_KEY,
         VISIBLE,
         COLUMN_FORMAT.FIXED,
-        Collate.AsciiBin,
+        Collate.ascii_bin,
         STORAGE.MEMORY
       ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name' UNIQUE KEY /*!80023 VISIBLE */ /*!50606 COLUMN_FORMAT FIXED */ COLLATE ascii_bin /*!50606 STORAGE MEMORY */"
     }
