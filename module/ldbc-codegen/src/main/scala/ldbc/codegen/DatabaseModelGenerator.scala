@@ -75,7 +75,7 @@ private[ldbc] object DatabaseModelGenerator:
          |
          |  override val character: Option[Character] = $character
          |
-         |  override val collate: Option[Collate] = $collate
+         |  override val collate: Option[Collate[String]] = $collate
          |
          |  override val tables = Set(
          |    ${ statements.mkString(",\n    ") }
