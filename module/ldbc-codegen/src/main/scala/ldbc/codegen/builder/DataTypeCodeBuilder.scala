@@ -69,7 +69,7 @@ case class DataTypeCodeBuilder(scalaType: String, formatter: Naming):
 
   private def buildCharacterSet(character: Option[String], collate: Option[String]): String =
     (character, collate) match
-      case (Some(ch), Some(co)) => s".CHARACTER_SET(\"$ch\").COLLATE(\"$co\")"
-      case (Some(ch), None)     => s".CHARACTER_SET(\"$ch\")"
-      case (None, Some(co))     => s".COLLATE(\"$co\")"
+      case (Some(ch), Some(co)) => s".CHARACTER_SET(Character.$ch).COLLATE(Collate.$co)"
+      case (Some(ch), None)     => s".CHARACTER_SET(Character.$ch)"
+      case (None, Some(co))     => s".COLLATE(Collate.$co)"
       case (None, None)         => ""

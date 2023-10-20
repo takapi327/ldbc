@@ -29,8 +29,6 @@ private[ldbc] trait Alias:
   def VISIBLE[T]:   Visible[T]   = Visible[T]()
   def INVISIBLE[T]: InVisible[T] = InVisible[T]()
 
-  def COLLATE[T <: String | Option[String]](name: String): Collate & Attribute[T] = new Collate(name) with Attribute[T]
-
   object COLUMN_FORMAT:
     def FIXED[T]:   ColumnFormat.Fixed[T]   = ColumnFormat.Fixed[T]()
     def DYNAMIC[T]: ColumnFormat.Dynamic[T] = ColumnFormat.Dynamic[T]()
