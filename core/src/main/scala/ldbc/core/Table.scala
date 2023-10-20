@@ -22,11 +22,11 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
   /** Table Key definitions */
   private[ldbc] def keyDefinitions: Seq[Key]
 
-  /** Table comment */
-  private[ldbc] def comment: Option[String]
-
   /** Table alias name */
   private[ldbc] def alias: Option[String]
+
+  /** Additional table information */
+  private[ldbc] def options: Seq[TableOption]
 
   /** Methods for statically accessing column information held by a Table.
     *
@@ -50,12 +50,46 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     */
   private[ldbc] def all: List[Column[[A] => A => A]]
 
+  /** Method to retrieve all column information that a table has as a Tuple.
+    *
+    * @param mirror
+    *   product isomorphism map
+    */
   def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
+  /** Methods for setting key information for tables.
+    *
+    * @param func
+    *   Function to construct an expression using the columns that Table has.
+    */
   def keySet(func: Table[P] => Key): Table[P]
 
-  def comment(str: String): Table[P]
+  /** Methods for setting multiple key information for a table.
+    *
+    * @param func
+    *   Function to construct an expression using the columns that Table has.
+    */
+  def keySets(func: Table[P] => Seq[Key]): Table[P]
 
+  /** Methods for setting additional information for the table.
+    *
+    * @param option
+    *   Additional information to be given to the table.
+    */
+  def setOption(option: TableOption): Table[P]
+
+  /** Methods for setting multiple additional information for a table.
+    *
+    * @param options
+    *   Additional information to be given to the table.
+    */
+  def setOptions(options: Seq[TableOption]): Table[P]
+
+  /** Methods for setting alias names for tables.
+    *
+    * @param name
+    *   Alias name to be set for the table
+    */
   def as(name: String): Table[P]
 
 object Table extends Dynamic:
@@ -64,7 +98,7 @@ object Table extends Dynamic:
     _name:          String,
     columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key],
-    comment:        Option[String],
+    options:        Seq[TableOption],
     alias:          Option[String] = None
   ) extends Table[P]:
 
@@ -89,7 +123,12 @@ object Table extends Dynamic:
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
-    override def comment(str: String): Table[P] = this.copy(comment = Some(str))
+    override def keySets(func: Table[P] => Seq[Key]): Table[P] =
+      this.copy(keyDefinitions = this.keyDefinitions ++ func(this))
+
+    override def setOption(option: TableOption): Table[P] = this.copy(options = options :+ option)
+
+    override def setOptions(options: Seq[TableOption]): Table[P] = this.copy(options = options)
 
     override def as(name: String): Table[P] = this.copy(alias = Some(name))
 
@@ -130,4 +169,4 @@ object Table extends Dynamic:
   )(
     _name:   String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
-  ): Table[P] = Impl[P, mirror.MirroredElemTypes](_name, columns, Seq.empty, None)
+  ): Table[P] = Impl[P, mirror.MirroredElemTypes](_name, columns, Seq.empty, Seq.empty, None)

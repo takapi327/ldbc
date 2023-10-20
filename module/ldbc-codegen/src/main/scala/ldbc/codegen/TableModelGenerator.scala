@@ -85,6 +85,10 @@ private[ldbc] object TableModelGenerator:
       s".keySet(table => ${ key.toCode("table", classNameFormatter, propertyNameFormatter) })"
     )
 
+    val tableOptions = statement.options.fold("")(
+      _.map(option => s".setOption(${ Table.buildTableOptionCode(option) })").mkString("\n  ")
+    )
+
     val builder = ColumnCodeBuilder(classNameFormatter)
 
     val columns =
@@ -111,6 +115,7 @@ private[ldbc] object TableModelGenerator:
          |    ${ columns.mkString(",\n    ") }
          |  )
          |  ${ keyDefinitions.mkString("\n  ") }
+         |  $tableOptions
          |""".stripMargin
 
     Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
