@@ -8,12 +8,12 @@ import scala.util.parsing.input.*
 
 import ldbc.codegen.model.{ Database, Table }
 
-case class Parser(fileName: String) extends DatabaseStatementParser:
+case class Parser(fileName: String) extends DatabaseStatementParser, SetParser:
 
   private def end: util.matching.Regex = """\s*""".r
 
-  private def sentence: Parser[Product] =
-    Seq[Parser[Product]](comment, databaseStatements, tableStatements).reduceLeft(_ | _)
+  private def sentence: Parser[Product | List[Product]] =
+    Seq[Parser[Product | List[Product]]](comment, databaseStatements, tableStatements, setStatements).reduceLeft(_ | _)
 
   private type Statements = Table.CreateStatement | Database.CreateStatement
 
