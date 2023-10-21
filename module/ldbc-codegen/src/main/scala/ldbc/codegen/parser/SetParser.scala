@@ -1,26 +1,27 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.codegen.parser
 
 import ldbc.codegen.model.SetDefinition
 
 /** Parser for parsing SET definitions.
- */
+  */
 trait SetParser extends SqlParser:
 
   private def systemVariable(str: "global" | "persist" | "persist_only" | "session" | "local"): Parser[String] =
     opt("@@" | "@") ~> caseSensitivity(str) <~ opt(".")
 
-  private def global: Parser[String] = systemVariable("global")
-  private def persist: Parser[String] = systemVariable("persist")
-  private def persistOnly: Parser[String] = systemVariable("persist_only")
-  private def session: Parser[String] = systemVariable("session") | "@@"
-  private def local: Parser[String] = systemVariable("local")
+  private def global:       Parser[String] = systemVariable("global")
+  private def persist:      Parser[String] = systemVariable("persist")
+  private def persistOnly:  Parser[String] = systemVariable("persist_only")
+  private def session:      Parser[String] = systemVariable("session") | "@@"
+  private def local:        Parser[String] = systemVariable("local")
   private def userVariable: Parser[String] = opt("@@" | "@") ~> specialChars <~ "."
 
-  private def expr: Parser[String] = opt(global | persist | session | local | userVariable) ~> opt("'") ~> specialChars <~ opt("'")
+  private def expr: Parser[String] =
+    opt(global | persist | session | local | userVariable) ~> opt("'") ~> specialChars <~ opt("'")
 
   private def globalVariableStatement: Parser[SetDefinition] =
     customError(
@@ -72,6 +73,9 @@ trait SetParser extends SqlParser:
 
   protected def setStatements: Parser[List[SetDefinition]] =
     customError(
-      caseSensitivity("set") ~> rep1sep(globalVariableStatement | persistVariableStatement | persistOnlyVariableStatement | sessionVariableStatement | localVariableStatement | variableStatement, ",") <~ ";",
+      caseSensitivity("set") ~> rep1sep(
+        globalVariableStatement | persistVariableStatement | persistOnlyVariableStatement | sessionVariableStatement | localVariableStatement | variableStatement,
+        ","
+      ) <~ ";",
       failureMessage("set", "SET variable = expr [, variable = expr] ...")
     )
