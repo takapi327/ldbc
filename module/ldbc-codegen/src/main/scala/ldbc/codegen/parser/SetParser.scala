@@ -70,7 +70,7 @@ trait SetParser extends SqlParser:
       failureMessage("set variable", "user_var_name | param_name | local_var_name")
     )
 
-  protected def setStatement: Parser[List[SetDefinition]] =
+  protected def setStatements: Parser[List[SetDefinition]] =
     customError(
       caseSensitivity("set") ~> rep1sep(globalVariableStatement | persistVariableStatement | persistOnlyVariableStatement | sessionVariableStatement | localVariableStatement | variableStatement, ",") <~ ";",
       failureMessage("set", "SET variable = expr [, variable = expr] ...")
