@@ -149,8 +149,8 @@ trait DataTypes:
 
   inline def DATE[T <: LocalDate | Option[LocalDate]]: Date[T] = Date(isOptional[T])
 
-  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]]
-    : DateTime[T] = DateTime(None, isOptional[T])
+  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]]: DateTime[T] =
+    DateTime(None, isOptional[T])
 
   inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]](
     inline fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6
@@ -174,10 +174,10 @@ trait DataTypes:
     "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
     "Ldbc-Core 0.1.0"
   )
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](digit: 4): Year[T] =
+  inline def YEAR[T <: Short | Instant | LocalDate | JYear | Option[Short | Instant | LocalDate | JYear]](digit: 4): Year[T] =
     Year(Some(digit), isOptional[T])
 
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] =
+  inline def YEAR[T <: Short | Instant | LocalDate | JYear | Option[Short | Instant | LocalDate | JYear]]: Year[T] =
     Year(None, isOptional[T])
 
   /** ===== List of Alias Date Data Types ===== */

@@ -137,8 +137,8 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   sealed trait DateType[
-    T <: Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear |
-      Option[Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear]
+    T <: Short | Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear |
+      Option[Short | Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear]
   ] extends DataType[T]
 
   /** ===== List of Numeric Data Types ===== */
@@ -1271,7 +1271,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): DateTime[T] = value match
+    def DEFAULT(value: T | 0): DateTime[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
 
@@ -1315,7 +1315,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): TimeStamp[T] = value match
+    def DEFAULT(value: T | 0): TimeStamp[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
 
@@ -1356,7 +1356,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Time[T] = value match
+    def DEFAULT(value: T | 0): Time[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
 
@@ -1371,7 +1371,7 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Year[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](
+  private[ldbc] case class Year[T <: Short | Instant | LocalDate | JYear | Option[Short | Instant | LocalDate | JYear]](
     digit:      Option[4],
     isOptional: Boolean,
     default:    Option[Default] = None
@@ -1394,6 +1394,17 @@ object DataType:
     def DEFAULT(value: T): Year[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
+
+    /** Method for setting Default value to DataType in SQL.
+     * A type-safe default method that allows you to set default values for Year types as far as the database can store them.
+     *
+     * @param value
+     * Value set as the default value for DataType
+     */
+    inline def TYPESAFE_DEFAULT(value: Short): Year[T] =
+      inline if value == 0 | (value >= 1901 & value <= 2155) then
+        this.copy(default = Some(Default.Value(value)))
+      else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
 
   /** Alias for DataType
     *
