@@ -403,9 +403,33 @@ class DataTypesTest extends AnyFlatSpec:
 
   it should "If the length at the time of BLOB generation is greater than 4294967295L, an error occurs." in {
     assertDoesNotCompile("""
-      import ldbc.sql.*
-      import ldbc.sql.DataType.*
+      import ldbc.core.*
+      import ldbc.core.DataType.*
 
       val p: Blob[Array[Byte]] = BLOB[Array[Byte]](4294967296L)
+    """.stripMargin)
+  }
+
+  it should "The default value can be passed to the YEAR type as 0 or a value greater than or equal to 1901 or less than or equal to 2155." in {
+    assertCompiles(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(0)
+      val p2: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(1901)
+      val p3: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(2155)
+    """.stripMargin)
+  }
+
+  it should "If a value other than 0 or a value in the range 1901-2155 is passed, a default value of type Year will result in an error." in {
+    assertDoesNotCompile(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(1)
+      val p2: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(1900)
+      val p3: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(2156)
     """.stripMargin)
   }
