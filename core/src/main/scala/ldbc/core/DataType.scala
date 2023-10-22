@@ -7,7 +7,9 @@ package ldbc.core
 import java.time.*
 import java.time.Year as JYear
 
-import scala.compiletime.error
+import scala.compiletime.{ error, constValue, erasedValue }
+import scala.compiletime.ops.string.*
+import scala.compiletime.ops.int.*
 
 import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
 import ldbc.core.attribute.Attribute
@@ -1338,11 +1340,11 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Time[T <: LocalTime | Option[LocalTime]](
+  private[ldbc] case class Time[T <: String | LocalTime | Option[String | LocalTime]](
     fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
     isOptional: Boolean,
     default:    Option[Default] = None
-  ) extends DateType[T]:
+  ) extends DataType[T]:
 
     override def typeName: String = "TIME"
 
@@ -1356,9 +1358,14 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T | 0): Time[T] = value match
-      case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v            => this.copy(default = Some(Default.Value(v)))
+    inline def DEFAULT(value: T | 0 | String): Time[T] =
+      inline erasedValue[value.type] match
+        case _: Option[?] => this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
+        case v: String =>
+          inline if constValue[Matches[v.type, """^(-?8[0-3][0-8]|-?[0-7][0-9]{2}|0?[0-9]{1,2}):([0-5]\d):([0-5]\d)$"""]] then
+            this.copy(default = Some(Default.Value(value)))
+          else error("A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type.")
+        case _: LocalTime => this.copy(default = Some(Default.Value(value)))
 
   /** This model is used to represent SQL DataType Year data.
     *
@@ -1371,11 +1378,11 @@ object DataType:
     * @tparam T
     *   Scala types that match SQL DataType
     */
-  private[ldbc] case class Year[T <: Short | Instant | LocalDate | JYear | Option[Short | Instant | LocalDate | JYear]](
+  private[ldbc] case class Year[T <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]](
     digit:      Option[4],
     isOptional: Boolean,
     default:    Option[Default] = None
-  ) extends DateType[T]:
+  ) extends DataType[T]:
 
     override def typeName: String = "YEAR"
 
@@ -1391,20 +1398,14 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): Year[T] = value match
-      case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v            => this.copy(default = Some(Default.Value(v)))
-
-    /** Method for setting Default value to DataType in SQL.
-     * A type-safe default method that allows you to set default values for Year types as far as the database can store them.
-     *
-     * @param value
-     * Value set as the default value for DataType
-     */
-    inline def TYPESAFE_DEFAULT(value: Short): Year[T] =
-      inline if value == 0 | (value >= 1901 & value <= 2155) then
-        this.copy(default = Some(Default.Value(value)))
-      else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
+    inline def DEFAULT(value: T | Int): Year[T] =
+      inline erasedValue[value.type] match
+        case _: Option[?] => this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
+        case v: Int =>
+          inline if ((constValue[>=[v.type, 0]] & constValue[<=[v.type, 0]]) | (constValue[>=[v.type, 1901]] & constValue[<=[v.type, 2155]])) then
+            this.copy(default = Some(Default.Value(value)))
+          else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
+        case _ => this.copy(default = Some(Default.Value(value)))
 
   /** Alias for DataType
     *
