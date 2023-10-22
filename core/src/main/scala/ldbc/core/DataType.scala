@@ -1268,12 +1268,12 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class DateTime[
-    T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]
+    T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
   ](
     fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
     isOptional: Boolean,
     default:    Option[Default] = None
-  ) extends DateType[T]:
+  ) extends DataType[T]:
 
     override def typeName: String = "DATETIME"
 
@@ -1287,9 +1287,21 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T | 0): DateTime[T] = value match
-      case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
-      case v            => this.copy(default = Some(Default.Value(v)))
+    inline def DEFAULT(value: T | 0 | String): DateTime[T] =
+      inline erasedValue[value.type] match
+        case _: Option[?] =>
+          this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
+        case v: String =>
+          inline if constValue[
+            Matches[v.type, """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5]\d):([0-5]\d)$"""]
+          ]
+          then this.copy(default = Some(Default.Value(value)))
+          else
+            error(
+              "The DATE type must be passed a string in the format YYYY-MM-DD, ranging from '1000-01-01' to '9999-12-31'."
+            )
+        case _: 0 => this.copy(default = Some(Default.Value(value)))
+        case _: (Instant | LocalDateTime | OffsetTime) => this.copy(default = Some(Default.Value(value)))
 
     /** Methods for setting default values for dates.
       *
