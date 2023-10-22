@@ -147,7 +147,7 @@ trait DataTypes:
 
   /** ===== List of Date Data Types ===== */
 
-  inline def DATE[T <: LocalDate | Option[LocalDate]]: Date[T] = Date(isOptional[T])
+  inline def DATE[T <: String | LocalDate | Option[String | LocalDate]]: Date[T] = Date(isOptional[T])
 
   inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]]
     : DateTime[T] =
