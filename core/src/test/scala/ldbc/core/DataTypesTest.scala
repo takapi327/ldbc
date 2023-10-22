@@ -462,8 +462,7 @@ class DataTypesTest extends AnyFlatSpec:
   }
 
   it should "The TIMESTAMP type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'." in {
-    assertCompiles(
-      """
+    assertCompiles("""
       import ldbc.core.*
       import ldbc.core.DataType.*
 
@@ -475,8 +474,7 @@ class DataTypesTest extends AnyFlatSpec:
   }
 
   it should "Passing a string of type TIMESTAMP in YYYY-MM-DD hh:mm:ss format other than the range from '1000-01-01 00:00:00' to '9999-12-31 23:59:59' will result in a compile error." in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
       import ldbc.core.*
       import ldbc.core.DataType.*
 

@@ -1352,18 +1352,19 @@ object DataType:
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: String =>
           inline if constValue[
-            Matches[
-              v.type,
-              """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5]\d):([0-5]\d)$"""
+              Matches[
+                v.type,
+                """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5]\d):([0-5]\d)$"""
+              ]
             ]
-          ]
           then this.copy(default = Some(Default.Value(value)))
           else
             error(
               "The DATE type must be passed a string in the format YYYY-MM-DD, ranging from '1000-01-01' to '9999-12-31'."
             )
         case _: 0 => this.copy(default = Some(Default.Value(value)))
-        case _: (Instant | LocalDateTime | OffsetDateTime | ZonedDateTime) => this.copy(default = Some(Default.Value(value)))
+        case _: (Instant | LocalDateTime | OffsetDateTime | ZonedDateTime) =>
+          this.copy(default = Some(Default.Value(value)))
 
     /** Methods for setting default values for dates.
       *
@@ -1415,7 +1416,7 @@ object DataType:
             error(
               "A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type."
             )
-        case _: 0 => this.copy(default = Some(Default.Value(value)))
+        case _: 0         => this.copy(default = Some(Default.Value(value)))
         case _: LocalTime => this.copy(default = Some(Default.Value(value)))
 
   /** This model is used to represent SQL DataType Year data.
