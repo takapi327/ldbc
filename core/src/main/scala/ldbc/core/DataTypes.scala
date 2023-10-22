@@ -149,11 +149,14 @@ trait DataTypes:
 
   inline def DATE[T <: String | LocalDate | Option[String | LocalDate]]: Date[T] = Date(isOptional[T])
 
-  inline def DATETIME[T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]]
-    : DateTime[T] =
+  inline def DATETIME[
+    T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
+  ]: DateTime[T] =
     DateTime(None, isOptional[T])
 
-  inline def DATETIME[T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]](
+  inline def DATETIME[
+    T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
+  ](
     inline fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6
   ): DateTime[T] = DateTime(Some(fsp), isOptional[T])
 
