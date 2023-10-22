@@ -161,13 +161,13 @@ trait DataTypes:
   ): DateTime[T] = DateTime(Some(fsp), isOptional[T])
 
   inline def TIMESTAMP[
-    T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
+    T <: String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ]: TimeStamp[T] = TimeStamp(None, isOptional[T])
 
   inline def TIMESTAMP[
-    T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
+    T <: String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): TimeStamp[T] = TimeStamp(Some(fsp), isOptional[T])
 
   inline def TIME[T <: String | LocalTime | Option[String | LocalTime]]: Time[T] = Time(None, isOptional[T])
