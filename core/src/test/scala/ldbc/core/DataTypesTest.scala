@@ -434,6 +434,31 @@ class DataTypesTest extends AnyFlatSpec:
     """.stripMargin)
   }
 
+  it should "The DATETIME type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'." in {
+    assertCompiles(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("1000-01-01 00:00:00")
+      val p2: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("9999-12-31 23:59:59")
+      val p3: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("2023-10-22 16:04:22")
+    """.stripMargin)
+  }
+
+  it should "Passing a string of type DATETIME in YYYY-MM-DD hh:mm:ss format other than the range from '1000-01-01 00:00:00' to '9999-12-31 23:59:59' will result in a compile error." in {
+    assertDoesNotCompile(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("999-01-01 00:00:00")
+      val p2: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("10000-12-31 23:59:59")
+      val p3: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("1000-1-31 0:00:00")
+      val p4: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("9999-1-32 24:59:59")
+    """.stripMargin)
+  }
+
   it should "A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type." in {
     assertCompiles("""
       import ldbc.core.*
