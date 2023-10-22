@@ -1411,9 +1411,11 @@ object DataType:
         case _: Option[?] =>
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: Int =>
-          inline if ((constValue[>=[v.type, 0]] & constValue[<=[v.type, 0]]) | (constValue[
+          inline if (
+            (constValue[>=[v.type, 0]] & constValue[<=[v.type, 0]]) | (constValue[
               >=[v.type, 1901]
-            ] & constValue[<=[v.type, 2155]]))
+            ] & constValue[<=[v.type, 2155]])
+          )
           then this.copy(default = Some(Default.Value(value)))
           else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
         case _ => this.copy(default = Some(Default.Value(value)))
