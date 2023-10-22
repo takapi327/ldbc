@@ -418,6 +418,7 @@ class DataTypesTest extends AnyFlatSpec:
       val p1: Date[java.time.LocalDate] = DATE.DEFAULT("1000-01-01")
       val p2: Date[java.time.LocalDate] = DATE.DEFAULT("9999-12-31")
       val p3: Date[java.time.LocalDate] = DATE.DEFAULT("2023-10-22")
+      val p4: Date[java.time.LocalDate] = DATE.DEFAULT(0)
     """.stripMargin)
   }
 
@@ -431,6 +432,7 @@ class DataTypesTest extends AnyFlatSpec:
       val p3: Date[java.time.LocalDate] = DATE.DEFAULT("1000-1-31")
       val p4: Date[java.time.LocalDate] = DATE.DEFAULT("9999-1-32")
       val p5: Date[java.time.LocalDate] = DATE.DEFAULT("2023:10:22")
+      val p6: Date[java.time.LocalDate] = DATE.DEFAULT(1)
     """.stripMargin)
   }
 
@@ -442,6 +444,7 @@ class DataTypesTest extends AnyFlatSpec:
       val p1: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("1000-01-01 00:00:00")
       val p2: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("9999-12-31 23:59:59")
       val p3: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("2023-10-22 16:04:22")
+      val p4: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT(0)
     """.stripMargin)
   }
 
@@ -454,6 +457,34 @@ class DataTypesTest extends AnyFlatSpec:
       val p2: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("10000-12-31 23:59:59")
       val p3: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("1000-1-31 0:00:00")
       val p4: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT("9999-1-32 24:59:59")
+      val p5: DateTime[java.time.LocalDateTime] = DATETIME.DEFAULT(1)
+    """.stripMargin)
+  }
+
+  it should "The TIMESTAMP type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'." in {
+    assertCompiles(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("1000-01-01 00:00:00")
+      val p2: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("9999-12-31 23:59:59")
+      val p3: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("2023-10-22 16:04:22")
+      val p4: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT(0)
+    """.stripMargin)
+  }
+
+  it should "Passing a string of type TIMESTAMP in YYYY-MM-DD hh:mm:ss format other than the range from '1000-01-01 00:00:00' to '9999-12-31 23:59:59' will result in a compile error." in {
+    assertDoesNotCompile(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("999-01-01 00:00:00")
+      val p2: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("10000-12-31 23:59:59")
+      val p3: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("1000-1-31 0:00:00")
+      val p4: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT("9999-1-32 24:59:59")
+      val p5: TimeStamp[java.time.LocalDateTime] = TIMESTAMP.DEFAULT(1)
     """.stripMargin)
   }
 
@@ -465,6 +496,7 @@ class DataTypesTest extends AnyFlatSpec:
       val p1: Time[java.time.LocalTime] = TIME.DEFAULT("-838:59:59")
       val p2: Time[java.time.LocalTime] = TIME.DEFAULT("838:59:59")
       val p3: Time[java.time.LocalTime] = TIME.DEFAULT("60:59:59")
+      val p4: Time[java.time.LocalTime] = TIME.DEFAULT(0)
     """.stripMargin)
   }
 
@@ -476,6 +508,7 @@ class DataTypesTest extends AnyFlatSpec:
       val p1: Time[java.time.LocalTime] = TIME.DEFAULT("-839:59:59")
       val p2: Time[java.time.LocalTime] = TIME.DEFAULT("839:59:59")
       val p3: Time[java.time.LocalTime] = TIME.DEFAULT("1111:59:59")
+      val p4: Time[java.time.LocalTime] = TIME.DEFAULT(1)
     """.stripMargin)
   }
 
