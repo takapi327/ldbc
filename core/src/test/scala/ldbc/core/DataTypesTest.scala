@@ -410,15 +410,39 @@ class DataTypesTest extends AnyFlatSpec:
     """.stripMargin)
   }
 
+  it should "A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type." in {
+    assertCompiles(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: Time[java.time.LocalTime] = TIME.DEFAULT("-838:59:59")
+      val p2: Time[java.time.LocalTime] = TIME.DEFAULT("838:59:59")
+      val p3: Time[java.time.LocalTime] = TIME.DEFAULT("60:59:59")
+    """.stripMargin)
+  }
+
+  it should "Passing a string of type TIME in hh:mm:ss or hhh:mm:ss format other than the range from '-838:59:59' to '838:59:59' will result in a compile error." in {
+    assertDoesNotCompile(
+      """
+      import ldbc.core.*
+      import ldbc.core.DataType.*
+
+      val p1: Time[java.time.LocalTime] = TIME.DEFAULT("-839:59:59")
+      val p2: Time[java.time.LocalTime] = TIME.DEFAULT("839:59:59")
+      val p3: Time[java.time.LocalTime] = TIME.DEFAULT("1111:59:59")
+    """.stripMargin)
+  }
+
   it should "The default value can be passed to the YEAR type as 0 or a value greater than or equal to 1901 or less than or equal to 2155." in {
     assertCompiles(
       """
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val p1: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(0)
-      val p2: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(1901)
-      val p3: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(2155)
+      val p1: Year[java.time.Year] = YEAR.DEFAULT(0)
+      val p2: Year[java.time.Year] = YEAR.DEFAULT(1901)
+      val p3: Year[java.time.Year] = YEAR.DEFAULT(2155)
     """.stripMargin)
   }
 
@@ -428,8 +452,8 @@ class DataTypesTest extends AnyFlatSpec:
       import ldbc.core.*
       import ldbc.core.DataType.*
 
-      val p1: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(1)
-      val p2: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(1900)
-      val p3: Year[java.time.Year] = YEAR.TYPESAFE_DEFAULT(2156)
+      val p1: Year[java.time.Year] = YEAR.DEFAULT(1)
+      val p2: Year[java.time.Year] = YEAR.DEFAULT(1900)
+      val p3: Year[java.time.Year] = YEAR.DEFAULT(2156)
     """.stripMargin)
   }
