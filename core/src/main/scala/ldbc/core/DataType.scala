@@ -133,18 +133,6 @@ object DataType:
 
     def character: Option[Character]
 
-  /** SQL DataType to represent date data types in trait.
-    *
-    * @tparam T
-    *   Scala types that match SQL DataType
-    */
-  sealed trait DateType[
-    T <: Short | Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear |
-      Option[
-        Short | Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear
-      ]
-  ] extends DataType[T]
-
   /** ===== List of Numeric Data Types ===== */
 
   /** Model for representing the Bit data type, which is the numeric data of SQL DataType.
