@@ -140,7 +140,9 @@ object DataType:
     */
   sealed trait DateType[
     T <: Short | Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear |
-      Option[Short | Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear]
+      Option[
+        Short | Instant | OffsetTime | LocalTime | LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | JYear
+      ]
   ] extends DataType[T]
 
   /** ===== List of Numeric Data Types ===== */
@@ -1360,11 +1362,17 @@ object DataType:
       */
     inline def DEFAULT(value: T | 0 | String): Time[T] =
       inline erasedValue[value.type] match
-        case _: Option[?] => this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
+        case _: Option[?] =>
+          this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: String =>
-          inline if constValue[Matches[v.type, """^(-?8[0-3][0-8]|-?[0-7][0-9]{2}|0?[0-9]{1,2}):([0-5]\d):([0-5]\d)$"""]] then
-            this.copy(default = Some(Default.Value(value)))
-          else error("A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type.")
+          inline if constValue[
+              Matches[v.type, """^(-?8[0-3][0-8]|-?[0-7][0-9]{2}|0?[0-9]{1,2}):([0-5]\d):([0-5]\d)$"""]
+            ]
+          then this.copy(default = Some(Default.Value(value)))
+          else
+            error(
+              "A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type."
+            )
         case _: LocalTime => this.copy(default = Some(Default.Value(value)))
 
   /** This model is used to represent SQL DataType Year data.
@@ -1400,10 +1408,13 @@ object DataType:
       */
     inline def DEFAULT(value: T | Int): Year[T] =
       inline erasedValue[value.type] match
-        case _: Option[?] => this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
+        case _: Option[?] =>
+          this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: Int =>
-          inline if ((constValue[>=[v.type, 0]] & constValue[<=[v.type, 0]]) | (constValue[>=[v.type, 1901]] & constValue[<=[v.type, 2155]])) then
-            this.copy(default = Some(Default.Value(value)))
+          inline if ((constValue[>=[v.type, 0]] & constValue[<=[v.type, 0]]) | (constValue[
+              >=[v.type, 1901]
+            ] & constValue[<=[v.type, 2155]]))
+          then this.copy(default = Some(Default.Value(value)))
           else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
         case _ => this.copy(default = Some(Default.Value(value)))
 
