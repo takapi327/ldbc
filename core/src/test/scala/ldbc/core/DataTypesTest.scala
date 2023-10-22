@@ -411,8 +411,7 @@ class DataTypesTest extends AnyFlatSpec:
   }
 
   it should "The DATE type must be passed a string in the format YYYY-MM-DD, ranging from '1000-01-01' to '9999-12-31'." in {
-    assertCompiles(
-      """
+    assertCompiles("""
       import ldbc.core.*
       import ldbc.core.DataType.*
 
@@ -423,8 +422,7 @@ class DataTypesTest extends AnyFlatSpec:
   }
 
   it should "Passing a string of type DATE in YYYY-MM-DD format other than the range from '1000-01-01' to '9999-12-31' will result in a compile error." in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
       import ldbc.core.*
       import ldbc.core.DataType.*
 

@@ -1238,12 +1238,18 @@ object DataType:
       */
     inline def DEFAULT(value: T | 0 | String): Date[T] =
       inline erasedValue[value.type] match
-        case _: Option[?] => this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
+        case _: Option[?] =>
+          this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: String =>
-          inline if constValue[Matches[v.type, """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"""]] then
-            this.copy(default = Some(Default.Value(value)))
-          else error("The DATE type must be passed a string in the format YYYY-MM-DD, ranging from '1000-01-01' to '9999-12-31'.")
-        case _: 0 => this.copy(default = Some(Default.Value(value)))
+          inline if constValue[
+              Matches[v.type, """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"""]
+            ]
+          then this.copy(default = Some(Default.Value(value)))
+          else
+            error(
+              "The DATE type must be passed a string in the format YYYY-MM-DD, ranging from '1000-01-01' to '9999-12-31'."
+            )
+        case _: 0         => this.copy(default = Some(Default.Value(value)))
         case _: LocalDate => this.copy(default = Some(Default.Value(value)))
 
     /** Methods for setting default values for dates.
