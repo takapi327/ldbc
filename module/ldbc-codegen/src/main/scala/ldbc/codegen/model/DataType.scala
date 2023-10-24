@@ -202,10 +202,11 @@ object DataType:
     override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.String, ScalaType.Instant, ScalaType.OffsetTime)
 
   case class TIMESTAMP(fsp: Option[Int]) extends DataType:
-    override val name:       String         = "TIMESTAMP"
-    override val jdbcType:   JdbcType       = JdbcType.Timestamp
-    override val scalaType:  ScalaType      = ScalaType.LocalDateTime
-    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.String, ScalaType.Instant, ScalaType.OffsetDateTime, ScalaType.ZonedDateTime)
+    override val name:      String    = "TIMESTAMP"
+    override val jdbcType:  JdbcType  = JdbcType.Timestamp
+    override val scalaType: ScalaType = ScalaType.LocalDateTime
+    override val scalaTypes: Seq[ScalaType] =
+      Seq(ScalaType.String, ScalaType.Instant, ScalaType.OffsetDateTime, ScalaType.ZonedDateTime)
 
   case class TIME(fsp: Option[Int]) extends DataType:
     override val name:       String         = "TIME"
