@@ -193,31 +193,31 @@ object DataType:
     override val name:       String         = "DATE"
     override val jdbcType:   JdbcType       = JdbcType.Date
     override val scalaType:  ScalaType      = ScalaType.LocalDate
-    override val scalaTypes: Seq[ScalaType] = Seq.empty
+    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.String)
 
   case class DATETIME(fsp: Option[Int]) extends DataType:
     override val name:       String         = "DATETIME"
     override val jdbcType:   JdbcType       = JdbcType.Timestamp
     override val scalaType:  ScalaType      = ScalaType.LocalDateTime
-    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Instant, ScalaType.OffsetTime)
+    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.String, ScalaType.Instant, ScalaType.OffsetTime)
 
   case class TIMESTAMP(fsp: Option[Int]) extends DataType:
     override val name:       String         = "TIMESTAMP"
     override val jdbcType:   JdbcType       = JdbcType.Timestamp
     override val scalaType:  ScalaType      = ScalaType.LocalDateTime
-    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Instant, ScalaType.OffsetDateTime, ScalaType.ZonedDateTime)
+    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.String, ScalaType.Instant, ScalaType.OffsetDateTime, ScalaType.ZonedDateTime)
 
   case class TIME(fsp: Option[Int]) extends DataType:
     override val name:       String         = "TIME"
     override val jdbcType:   JdbcType       = JdbcType.Time
     override val scalaType:  ScalaType      = ScalaType.LocalTime
-    override val scalaTypes: Seq[ScalaType] = Seq.empty
+    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.String)
 
   case class YEAR(digit: Option[4]) extends DataType:
     override val name:       String         = "YEAR"
     override val jdbcType:   JdbcType       = JdbcType.Date
     override val scalaType:  ScalaType      = ScalaType.Year
-    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Instant, ScalaType.LocalDate)
+    override val scalaTypes: Seq[ScalaType] = Seq(ScalaType.Int, ScalaType.Instant, ScalaType.LocalDate)
 
   case class SERIAL() extends DataType:
     override val name:       String         = "SERIAL"
