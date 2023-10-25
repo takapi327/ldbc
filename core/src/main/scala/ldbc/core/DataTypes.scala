@@ -143,7 +143,7 @@ trait DataTypes:
 
   inline def LONGTEXT[T <: String | Option[String]](): LongText[T] = LongText(isOptional[T])
 
-  inline def ENUM[T <: EnumModel | Option[?]](using EnumDataType[?]): Enum[T] = Enum(isOptional[T])
+  inline def ENUM[T <: EnumModel | Option[EnumModel]](using EnumDataType[?]): Enum[T] = Enum(isOptional[T])
 
   /** ===== List of Date Data Types ===== */
 

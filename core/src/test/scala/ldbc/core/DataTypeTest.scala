@@ -19,7 +19,11 @@ object DataTypeTest extends Specification:
       BIT[Byte](1).queryString === "BIT(1) NOT NULL" and
         BIT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "BIT(64) NOT NULL DEFAULT '98'" and
         BIT[Option[Short]](1).queryString === "BIT(1) NULL" and
-        BIT[Option[Short]](64).DEFAULT(None).queryString === "BIT(64) NULL DEFAULT NULL"
+        BIT[Option[Short]](64).DEFAULT(None).queryString === "BIT(64) NULL DEFAULT NULL" and
+        BIT[Byte].queryString === "BIT NOT NULL" and
+        BIT[Byte].DEFAULT("byte".getBytes.head).queryString === "BIT NOT NULL DEFAULT '98'" and
+        BIT[Option[Short]].queryString === "BIT NULL" and
+        BIT[Option[Short]].DEFAULT(None).queryString === "BIT NULL DEFAULT NULL"
     }
 
     "The query string generated from the Tinyint DataType model matches the specified one." in {
@@ -37,7 +41,22 @@ object DataTypeTest extends Specification:
           .DEFAULT("byte".getBytes.headOption)
           .queryString === "TINYINT(64) NULL DEFAULT '98'" and
         TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL" and
-        TINYINT[Option[Byte]](64).DEFAULT(None).UNSIGNED.queryString === "TINYINT(64) UNSIGNED NULL DEFAULT NULL"
+        TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL" and
+        TINYINT[Byte].queryString === "TINYINT NOT NULL" and
+        TINYINT[Byte].UNSIGNED.queryString === "TINYINT UNSIGNED NOT NULL" and
+        TINYINT[Byte].DEFAULT("byte".getBytes.head).queryString === "TINYINT NOT NULL DEFAULT '98'" and
+        TINYINT[Byte]
+          .DEFAULT("byte".getBytes.head)
+          .UNSIGNED
+          .queryString === "TINYINT UNSIGNED NOT NULL DEFAULT '98'" and
+        TINYINT[Option[Byte]].queryString === "TINYINT NULL" and
+        TINYINT[Option[Byte]].UNSIGNED.queryString === "TINYINT UNSIGNED NULL" and
+        TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL" and
+        TINYINT[Option[Byte]]
+          .DEFAULT("byte".getBytes.headOption)
+          .queryString === "TINYINT NULL DEFAULT '98'" and
+        TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL" and
+        TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Smallint DataType model matches the specified one." in {
@@ -61,7 +80,16 @@ object DataTypeTest extends Specification:
         MEDIUMINT[Option[Int]](0).UNSIGNED.queryString === "MEDIUMINT(0) UNSIGNED NULL" and
         MEDIUMINT[Option[Int]](255).DEFAULT(None).queryString === "MEDIUMINT(255) NULL DEFAULT NULL" and
         MEDIUMINT[Option[Int]](255).DEFAULT(Some(2)).queryString === "MEDIUMINT(255) NULL DEFAULT '2'" and
-        MEDIUMINT[Option[Int]](255).DEFAULT(None).UNSIGNED.queryString === "MEDIUMINT(255) UNSIGNED NULL DEFAULT NULL"
+        MEDIUMINT[Option[Int]].DEFAULT(None).UNSIGNED.queryString === "MEDIUMINT UNSIGNED NULL DEFAULT NULL" and
+        MEDIUMINT[Int].queryString === "MEDIUMINT NOT NULL" and
+        MEDIUMINT[Int].UNSIGNED.queryString === "MEDIUMINT UNSIGNED NOT NULL" and
+        MEDIUMINT[Int].DEFAULT(1).queryString === "MEDIUMINT NOT NULL DEFAULT '1'" and
+        MEDIUMINT[Int].DEFAULT(1).UNSIGNED.queryString === "MEDIUMINT UNSIGNED NOT NULL DEFAULT '1'" and
+        MEDIUMINT[Option[Int]].queryString === "MEDIUMINT NULL" and
+        MEDIUMINT[Option[Int]].UNSIGNED.queryString === "MEDIUMINT UNSIGNED NULL" and
+        MEDIUMINT[Option[Int]].DEFAULT(None).queryString === "MEDIUMINT NULL DEFAULT NULL" and
+        MEDIUMINT[Option[Int]].DEFAULT(Some(2)).queryString === "MEDIUMINT NULL DEFAULT '2'" and
+        MEDIUMINT[Option[Int]].DEFAULT(None).UNSIGNED.queryString === "MEDIUMINT UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Integer DataType model matches the specified one." in {
@@ -73,7 +101,16 @@ object DataTypeTest extends Specification:
         INT[Option[Int]](0).UNSIGNED.queryString === "INT(0) UNSIGNED NULL" and
         INT[Option[Int]](255).DEFAULT(None).queryString === "INT(255) NULL DEFAULT NULL" and
         INT[Option[Int]](255).DEFAULT(Some(2)).queryString === "INT(255) NULL DEFAULT '2'" and
-        INT[Option[Int]](255).DEFAULT(None).UNSIGNED.queryString === "INT(255) UNSIGNED NULL DEFAULT NULL"
+        INT[Option[Int]](255).DEFAULT(None).UNSIGNED.queryString === "INT(255) UNSIGNED NULL DEFAULT NULL" and
+        INT[Int].queryString === "INT NOT NULL" and
+        INT[Int].UNSIGNED.queryString === "INT UNSIGNED NOT NULL" and
+        INT[Int].DEFAULT(1).queryString === "INT NOT NULL DEFAULT '1'" and
+        INT[Int].DEFAULT(1).UNSIGNED.queryString === "INT UNSIGNED NOT NULL DEFAULT '1'" and
+        INT[Option[Int]].queryString === "INT NULL" and
+        INT[Option[Int]].UNSIGNED.queryString === "INT UNSIGNED NULL" and
+        INT[Option[Int]].DEFAULT(None).queryString === "INT NULL DEFAULT NULL" and
+        INT[Option[Int]].DEFAULT(Some(2)).queryString === "INT NULL DEFAULT '2'" and
+        INT[Option[Int]].DEFAULT(None).UNSIGNED.queryString === "INT UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Bigint DataType model matches the specified one." in {
@@ -85,7 +122,16 @@ object DataTypeTest extends Specification:
         BIGINT[Option[Long]](0).UNSIGNED.queryString === "BIGINT(0) UNSIGNED NULL" and
         BIGINT[Option[Long]](255).DEFAULT(None).queryString === "BIGINT(255) NULL DEFAULT NULL" and
         BIGINT[Option[Long]](255).DEFAULT(Some(2)).queryString === "BIGINT(255) NULL DEFAULT '2'" and
-        BIGINT[Option[Long]](255).DEFAULT(None).UNSIGNED.queryString === "BIGINT(255) UNSIGNED NULL DEFAULT NULL"
+        BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.queryString === "BIGINT UNSIGNED NULL DEFAULT NULL" and
+        BIGINT[Long].queryString === "BIGINT NOT NULL" and
+        BIGINT[Long].UNSIGNED.queryString === "BIGINT UNSIGNED NOT NULL" and
+        BIGINT[Long].DEFAULT(1).queryString === "BIGINT NOT NULL DEFAULT '1'" and
+        BIGINT[Long].DEFAULT(1).UNSIGNED.queryString === "BIGINT UNSIGNED NOT NULL DEFAULT '1'" and
+        BIGINT[Option[Long]].queryString === "BIGINT NULL" and
+        BIGINT[Option[Long]].UNSIGNED.queryString === "BIGINT UNSIGNED NULL" and
+        BIGINT[Option[Long]].DEFAULT(None).queryString === "BIGINT NULL DEFAULT NULL" and
+        BIGINT[Option[Long]].DEFAULT(Some(2)).queryString === "BIGINT NULL DEFAULT '2'" and
+        BIGINT[Option[Long]].DEFAULT(None).UNSIGNED.queryString === "BIGINT UNSIGNED NULL DEFAULT NULL"
     }
 
     "The query string generated from the Decimal DataType model matches the specified one." in {
@@ -202,11 +248,13 @@ object DataTypeTest extends Specification:
         DATE[LocalDate]
           .DEFAULT(LocalDate.of(2023, 2, 10))
           .queryString === "DATE NOT NULL DEFAULT '2023-02-10'" and
+        DATE[LocalDate].DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)" and
         DATE[Option[LocalDate]].queryString === "DATE NULL" and
         DATE[Option[LocalDate]].DEFAULT(None).queryString === "DATE NULL DEFAULT NULL" and
         DATE[Option[LocalDate]]
           .DEFAULT(Some(LocalDate.of(2023, 2, 10)))
-          .queryString === "DATE NULL DEFAULT '2023-02-10'"
+          .queryString === "DATE NULL DEFAULT '2023-02-10'" and
+        DATE[Option[LocalDate]].DEFAULT_CURRENT_DATE().queryString === "DATE NULL DEFAULT (CURRENT_DATE)"
     }
 
     "The query string generated from the DateTime DataType model matches the specified one." in {

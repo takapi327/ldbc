@@ -28,7 +28,9 @@ CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
   code3 Bit(64) DEFAULT 1
 );
 
-/* Comment */ CREATE /* Comment */ DATABASE /* Comment */ `test`;
+SET @@SESSION.max_join_size = @@GLOBAL.max_join_size;
+
+/* Comment */ CREATE /* Comment */ DATABASE /* Comment */ `test` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 /* Comment */ USE /* Comment */ `test`;
 
@@ -44,6 +46,8 @@ CREATE TABLE `sub_test` (
   `category` TINYINT(64) ZEROFILL NOT NULL,
   PRIMARY KEY(`id`, `category`)
 );
+
+SET @@GLOBAL.sort_buffer_size = 1000000, @@LOCAL.sort_buffer_size = 1000000;
 
 --
 -- Table structure for table `test`
@@ -98,3 +102,5 @@ CREATE TABLE `alias` (
   `id` SERIAL,
   `bool` BOOLEAN NOT NULL DEFAULT true
 );
+
+SET GLOBAL max_connections = 1000, sort_buffer_size = 1000000;

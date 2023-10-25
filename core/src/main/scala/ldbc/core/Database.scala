@@ -27,7 +27,7 @@ trait Database:
   val character: Option[Character]
 
   /** A value to represent the collation. */
-  val collate: Option[Collate]
+  val collate: Option[Collate[String]]
 
   /** Connection host to database */
   val host: String
