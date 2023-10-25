@@ -20,7 +20,11 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidat
   private val createDefinitions: Seq[String] =
     columnDefinitions ++ table.keyDefinitions.map(_.queryString)
 
-  private val tableOptions: Seq[String] = table.options.map(_.queryString)
+  private val tableOptions: Seq[String] = table.options.map {
+    case character: Character => s"DEFAULT ${character.queryString}"
+    case collate: Collate[?] => s"DEFAULT ${collate.queryString}"
+    case option: TableOption => option.queryString
+  }
 
   /** Variable that generates the Create statement that creates the Table.
     */
