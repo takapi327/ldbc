@@ -26,7 +26,7 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
   private[ldbc] def alias: Option[String]
 
   /** Additional table information */
-  private[ldbc] def options: Seq[TableOption]
+  private[ldbc] def options: Seq[TableOption | Character | Collate[String]]
 
   /** Methods for statically accessing column information held by a Table.
     *
@@ -76,7 +76,7 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     * @param option
     *   Additional information to be given to the table.
     */
-  def setOption(option: TableOption): Table[P]
+  def setOption(option: TableOption | Character | Collate[String]): Table[P]
 
   /** Methods for setting multiple additional information for a table.
     *
@@ -98,7 +98,7 @@ object Table extends Dynamic:
     _name:          String,
     columns:        Tuple.Map[T, Column],
     keyDefinitions: Seq[Key],
-    options:        Seq[TableOption],
+    options:        Seq[TableOption | Character | Collate[String]],
     alias:          Option[String] = None
   ) extends Table[P]:
 
@@ -126,7 +126,7 @@ object Table extends Dynamic:
     override def keySets(func: Table[P] => Seq[Key]): Table[P] =
       this.copy(keyDefinitions = this.keyDefinitions ++ func(this))
 
-    override def setOption(option: TableOption): Table[P] = this.copy(options = options :+ option)
+    override def setOption(option: TableOption | Character | Collate[String]): Table[P] = this.copy(options = options :+ option)
 
     override def setOptions(options: Seq[TableOption]): Table[P] = this.copy(options = options)
 
