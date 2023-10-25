@@ -30,7 +30,7 @@ CREATE /* Comment */ TABLE /* Comment */ country /* Comment */ (
 
 SET @@SESSION.max_join_size = @@GLOBAL.max_join_size;
 
-/* Comment */ CREATE /* Comment */ DATABASE /* Comment */ `test`;
+/* Comment */ CREATE /* Comment */ DATABASE /* Comment */ `test` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 /* Comment */ USE /* Comment */ `test`;
 

@@ -18,14 +18,8 @@ object TableOption:
   case class AVGRowLength(value: Int) extends TableOption:
     override def queryString: String = s"AVG_ROW_LENGTH=$value"
 
-  case class Character(value: String) extends TableOption:
-    override def queryString: String = s"DEFAULT CHARACTER SET=$value"
-
   case class CheckSum(value: 0 | 1) extends TableOption:
     override def queryString: String = s"CHECKSUM=$value"
-
-  case class Collate(value: String) extends TableOption:
-    override def queryString: String = s"DEFAULT COLLATE=$value"
 
   case class Comment(value: String) extends TableOption:
     override def queryString: String = s"COMMENT='$value'"
@@ -89,3 +83,9 @@ object TableOption:
 
   case class Union(tableNames: List[String]) extends TableOption:
     override def queryString: String = s"UNION ${ tableNames.mkString(",") }"
+
+  private[ldbc] case class Character(value: String) extends TableOption:
+    override def queryString: String = s"DEFAULT CHARACTER SET=$value"
+
+  private[ldbc] case class Collate(value: String) extends TableOption:
+    override def queryString: String = s"DEFAULT COLLATE=$value"
