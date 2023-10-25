@@ -268,7 +268,9 @@ object DataTypeTest extends Specification:
           .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
           .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'" and
         DATETIME[LocalDateTime].DEFAULT(0).queryString === "DATETIME NOT NULL DEFAULT 0" and
-        DATETIME[LocalDateTime].DEFAULT("2023-02-10 10:00:00").queryString === "DATETIME NOT NULL DEFAULT '2023-02-10 10:00:00'" and
+        DATETIME[LocalDateTime]
+          .DEFAULT("2023-02-10 10:00:00")
+          .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10 10:00:00'" and
         DATETIME[Option[LocalDateTime]].queryString === "DATETIME NULL" and
         DATETIME[Option[LocalDateTime]](6).queryString === "DATETIME(6) NULL" and
         DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL" and
@@ -277,7 +279,9 @@ object DataTypeTest extends Specification:
           .queryString === "DATETIME NULL DEFAULT '2023-02-10T10:00'" and
         DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL" and
         DATETIME[Option[LocalDateTime]].DEFAULT(0).queryString === "DATETIME NULL DEFAULT 0" and
-        DATETIME[Option[LocalDateTime]].DEFAULT("2023-02-10 10:00:00").queryString === "DATETIME NULL DEFAULT '2023-02-10 10:00:00'" and
+        DATETIME[Option[LocalDateTime]]
+          .DEFAULT("2023-02-10 10:00:00")
+          .queryString === "DATETIME NULL DEFAULT '2023-02-10 10:00:00'" and
         DATETIME[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP()
           .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP" and
@@ -299,7 +303,9 @@ object DataTypeTest extends Specification:
           .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
           .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'" and
         TIMESTAMP[LocalDateTime].DEFAULT(0).queryString === "TIMESTAMP NOT NULL DEFAULT 0" and
-        TIMESTAMP[LocalDateTime].DEFAULT("2023-02-10 10:00:00").queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10 10:00:00'" and
+        TIMESTAMP[LocalDateTime]
+          .DEFAULT("2023-02-10 10:00:00")
+          .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10 10:00:00'" and
         TIMESTAMP[Option[LocalDateTime]].queryString === "TIMESTAMP NULL" and
         TIMESTAMP[Option[LocalDateTime]](5).queryString === "TIMESTAMP(5) NULL" and
         TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL" and
@@ -308,7 +314,9 @@ object DataTypeTest extends Specification:
           .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10T10:00'" and
         TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL" and
         TIMESTAMP[Option[LocalDateTime]].DEFAULT(0).queryString === "TIMESTAMP NULL DEFAULT 0" and
-        TIMESTAMP[Option[LocalDateTime]].DEFAULT("2023-02-10 10:00:00").queryString === "TIMESTAMP NULL DEFAULT '2023-02-10 10:00:00'" and
+        TIMESTAMP[Option[LocalDateTime]]
+          .DEFAULT("2023-02-10 10:00:00")
+          .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10 10:00:00'" and
         TIMESTAMP[Option[LocalDateTime]]
           .DEFAULT_CURRENT_TIMESTAMP()
           .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP" and
