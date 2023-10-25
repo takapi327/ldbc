@@ -126,7 +126,8 @@ object Table extends Dynamic:
     override def keySets(func: Table[P] => Seq[Key]): Table[P] =
       this.copy(keyDefinitions = this.keyDefinitions ++ func(this))
 
-    override def setOption(option: TableOption | Character | Collate[String]): Table[P] = this.copy(options = options :+ option)
+    override def setOption(option: TableOption | Character | Collate[String]): Table[P] =
+      this.copy(options = options :+ option)
 
     override def setOptions(options: Seq[TableOption]): Table[P] = this.copy(options = options)
 
