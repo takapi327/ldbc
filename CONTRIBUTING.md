@@ -27,6 +27,8 @@ This is the process for committing code into `master`. There are of course excep
 For a Pull Request to be considered at all it has to meet these requirements:
 
 1. Regardless if the code introduces new features or fixes bugs or regressions, it must have comprehensive tests.
+2. scalafmt must be applied to all Scala source code
+3. Source and binary compatibility must always be kept
 
 If these requirements are not met then the code should not be merged into `master`, or even reviewed - regardless of how good or important it is. No exceptions.
 
