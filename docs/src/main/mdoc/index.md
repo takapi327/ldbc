@@ -17,7 +17,7 @@ ldbc allows the same type-safe construction with Scala at the database layer and
 
 Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
 
-## Document
+## Documentation
 
 - [English](http://localhost:4000/en/index.html)
 - [Japanese](http://localhost:4000/ja/index.html)
