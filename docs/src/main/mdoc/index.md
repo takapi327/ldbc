@@ -5,7 +5,7 @@
     <img src="https://img.shields.io/badge/license-MIT-green">
   </a>
   <a href="https://github.com/lampepfl/dotty">
-    <img src="https://img.shields.io/badge/scala-v3.x-red">
+    <img src="https://img.shields.io/badge/scala-v3.3.x-red">
   </a>
 </div>
 
