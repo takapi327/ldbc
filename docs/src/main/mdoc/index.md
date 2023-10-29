@@ -1,6 +1,7 @@
 # LDBC
 
 <div align="center">
+  <img src="https://img.shields.io/badge/ldbc-v0.1.0-blue">
   <a href="https://en.wikipedia.org/wiki/MIT_License">
     <img src="https://img.shields.io/badge/license-MIT-green">
   </a>
