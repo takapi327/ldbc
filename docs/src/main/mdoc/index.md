@@ -30,8 +30,6 @@ If you’d like to contribute, see the list of [issues](https://github.com/takap
 
 If you have any questions about why or how it works, feel free to ask on github. This probably means that the documentation, scaladocs, and code are unclear and can be improved for the benefit of all.
 
-### Testing
+### Testing locally
 
 If you want to build and run the tests for yourself, you'll need a local MySQL database. The easiest way to do this is to run `docker-compose up` from the project root.
-
-## Acknowledgments
