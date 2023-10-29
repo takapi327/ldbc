@@ -1,6 +1,6 @@
 # テーブル定義
 
-この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator]() を使ってこの作業を省略することもできます。
+この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator]() を使ってこの作業を省略することもできます。
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -27,16 +27,16 @@ val table = Table[User]("user")(                     // CREATE TABLE `user` (
 )                                                    // );
 ```
 
-すべてのカラムはcolumnメソッドで定義される。各カラムにはカラム名、データ型、属性があります。以下のプリミティブ型が標準でサポートされており、すぐに使用できます。
+すべてのカラムはcolumnメソッドで定義されます。各カラムにはカラム名、データ型、属性があります。以下のプリミティブ型が標準でサポートされており、すぐに使用できます。
 
-- Numeric types: Byte, Short, Int, Long, Float, Double, BigDecimal, BigInt
-- LOB types: java.sql.Blob, java.sql.Clob, Array[Byte]
-- Date types: java.sql.Date, java.sql.Time, java.sql.Timestamp
+- Numeric types: `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`, `BigDecimal`, `BigInt`
+- LOB types: `java.sql.Blob`, `java.sql.Clob`, `Array[Byte]`
+- Date types: `java.sql.Date`, `java.sql.Time`, `java.sql.Timestamp`
 - String
 - Boolean
 - java.time.*
 
-Null可能な列はOption[T]で表現され、Tはサポートされるプリミティブ型の1つである。Option型でない列はすべてNot Nullであることに注意。
+Null可能な列はOption[T]で表現され、Tはサポートされるプリミティブ型の1つです。Option型でない列はすべてNot Nullであることに注意してください。
 
 ## データ型
 
@@ -73,7 +73,9 @@ Null可能な列はOption[T]で表現され、Tはサポートされるプリミ
 | YEAR       | java.time.Instant, java.time.LocalDate, java.time.Year                                        |
 | BOOLEAN    | Boolean                                                                                       |
 
-整数型を扱う際の注意点。符号あり、符号なしに応じて、扱えるデータの範囲がScalaの型に収まらないことに注意。
+**整数型を扱う際の注意点**
+
+符号あり、符号なしに応じて、扱えるデータの範囲がScalaの型に収まらないことに注意する必要があります。
 
 | Data Type | signed range                               | unsigned range           | Scala Type     | range                                                              |
 |-----------|--------------------------------------------|--------------------------|----------------|--------------------------------------------------------------------|

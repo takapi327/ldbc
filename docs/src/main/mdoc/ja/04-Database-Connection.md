@@ -179,7 +179,7 @@ val update = userQuery.update("name", "update name").update // Int
 val delete = userQuery.delete.update // Int
 ```
 
-`insert`文の場合データ挿入時にAutoIncrementで生成された値を返却させてい場合があります。その場合は`update`メソッドではなく`returning`メソッドを使用して返却したいカラムを指定します。
+`insert`文の場合データ挿入時にAutoIncrementで生成された値を返却させたい場合があります。その場合は`update`メソッドではなく`returning`メソッドを使用して返却したいカラムを指定します。
 
 ```scala 3
 val insert = userQuery.insert((1L, "name", None)).returning("id") // Long
