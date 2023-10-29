@@ -103,7 +103,7 @@ lazy val moduleProjects: Seq[ProjectReference] = Seq(
   codegen
 )
 
-lazy val Ldbc = Project("Ldbc", file("."))
+lazy val ldbc = Project("Ldbc", file("."))
   .settings(scalaVersion := (core / scalaVersion).value)
   .settings(publish / skip := true)
   .settings(commonSettings)
