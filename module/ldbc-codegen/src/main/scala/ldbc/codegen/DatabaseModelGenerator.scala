@@ -51,8 +51,8 @@ private[ldbc] object DatabaseModelGenerator:
       outputFile.getParentFile.mkdirs()
       outputFile.createNewFile()
 
-    val character = statement.charset.fold("None")(str => s"Some(Character(\"$str\"))")
-    val collate   = statement.collate.fold("None")(str => s"Some(Collate(\"$str\"))")
+    val character = statement.charset.fold("None")(str => s"Some(Character.$str)")
+    val collate   = statement.collate.fold("None")(str => s"Some(Collate.$str[String])")
 
     val scalaSource =
       s"""
