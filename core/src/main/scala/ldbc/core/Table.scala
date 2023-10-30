@@ -19,6 +19,9 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
   /** Table name */
   private[ldbc] def _name: String
 
+  /** Tuple of columns the table has. */
+  private[ldbc] def columns: Tuple
+
   /** Table Key definitions */
   private[ldbc] def keyDefinitions: Seq[Key]
 
@@ -27,24 +30,6 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Additional table information */
   private[ldbc] def options: Seq[TableOption | Character | Collate[String]]
-
-  /** Methods for statically accessing column information held by a Table.
-    *
-    * @param tag
-    *   A type with a single instance. Here, Column is passed.
-    * @param mirror
-    *   product isomorphism map
-    * @param index
-    *   Position of the specified type in tuple X
-    * @tparam Tag
-    *   Type with a single instance
-    */
-  def selectDynamic[Tag <: Singleton](
-    tag: Tag
-  )(using
-    mirror: Mirror.ProductOf[P],
-    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
 
   /** Method to retrieve an array of column information that a table has.
     */
@@ -94,6 +79,21 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
 object Table extends Dynamic:
 
+  extension[P <: Product](table: Table[P])
+
+    /** Methods for statically accessing column information held by a Table.
+     */
+    transparent inline def selectDynamic[Tag <: Singleton](
+      tag: Tag
+    )(using
+      mirror: Mirror.ProductOf[P],
+      index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
+      val column = table.columns
+        .productElement(index.value)
+        .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+      table.alias.fold(column)(name => column.as(name))
+
   private case class Impl[P <: Product, T <: Tuple](
     _name:          String,
     columns:        Tuple.Map[T, Column],
@@ -101,17 +101,6 @@ object Table extends Dynamic:
     options:        Seq[TableOption | Character | Collate[String]],
     alias:          Option[String] = None
   ) extends Table[P]:
-
-    override def selectDynamic[Tag <: Singleton](
-      tag: Tag
-    )(using
-      mirror: Mirror.ProductOf[P],
-      index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-      val column = columns
-        .productElement(index.value)
-        .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
-      alias.fold(column)(name => column.as(name))
 
     override private[ldbc] def all: List[Column[[A] => A => A]] =
       columns.toList.asInstanceOf[List[Column[[A] => A => A]]]
@@ -158,7 +147,7 @@ object Table extends Dynamic:
     *
     * @param mirror
     *   product isomorphism map
-    * @param _name
+    * @param name
     *   Table name
     * @param columns
     *   Tuple of columns matching the Product's Elem type
@@ -168,6 +157,6 @@ object Table extends Dynamic:
   private def fromTupleMap[P <: Product](using
     mirror: Mirror.ProductOf[P]
   )(
-    _name:   String,
+    name:   String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
-  ): Table[P] = Impl[P, mirror.MirroredElemTypes](_name, columns, Seq.empty, Seq.empty, None)
+  ): Table[P] = Impl[P, mirror.MirroredElemTypes](name, columns, Seq.empty, Seq.empty, None)
