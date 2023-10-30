@@ -130,9 +130,9 @@ object Key:
           (list.find(_.isInstanceOf[OnDelete]), list.find(_.isInstanceOf[OnUpdate])) match
             case (None, None) => s"REFERENCE($className.table, (${ columns.mkString(",") }))"
             case (Some(delete), None) =>
-              s"REFERENCE($className.table, ${ columns.mkString(", ") }).onDelete(${ delete.option })"
+              s"REFERENCE($className.table, (${ columns.mkString(", ") })).onDelete(${ delete.option })"
             case (None, Some(update)) =>
-              s"REFERENCE($className.table, ${ columns.mkString(", ") }).onUpdate(${ update.option })"
+              s"REFERENCE($className.table, (${ columns.mkString(", ") })).onUpdate(${ update.option })"
             case (Some(delete), Some(update)) =>
-              s"REFERENCE($className.table, ${ columns.mkString(", ") }).onDelete(${ delete.option }).onUpdate(${ update.option })"
+              s"REFERENCE($className.table, (${ columns.mkString(", ") })).onDelete(${ delete.option }).onUpdate(${ update.option })"
         case None => s"REFERENCE($className.table, ${ columns.mkString(",") })"
