@@ -108,7 +108,7 @@ class TableTest extends AnyFlatSpec:
     """.stripMargin)
   }
 
-  it should "" in {
+  it should "Compound foreign keys of the same type can be compiled without error." in {
     assertCompiles("""
       import ldbc.core.*
 
@@ -126,9 +126,11 @@ class TableTest extends AnyFlatSpec:
         column("sub_id", BIGINT(64)),
         column("sub_category", TINYINT)
       )
-        .keySet(table => PRIMARY_KEY(table.id))
-        .keySet(table => INDEX_KEY(table.subId))
-        .keySet(table => CONSTRAINT("fk_id", FOREIGN_KEY((table.subId, table.subCategory), REFERENCE(subTable, (subTable.id, subTable.category)))))
+        .keySets(table => Seq(
+          PRIMARY_KEY(table.id),
+          INDEX_KEY(table.subId),
+          CONSTRAINT("fk_id", FOREIGN_KEY((table.subId, table.subCategory), REFERENCE(subTable, (subTable.id, subTable.category))))
+        ))
     """.stripMargin)
   }
 
