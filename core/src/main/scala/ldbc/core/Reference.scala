@@ -12,6 +12,8 @@ import java.sql.DatabaseMetaData.{
   importedKeySetDefault
 }
 
+import ldbc.core.interpreter.Tuples
+
 /** A model for setting reference options used for foreign key constraints, etc.
   *
   * @param table
@@ -25,10 +27,10 @@ import java.sql.DatabaseMetaData.{
   */
 case class Reference[T <: Tuple](
   table:    Table[?],
-  keyPart:  Tuple.Map[T, Column],
+  keyPart:  T,
   onDelete: Option[Reference.ReferenceOption],
   onUpdate: Option[Reference.ReferenceOption]
-):
+)(using Tuples.IsColumn[T] =:= true):
 
   private val label: String = "REFERENCES"
 
