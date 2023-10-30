@@ -110,6 +110,31 @@ class TableTest extends AnyFlatSpec:
     """.stripMargin)
   }
 
+  it should "" in {
+    assertCompiles(
+      """
+      import ldbc.core.*
+
+      case class Test(id: Long, subId: Long, subCategory: Short)
+      case class SubTest(id: Long, test: String, category: Short)
+
+      val subTable: Table[SubTest] = Table[SubTest]("sub_test")(
+        column("id", BIGINT(64), AUTO_INCREMENT, PRIMARY_KEY),
+        column("test", VARCHAR(255)),
+        column("category", TINYINT)
+      )
+
+      val table: Table[Test] = Table[Test]("test")(
+        column("id", BIGINT(64), AUTO_INCREMENT),
+        column("sub_id", BIGINT(64)),
+        column("sub_category", TINYINT)
+      )
+        .keySet(table => PRIMARY_KEY(table.id))
+        .keySet(table => INDEX_KEY(table.subId))
+        .keySet(table => CONSTRAINT("fk_id", FOREIGN_KEY((table.subId, table.subCategory), REFERENCE(subTable, (subTable.id, subTable.category)))))
+    """.stripMargin)
+  }
+
   it should "The type of the column accessed by selectDynamic matches the type of the specified column." in {
     case class User(id: Long, name: String, age: Int)
 

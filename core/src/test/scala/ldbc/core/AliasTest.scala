@@ -105,9 +105,9 @@ object AliasTest extends Specification:
 
   "FOREIGN_KEY call succeeds" in {
     val p1 = FOREIGN_KEY(column("test_id", BIGINT), REFERENCE(table, table.id))
-    val p2 = FOREIGN_KEY[(Long, Int)](
+    val p2 = FOREIGN_KEY(
       (column("test_id", BIGINT), column("test_status", INT)),
-      REFERENCES[(Long, Int)](table, (table.id, table.status))
+      REFERENCE(table, (table.id, table.status))
     )
 
     p1.queryString == "FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)" and
