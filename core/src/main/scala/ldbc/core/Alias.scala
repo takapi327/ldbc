@@ -8,6 +8,7 @@ import java.time.*
 import java.time.Year as JYear
 
 import ldbc.core.attribute.*
+import ldbc.core.interpreter.Tuples
 
 private[ldbc] trait Alias:
 
@@ -160,44 +161,44 @@ private[ldbc] trait Alias:
 
   def FOREIGN_KEY[T](
     column:    Column[T],
-    reference: Reference[T *: EmptyTuple]
-  ): ForeignKey[T *: EmptyTuple] = ForeignKey[T *: EmptyTuple](None, column *: EmptyTuple, reference)
+    reference: Reference[Column[T] *: EmptyTuple]
+  ): ForeignKey[Column[T] *: EmptyTuple] = ForeignKey[Column[T] *: EmptyTuple](None, column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T](
     name:      String,
     column:    Column[T],
-    reference: Reference[T *: EmptyTuple]
-  ): ForeignKey[T *: EmptyTuple] = ForeignKey[T *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
+    reference: Reference[Column[T] *: EmptyTuple]
+  ): ForeignKey[Column[T] *: EmptyTuple] = ForeignKey[Column[T] *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T <: Tuple](
-    columns:   Tuple.Map[T, Column],
+    columns:   T,
     reference: Reference[T]
-  ): ForeignKey[T] =
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](None, columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
     name:      String,
-    columns:   Tuple.Map[T, Column],
+    columns:   T,
     reference: Reference[T]
-  ): ForeignKey[T] =
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](Some(name), columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
     name:      Option[String],
-    columns:   Tuple.Map[T, Column],
+    columns:   T,
     reference: Reference[T]
-  ): ForeignKey[T] =
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](name, columns, reference)
 
   def REFERENCE[T](
     table:  Table[?],
     column: Column[T]
-  ): Reference[T *: EmptyTuple] = Reference[T *: EmptyTuple](table, column *: EmptyTuple, None, None)
+  ): Reference[Column[T] *: EmptyTuple] = Reference[Column[T] *: EmptyTuple](table, column *: EmptyTuple, None, None)
 
-  def REFERENCE[T <: Tuple](table: Table[?], columns: Tuple.Map[T, Column]): Reference[T] =
-    Reference[T](table, columns, None, None)
-
-  def REFERENCES[T <: Tuple](table: Table[?], columns: Tuple.Map[T, Column]): Reference[T] =
+  def REFERENCE[T <: Tuple](
+    table: Table[?],
+    columns: T
+  )(using Tuples.IsColumn[T] =:= true): Reference[T] =
     Reference[T](table, columns, None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
