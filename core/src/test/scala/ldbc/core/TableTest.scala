@@ -64,6 +64,52 @@ class TableTest extends AnyFlatSpec:
     """.stripMargin)
   }
 
+  it should "Foreign key constraints can be set between the same type without any problem." in {
+    assertCompiles(
+      """
+      import ldbc.core.*
+
+      case class Test(id: Long, subId: Long)
+      case class SubTest(id: Long, test: String)
+
+      val subTable: Table[SubTest] = Table[SubTest]("sub_test")(
+        column("id", BIGINT(64), AUTO_INCREMENT, PRIMARY_KEY),
+        column("test", VARCHAR(255))
+      )
+
+      val table: Table[Test] = Table[Test]("test")(
+        column("id", BIGINT(64), AUTO_INCREMENT),
+        column("sub_id", BIGINT(64))
+      )
+        .keySet(table => PRIMARY_KEY(table.id))
+        .keySet(table => INDEX_KEY(table.subId))
+        .keySet(table => CONSTRAINT("fk_id", FOREIGN_KEY(table.subId, REFERENCE(subTable, subTable.id))))
+    """.stripMargin)
+  }
+
+  it should "Setting foreign key constraints between different types results in a compile error." in {
+    assertDoesNotCompile(
+      """
+      import ldbc.core.*
+
+      case class Test(id: Long, subId: Long)
+      case class SubTest(id: Long, test: String)
+
+      val subTable: Table[SubTest] = Table[SubTest]("sub_test")(
+        column("id", BIGINT(64), AUTO_INCREMENT, PRIMARY_KEY),
+        column("test", VARCHAR(255))
+      )
+
+      val table: Table[Test] = Table[Test]("test")(
+        column("id", BIGINT(64), AUTO_INCREMENT),
+        column("sub_id", BIGINT(64))
+      )
+        .keySet(table => PRIMARY_KEY(table.id))
+        .keySet(table => INDEX_KEY(table.subId))
+        .keySet(table => CONSTRAINT("fk_id", FOREIGN_KEY(table.subId, REFERENCE(subTable, subTable.test))))
+    """.stripMargin)
+  }
+
   it should "The type of the column accessed by selectDynamic matches the type of the specified column." in {
     case class User(id: Long, name: String, age: Int)
 
