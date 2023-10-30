@@ -196,7 +196,8 @@ private[ldbc] case class ForeignKey[T <: Tuple](
   indexName: Option[String],
   columns:   T,
   reference: Reference[T]
-)(using Tuples.IsColumn[T] =:= true) extends Key:
+)(using Tuples.IsColumn[T] =:= true)
+  extends Key:
 
   override val label: String = "FOREIGN KEY"
 

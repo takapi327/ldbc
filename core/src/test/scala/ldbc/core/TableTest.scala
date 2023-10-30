@@ -65,8 +65,7 @@ class TableTest extends AnyFlatSpec:
   }
 
   it should "Foreign key constraints can be set between the same type without any problem." in {
-    assertCompiles(
-      """
+    assertCompiles("""
       import ldbc.core.*
 
       case class Test(id: Long, subId: Long)
@@ -88,8 +87,7 @@ class TableTest extends AnyFlatSpec:
   }
 
   it should "Setting foreign key constraints between different types results in a compile error." in {
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
       import ldbc.core.*
 
       case class Test(id: Long, subId: Long)
@@ -111,8 +109,7 @@ class TableTest extends AnyFlatSpec:
   }
 
   it should "" in {
-    assertCompiles(
-      """
+    assertCompiles("""
       import ldbc.core.*
 
       case class Test(id: Long, subId: Long, subCategory: Short)

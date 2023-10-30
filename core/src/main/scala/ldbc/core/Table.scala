@@ -79,15 +79,14 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
 
 object Table extends Dynamic:
 
-  extension[P <: Product](table: Table[P])
-
+  extension [P <: Product](table: Table[P])
     /** Methods for statically accessing column information held by a Table.
-     */
+      */
     transparent inline def selectDynamic[Tag <: Singleton](
       tag: Tag
     )(using
       mirror: Mirror.ProductOf[P],
-      index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+      index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
       val column = table.columns
         .productElement(index.value)
@@ -157,6 +156,6 @@ object Table extends Dynamic:
   private def fromTupleMap[P <: Product](using
     mirror: Mirror.ProductOf[P]
   )(
-    name:   String,
+    name:    String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
   ): Table[P] = Impl[P, mirror.MirroredElemTypes](name, columns, Seq.empty, Seq.empty, None)

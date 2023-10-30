@@ -168,7 +168,8 @@ private[ldbc] trait Alias:
     name:      String,
     column:    Column[T],
     reference: Reference[Column[T] *: EmptyTuple]
-  ): ForeignKey[Column[T] *: EmptyTuple] = ForeignKey[Column[T] *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
+  ): ForeignKey[Column[T] *: EmptyTuple] =
+    ForeignKey[Column[T] *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T <: Tuple](
     columns:   T,
@@ -196,7 +197,7 @@ private[ldbc] trait Alias:
   ): Reference[Column[T] *: EmptyTuple] = Reference[Column[T] *: EmptyTuple](table, column *: EmptyTuple, None, None)
 
   def REFERENCE[T <: Tuple](
-    table: Table[?],
+    table:   Table[?],
     columns: T
   )(using Tuples.IsColumn[T] =:= true): Reference[T] =
     Reference[T](table, columns, None, None)
