@@ -4,6 +4,8 @@
 
 package ldbc.core
 
+import ldbc.core.interpreter.Tuples
+
 /** Key to be set for the table
   */
 private[ldbc] trait Key:
@@ -192,9 +194,9 @@ object UniqueKey:
   */
 private[ldbc] case class ForeignKey[T <: Tuple](
   indexName: Option[String],
-  columns:   Tuple.Map[T, Column],
+  columns:   T,
   reference: Reference[T]
-) extends Key:
+)(using Tuples.IsColumn[T] =:= true) extends Key:
 
   override val label: String = "FOREIGN KEY"
 
