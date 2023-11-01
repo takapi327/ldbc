@@ -376,7 +376,7 @@ val user = Table[User]("user")(
   column("post_id", BIGINT[Long]),
   column("post_category", SMALLINT[Short])
 )
-  .keySet(table => FOREIGN_KEY(List(table.postId, table.postCategory), REFERENCE(post, post.id, post.category)))
+  .keySet(table => FOREIGN_KEY((table.postId, table.postCategory), REFERENCE(post, (post.id, post.category))))
 
 // CREATE TABLE `user` (
 //   ...,
