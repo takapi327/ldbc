@@ -147,37 +147,43 @@ trait DataTypes:
 
   /** ===== List of Date Data Types ===== */
 
-  inline def DATE[T <: LocalDate | Option[LocalDate]]: Date[T] = Date(isOptional[T])
+  inline def DATE[T <: String | LocalDate | Option[String | LocalDate]]: Date[T] = Date(isOptional[T])
 
-  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]]
-    : DateTime[T] = DateTime(None, isOptional[T])
+  inline def DATETIME[
+    T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
+  ]: DateTime[T] =
+    DateTime(None, isOptional[T])
 
-  inline def DATETIME[T <: Instant | LocalDateTime | OffsetTime | Option[Instant | LocalDateTime | OffsetTime]](
+  inline def DATETIME[
+    T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
+  ](
     inline fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6
   ): DateTime[T] = DateTime(Some(fsp), isOptional[T])
 
   inline def TIMESTAMP[
-    T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
+    T <: String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ]: TimeStamp[T] = TimeStamp(None, isOptional[T])
 
   inline def TIMESTAMP[
-    T <: Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
+    T <: String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): TimeStamp[T] = TimeStamp(Some(fsp), isOptional[T])
 
-  inline def TIME[T <: LocalTime | Option[LocalTime]]: Time[T] = Time(None, isOptional[T])
-  inline def TIME[T <: LocalTime | Option[LocalTime]](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Time[T] =
+  inline def TIME[T <: String | LocalTime | Option[String | LocalTime]]: Time[T] = Time(None, isOptional[T])
+  inline def TIME[T <: String | LocalTime | Option[String | LocalTime]](fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Time[T] =
     Time(Some(fsp), isOptional[T])
 
   @deprecated(
     "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
     "Ldbc-Core 0.1.0"
   )
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]](digit: 4): Year[T] =
+  inline def YEAR[T <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]](
+    digit: 4
+  ): Year[T] =
     Year(Some(digit), isOptional[T])
 
-  inline def YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]]: Year[T] =
+  inline def YEAR[T <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]]: Year[T] =
     Year(None, isOptional[T])
 
   /** ===== List of Alias Date Data Types ===== */

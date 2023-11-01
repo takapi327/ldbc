@@ -266,10 +266,10 @@ class LdbcSchemaAnalyzer(
       val schemaSpyTable = builder.build
 
       val importedKeys = table.keyDefinitions.flatMap {
-        case v: ForeignKey => ImportForeignKeyBuilder.build(v, db.getCatalog.getName, db.getSchema.getName, None)
+        case v: ForeignKey[?] => ImportForeignKeyBuilder.build(v, db.getCatalog.getName, db.getSchema.getName, None)
         case constraint: Constraint =>
           constraint.key match
-            case v: ForeignKey =>
+            case v: ForeignKey[?] =>
               ImportForeignKeyBuilder.build(v, db.getCatalog.getName, db.getSchema.getName, constraint.symbol)
             case _ => Nil
         case _ => Nil

@@ -18,11 +18,11 @@ trait OrderingTable:
   private def calculateWeightByReference(table: Table[?]): Int =
     if table.keyDefinitions.nonEmpty then
       table.keyDefinitions.map {
-        case _: ForeignKey => 1
+        case _: ForeignKey[?] => 1
         case constraint: Constraint =>
           constraint.key match
-            case _: ForeignKey => 1
-            case _             => 0
+            case _: ForeignKey[?] => 1
+            case _                => 0
         case _ => 0
       }.sum
     else 0
