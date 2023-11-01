@@ -136,7 +136,6 @@ trait CustomMapping: // 任意の名前
 カスタマイズを行うためのymlファイルに実装を行なった`CustomMapping`traitを設定し、対象のカラムの型をCountryCodeに変換してあげます。
 
 ```yaml
-
 database:
   name: 'location'
   tables:

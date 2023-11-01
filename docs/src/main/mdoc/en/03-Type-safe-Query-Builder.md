@@ -1,4 +1,4 @@
-# Type-safe query construction
+# Type-safe Query Construction
 
 This chapter describes how to use LDBC-built table definitions to construct type-safe queries.
 

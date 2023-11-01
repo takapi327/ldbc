@@ -116,7 +116,7 @@ database:
 
 The `database` must be the name of the database listed in the SQL file to be analyzed. The table name must be the name of a table belonging to the database listed in the SQL file to be analyzed.
 
-In the `columns` field, enter the name of the column whose type you want to change and the Scala type you want to change as a string. Columns` can have multiple values, but the column name in `name` must be in the target table.
+In the `columns` field, enter the name of the column to be retyped and the Scala type to be changed as a string. You can set multiple values for `columns`, but the column name listed in name must be in the target table.
 Also, the Scala type to be converted must be one that is supported by the column's Data type. If you want to specify an unsupported type, you must pass a trait, abstract class, etc. that is configured to do implicit type conversion for `object`.
 
 See [here](http://localhost:4000/en/01-Table-Definitions.html) for types supported by the Data type and [here](http://localhost:4000/en/02-Custom-Data-Type.html).
@@ -136,7 +136,6 @@ trait CustomMapping: // Any name
 Set the `CustomMapping`trait that you have implemented in the yml file for customization, and convert the target column type to CountryCode.
 
 ```yaml
-
 database:
   name: 'location'
   tables:

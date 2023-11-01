@@ -1,4 +1,4 @@
-# Plain SQL queries
+# Plain SQL Queries
 
 Sometimes you may need to write your own SQL code for operations that are not well supported at a higher level of abstraction; instead of going back to the lower layers of JDBC, you can use LDBC's Plain SQL queries in the Scala-based API.
 This chapter describes how to use Plain SQL queries in LDBC to process connections to databases in such cases.

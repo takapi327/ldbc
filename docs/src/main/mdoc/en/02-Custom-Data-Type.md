@@ -1,4 +1,4 @@
-# Custom Data type
+# Custom Data Type
 
 This chapter describes how to use user-specific or unsupported types in table definitions built with LDBC.
 
