@@ -86,3 +86,9 @@ object Database:
 
   def mysql[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
     Database[F](CoreDatabase.Type.MySQL, name, host, port, Some(user), Some(password))
+
+  def aws[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
+    Database[F](CoreDatabase.Type.AWSMySQL, name, host, port)
+
+  def aws[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
+    Database[F](CoreDatabase.Type.AWSMySQL, name, host, port, Some(user), Some(password))
