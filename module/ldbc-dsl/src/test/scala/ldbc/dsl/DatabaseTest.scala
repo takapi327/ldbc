@@ -412,7 +412,9 @@ object DatabaseTest extends Specification:
         .autoCommit(
           city
             .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-            .values(List(("Test2", "DatabaseTest_case2", "T", 1), ("Test3", "DatabaseTest_case3", "DatabaseTest_case3", 2)))
+            .values(
+              List(("Test2", "DatabaseTest_case2", "T", 1), ("Test3", "DatabaseTest_case3", "DatabaseTest_case3", 2))
+            )
             .update
         )
         .unsafeRunSync()
