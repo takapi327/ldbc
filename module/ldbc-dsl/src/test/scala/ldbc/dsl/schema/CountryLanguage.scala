@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl.schema
 
@@ -11,11 +11,11 @@ import ldbc.sql.*
 import ldbc.dsl.io.*
 
 case class CountryLanguage(
-                            countryCode: String,
-                            language:    String,
-                            isOfficial:  CountryLanguage.IsOfficial,
-                            percentage:  BigDecimal
-                          )
+  countryCode: String,
+  language:    String,
+  isOfficial:  CountryLanguage.IsOfficial,
+  percentage:  BigDecimal
+)
 
 object CountryLanguage:
 

@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl
 
@@ -19,10 +19,10 @@ object DatabaseTest extends Specification:
 
   given LogHandler[IO] = LogHandler.consoleLogger
 
-  private val db = Database.mysql[IO]("world","127.0.0.1", 13306, "ldbc", "password")
+  private val db = Database.mysql[IO]("world", "127.0.0.1", 13306, "ldbc", "password")
 
-  private val country = TableQuery[IO, Country](Country.table)
-  private val city = TableQuery[IO, City](City.table)
+  private val country         = TableQuery[IO, Country](Country.table)
+  private val city            = TableQuery[IO, City](City.table)
   private val countryLanguage = TableQuery[IO, CountryLanguage](CountryLanguage.table)
 
   "Database Connection Test" should {
@@ -42,7 +42,8 @@ object DatabaseTest extends Specification:
     }
 
     "The number of cases retrieved using the subquery matches the specified value." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           city
             .select(v => (v.name, v.countryCode))
             .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
@@ -54,7 +55,8 @@ object DatabaseTest extends Specification:
     }
 
     "The acquired data matches the specified model." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           country.selectAll
             .where(_.code _equals "JPN")
             .query[Country]
@@ -83,7 +85,8 @@ object DatabaseTest extends Specification:
     }
 
     "The acquired data matches the specified model." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           city.selectAll
             .where(_.id _equals 1532)
             .query[City]
@@ -94,7 +97,8 @@ object DatabaseTest extends Specification:
     }
 
     "The acquired data matches the specified model." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           countryLanguage.selectAll
             .where(_.countryCode _equals "JPN")
             .and(_.language _equals "Japanese")
@@ -106,7 +110,8 @@ object DatabaseTest extends Specification:
     }
 
     "The data retrieved by Join matches the specified model." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           (city join country)
             .on((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
@@ -122,7 +127,8 @@ object DatabaseTest extends Specification:
     "The data retrieved by Join matches the specified model." in {
       case class CountryCity(cityName: String, countryName: String)
 
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           (city join country)
             .on((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
@@ -136,7 +142,8 @@ object DatabaseTest extends Specification:
     }
 
     "The data retrieved by Left Join matches the specified model." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           (city join country)
             .left((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
@@ -152,7 +159,8 @@ object DatabaseTest extends Specification:
     "The data retrieved by Left Join matches the specified model." in {
       case class CountryCity(cityName: String, countryName: Option[String])
 
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           (city join country)
             .left((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
@@ -166,7 +174,8 @@ object DatabaseTest extends Specification:
     }
 
     "The data retrieved by Right Join matches the specified model." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           (city join country)
             .right((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
@@ -182,7 +191,8 @@ object DatabaseTest extends Specification:
     "The data retrieved by Right Join matches the specified model." in {
       case class CountryCity(cityName: Option[String], countryName: String)
 
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           (city join country)
             .right((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
@@ -196,7 +206,8 @@ object DatabaseTest extends Specification:
     }
 
     "The retrieved data matches the specified value." in {
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           city
             .select(v => (v.countryCode, v.id.count))
             .where(_.countryCode _equals "JPN")
@@ -210,7 +221,8 @@ object DatabaseTest extends Specification:
     "The acquired data matches the specified model." in {
       case class CountryCodeGroup(countryCode: String, length: Int)
 
-      val result = db.readOnly(
+      val result = db
+        .readOnly(
           city
             .select(v => (v.countryCode, v.id.count))
             .groupBy(_._1)
@@ -225,18 +237,20 @@ object DatabaseTest extends Specification:
       db.readOnly(for
         codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.headOption
         cities <- codeOpt match
-          case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
-          case Some(code *: EmptyTuple) =>
-            city
-              .select(v => (v.name, v.countryCode))
-              .where(_.countryCode _equals code)
-              .query
-              .toList
-      yield cities.length === 248).unsafeRunSync()
+                    case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
+                    case Some(code *: EmptyTuple) =>
+                      city
+                        .select(v => (v.name, v.countryCode))
+                        .where(_.countryCode _equals code)
+                        .query
+                        .toList
+      yield cities.length === 248)
+        .unsafeRunSync()
     }
 
     "New data can be registered with the value of Tuple." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           country
             .insert(
               (
@@ -265,7 +279,8 @@ object DatabaseTest extends Specification:
     }
 
     "New data can be registered from multiple tuple values." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           country
             .insert(
               (
@@ -328,7 +343,8 @@ object DatabaseTest extends Specification:
         None,
         "T4"
       )
-      val result = db.autoCommit((country += newCountry).update)
+      val result = db
+        .autoCommit((country += newCountry).update)
         .unsafeRunSync()
 
       result === 1
@@ -369,7 +385,8 @@ object DatabaseTest extends Specification:
         None,
         "T6"
       )
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           (country ++= List(newCountry1, newCountry2)).update
         )
         .unsafeRunSync()
@@ -378,7 +395,8 @@ object DatabaseTest extends Specification:
     }
 
     "Only specified items can be added to the data." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           city
             .insertInto(v => (v.name, v.countryCode, v.district, v.population))
             .values(("Test", "T1", "T", 1))
@@ -390,7 +408,8 @@ object DatabaseTest extends Specification:
     }
 
     "Multiple additions of data can be made only for specified items." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           city
             .insertInto(v => (v.name, v.countryCode, v.district, v.population))
             .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
@@ -402,7 +421,8 @@ object DatabaseTest extends Specification:
     }
 
     "A stand-alone update succeeds." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           city
             .update("district", "Tokyo-test")
             .where(_.name _equals "Tokyo")
@@ -417,17 +437,19 @@ object DatabaseTest extends Specification:
       db.transaction(for
         cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query[City].headOption
         result <- cityOpt match
-          case None => ConnectionIO.pure[IO, Int](0)
-          case Some(cityModel) =>
-            city
-              .update(cityModel.copy(district = "Tokyo-to"))
-              .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
-              .update
-      yield result === 1).unsafeRunSync()
+                    case None => ConnectionIO.pure[IO, Int](0)
+                    case Some(cityModel) =>
+                      city
+                        .update(cityModel.copy(district = "Tokyo-to"))
+                        .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
+                        .update
+      yield result === 1)
+        .unsafeRunSync()
     }
 
     "Multiple columns are successfully updated." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           city
             .update("name", "Yokohama")
             .set("countryCode", "JPN")
@@ -442,40 +464,44 @@ object DatabaseTest extends Specification:
     }
 
     "The values of columns that do not satisfy the condition are not updated." in {
-      val result = db.transaction(for
-        _ <- city
-          .update("name", "update Odawara")
-          .set("district", "not update Kanagawa", false)
-          .where(_.id _equals 1637)
-          .update
-        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
-      yield updated).unsafeRunSync()
+      val result = db
+        .transaction(for
+          _ <- city
+                 .update("name", "update Odawara")
+                 .set("district", "not update Kanagawa", false)
+                 .where(_.id _equals 1637)
+                 .update
+          updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
+        yield updated)
+        .unsafeRunSync()
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
 
     "The update succeeds in the combined processing of multiple queries." in {
       db.transaction(for
         codeOpt <- country
-          .select(_.code)
-          .where(_.name _equals "Test1")
-          .and(_.continent _equals Country.Continent.Asia)
-          .query
-          .headOption
+                     .select(_.code)
+                     .where(_.name _equals "Test1")
+                     .and(_.continent _equals Country.Continent.Asia)
+                     .query
+                     .headOption
         result <- codeOpt match
-          case None => ConnectionIO.pure[IO, Int](0)
-          case Some(code *: EmptyTuple) =>
-            city
-              .update("name", "Test1")
-              .set("countryCode", code)
-              .set("district", "TT")
-              .set("population", 2)
-              .where(_.name _equals "Test2")
-              .update
-      yield result === 1).unsafeRunSync()
+                    case None => ConnectionIO.pure[IO, Int](0)
+                    case Some(code *: EmptyTuple) =>
+                      city
+                        .update("name", "Test1")
+                        .set("countryCode", code)
+                        .set("district", "TT")
+                        .set("population", 2)
+                        .where(_.name _equals "Test2")
+                        .update
+      yield result === 1)
+        .unsafeRunSync()
     }
 
     "Bulk renewal succeeds." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           countryLanguage
             .update("isOfficial", CountryLanguage.IsOfficial.T)
             .where(_.countryCode _equals "JPN")
@@ -487,7 +513,8 @@ object DatabaseTest extends Specification:
     }
 
     "Successful batch update with specified number." in {
-      val result = db.autoCommit(
+      val result = db
+        .autoCommit(
           countryLanguage
             .update("isOfficial", CountryLanguage.IsOfficial.T)
             .where(_.countryCode _equals "JPN")
@@ -500,9 +527,11 @@ object DatabaseTest extends Specification:
     }
 
     "Deletion by itself is successful." in {
-      val result = db.autoCommit(
-        country.delete.where(_.code _equals "T5").update
-      ).unsafeRunSync()
+      val result = db
+        .autoCommit(
+          country.delete.where(_.code _equals "T5").update
+        )
+        .unsafeRunSync()
       result === 1
     }
 
