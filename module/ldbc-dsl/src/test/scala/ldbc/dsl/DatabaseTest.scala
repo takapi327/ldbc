@@ -254,7 +254,7 @@ object DatabaseTest extends Specification:
           country
             .insert(
               (
-                "T1",
+                "DatabaseTest_case1",
                 "Test1",
                 Country.Continent.Asia,
                 "Northeast",
@@ -268,7 +268,7 @@ object DatabaseTest extends Specification:
                 "Test",
                 None,
                 None,
-                "T1"
+                "DatabaseTest_case1"
               )
             )
             .update
@@ -284,7 +284,7 @@ object DatabaseTest extends Specification:
           country
             .insert(
               (
-                "T2",
+                "DatabaseTest_case2",
                 "Test2",
                 Country.Continent.Asia,
                 "Northeast",
@@ -298,10 +298,10 @@ object DatabaseTest extends Specification:
                 "Test",
                 None,
                 None,
-                "T2"
+                "DatabaseTest_case2"
               ),
               (
-                "T3",
+                "DatabaseTest_case3",
                 "Test3",
                 Country.Continent.Asia,
                 "Northeast",
@@ -315,7 +315,7 @@ object DatabaseTest extends Specification:
                 "Test",
                 None,
                 None,
-                "T3"
+                "DatabaseTest_case3"
               )
             )
             .update
@@ -327,7 +327,7 @@ object DatabaseTest extends Specification:
 
     "New data can be registered from the model." in {
       val newCountry = Country(
-        "T4",
+        "DatabaseTest_case4",
         "Test4",
         Country.Continent.Asia,
         "Northeast",
@@ -341,7 +341,7 @@ object DatabaseTest extends Specification:
         "Test",
         None,
         None,
-        "T4"
+        "DatabaseTest_case4"
       )
       val result = db
         .autoCommit((country += newCountry).update)
@@ -352,7 +352,7 @@ object DatabaseTest extends Specification:
 
     "New data can be registered from multiple models." in {
       val newCountry1 = Country(
-        "T5",
+        "DatabaseTest_case5",
         "Test5",
         Country.Continent.Asia,
         "Northeast",
@@ -366,7 +366,7 @@ object DatabaseTest extends Specification:
         "Test",
         None,
         None,
-        "T5"
+        "DatabaseTest_case5"
       )
       val newCountry2 = Country(
         "T6",
@@ -399,7 +399,7 @@ object DatabaseTest extends Specification:
         .autoCommit(
           city
             .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-            .values(("Test", "T1", "T", 1))
+            .values(("Test", "DatabaseTest_case1", "T", 1))
             .update
         )
         .unsafeRunSync()
@@ -412,7 +412,7 @@ object DatabaseTest extends Specification:
         .autoCommit(
           city
             .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-            .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
+            .values(List(("Test2", "DatabaseTest_case2", "T", 1), ("Test3", "DatabaseTest_case3", "DatabaseTest_case3", 2)))
             .update
         )
         .unsafeRunSync()
@@ -529,7 +529,7 @@ object DatabaseTest extends Specification:
     "Deletion by itself is successful." in {
       val result = db
         .autoCommit(
-          country.delete.where(_.code _equals "T5").update
+          country.delete.where(_.code _equals "DatabaseTest_case5").update
         )
         .unsafeRunSync()
       result === 1
