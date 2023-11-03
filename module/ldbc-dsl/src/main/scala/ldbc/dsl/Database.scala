@@ -47,6 +47,12 @@ case class Database[F[_]: Sync](
       }
       .map(ConnectionIO[F])
 
+  def setUser(user: String):                Database[F] = this.copy(user = Some(user))
+  def setPassword(password: String):        Database[F] = this.copy(password = Some(password))
+  def setCharacter(character: Character):   Database[F] = this.copy(character = Some(character))
+  def setCollate(collate: Collate[String]): Database[F] = this.copy(collate = Some(collate))
+  def setTables(tables: Set[Table[?]]):     Database[F] = this.copy(tables = tables)
+
   def readOnly[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
     buildConnectionResource {
       for
