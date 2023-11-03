@@ -22,7 +22,7 @@ case class Database[F[_]: Sync](
   name:         String,
   host:         String,
   port:         Int,
-  connectionF:  () => F[ConnectionIO[F]],
+  connectionF:  () => F[Connection[F]],
   character:    Option[Character]       = None,
   collate:      Option[Collate[String]] = None,
   tables:       Set[Table[?]]           = Set.empty
@@ -84,7 +84,7 @@ object Database:
   ): Database[F] =
     val jdbcUrl: String = s"jdbc:${ databaseType.name }://$host:$port/$name"
 
-    val connection: F[ConnectionIO[F]] =
+    val connection: F[Connection[F]] =
       Sync[F]
         .blocking {
           Class.forName(databaseType.driver)
@@ -115,7 +115,7 @@ object Database:
     port:         Int,
     dataSource:   DataSource
   ): Database[F] =
-    val connection: F[ConnectionIO[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+    val connection: F[Connection[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
     Database[F](databaseType, name, host, port, () => connection)
 
   def mysqlDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
