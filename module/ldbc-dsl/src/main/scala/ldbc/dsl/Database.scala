@@ -76,13 +76,13 @@ object Database:
 
   def fromDriverManager[F[_]: Sync](
     databaseType: CoreDatabase.Type,
-    name: String,
-    host: String,
-    port: Int,
-    user: Option[String] = None,
-    password: Option[String] = None,
+    name:         String,
+    host:         String,
+    port:         Int,
+    user:         Option[String] = None,
+    password:     Option[String] = None
   ): Database[F] =
-    val jdbcUrl: String = s"jdbc:${databaseType.name}://$host:$port/$name"
+    val jdbcUrl: String = s"jdbc:${ databaseType.name }://$host:$port/$name"
 
     val connection: F[ConnectionIO[F]] =
       Sync[F]
@@ -90,7 +90,7 @@ object Database:
           Class.forName(databaseType.driver)
           (user, password) match
             case (Some(u), Some(p)) => DriverManager.getConnection(jdbcUrl, u, p)
-            case _ => DriverManager.getConnection(jdbcUrl)
+            case _                  => DriverManager.getConnection(jdbcUrl)
         }
         .map(ConnectionIO[F])
 
@@ -110,16 +110,16 @@ object Database:
 
   def fromDataSource[F[_]: Sync](
     databaseType: CoreDatabase.Type,
-    name: String,
-    host: String,
-    port: Int,
-    dataSource: DataSource
+    name:         String,
+    host:         String,
+    port:         Int,
+    dataSource:   DataSource
   ): Database[F] =
     val connection: F[ConnectionIO[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
     Database[F](databaseType, name, host, port, () => connection)
 
-  def mysqlDataSource[F[_] : Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+  def mysqlDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
     fromDataSource[F](CoreDatabase.Type.MySQL, name, host, port, dataSource)
 
-  def awsDataSource[F[_] : Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+  def awsDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
     fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, port, dataSource)
