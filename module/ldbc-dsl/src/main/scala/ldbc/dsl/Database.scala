@@ -6,6 +6,8 @@ package ldbc.dsl
 
 import java.sql.DriverManager
 
+import javax.sql.DataSource
+
 import cats.data.Kleisli
 import cats.implicits.*
 
@@ -20,8 +22,7 @@ case class Database[F[_]: Sync](
   name:         String,
   host:         String,
   port:         Int,
-  user:         Option[String]          = None,
-  password:     Option[String]          = None,
+  connectionF:  () => F[ConnectionIO[F]],
   character:    Option[Character]       = None,
   collate:      Option[Collate[String]] = None,
   tables:       Set[Table[?]]           = Set.empty
@@ -35,20 +36,6 @@ case class Database[F[_]: Sync](
     val release: Connection[F] => F[Unit] = connection => connection.close()
     Resource.make(acquire)(release)
 
-  private val jdbcUrl: String = s"jdbc:${ databaseType.name }://$host:$port/$name"
-
-  private def getConnection: F[ConnectionIO[F]] =
-    Sync[F]
-      .blocking {
-        Class.forName(databaseType.driver)
-        (user, password) match
-          case (Some(u), Some(p)) => DriverManager.getConnection(jdbcUrl, u, p)
-          case _                  => DriverManager.getConnection(jdbcUrl)
-      }
-      .map(ConnectionIO[F])
-
-  def setUser(user: String):                Database[F] = this.copy(user = Some(user))
-  def setPassword(password: String):        Database[F] = this.copy(password = Some(password))
   def setCharacter(character: Character):   Database[F] = this.copy(character = Some(character))
   def setCollate(collate: Collate[String]): Database[F] = this.copy(collate = Some(collate))
   def setTables(tables: Set[Table[?]]):     Database[F] = this.copy(tables = tables)
@@ -56,7 +43,7 @@ case class Database[F[_]: Sync](
   def readOnly[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
     buildConnectionResource {
       for
-        connection <- getConnection
+        connection <- connectionF()
         _          <- connection.setReadOnly(true)
       yield connection
     }
@@ -65,7 +52,7 @@ case class Database[F[_]: Sync](
   def autoCommit[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
     buildConnectionResource {
       for
-        connection <- getConnection
+        connection <- connectionF()
         _          <- connection.setReadOnly(false) >> connection.setAutoCommit(true)
       yield connection
     }
@@ -75,7 +62,7 @@ case class Database[F[_]: Sync](
     (for
       connection <- buildConnectionResource {
                       for
-                        connection <- getConnection
+                        connection <- connectionF()
                         _          <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
                       yield connection
                     }
@@ -87,14 +74,52 @@ case class Database[F[_]: Sync](
 
 object Database:
 
-  def mysql[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
-    Database[F](CoreDatabase.Type.MySQL, name, host, port)
+  def fromDriverManager[F[_]: Sync](
+    databaseType: CoreDatabase.Type,
+    name: String,
+    host: String,
+    port: Int,
+    user: Option[String] = None,
+    password: Option[String] = None,
+  ): Database[F] =
+    val jdbcUrl: String = s"jdbc:${databaseType.name}://$host:$port/$name"
 
-  def mysql[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
-    Database[F](CoreDatabase.Type.MySQL, name, host, port, Some(user), Some(password))
+    val connection: F[ConnectionIO[F]] =
+      Sync[F]
+        .blocking {
+          Class.forName(databaseType.driver)
+          (user, password) match
+            case (Some(u), Some(p)) => DriverManager.getConnection(jdbcUrl, u, p)
+            case _ => DriverManager.getConnection(jdbcUrl)
+        }
+        .map(ConnectionIO[F])
 
-  def aws[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
-    Database[F](CoreDatabase.Type.AWSMySQL, name, host, port)
+    Database[F](databaseType, name, host, port, () => connection)
 
-  def aws[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
-    Database[F](CoreDatabase.Type.AWSMySQL, name, host, port, Some(user), Some(password))
+  def mysqlDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, port)
+
+  def mysqlDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, port, Some(user), Some(password))
+
+  def awsDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, port)
+
+  def awsDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, port, Some(user), Some(password))
+
+  def fromDataSource[F[_]: Sync](
+    databaseType: CoreDatabase.Type,
+    name: String,
+    host: String,
+    port: Int,
+    dataSource: DataSource
+  ): Database[F] =
+    val connection: F[ConnectionIO[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+    Database[F](databaseType, name, host, port, () => connection)
+
+  def mysqlDataSource[F[_] : Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+    fromDataSource[F](CoreDatabase.Type.MySQL, name, host, port, dataSource)
+
+  def awsDataSource[F[_] : Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+    fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, port, dataSource)
