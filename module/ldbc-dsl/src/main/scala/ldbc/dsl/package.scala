@@ -14,13 +14,14 @@ import cats.implicits.*
 import cats.effect.{ IO, Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
+import ldbc.core.Database as CoreDatabase
 import ldbc.sql.*
 import ldbc.dsl.syntax.*
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 package object dsl:
 
-  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F], QuerySyntax[F], CommandSyntax[F]:
+  private trait SyncSyntax[F[_]: Sync] extends SQLSyntax[F], ConnectionSyntax[F], QuerySyntax[F], CommandSyntax[F], DatabaseSyntax[F]:
 
     implicit class SqlOps(sql: SQL[F]):
       inline def query[T <: Tuple]: Command[F, T] =
@@ -124,5 +125,17 @@ package object dsl:
                       }
         yield transact).use(connectionKleisli.run)
       }
+
+    extension (database: CoreDatabase)
+      def fromDriverManager(
+        databaseType: CoreDatabase.Type,
+        user: Option[String] = None,
+        password: Option[String] = None
+      ): Database[F] = Database.fromDriverManager[F](databaseType, database.name, database.host, database.port, user, password)
+
+      def fromDataSource(
+        databaseType: CoreDatabase.Type,
+        dataSource: DataSource
+      ): Database[F] = Database.fromDataSource[F](databaseType, database.name, database.host, database.port, dataSource)
 
   val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
