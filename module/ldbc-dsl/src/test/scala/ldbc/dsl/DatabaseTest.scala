@@ -19,7 +19,7 @@ object DatabaseTest extends Specification:
 
   given LogHandler[IO] = LogHandler.consoleLogger
 
-  private val db = Database.mysql[IO]("world2", "127.0.0.1", 13306, "ldbc", "password")
+  private val db = Database.mysqlDriver[IO]("world2", "127.0.0.1", 13306, "ldbc", "password")
 
   private val country         = TableQuery[IO, Country](Country.table)
   private val city            = TableQuery[IO, City](City.table)
