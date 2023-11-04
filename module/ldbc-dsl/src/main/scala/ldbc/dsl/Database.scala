@@ -21,7 +21,7 @@ case class Database[F[_]: Sync](
   databaseType: CoreDatabase.Type,
   name:         String,
   host:         String,
-  port:         Int,
+  port:         Option[Int],
   connectionF:  () => F[Connection[F]],
   character:    Option[Character]       = None,
   collate:      Option[Collate[String]] = None,
@@ -78,11 +78,13 @@ object Database:
     databaseType: CoreDatabase.Type,
     name:         String,
     host:         String,
-    port:         Int,
-    user:         Option[String] = None,
-    password:     Option[String] = None
+    port:         Option[Int],
+    user:         Option[String],
+    password:     Option[String]
   ): Database[F] =
-    val jdbcUrl: String = s"jdbc:${ databaseType.name }://$host:$port/$name"
+    val jdbcUrl: String = port match
+      case Some(p) => s"jdbc:${ databaseType.name }://$host:$p/$name"
+      case None => s"jdbc:${ databaseType.name }://$host/$name"
 
     val connection: F[Connection[F]] =
       Sync[F]
@@ -97,29 +99,47 @@ object Database:
     Database[F](databaseType, name, host, port, () => connection)
 
   def mysqlDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
-    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, port)
+    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, Some(port), None, None)
+
+  def mysqlDriver[F[_] : Sync](name: String, host: String): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, None, None, None)
 
   def mysqlDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
-    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, port, Some(user), Some(password))
+    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, Some(port), Some(user), Some(password))
+
+  def mysqlDriver[F[_] : Sync](name: String, host: String, user: String, password: String): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, None, Some(user), Some(password))
 
   def awsDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
-    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, port)
+    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, Some(port), None, None)
+
+  def awsDriver[F[_] : Sync](name: String, host: String): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, None, None, None)
 
   def awsDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
-    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, port, Some(user), Some(password))
+    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, Some(port), Some(user), Some(password))
+
+  def awsDriver[F[_] : Sync](name: String, host: String, user: String, password: String): Database[F] =
+    fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, None, Some(user), Some(password))
 
   def fromDataSource[F[_]: Sync](
     databaseType: CoreDatabase.Type,
     name:         String,
     host:         String,
-    port:         Int,
+    port:         Option[Int],
     dataSource:   DataSource
   ): Database[F] =
     val connection: F[Connection[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
     Database[F](databaseType, name, host, port, () => connection)
 
   def mysqlDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
-    fromDataSource[F](CoreDatabase.Type.MySQL, name, host, port, dataSource)
+    fromDataSource[F](CoreDatabase.Type.MySQL, name, host, Some(port), dataSource)
+
+  def mysqlDataSource[F[_] : Sync](name: String, host: String, dataSource: DataSource): Database[F] =
+    fromDataSource[F](CoreDatabase.Type.MySQL, name, host, None, dataSource)
 
   def awsDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
-    fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, port, dataSource)
+    fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, Some(port), dataSource)
+
+  def awsDataSource[F[_] : Sync](name: String, host: String, dataSource: DataSource): Database[F] =
+    fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, None, dataSource)

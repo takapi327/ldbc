@@ -33,7 +33,7 @@ trait Database:
   val host: String
 
   /** Connection port to database */
-  val port: Int
+  val port: Option[Int]
 
   /** List of Tables in Database */
   val tables: Set[Table[?]]
