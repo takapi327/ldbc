@@ -323,7 +323,7 @@ val user = Table[User]("user")(
 
 // CREATE TABLE `user` (
 //   ...,
-//   CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`)
+//   FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`)
 // )
 ```
 
@@ -346,7 +346,7 @@ val user = Table[User]("user")(
 
 // CREATE TABLE `user` (
 //   ...,
-//   CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`) ON DELETE RESTRICT
+//   FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`) ON DELETE RESTRICT
 // )
 ```
 
@@ -380,7 +380,7 @@ val user = Table[User]("user")(
 
 // CREATE TABLE `user` (
 //   ...,
-//   CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`, `post_category`)  REFERENCES `post` (`id`, `category`)
+//   FOREIGN KEY (`post_id`, `post_category`)  REFERENCES `post` (`id`, `category`)
 // )
 ```
 
