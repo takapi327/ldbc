@@ -18,9 +18,9 @@ object JdbcUrlBuilder:
   private def buildForMySQL(database: Database): String =
     database.port match
       case Some(port) => s"jdbc:mysql://${ database.host }:$port/${ database.name }"
-      case None => s"jdbc:mysql://${ database.host }/${ database.name }"
+      case None       => s"jdbc:mysql://${ database.host }/${ database.name }"
 
   private def buildForAWSMySQL(database: Database): String =
     database.port match
       case Some(port) => s"jdbc:mysql:aws://${ database.host }:$port/${ database.name }"
-      case None => s"jdbc:mysql:aws://${ database.host }/${ database.name }"
+      case None       => s"jdbc:mysql:aws://${ database.host }/${ database.name }"
