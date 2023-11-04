@@ -239,7 +239,63 @@ val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource)
 Cats Effect IOを使用している場合は、`IOApp`内で実行を行うか`unsafeRunSync`などを使用することでデータベース接続処理を実行することができます。
 
 ```scala 3
-val user: User = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+val user: Option[User] = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
 ```
 
 `Kleisli`に関してはCatsの[ドキュメント](https://typelevel.org/cats/datatypes/kleisli.html)を参照してください。
+
+## Database Action
+
+データベース処理を実行する方法としてデータベースへの接続情報を持った`Database`を使用して行う方法も存在します。
+
+`Database`を構築する方法はDriverManagerを使用した方法と、DataSourceから生成する方法の2種類があります。以下はMySQLのドライバーを使用してデータベースへの接続情報を持った`Database`を構築する例です。
+
+```scala 3
+val db = Database.mysqlDriver[IO]("database name", "host", "port number", "user name", "password")
+```
+
+`Database`を使用してデータベース処理を実行するメリットは以下になります。
+
+- DataSourceの構築を簡略できる (DriverManagerを使用した場合)
+- クエリごとにDataSourceを受け渡す必要がなくなる
+
+`Database`を使用する方法は、DataSourceを受け渡す方法を簡略化しただけにすぎないため、どちらを使用しても実行結果に差が出ることはありません。
+`flatMap`などで処理を結合しメソッドチェーンで実行するか、結合した処理を`Database`を使用して実行するかの違いでしかありません。そのため実行方法はユーザーの好きの方法を選択できます。
+
+**Read Only**
+
+```scala 3
+val user: Option[User] = db.readOnly(userQuery.selectAll.query[User].headOption).unsafeRunSync()
+```
+
+**Auto Commit**
+
+```scala 3
+val result = db.autoCommit(userQuery.insert((1L, "name", None)).update).unsafeRunSync()
+```
+
+**Transaction**
+
+```scala 3
+db.transaction(for
+  result1 <- userQuery.insert((1L, "name", None)).returning("id")
+  result2 <- userQuery.update("name", "update name").update
+  ...
+yield ...).unsafeRunSync()
+```
+
+### Database model
+
+LDBCでは`Database`モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては[こちら](http://localhost:4000/ja/06-Generating-SchemaSPY-Documentation.html)を参照してください。
+
+すでに`Database`モデルを別の用途で生成している場合は、そのモデルを使用してデータベースの接続情報を持った`Database`を構築することができます。
+
+```scala 3
+import ldbc.dsl.io.*
+
+val database: Database = ???
+
+val db = database.mysqlDriver
+// or
+val db = database.mysqlDriver("user name", "password")
+```
