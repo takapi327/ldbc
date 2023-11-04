@@ -11,16 +11,6 @@ import ldbc.core.Database
 object JdbcUrlBuilder:
 
   def build(database: Database): String =
-    database.databaseType match
-      case Database.Type.MySQL    => buildForMySQL(database)
-      case Database.Type.AWSMySQL => buildForAWSMySQL(database)
-
-  private def buildForMySQL(database: Database): String =
     database.port match
-      case Some(port) => s"jdbc:mysql://${ database.host }:$port/${ database.name }"
-      case None       => s"jdbc:mysql://${ database.host }/${ database.name }"
-
-  private def buildForAWSMySQL(database: Database): String =
-    database.port match
-      case Some(port) => s"jdbc:mysql:aws://${ database.host }:$port/${ database.name }"
-      case None       => s"jdbc:mysql:aws://${ database.host }/${ database.name }"
+      case Some(port) => s"jdbc:${ database.databaseType.name }://${ database.host }:$port/${ database.name }"
+      case None       => s"jdbc:${ database.databaseType.name }://${ database.host }/${ database.name }"
