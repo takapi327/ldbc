@@ -64,7 +64,7 @@ private[ldbc] object DatabaseModelGenerator:
          |  schemaMeta: Option[String] = None,
          |  catalog: Option[String] = Some("def"),
          |  host: String = "127.0.0.1",
-         |  port: Int = 3306
+         |  port: Option[Int] = Some(3306)
          |) extends Database:
          |
          |  override val databaseType: Database.Type = Database.Type.MySQL
