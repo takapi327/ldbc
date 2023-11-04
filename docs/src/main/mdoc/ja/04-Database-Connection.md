@@ -13,7 +13,7 @@ libraryDependencies ++= Seq(
 ```
 @@@
 
-LDBCでのクエリ構築方法をまだ読んでいない場合は、先に[型安全なクエリ構築](http://localhost:4000/ja/03-Type-safe-Query-Builder.html)の章を先に読むことをオススメしましす。
+LDBCでのクエリ構築方法をまだ読んでいない場合は、[型安全なクエリ構築](http://localhost:4000/ja/03-Type-safe-Query-Builder.html)の章を先に読むことをオススメしましす。
 
 以下のコード例では、以下のimportを想定しています。
 

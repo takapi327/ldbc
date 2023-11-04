@@ -10,7 +10,7 @@ libraryDependencies += "$org$" %% "ldbc-query-builder" % "$version$"
 ```
 @@@
 
-LDBCでのテーブル定義方法をまだ読んでいない場合は、先に[テーブル定義](http://localhost:4000/ja/01-Table-Definitions.html)の章を先に読むことをオススメしましす。
+LDBCでのテーブル定義方法をまだ読んでいない場合は、[テーブル定義](http://localhost:4000/ja/01-Table-Definitions.html)の章を先に読むことをオススメしましす。
 
 以下のコード例では、以下のimportを想定しています。
 
