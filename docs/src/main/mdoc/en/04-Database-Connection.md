@@ -243,3 +243,59 @@ val user: User = userQuery.selectAll.query[User].headOption.readOnly.run(dataSou
 ```
 
 For more information on `Kleisli`, please refer to Cats' [documentation](https://typelevel.org/cats/datatypes/kleisli.html).
+
+## Database Action
+
+There is also a way to perform database processing using `Database` with connection information to the database.
+
+There are two ways to construct a `Database`: using the DriverManager or generating one from a DataSource. The following is an example of constructing a `Database` with connection information to a database using a MySQL driver.
+
+```scala 3
+val db = Database.fromMySQLDriver[IO]("database name", "host", "port number", "user name", "password")
+```
+
+The advantages of using `Database` to perform database processing are as follows
+
+- Simplifies DataSource construction (when using DriverManager)
+- Eliminates the need to pass a DataSource for each query
+
+The method using `Database` is merely a simplified method of passing a DataSource, so there is no difference in execution results between the two.
+The only difference is whether the processes are combined using `flatMap` or other methods and executed in a method chain, or whether the combined processes are executed using `Database`. Therefore, the user can choose the execution method of his/her choice.
+
+**Read Only**
+
+```scala 3
+val user: Option[User] = db.readOnly(userQuery.selectAll.query[User].headOption).unsafeRunSync()
+```
+
+**Auto Commit**
+
+```scala 3
+val result = db.autoCommit(userQuery.insert((1L, "name", None)).update).unsafeRunSync()
+```
+
+**Transaction**
+
+```scala 3
+db.transaction(for
+  result1 <- userQuery.insert((1L, "name", None)).returning("id")
+  result2 <- userQuery.update("name", "update name").update
+  ...
+yield ...).unsafeRunSync()
+```
+
+### Database model
+
+In LDBC, the `Database` model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see [here](http://localhost:4000/ja/06-Generating-SchemaSPY-Documentation.html) for information on SchemaSPY document generation.
+
+If you have already generated a `Database` model for another use, you can use that model to build a `Database` with database connection information.
+
+```scala 3
+import ldbc.dsl.io.*
+
+val database: Database = ???
+
+val db = database.fromDriverManager()
+// or
+val db = database.fromDriverManager("user name", "password")
+```

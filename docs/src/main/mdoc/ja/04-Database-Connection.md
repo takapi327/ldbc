@@ -251,7 +251,7 @@ val user: Option[User] = userQuery.selectAll.query[User].headOption.readOnly.run
 `Database`を構築する方法はDriverManagerを使用した方法と、DataSourceから生成する方法の2種類があります。以下はMySQLのドライバーを使用してデータベースへの接続情報を持った`Database`を構築する例です。
 
 ```scala 3
-val db = Database.mysqlDriver[IO]("database name", "host", "port number", "user name", "password")
+val db = Database.fromMySQLDriver[IO]("database name", "host", "port number", "user name", "password")
 ```
 
 `Database`を使用してデータベース処理を実行するメリットは以下になります。
@@ -295,7 +295,7 @@ import ldbc.dsl.io.*
 
 val database: Database = ???
 
-val db = database.mysqlDriver
+val db = database.fromDriverManager()
 // or
-val db = database.mysqlDriver("user name", "password")
+val db = database.fromDriverManager("user name", "password")
 ```
