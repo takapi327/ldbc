@@ -132,16 +132,16 @@ package object dsl:
       }
 
     extension (database: CoreDatabase)
-      def fromDriverManager(
-        databaseType: CoreDatabase.Type,
-        user:         Option[String] = None,
-        password:     Option[String] = None
-      ): Database[F] =
-        Database.fromDriverManager[F](databaseType, database.name, database.host, database.port, user, password)
 
-      def fromDataSource(
-        databaseType: CoreDatabase.Type,
-        dataSource:   DataSource
-      ): Database[F] = Database.fromDataSource[F](databaseType, database.name, database.host, database.port, dataSource)
+      def fromDriverManager(): Database[F] =
+        Database.fromDriverManager[F](database.databaseType, database.name, database.host, database.port, None, None)
+
+      def fromDriverManager(
+        user:     String,
+        password: String
+      ): Database[F] =
+        Database.fromDriverManager[F](database.databaseType, database.name, database.host, database.port, Some(user), Some(password))
+
+      def fromDataSource(dataSource: DataSource): Database[F] = Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
 
   val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
