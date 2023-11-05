@@ -16,11 +16,14 @@ private[ldbc] trait TableValidator:
 
   protected val autoInc = table.all.filter(_.attributes.contains(AutoInc()))
 
-  protected val primaryKey = table.all.filter(_.attributes.exists(_.isInstanceOf[PrimaryKey]))
+  protected val primaryKey = table.all.filter(_.attributes.exists {
+    case _: PrimaryKey => true
+    case _             => false
+  })
 
   protected val keyPart = table.keyDefinitions.flatMap {
-    case key: PrimaryKey with Index => key.keyPart.toList
-    case key: UniqueKey with Index  => key.keyPart.toList
+    case key: PrimaryKey with Index => key.keyPart
+    case key: UniqueKey with Index  => key.keyPart
     case _                          => List.empty
   }
 
@@ -48,21 +51,27 @@ private[ldbc] trait TableValidator:
 
   require(
     !(autoInc.nonEmpty &&
-      (autoInc.count(column =>
-        column.attributes.exists(_.isInstanceOf[PrimaryKey]) || column.attributes.exists(_.isInstanceOf[UniqueKey])
-      ) >= 1 || keyPart.count(key =>
+      autoInc.count(column =>
+        column.attributes.exists {
+          case _: PrimaryKey => true
+          case _: UniqueKey  => true
+          case _             => false
+        }
+      ) == 0 && keyPart.count(key =>
         autoInc
           .map(_.label)
           .contains(key.label)
-      ) == 0)),
+      ) == 0),
     "The columns with AUTO_INCREMENT must have a Primary Key or Unique Key."
   )
 
   if constraints.nonEmpty then
     require(
       constraints.exists(_.key match
-        case key: ForeignKey => key.colName.map(_.dataType) == key.reference.keyPart.map(_.dataType)
-        case _               => false
+        case key: ForeignKey[?] =>
+          key.columns.toList.map(_.asInstanceOf[Column[?]].dataType) == key.reference.keyPart.toList
+            .map(_.asInstanceOf[Column[?]].dataType)
+        case _ => false
       ),
       s"""
          |The type of the column set in FOREIGN KEY does not match.
@@ -77,12 +86,14 @@ private[ldbc] trait TableValidator:
 
     require(
       constraints.exists(_.key match
-        case key: ForeignKey =>
-          key.reference.keyPart.toList.flatMap(_.attributes).exists(_.isInstanceOf[PrimaryKey]) ||
-          key.reference.table.keyDefinitions.exists(_ match
-            case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.exists(_ == c))
+        case key: ForeignKey[?] =>
+          key.reference.keyPart.toList
+            .flatMap(_.asInstanceOf[Column[?]].attributes)
+            .exists(_.isInstanceOf[PrimaryKey]) ||
+          key.reference.table.keyDefinitions.exists {
+            case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.toList.exists(_ == c))
             case _                        => false
-          )
+          }
         case _ => false
       ),
       "The column referenced by FOREIGN KEY must be a PRIMARY KEY."
@@ -91,10 +102,10 @@ private[ldbc] trait TableValidator:
   private def initForeignKeyErrorMsg(constraints: Seq[Constraint]): String =
     constraints
       .flatMap(_.key match
-        case key: ForeignKey =>
+        case key: ForeignKey[?] =>
           for
-            (column, index)             <- key.colName.zipWithIndex.toList
-            (refColumn, refColumnIndex) <- key.reference.keyPart.zipWithIndex.toList
+            (column, index)             <- key.columns.toList.asInstanceOf[List[Column[?]]].zipWithIndex
+            (refColumn, refColumnIndex) <- key.reference.keyPart.toList.asInstanceOf[List[Column[?]]].zipWithIndex
           yield
             if index == refColumnIndex then s"""
              |(${ column.dataType == refColumn.dataType }) `${ column.label }` ${ column.dataType.typeName } =:= `${ refColumn.label }` ${ refColumn.dataType.typeName }

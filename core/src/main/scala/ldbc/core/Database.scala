@@ -27,13 +27,13 @@ trait Database:
   val character: Option[Character]
 
   /** A value to represent the collation. */
-  val collate: Option[Collate]
+  val collate: Option[Collate[String]]
 
   /** Connection host to database */
   val host: String
 
   /** Connection port to database */
-  val port: Int
+  val port: Option[Int]
 
   /** List of Tables in Database */
   val tables: Set[Table[?]]
@@ -42,6 +42,6 @@ object Database:
 
   /** Enum representing the database type, only databases that are already supported by the library will be managed.
     */
-  enum Type(val driver: String):
-    case MySQL    extends Type("com.mysql.cj.jdbc.Driver")
-    case AWSMySQL extends Type("software.aws.rds.jdbc.mysql.Driver")
+  enum Type(val name: String, val driver: String):
+    case MySQL    extends Type("mysql", "com.mysql.cj.jdbc.Driver")
+    case AWSMySQL extends Type("mysql:aws", "software.aws.rds.jdbc.mysql.Driver")

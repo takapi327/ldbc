@@ -19,65 +19,87 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
   /** Table name */
   private[ldbc] def _name: String
 
+  /** Tuple of columns the table has. */
+  private[ldbc] def columns: Tuple
+
   /** Table Key definitions */
   private[ldbc] def keyDefinitions: Seq[Key]
-
-  /** Table comment */
-  private[ldbc] def comment: Option[String]
 
   /** Table alias name */
   private[ldbc] def alias: Option[String]
 
-  /** Methods for statically accessing column information held by a Table.
-    *
-    * @param tag
-    *   A type with a single instance. Here, Column is passed.
-    * @param mirror
-    *   product isomorphism map
-    * @param index
-    *   Position of the specified type in tuple X
-    * @tparam Tag
-    *   Type with a single instance
-    */
-  def selectDynamic[Tag <: Singleton](
-    tag: Tag
-  )(using
-    mirror: Mirror.ProductOf[P],
-    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+  /** Additional table information */
+  private[ldbc] def options: Seq[TableOption | Character | Collate[String]]
 
   /** Method to retrieve an array of column information that a table has.
     */
   private[ldbc] def all: List[Column[[A] => A => A]]
 
+  /** Method to retrieve all column information that a table has as a Tuple.
+    *
+    * @param mirror
+    *   product isomorphism map
+    */
   def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
 
+  /** Methods for setting key information for tables.
+    *
+    * @param func
+    *   Function to construct an expression using the columns that Table has.
+    */
   def keySet(func: Table[P] => Key): Table[P]
 
-  def comment(str: String): Table[P]
+  /** Methods for setting multiple key information for a table.
+    *
+    * @param func
+    *   Function to construct an expression using the columns that Table has.
+    */
+  def keySets(func: Table[P] => Seq[Key]): Table[P]
 
+  /** Methods for setting additional information for the table.
+    *
+    * @param option
+    *   Additional information to be given to the table.
+    */
+  def setOption(option: TableOption | Character | Collate[String]): Table[P]
+
+  /** Methods for setting multiple additional information for a table.
+    *
+    * @param options
+    *   Additional information to be given to the table.
+    */
+  def setOptions(options: Seq[TableOption]): Table[P]
+
+  /** Methods for setting alias names for tables.
+    *
+    * @param name
+    *   Alias name to be set for the table
+    */
   def as(name: String): Table[P]
 
 object Table extends Dynamic:
 
-  private case class Impl[P <: Product, T <: Tuple](
-    _name:          String,
-    columns:        Tuple.Map[T, Column],
-    keyDefinitions: Seq[Key],
-    comment:        Option[String],
-    alias:          Option[String] = None
-  ) extends Table[P]:
-
-    override def selectDynamic[Tag <: Singleton](
+  extension [P <: Product](table: Table[P])
+    /** Methods for statically accessing column information held by a Table.
+      */
+    transparent inline def selectDynamic[Tag <: Singleton](
       tag: Tag
     )(using
       mirror: Mirror.ProductOf[P],
       index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-      val column = columns
+      val column = table.columns
         .productElement(index.value)
         .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
-      alias.fold(column)(name => column.as(name))
+      table.alias.fold(column)(name => column.as(name))
+
+  private case class Impl[P <: Product, T <: Tuple](
+    _name:          String,
+    columns:        Tuple.Map[T, Column],
+    keyDefinitions: Seq[Key],
+    options:        Seq[TableOption | Character | Collate[String]],
+    alias:          Option[String] = None
+  ) extends Table[P]:
 
     override private[ldbc] def all: List[Column[[A] => A => A]] =
       columns.toList.asInstanceOf[List[Column[[A] => A => A]]]
@@ -89,7 +111,13 @@ object Table extends Dynamic:
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
-    override def comment(str: String): Table[P] = this.copy(comment = Some(str))
+    override def keySets(func: Table[P] => Seq[Key]): Table[P] =
+      this.copy(keyDefinitions = this.keyDefinitions ++ func(this))
+
+    override def setOption(option: TableOption | Character | Collate[String]): Table[P] =
+      this.copy(options = options :+ option)
+
+    override def setOptions(options: Seq[TableOption]): Table[P] = this.copy(options = options)
 
     override def as(name: String): Table[P] = this.copy(alias = Some(name))
 
@@ -118,7 +146,7 @@ object Table extends Dynamic:
     *
     * @param mirror
     *   product isomorphism map
-    * @param _name
+    * @param name
     *   Table name
     * @param columns
     *   Tuple of columns matching the Product's Elem type
@@ -128,6 +156,6 @@ object Table extends Dynamic:
   private def fromTupleMap[P <: Product](using
     mirror: Mirror.ProductOf[P]
   )(
-    _name:   String,
+    name:    String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
-  ): Table[P] = Impl[P, mirror.MirroredElemTypes](_name, columns, Seq.empty, None)
+  ): Table[P] = Impl[P, mirror.MirroredElemTypes](name, columns, Seq.empty, Seq.empty, None)

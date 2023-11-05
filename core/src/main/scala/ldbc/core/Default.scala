@@ -43,6 +43,11 @@ object Default:
 
     override def queryString: String = _value match
       case _: Boolean => s"DEFAULT $value"
+      case _: Short   => s"DEFAULT $value"
+      case _: Int     => s"DEFAULT $value"
+      case _: Long    => s"DEFAULT $value"
+      case _: Double  => s"DEFAULT $value"
+      case _: Float   => s"DEFAULT $value"
       case _          => s"DEFAULT '$value'"
 
   /** Model for setting TimeStamp-specific Default values.
@@ -59,3 +64,10 @@ object Default:
     override def queryString: String =
       if withOn then s"DEFAULT $value ON UPDATE CURRENT_TIMESTAMP" ++ fsp.fold("")(v => s"($v)")
       else s"DEFAULT $value"
+
+  /** Model for setting Date-specific Default values.
+    */
+  case class Date() extends Default:
+    override def value: String = "CURRENT_DATE"
+
+    override def queryString: String = s"DEFAULT ($value)"

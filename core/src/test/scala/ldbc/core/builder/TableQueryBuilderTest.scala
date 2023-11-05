@@ -297,24 +297,29 @@ object TableQueryBuilderTest extends Specification:
           |""".stripMargin
     }
 
-    "IllegalArgumentException is raised if the type of the column set in FOREIGN KEY does not match." in {
-      case class Test(id: Long, subId: Long)
-      case class SubTest(id: Long, test: String)
-
-      val subTable: Table[SubTest] = Table[SubTest]("sub_test")(
-        column("id", BIGINT(64), AUTO_INCREMENT, PRIMARY_KEY),
-        column("test", VARCHAR(64))
-      )
+    "If the table option is set to Table, the query string will match the specified value." in {
+      case class Test(id: Long, name: String)
 
       val table: Table[Test] = Table[Test]("test")(
-        column("id", BIGINT(64), AUTO_INCREMENT),
-        column("sub_id", BIGINT(64))
+        column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+        column("name", VARCHAR(255))
       )
-        .keySet(table => PRIMARY_KEY(table.id))
-        .keySet(table => INDEX_KEY(table.subId))
-        .keySet(table => CONSTRAINT("fk_id", FOREIGN_KEY(table.subId, REFERENCE(subTable, subTable.test))))
+        .setOptions(
+          Seq(
+            TableOption.Engine("InnoDB"),
+            TableOption.Character("utf8mb4"),
+            TableOption.Collate("utf8mb4_unicode_ci"),
+            TableOption.Comment("test")
+          )
+        )
 
-      TableQueryBuilder(table) must throwAn[IllegalArgumentException]
+      TableQueryBuilder(table).createStatement ===
+        """
+          |CREATE TABLE `test` (
+          |  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+          |  `name` VARCHAR(255) NOT NULL
+          |) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4 DEFAULT COLLATE=utf8mb4_unicode_ci COMMENT='test';
+          |""".stripMargin
     }
 
     "If a column that is not a PRIMARY KEY is set as a FOREIGN KEY, an IllegalArgumentException will be thrown." in {

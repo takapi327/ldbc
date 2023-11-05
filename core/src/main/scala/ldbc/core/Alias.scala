@@ -8,6 +8,7 @@ import java.time.*
 import java.time.Year as JYear
 
 import ldbc.core.attribute.*
+import ldbc.core.interpreter.Tuples
 
 private[ldbc] trait Alias:
 
@@ -28,8 +29,6 @@ private[ldbc] trait Alias:
 
   def VISIBLE[T]:   Visible[T]   = Visible[T]()
   def INVISIBLE[T]: InVisible[T] = InVisible[T]()
-
-  def COLLATE[T <: String | Option[String]](name: String): Collate & Attribute[T] = new Collate(name) with Attribute[T]
 
   object COLUMN_FORMAT:
     def FIXED[T]:   ColumnFormat.Fixed[T]   = ColumnFormat.Fixed[T]()
@@ -153,40 +152,55 @@ private[ldbc] trait Alias:
     )
     IndexKey(indexName, indexType, keyPart.toList, indexOption)
 
-  def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey): Constraint = Constraint(None, key)
+  def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey[?]): Constraint = Constraint(None, key)
 
   def CONSTRAINT(
     symbol: String,
-    key:    PrimaryKey | UniqueKey | ForeignKey
+    key:    PrimaryKey | UniqueKey | ForeignKey[?]
   ): Constraint = Constraint(Some(symbol), key)
 
-  def FOREIGN_KEY(
-    colName:   Column[?],
-    reference: Reference
-  ): ForeignKey = ForeignKey(None, List(colName), reference)
+  def FOREIGN_KEY[T](
+    column:    Column[T],
+    reference: Reference[Column[T] *: EmptyTuple]
+  ): ForeignKey[Column[T] *: EmptyTuple] = ForeignKey[Column[T] *: EmptyTuple](None, column *: EmptyTuple, reference)
 
-  def FOREIGN_KEY(
-    indexName: Option[String],
-    colName:   List[Column[?]],
-    reference: Reference
-  ): ForeignKey =
-    require(
-      colName.nonEmpty,
-      "At least one column must always be specified."
-    )
-    ForeignKey(indexName, colName, reference)
+  def FOREIGN_KEY[T](
+    name:      String,
+    column:    Column[T],
+    reference: Reference[Column[T] *: EmptyTuple]
+  ): ForeignKey[Column[T] *: EmptyTuple] =
+    ForeignKey[Column[T] *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
 
-  def REFERENCE(
+  def FOREIGN_KEY[T <: Tuple](
+    columns:   T,
+    reference: Reference[T]
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+    ForeignKey[T](None, columns, reference)
+
+  def FOREIGN_KEY[T <: Tuple](
+    name:      String,
+    columns:   T,
+    reference: Reference[T]
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+    ForeignKey[T](Some(name), columns, reference)
+
+  def FOREIGN_KEY[T <: Tuple](
+    name:      Option[String],
+    columns:   T,
+    reference: Reference[T]
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+    ForeignKey[T](name, columns, reference)
+
+  def REFERENCE[T](
+    table:  Table[?],
+    column: Column[T]
+  ): Reference[Column[T] *: EmptyTuple] = Reference[Column[T] *: EmptyTuple](table, column *: EmptyTuple, None, None)
+
+  def REFERENCE[T <: Tuple](
     table:   Table[?],
-    keyPart: Column[?]
-  ): Reference = Reference(table, List(keyPart), None, None)
-
-  def REFERENCE(table: Table[?], columns: Column[?]*): Reference =
-    require(
-      columns.nonEmpty,
-      "For Reference settings, at least one COLUMN must always be specified."
-    )
-    Reference(table, columns.toList, None, None)
+    columns: T
+  )(using Tuples.IsColumn[T] =:= true): Reference[T] =
+    Reference[T](table, columns, None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
 

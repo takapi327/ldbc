@@ -51,8 +51,8 @@ private[ldbc] object DatabaseModelGenerator:
       outputFile.getParentFile.mkdirs()
       outputFile.createNewFile()
 
-    val character = statement.charset.fold("None")(str => s"Some(Character(\"$str\"))")
-    val collate   = statement.collate.fold("None")(str => s"Some(Collate(\"$str\"))")
+    val character = statement.charset.fold("None")(str => s"Some(Character.$str)")
+    val collate   = statement.collate.fold("None")(str => s"Some(Collate.$str[String])")
 
     val scalaSource =
       s"""
@@ -64,7 +64,7 @@ private[ldbc] object DatabaseModelGenerator:
          |  schemaMeta: Option[String] = None,
          |  catalog: Option[String] = Some("def"),
          |  host: String = "127.0.0.1",
-         |  port: Int = 3306
+         |  port: Option[Int] = Some(3306)
          |) extends Database:
          |
          |  override val databaseType: Database.Type = Database.Type.MySQL
@@ -75,7 +75,7 @@ private[ldbc] object DatabaseModelGenerator:
          |
          |  override val character: Option[Character] = $character
          |
-         |  override val collate: Option[Collate] = $collate
+         |  override val collate: Option[Collate[String]] = $collate
          |
          |  override val tables = Set(
          |    ${ statements.mkString(",\n    ") }
