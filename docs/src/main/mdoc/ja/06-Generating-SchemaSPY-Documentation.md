@@ -51,8 +51,6 @@ case class SampleLdbcDatabase(
   )
 ```
 
-データベース情報は現状SchemaSPYのドキュメント生成でしか使用できませんが、今後の機能改修で他の用途としても使用していく予定です。
-
 SchemaSPYのドキュメント生成には`SchemaSpyGenerator`を使用します。生成したデータベース定義を`default`メソッドに渡し、`generate`を呼び出すと第2引数に指定したファイルの場所にSchemaSPYのファイル群が生成されます。
 
 ```scala 3

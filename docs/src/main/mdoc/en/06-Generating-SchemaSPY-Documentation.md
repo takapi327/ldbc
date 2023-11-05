@@ -51,8 +51,6 @@ case class SampleLdbcDatabase(
   )
 ```
 
-Database information can currently only be used for SchemaSPY document generation, but we plan to use it for other purposes as well in future feature enhancements.
-
 Use `SchemaSpyGenerator` to generate SchemaSPY documents. Pass the generated database definition to the `default` method and call `generate` to generate SchemaSPY files at the file location specified in the second argument.
 
 ```scala 3
