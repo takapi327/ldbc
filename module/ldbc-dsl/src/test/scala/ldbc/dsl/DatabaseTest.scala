@@ -4,10 +4,7 @@
 
 package ldbc.dsl
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import org.specs2.mutable.Specification
-import org.specs2.execute.Result
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -18,16 +15,11 @@ import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
 import ldbc.dsl.schema.*
 
-object DatabaseConnectionTest extends Specification:
-
-  private val dataSource = new MysqlDataSource()
-  dataSource.setServerName("127.0.0.1")
-  dataSource.setPortNumber(13306)
-  dataSource.setDatabaseName("world")
-  dataSource.setUser("ldbc")
-  dataSource.setPassword("password")
+object DatabaseTest extends Specification:
 
   given LogHandler[IO] = LogHandler.consoleLogger
+
+  private val db = Database.fromMySQLDriver[IO]("world2", "127.0.0.1", 13306, "ldbc", "password")
 
   private val country         = TableQuery[IO, Country](Country.table)
   private val city            = TableQuery[IO, City](City.table)
@@ -35,39 +27,41 @@ object DatabaseConnectionTest extends Specification:
 
   "Database Connection Test" should {
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = country.selectAll.query[Country].toList.readOnly.run(dataSource).unsafeRunSync()
+      val result = db.readOnly(country.selectAll.query[Country].toList).unsafeRunSync()
       result.length === 239
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = city.selectAll.query[City].toList.readOnly.run(dataSource).unsafeRunSync()
+      val result = db.readOnly(city.selectAll.query[City].toList).unsafeRunSync()
       result.length === 4079
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = countryLanguage.selectAll.query[CountryLanguage].toList.readOnly.run(dataSource).unsafeRunSync()
+      val result = db.readOnly(countryLanguage.selectAll.query[CountryLanguage].toList).unsafeRunSync()
       result.length === 984
     }
 
     "The number of cases retrieved using the subquery matches the specified value." in {
-      val result = city
-        .select(v => (v.name, v.countryCode))
-        .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
-        .query
-        .toList
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          city
+            .select(v => (v.name, v.countryCode))
+            .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
+            .query
+            .toList
+        )
         .unsafeRunSync()
       result.length === 248
     }
 
     "The acquired data matches the specified model." in {
-      val result = country.selectAll
-        .where(_.code _equals "JPN")
-        .query[Country]
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          country.selectAll
+            .where(_.code _equals "JPN")
+            .query[Country]
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(
         Country(
@@ -91,38 +85,41 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The acquired data matches the specified model." in {
-      val result = city.selectAll
-        .where(_.id _equals 1532)
-        .query[City]
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          city.selectAll
+            .where(_.id _equals 1532)
+            .query[City]
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230))
     }
 
     "The acquired data matches the specified model." in {
-      val result = countryLanguage.selectAll
-        .where(_.countryCode _equals "JPN")
-        .and(_.language _equals "Japanese")
-        .query[CountryLanguage]
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          countryLanguage.selectAll
+            .where(_.countryCode _equals "JPN")
+            .and(_.language _equals "Japanese")
+            .query[CountryLanguage]
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(CountryLanguage("JPN", "Japanese", CountryLanguage.IsOfficial.T, BigDecimal.decimal(99.1)))
     }
 
     "The data retrieved by Join matches the specified model." in {
-      val result = (city join country)
-        .on((city, country) => city.countryCode _equals country.code)
-        .select((city, country) => (city.name, country.name))
-        .where((_, country) => country.code _equals "JPN")
-        .and((city, _) => city.name _equals "Tokyo")
-        .query
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          (city join country)
+            .on((city, country) => city.countryCode _equals country.code)
+            .select((city, country) => (city.name, country.name))
+            .where((_, country) => country.code _equals "JPN")
+            .and((city, _) => city.name _equals "Tokyo")
+            .query
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(("Tokyo", "Japan"))
     }
@@ -130,29 +127,31 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Join matches the specified model." in {
       case class CountryCity(cityName: String, countryName: String)
 
-      val result = (city join country)
-        .on((city, country) => city.countryCode _equals country.code)
-        .select((city, country) => (city.name, country.name))
-        .where((_, country) => country.code _equals "JPN")
-        .and((city, _) => city.name _equals "Tokyo")
-        .query[CountryCity]
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          (city join country)
+            .on((city, country) => city.countryCode _equals country.code)
+            .select((city, country) => (city.name, country.name))
+            .where((_, country) => country.code _equals "JPN")
+            .and((city, _) => city.name _equals "Tokyo")
+            .query[CountryCity]
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(CountryCity("Tokyo", "Japan"))
     }
 
     "The data retrieved by Left Join matches the specified model." in {
-      val result = (city join country)
-        .left((city, country) => city.countryCode _equals country.code)
-        .select((city, country) => (city.name, country.name))
-        .where((_, country) => country.code _equals "JPN")
-        .and((city, _) => city.name _equals "Tokyo")
-        .query
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          (city join country)
+            .left((city, country) => city.countryCode _equals country.code)
+            .select((city, country) => (city.name, country.name))
+            .where((_, country) => country.code _equals "JPN")
+            .and((city, _) => city.name _equals "Tokyo")
+            .query
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(("Tokyo", Some("Japan")))
     }
@@ -160,29 +159,31 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Left Join matches the specified model." in {
       case class CountryCity(cityName: String, countryName: Option[String])
 
-      val result = (city join country)
-        .left((city, country) => city.countryCode _equals country.code)
-        .select((city, country) => (city.name, country.name))
-        .where((_, country) => country.code _equals "JPN")
-        .and((city, _) => city.name _equals "Tokyo")
-        .query[CountryCity]
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          (city join country)
+            .left((city, country) => city.countryCode _equals country.code)
+            .select((city, country) => (city.name, country.name))
+            .where((_, country) => country.code _equals "JPN")
+            .and((city, _) => city.name _equals "Tokyo")
+            .query[CountryCity]
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(CountryCity("Tokyo", Some("Japan")))
     }
 
     "The data retrieved by Right Join matches the specified model." in {
-      val result = (city join country)
-        .right((city, country) => city.countryCode _equals country.code)
-        .select((city, country) => (city.name, country.name))
-        .where((_, country) => country.code _equals "JPN")
-        .and((city, _) => city.name _equals "Tokyo")
-        .query
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          (city join country)
+            .right((city, country) => city.countryCode _equals country.code)
+            .select((city, country) => (city.name, country.name))
+            .where((_, country) => country.code _equals "JPN")
+            .and((city, _) => city.name _equals "Tokyo")
+            .query
+            .headOption
+        )
         .unsafeRunSync()
       result === Some((Some("Tokyo"), "Japan"))
     }
@@ -190,27 +191,29 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Right Join matches the specified model." in {
       case class CountryCity(cityName: Option[String], countryName: String)
 
-      val result = (city join country)
-        .right((city, country) => city.countryCode _equals country.code)
-        .select((city, country) => (city.name, country.name))
-        .where((_, country) => country.code _equals "JPN")
-        .and((city, _) => city.name _equals "Tokyo")
-        .query[CountryCity]
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          (city join country)
+            .right((city, country) => city.countryCode _equals country.code)
+            .select((city, country) => (city.name, country.name))
+            .where((_, country) => country.code _equals "JPN")
+            .and((city, _) => city.name _equals "Tokyo")
+            .query[CountryCity]
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(CountryCity(Some("Tokyo"), "Japan"))
     }
 
     "The retrieved data matches the specified value." in {
-      val result = city
-        .select(v => (v.countryCode, v.id.count))
-        .where(_.countryCode _equals "JPN")
-        .query
-        .headOption
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          city
+            .select(v => (v.countryCode, v.id.count))
+            .where(_.countryCode _equals "JPN")
+            .query
+            .headOption
+        )
         .unsafeRunSync()
       result === Some(("JPN", 248))
     }
@@ -218,19 +221,20 @@ object DatabaseConnectionTest extends Specification:
     "The acquired data matches the specified model." in {
       case class CountryCodeGroup(countryCode: String, length: Int)
 
-      val result = city
-        .select(v => (v.countryCode, v.id.count))
-        .groupBy(_._1)
-        .query[CountryCodeGroup]
-        .toList
-        .readOnly
-        .run(dataSource)
+      val result = db
+        .readOnly(
+          city
+            .select(v => (v.countryCode, v.id.count))
+            .groupBy(_._1)
+            .query[CountryCodeGroup]
+            .toList
+        )
         .unsafeRunSync()
       result.length === 232
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      (for
+      db.readOnly(for
         codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.headOption
         cities <- codeOpt match
                     case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
@@ -240,81 +244,82 @@ object DatabaseConnectionTest extends Specification:
                         .where(_.countryCode _equals code)
                         .query
                         .toList
-      yield cities.length === 248).readOnly
-        .run(dataSource)
+      yield cities.length === 248)
         .unsafeRunSync()
     }
 
     "New data can be registered with the value of Tuple." in {
-      val result = country
-        .insert(
-          (
-            "T1",
-            "Test1",
-            Country.Continent.Asia,
-            "Northeast",
-            BigDecimal.decimal(390757.00),
-            None,
-            1,
-            None,
-            None,
-            None,
-            "Test",
-            "Test",
-            None,
-            None,
-            "T1"
-          )
+      val result = db
+        .autoCommit(
+          country
+            .insert(
+              (
+                "D1",
+                "Test1",
+                Country.Continent.Asia,
+                "Northeast",
+                BigDecimal.decimal(390757.00),
+                None,
+                1,
+                None,
+                None,
+                None,
+                "Test",
+                "Test",
+                None,
+                None,
+                "D1"
+              )
+            )
+            .update
         )
-        .update
-        .autoCommit
-        .run(dataSource)
         .unsafeRunSync()
 
       result === 1
     }
 
     "New data can be registered from multiple tuple values." in {
-      val result = country
-        .insert(
-          (
-            "T2",
-            "Test2",
-            Country.Continent.Asia,
-            "Northeast",
-            BigDecimal.decimal(390757.00),
-            None,
-            1,
-            None,
-            None,
-            None,
-            "Test",
-            "Test",
-            None,
-            None,
-            "T2"
-          ),
-          (
-            "T3",
-            "Test3",
-            Country.Continent.Asia,
-            "Northeast",
-            BigDecimal.decimal(390757.00),
-            None,
-            1,
-            None,
-            None,
-            None,
-            "Test",
-            "Test",
-            None,
-            None,
-            "T3"
-          )
+      val result = db
+        .autoCommit(
+          country
+            .insert(
+              (
+                "D2",
+                "Test2",
+                Country.Continent.Asia,
+                "Northeast",
+                BigDecimal.decimal(390757.00),
+                None,
+                1,
+                None,
+                None,
+                None,
+                "Test",
+                "Test",
+                None,
+                None,
+                "D2"
+              ),
+              (
+                "D3",
+                "Test3",
+                Country.Continent.Asia,
+                "Northeast",
+                BigDecimal.decimal(390757.00),
+                None,
+                1,
+                None,
+                None,
+                None,
+                "Test",
+                "Test",
+                None,
+                None,
+                "D3"
+              )
+            )
+            .update
         )
-        .update
-        .autoCommit
-        .run(dataSource)
         .unsafeRunSync()
 
       result === 2
@@ -322,7 +327,7 @@ object DatabaseConnectionTest extends Specification:
 
     "New data can be registered from the model." in {
       val newCountry = Country(
-        "T4",
+        "D4",
         "Test4",
         Country.Continent.Asia,
         "Northeast",
@@ -336,10 +341,10 @@ object DatabaseConnectionTest extends Specification:
         "Test",
         None,
         None,
-        "T4"
+        "D4"
       )
-      val result = (country += newCountry).update.autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit((country += newCountry).update)
         .unsafeRunSync()
 
       result === 1
@@ -347,7 +352,7 @@ object DatabaseConnectionTest extends Specification:
 
     "New data can be registered from multiple models." in {
       val newCountry1 = Country(
-        "T5",
+        "D5",
         "Test5",
         Country.Continent.Asia,
         "Northeast",
@@ -361,10 +366,10 @@ object DatabaseConnectionTest extends Specification:
         "Test",
         None,
         None,
-        "T5"
+        "D5"
       )
       val newCountry2 = Country(
-        "T6",
+        "D6",
         "Test6",
         Country.Continent.North_America,
         "Northeast",
@@ -378,53 +383,60 @@ object DatabaseConnectionTest extends Specification:
         "Test",
         None,
         None,
-        "T6"
+        "D6"
       )
-      val result = (country ++= List(newCountry1, newCountry2)).update.autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit(
+          (country ++= List(newCountry1, newCountry2)).update
+        )
         .unsafeRunSync()
 
       result === 2
     }
 
     "Only specified items can be added to the data." in {
-      val result = city
-        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test", "T1", "T", 1))
-        .update
-        .autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit(
+          city
+            .insertInto(v => (v.name, v.countryCode, v.district, v.population))
+            .values(("Test", "D1", "T", 1))
+            .update
+        )
         .unsafeRunSync()
 
       result === 1
     }
 
     "Multiple additions of data can be made only for specified items." in {
-      val result = city
-        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-        .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
-        .update
-        .autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit(
+          city
+            .insertInto(v => (v.name, v.countryCode, v.district, v.population))
+            .values(
+              List(("Test2", "D2", "T", 1), ("Test3", "D3", "D3", 2))
+            )
+            .update
+        )
         .unsafeRunSync()
 
       result === 2
     }
 
     "A stand-alone update succeeds." in {
-      val result = city
-        .update("district", "Tokyo-test")
-        .where(_.name _equals "Tokyo")
-        .update
-        .autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit(
+          city
+            .update("district", "Tokyo-test")
+            .where(_.name _equals "Tokyo")
+            .update
+        )
         .unsafeRunSync()
 
       result === 1
     }
 
     "A stand-alone update from the model will be successful." in {
-      (for
+      db.transaction(for
         cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query[City].headOption
         result <- cityOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
@@ -433,42 +445,42 @@ object DatabaseConnectionTest extends Specification:
                         .update(cityModel.copy(district = "Tokyo-to"))
                         .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
                         .update
-      yield result === 1).transaction
-        .run(dataSource)
+      yield result === 1)
         .unsafeRunSync()
     }
 
     "Multiple columns are successfully updated." in {
-      val result = city
-        .update("name", "Yokohama")
-        .set("countryCode", "JPN")
-        .set("district", "Kanagawa")
-        .set("population", 2)
-        .where(_.name _equals "Jokohama [Yokohama]")
-        .update
-        .autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit(
+          city
+            .update("name", "Yokohama")
+            .set("countryCode", "JPN")
+            .set("district", "Kanagawa")
+            .set("population", 2)
+            .where(_.name _equals "Jokohama [Yokohama]")
+            .update
+        )
         .unsafeRunSync()
 
       result === 1
     }
 
     "The values of columns that do not satisfy the condition are not updated." in {
-      val result = (for
-        _ <- city
-               .update("name", "update Odawara")
-               .set("district", "not update Kanagawa", false)
-               .where(_.id _equals 1637)
-               .update
-        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
-      yield updated).transaction
-        .run(dataSource)
+      val result = db
+        .transaction(for
+          _ <- city
+                 .update("name", "update Odawara")
+                 .set("district", "not update Kanagawa", false)
+                 .where(_.id _equals 1637)
+                 .update
+          updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
+        yield updated)
         .unsafeRunSync()
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
 
     "The update succeeds in the combined processing of multiple queries." in {
-      (for
+      db.transaction(for
         codeOpt <- country
                      .select(_.code)
                      .where(_.name _equals "Test1")
@@ -485,44 +497,49 @@ object DatabaseConnectionTest extends Specification:
                         .set("population", 2)
                         .where(_.name _equals "Test2")
                         .update
-      yield result === 1).transaction
-        .run(dataSource)
+      yield result === 1)
         .unsafeRunSync()
     }
 
     "Bulk renewal succeeds." in {
-      val result = countryLanguage
-        .update("isOfficial", CountryLanguage.IsOfficial.T)
-        .where(_.countryCode _equals "JPN")
-        .update
-        .autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit(
+          countryLanguage
+            .update("isOfficial", CountryLanguage.IsOfficial.T)
+            .where(_.countryCode _equals "JPN")
+            .update
+        )
         .unsafeRunSync()
 
       result === 6
     }
 
     "Successful batch update with specified number." in {
-      val result = countryLanguage
-        .update("isOfficial", CountryLanguage.IsOfficial.T)
-        .where(_.countryCode _equals "JPN")
-        .limit(3)
-        .update
-        .autoCommit
-        .run(dataSource)
+      val result = db
+        .autoCommit(
+          countryLanguage
+            .update("isOfficial", CountryLanguage.IsOfficial.T)
+            .where(_.countryCode _equals "JPN")
+            .limit(3)
+            .update
+        )
         .unsafeRunSync()
 
       result === 3
     }
 
     "Deletion by itself is successful." in {
-      val result = country.delete.where(_.code _equals "T5").update.autoCommit.run(dataSource).unsafeRunSync()
+      val result = db
+        .autoCommit(
+          country.delete.where(_.code _equals "D5").update
+        )
+        .unsafeRunSync()
       result === 1
     }
 
     "The number of deletions in multiple cases matches the number specified." in {
       val result =
-        countryLanguage.delete.where(_.countryCode _equals "AFG").update.autoCommit.run(dataSource).unsafeRunSync()
+        db.autoCommit(countryLanguage.delete.where(_.countryCode _equals "AFG").update).unsafeRunSync()
       result === 5
     }
   }
