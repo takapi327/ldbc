@@ -17,29 +17,28 @@ import ldbc.query.builder.interpreter.Tuples
   *   Base trait for all products
   */
 private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
+  self =>
 
-  /** Trait for generating SQL table information. */
+  /** A model for generating queries from Table information. */
   def tableQuery: TableQuery[F, P]
+
+  /** Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements. */
+  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): DuplicateKeyUpdateInsert[F] =
+    val duplicateKeys = func(self.tableQuery) match
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${tableQuery.table._name}.$column")
+      case column => List(s"$column = new_${tableQuery.table._name}.$column")
+    new DuplicateKeyUpdateInsert[F]:
+      override def params: Seq[ParameterBinder[F]] = self.params
+
+      override def statement: String =
+        s"${self.statement} AS new_${tableQuery.table._name} ON DUPLICATE KEY UPDATE ${duplicateKeys.mkString(", ")}"
 
 /** Insert trait that provides a method to update in case of duplicate keys.
   *
   * @tparam F
   *   The effect type
-  * @tparam P
-  *   Base trait for all products
   */
-private[ldbc] trait DuplicateKeyUpdateInsert[F[_], P <: Product] extends Insert[F, P]:
-  self =>
-
-  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): Insert[F, P] =
-    val duplicateKeys = func(self.tableQuery) match
-      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
-      case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
-    new Insert[F, P]:
-      override def tableQuery: TableQuery[F, P]        = self.tableQuery
-      override def params:     Seq[ParameterBinder[F]] = self.params
-      override def statement: String =
-        s"${ self.statement } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
+trait DuplicateKeyUpdateInsert[F[_]] extends Command[F]
 
 /** A model for constructing INSERT statements that insert single values in MySQL.
   *
@@ -61,7 +60,7 @@ case class SingleInsert[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuple:      T,
   params:     Seq[ParameterBinder[F]]
-) extends DuplicateKeyUpdateInsert[F, P]:
+) extends Insert[F, P]:
 
   override val statement: String =
     s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
@@ -87,7 +86,7 @@ case class MultiInsert[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuples:     List[T],
   params:     Seq[ParameterBinder[F]]
-) extends DuplicateKeyUpdateInsert[F, P]:
+) extends Insert[F, P]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
@@ -163,7 +162,7 @@ case class DuplicateKeyUpdate[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuples:     List[T],
   params:     Seq[ParameterBinder[F]]
-) extends Insert[F, P]:
+) extends DuplicateKeyUpdateInsert[F]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
