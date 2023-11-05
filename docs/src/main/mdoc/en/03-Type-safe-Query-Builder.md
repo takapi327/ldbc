@@ -176,6 +176,26 @@ val insert = userQuery ++= List(User(1L, "name", None), User(2L, "name", None))
 insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?), (?, ?, ?)"
 ```
 
+### ON DUPLICATE KEY UPDATE
+
+Inserting a row with an ON DUPLICATE KEY UPDATE clause will cause an UPDATE of the old row if the UNIQUE index or PRIMARY KEY has duplicate values.
+
+There are two ways to achieve this in LDBC: using `insertOrUpdate{s}` or using `onDuplicateKeyUpdate` for `Insert`.
+
+```scala 3
+val insert = userQuery.insertOrUpdate((1L, "name", None))
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `id` = new_user.`id`, `name` = new_user.`name`, `age` = new_user.`age`"
+```
+
+Note that if you use `insertOrUpdate{s}`, all columns will be updated. If you have duplicate values and wish to update only certain columns, use `onDuplicateKeyUpdate` to specify only the columns you wish to update.
+
+```scala 3
+val insert = userQuery.insert((1L, "name", None)).onDuplicateKeyUpdate(v => (v.name, v.age))
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `name` = new_user.`name`, `age` = new_user.`age`"
+```
+
 ## UPDATE
 
 A type-safe way to construct an UPDATE statement is to use the `update` method provided by TableQuery.

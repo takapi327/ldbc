@@ -176,6 +176,26 @@ val insert = userQuery ++= List(User(1L, "name", None), User(2L, "name", None))
 insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?), (?, ?, ?)"
 ```
 
+### ON DUPLICATE KEY UPDATE
+
+ON DUPLICATE KEY UPDATE 句を指定し行を挿入すると、UNIQUEインデックスまたはPRIMARY KEYで値が重複する場合、古い行のUPDATEが発生します。
+
+LDBCでこの処理を実現する方法は2種類あり、`insertOrUpdate{s}`を使用するか、`Insert`に対して`onDuplicateKeyUpdate`を使用することです。
+
+```scala 3
+val insert = userQuery.insertOrUpdate((1L, "name", None))
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `id` = new_user.`id`, `name` = new_user.`name`, `age` = new_user.`age`"
+```
+
+`insertOrUpdate{s}`を使用した場合、全てのカラムが更新対象となることに注意してください。重複する値があり特定のカラムのみを更新したい場合は、`onDuplicateKeyUpdate`を使用して更新したいカラムのみを指定するようにしてください。
+
+```scala 3
+val insert = userQuery.insert((1L, "name", None)).onDuplicateKeyUpdate(v => (v.name, v.age))
+
+insert.statement === "INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `name` = new_user.`name`, `age` = new_user.`age`"
+```
+
 ## UPDATE
 
 型安全にUPDATE文を構築する方法はTableQueryが提供する`update`メソッドを使用することです。
