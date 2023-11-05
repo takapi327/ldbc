@@ -132,14 +132,14 @@ object Database:
     val connection: F[Connection[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
     Database[F](databaseType, name, host, port, () => connection)
 
-  def mysqlDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+  def fromMySQLDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
     fromDataSource[F](CoreDatabase.Type.MySQL, name, host, Some(port), dataSource)
 
-  def mysqlDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource): Database[F] =
+  def fromMySQLDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource): Database[F] =
     fromDataSource[F](CoreDatabase.Type.MySQL, name, host, None, dataSource)
 
-  def awsDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+  def fromAwsDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
     fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, Some(port), dataSource)
 
-  def awsDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource): Database[F] =
+  def fromAwsDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource): Database[F] =
     fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, None, dataSource)
