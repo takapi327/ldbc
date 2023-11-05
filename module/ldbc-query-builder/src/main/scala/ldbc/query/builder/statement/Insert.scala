@@ -23,15 +23,17 @@ private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
   def tableQuery: TableQuery[F, P]
 
   /** Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements. */
-  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): DuplicateKeyUpdateInsert[F] =
+  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using
+    Tuples.IsColumnQuery[F, T] =:= true
+  ): DuplicateKeyUpdateInsert[F] =
     val duplicateKeys = func(self.tableQuery) match
-      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${tableQuery.table._name}.$column")
-      case column => List(s"$column = new_${tableQuery.table._name}.$column")
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
+      case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
     new DuplicateKeyUpdateInsert[F]:
       override def params: Seq[ParameterBinder[F]] = self.params
 
       override def statement: String =
-        s"${self.statement} AS new_${tableQuery.table._name} ON DUPLICATE KEY UPDATE ${duplicateKeys.mkString(", ")}"
+        s"${ self.statement } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
 
 /** Insert trait that provides a method to update in case of duplicate keys.
   *
