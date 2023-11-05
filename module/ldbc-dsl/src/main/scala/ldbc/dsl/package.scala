@@ -140,8 +140,16 @@ package object dsl:
         user:     String,
         password: String
       ): Database[F] =
-        Database.fromDriverManager[F](database.databaseType, database.name, database.host, database.port, Some(user), Some(password))
+        Database.fromDriverManager[F](
+          database.databaseType,
+          database.name,
+          database.host,
+          database.port,
+          Some(user),
+          Some(password)
+        )
 
-      def fromDataSource(dataSource: DataSource): Database[F] = Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
+      def fromDataSource(dataSource: DataSource): Database[F] =
+        Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
 
   val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
