@@ -58,10 +58,6 @@ LDBCでのモデルをテーブル定義にマッピングするのはとても�
 
 モデルが持つプロパティと、そのカラムのために定義されるデータ型の間のマッピングも非常にシンプルです。開発者は、モデルが持つプロパティと同じ順序で、対応するカラムを定義するだけです。
 
-また、間違った型を組み合わせようとするとコンパイルエラーになる。
-
-例えば、Userが持つString型のnameプロパティに関連するカラムにINT型のカラムを渡すとエラーになります。
-
 ```scala mdoc:silent
 import ldbc.core.*
 
@@ -76,6 +72,20 @@ val table = Table[User]("user")(
   column("name", VARCHAR(255)),
   column("age", INT.UNSIGNED.DEFAULT(None)),
 )
+```
+
+また、間違った型を組み合わせようとするとコンパイルエラーになります。
+
+例えば、Userが持つString型のnameプロパティに関連するカラムにINT型のカラムを渡すとエラーになります。
+
+```shell
+[error] -- [E007] Type Mismatch Error:
+[error] 169 |    column("name", INT),
+[error]     |                   ^^^
+[error]     |Found:    ldbc.core.DataType.Integer[T]
+[error]     |Required: ldbc.core.DataType[String]
+[error]     |
+[error]     |where:    T is a type variable with constraint <: Int | Long | Option[Int | Long]
 ```
 
 これらのアドオンの詳細については、[テーブル定義](http://localhost:4000/ja/01-Table-Definitions.html) を参照してください。

@@ -58,10 +58,6 @@ Mapping models in LDBC to table definitions is very easy.
 
 The mapping between the properties a model has and the data types defined for its columns is also very simple. The developer simply defines the corresponding columns in the same order as the properties the model has.
 
-Also, attempting to combine the wrong types will result in a compile error.
-
-For example, passing a column of type INT to a column related to the name property of type String held by User will result in an error.
-
 ```scala mdoc:silent
 import ldbc.core.*
 
@@ -76,6 +72,20 @@ val table = Table[User]("user")(
   column("name", VARCHAR(255)),
   column("age", INT.UNSIGNED.DEFAULT(None)),
 )
+```
+
+Also, attempting to combine the wrong types will result in a compile error.
+
+For example, passing a column of type INT to a column related to the name property of type String held by User will result in an error.
+
+```shell
+[error] -- [E007] Type Mismatch Error:
+[error] 169 |    column("name", INT),
+[error]     |                   ^^^
+[error]     |Found:    ldbc.core.DataType.Integer[T]
+[error]     |Required: ldbc.core.DataType[String]
+[error]     |
+[error]     |where:    T is a type variable with constraint <: Int | Long | Option[Int | Long]
 ```
 
 For more information on these add-ons, see [Table Definitions](http://localhost:4000/en/01-Table-Definitions.html).
