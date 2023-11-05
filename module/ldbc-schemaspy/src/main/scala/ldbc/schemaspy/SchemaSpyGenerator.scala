@@ -78,7 +78,7 @@ object SchemaSpyGenerator:
       "-host",
       database.host,
       "-port",
-      database.port.toString
+      database.port.getOrElse(3306).toString
     )
 
   private def buildArguments(arguments: Seq[String]): CommandLineArguments =
