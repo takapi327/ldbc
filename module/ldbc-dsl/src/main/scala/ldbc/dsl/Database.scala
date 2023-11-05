@@ -98,28 +98,28 @@ object Database:
 
     Database[F](databaseType, name, host, port, () => connection)
 
-  def mysqlDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
+  def fromMySQLDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, Some(port), None, None)
 
-  def mysqlDriver[F[_]: Sync](name: String, host: String): Database[F] =
+  def fromMySQLDriver[F[_]: Sync](name: String, host: String): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, None, None, None)
 
-  def mysqlDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
+  def fromMySQLDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, Some(port), Some(user), Some(password))
 
-  def mysqlDriver[F[_]: Sync](name: String, host: String, user: String, password: String): Database[F] =
+  def fromMySQLDriver[F[_]: Sync](name: String, host: String, user: String, password: String): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.MySQL, name, host, None, Some(user), Some(password))
 
-  def awsDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
+  def fromAwsDriver[F[_]: Sync](name: String, host: String, port: Int): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, Some(port), None, None)
 
-  def awsDriver[F[_]: Sync](name: String, host: String): Database[F] =
+  def fromAwsDriver[F[_]: Sync](name: String, host: String): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, None, None, None)
 
-  def awsDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
+  def fromAwsDriver[F[_]: Sync](name: String, host: String, port: Int, user: String, password: String): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, Some(port), Some(user), Some(password))
 
-  def awsDriver[F[_]: Sync](name: String, host: String, user: String, password: String): Database[F] =
+  def fromAwsDriver[F[_]: Sync](name: String, host: String, user: String, password: String): Database[F] =
     fromDriverManager[F](CoreDatabase.Type.AWSMySQL, name, host, None, Some(user), Some(password))
 
   def fromDataSource[F[_]: Sync](
