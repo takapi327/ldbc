@@ -111,7 +111,7 @@ select.statement === "SELECT `id` FROM user WHERE name = ?"
 
 ### GROUP BY/Having
 
-クエリに型安全にGroup By句を設定する方法は`groupBy`メソッドを使用することです。
+クエリに型安全にGROUP BY句を設定する方法は`groupBy`メソッドを使用することです。
 
 `groupBy`を使用することで`select`でデータを取得する時に指定したカラム名の値を基準にグループ化することができます。
 
@@ -132,6 +132,29 @@ select.statement === "SELECT `id`, `name`, `age` FROM user GROUP BY age HAVING a
 ```
 
 ### ORDER BY
+
+クエリに型安全にORDER BY句を設定する方法は`orderBy`メソッドを使用することです。
+
+`orderBy`を使うことで`select`でデータを取得する時に指定したカラムの値を対象にソートした結果を取得することができます。
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).orderBy(_.age)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age"
+```
+
+昇順/降順を指定したい場合は、それぞれカラムに対して `asc`/`desc`を呼び出すだけです。
+
+```scala 3
+val desc = userQuery.select(user => (user.id, user.name, user.age)).orderBy(_.age.desc)
+
+desc.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age DESC"
+
+val asc = userQuery.select(user => (user.id, user.name, user.age)).orderBy(_.age.asc)
+
+asc.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age ASC"
+```
+
 ### LIMIT/OFFSET
 
 ## INSERT

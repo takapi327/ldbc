@@ -131,6 +131,30 @@ val select = userQuery.select(user => (user.id, user.name, user.age)).groupBy(_.
 select.statement === "SELECT `id`, `name`, `age` FROM user GROUP BY age HAVING age > ?"
 ```
 
+### ORDER BY
+
+A type-safe way to set an ORDER BY clause in a query is to use the `orderBy` method.
+
+Using `orderBy` allows you to get the results sorted by the values of the columns you specify when retrieving data with `select`.
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).orderBy(_.age)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age"
+```
+
+If you want to specify ascending/descending order, simply call `asc`/`desc` for the columns, respectively.
+
+```scala 3
+val desc = userQuery.select(user => (user.id, user.name, user.age)).orderBy(_.age.desc)
+
+desc.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age DESC"
+
+val asc = userQuery.select(user => (user.id, user.name, user.age)).orderBy(_.age.asc)
+
+asc.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age ASC"
+```
+
 ## INSERT
 
 A type-safe way to construct an INSERT statement is to use the following methods provided by TableQuery.
