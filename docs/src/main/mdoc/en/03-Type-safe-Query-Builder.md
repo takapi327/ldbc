@@ -109,6 +109,28 @@ The following is a list of conditions that can be used in the `where` method.
 | ^ (value)                            | `column ^ ?`                          |
 | ~ (value)                            | `~column = ?`                         |
 
+### GROUP BY/Having
+
+A type-safe way to set a Group By clause in a query is to use the `groupBy` method.
+
+Using `groupBy` allows you to group data based on the value of a column name you specify when retrieving data with `select`.
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).groupBy(_._3)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user GROUP BY age"
+```
+
+When grouping, the number of data that can be retrieved with `select` is the number of groups. So, when grouping, you can retrieve the values of the columns specified for grouping, or the results of aggregating the column values by group using the provided functions.
+
+The `having` allows you to set the conditions for retrieval with respect to data grouped and retrieved by `groupBy`.
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).groupBy(_._3).having(_._3 > 20)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user GROUP BY age HAVING age > ?"
+```
+
 ## INSERT
 
 A type-safe way to construct an INSERT statement is to use the following methods provided by TableQuery.

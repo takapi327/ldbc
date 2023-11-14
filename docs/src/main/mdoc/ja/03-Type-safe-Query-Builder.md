@@ -109,6 +109,31 @@ select.statement === "SELECT `id` FROM user WHERE name = ?"
 | ^ (value)                            | `column ^ ?`                          |
 | ~ (value)                            | `~column = ?`                         |
 
+### GROUP BY/Having
+
+クエリに型安全にGroup By句を設定する方法は`groupBy`メソッドを使用することです。
+
+`groupBy`を使用することで`select`でデータを取得する時に指定したカラム名の値を基準にグループ化することができます。
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).groupBy(_._3)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user GROUP BY age"
+```
+
+グループ化すると`select`で取得できるデータの数はグループの数だけとなります。そこでグループ化を行った場合には、グループ化に指定したカラムの値や、用意された関数を使ってカラムの値をグループ単位で集計した結果などを取得することができます。
+
+`having`を使用すると`groupBy`によってグループ化されて取得したデータに関して、取得する条件を設定することができます。
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).groupBy(_._3).having(_._3 > 20)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user GROUP BY age HAVING age > ?"
+```
+
+### ORDER BY
+### LIMIT/OFFSET
+
 ## INSERT
 
 型安全にINSERT文を構築する方法はTableQueryが提供する以下のメソッドを使用することです。
