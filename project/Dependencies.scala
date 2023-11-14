@@ -20,7 +20,7 @@ object Dependencies {
 
   val mysql = "mysql" % "mysql-connector-java" % "8.0.33"
 
-  val specs2Version = "5.3.2"
+  val specs2Version = "5.4.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
     "specs2-junit",
