@@ -167,6 +167,25 @@ val select = userQuery.select(user => (user.id, user.name, user.age)).limit(100)
 select.statement === "SELECT `id`, `name`, `age` FROM user LIMIT ? OFFSET ?"
 ```
 
+## Custom Data Type
+
+前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの`mapping`メソッドを使用して独自の型とDataTypeのマッピングを行ないました。([参照](http://localhost:4000/ja/02-Custom-Data-Type.html))
+
+LDBCはテーブル定義とデータベースへの接続処理が分離されています。
+そのためデータベースからデータを取得する際にユーザー独自の型もしくはサポートされていない型に変換したい場合は、ResultSetからのデータ取得方法を独自の型もしくはサポートされていない型と紐付けてあげる必要があります。
+
+例えばユーザー定義のEnumを文字列型とマッピングしたい場合は、以下のようになります。
+
+```scala 3
+enum Custom:
+  case ...
+
+given ResultSetReader[IO, Custom] =
+  ResultSetReader.mapping[IO, str, Custom](str => Custom.valueOf(str))
+```
+
+※ この処理は将来のバージョンでDataTypeのマッピングと統合される可能性があります。
+
 ## INSERT
 
 型安全にINSERT文を構築する方法はTableQueryが提供する以下のメソッドを使用することです。

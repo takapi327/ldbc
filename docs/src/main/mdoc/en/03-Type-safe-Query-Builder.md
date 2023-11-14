@@ -167,6 +167,25 @@ val select = userQuery.select(user => (user.id, user.name, user.age)).limit(100)
 select.statement === "SELECT `id`, `name`, `age` FROM user LIMIT ? OFFSET ?"
 ```
 
+## Custom Data Type
+
+In the previous section, we used the `mapping` method of DataType to map custom types to DataType in order to use user-specific or unsupported types. ([reference](http://localhost:4000/en/02-Custom-Data-Type.html))
+
+LDBC separates the table definition from the process of connecting to the database.
+Therefore, if you want to retrieve data from the database and convert it to a user-specific or unsupported type, you must link the method of retrieving data from the ResultSet to the user-specific or unsupported type.
+
+For example, if you want to map a user-defined Enum to a string type
+
+```scala 3
+enum Custom:
+  case ...
+
+given ResultSetReader[IO, Custom] =
+  ResultSetReader.mapping[IO, str, Custom](str => Custom.valueOf(str))
+```
+
+※ This process may be integrated with DataType mapping in a future version.
+
 ## INSERT
 
 A type-safe way to construct an INSERT statement is to use the following methods provided by TableQuery.
