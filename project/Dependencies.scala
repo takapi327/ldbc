@@ -15,7 +15,7 @@ object Dependencies {
 
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 
-  val circeYaml = "io.circe" %% "circe-yaml" % "0.14.2"
+  val circeYaml = "io.circe" %% "circe-yaml" % "0.15.1"
   val circeGeneric = "io.circe" %% "circe-generic" % "0.14.6"
 
   val mysql = "mysql" % "mysql-connector-java" % "8.0.33"
