@@ -467,6 +467,38 @@ object DatabaseConnectionTest extends Specification:
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
 
+    "If the primary key is duplicated, the data is updated." in {
+      val result = (for
+        _       <- city.insertOrUpdates(List(City(1638, "update Kofu", "JPN", "Yamanashi", 199753))).update
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1638).query.unsafe
+      yield updated).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+      (result._1 === "update Kofu") and (result._2 !== Some("not update Yamanashi"))
+    }
+
+    "If there are duplicate primary keys, only the specified columns are updated." in {
+      val result = (for
+        _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
+               .onDuplicateKeyUpdate(_.name)
+               .update
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1639).query.unsafe
+      yield updated).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+      (result._1 === "update Kushiro") and (result._2 !== Some("not update Hokkaido"))
+    }
+
+    "Data is added if the primary key is not duplicated." in {
+      (for
+        empty <- city.selectAll.where(_.id _equals 5000).query.headOption
+        _     <- city.insertOrUpdate((5000, "Nishinomiya", "JPN", "Hyogo", 0)).update
+        data  <- city.selectAll.where(_.id _equals 5000).query.headOption
+      yield empty.isEmpty and data.nonEmpty).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+    }
+
     "The update succeeds in the combined processing of multiple queries." in {
       (for
         codeOpt <- country

@@ -7,6 +7,7 @@ package ldbc.query.builder.statement
 import ldbc.core.Column
 import ldbc.sql.*
 import ldbc.query.builder.TableQuery
+import ldbc.query.builder.interpreter.Tuples
 
 /** Trait for building Statements to be added.
   *
@@ -16,9 +17,30 @@ import ldbc.query.builder.TableQuery
   *   Base trait for all products
   */
 private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
+  self =>
 
-  /** Trait for generating SQL table information. */
+  /** A model for generating queries from Table information. */
   def tableQuery: TableQuery[F, P]
+
+  /** Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements. */
+  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using
+    Tuples.IsColumnQuery[F, T] =:= true
+  ): DuplicateKeyUpdateInsert[F] =
+    val duplicateKeys = func(self.tableQuery) match
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
+      case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
+    new DuplicateKeyUpdateInsert[F]:
+      override def params: Seq[ParameterBinder[F]] = self.params
+
+      override def statement: String =
+        s"${ self.statement } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
+
+/** Insert trait that provides a method to update in case of duplicate keys.
+  *
+  * @tparam F
+  *   The effect type
+  */
+trait DuplicateKeyUpdateInsert[F[_]] extends Command[F]
 
 /** A model for constructing INSERT statements that insert single values in MySQL.
   *
@@ -121,3 +143,34 @@ case class SelectInsert[F[_], P <: Product, T](
           case (value: Any, parameter: Any) =>
             ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
         })
+
+/** A model for constructing ON DUPLICATE KEY UPDATE statements that insert multiple values in MySQL.
+  *
+  * @param tableQuery
+  *   Trait for generating SQL table information.
+  * @param tuples
+  *   Tuple type value of the property with type parameter P.
+  * @param params
+  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+  *   only.
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  * @tparam T
+  *   Tuple type of the property with type parameter P
+  */
+case class DuplicateKeyUpdate[F[_], P <: Product, T <: Tuple](
+  tableQuery: TableQuery[F, P],
+  tuples:     List[T],
+  params:     Seq[ParameterBinder[F]]
+) extends DuplicateKeyUpdateInsert[F]:
+
+  private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
+
+  private val duplicateKeys = tableQuery.table.all.map(column => s"$column = new_${ tableQuery.table._name }.$column")
+
+  override val statement: String =
+    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(
+        ", "
+      ) } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
