@@ -155,6 +155,18 @@ val asc = userQuery.select(user => (user.id, user.name, user.age)).orderBy(_.age
 asc.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age ASC"
 ```
 
+### LIMIT/OFFSET
+
+A type-safe way to set the LIMIT and OFFSET clauses in a query is to use the `limit`/`offset` methods.
+
+The `limit` can be set to the maximum number of rows of data to retrieve when `select` is executed, and the `offset` can be set to the number of rows of data to retrieve.
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).limit(100).offset(50)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user LIMIT ? OFFSET ?"
+```
+
 ## INSERT
 
 A type-safe way to construct an INSERT statement is to use the following methods provided by TableQuery.

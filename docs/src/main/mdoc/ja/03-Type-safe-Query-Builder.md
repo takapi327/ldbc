@@ -157,6 +157,16 @@ asc.statement === "SELECT `id`, `name`, `age` FROM user ORDER BY age ASC"
 
 ### LIMIT/OFFSET
 
+クエリに型安全にLIMIT句とOFFSET句を設定する方法は`limit`/`offset`メソッドを使用することです。
+
+`limit`を設定すると`select`を実行した時に取得するデータの行数の上限を設定することができ、`offset`を設定すると何番目からのデータを取得するのかを指定することができます。
+
+```scala 3
+val select = userQuery.select(user => (user.id, user.name, user.age)).limit(100).offset(50)
+
+select.statement === "SELECT `id`, `name`, `age` FROM user LIMIT ? OFFSET ?"
+```
+
 ## INSERT
 
 型安全にINSERT文を構築する方法はTableQueryが提供する以下のメソッドを使用することです。
