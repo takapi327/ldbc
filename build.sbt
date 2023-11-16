@@ -54,6 +54,7 @@ lazy val LdbcCodegenProject = LepusSbtProject("Ldbc-Codegen", "module/ldbc-codeg
 lazy val LdbcHikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
   .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
+    catsEffect,
     typesafeConfig,
     hikariCP
   ))
