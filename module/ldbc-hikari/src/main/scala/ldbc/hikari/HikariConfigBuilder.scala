@@ -1,8 +1,6 @@
-/**
- *  This file is part of the ldbc.
- *  For the full copyright and license information,
- *  please view the LICENSE file that was distributed with this source code.
- */
+/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
+  * distributed with this source code.
+  */
 
 package ldbc.hikari
 
@@ -17,7 +15,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory
 
 /** Build the Configuration of HikariCP.
- */
+  */
 trait HikariConfigBuilder:
 
   protected val config: Configuration = Configuration.load()
@@ -25,43 +23,42 @@ trait HikariConfigBuilder:
   protected val path: String = "ldbc.hikari"
 
   /** List of keys to retrieve from conf file. */
-  final private val CATALOG = "catalog"
-  final private val CONNECTION_TIMEOUT = "connection_timeout"
-  final private val IDLE_TIMEOUT = "idle_timeout"
-  final private val LEAK_DETECTION_THRESHOLD = "leak_detection_threshold"
-  final private val MAXIMUM_POOL_SIZE = "maximum_pool_size"
-  final private val MAX_LIFETIME = "max_lifetime"
-  final private val MINIMUM_IDLE = "minimum_idle"
-  final private val POOL_NAME = "pool_name"
-  final private val VALIDATION_TIMEOUT = "validation_timeout"
-  final private val ALLOW_POOL_SUSPENSION = "allow_pool_suspension"
-  final private val AUTO_COMMIT = "auto_commit"
-  final private val CONNECTION_INIT_SQL = "connection_init_sql"
-  final private val CONNECTION_TEST_QUERY = "connection_test_query"
-  final private val DATA_SOURCE_CLASSNAME = "data_source_classname"
-  final private val DATASOURCE_JNDI = "datasource_jndi"
+  final private val CATALOG                     = "catalog"
+  final private val CONNECTION_TIMEOUT          = "connection_timeout"
+  final private val IDLE_TIMEOUT                = "idle_timeout"
+  final private val LEAK_DETECTION_THRESHOLD    = "leak_detection_threshold"
+  final private val MAXIMUM_POOL_SIZE           = "maximum_pool_size"
+  final private val MAX_LIFETIME                = "max_lifetime"
+  final private val MINIMUM_IDLE                = "minimum_idle"
+  final private val POOL_NAME                   = "pool_name"
+  final private val VALIDATION_TIMEOUT          = "validation_timeout"
+  final private val ALLOW_POOL_SUSPENSION       = "allow_pool_suspension"
+  final private val AUTO_COMMIT                 = "auto_commit"
+  final private val CONNECTION_INIT_SQL         = "connection_init_sql"
+  final private val CONNECTION_TEST_QUERY       = "connection_test_query"
+  final private val DATA_SOURCE_CLASSNAME       = "data_source_classname"
+  final private val DATASOURCE_JNDI             = "datasource_jndi"
   final private val INITIALIZATION_FAIL_TIMEOUT = "initialization_fail_timeout"
-  final private val ISOLATE_INTERNAL_QUERIES = "isolate_internal_queries"
-  final private val JDBC_URL = "jdbc_url"
-  final private val READONLY = "readonly"
-  final private val REGISTER_MBEANS = "register_mbeans"
-  final private val SCHEMA = "schema"
-  final private val USERNAME = "username"
-  final private val PASSWORD = "password"
-  final private val DRIVER_CLASS_NAME = "driver_class_name"
-  final private val TRANSACTION_ISOLATION = "transaction_isolation"
+  final private val ISOLATE_INTERNAL_QUERIES    = "isolate_internal_queries"
+  final private val JDBC_URL                    = "jdbc_url"
+  final private val READONLY                    = "readonly"
+  final private val REGISTER_MBEANS             = "register_mbeans"
+  final private val SCHEMA                      = "schema"
+  final private val USERNAME                    = "username"
+  final private val PASSWORD                    = "password"
+  final private val DRIVER_CLASS_NAME           = "driver_class_name"
+  final private val TRANSACTION_ISOLATION       = "transaction_isolation"
 
   /** Number of application cores */
   private val maxCore: Int = Runtime.getRuntime.availableProcessors()
 
-  /** Method to retrieve values matching any key from the conf file from the path configuration, with any
-   * type.
-   *
-   * @param func
-   * Process to get values from Configuration wrapped in Option
-   * @tparam T
-   * Type of value retrieved from conf file
-   */
+  /** Method to retrieve values matching any key from the conf file from the path configuration, with any type.
+    *
+    * @param func
+    *   Process to get values from Configuration wrapped in Option
+    * @tparam T
+    *   Type of value retrieved from conf file
+    */
   final private def readConfig[T](func: Configuration => Option[T]): Option[T] =
     config.get[Option[Configuration]](path).flatMap(func(_))
 
@@ -173,49 +170,49 @@ trait HikariConfigBuilder:
     }
 
   /** List of variables predefined as default settings. */
-  val connectionTimeout: Long = getConnectionTimeout.getOrElse(Duration(30, TimeUnit.SECONDS)).toMillis
-  val idleTimeout: Long = getIdleTimeout.getOrElse(Duration(10, TimeUnit.MINUTES)).toMillis
-  val leakDetectionThreshold: Long = getLeakDetectionThreshold.getOrElse(Duration.Zero).toMillis
-  val maximumPoolSize: Int = getMaximumPoolSize.getOrElse(maxCore * 2)
-  val maxLifetime: Long = getMaxLifetime.getOrElse(Duration(30, TimeUnit.MINUTES)).toMillis
-  val minimumIdle: Int = getMinimumIdle.getOrElse(10)
-  val validationTimeout: Long = getValidationTimeout.getOrElse(Duration(5, TimeUnit.SECONDS)).toMillis
-  val allowPoolSuspension: Boolean = getAllowPoolSuspension.getOrElse(false)
-  val autoCommit: Boolean = getAutoCommit.getOrElse(true)
+  val connectionTimeout:      Long    = getConnectionTimeout.getOrElse(Duration(30, TimeUnit.SECONDS)).toMillis
+  val idleTimeout:            Long    = getIdleTimeout.getOrElse(Duration(10, TimeUnit.MINUTES)).toMillis
+  val leakDetectionThreshold: Long    = getLeakDetectionThreshold.getOrElse(Duration.Zero).toMillis
+  val maximumPoolSize:        Int     = getMaximumPoolSize.getOrElse(maxCore * 2)
+  val maxLifetime:            Long    = getMaxLifetime.getOrElse(Duration(30, TimeUnit.MINUTES)).toMillis
+  val minimumIdle:            Int     = getMinimumIdle.getOrElse(10)
+  val validationTimeout:      Long    = getValidationTimeout.getOrElse(Duration(5, TimeUnit.SECONDS)).toMillis
+  val allowPoolSuspension:    Boolean = getAllowPoolSuspension.getOrElse(false)
+  val autoCommit:             Boolean = getAutoCommit.getOrElse(true)
   val initializationFailTimeout: Long =
     getInitializationFailTimeout.getOrElse(Duration(1, TimeUnit.MILLISECONDS)).toMillis
   val isolateInternalQueries: Boolean = getIsolateInternalQueries.getOrElse(false)
-  val readonly: Boolean = getReadonly.getOrElse(false)
-  val registerMbeans: Boolean = getRegisterMbeans.getOrElse(false)
+  val readonly:               Boolean = getReadonly.getOrElse(false)
+  val registerMbeans:         Boolean = getRegisterMbeans.getOrElse(false)
 
   /** Method to generate HikariConfig based on DatabaseConfig and other settings.
-   *
-   * @param jDataSource
-   * Factories for connection to physical data sources
-   * @param dataSourceProperties
-   * Properties (name/value pairs) used to configure DataSource/java.sql.Driver
-   * @param healthCheckProperties
-   * Properties (name/value pairs) used to configure HealthCheck/java.sql.Driver
-   * @param healthCheckRegistry
-   * Set the HealthCheckRegistry that will be used for registration of health checks by HikariCP.
-   * @param metricRegistry
-   * Set a MetricRegistry instance to use for registration of metrics used by HikariCP.
-   * @param metricsTrackerFactory
-   * Set a MetricsTrackerFactory instance to use for registration of metrics used by HikariCP.
-   * @param scheduledExecutor
-   * Set the ScheduledExecutorService used for housekeeping.
-   * @param threadFactory
-   * Set the thread factory to be used to create threads.
-   */
+    *
+    * @param jDataSource
+    *   Factories for connection to physical data sources
+    * @param dataSourceProperties
+    *   Properties (name/value pairs) used to configure DataSource/java.sql.Driver
+    * @param healthCheckProperties
+    *   Properties (name/value pairs) used to configure HealthCheck/java.sql.Driver
+    * @param healthCheckRegistry
+    *   Set the HealthCheckRegistry that will be used for registration of health checks by HikariCP.
+    * @param metricRegistry
+    *   Set a MetricRegistry instance to use for registration of metrics used by HikariCP.
+    * @param metricsTrackerFactory
+    *   Set a MetricsTrackerFactory instance to use for registration of metrics used by HikariCP.
+    * @param scheduledExecutor
+    *   Set the ScheduledExecutorService used for housekeeping.
+    * @param threadFactory
+    *   Set the thread factory to be used to create threads.
+    */
   def makeFromConfig(
-    jDataSource: Option[JDataSource] = None,
-    dataSourceProperties: Option[Properties] = None,
+    jDataSource:           Option[JDataSource] = None,
+    dataSourceProperties:  Option[Properties] = None,
     healthCheckProperties: Option[Properties] = None,
-    healthCheckRegistry: Option[Object] = None,
-    metricRegistry: Option[Object] = None,
+    healthCheckRegistry:   Option[Object] = None,
+    metricRegistry:        Option[Object] = None,
     metricsTrackerFactory: Option[MetricsTrackerFactory] = None,
-    scheduledExecutor: Option[ScheduledExecutorService] = None,
-    threadFactory: Option[ThreadFactory] = None
+    scheduledExecutor:     Option[ScheduledExecutorService] = None,
+    threadFactory:         Option[ThreadFactory] = None
   ): HikariConfig =
 
     val hikariConfig = new HikariConfig()
