@@ -33,8 +33,18 @@ trait HikariDataSourceBuilder[F[_]: Sync] extends HikariConfigBuilder:
       hikariConfig
     }.toResource
 
+  /** Method to generate DataSource from HikariCPConfig generation.
+    */
   def buildDataSource(): Resource[F, HikariDataSource] =
     for
       hikariConfig     <- buildConfig()
       hikariDataSource <- createDataSourceResource(new HikariDataSource(hikariConfig))
     yield hikariDataSource
+
+  /** Methods for generating DataSource from user-generated HikariCPConfig.
+    *
+    * @param hikariConfig
+    *   User-generated HikariCP Config file
+    */
+  def buildFromConfig(hikariConfig: HikariConfig): Resource[F, HikariDataSource] =
+    createDataSourceResource(new HikariDataSource(hikariConfig))
