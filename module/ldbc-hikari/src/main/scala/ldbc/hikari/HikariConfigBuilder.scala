@@ -256,24 +256,22 @@ trait HikariConfigBuilder:
 
 object HikariConfigBuilder:
 
-  /**
-   * Methods for retrieving data from the LDBC default specified path.
-   *
-   * {{{
-   *   ldbc.hikari {
-   *     jdbc_url = ...
-   *     username = ...
-   *     password = ...
-   *   }
-   * }}}
-   */
+  /** Methods for retrieving data from the LDBC default specified path.
+    *
+    * {{{
+    *   ldbc.hikari {
+    *     jdbc_url = ...
+    *     username = ...
+    *     password = ...
+    *   }
+    * }}}
+    */
   def default: HikariConfigBuilder = new HikariConfigBuilder {}
 
-  /**
-   * Methods for retrieving data from a user-specified conf path.
-   *
-   * @param confPath
-   *   Path of conf from which user-specified data is to be retrieved
-   */
+  /** Methods for retrieving data from a user-specified conf path.
+    *
+    * @param confPath
+    *   Path of conf from which user-specified data is to be retrieved
+    */
   def from(confPath: String): HikariConfigBuilder = new HikariConfigBuilder:
     override protected val path: String = confPath
