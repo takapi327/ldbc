@@ -204,7 +204,7 @@ trait HikariConfigBuilder:
     * @param threadFactory
     *   Set the thread factory to be used to create threads.
     */
-  def makeFromConfig(
+  def build(
     jDataSource:           Option[JDataSource] = None,
     dataSourceProperties:  Option[Properties] = None,
     healthCheckProperties: Option[Properties] = None,
@@ -255,4 +255,25 @@ trait HikariConfigBuilder:
     hikariConfig
 
 object HikariConfigBuilder:
+
+  /**
+   * Methods for retrieving data from the LDBC default specified path.
+   *
+   * {{{
+   *   ldbc.hikari {
+   *     jdbc_url = ...
+   *     username = ...
+   *     password = ...
+   *   }
+   * }}}
+   */
   def default: HikariConfigBuilder = new HikariConfigBuilder {}
+
+  /**
+   * Methods for retrieving data from a user-specified conf path.
+   *
+   * @param confPath
+   *   Path of conf from which user-specified data is to be retrieved
+   */
+  def from(confPath: String): HikariConfigBuilder = new HikariConfigBuilder:
+    override protected val path: String = confPath

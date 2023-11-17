@@ -28,7 +28,7 @@ trait HikariDataSourceBuilder[F[_]: Sync] extends HikariConfigBuilder:
     */
   private def buildConfig(): Resource[F, HikariConfig] =
     Sync[F].delay {
-      val hikariConfig = makeFromConfig()
+      val hikariConfig = build()
       hikariConfig.validate()
       hikariConfig
     }.toResource
