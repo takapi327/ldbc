@@ -272,6 +272,14 @@ object HikariConfigBuilder:
     *
     * @param confPath
     *   Path of conf from which user-specified data is to be retrieved
+    *
+    * {{{
+    *   {user path} {
+    *     jdbc_url = ...
+    *     username = ...
+    *     password = ...
+    *   }
+    * }}}
     */
   def from(confPath: String): HikariConfigBuilder = new HikariConfigBuilder:
     override protected val path: String = confPath
