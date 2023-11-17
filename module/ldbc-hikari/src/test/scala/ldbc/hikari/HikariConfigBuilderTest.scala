@@ -10,9 +10,9 @@ import scala.concurrent.duration.Duration
 
 import org.specs2.mutable.Specification
 
-object HikariConfigBuilderTest extends Specification, HikariConfigBuilder:
+object HikariConfigBuilderTest extends Specification:
 
-  private val hikariConfig = build()
+  private val hikariConfig = HikariConfigBuilder.default.build()
 
   "Testing the HikariConfigBuilder" should {
 
