@@ -57,7 +57,7 @@ lazy val LdbcHikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
     catsEffect,
     typesafeConfig,
     hikariCP
-  ))
+  ) ++ specs2)
 
 lazy val LdbcPluginProject = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
   .settings((Compile / sourceGenerators) += Def.task {
