@@ -67,12 +67,15 @@ object Join:
 
     override def joinType: JoinType = JoinType.JOIN
 
-    def select[T <: Tuple](
-      func: (TableQuery[F, P1], TableQuery[F, P2]) => Tuples.ToColumn[F, T]
-    ): JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
-      val columns   = func(left, right)
-      val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
-      JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
+    def select[T](func: (TableQuery[F, P1], TableQuery[F, P2]) => T)(using
+      Tuples.IsColumnQuery[F, T] =:= true
+    ): JoinSelect[F, P1, P2, T] =
+      val columns = func(left, right)
+      val str = columns match
+        case v: Tuple => v.toArray.distinct.mkString(", ")
+        case v        => v
+      val statement = s"SELECT $str $fromStatement"
+      JoinSelect[F, P1, P2, T](
         left      = left,
         right     = right,
         statement = statement,
@@ -88,12 +91,15 @@ object Join:
 
     override def joinType: JoinType = JoinType.LEFT_JOIN
 
-    def select[T <: Tuple](
-      func: (TableQuery[F, P1], TableOpt[F, P2]) => Tuples.ToColumn[F, T]
-    ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
-      val columns   = func(left, TableOpt(right.table))
-      val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
-      Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
+    def select[T](func: (TableQuery[F, P1], TableOpt[F, P2]) => T)(using
+      Tuples.IsColumnQuery[F, T] =:= true
+    ): Join.JoinSelect[F, P1, P2, T] =
+      val columns = func(left, TableOpt(right.table))
+      val str = columns match
+        case v: Tuple => v.toArray.distinct.mkString(", ")
+        case v        => v
+      val statement = s"SELECT $str $fromStatement"
+      Join.JoinSelect[F, P1, P2, T](
         left      = left,
         right     = right,
         statement = statement,
@@ -109,12 +115,15 @@ object Join:
 
     override def joinType: JoinType = JoinType.RIGHT_JOIN
 
-    def select[T <: Tuple](
-      func: (TableOpt[F, P1], TableQuery[F, P2]) => Tuples.ToColumn[F, T]
-    ): Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]] =
-      val columns   = func(TableOpt(left.table), right)
-      val statement = s"SELECT ${ columns.toArray.mkString(", ") } $fromStatement"
-      Join.JoinSelect[F, P1, P2, Tuples.ToColumn[F, T]](
+    def select[T](
+      func: (TableOpt[F, P1], TableQuery[F, P2]) => T
+    )(using Tuples.IsColumnQuery[F, T] =:= true): Join.JoinSelect[F, P1, P2, T] =
+      val columns = func(TableOpt(left.table), right)
+      val str = columns match
+        case v: Tuple => v.toArray.distinct.mkString(", ")
+        case v        => v
+      val statement = s"SELECT $str $fromStatement"
+      Join.JoinSelect[F, P1, P2, T](
         left      = left,
         right     = right,
         statement = statement,
@@ -122,7 +131,7 @@ object Join:
         params    = expression.parameter
       )
 
-  private[ldbc] case class JoinSelect[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
+  private[ldbc] case class JoinSelect[F[_], P1 <: Product, P2 <: Product, T](
     left:      TableQuery[F, P1],
     right:     TableQuery[F, P2],
     statement: String,
@@ -151,7 +160,7 @@ object Join:
         params    = params
       )
 
-  private[ldbc] case class JoinWhere[F[_], P1 <: Product, P2 <: Product, T <: Tuple](
+  private[ldbc] case class JoinWhere[F[_], P1 <: Product, P2 <: Product, T](
     left:      TableQuery[F, P1],
     right:     TableQuery[F, P2],
     statement: String,
@@ -252,9 +261,9 @@ object Join:
 
 case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
-  def selectDynamic[Tag <: Singleton](tag: Tag)(using
-    mirror:                                Mirror.ProductOf[P],
-    index:                                 ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+  transparent inline def selectDynamic[Tag <: Singleton](tag: Tag)(using
+    mirror:                                                   Mirror.ProductOf[P],
+    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     reader: ResultSetReader[F, Option[
       Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     ]]

@@ -12,3 +12,7 @@ services:
       - 13306:3306
     volumes:
       - ./database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10

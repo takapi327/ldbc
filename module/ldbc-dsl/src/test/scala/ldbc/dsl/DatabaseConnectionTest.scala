@@ -12,112 +12,11 @@ import org.specs2.execute.Result
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
-import ldbc.core.model.*
 import ldbc.sql.*
 import ldbc.dsl.io.*
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
-
-case class Country(
-  code:           String,
-  name:           String,
-  continent:      Country.Continent,
-  region:         String,
-  surfaceArea:    BigDecimal,
-  indepYear:      Option[Short],
-  population:     Int,
-  lifeExpectancy: Option[BigDecimal],
-  gnp:            Option[BigDecimal],
-  gnpOld:         Option[BigDecimal],
-  localName:      String,
-  governmentForm: String,
-  headOfState:    Option[String],
-  capital:        Option[Int],
-  code2:          String
-)
-
-object Country:
-
-  enum Continent(val value: String) extends Enum:
-    case Asia          extends Continent("Asia")
-    case Europe        extends Continent("Europe")
-    case North_America extends Continent("North America")
-    case Africa        extends Continent("Africa")
-    case Oceania       extends Continent("Oceania")
-    case Antarctica    extends Continent("Antarctica")
-    case South_America extends Continent("South America")
-
-    override def toString: String = value
-  object Continent extends EnumDataType[Continent]
-
-  given ResultSetReader[IO, Continent] =
-    ResultSetReader.mapping[IO, String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
-
-  val table: Table[Country] = Table[Country]("country")(
-    column("Code", CHAR(3).DEFAULT(""), PRIMARY_KEY),
-    column("Name", CHAR(52).DEFAULT("")),
-    column("Continent", ENUM(using Continent).DEFAULT(Continent.Asia)),
-    column("Region", CHAR(26).DEFAULT("")),
-    column("SurfaceArea", DECIMAL(10, 2).DEFAULT(0.00)),
-    column("IndepYear", SMALLINT.DEFAULT(None)),
-    column("Population", INT.DEFAULT(0)),
-    column("LifeExpectancy", DECIMAL(3, 1).DEFAULT(None)),
-    column("GNP", DECIMAL(10, 2).DEFAULT(None)),
-    column("GNPOld", DECIMAL(10, 2).DEFAULT(None)),
-    column("LocalName", CHAR(45).DEFAULT("")),
-    column("GovernmentForm", CHAR(45).DEFAULT("")),
-    column("HeadOfState", CHAR(60).DEFAULT(None)),
-    column("Capital", INT.DEFAULT(None)),
-    column("Code2", CHAR(2).DEFAULT(""))
-  )
-
-case class City(
-  id:          Int,
-  name:        String,
-  countryCode: String,
-  district:    String,
-  population:  Int
-)
-
-object City:
-
-  val table: Table[City] = Table[City]("city")(
-    column("ID", INT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("Name", CHAR(35).DEFAULT("")),
-    column("CountryCode", CHAR(3).DEFAULT("")),
-    column("District", CHAR(20).DEFAULT("")),
-    column("Population", INT.DEFAULT(0))
-  )
-    .keySet(v => INDEX_KEY(v.countryCode))
-    .keySet(v => CONSTRAINT("city_ibfk_1", FOREIGN_KEY(v.countryCode, REFERENCE(Country.table, Country.table.code))))
-
-case class CountryLanguage(
-  countryCode: String,
-  language:    String,
-  isOfficial:  CountryLanguage.IsOfficial,
-  percentage:  BigDecimal
-)
-
-object CountryLanguage:
-
-  enum IsOfficial extends Enum:
-    case T, F
-  object IsOfficial extends EnumDataType[IsOfficial]
-
-  given ResultSetReader[IO, IsOfficial] =
-    ResultSetReader.mapping[IO, String, IsOfficial](str => IsOfficial.valueOf(str))
-
-  val table: Table[CountryLanguage] = Table[CountryLanguage]("countrylanguage")(
-    column("CountryCode", CHAR(3).DEFAULT("")),
-    column("Language", CHAR(30).DEFAULT("")),
-    column("IsOfficial", ENUM(using IsOfficial).DEFAULT(IsOfficial.F)),
-    column("Percentage", DECIMAL(4, 1).DEFAULT(0.0))
-  )
-    .keySet(v => PRIMARY_KEY(v.countryCode, v.language))
-    .keySet(v => INDEX_KEY(v.countryCode))
-    .keySet(v =>
-      CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(v.countryCode, REFERENCE(Country.table, Country.table.code)))
-    )
+import ldbc.dsl.schema.*
 
 object DatabaseConnectionTest extends Specification:
 
@@ -152,8 +51,8 @@ object DatabaseConnectionTest extends Specification:
 
     "The number of cases retrieved using the subquery matches the specified value." in {
       val result = city
-        .select[(String, String)](v => (v.name, v.countryCode))
-        .where(_.countryCode _equals country.select[String](_.code).where(_.code _equals "JPN"))
+        .select(v => (v.name, v.countryCode))
+        .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
         .query
         .toList
         .readOnly
@@ -217,7 +116,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Join matches the specified model." in {
       val result = (city join country)
         .on((city, country) => city.countryCode _equals country.code)
-        .select[(String, String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query
@@ -233,7 +132,7 @@ object DatabaseConnectionTest extends Specification:
 
       val result = (city join country)
         .on((city, country) => city.countryCode _equals country.code)
-        .select[(String, String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query[CountryCity]
@@ -247,7 +146,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Left Join matches the specified model." in {
       val result = (city join country)
         .left((city, country) => city.countryCode _equals country.code)
-        .select[(String, Option[String])]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query
@@ -263,7 +162,7 @@ object DatabaseConnectionTest extends Specification:
 
       val result = (city join country)
         .left((city, country) => city.countryCode _equals country.code)
-        .select[(String, Option[String])]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query[CountryCity]
@@ -277,7 +176,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Right Join matches the specified model." in {
       val result = (city join country)
         .right((city, country) => city.countryCode _equals country.code)
-        .select[(Option[String], String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query
@@ -293,7 +192,7 @@ object DatabaseConnectionTest extends Specification:
 
       val result = (city join country)
         .right((city, country) => city.countryCode _equals country.code)
-        .select[(Option[String], String)]((city, country) => (city.name, country.name))
+        .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
         .query[CountryCity]
@@ -306,7 +205,7 @@ object DatabaseConnectionTest extends Specification:
 
     "The retrieved data matches the specified value." in {
       val result = city
-        .select[(String, Int)](v => (v.countryCode, v.id.count))
+        .select(v => (v.countryCode, v.id.count))
         .where(_.countryCode _equals "JPN")
         .query
         .headOption
@@ -320,7 +219,7 @@ object DatabaseConnectionTest extends Specification:
       case class CountryCodeGroup(countryCode: String, length: Int)
 
       val result = city
-        .select[(String, Int)](v => (v.countryCode, v.id.count))
+        .select(v => (v.countryCode, v.id.count))
         .groupBy(_._1)
         .query[CountryCodeGroup]
         .toList
@@ -332,12 +231,12 @@ object DatabaseConnectionTest extends Specification:
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       (for
-        codeOpt <- country.select[String](_.code).where(_.code _equals "JPN").query.headOption
+        codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.headOption
         cities <- codeOpt match
                     case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
-                        .select[(String, String)](v => (v.name, v.countryCode))
+                        .select(v => (v.name, v.countryCode))
                         .where(_.countryCode _equals code)
                         .query
                         .toList
@@ -490,7 +389,7 @@ object DatabaseConnectionTest extends Specification:
 
     "Only specified items can be added to the data." in {
       val result = city
-        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
+        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
         .values(("Test", "T1", "T", 1))
         .update
         .autoCommit
@@ -502,8 +401,8 @@ object DatabaseConnectionTest extends Specification:
 
     "Multiple additions of data can be made only for specified items." in {
       val result = city
-        .selectInsert[(String, String, String, Int)](v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2))
+        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
+        .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
         .update
         .autoCommit
         .run(dataSource)
@@ -561,17 +460,49 @@ object DatabaseConnectionTest extends Specification:
                .set("district", "not update Kanagawa", false)
                .where(_.id _equals 1637)
                .update
-        updated <- city.select[(String, String)](v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
       yield updated).transaction
         .run(dataSource)
         .unsafeRunSync()
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
 
+    "If the primary key is duplicated, the data is updated." in {
+      val result = (for
+        _       <- city.insertOrUpdates(List(City(1638, "update Kofu", "JPN", "Yamanashi", 199753))).update
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1638).query.unsafe
+      yield updated).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+      (result._1 === "update Kofu") and (result._2 !== Some("not update Yamanashi"))
+    }
+
+    "If there are duplicate primary keys, only the specified columns are updated." in {
+      val result = (for
+        _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
+               .onDuplicateKeyUpdate(_.name)
+               .update
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1639).query.unsafe
+      yield updated).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+      (result._1 === "update Kushiro") and (result._2 !== Some("not update Hokkaido"))
+    }
+
+    "Data is added if the primary key is not duplicated." in {
+      (for
+        empty <- city.selectAll.where(_.id _equals 5000).query.headOption
+        _     <- city.insertOrUpdate((5000, "Nishinomiya", "JPN", "Hyogo", 0)).update
+        data  <- city.selectAll.where(_.id _equals 5000).query.headOption
+      yield empty.isEmpty and data.nonEmpty).transaction
+        .run(dataSource)
+        .unsafeRunSync()
+    }
+
     "The update succeeds in the combined processing of multiple queries." in {
       (for
         codeOpt <- country
-                     .select[String](_.code)
+                     .select(_.code)
                      .where(_.name _equals "Test1")
                      .and(_.continent _equals Country.Continent.Asia)
                      .query

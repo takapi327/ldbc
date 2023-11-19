@@ -4,8 +4,10 @@
 
 package ldbc.query.builder.statement
 
+import ldbc.core.Column
 import ldbc.sql.*
 import ldbc.query.builder.TableQuery
+import ldbc.query.builder.interpreter.Tuples
 
 /** Trait for building Statements to be added.
   *
@@ -15,84 +17,160 @@ import ldbc.query.builder.TableQuery
   *   Base trait for all products
   */
 private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
+  self =>
 
-  /** Trait for generating SQL table information. */
+  /** A model for generating queries from Table information. */
   def tableQuery: TableQuery[F, P]
 
-private[ldbc] object Insert:
+  /** Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements. */
+  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using
+    Tuples.IsColumnQuery[F, T] =:= true
+  ): DuplicateKeyUpdateInsert[F] =
+    val duplicateKeys = func(self.tableQuery) match
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
+      case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
+    new DuplicateKeyUpdateInsert[F]:
+      override def params: Seq[ParameterBinder[F]] = self.params
 
-  /** A model for constructing INSERT statements that insert single values in MySQL.
-    *
-    * @param tableQuery
-    *   Trait for generating SQL table information.
-    * @param tuple
-    *   Tuple type value of the property with type parameter P.
-    * @param params
-    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
-    *   only.
-    * @tparam F
-    *   The effect type
-    * @tparam P
-    *   Base trait for all products
-    * @tparam T
-    *   Tuple type of the property with type parameter P
-    */
-  case class Single[F[_], P <: Product, T <: Tuple](
-    tableQuery: TableQuery[F, P],
-    tuple:      T,
-    params:     Seq[ParameterBinder[F]]
-  ) extends Insert[F, P]:
+      override def statement: String =
+        s"${ self.statement } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
 
-    override def statement: String =
-      s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
-          .mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
+/** Insert trait that provides a method to update in case of duplicate keys.
+  *
+  * @tparam F
+  *   The effect type
+  */
+trait DuplicateKeyUpdateInsert[F[_]] extends Command[F]
 
-  /** A model for constructing INSERT statements that insert multiple values in MySQL.
-    *
-    * @param tableQuery
-    *   Trait for generating SQL table information.
-    * @param tuples
-    *   Tuple type value of the property with type parameter P.
-    * @param params
-    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
-    *   only.
-    * @tparam F
-    *   The effect type
-    * @tparam P
-    *   Base trait for all products
-    * @tparam T
-    *   Tuple type of the property with type parameter P
-    */
-  case class Multi[F[_], P <: Product, T <: Tuple](
-    tableQuery: TableQuery[F, P],
-    tuples:     List[T],
-    params:     Seq[ParameterBinder[F]]
-  ) extends Insert[F, P]:
+/** A model for constructing INSERT statements that insert single values in MySQL.
+  *
+  * @param tableQuery
+  *   Trait for generating SQL table information.
+  * @param tuple
+  *   Tuple type value of the property with type parameter P.
+  * @param params
+  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+  *   only.
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  * @tparam T
+  *   Tuple type of the property with type parameter P
+  */
+case class SingleInsert[F[_], P <: Product, T <: Tuple](
+  tableQuery: TableQuery[F, P],
+  tuple:      T,
+  params:     Seq[ParameterBinder[F]]
+) extends Insert[F, P]:
 
-    private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
+  override val statement: String =
+    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
+        .mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
 
-    override def statement: String =
-      s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
+/** A model for constructing INSERT statements that insert multiple values in MySQL.
+  *
+  * @param tableQuery
+  *   Trait for generating SQL table information.
+  * @param tuples
+  *   Tuple type value of the property with type parameter P.
+  * @param params
+  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+  *   only.
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  * @tparam T
+  *   Tuple type of the property with type parameter P
+  */
+case class MultiInsert[F[_], P <: Product, T <: Tuple](
+  tableQuery: TableQuery[F, P],
+  tuples:     List[T],
+  params:     Seq[ParameterBinder[F]]
+) extends Insert[F, P]:
 
-  case class Select[F[_], P <: Product, T <: Tuple](
-    _tableQuery: TableQuery[F, P],
-    columns:     Tuple
-  ):
+  private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
-    private def _statement: String =
-      s"INSERT INTO ${ _tableQuery.table._name } (${ columns.toArray.mkString(", ") })"
+  override val statement: String =
+    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
 
-    inline def values(tuples: T*): Insert[F, P] =
+/** A model for constructing INSERT statements that insert values into specified columns in MySQL.
+  *
+  * @param query
+  *   Trait for generating SQL table information.
+  * @param columns
+  *   List of columns into which values are to be inserted.
+  * @param parameter
+  *   Parameters of the value to be inserted
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  * @tparam T
+  *   Tuple type of the property with type parameter P
+  */
+case class SelectInsert[F[_], P <: Product, T](
+  query:     TableQuery[F, P],
+  columns:   T,
+  parameter: Parameter.MapToTuple[F, Column.Extract[T]]
+):
 
-      val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
+  private val columnStatement = columns match
+    case v: Tuple => v.toArray.distinct.mkString(", ")
+    case v        => v
 
-      new Insert[F, P]:
-        override def tableQuery: TableQuery[F, P] = _tableQuery
-        override def statement:  String           = s"$_statement VALUES${ values.mkString(", ") }"
-        override def params: Seq[ParameterBinder[F]] =
-          tuples
-            .map(Tuple.fromProduct)
-            .flatMap(_.zip(Parameter.fold[F, T]).toArray.map {
-              case (value: Any, parameter: Any) =>
-                ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
-            })
+  private val insertStatement: String =
+    s"INSERT INTO ${ query.table._name } ($columnStatement)"
+
+  def values(tuple: Column.Extract[T]): Insert[F, P] =
+    new Insert[F, P]:
+      override def tableQuery: TableQuery[F, P] = query
+      override def statement: String = s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
+      override def params: Seq[ParameterBinder[F]] =
+        tuple.zip(parameter).toArray.toSeq.map {
+          case (value: Any, parameter: Any) =>
+            ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+        }
+
+  def values(tuples: List[Column.Extract[T]]): Insert[F, P] =
+    val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
+    new Insert[F, P]:
+      override def tableQuery: TableQuery[F, P] = query
+      override def statement:  String           = s"$insertStatement VALUES${ values.mkString(", ") }"
+      override def params: Seq[ParameterBinder[F]] =
+        tuples.flatMap(_.zip(parameter).toArray.map {
+          case (value: Any, parameter: Any) =>
+            ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+        })
+
+/** A model for constructing ON DUPLICATE KEY UPDATE statements that insert multiple values in MySQL.
+  *
+  * @param tableQuery
+  *   Trait for generating SQL table information.
+  * @param tuples
+  *   Tuple type value of the property with type parameter P.
+  * @param params
+  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+  *   only.
+  * @tparam F
+  *   The effect type
+  * @tparam P
+  *   Base trait for all products
+  * @tparam T
+  *   Tuple type of the property with type parameter P
+  */
+case class DuplicateKeyUpdate[F[_], P <: Product, T <: Tuple](
+  tableQuery: TableQuery[F, P],
+  tuples:     List[T],
+  params:     Seq[ParameterBinder[F]]
+) extends DuplicateKeyUpdateInsert[F]:
+
+  private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
+
+  private val duplicateKeys = tableQuery.table.all.map(column => s"$column = new_${ tableQuery.table._name }.$column")
+
+  override val statement: String =
+    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(
+        ", "
+      ) } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"

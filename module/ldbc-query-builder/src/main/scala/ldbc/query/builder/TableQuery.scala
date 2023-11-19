@@ -27,16 +27,15 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   private[ldbc] val alias: Table[P] = table.as(s"${ table._name }_alias")
 
-  def selectDynamic[Tag <: Singleton](
+  transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
   )(using
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     reader: ResultSetReader[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ): ColumnQuery[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-    val column = table.selectDynamic[Tag](tag)
     ColumnQuery.fromColumn[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]](
-      column
+      table.selectDynamic[Tag](tag)
     )
 
   /** Type alias for ParameterBinder. Mainly for use with Tuple.map. */
@@ -66,13 +65,13 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     * @tparam T
     *   Type of value to be obtained
     */
-  def select[T](func: TableQuery[F, P] => Tuples.ToColumn[F, T]): Select[F, P, Tuples.ToColumn[F, T]] =
+  def select[T](func: TableQuery[F, P] => T)(using Tuples.IsColumnQuery[F, T] =:= true): Select[F, P, T] =
     val columns = func(this)
     val str = columns match
       case v: Tuple => v.toArray.distinct.mkString(", ")
       case v        => v
     val statement = s"SELECT $str FROM ${ table._name }"
-    Select[F, P, Tuples.ToColumn[F, T]](this, statement, columns, Seq.empty)
+    Select[F, P, T](this, statement, columns, Seq.empty)
 
   /** A method to join another table to itself.
     *
@@ -102,7 +101,9 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     * @param values
     *   A list of Tuples constructed with all the property types that Table has.
     */
-  inline def insert(using mirror: Mirror.ProductOf[P])(values: mirror.MirroredElemTypes*): Insert[F, P] =
+  inline def insert(using mirror: Mirror.ProductOf[P])(
+    values:                       mirror.MirroredElemTypes*
+  ): Insert[F, P] =
     val parameterBinders = values
       .flatMap(
         _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
@@ -116,7 +117,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
       )
       .toList
       .asInstanceOf[List[ParameterBinder[F]]]
-    new Insert.Multi[F, P, Tuple](this, values.toList, parameterBinders)
+    new MultiInsert[F, P, Tuple](this, values.toList, parameterBinders)
 
   /** A method to build a query model that inserts data into specified columns defined in a table.
     *
@@ -125,8 +126,11 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     * @tparam T
     *   Type of value to be obtained
     */
-  def selectInsert[T <: Tuple](func: TableQuery[F, P] => Tuple.Map[T, Column]): Insert.Select[F, P, T] =
-    Insert.Select[F, P, T](this, func(this))
+  inline def insertInto[T](func: TableQuery[F, P] => T)(using
+    Tuples.IsColumnQuery[F, T] =:= true
+  ): SelectInsert[F, P, T] =
+    val parameter: Parameter.MapToTuple[F, Column.Extract[T]] = Parameter.fold[F, Column.Extract[T]]
+    SelectInsert[F, P, T](this, func(this), parameter)
 
   /** A method to build a query model that inserts data from the model into all columns defined in the table.
     *
@@ -148,7 +152,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
       )
       .toList
       .asInstanceOf[List[ParameterBinder[F]]]
-    new Insert.Single[F, P, Tuple](this, tuples, parameterBinders)
+    new SingleInsert[F, P, Tuple](this, tuples, parameterBinders)
 
   /** A method to build a query model that inserts data from multiple models into all columns defined in a table.
     *
@@ -172,7 +176,57 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
           .toList
       )
       .asInstanceOf[List[ParameterBinder[F]]]
-    new Insert.Multi[F, P, Tuple](this, tuples, parameterBinders)
+    new MultiInsert[F, P, Tuple](this, tuples, parameterBinders)
+
+  /** A method to build a query model that inserts data in all columns defined in the table or updates the data if there
+    * are duplicate primary keys.
+    *
+    * @param mirror
+    *   product isomorphism map
+    * @param values
+    *   A list of Tuples constructed with all the property types that Table has.
+    */
+  inline def insertOrUpdate(using mirror: Mirror.ProductOf[P])(
+    values:                               mirror.MirroredElemTypes*
+  ): DuplicateKeyUpdateInsert[F] =
+    val parameterBinders = values
+      .flatMap(
+        _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
+          .map[ParamBind](
+            [t] =>
+              (x: t) =>
+                val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
+                ParameterBinder[F, t](value)(using parameter)
+          )
+          .toList
+      )
+      .toList
+      .asInstanceOf[List[ParameterBinder[F]]]
+    new DuplicateKeyUpdate[F, P, Tuple](this, values.toList, parameterBinders)
+
+  /** A method to build a query model that inserts data in all columns defined in the table or updates the data if there
+    * are duplicate primary keys.
+    *
+    * @param values
+    *   A class that implements a [[Product]] that is one-to-one with the table definition.
+    * @param mirror
+    *   product isomorphism map
+    */
+  inline def insertOrUpdates(values: List[P])(using mirror: Mirror.ProductOf[P]): DuplicateKeyUpdateInsert[F] =
+    val tuples = values.map(Tuple.fromProductTyped)
+    val parameterBinders = tuples
+      .flatMap(
+        _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
+          .map[ParamBind](
+            [t] =>
+              (x: t) =>
+                val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
+                ParameterBinder[F, t](value)(using parameter)
+          )
+          .toList
+      )
+      .asInstanceOf[List[ParameterBinder[F]]]
+    new DuplicateKeyUpdate[F, P, Tuple](this, tuples, parameterBinders)
 
   /** A method to build a query model that updates specified columns defined in a table.
     *

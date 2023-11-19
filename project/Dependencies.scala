@@ -9,7 +9,7 @@ import sbt._
 object Dependencies {
 
   val cats = "org.typelevel" %% "cats-core" % "2.10.0"
-  val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.1"
+  val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.2"
 
   val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
 
@@ -17,12 +17,12 @@ object Dependencies {
 
   val slick = "com.typesafe.slick" %% "slick" % "3.5.0-M4"
 
-  val circeYaml = "io.circe" %% "circe-yaml" % "0.14.2"
+  val circeYaml = "io.circe" %% "circe-yaml" % "0.15.1"
   val circeGeneric = "io.circe" %% "circe-generic" % "0.14.6"
 
   val mysql = "mysql" % "mysql-connector-java" % "8.0.33"
 
-  val specs2Version = "5.3.2"
+  val specs2Version = "5.4.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
     "specs2-junit",

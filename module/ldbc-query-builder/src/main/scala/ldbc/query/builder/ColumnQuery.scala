@@ -248,19 +248,19 @@ object ColumnQuery:
     _reader:     ResultSetReader[F, T]
   ): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label:      String            = _label
-      override def dataType:   DataType[T]       = _dataType
-      override def attributes: Seq[Attribute[T]] = _attributes
-      override private[ldbc] def alias = _alias
-      override def reader: ResultSetReader[F, T] = _reader
+      override def label:      String                = _label
+      override def dataType:   DataType[T]           = _dataType
+      override def attributes: Seq[Attribute[T]]     = _attributes
+      override def alias:      Option[String]        = _alias
+      override def reader:     ResultSetReader[F, T] = _reader
 
   def fromColumn[F[_], T](column: Column[T])(using _reader: ResultSetReader[F, T]): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label:      String            = column.label
-      override def dataType:   DataType[T]       = column.dataType
-      override def attributes: Seq[Attribute[T]] = column.attributes
-      override private[ldbc] def alias = column.alias
-      override def reader: ResultSetReader[F, T] = _reader
+      override def label:      String                = column.label
+      override def dataType:   DataType[T]           = column.dataType
+      override def attributes: Seq[Attribute[T]]     = column.attributes
+      override def alias:      Option[String]        = column.alias
+      override def reader:     ResultSetReader[F, T] = _reader
 
   private[ldbc] case class MultiColumn[F[_], T](flag: String, left: ColumnQuery[F, T], right: ColumnQuery[F, T]):
     val label: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"

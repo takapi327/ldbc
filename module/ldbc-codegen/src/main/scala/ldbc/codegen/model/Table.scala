@@ -4,47 +4,44 @@
 
 package ldbc.codegen.model
 
+import ldbc.core.TableOption
+
 object Table:
-
-  trait Options
-
-  object Options:
-
-    case class AutoExtendSize(value: Int)                  extends Options
-    case class AutoIncrement(value: Int)                   extends Options
-    case class AVGRowLength(value: Int)                    extends Options
-    case class Character(value: String)                    extends Options
-    case class CheckSum(value: 0 | 1)                      extends Options
-    case class Collate(value: String)                      extends Options
-    case class Comment(value: String)                      extends Options
-    case class Compression(value: "ZLIB" | "LZ4" | "NONE") extends Options
-    case class Connection(value: String)                   extends Options
-    case class Directory(value: String)                    extends Options
-    case class DelayKeyWrite(value: 0 | 1)                 extends Options
-    case class Encryption(value: "Y" | "N")                extends Options
-    case class Engine(
-      value: "InnoDB" | "MyISAM" | "MEMORY" | "CSV" | "ARCHIVE" | "EXAMPLE" | "FEDERATED" | "HEAP" | "MERGE" | "NDB"
-    ) extends Options
-    case class EngineAttribute(value: Key.EngineAttribute)  extends Options
-    case class InsertMethod(value: "NO" | "FIRST" | "LAST") extends Options
-    case class KeyBlockSize(value: Key.KeyBlockSize)        extends Options
-    case class MaxRows(value: Long)                         extends Options
-    case class MinRows(value: Long)                         extends Options
-    case class PackKeys(value: "0" | "1" | "DEFAULT")       extends Options
-    case class RowFormat(value: "DEFAULT" | "DYNAMIC" | "FIXED" | "COMPRESSED" | "REDUNDANT" | "COMPACT")
-      extends Options
-    case class SecondaryEngineAttribute(value: String)                      extends Options
-    case class StatsAutoRecalc(value: "0" | "1" | "DEFAULT")                extends Options
-    case class StatsPersistent(value: "0" | "1" | "DEFAULT")                extends Options
-    case class StatsSamplePages(value: Int)                                 extends Options
-    case class Tablespace(name: String, storage: Option["DISK" | "MEMORY"]) extends Options
-    case class Union(tableNames: List[String])                              extends Options
 
   case class CreateStatement(
     tableName:         String,
     columnDefinitions: List[ColumnDefinition],
     keyDefinitions:    List[Key],
-    options:           Option[List[Options]]
+    options:           Option[List[TableOption]]
   )
 
   case class DropStatement(tableName: String)
+
+  def buildTableOptionCode(option: TableOption): String =
+    option match
+      case TableOption.AutoExtendSize(value)           => s"TableOption.AutoExtendSize($value)"
+      case TableOption.AutoIncrement(value)            => s"TableOption.AutoIncrement($value)"
+      case TableOption.AVGRowLength(value)             => s"TableOption.AVGRowLength($value)"
+      case TableOption.Character(value)                => s"Character.$value"
+      case TableOption.CheckSum(value)                 => s"TableOption.CheckSum($value)"
+      case TableOption.Collate(value)                  => s"Collate.$value"
+      case TableOption.Comment(value)                  => s"TableOption.Comment(\"$value\")"
+      case TableOption.Compression(value)              => s"TableOption.Compression(\"$value\")"
+      case TableOption.Connection(value)               => s"TableOption.Connection(\"$value\")"
+      case TableOption.Directory(str, value)           => s"TableOption.Directory(\"$str\", \"$value\")"
+      case TableOption.DelayKeyWrite(value)            => s"TableOption.DelayKeyWrite($value)"
+      case TableOption.Encryption(value)               => s"TableOption.Encryption(\"$value\")"
+      case TableOption.Engine(value)                   => s"TableOption.Engine(\"$value\")"
+      case TableOption.EngineAttribute(value)          => s"TableOption.EngineAttribute(\"$value\")"
+      case TableOption.InsertMethod(value)             => s"TableOption.InsertMethod(\"$value\")"
+      case TableOption.KeyBlockSize(value)             => s"TableOption.KeyBlockSize($value)"
+      case TableOption.MaxRows(value)                  => s"TableOption.MaxRows($value)"
+      case TableOption.MinRows(value)                  => s"TableOption.MinRows($value)"
+      case TableOption.PackKeys(value)                 => s"TableOption.PackKeys(\"$value\")"
+      case TableOption.RowFormat(value)                => s"TableOption.RowFormat(\"$value\")"
+      case TableOption.SecondaryEngineAttribute(value) => s"TableOption.SecondaryEngineAttribute(\"$value\")"
+      case TableOption.StatsAutoRecalc(value)          => s"TableOption.StatsAutoRecalc(\"$value\")"
+      case TableOption.StatsPersistent(value)          => s"TableOption.StatsPersistent(\"$value\")"
+      case TableOption.StatsSamplePages(value)         => s"TableOption.StatsSamplePages($value)"
+      case TableOption.Tablespace(name, value)         => s"TableOption.Tablespace(\"$name\", \"$value\")"
+      case TableOption.Union(value) => s"TableOption.Union(List(${ value.map(str => s"\"$str\"").mkString(",") }))"

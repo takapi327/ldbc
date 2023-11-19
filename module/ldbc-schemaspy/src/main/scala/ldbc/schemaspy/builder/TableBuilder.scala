@@ -24,7 +24,12 @@ import ldbc.core.validator.TableValidator
   */
 case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableValidator:
 
-  private val schemaTable = new SchemaspyTable(db, null, db.getSchema.getName, table._name, table.comment.orNull)
+  private val comment = table.options.flatMap {
+    case comment: TableOption.Comment => Some(comment.value)
+    case _                            => None
+  }.headOption
+
+  private val schemaTable = new SchemaspyTable(db, null, db.getSchema.getName, table._name, comment.orNull)
 
   /** A method to extract columns with PrimaryKey set from all columns and keys set in the Table.
     *
