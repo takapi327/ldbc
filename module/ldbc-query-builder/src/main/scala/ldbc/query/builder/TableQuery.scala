@@ -73,24 +73,72 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     val statement = s"SELECT $str FROM ${ table._name }"
     Select[F, P, T](this, statement, columns, Seq.empty)
 
-  /** A method to join another table to itself.
-    *
-    * @param other
-    *   Table model to be joined.
-    * @tparam O
-    *   A class that implements a [[Product]] that is one-to-one with the table definition.
-    */
-  def join[O <: Product](other: Table[O]): Join[F, P, O] =
-    new Join(TableQuery(alias), TableQuery(other.as(s"${ other._name }_alias")))
+  /**
+   * A method to perform a simple Join.
+   *
+   * @param other
+   * [[TableQuery]] to do a Join.
+   * @param on
+   * Comparison function that performs a Join.
+   * @tparam O
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
+  def join[O <: Product](other: TableQuery[F, O])(on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableQuery[F, O]]] =
+    val main: TableQuery[F, P] = setNameForJoin(this)
+    val joinTable: TableQuery[F, O] = setNameForJoin(other)
+    val joins: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] = main *: Tuple(joinTable)
+    Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableQuery[F, O]]](
+      this,
+      joins,
+      main *: Tuple(joinTable),
+      Seq(s"${Join.JoinType.JOIN.statement} ${other.table._name} ON ${on(joins).statement}")
+    )
 
-  /** A method to join another table to itself.
-    *
-    * @param other
-    *   A model for generating queries from Table information.
-    * @tparam O
-    *   A class that implements a [[Product]] that is one-to-one with the table definition.
-    */
-  def join[O <: Product](other: TableQuery[F, O]): Join[F, P, O] = new Join(TableQuery(alias), TableQuery(other.alias))
+  /**
+   * Method to perform Left Join.
+   *
+   * @param other
+   * [[TableQuery]] to do a Join.
+   * @param on
+   * Comparison function that performs a Join.
+   * @tparam O
+   * A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
+  def leftJoin[O <: Product](other: TableQuery[F, O])(on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableOpt[F, O]]] =
+    val main: TableQuery[F, P] = setNameForJoin(this)
+    val joinTable: TableQuery[F, O] = setNameForJoin(other)
+    val joins: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] = main *: Tuple(joinTable)
+    Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableOpt[F, O]]](
+      this,
+      joins,
+      main *: Tuple(TableOpt(joinTable.table)),
+      Seq(s"${Join.JoinType.LEFT_JOIN.statement} ${other.table._name} ON ${on(joins).statement}")
+    )
+
+  /**
+   * Method to perform Right Join.
+   *
+   * @param other
+   * [[TableQuery]] to do a Join.
+   * @param on
+   * Comparison function that performs a Join.
+   * @tparam O
+   * A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
+  def rightJoin[O <: Product](other: TableQuery[F, O])(on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableOpt[F, P] *: Tuple1[TableQuery[F, O]]] =
+    val main: TableQuery[F, P] = setNameForJoin(this)
+    val joinTable: TableQuery[F, O] = setNameForJoin(other)
+    val joins: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] = main *: Tuple(joinTable)
+    Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableOpt[F, P] *: Tuple1[TableQuery[F, O]]](
+      this,
+      joins,
+      TableOpt(main.table) *: Tuple(joinTable),
+      Seq(s"${Join.JoinType.RIGHT_JOIN.statement} ${other.table._name} ON ${on(joins).statement}")
+    )
+
+  private def setNameForJoin[J <: Product](tableQuery: TableQuery[F, J]): TableQuery[F, J] =
+    val table: Table[J] = tableQuery.table.alias.fold(tableQuery.table.as(tableQuery.table._name))(_ => tableQuery.table)
+    TableQuery[F, J](table)
 
   // TODO: In the following implementation, Warning occurs at the time of Compile, so it is cast by asInstanceOf.
   // case (value: Any, parameter: Parameter[F, Any]) => ???
