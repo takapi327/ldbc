@@ -129,7 +129,7 @@ object Join:
     case LEFT_JOIN  extends JoinType("LEFT JOIN")
     case RIGHT_JOIN extends JoinType("RIGHT JOIN")
 
-  def apply[F[_], JOINS <: Tuple, SELECTS <: Tuple](
+  private[ldbc] def apply[F[_], JOINS <: Tuple, SELECTS <: Tuple](
     _main:         TableQuery[F, ?],
     joinQueries:   JOINS,
     selectQueries: SELECTS,
@@ -141,7 +141,7 @@ object Join:
       override def selects:        SELECTS          = selectQueries
       override val joinStatements: Seq[String]      = statements
 
-  case class JoinSelect[F[_], SELECTS <: Tuple, T](
+  private[ldbc] case class JoinSelect[F[_], SELECTS <: Tuple, T](
     selects:       SELECTS,
     fromStatement: String,
     columns:       T,
