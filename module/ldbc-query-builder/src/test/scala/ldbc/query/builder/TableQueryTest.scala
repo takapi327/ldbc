@@ -26,8 +26,17 @@ class TableQueryTest extends AnyFlatSpec:
     column("p3", VARCHAR(255))
   )
 
-  private val query     = TableQuery[Id, Test](table)
-  private val joinQuery = TableQuery[Id, JoinTest](joinTable)
+  case class JoinTest2(p1: Long, p2: String, p3: Option[String])
+
+  private val joinTable2 = Table[JoinTest2]("join_test2")(
+    column("p1", BIGINT),
+    column("p2", VARCHAR(255)),
+    column("p3", VARCHAR(255))
+  )
+
+  private val query      = TableQuery[Id, Test](table)
+  private val joinQuery  = TableQuery[Id, JoinTest](joinTable)
+  private val joinQuery2 = TableQuery[Id, JoinTest2](joinTable2)
 
   it should "The select query statement generated from Table is equal to the specified query statement." in {
     assert(query.select(_.p1).statement === "SELECT `p1` FROM test")
@@ -92,6 +101,34 @@ class TableQueryTest extends AnyFlatSpec:
         .rightJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .select((test, joinTest) => (test.p2, joinTest.p2))
         .statement === "SELECT test.`p2`, join_test.`p2` FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1"
+    )
+    assert(
+      query
+        .join(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
+        .join(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
+        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
+    )
+    assert(
+      query
+        .join(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
+        .leftJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
+        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
+    )
+    assert(
+      query
+        .join(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
+        .rightJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
+        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
+    )
+    assert(
+      query
+        .leftJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
+        .rightJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
+        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(query.selectAll.statement === "SELECT `p1`, `p2`, `p3` FROM test")
   }
