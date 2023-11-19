@@ -26,24 +26,8 @@ class TableQueryTest extends AnyFlatSpec:
     column("p3", VARCHAR(255))
   )
 
-  case class JoinTest2(p1: Long, p2: String, p3: Option[String])
-  private val joinTable2 = Table[JoinTest2]("join_test2")(
-    column("p1", BIGINT),
-    column("p2", VARCHAR(255)),
-    column("p3", VARCHAR(255))
-  )
-
-  case class JoinTest3(p1: Long, p2: String, p3: Option[String])
-  private val joinTable3 = Table[JoinTest3]("join_test3")(
-    column("p1", BIGINT),
-    column("p2", VARCHAR(255)),
-    column("p3", VARCHAR(255))
-  )
-
-  private val query      = TableQuery[Id, Test](table)
-  private val joinQuery  = TableQuery[Id, JoinTest](joinTable)
-  private val joinQuery2 = TableQuery[Id, JoinTest2](joinTable2)
-  private val joinQuery3 = TableQuery[Id, JoinTest3](joinTable3)
+  private val query     = TableQuery[Id, Test](table)
+  private val joinQuery = TableQuery[Id, JoinTest](joinTable)
 
   it should "The select query statement generated from Table is equal to the specified query statement." in {
     assert(query.select(_.p1).statement === "SELECT `p1` FROM test")
