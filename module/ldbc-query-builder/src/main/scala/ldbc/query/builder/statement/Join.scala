@@ -95,15 +95,15 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
     */
   def rightJoin[P <: Product](other: TableQuery[F, P])(
     on:                              Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
-  ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableQuery[F, P]]]] =
+  ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[Tuples.ToTableOpt[F, SELECTS], Tuple1[TableQuery[F, P]]]] =
     val joinTable: TableQuery[F, P] = TableQuery(
       other.table.alias.fold(other.table.as(other.table._name))(_ => other.table)
     )
     Join(
       main,
       joins ++ Tuple(joinTable),
-      selects ++ Tuple(joinTable),
-      joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.table._name } ON ${ on(joins ++ Tuple(joinTable)).statement }"
+      Tuples.toTableOpt[F, SELECTS](selects) ++ Tuple(joinTable),
+      joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.table._name } ON ${ on(joins ++ Tuple(joinTable)).statement }"
     )
 
   def select[C](func: SELECTS => C)(using Tuples.IsColumnQuery[F, C] =:= true): Join.JoinSelect[F, SELECTS, C] =
