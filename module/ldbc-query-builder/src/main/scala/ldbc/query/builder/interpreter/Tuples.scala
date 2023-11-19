@@ -33,13 +33,13 @@ object Tuples:
 
   type ToTableOpt[F[_], T <: Tuple] <: Tuple = T match
     case TableQuery[F, t] *: EmptyTuple => TableOpt[F, t] *: EmptyTuple
-    case TableOpt[F, t] *: EmptyTuple => TableOpt[F, t] *: EmptyTuple
-    case TableQuery[F, t] *: ts => TableOpt[F, t] *: ToTableOpt[F, ts]
-    case TableOpt[F, t] *: ts => TableOpt[F, t] *: ToTableOpt[F, ts]
+    case TableOpt[F, t] *: EmptyTuple   => TableOpt[F, t] *: EmptyTuple
+    case TableQuery[F, t] *: ts         => TableOpt[F, t] *: ToTableOpt[F, ts]
+    case TableOpt[F, t] *: ts           => TableOpt[F, t] *: ToTableOpt[F, ts]
 
   def toTableOpt[F[_], T <: Tuple](tuple: T): ToTableOpt[F, T] =
     val list = tuple.toList.asInstanceOf[List[TableQuery[F, ?] | TableOpt[F, ?]]].map {
       case query: TableQuery[F, p] => TableOpt[F, p](query.table)
-      case opt: TableOpt[F, p] => opt
+      case opt: TableOpt[F, p]     => opt
     }
     Tuple.fromArray(list.toArray).asInstanceOf[ToTableOpt[F, T]]
