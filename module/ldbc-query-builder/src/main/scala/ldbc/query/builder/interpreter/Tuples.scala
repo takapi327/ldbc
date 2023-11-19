@@ -21,28 +21,28 @@ object Tuples:
     case ColumnQuery[F, h] *: t          => h *: InverseColumnMap[F, t]
 
   type IsTableQuery[F[_], T] <: Boolean = T match
-    case EmptyTuple => false
-    case TableQuery[F, p] => true
+    case EmptyTuple                     => false
+    case TableQuery[F, p]               => true
     case TableQuery[F, p] *: EmptyTuple => true
-    case TableQuery[F, p] *: ts => IsTableQuery[F, ts]
-    case _ => false
+    case TableQuery[F, p] *: ts         => IsTableQuery[F, ts]
+    case _                              => false
 
   type IsTableOpt[F[_], T] <: Boolean = T match
-    case EmptyTuple => false
-    case TableOpt[F, p] => true
+    case EmptyTuple                   => false
+    case TableOpt[F, p]               => true
     case TableOpt[F, p] *: EmptyTuple => true
-    case TableOpt[F, p] *: ts => IsTableQuery[F, ts]
-    case _ => false
+    case TableOpt[F, p] *: ts         => IsTableQuery[F, ts]
+    case _                            => false
 
   type IsTableQueryOpt[F[_], T] <: Boolean = T match
-    case EmptyTuple => false
-    case TableQuery[F, p] => true
-    case TableOpt[F, p] => true
+    case EmptyTuple                     => false
+    case TableQuery[F, p]               => true
+    case TableOpt[F, p]                 => true
     case TableQuery[F, p] *: EmptyTuple => true
-    case TableOpt[F, p] *: EmptyTuple => true
-    case TableQuery[F, p] *: ts => IsTableQueryOpt[F, ts]
-    case TableOpt[F, p] *: ts => IsTableQueryOpt[F, ts]
-    case _ => false
+    case TableOpt[F, p] *: EmptyTuple   => true
+    case TableQuery[F, p] *: ts         => IsTableQueryOpt[F, ts]
+    case TableOpt[F, p] *: ts           => IsTableQueryOpt[F, ts]
+    case _                              => false
 
   type IsColumnQuery[F[_], T] <: Boolean = T match
     case EmptyTuple                      => false

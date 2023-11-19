@@ -51,7 +51,9 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
     */
   def join[P <: Product](other: TableQuery[F, P])(
     on:                         Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
-  )(using Tuples.IsTableQueryOpt[F, SELECTS] =:= true): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableQuery[F, P]]]] =
+  )(using
+    Tuples.IsTableQueryOpt[F, SELECTS] =:= true
+  ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableQuery[F, P]]]] =
     val joinTable: TableQuery[F, P] = TableQuery(
       other.table.alias.fold(other.table.as(other.table._name))(_ => other.table)
     )
@@ -73,7 +75,9 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
     */
   def leftJoin[P <: Product](other: TableQuery[F, P])(
     on:                             Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
-  )(using Tuples.IsTableQueryOpt[F, SELECTS] =:= true): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[F, P]]]] =
+  )(using
+    Tuples.IsTableQueryOpt[F, SELECTS] =:= true
+  ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[F, P]]]] =
     val joinTable: TableQuery[F, P] = TableQuery(
       other.table.alias.fold(other.table.as(other.table._name))(_ => other.table)
     )
@@ -95,7 +99,9 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
     */
   def rightJoin[P <: Product](other: TableQuery[F, P])(
     on:                              Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
-  )(using Tuples.IsTableQueryOpt[F, SELECTS] =:= true): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[Tuples.ToTableOpt[F, SELECTS], Tuple1[
+  )(using
+    Tuples.IsTableQueryOpt[F, SELECTS] =:= true
+  ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[Tuples.ToTableOpt[F, SELECTS], Tuple1[
     TableQuery[F, P]
   ]]] =
     val joinTable: TableQuery[F, P] = TableQuery(
