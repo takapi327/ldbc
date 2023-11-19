@@ -288,7 +288,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class UserCategory(userName: String, categoryName: String)
         |
-        |val query: Kleisli[IO, Connection[IO], List[(String, String)]] = (user join category).on((user, category) => user.categoryId === category.id)
+        |val query: Kleisli[IO, Connection[IO], List[(String, String)]] = (user join category)((user, category) => user.categoryId === category.id)
         |  .select((user, category) => (user.name, category.name))
         |  .query
         |  .toList
@@ -331,7 +331,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class UserCategory(userName: String, categoryName: String)
         |
-        |val query = (user join category).on((user, category) => user.categoryId === category.id)
+        |val query = (user join category)((user, category) => user.categoryId === category.id)
         |  .select((user, category) => (user.name, category.name))
         |  .query[UserCategory]
         |  .toList
