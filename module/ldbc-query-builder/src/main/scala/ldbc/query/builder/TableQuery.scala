@@ -25,8 +25,6 @@ import ldbc.query.builder.interpreter.Tuples
   */
 case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
-  private[ldbc] val alias: Table[P] = table.as(s"${ table._name }_alias")
-
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
   )(using
