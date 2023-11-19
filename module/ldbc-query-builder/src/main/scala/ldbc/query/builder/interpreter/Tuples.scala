@@ -4,7 +4,8 @@
 
 package ldbc.query.builder.interpreter
 
-import ldbc.query.builder.ColumnQuery
+import ldbc.query.builder.*
+import ldbc.query.builder.statement.TableOpt
 
 object Tuples:
 
@@ -29,3 +30,16 @@ object Tuples:
   type ToColumn[F[_], T] = T match
     case Tuple => MapToColumn[T, F]
     case _     => ColumnQuery[F, T]
+
+  type ToTableOpt[F[_], T <: Tuple] <: Tuple = T match
+    case TableQuery[F, t] *: EmptyTuple => TableOpt[F, t] *: EmptyTuple
+    case TableOpt[F, t] *: EmptyTuple => TableOpt[F, t] *: EmptyTuple
+    case TableQuery[F, t] *: ts => TableOpt[F, t] *: ToTableOpt[F, ts]
+    case TableOpt[F, t] *: ts => TableOpt[F, t] *: ToTableOpt[F, ts]
+
+  def toTableOpt[F[_], T <: Tuple](tuple: T): ToTableOpt[F, T] =
+    val list = tuple.toList.asInstanceOf[List[TableQuery[F, ?] | TableOpt[F, ?]]].map {
+      case query: TableQuery[F, p] => TableOpt[F, p](query.table)
+      case opt: TableOpt[F, p] => opt
+    }
+    Tuple.fromArray(list.toArray).asInstanceOf[ToTableOpt[F, T]]
