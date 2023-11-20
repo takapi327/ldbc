@@ -460,3 +460,64 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |""".stripMargin
     )
   }
+
+  it should "When a column of type Option is made into type Option with Right Join, Option is not nested." in {
+    assertCompiles(
+      """
+        |import cats.data.Kleisli
+        |import cats.effect.IO
+        |
+        |import ldbc.core.*
+        |import ldbc.sql.Connection
+        |import ldbc.dsl.io.{ *, given }
+        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.query.builder.TableQuery
+        |
+        |case class Country(code: String, name: String)
+        |object Country:
+        |  val table = Table[Country]("country")(
+        |    column("code", CHAR(3), PRIMARY_KEY),
+        |    column("name", VARCHAR(255))
+        |  )
+        |
+        |case class City(id: Long, name: String, countryCode: String)
+        |object City:
+        |  val table = Table[City]("city")(
+        |    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+        |    column("name", VARCHAR(255)),
+        |    column("country_code", CHAR(3))
+        |  )
+        |    .keySets(table => Seq(
+        |      INDEX_KEY(table.countryCode),
+        |      CONSTRAINT("city_ibfk_1", FOREIGN_KEY(table.countryCode, REFERENCE(Country.table, Country.table.code)))
+        |    ))
+        |
+        |case class CountryLanguage(
+        |  countryCode: String,
+        |  language:    Option[String]
+        |)
+        |object CountryLanguage:
+        |  val table: Table[CountryLanguage] = Table[CountryLanguage]("country_language")(
+        |    column("country_code", CHAR(3)),
+        |    column("language", CHAR(30))
+        |  )
+        |    .keySets(table => Seq(
+        |      PRIMARY_KEY(table.countryCode, table.language),
+        |      INDEX_KEY(table.countryCode),
+        |      CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(table.countryCode, REFERENCE(Country.table, Country.table.code)))
+        |    ))
+        |
+        |val countryQuery = TableQuery[IO, Country](Country.table)
+        |val cityQuery = TableQuery[IO, City](City.table)
+        |val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+        |
+        |given LogHandler[IO] = LogHandler.consoleLogger
+        |
+        |val query: Kleisli[IO, Connection[IO], List[(String, String, Option[String])]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
+        |  .leftJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
+        |  .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language))
+        |  .query
+        |  .toList
+        |""".stripMargin
+    )
+  }
