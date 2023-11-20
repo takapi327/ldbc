@@ -112,8 +112,7 @@ object DatabaseTest extends Specification:
     "The data retrieved by Join matches the specified model." in {
       val result = db
         .readOnly(
-          (city join country)
-            .on((city, country) => city.countryCode _equals country.code)
+          (city join country)((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
@@ -129,8 +128,7 @@ object DatabaseTest extends Specification:
 
       val result = db
         .readOnly(
-          (city join country)
-            .on((city, country) => city.countryCode _equals country.code)
+          (city join country)((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
@@ -144,8 +142,7 @@ object DatabaseTest extends Specification:
     "The data retrieved by Left Join matches the specified model." in {
       val result = db
         .readOnly(
-          (city join country)
-            .left((city, country) => city.countryCode _equals country.code)
+          (city leftJoin country)((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
@@ -161,8 +158,7 @@ object DatabaseTest extends Specification:
 
       val result = db
         .readOnly(
-          (city join country)
-            .left((city, country) => city.countryCode _equals country.code)
+          (city leftJoin country)((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
@@ -176,8 +172,7 @@ object DatabaseTest extends Specification:
     "The data retrieved by Right Join matches the specified model." in {
       val result = db
         .readOnly(
-          (city join country)
-            .right((city, country) => city.countryCode _equals country.code)
+          (city rightJoin country)((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
@@ -193,8 +188,7 @@ object DatabaseTest extends Specification:
 
       val result = db
         .readOnly(
-          (city join country)
-            .right((city, country) => city.countryCode _equals country.code)
+          (city rightJoin country)((city, country) => city.countryCode _equals country.code)
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
