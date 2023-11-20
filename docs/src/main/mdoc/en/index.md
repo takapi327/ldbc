@@ -118,7 +118,6 @@ For more information on how to use the sbt plugin, please refer to this [documen
 - Geometry data type support
 - Support for CHECK constraints
 - Non-MySQL database support
-- Join 3 or more tables with Query Builder
 - Streaming Support
 - ZIO module support
 - Integration with other database libraries
