@@ -167,6 +167,115 @@ val select = userQuery.select(user => (user.id, user.name, user.age)).limit(100)
 select.statement === "SELECT `id`, `name`, `age` FROM user LIMIT ? OFFSET ?"
 ```
 
+## JOIN/LEFT JOIN/RIGHT JOIN
+
+クエリに型安全にJoinを設定する方法は`join`/`leftJoin`/`rightJoin`メソッドを使用することです。
+
+Joinでは以下定義をサンプルとして使用します。
+
+```scala 3
+case class Country(code: String, name: String)
+object Country:
+  val table = Table[Country]("country")(
+    column("code", CHAR(3), PRIMARY_KEY),
+    column("name", VARCHAR(255))
+  )
+
+case class City(id: Long, name: String, countryCode: String)
+object City:
+  val table = Table[City]("city")(
+    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+    column("name", VARCHAR(255)),
+    column("country_code", CHAR(3))
+  )
+
+case class CountryLanguage(
+  countryCode: String,
+  language:    String
+)
+object CountryLanguage:
+  val table: Table[CountryLanguage] = Table[CountryLanguage]("country_language")(
+    column("country_code", CHAR(3)),
+    column("language", CHAR(30))
+  )
+
+val countryQuery = TableQuery[IO, Country](Country.table)
+val cityQuery = TableQuery[IO, City](City.table)
+val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+```
+
+まずシンプルなJoinを行いたい場合は、`join`を使用します。
+`join`の第一引数には結合したいテーブルを渡し、第二引数では結合元のテーブルと結合したいテーブルのカラムで比較を行う関数を渡します。これはJoinにおいてのON句に該当します。
+
+Join後の`select`は2つのテーブルからカラムを指定することになります。
+
+```scala 3
+val join = countryQuery.join(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name))
+
+join.statement = "SELECT country.`name`, city.`name` FROM country JOIN city ON country.code = city.country_code"
+```
+
+次に左外部結合であるLeft Joinを行いたい場合は、`leftJoin`を使用します。
+`join`が`leftJoin`に変わっただけで実装自体はシンプルなJoinの時と同じになります。
+
+```scala 3
+val leftJoin = countryQuery.leftJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name))
+
+join.statement = "SELECT country.`name`, city.`name` FROM country LEFT JOIN city ON country.code = city.country_code"
+```
+
+シンプルなJoinとの違いは`leftJoin`を使用した場合、結合を行うテーブルから取得するレコードはNULLになる可能性があるということです。
+
+そのためLDBCでは`leftJoin`に渡されたテーブルから取得するカラムのレコードは全てOption型になります。
+
+```scala 3
+val leftJoin = countryQuery.leftJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name)) // (String, Option[String])
+```
+
+次に右外部結合であるRight Joinを行いたい場合は、`rightJoin`を使用します。
+こちらも`join`が`rightJoin`に変わっただけで実装自体はシンプルなJoinの時と同じになります。
+
+```scala 3
+val rightJoin = countryQuery.rightJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name))
+
+join.statement = "SELECT country.`name`, city.`name` FROM country RIGHT JOIN city ON country.code = city.country_code"
+```
+
+シンプルなJoinとの違いは`rightJoin`を使用した場合、結合元のテーブルから取得するレコードはNULLになる可能性があるということです。
+
+そのためLDBCでは`rightJoin`を使用した結合元のテーブルから取得するカラムのレコードは全てOption型になります。
+
+```scala 3
+val rightJoin = countryQuery.rightJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name)) // (Option[String], String)
+```
+
+複数のJoinを行いたい場合は、メソッドチェーンで任意のJoinメソッドを呼ぶことで実現することができます。
+
+```scala 3
+val join = 
+  (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
+    .rightJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
+    .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language)) // (Option[String], Option[String], String)]
+
+join.statement =
+  """
+    |SELECT
+    |  country.`name`, 
+    |  city.`name`,
+    |  country_language.`language`
+    |FROM country
+    |JOIN city ON country.code = city.country_code
+    |RIGHT JOIN country_language ON city.country_code = country_language.country_code
+    |""".stripMargin
+```
+
+複数のJoinを行っている状態で`rightJoin`での結合を行うと、今までの結合が何であったかにかかわらず直前まで結合していたテーブルから取得するレコードは全てNULL許容なアクセスとなることに注意してください。
+
 ## Custom Data Type
 
 前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの`mapping`メソッドを使用して独自の型とDataTypeのマッピングを行ないました。([参照](http://localhost:4000/ja/02-Custom-Data-Type.html))

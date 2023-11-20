@@ -167,6 +167,115 @@ val select = userQuery.select(user => (user.id, user.name, user.age)).limit(100)
 select.statement === "SELECT `id`, `name`, `age` FROM user LIMIT ? OFFSET ?"
 ```
 
+## JOIN/LEFT JOIN/RIGHT JOIN
+
+A type-safe way to set a Join on a query is to use the `join`/`leftJoin`/`rightJoin` methods.
+
+The following definition is used as a sample for Join.
+
+```scala 3
+case class Country(code: String, name: String)
+object Country:
+  val table = Table[Country]("country")(
+    column("code", CHAR(3), PRIMARY_KEY),
+    column("name", VARCHAR(255))
+  )
+
+case class City(id: Long, name: String, countryCode: String)
+object City:
+  val table = Table[City]("city")(
+    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+    column("name", VARCHAR(255)),
+    column("country_code", CHAR(3))
+  )
+
+case class CountryLanguage(
+  countryCode: String,
+  language:    String
+)
+object CountryLanguage:
+  val table: Table[CountryLanguage] = Table[CountryLanguage]("country_language")(
+    column("country_code", CHAR(3)),
+    column("language", CHAR(30))
+  )
+
+val countryQuery = TableQuery[IO, Country](Country.table)
+val cityQuery = TableQuery[IO, City](City.table)
+val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+```
+
+If you want to do a simple Join first, use `join`.
+The first argument of `join` is the table to be joined, and the second argument is a function that compares the source table with the columns of the table to be joined. This corresponds to the ON clause in Join.
+
+After the join, the `select` will specify columns from the two tables.
+
+```scala 3
+val join = countryQuery.join(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name))
+
+join.statement = "SELECT country.`name`, city.`name` FROM country JOIN city ON country.code = city.country_code"
+```
+
+Next, if you want to perform a Left Join, which is a left outer join, use `leftJoin`.
+The implementation itself is the same as for a simple Join, only `join` is changed to `leftJoin`.
+
+```scala 3
+val leftJoin = countryQuery.leftJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name))
+
+join.statement = "SELECT country.`name`, city.`name` FROM country LEFT JOIN city ON country.code = city.country_code"
+```
+
+The difference from a simple Join is that when using `leftJoin`, the records retrieved from the table to be joined may be NULL.
+
+Therefore, in LDBC, all records in the column retrieved from the table passed to `leftJoin` will be of type Option.
+
+```scala 3
+val leftJoin = countryQuery.leftJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name)) // (String, Option[String])
+```
+
+Next, if you want to perform a Right Join, which is a right outer join, use `rightJoin`.
+The implementation itself is the same as that of simple Join, only `join` is changed to `rightJoin`.
+
+```scala 3
+val rightJoin = countryQuery.rightJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name))
+
+join.statement = "SELECT country.`name`, city.`name` FROM country RIGHT JOIN city ON country.code = city.country_code"
+```
+
+The difference from a simple Join is that when using `rightJoin`, the records retrieved from the join source table may be NULL.
+
+Therefore, in LDBC, all records of a column retrieved from a join source table using `rightJoin` are of type Option.
+
+```scala 3
+val rightJoin = countryQuery.rightJoin(cityQuery)((country, city) => country.code === city.countryCode)
+  .select((country, city) => (country.name, city.name)) // (Option[String], String)
+```
+
+If multiple joins are desired, this can be accomplished by calling any Join method in the method chain.
+
+```scala 3
+val join = 
+  (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
+    .rightJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
+    .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language)) // (Option[String], Option[String], String)]
+
+join.statement =
+  """
+    |SELECT
+    |  country.`name`, 
+    |  city.`name`,
+    |  country_language.`language`
+    |FROM country
+    |JOIN city ON country.code = city.country_code
+    |RIGHT JOIN country_language ON city.country_code = country_language.country_code
+    |""".stripMargin
+```
+
+Note that a `rightJoin` join with multiple joins will result in NULL-acceptable access to all records retrieved from the previously joined table, regardless of what the previous join was.
+
 ## Custom Data Type
 
 In the previous section, we used the `mapping` method of DataType to map custom types to DataType in order to use user-specific or unsupported types. ([reference](http://localhost:4000/en/02-Custom-Data-Type.html))
