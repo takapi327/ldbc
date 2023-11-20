@@ -51,6 +51,15 @@ lazy val codegen = LepusSbtProject("Ldbc-Codegen", "module/ldbc-codegen")
   .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
   .dependsOn(core)
 
+lazy val hikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
+  .settings(scalaVersion := (core / scalaVersion).value)
+  .settings(libraryDependencies ++= Seq(
+    catsEffect,
+    typesafeConfig,
+    hikariCP
+  ) ++ specs2)
+  .dependsOn(dsl)
+
 lazy val plugin = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
@@ -85,7 +94,8 @@ lazy val docs = (project in file("docs"))
     dsl,
     queryBuilder,
     schemaSpy,
-    codegen
+    codegen,
+    hikari
   )
   .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin)
 
@@ -100,7 +110,8 @@ lazy val moduleProjects: Seq[ProjectReference] = Seq(
   dsl,
   queryBuilder,
   schemaSpy,
-  codegen
+  codegen,
+  hikari
 )
 
 lazy val ldbc = Project("Ldbc", file("."))
