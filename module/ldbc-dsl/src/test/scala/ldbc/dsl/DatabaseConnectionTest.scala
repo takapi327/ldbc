@@ -114,8 +114,7 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The data retrieved by Join matches the specified model." in {
-      val result = (city join country)
-        .on((city, country) => city.countryCode _equals country.code)
+      val result = (city join country)((city, country) => city.countryCode _equals country.code)
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
@@ -130,8 +129,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Join matches the specified model." in {
       case class CountryCity(cityName: String, countryName: String)
 
-      val result = (city join country)
-        .on((city, country) => city.countryCode _equals country.code)
+      val result = (city join country)((city, country) => city.countryCode _equals country.code)
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
@@ -144,8 +142,7 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The data retrieved by Left Join matches the specified model." in {
-      val result = (city join country)
-        .left((city, country) => city.countryCode _equals country.code)
+      val result = (city leftJoin country)((city, country) => city.countryCode _equals country.code)
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
@@ -160,8 +157,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Left Join matches the specified model." in {
       case class CountryCity(cityName: String, countryName: Option[String])
 
-      val result = (city join country)
-        .left((city, country) => city.countryCode _equals country.code)
+      val result = (city leftJoin country)((city, country) => city.countryCode _equals country.code)
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
@@ -174,8 +170,7 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The data retrieved by Right Join matches the specified model." in {
-      val result = (city join country)
-        .right((city, country) => city.countryCode _equals country.code)
+      val result = (city rightJoin country)((city, country) => city.countryCode _equals country.code)
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
@@ -190,8 +185,7 @@ object DatabaseConnectionTest extends Specification:
     "The data retrieved by Right Join matches the specified model." in {
       case class CountryCity(cityName: Option[String], countryName: String)
 
-      val result = (city join country)
-        .right((city, country) => city.countryCode _equals country.code)
+      val result = (city rightJoin country)((city, country) => city.countryCode _equals country.code)
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
