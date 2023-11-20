@@ -48,3 +48,7 @@ trait HikariDataSourceBuilder[F[_]: Sync] extends HikariConfigBuilder:
     */
   def buildFromConfig(hikariConfig: HikariConfig): Resource[F, HikariDataSource] =
     createDataSourceResource(new HikariDataSource(hikariConfig))
+
+object HikariDataSourceBuilder:
+
+  def default[F[_]: Sync]: HikariDataSourceBuilder[F] = new HikariDataSourceBuilder[F] {}
