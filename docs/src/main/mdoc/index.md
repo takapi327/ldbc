@@ -1,6 +1,10 @@
 # LDBC
 
 <div align="center">
+  <img src="https://github.com/takapi327/ldbc/assets/57429437/9bdbff7a-c677-4dbf-b3b4-0d102caaec83">
+</div>
+
+<div align="center">
   <img src="https://img.shields.io/badge/ldbc-v0.1.0-blue">
   <a href="https://en.wikipedia.org/wiki/MIT_License">
     <img src="https://img.shields.io/badge/license-MIT-green">
