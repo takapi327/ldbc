@@ -88,7 +88,7 @@ val table = Table[User]("user")(
 [error]     |where:    T is a type variable with constraint <: Int | Long | Option[Int | Long]
 ```
 
-これらのアドオンの詳細については、[テーブル定義](http://localhost:4000/ja/01-Table-Definitions.html) を参照してください。
+これらのアドオンの詳細については、[テーブル定義](/ja/01-Table-Definitions.html) を参照してください。
 
 ## クイックスタート
 
@@ -109,7 +109,7 @@ libraryDependencies ++= Seq(
 ```
 @@@
 
-sbtプラグインの使い方については、こちらの[documentation](http://localhost:4000/ja/07-Schema-Code-Generation.html)を参照してください。
+sbtプラグインの使い方については、こちらの[documentation](/ja/07-Schema-Code-Generation.html)を参照してください。
 
 ## TODO
 

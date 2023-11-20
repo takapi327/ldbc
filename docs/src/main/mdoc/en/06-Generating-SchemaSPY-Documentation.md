@@ -10,7 +10,7 @@ libraryDependencies += "$org$" %% "ldbc-schemaspy" % "$version$"
 ```
 @@@
 
-If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](http://localhost:4000/en/01-Table-Definitions.html) first.
+If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](/en/01-Table-Definitions.html) first.
 
 The following code example assumes the following import
 

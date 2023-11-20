@@ -13,7 +13,7 @@ libraryDependencies ++= Seq(
 ```
 @@@
 
-LDBCでのクエリ構築方法をまだ読んでいない場合は、[型安全なクエリ構築](http://localhost:4000/ja/03-Type-safe-Query-Builder.html)の章を先に読むことをオススメしましす。
+LDBCでのクエリ構築方法をまだ読んでいない場合は、[型安全なクエリ構築](/ja/03-Type-safe-Query-Builder.html)の章を先に読むことをオススメしましす。
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -286,7 +286,7 @@ yield ...).unsafeRunSync()
 
 ### Database model
 
-LDBCでは`Database`モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては[こちら](http://localhost:4000/ja/06-Generating-SchemaSPY-Documentation.html)を参照してください。
+LDBCでは`Database`モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては[こちら](/ja/06-Generating-SchemaSPY-Documentation.html)を参照してください。
 
 すでに`Database`モデルを別の用途で生成している場合は、そのモデルを使用してデータベースの接続情報を持った`Database`を構築することができます。
 

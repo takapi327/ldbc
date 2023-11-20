@@ -24,8 +24,8 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 ## Documentation
 
-- [English](http://localhost:4000/en/index.html)
-- [Japanese](http://localhost:4000/ja/index.html)
+- [English](/en/index.html)
+- [Japanese](/ja/index.html)
 
 ## Contributing
 

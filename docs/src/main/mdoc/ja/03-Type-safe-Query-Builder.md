@@ -10,7 +10,7 @@ libraryDependencies += "$org$" %% "ldbc-query-builder" % "$version$"
 ```
 @@@
 
-LDBCでのテーブル定義方法をまだ読んでいない場合は、[テーブル定義](http://localhost:4000/ja/01-Table-Definitions.html)の章を先に読むことをオススメしましす。
+LDBCでのテーブル定義方法をまだ読んでいない場合は、[テーブル定義](/ja/01-Table-Definitions.html)の章を先に読むことをオススメしましす。
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -278,7 +278,7 @@ join.statement =
 
 ## Custom Data Type
 
-前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの`mapping`メソッドを使用して独自の型とDataTypeのマッピングを行ないました。([参照](http://localhost:4000/ja/02-Custom-Data-Type.html))
+前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの`mapping`メソッドを使用して独自の型とDataTypeのマッピングを行ないました。([参照](/ja/02-Custom-Data-Type.html))
 
 LDBCはテーブル定義とデータベースへの接続処理が分離されています。
 そのためデータベースからデータを取得する際にユーザー独自の型もしくはサポートされていない型に変換したい場合は、ResultSetからのデータ取得方法を独自の型もしくはサポートされていない型と紐付けてあげる必要があります。
@@ -434,7 +434,7 @@ val update = userQuery.update("name", "update name").set("age", Some(20)).where(
 update.statement === "UPDATE user SET name = ?, age = ? WHERE id = ?"
 ```
 
-`where`メソッドで使用できる条件はInsert文の[where項目](http://localhost:4000/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
+`where`メソッドで使用できる条件はInsert文の[where項目](/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
 
 ## DELETE
 
@@ -456,4 +456,4 @@ val delete = userQuery.delete.where(_.id === 1)
 delete.statement === "DELETE FROM user WHERE id = ?"
 ```
 
-`where`メソッドで使用できる条件はInsert文の[where項目](http://localhost:4000/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
+`where`メソッドで使用できる条件はInsert文の[where項目](/ja/03-Type-safe-Query-Builder.html#where)を参照してください。

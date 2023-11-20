@@ -1,6 +1,6 @@
 # Table Definitions
 
-This chapter describes how to work with database schemas in Scala code, especially how to manually write a schema, which is useful when starting to write an application without an existing database. If you already have a schema in your database, you can skip this step using the [code generator](http://localhost:4000/en/07-Schema-Code-Generation.html).
+This chapter describes how to work with database schemas in Scala code, especially how to manually write a schema, which is useful when starting to write an application without an existing database. If you already have a schema in your database, you can skip this step using the [code generator](/en/07-Schema-Code-Generation.html).
 
 The following code example assumes the following import
 
@@ -85,7 +85,7 @@ It should be noted that the range of data that can be handled, depending on whet
 | INT       | -2147483648	~ 2147483647                   | 0 ~ 4294967295           | Int<br>Long    | -2147483648～2147483647<br>-9223372036854775808～9223372036854775807 |
 | BIGINT    | -9223372036854775808 ~ 9223372036854775807 | 0 ~ 18446744073709551615 | Long<br>BigInt | -9223372036854775808～9223372036854775807<br>...                    |
 
-To work with user-defined proprietary or unsupported types, see [Custom Types](http://localhost:4000/en/02-Custom-Data-Type.html).
+To work with user-defined proprietary or unsupported types, see [Custom Types](/en/02-Custom-Data-Type.html).
 
 ## Attribute
 
