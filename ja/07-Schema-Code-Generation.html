@@ -223,7 +223,7 @@ object Country:
 </code></pre>
 <p><code>database</code>は解析対象のSQLファイルに記載されているデータベース名である必要があります。またテーブル名は解析対象のSQLファイルに記載されているデータベースに所属しているテーブル名である必要があります。</p>
 <p><code>columns</code>には型を変更したいカラム名と変更したいScalaの型を文字列で記載を行います。<code>columns</code>には複数の値を設定できますが、nameに記載されたカラム名が対象のテーブルに含まれいてなければなりません。 また、変換を行うScalaの型はカラムのData型がサポートしている型である必要があります。もしサポート対象外の型を指定したい場合は、<code>object</code>に対して暗黙の型変換を行う設定を持ったtraitやabstract classなどを渡してあげる必要があります。</p>
-<p>Data型がサポートしている型に関しては<a href="/ja/01-Table-Definitions.html">こちら</a>を、サポート対象外の型を設定する方法は<a href="/ja/02-Custom-Data-Type.html">こちら</a>を参照してください。</p>
+<p>Data型がサポートしている型に関しては<a href="/ldbc/ja/01-Table-Definitions.html">こちら</a>を、サポート対象外の型を設定する方法は<a href="/ldbc/ja/02-Custom-Data-Type.html">こちら</a>を参照してください。</p>
 <p>Int型をユーザー独自の型であるCountryCodeに変換する場合は、以下のような<code>CustomMapping</code>traitを実装します。</p>
 <pre class="prettyprint"><code class="language-scala 3">trait CountryCode:
   val code: Int

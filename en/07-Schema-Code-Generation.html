@@ -223,7 +223,7 @@ object Country:
 </code></pre>
 <p>The <code>database</code> must be the name of the database listed in the SQL file to be analyzed. The table name must be the name of a table belonging to the database listed in the SQL file to be analyzed.</p>
 <p>In the <code>columns</code> field, enter the name of the column to be retyped and the Scala type to be changed as a string. You can set multiple values for <code>columns</code>, but the column name listed in name must be in the target table. Also, the Scala type to be converted must be one that is supported by the column&rsquo;s Data type. If you want to specify an unsupported type, you must pass a trait, abstract class, etc. that is configured to do implicit type conversion for <code>object</code>.</p>
-<p>See <a href="/en/01-Table-Definitions.html">here</a> for types supported by the Data type and <a href="/en/02-Custom-Data-Type.html">here</a>.</p>
+<p>See <a href="/ldbc/en/01-Table-Definitions.html">here</a> for types supported by the Data type and <a href="/ldbc/en/02-Custom-Data-Type.html">here</a>.</p>
 <p>To convert an Int type to the user&rsquo;s own type, CountryCode, implement the following <code>CustomMapping</code>trait.</p>
 <pre class="prettyprint"><code class="language-scala 3">trait CountryCode:
   val code: Int

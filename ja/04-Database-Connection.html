@@ -119,7 +119,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
 )
 </code></pre>
-<p>LDBCでのクエリ構築方法をまだ読んでいない場合は、<a href="/ja/03-Type-safe-Query-Builder.html">型安全なクエリ構築</a>の章を先に読むことをオススメしましす。</p>
+<p>LDBCでのクエリ構築方法をまだ読んでいない場合は、<a href="/ldbc/ja/03-Type-safe-Query-Builder.html">型安全なクエリ構築</a>の章を先に読むことをオススメしましす。</p>
 <p>以下のコード例では、以下のimportを想定しています。</p>
 <pre class="prettyprint"><code class="language-scala 3">import com.mysql.cj.jdbc.MysqlDataSource
 
@@ -294,7 +294,7 @@ yield ...).transaction
 yield ...).unsafeRunSync()
 </code></pre>
 <h3><a href="#database-model" name="database-model" class="anchor"><span class="anchor-link"></span></a>Database model</h3>
-<p>LDBCでは<code>Database</code>モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては<a href="/ja/06-Generating-SchemaSPY-Documentation.html">こちら</a>を参照してください。</p>
+<p>LDBCでは<code>Database</code>モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては<a href="/ldbc/ja/06-Generating-SchemaSPY-Documentation.html">こちら</a>を参照してください。</p>
 <p>すでに<code>Database</code>モデルを別の用途で生成している場合は、そのモデルを使用してデータベースの接続情報を持った<code>Database</code>を構築することができます。</p>
 <pre class="prettyprint"><code class="language-scala 3">import ldbc.dsl.io.*
 

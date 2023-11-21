@@ -116,7 +116,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;com.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.1.0&quot;
 </code></pre>
-<p>LDBCでのテーブル定義方法をまだ読んでいない場合は、<a href="/ja/01-Table-Definitions.html">テーブル定義</a>の章を先に読むことをオススメしましす。</p>
+<p>LDBCでのテーブル定義方法をまだ読んでいない場合は、<a href="/ldbc/ja/01-Table-Definitions.html">テーブル定義</a>の章を先に読むことをオススメしましす。</p>
 <p>以下のコード例では、以下のimportを想定しています。</p>
 <pre class="prettyprint"><code class="language-scala 3">import cats.effect.IO
 import ldbc.core.*
@@ -372,7 +372,7 @@ join.statement =
 </code></pre>
 <p>複数のJoinを行っている状態で<code>rightJoin</code>での結合を行うと、今までの結合が何であったかにかかわらず直前まで結合していたテーブルから取得するレコードは全てNULL許容なアクセスとなることに注意してください。</p>
 <h2><a href="#custom-data-type" name="custom-data-type" class="anchor"><span class="anchor-link"></span></a>Custom Data Type</h2>
-<p>前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの<code>mapping</code>メソッドを使用して独自の型とDataTypeのマッピングを行ないました。(<a href="/ja/02-Custom-Data-Type.html">参照</a>)</p>
+<p>前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの<code>mapping</code>メソッドを使用して独自の型とDataTypeのマッピングを行ないました。(<a href="/ldbc/ja/02-Custom-Data-Type.html">参照</a>)</p>
 <p>LDBCはテーブル定義とデータベースへの接続処理が分離されています。 そのためデータベースからデータを取得する際にユーザー独自の型もしくはサポートされていない型に変換したい場合は、ResultSetからのデータ取得方法を独自の型もしくはサポートされていない型と紐付けてあげる必要があります。</p>
 <p>例えばユーザー定義のEnumを文字列型とマッピングしたい場合は、以下のようになります。</p>
 <pre class="prettyprint"><code class="language-scala 3">enum Custom:
@@ -468,7 +468,7 @@ update.statement === &quot;UPDATE user SET id = ?, name = ?, age = ?&quot;
 
 update.statement === &quot;UPDATE user SET name = ?, age = ? WHERE id = ?&quot;
 </code></pre>
-<p><code>where</code>メソッドで使用できる条件はInsert文の<a href="/ja/03-Type-safe-Query-Builder.html#where">where項目</a>を参照してください。</p>
+<p><code>where</code>メソッドで使用できる条件はInsert文の<a href="/ldbc/ja/03-Type-safe-Query-Builder.html#where">where項目</a>を参照してください。</p>
 <h2><a href="#delete" name="delete" class="anchor"><span class="anchor-link"></span></a>DELETE</h2>
 <p>型安全にDELETE文を構築する方法はTableQueryが提供する<code>delete</code>メソッドを使用することです。</p>
 <pre class="prettyprint"><code class="language-scala 3">val delete = userQuery.delete
@@ -481,7 +481,7 @@ delete.statement === &quot;DELETE FROM user&quot;
 
 delete.statement === &quot;DELETE FROM user WHERE id = ?&quot;
 </code></pre>
-<p><code>where</code>メソッドで使用できる条件はInsert文の<a href="/ja/03-Type-safe-Query-Builder.html#where">where項目</a>を参照してください。</p>
+<p><code>where</code>メソッドで使用できる条件はInsert文の<a href="/ldbc/ja/03-Type-safe-Query-Builder.html#where">where項目</a>を参照してください。</p>
 <div class="source-github">
 The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/ja/03-Type-safe-Query-Builder.md">here</a>.
 </div>

@@ -119,7 +119,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
 )
 </code></pre>
-<p>If you have not yet read about how to build queries with LDBC, we recommend that you read the chapter <a href="/en/03-Type-safe-Query-Builder.html">Building Type-Safe Queries</a> first.</p>
+<p>If you have not yet read about how to build queries with LDBC, we recommend that you read the chapter <a href="/ldbc/en/03-Type-safe-Query-Builder.html">Building Type-Safe Queries</a> first.</p>
 <p>The following code example assumes the following import</p>
 <pre class="prettyprint"><code class="language-scala 3">import com.mysql.cj.jdbc.MysqlDataSource
 
@@ -294,7 +294,7 @@ yield ...).transaction
 yield ...).unsafeRunSync()
 </code></pre>
 <h3><a href="#database-model" name="database-model" class="anchor"><span class="anchor-link"></span></a>Database model</h3>
-<p>In LDBC, the <code>Database</code> model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see <a href="/ja/06-Generating-SchemaSPY-Documentation.html">here</a> for information on SchemaSPY document generation.</p>
+<p>In LDBC, the <code>Database</code> model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see <a href="/ldbc/ja/06-Generating-SchemaSPY-Documentation.html">here</a> for information on SchemaSPY document generation.</p>
 <p>If you have already generated a <code>Database</code> model for another use, you can use that model to build a <code>Database</code> with database connection information.</p>
 <pre class="prettyprint"><code class="language-scala 3">import ldbc.dsl.io.*
 

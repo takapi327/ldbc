@@ -113,7 +113,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <div class="small-12 large-9 column" id="docs">
 <h1><a href="#plain-sql-queries" name="plain-sql-queries" class="anchor"><span class="anchor-link"></span></a>Plain SQL Queries</h1>
 <p>Sometimes you may need to write your own SQL code for operations that are not well supported at a higher level of abstraction; instead of going back to the lower layers of JDBC, you can use LDBC&rsquo;s Plain SQL queries in the Scala-based API. This chapter describes how to use Plain SQL queries in LDBC to process connections to databases in such cases.</p>
-<p>See the previous chapter on <a href="/en/04-Database-Connection.html">Database Connections</a> for project dependencies and the use and logging of DataSource.</p>
+<p>See the previous chapter on <a href="/ldbc/en/04-Database-Connection.html">Database Connections</a> for project dependencies and the use and logging of DataSource.</p>
 <h2><a href="#plain-sql" name="plain-sql" class="anchor"><span class="anchor-link"></span></a>Plain SQL</h2>
 <p>LDBC uses sql string interpolation with literal SQL strings to construct plain queries as follows</p>
 <p>Variables and expressions injected into the query are converted to bind variables in the resulting query string. Since they are not inserted directly into the query string, there is no risk of SQL injection attacks.</p>
@@ -123,7 +123,7 @@ val update = sql&quot;UPDATE user SET id = $id, name = $name, age = $age&quot; /
 val delete = sql&quot;DELETE FROM user WHERE id = $id&quot; // DELETE FROM user WHERE id = ?
 </code></pre>
 <p>Plain SQL queries simply construct SQL statements at runtime. While this provides a safe and easy way to construct complex statements, it is merely an embedded string. Any syntax errors in the statement or type mismatch between the database and the Scala code cannot be detected at compile time.</p>
-<p>Please refer to the <a href="/en/04-Database-Connection.html#Query">Query</a> item in the previous section &ldquo;Database Connection&rdquo; for information on setting the return type of the query result and the connection method. It is built and works the same way as a query built using a table definition.</p>
+<p>Please refer to the <a href="/ldbc/en/04-Database-Connection.html#Query">Query</a> item in the previous section &ldquo;Database Connection&rdquo; for information on setting the return type of the query result and the connection method. It is built and works the same way as a query built using a table definition.</p>
 <p>Plain queries and type-safe queries are constructed differently, but the implementation is the same, including the subsequent connection methods. Therefore, it is possible to combine the two and execute the query.</p>
 <pre class="prettyprint"><code class="language-scala 3">(for
   result1 &lt;- sql&quot;INSERT INTO user (id, name, age) VALUES($id, $name, $age)&quot;.update

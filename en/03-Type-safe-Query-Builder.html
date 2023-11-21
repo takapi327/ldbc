@@ -116,7 +116,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>The following dependencies must be set up for the project</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;com.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.1.0&quot;
 </code></pre>
-<p>If you have not yet read how to define tables in LDBC, we recommend that you read the chapter <a href="/en/01-Table-Definitions.html">Table Definitions</a> first.</p>
+<p>If you have not yet read how to define tables in LDBC, we recommend that you read the chapter <a href="/ldbc/en/01-Table-Definitions.html">Table Definitions</a> first.</p>
 <p>The following code example assumes the following import</p>
 <pre class="prettyprint"><code class="language-scala 3">import cats.effect.IO
 import ldbc.core.*
@@ -372,7 +372,7 @@ join.statement =
 </code></pre>
 <p>Note that a <code>rightJoin</code> join with multiple joins will result in NULL-acceptable access to all records retrieved from the previously joined table, regardless of what the previous join was.</p>
 <h2><a href="#custom-data-type" name="custom-data-type" class="anchor"><span class="anchor-link"></span></a>Custom Data Type</h2>
-<p>In the previous section, we used the <code>mapping</code> method of DataType to map custom types to DataType in order to use user-specific or unsupported types. (<a href="/en/02-Custom-Data-Type.html">reference</a>)</p>
+<p>In the previous section, we used the <code>mapping</code> method of DataType to map custom types to DataType in order to use user-specific or unsupported types. (<a href="/ldbc/en/02-Custom-Data-Type.html">reference</a>)</p>
 <p>LDBC separates the table definition from the process of connecting to the database. Therefore, if you want to retrieve data from the database and convert it to a user-specific or unsupported type, you must link the method of retrieving data from the ResultSet to the user-specific or unsupported type.</p>
 <p>For example, if you want to map a user-defined Enum to a string type</p>
 <pre class="prettyprint"><code class="language-scala 3">enum Custom:
@@ -468,7 +468,7 @@ update.statement === &quot;UPDATE user SET id = ?, name = ?, age = ?&quot;
 
 update.statement === &quot;UPDATE user SET name = ?, age = ? WHERE id = ?&quot;
 </code></pre>
-<p>See <a href="/en/03-Type-safe-Query-Builder.html#where">where item</a> in the Insert statement for conditions that can be used in the <code>where</code> method.</p>
+<p>See <a href="/ldbc/en/03-Type-safe-Query-Builder.html#where">where item</a> in the Insert statement for conditions that can be used in the <code>where</code> method.</p>
 <h2><a href="#delete" name="delete" class="anchor"><span class="anchor-link"></span></a>DELETE</h2>
 <p>A type-safe way to construct a DELETE statement is to use the <code>delete</code> method provided by TableQuery.</p>
 <pre class="prettyprint"><code class="language-scala 3">val delete = userQuery.delete
@@ -481,7 +481,7 @@ delete.statement === &quot;DELETE FROM user&quot;
 
 delete.statement === &quot;DELETE FROM user WHERE id = ?&quot;
 </code></pre>
-<p>See <a href="/en/03-Type-safe-Query-Builder.html#where">where item</a> in the Insert statement for conditions that can be used in the <code>where</code> method.</p>
+<p>See <a href="/ldbc/en/03-Type-safe-Query-Builder.html#where">where item</a> in the Insert statement for conditions that can be used in the <code>where</code> method.</p>
 <div class="source-github">
 The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/en/03-Type-safe-Query-Builder.md">here</a>.
 </div>
