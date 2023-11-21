@@ -299,3 +299,125 @@ val db = database.fromDriverManager()
 // or
 val db = database.fromDriverManager("user name", "password")
 ```
+
+## HikariCPコネクションプールの使用
+
+`ldbc-hikari`は、HikariCP接続プールを構築するためのHikariConfigおよびHikariDataSourceを構築するためのビルダーを提供します。
+
+@@@ vars
+```scala
+libraryDependencies ++= Seq(
+  "$org$" %% "ldbc-hikari" % "$version$",
+)
+```
+@@@
+
+`HikariConfigBuilder`は名前の通りHikariCPの`HikariConfig`を構築するためのビルダーです。
+
+```scala 3
+val hikariConfig: com.zaxxer.hikari.HikariConfig = HikariConfigBuilder.default.build()
+```
+
+`HikariConfigBuilder`には`default`と`from`メソッドがあり`default`を使用した場合、LDBC指定のパスを元にConfigから対象の値を取得して`HikariConfig`の構築を行います。
+
+```text
+ldbc.hikari {
+  jdbc_url = ...
+  username = ...
+  password = ...
+}
+```
+
+ユーザー独自のパスを指定したい場合は`from`メソッドを使用して引数に取得したいパスを渡す必要があります。
+
+```scala 3
+val hikariConfig: com.zaxxer.hikari.HikariConfig = HikariConfigBuilder.from("custom.path").build()
+
+// custom.path {
+//   jdbc_url = ...
+//   username = ...
+//   password = ...
+// }
+```
+
+HikariCPに設定できる内容は[公式](https://github.com/brettwooldridge/HikariCP)を参照してください。
+
+Configに設定できるキーの一覧は以下になります。
+
+| キー名                         | 説明                                                                     | 型        |
+|-----------------------------|------------------------------------------------------------------------|----------|
+| catalog                     | 接続時に設定するデフォルトのカタログ名                                                    | String   |
+| connection_timeout          | クライアントがプールからの接続を待機する最大ミリ秒数                                             | Duration |
+| idle_timeout                | 接続がプール内でアイドル状態であることを許可される最大時間 (ミリ秒単位)                                  | Duration |
+| leak_detection_threshold    | 接続漏れの可能性を示すメッセージがログに記録されるまでに、接続がプールから外れる時間                             | Duration |
+| maximum_pool_size           | アイドル接続と使用中の接続の両方を含め、プールが許容する最大サイズ                                      | Int      |
+| max_lifetime                | プール内の接続の最大寿命                                                           | Duration |
+| minimum_idle                | アイドル接続と使用中接続の両方を含め、HikariCPがプール内に維持しようとするアイドル接続の最小数                    | Int      |
+| pool_name                   | 接続プールの名前                                                               | String   |
+| allow_pool_suspension       | プール・サスペンドを許可するかどうか                                                     | Boolean  |
+| auto_commit                 | プール内の接続のデフォルトの自動コミット動作                                                 | Boolean  |
+| connection_init_sql         | 新しい接続が作成されたときに、その接続がプールに追加される前に実行されるSQL文字列                             | String   |
+| connection_test_query       | 接続の有効性をテストするために実行する SQL クエリ                                            | String   |
+| data_source_classname       | Connections の作成に使用する JDBC DataSourceの完全修飾クラス名                          | String   |
+| initialization_fail_timeout | プール初期化の失敗タイムアウト                                                        | Duration |
+| isolate_internal_queries    | 内部プール・クエリ (主に有効性チェック)を、`Connection.rollback()`によって独自のトランザクションで分離するかどうか | Boolean  |
+| jdbc_url                    | JDBCのURL                                                               | String   |
+| readonly                    | プールに追加する接続を読み取り専用接続として設定するかどうか                                         | Boolean  |
+| register_mbeans             | HikariCPがJMXにHikariConfigMXBeanとHikariPoolMXBeanを自己登録するかどうか            | Boolean  |
+| schema                      | 接続時に設定するデフォルトのスキーマ名                                                    | String   |
+| username                    | `DataSource.getConnection(username,password)`の呼び出しに使用されるデフォルトのユーザ名     | String   |
+| password                    | `DataSource.getConnection(username,password)`の呼び出しに使用するデフォルトのパスワード     | String   |
+| driver_class_name           | 使用するDriverのクラス名                                                        | String   |
+| transaction_isolation       | デフォルトのトランザクション分離レベル                                                    | String   |
+
+`HikariDataSourceBuilder`を使用することで、HikariCPの`HikariDataSource`を構築することができます。
+
+接続プールはライフタイムで管理されるオブジェクトでありきれいにシャットダウンする必要があるため、ビルダーによって構築された`HikariDataSource`は`Resource`として管理されます。
+
+```scala 3
+val dataSource: Resource[IO, HikariDataSource] = HikariDataSourceBuilder.default[IO].buildDataSource()
+```
+
+`buildDataSource`経由で構築された`HikariDataSource`は、内部でLDBC指定のパスを元にConfigから設定を取得し構築された`HikariConfig`を使用しています。
+これは`HikariConfigBuilder`の`default`経由で生成された`HikariConfig`と同等のものです。
+
+もしユーザー指定の`HikariConfig`を使用したい場合は、`buildFromConfig`を使用することで`HikariDataSource`を構築することができます。
+
+```scala 3
+val hikariConfig = ???
+val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfig)
+```
+
+`HikariDataSourceBuilder`を使用して構築された`HikariDataSource`は通常IOAppを使用して実行します。
+
+```scala 3
+object HikariApp extends IOApp:
+
+  val dataSourceResource: Resource[IO, HikariDataSource] = HikariDataSourceBuilder.default[IO].buildDataSource()
+
+  def run(args: List[String]): IO[ExitCode] =
+    dataSourceResource.use { dataSource =>
+       ...
+    }
+```
+
+### HikariDatabase
+
+HikariCPのコネクション情報を持った`Database`を構築する方法も存在します。
+
+`HikariDatabase`は`HikariDataSource`と同様に`Resource`として管理されます。
+そのため通常はIOAppを使用して実行します。
+
+```scala 3
+object HikariApp extends IOApp:
+
+  val hikariConfig = ???
+  val databaseResource: Resource[F, Database[F]] = HikariDatabase.fromHikariConfig[IO](hikariConfig)
+
+  def run(args: List[String]): IO[ExitCode] =
+    databaseResource.use { database =>
+       for
+         result <- database.readOnly(...)
+        yield ExitCode.Success
+    }
+```

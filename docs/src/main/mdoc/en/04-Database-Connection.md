@@ -299,3 +299,125 @@ val db = database.fromDriverManager()
 // or
 val db = database.fromDriverManager("user name", "password")
 ```
+
+## Using a HikariCP Connection Pool
+
+`ldbc-hikari` provides a builder to build HikariConfig and HikariDataSource for building HikariCP connection pools.
+
+@@@ vars
+```scala
+libraryDependencies ++= Seq(
+  "$org$" %% "ldbc-hikari" % "$version$",
+)
+```
+@@@
+
+`HikariConfigBuilder` is a builder to build `HikariConfig` of HikariCP as the name suggests.
+
+```scala 3
+val hikariConfig: com.zaxxer.hikari.HikariConfig = HikariConfigBuilder.default.build()
+```
+
+The `HikariConfigBuilder` has a `default` and a `from` method. When `default` is used, the `HikariConfig` is constructed by retrieving the target values from the Config based on the LDBC specified path.
+
+```text
+ldbc.hikari {
+  jdbc_url = ...
+  username = ...
+  password = ...
+}
+```
+
+If you want to specify a user-specific path, you must use the `from` method and pass the path you want to retrieve as an argument.
+
+```scala 3
+val hikariConfig: com.zaxxer.hikari.HikariConfig = HikariConfigBuilder.from("custom.path").build()
+
+// custom.path {
+//   jdbc_url = ...
+//   username = ...
+//   password = ...
+// }
+```
+
+Please refer to [official](https://github.com/brettwooldridge/HikariCP) for details on what can be set in HikariCP.
+
+The following is a list of keys that can be set for Config.
+
+| Key name                    | Description                                                                                                               | Type     |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------|----------|
+| catalog                     | Default catalog name to be set when connecting                                                                            | String   |
+| connection_timeout          | Maximum number of milliseconds the client will wait for a connection from the pool                                        | Duration |
+| idle_timeout                | Maximum time (in milliseconds) that a connection is allowed to be idle in the pool                                        | Duration |
+| leak_detection_threshold    | Time a connection is out of the pool before a message indicating a possible connection leak is logged                     | Duration |
+| maximum_pool_size           | Maximum size allowed by the pool, including both idle and in-use connections                                              | Int      |
+| max_lifetime                | Maximum lifetime of connections in the pool                                                                               | Duration |
+| minimum_idle                | Minimum number of idle connections that HikariCP will try to keep in the pool, including both idle and in-use connections | Int      |
+| pool_name                   | Connection pool name                                                                                                      | String   |
+| allow_pool_suspension       | Whether to allow pool suspend                                                                                             | Boolean  |
+| auto_commit                 | Default autocommit behavior for connections in the pool                                                                   | Boolean  |
+| connection_init_sql         | SQL string to be executed when a new connection is created, before it is added to the pool                                | String   |
+| connection_test_query       | SQL query to execute to test the validity of the connection                                                               | String   |
+| data_source_classname       | Fully qualified class name of the JDBC DataSource to be used to create Connections                                        | String   |
+| initialization_fail_timeout | Pool initialization failure timeout                                                                                       | Duration |
+| isolate_internal_queries    | Whether internal pool queries (mainly validity checks) are separated in their own transaction by `Connection.rollback()`. | Boolean  |
+| jdbc_url                    | JDBC URL                                                                                                                  | String   |
+| readonly                    | Whether connections to be added to the pool should be set as read-only connections                                        | Boolean  |
+| register_mbeans             | Whether HikariCP self-registers HikariConfigMXBean and HikariPoolMXBean in JMX                                            | Boolean  |
+| schema                      | Default schema name to set when connecting                                                                                | String   |
+| username                    | Default username used for calls to `DataSource.getConnection(username,password)`                                          | String   |
+| password                    | Default password used for calling `DataSource.getConnection(username,password)`                                           | String   |
+| driver_class_name           | Driver class name to be used                                                                                              | String   |
+| transaction_isolation       | Default transaction isolation level                                                                                       | String   |
+
+The `HikariDataSourceBuilder` allows you to build a `HikariDataSource` for HikariCP.
+
+The `HikariDataSource` built by the builder is managed as a `Resource` since the connection pool is a lifetime managed object and needs to be shut down cleanly.
+
+```scala 3
+val dataSource: Resource[IO, HikariDataSource] = HikariDataSourceBuilder.default[IO].buildDataSource()
+```
+
+The `HikariDataSource` built via `buildDataSource` uses `HikariConfig`, which is built internally by retrieving settings from Config based on the LDBC specified path.
+This is equivalent to `HikariConfig` generated via `default` in `HikariConfigBuilder`.
+
+If you want to use a user-specified `HikariConfig`, you can use `buildFromConfig` to build a `HikariDataSource`.
+
+```scala 3
+val hikariConfig = ???
+val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfig)
+```
+
+A `HikariDataSource` built with `HikariDataSourceBuilder` is usually executed using IOApp.
+
+```scala 3
+object HikariApp extends IOApp:
+
+  val dataSourceResource: Resource[IO, HikariDataSource] = HikariDataSourceBuilder.default[IO].buildDataSource()
+
+  def run(args: List[String]): IO[ExitCode] =
+    dataSourceResource.use { dataSource =>
+       ...
+    }
+```
+
+### HikariDatabase
+
+There is also a way to build a `Database` with HikariCP connection information.
+
+The `HikariDatabase` is managed as a `Resource` like the `HikariDataSource`.
+Therefore, it is usually executed using IOApp.
+
+```scala 3
+object HikariApp extends IOApp:
+
+  val hikariConfig = ???
+  val databaseResource: Resource[F, Database[F]] = HikariDatabase.fromHikariConfig[IO](hikariConfig)
+
+  def run(args: List[String]): IO[ExitCode] =
+    databaseResource.use { database =>
+       for
+         result <- database.readOnly(...)
+        yield ExitCode.Success
+    }
+```
