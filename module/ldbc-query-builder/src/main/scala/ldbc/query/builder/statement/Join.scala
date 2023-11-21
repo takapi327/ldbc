@@ -8,7 +8,7 @@ import scala.language.dynamics
 import scala.deriving.Mirror
 
 import ldbc.core.*
-import ldbc.core.interpreter.Tuples as CoreTuples
+import ldbc.core.interpreter.{ ExtractOption, Tuples as CoreTuples }
 import ldbc.sql.*
 import ldbc.query.builder.interpreter.Tuples
 import ldbc.query.builder.{ TableQuery, ColumnQuery }
@@ -266,11 +266,15 @@ case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
     mirror:                                                   Mirror.ProductOf[P],
     index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     reader: ResultSetReader[F, Option[
-      Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+      ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
     ]]
-  ): ColumnQuery[F, Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]] =
+  ): ColumnQuery[F, Option[
+    ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+  ]] =
     val column = table.selectDynamic[Tag](tag)
-    ColumnQuery[F, Option[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]](
+    ColumnQuery[F, Option[
+      ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+    ]](
       _label      = column.label,
       _dataType   = column.dataType.toOption,
       _attributes = Seq.empty,

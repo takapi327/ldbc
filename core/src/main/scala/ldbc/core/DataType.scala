@@ -13,6 +13,7 @@ import scala.compiletime.ops.int.*
 
 import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
 import ldbc.core.attribute.Attribute
+import ldbc.core.interpreter.ExtractOption
 
 /** Trait for representing SQL DataType
   *
@@ -62,8 +63,8 @@ sealed trait DataType[T]:
   protected def nullType: String = if isOptional then "NULL" else "NOT NULL"
 
   /** Methods for overriding the DataType type with the Option type. */
-  def toOption: DataType[Option[T]] =
-    new DataType[Option[T]]:
+  def toOption: DataType[Option[ExtractOption[T]]] =
+    new DataType[Option[ExtractOption[T]]]:
       override def typeName:    String          = self.typeName
       override def jdbcType:    JdbcType        = self.jdbcType
       override def queryString: String          = self.queryString

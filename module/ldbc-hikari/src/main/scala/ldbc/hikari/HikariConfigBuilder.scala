@@ -151,7 +151,7 @@ trait HikariConfigBuilder:
     readConfig(_.get[Option[String]](USERNAME))
 
   /** Method to retrieve password information from the conf file. */
-  protected def getPassWord: Option[String] =
+  protected def getPassword: Option[String] =
     readConfig(_.get[Option[String]](PASSWORD))
 
   /** Method to retrieve driver class name information from the conf file. */
@@ -220,6 +220,7 @@ trait HikariConfigBuilder:
     getCatalog foreach hikariConfig.setCatalog
     hikariConfig.setConnectionTimeout(connectionTimeout)
     hikariConfig.setIdleTimeout(idleTimeout)
+    hikariConfig.setLeakDetectionThreshold(leakDetectionThreshold)
     hikariConfig.setMaximumPoolSize(maximumPoolSize)
     hikariConfig.setMaxLifetime(maxLifetime)
     hikariConfig.setMinimumIdle(minimumIdle)
@@ -231,7 +232,7 @@ trait HikariConfigBuilder:
     hikariConfig.setReadOnly(readonly)
     hikariConfig.setRegisterMbeans(registerMbeans)
 
-    getPassWord foreach hikariConfig.setPassword
+    getPassword foreach hikariConfig.setPassword
     getPoolName foreach hikariConfig.setPoolName
     getUserName foreach hikariConfig.setUsername
     getConnectionInitSql foreach hikariConfig.setConnectionInitSql
