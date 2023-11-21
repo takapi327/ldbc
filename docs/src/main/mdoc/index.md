@@ -1,7 +1,7 @@
 # LDBC
 
 <div align="center">
-  <img src="https://github.com/takapi327/ldbc/assets/57429437/9bdbff7a-c677-4dbf-b3b4-0d102caaec83">
+  <img src="./img/lepus_logo.png">
 </div>
 
 <div align="center">
