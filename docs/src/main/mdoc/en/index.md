@@ -88,7 +88,7 @@ For example, passing a column of type INT to a column related to the name proper
 [error]     |where:    T is a type variable with constraint <: Int | Long | Option[Int | Long]
 ```
 
-For more information on these add-ons, see [Table Definitions](/en/01-Table-Definitions.html).
+For more information on these add-ons, see [Table Definitions](/ldbc/en/01-Table-Definitions.html).
 
 ## Quick Start
 
@@ -109,7 +109,7 @@ libraryDependencies ++= Seq(
 ```
 @@@
 
-For more information on how to use the sbt plugin, please refer to this [documentation](/en/07-Schema-Code-Generation.html).
+For more information on how to use the sbt plugin, please refer to this [documentation](/ldbc/en/07-Schema-Code-Generation.html).
 
 ## TODO
 

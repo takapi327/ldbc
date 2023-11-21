@@ -10,7 +10,7 @@ libraryDependencies += "$org$" %% "ldbc-query-builder" % "$version$"
 ```
 @@@
 
-If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](/en/01-Table-Definitions.html) first.
+If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](/ldbc/en/01-Table-Definitions.html) first.
 
 The following code example assumes the following import
 
@@ -278,7 +278,7 @@ Note that a `rightJoin` join with multiple joins will result in NULL-acceptable 
 
 ## Custom Data Type
 
-In the previous section, we used the `mapping` method of DataType to map custom types to DataType in order to use user-specific or unsupported types. ([reference](/en/02-Custom-Data-Type.html))
+In the previous section, we used the `mapping` method of DataType to map custom types to DataType in order to use user-specific or unsupported types. ([reference](/ldbc/en/02-Custom-Data-Type.html))
 
 LDBC separates the table definition from the process of connecting to the database.
 Therefore, if you want to retrieve data from the database and convert it to a user-specific or unsupported type, you must link the method of retrieving data from the ResultSet to the user-specific or unsupported type.
@@ -434,7 +434,7 @@ val update = userQuery.update("name", "update name").set("age", Some(20)).where(
 update.statement === "UPDATE user SET name = ?, age = ? WHERE id = ?"
 ```
 
-See [where item](/en/03-Type-safe-Query-Builder.html#where) in the Insert statement for conditions that can be used in the `where` method.
+See [where item](/ldbc/en/03-Type-safe-Query-Builder.html#where) in the Insert statement for conditions that can be used in the `where` method.
 
 ## DELETE
 
@@ -456,4 +456,4 @@ val delete = userQuery.delete.where(_.id === 1)
 delete.statement === "DELETE FROM user WHERE id = ?"
 ```
 
-See [where item](/en/03-Type-safe-Query-Builder.html#where) in the Insert statement for conditions that can be used in the `where` method.
+See [where item](/ldbc/en/03-Type-safe-Query-Builder.html#where) in the Insert statement for conditions that can be used in the `where` method.

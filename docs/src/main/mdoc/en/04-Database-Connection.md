@@ -13,7 +13,7 @@ libraryDependencies ++= Seq(
 ```
 @@@
 
-If you have not yet read about how to build queries with LDBC, we recommend that you read the chapter [Building Type-Safe Queries](/en/03-Type-safe-Query-Builder.html) first.
+If you have not yet read about how to build queries with LDBC, we recommend that you read the chapter [Building Type-Safe Queries](/ldbc/en/03-Type-safe-Query-Builder.html) first.
 
 The following code example assumes the following import
 
@@ -286,7 +286,7 @@ yield ...).unsafeRunSync()
 
 ### Database model
 
-In LDBC, the `Database` model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see [here](/ja/06-Generating-SchemaSPY-Documentation.html) for information on SchemaSPY document generation.
+In LDBC, the `Database` model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see [here](/ldbc/ja/06-Generating-SchemaSPY-Documentation.html) for information on SchemaSPY document generation.
 
 If you have already generated a `Database` model for another use, you can use that model to build a `Database` with database connection information.
 
