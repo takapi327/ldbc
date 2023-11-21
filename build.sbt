@@ -86,6 +86,8 @@ lazy val docs = (project in file("docs"))
     Compile / paradox / sourceDirectory := mdocOut.value,
     Compile / paradoxRoots := List("index.html", "en/index.html", "ja/index.html"),
     makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
+    git.remoteRepo := "git@github.com:takapi327/ldbc.git",
+    ghpagesNoJekyll := true,
   )
   .settings(commonSettings)
   .dependsOn(
@@ -97,7 +99,7 @@ lazy val docs = (project in file("docs"))
     codegen,
     hikari
   )
-  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin)
+  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin)
 
 lazy val projects: Seq[ProjectReference] = Seq(
   core,
