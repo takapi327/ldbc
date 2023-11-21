@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>プレーンなSQLクエリ · LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='docs'/>
+<link rel="canonical" href="https://github.com/takapi327/ldbc../ja/05-Plain-SQL-Queries.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../ja/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.1.0*
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="active page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../ja/index.html">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../ja/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.1.0*
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="active page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+<div class="nav-breadcrumbs">
+<ul>
+  <li><a href="../ja/index.html">LDBC</a></li>
+  <li>プレーンなSQLクエリ</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#プレーンなsqlクエリ" name="プレーンなsqlクエリ" class="anchor"><span class="anchor-link"></span></a>プレーンなSQLクエリ</h1>
+<p>時には、抽象度の高いレベルではうまくサポートされていない操作のために、独自のSQLコードを書く必要があるかもしれません。JDBCの低レイヤーに戻る代わりに、ScalaベースのAPIでLDBCのPlain SQLクエリーを使うことができます。 この章では、そのような場合にLDBCでPlain SQLクエリーを使用してデータベースへの接続処理を行うための方法について説明します。</p>
+<p>プロジェクトへの依存関係やDataSourceの使用とログに関しては、前章の<a href="/ja/04-Database-Connection.html">データベース接続</a>の章を参照してください。</p>
+<h2><a href="#plain-sql" name="plain-sql" class="anchor"><span class="anchor-link"></span></a>Plain SQL</h2>
+<p>LDBCでは以下のようにsql文字列補間をリテラルSQL文字列で使用してプレーンなクエリを構築します。</p>
+<p>クエリに注入された変数や式は、結果のクエリ文字列のバインド変数に変換されます。クエリ文字列に直接挿入されるわけではないので、SQLインジェクション攻撃の危険はありません。</p>
+<pre class="prettyprint"><code class="language-scala 3">val select = sql&quot;SELECT id, name, age FROM user WHERE id = $id&quot; // SELECT id, name, age FROM user WHERE id = ?
+val insert = sql&quot;INSERT INTO user (id, name, age) VALUES($id, $name, $age)&quot; // INSERT INTO user (id, name, age) VALUES(?, ?, ?)
+val update = sql&quot;UPDATE user SET id = $id, name = $name, age = $age&quot; // UPDATE user SET id = ?, name = ?, age = ?
+val delete = sql&quot;DELETE FROM user WHERE id = $id&quot; // DELETE FROM user WHERE id = ?
+</code></pre>
+<p>Plain SQLクエリーは実行時にSQL文を構築するだけです。これは安全かつ簡単に複雑なステートメントを構築する方法を提供しますが、これは単なる埋め込み文字列にすぎません。ステートメントに構文エラーがあったり、データベースとScalaコードの型が一致しなかったりしてもコンパイル時に検出することはできません。</p>
+<p>クエリ実行結果の戻り値の型、接続方法の設定に関しては前章の「データベース接続」にある<a href="/ja/04-Database-Connection.html#Query">Query</a>項目以降を参照してください。 テーブル定義を使用して構築されたクエリと同じように構築および動作します。</p>
+<p>プレーンなクエリと型安全なクエリは構築方法が違うだけで後続の接続方法などは同じ実装です。そのため2つを組み合わせてクエリを実行することも可能です。</p>
+<pre class="prettyprint"><code class="language-scala 3">(for
+  result1 &lt;- sql&quot;INSERT INTO user (id, name, age) VALUES($id, $name, $age)&quot;.update
+  result2 &lt;- userQuery.update(&quot;name&quot;, &quot;update name&quot;).update
+  ...
+yield ...).transaction
+</code></pre>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/ja/05-Plain-SQL-Queries.md">here</a>.
+</div>
+
+<div class="nav-next">
+<p><strong>Next:</strong> <a href="../ja/06-Generating-SchemaSPY-Documentation.html">SchemaSPYドキュメントの生成</a></p>
+</div>
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/05-Plain-SQL-Queries.html#プレーンなsqlクエリ" class="header">プレーンなSQLクエリ</a>
+  <ul>
+    <li><a href="../ja/05-Plain-SQL-Queries.html#plain-sql" class="header">Plain SQL</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2023</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0-SNAPSHOT', 'https://github.com/takapi327/ldbc')});</script>
+
+
+</html>

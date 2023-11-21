@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>データベース接続 · LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='docs'/>
+<link rel="canonical" href="https://github.com/takapi327/ldbc../ja/04-Database-Connection.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../ja/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.1.0*
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="active page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../ja/index.html">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../ja/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.1.0*
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="active page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+<div class="nav-breadcrumbs">
+<ul>
+  <li><a href="../ja/index.html">LDBC</a></li>
+  <li>データベース接続</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#データベース接続" name="データベース接続" class="anchor"><span class="anchor-link"></span></a>データベース接続</h1>
+<p>この章では、LDBCで構築したクエリを使用して、データベースへの接続処理を行うための方法について説明します。</p>
+<p>プロジェクトに以下の依存関係を設定する必要があります。</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
+  &quot;com.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
+  &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
+)
+</code></pre>
+<p>LDBCでのクエリ構築方法をまだ読んでいない場合は、<a href="/ja/03-Type-safe-Query-Builder.html">型安全なクエリ構築</a>の章を先に読むことをオススメしましす。</p>
+<p>以下のコード例では、以下のimportを想定しています。</p>
+<pre class="prettyprint"><code class="language-scala 3">import com.mysql.cj.jdbc.MysqlDataSource
+
+import cats.effect.IO
+// This is just for testing. Consider using cats.effect.IOApp instead of calling
+// unsafe methods directly.
+import cats.effect.unsafe.implicits.global
+
+import ldbc.sql.*
+import ldbc.dsl.io.*
+import ldbc.dsl.logging.LogHandler
+import ldbc.query.builder.TableQuery
+</code></pre>
+<p>テーブル定義は以下を使用します。</p>
+<pre class="prettyprint"><code class="language-scala 3">case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),
+)
+
+val userQuery = TableQuery[IO, User](table)
+</code></pre>
+<h2><a href="#datasourceの使用" name="datasourceの使用" class="anchor"><span class="anchor-link"></span></a>DataSourceの使用</h2>
+<p>LDBCはデータベース接続にJDBCのDataSourceを使用します。LDBCにはこのDataSourceを構築する実装は提供されていないため、mysqlやHikariCPなどのライブラリを使用する必要があります。今回の例ではMysqlDataSourceを使用してDataSourceの構築を行います。</p>
+<pre class="prettyprint"><code class="language-scala 3">private val dataSource = new MysqlDataSource()
+dataSource.setServerName(&quot;127.0.0.1&quot;)
+dataSource.setPortNumber(3306)
+dataSource.setDatabaseName(&quot;database name&quot;)
+dataSource.setUser(&quot;user name&quot;)
+dataSource.setPassword(&quot;password&quot;)
+</code></pre>
+<h2><a href="#ログ" name="ログ" class="anchor"><span class="anchor-link"></span></a>ログ</h2>
+<p>LDBCではDatabase接続の実行ログやエラーログを任意のロギングライブラリを使用して任意の形式で書き出すことができます。</p>
+<p>標準ではCats EffectのConsoleを使用したロガーが提供されているため開発時はこちらを使用することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">given LogHandler[IO] = LogHandler.consoleLogger
+</code></pre>
+<h3><a href="#カスタマイズ" name="カスタマイズ" class="anchor"><span class="anchor-link"></span></a>カスタマイズ</h3>
+<p>任意のロギングライブラリを使用してログをカスタマイズする場合は<code>ldbc.dsl.logging.LogHandler</code>を使用します。</p>
+<p>以下は標準実装のログ実装です。LDBCではデータベース接続で以下3種類のイベントが発生します。</p>
+<ul>
+  <li>Success: 処理の成功</li>
+  <li>ProcessingFailure: データ取得後もしくはデータベース接続前の処理のエラー</li>
+  <li>ExecFailure: データベースへの接続処理のエラー</li>
+</ul>
+<p>それぞれのイベントでどのようなログを書き込むかをパターンマッチングによって振り分けを行います。</p>
+<pre class="prettyprint"><code class="language-scala 3">def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
+  case LogEvent.Success(sql, args) =&gt;
+    Console[F].println(
+      s&quot;&quot;&quot;Successful Statement Execution:
+         |  $sql
+         |
+         | arguments = [${ args.mkString(&quot;,&quot;) }]
+         |&quot;&quot;&quot;.stripMargin
+    )
+  case LogEvent.ProcessingFailure(sql, args, failure) =&gt;
+    Console[F].errorln(
+      s&quot;&quot;&quot;Failed ResultSet Processing:
+         |  $sql
+         |
+         | arguments = [${ args.mkString(&quot;,&quot;) }]
+         |&quot;&quot;&quot;.stripMargin
+    ) &gt;&gt; Console[F].printStackTrace(failure)
+  case LogEvent.ExecFailure(sql, args, failure) =&gt;
+    Console[F].errorln(
+      s&quot;&quot;&quot;Failed Statement Execution:
+         |  $sql
+         |
+         | arguments = [${ args.mkString(&quot;,&quot;) }]
+         |&quot;&quot;&quot;.stripMargin
+    ) &gt;&gt; Console[F].printStackTrace(failure)
+</code></pre>
+<h2><a href="#query" name="query" class="anchor"><span class="anchor-link"></span></a>Query</h2>
+<p><code>select</code>文を構築すると<code>query</code>メソッドを使用できるようになります。<code>query</code>メソッドは取得後のデータ形式を決定するために使用します。特段何も型を指定しない場合は<code>select</code>メソッドで指定したカラムの型がTupleとして返却されます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query // (Long, String, Option[Int])
+val query2 = userQuery.select(user =&gt; (user.name, user.age)).query // (String, Option[Int])
+</code></pre>
+<p><code>query</code>メソッドにモデルを指定すると取得後のデータを指定したモデルに変換することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query = userQuery.selectAll.query[User] // User
+</code></pre>
+<p><code>query</code>メソッドで指定するモデルの型は<code>select</code>メソッドで指定したTupleの型と一致するか、Tupleの型から指定したモデルへの型変換が可能なものでなければなりません。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.select(user =&gt; (user.name, user.age)).query[User] // Compile error
+
+case class Test(name: String, age: Option[Int])
+val query2 = userQuery.select(user =&gt; (user.name, user.age)).query[Test] // Test
+</code></pre>
+<h3><a href="#tolist" name="tolist" class="anchor"><span class="anchor-link"></span></a>toList</h3>
+<p><code>query</code>メソッドで取得する型を決定したあとは、取得するデータを配列で取得するかOptionalなデータとして取得するかを決定します。</p>
+<p>クエリを実行した結果データの一覧を取得したい場合は、<code>toList</code>メソッドを使用します。<code>toList</code>メソッドを使用してデータベース処理を行なった結果、データ取得件数が0件であった場合空の配列が返されます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.toList // List[(Long, String, Option[Int])]
+val query2 = userQuery.selectAll.query[User].toList // List[User]
+</code></pre>
+<h3><a href="#headoption" name="headoption" class="anchor"><span class="anchor-link"></span></a>headOption</h3>
+<p>クエリを実行した結果最初の1件のデータをOptionalで取得したい場合は、<code>headOption</code>メソッドを使用します。<code>headOption</code>メソッドを使用してデータベース処理を行なった結果データ取得件数が0件であった場合Noneが返されます。</p>
+<p><code>headOption</code>メソッドを使用した場合、複数のデータを取得するクエリを実行したとしても最初のデータのみ返されることに注意してください。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.headOption // Option[(Long, String, Option[Int])]
+val query2 = userQuery.selectAll.query[User].headOption // Option[User]
+</code></pre>
+<h3><a href="#unsafe" name="unsafe" class="anchor"><span class="anchor-link"></span></a>unsafe</h3>
+<p><code>unsafe</code>メソッドを使用した場合、取得したデータの最初の1件のみ返されることは<code>headOption</code>メソッドと同じですが、データはOptionalにはならずそのままのデータが返却されます。もし取得したデータの件数が0件であった場合は例外が発生するため適切な例外ハンドリングを行う必要があります。</p>
+<p>実行時に例外を発生する可能性が高いため<code>unsafe</code>という名前になっています。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.unsafe // (Long, String, Option[Int])
+val query2 = userQuery.selectAll.query[User].unsafe // User
+</code></pre>
+<h2><a href="#update" name="update" class="anchor"><span class="anchor-link"></span></a>Update</h2>
+<p><code>insert/update/delete</code>文を構築すると<code>update</code>メソッドを使用できるようになります。<code>update</code>メソッドはデータベースへの書き込み処理件数を返却します。</p>
+<pre class="prettyprint"><code class="language-scala 3">val insert = userQuery.insert((1L, &quot;name&quot;, None)).update // Int
+val update = userQuery.update(&quot;name&quot;, &quot;update name&quot;).update // Int
+val delete = userQuery.delete.update // Int
+</code></pre>
+<p><code>insert</code>文の場合データ挿入時にAutoIncrementで生成された値を返却させたい場合があります。その場合は<code>update</code>メソッドではなく<code>returning</code>メソッドを使用して返却したいカラムを指定します。</p>
+<pre class="prettyprint"><code class="language-scala 3">val insert = userQuery.insert((1L, &quot;name&quot;, None)).returning(&quot;id&quot;) // Long
+</code></pre>
+<p><code>returning</code>メソッドで指定する値はモデルが持つプロパティ名である必要があります。また、指定したプロパティがテーブル定義上でAutoIncrementの属性が設定されていなければエラーとなってしまいます。</p>
+<p>MySQLではデータ挿入時に返却できる値はAutoIncrementのカラムのみであるため、LDBCでも同じような仕様となっています。</p>
+<h2><a href="#データベース操作の実行" name="データベース操作の実行" class="anchor"><span class="anchor-link"></span></a>データベース操作の実行</h2>
+<p>データベース接続を行う前にコミットのタイミングや読み書き専用などの設定を行う必要があります。</p>
+<h3><a href="#読み取り専用" name="読み取り専用" class="anchor"><span class="anchor-link"></span></a>読み取り専用</h3>
+<p><code>readOnly</code>メソッドを使用することで実行するクエリの処理を読み込み専用にすることができます。<code>readOnly</code>メソッドは<code>insert/update/delete</code>文でも使用することができますが、書き込み処理を行うので実行時にエラーとなります。</p>
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.query.readOnly
+</code></pre>
+<h3><a href="#自動コミット" name="自動コミット" class="anchor"><span class="anchor-link"></span></a>自動コミット</h3>
+<p><code>autoCommit</code>メソッドを使用することで実行するクエリの処理をクエリ実行時ごとにコミットするように設定することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.insert((1L, &quot;name&quot;, None)).update.autoCommit
+</code></pre>
+<h3><a href="#トランザクション" name="トランザクション" class="anchor"><span class="anchor-link"></span></a>トランザクション</h3>
+<p><code>transaction</code>メソッドを使用することで複数のデータベース接続処理を1つのトランザクションにまとめることができます。</p>
+<p><code>toList/headOption/unsafe/returning/update</code>メソッドの戻り値は<code>Kleisli[F, Connection[F], T]</code>型となっています。そのためmapやflatMapを使用して処理を1つにまとめることができます。</p>
+<p>1つにまとめた<code>Kleisli[F, Connection[F], T]</code>に対して<code>transaction</code>メソッドを使用することで、中で行われる全てのデータベース接続処理は1つのトランザクションにまとめて実行されます。</p>
+<pre class="prettyprint"><code class="language-scala 3">(for
+  result1 &lt;- userQuery.insert((1L, &quot;name&quot;, None)).returning(&quot;id&quot;)
+  result2 &lt;- userQuery.update(&quot;name&quot;, &quot;update name&quot;).update
+  ...
+yield ...).transaction
+</code></pre>
+<h3><a href="#実行" name="実行" class="anchor"><span class="anchor-link"></span></a>実行</h3>
+<p>戻り値の型、接続方法の設定を行いましたがLDBCで構築された今までの処理は<code>Kleisli[F, XXX, T]</code>型となっているため定義を行なっただけではデータベース接続処理(副作用)は発生しません。 データベース処理を実行するためには<code>Kleisli</code>の<code>run</code>を実行する必要があります。</p>
+<p><code>readOnly/autoCommit/transaction</code>メソッドを使用すると戻り値の型は<code>Kleisli[F, DataSource, T]</code>となるためJDBCのDataSourceを<code>run</code>に渡すことで戻り値の型を<code>F</code>に持ち上げることができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource) // F[User]
+</code></pre>
+<p>Cats Effect IOを使用している場合は、<code>IOApp</code>内で実行を行うか<code>unsafeRunSync</code>などを使用することでデータベース接続処理を実行することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+</code></pre>
+<p><code>Kleisli</code>に関してはCatsの<a href="https://typelevel.org/cats/datatypes/kleisli.html">ドキュメント</a>を参照してください。</p>
+<h2><a href="#database-action" name="database-action" class="anchor"><span class="anchor-link"></span></a>Database Action</h2>
+<p>データベース処理を実行する方法としてデータベースへの接続情報を持った<code>Database</code>を使用して行う方法も存在します。</p>
+<p><code>Database</code>を構築する方法はDriverManagerを使用した方法と、DataSourceから生成する方法の2種類があります。以下はMySQLのドライバーを使用してデータベースへの接続情報を持った<code>Database</code>を構築する例です。</p>
+<pre class="prettyprint"><code class="language-scala 3">val db = Database.fromMySQLDriver[IO](&quot;database name&quot;, &quot;host&quot;, &quot;port number&quot;, &quot;user name&quot;, &quot;password&quot;)
+</code></pre>
+<p><code>Database</code>を使用してデータベース処理を実行するメリットは以下になります。</p>
+<ul>
+  <li>DataSourceの構築を簡略できる (DriverManagerを使用した場合)</li>
+  <li>クエリごとにDataSourceを受け渡す必要がなくなる</li>
+</ul>
+<p><code>Database</code>を使用する方法は、DataSourceを受け渡す方法を簡略化しただけにすぎないため、どちらを使用しても実行結果に差が出ることはありません。 <code>flatMap</code>などで処理を結合しメソッドチェーンで実行するか、結合した処理を<code>Database</code>を使用して実行するかの違いでしかありません。そのため実行方法はユーザーの好きの方法を選択できます。</p>
+<p><strong>Read Only</strong></p>
+<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = db.readOnly(userQuery.selectAll.query[User].headOption).unsafeRunSync()
+</code></pre>
+<p><strong>Auto Commit</strong></p>
+<pre class="prettyprint"><code class="language-scala 3">val result = db.autoCommit(userQuery.insert((1L, &quot;name&quot;, None)).update).unsafeRunSync()
+</code></pre>
+<p><strong>Transaction</strong></p>
+<pre class="prettyprint"><code class="language-scala 3">db.transaction(for
+  result1 &lt;- userQuery.insert((1L, &quot;name&quot;, None)).returning(&quot;id&quot;)
+  result2 &lt;- userQuery.update(&quot;name&quot;, &quot;update name&quot;).update
+  ...
+yield ...).unsafeRunSync()
+</code></pre>
+<h3><a href="#database-model" name="database-model" class="anchor"><span class="anchor-link"></span></a>Database model</h3>
+<p>LDBCでは<code>Database</code>モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては<a href="/ja/06-Generating-SchemaSPY-Documentation.html">こちら</a>を参照してください。</p>
+<p>すでに<code>Database</code>モデルを別の用途で生成している場合は、そのモデルを使用してデータベースの接続情報を持った<code>Database</code>を構築することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">import ldbc.dsl.io.*
+
+val database: Database = ???
+
+val db = database.fromDriverManager()
+// or
+val db = database.fromDriverManager(&quot;user name&quot;, &quot;password&quot;)
+</code></pre>
+<h2><a href="#hikaricpコネクションプールの使用" name="hikaricpコネクションプールの使用" class="anchor"><span class="anchor-link"></span></a>HikariCPコネクションプールの使用</h2>
+<p><code>ldbc-hikari</code>は、HikariCP接続プールを構築するためのHikariConfigおよびHikariDataSourceを構築するためのビルダーを提供します。</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
+  &quot;com.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
+)
+</code></pre>
+<p><code>HikariConfigBuilder</code>は名前の通りHikariCPの<code>HikariConfig</code>を構築するためのビルダーです。</p>
+<pre class="prettyprint"><code class="language-scala 3">val hikariConfig: com.zaxxer.hikari.HikariConfig = HikariConfigBuilder.default.build()
+</code></pre>
+<p><code>HikariConfigBuilder</code>には<code>default</code>と<code>from</code>メソッドがあり<code>default</code>を使用した場合、LDBC指定のパスを元にConfigから対象の値を取得して<code>HikariConfig</code>の構築を行います。</p>
+<pre class="prettyprint"><code class="nocode">ldbc.hikari {
+  jdbc_url = ...
+  username = ...
+  password = ...
+}
+</code></pre>
+<p>ユーザー独自のパスを指定したい場合は<code>from</code>メソッドを使用して引数に取得したいパスを渡す必要があります。</p>
+<pre class="prettyprint"><code class="language-scala 3">val hikariConfig: com.zaxxer.hikari.HikariConfig = HikariConfigBuilder.from(&quot;custom.path&quot;).build()
+
+// custom.path {
+//   jdbc_url = ...
+//   username = ...
+//   password = ...
+// }
+</code></pre>
+<p>HikariCPに設定できる内容は<a href="https://github.com/brettwooldridge/HikariCP">公式</a>を参照してください。</p>
+<p>Configに設定できるキーの一覧は以下になります。</p>
+<table>
+  <thead>
+    <tr>
+      <th>キー名 </th>
+      <th>説明 </th>
+      <th>型 </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>catalog </td>
+      <td>接続時に設定するデフォルトのカタログ名 </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>connection_timeout </td>
+      <td>クライアントがプールからの接続を待機する最大ミリ秒数 </td>
+      <td>Duration </td>
+    </tr>
+    <tr>
+      <td>idle_timeout </td>
+      <td>接続がプール内でアイドル状態であることを許可される最大時間 (ミリ秒単位) </td>
+      <td>Duration </td>
+    </tr>
+    <tr>
+      <td>leak_detection_threshold </td>
+      <td>接続漏れの可能性を示すメッセージがログに記録されるまでに、接続がプールから外れる時間 </td>
+      <td>Duration </td>
+    </tr>
+    <tr>
+      <td>maximum_pool_size </td>
+      <td>アイドル接続と使用中の接続の両方を含め、プールが許容する最大サイズ </td>
+      <td>Int </td>
+    </tr>
+    <tr>
+      <td>max_lifetime </td>
+      <td>プール内の接続の最大寿命 </td>
+      <td>Duration </td>
+    </tr>
+    <tr>
+      <td>minimum_idle </td>
+      <td>アイドル接続と使用中接続の両方を含め、HikariCPがプール内に維持しようとするアイドル接続の最小数 </td>
+      <td>Int </td>
+    </tr>
+    <tr>
+      <td>pool_name </td>
+      <td>接続プールの名前 </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>allow_pool_suspension </td>
+      <td>プール・サスペンドを許可するかどうか </td>
+      <td>Boolean </td>
+    </tr>
+    <tr>
+      <td>auto_commit </td>
+      <td>プール内の接続のデフォルトの自動コミット動作 </td>
+      <td>Boolean </td>
+    </tr>
+    <tr>
+      <td>connection_init_sql </td>
+      <td>新しい接続が作成されたときに、その接続がプールに追加される前に実行されるSQL文字列 </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>connection_test_query </td>
+      <td>接続の有効性をテストするために実行する SQL クエリ </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>data_source_classname </td>
+      <td>Connections の作成に使用する JDBC DataSourceの完全修飾クラス名 </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>initialization_fail_timeout </td>
+      <td>プール初期化の失敗タイムアウト </td>
+      <td>Duration </td>
+    </tr>
+    <tr>
+      <td>isolate_internal_queries </td>
+      <td>内部プール・クエリ (主に有効性チェック)を、<code>Connection.rollback()</code>によって独自のトランザクションで分離するかどうか </td>
+      <td>Boolean </td>
+    </tr>
+    <tr>
+      <td>jdbc_url </td>
+      <td>JDBCのURL </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>readonly </td>
+      <td>プールに追加する接続を読み取り専用接続として設定するかどうか </td>
+      <td>Boolean </td>
+    </tr>
+    <tr>
+      <td>register_mbeans </td>
+      <td>HikariCPがJMXにHikariConfigMXBeanとHikariPoolMXBeanを自己登録するかどうか </td>
+      <td>Boolean </td>
+    </tr>
+    <tr>
+      <td>schema </td>
+      <td>接続時に設定するデフォルトのスキーマ名 </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>username </td>
+      <td><code>DataSource.getConnection(username,password)</code>の呼び出しに使用されるデフォルトのユーザ名 </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>password </td>
+      <td><code>DataSource.getConnection(username,password)</code>の呼び出しに使用するデフォルトのパスワード </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>driver_class_name </td>
+      <td>使用するDriverのクラス名 </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>transaction_isolation </td>
+      <td>デフォルトのトランザクション分離レベル </td>
+      <td>String </td>
+    </tr>
+  </tbody>
+</table>
+<p><code>HikariDataSourceBuilder</code>を使用することで、HikariCPの<code>HikariDataSource</code>を構築することができます。</p>
+<p>接続プールはライフタイムで管理されるオブジェクトでありきれいにシャットダウンする必要があるため、ビルダーによって構築された<code>HikariDataSource</code>は<code>Resource</code>として管理されます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val dataSource: Resource[IO, HikariDataSource] = HikariDataSourceBuilder.default[IO].buildDataSource()
+</code></pre>
+<p><code>buildDataSource</code>経由で構築された<code>HikariDataSource</code>は、内部でLDBC指定のパスを元にConfigから設定を取得し構築された<code>HikariConfig</code>を使用しています。 これは<code>HikariConfigBuilder</code>の<code>default</code>経由で生成された<code>HikariConfig</code>と同等のものです。</p>
+<p>もしユーザー指定の<code>HikariConfig</code>を使用したい場合は、<code>buildFromConfig</code>を使用することで<code>HikariDataSource</code>を構築することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val hikariConfig = ???
+val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfig)
+</code></pre>
+<p><code>HikariDataSourceBuilder</code>を使用して構築された<code>HikariDataSource</code>は通常IOAppを使用して実行します。</p>
+<pre class="prettyprint"><code class="language-scala 3">object HikariApp extends IOApp:
+
+  val dataSourceResource: Resource[IO, HikariDataSource] = HikariDataSourceBuilder.default[IO].buildDataSource()
+
+  def run(args: List[String]): IO[ExitCode] =
+    dataSourceResource.use { dataSource =&gt;
+       ...
+    }
+</code></pre>
+<h3><a href="#hikaridatabase" name="hikaridatabase" class="anchor"><span class="anchor-link"></span></a>HikariDatabase</h3>
+<p>HikariCPのコネクション情報を持った<code>Database</code>を構築する方法も存在します。</p>
+<p><code>HikariDatabase</code>は<code>HikariDataSource</code>と同様に<code>Resource</code>として管理されます。 そのため通常はIOAppを使用して実行します。</p>
+<pre class="prettyprint"><code class="language-scala 3">object HikariApp extends IOApp:
+
+  val hikariConfig = ???
+  val databaseResource: Resource[F, Database[F]] = HikariDatabase.fromHikariConfig[IO](hikariConfig)
+
+  def run(args: List[String]): IO[ExitCode] =
+    databaseResource.use { database =&gt;
+       for
+         result &lt;- database.readOnly(...)
+        yield ExitCode.Success
+    }
+</code></pre>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/ja/04-Database-Connection.md">here</a>.
+</div>
+
+<div class="nav-next">
+<p><strong>Next:</strong> <a href="../ja/05-Plain-SQL-Queries.html">プレーンなSQLクエリ</a></p>
+</div>
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/04-Database-Connection.html#データベース接続" class="header">データベース接続</a>
+  <ul>
+    <li><a href="../ja/04-Database-Connection.html#datasourceの使用" class="header">DataSourceの使用</a></li>
+    <li><a href="../ja/04-Database-Connection.html#ログ" class="header">ログ</a></li>
+    <li><a href="../ja/04-Database-Connection.html#query" class="header">Query</a></li>
+    <li><a href="../ja/04-Database-Connection.html#update" class="header">Update</a></li>
+    <li><a href="../ja/04-Database-Connection.html#データベース操作の実行" class="header">データベース操作の実行</a></li>
+    <li><a href="../ja/04-Database-Connection.html#database-action" class="header">Database Action</a></li>
+    <li><a href="../ja/04-Database-Connection.html#hikaricpコネクションプールの使用" class="header">HikariCPコネクションプールの使用</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2023</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0-SNAPSHOT', 'https://github.com/takapi327/ldbc')});</script>
+
+
+</html>
