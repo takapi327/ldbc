@@ -18,9 +18,10 @@ object Dependencies {
   val circeYaml = "io.circe" %% "circe-yaml" % "0.15.1"
   val circeGeneric = "io.circe" %% "circe-generic" % "0.14.6"
 
-  val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
+  val mysqlVersion = "8.0.33"
+  val mysql = "mysql" % "mysql-connector-java" % mysqlVersion
 
-  val mysql = "mysql" % "mysql-connector-java" % "8.0.33"
+  val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
 
   val hikariCP = "com.zaxxer" % "HikariCP" % "5.0.1"
 

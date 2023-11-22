@@ -1,7 +1,7 @@
 # LDBC
 
 <div align="center">
-  <img src="./lepus_logo.png">
+  <img src="./img/lepus_logo.png">
 </div>
 
 <div align="center">
@@ -24,8 +24,8 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 ## Documentation
 
-- [English](https://takapi327.github.io/ldbc/en/index.html)
-- [Japanese](https://takapi327.github.io/ldbc/ja/index.html)
+- [English](/ldbc/en/index.html)
+- [Japanese](/ldbc/ja/index.html)
 
 ## Contributing
 

@@ -7,3 +7,6 @@
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.15.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
 addSbtPlugin("com.github.sbt" % "sbt-release" % "1.1.0")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.7" )
+addSbtPlugin("com.github.sbt" % "sbt-site-paradox" % "1.5.0")
+addSbtPlugin("com.github.sbt" % "sbt-ghpages" % "0.8.0")

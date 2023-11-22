@@ -18,77 +18,106 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 
-lazy val LdbcCoreProject = LepusSbtProject("Ldbc-Core", "core")
+lazy val core = LepusSbtProject("Ldbc-Core", "core")
   .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
   .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
 
-lazy val LdbcSqlProject = LepusSbtProject("Ldbc-Sql", "module/ldbc-sql")
-  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
-  .dependsOn(LdbcCoreProject)
+lazy val sql = LepusSbtProject("Ldbc-Sql", "module/ldbc-sql")
+  .settings(scalaVersion := (core / scalaVersion).value)
+  .dependsOn(core)
 
-lazy val LdbcQueryBuilderProject = LepusSbtProject("Ldbc-Query-Builder", "module/ldbc-query-builder")
-  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+lazy val queryBuilder = LepusSbtProject("Ldbc-Query-Builder", "module/ldbc-query-builder")
+  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies += scalaTest)
-  .dependsOn(LdbcSqlProject)
+  .dependsOn(sql)
 
-lazy val LdbcDslProject = LepusSbtProject("Ldbc-Dsl", "module/ldbc-dsl")
-  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+lazy val dsl = LepusSbtProject("Ldbc-Dsl", "module/ldbc-dsl")
+  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
     catsEffect,
     mockito,
     scalaTest,
     mysql % Test
   ) ++ specs2)
-  .dependsOn(LdbcQueryBuilderProject)
+  .dependsOn(queryBuilder)
 
-lazy val LdbcSchemaSpyProject = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
-  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+lazy val schemaSpy = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
+  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies += schemaspy)
-  .dependsOn(LdbcCoreProject)
+  .dependsOn(core)
 
-lazy val LdbcCodegenProject = LepusSbtProject("Ldbc-Codegen", "module/ldbc-codegen")
-  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+lazy val codegen = LepusSbtProject("Ldbc-Codegen", "module/ldbc-codegen")
+  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
-  .dependsOn(LdbcCoreProject)
+  .dependsOn(core)
 
-lazy val LdbcHikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
-  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+lazy val hikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
+  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
     catsEffect,
     typesafeConfig,
     hikariCP
   ) ++ specs2)
-  .dependsOn(LdbcDslProject)
+  .dependsOn(dsl)
 
-lazy val LdbcPluginProject = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
+lazy val plugin = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
       version      = version.value,
-      scalaVersion = (LdbcCoreProject / scalaVersion).value,
+      scalaVersion = (core / scalaVersion).value,
       sbtVersion   = sbtVersion.value,
       dir          = (Compile / sourceManaged).value
     )
   }.taskValue)
 
-lazy val coreProjects: Seq[ProjectReference] = Seq(
-  LdbcCoreProject
+lazy val docs = (project in file("docs"))
+  .settings(
+    scalaVersion := (core / scalaVersion).value,
+    scalacOptions := Nil,
+    publish / skip := true,
+    mdocIn := baseDirectory.value / "src" / "main" / "mdoc",
+    paradoxTheme := Some(builtinParadoxTheme("generic")),
+    paradoxProperties ++= Map(
+      "org"          -> organization.value,
+      "scalaVersion" -> scalaVersion.value,
+      "version"      -> version.value.replace("-SNAPSHOT", ""),
+      "mysqlVersion" -> mysqlVersion
+    ),
+    Compile / paradox / sourceDirectory := mdocOut.value,
+    Compile / paradoxRoots := List("index.html", "en/index.html", "ja/index.html"),
+    makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
+    git.remoteRepo := "git@github.com:takapi327/ldbc.git",
+    ghpagesNoJekyll := true,
+  )
+  .settings(commonSettings)
+  .dependsOn(
+    core,
+    sql,
+    dsl,
+    queryBuilder,
+    schemaSpy,
+    codegen,
+    hikari
+  )
+  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin)
+
+lazy val projects: Seq[ProjectReference] = Seq(
+  core,
+  plugin,
+  docs
 )
 
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
-  LdbcSqlProject,
-  LdbcDslProject,
-  LdbcQueryBuilderProject,
-  LdbcSchemaSpyProject,
-  LdbcCodegenProject,
-  LdbcHikari
+  sql,
+  dsl,
+  queryBuilder,
+  schemaSpy,
+  codegen,
+  hikari
 )
 
-lazy val pluginProjects: Seq[ProjectReference] = Seq(
-  LdbcPluginProject
-)
-
-lazy val Ldbc = Project("Ldbc", file("."))
-  .settings(scalaVersion := (LdbcCoreProject / scalaVersion).value)
+lazy val ldbc = Project("Ldbc", file("."))
+  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(publish / skip := true)
-  .settings(commonSettings: _*)
-  .aggregate((coreProjects ++ moduleProjects ++ pluginProjects): _*)
+  .settings(commonSettings)
+  .aggregate((projects ++ moduleProjects): _*)
