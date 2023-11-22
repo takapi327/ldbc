@@ -19,7 +19,7 @@ Most of our application development involves the use of databases.<br>One way to
 - Functional DSL (slick, quill, zio-sql)
 - SQL string interpolator (Anorm, doobie)
 
-LDBC, also a JDBC-wrapped library, is a Scala 3 library that combines aspects of each, providing a type-safe, refactorable SQL interface that can express all SQL expressions on a MySQL database.
+LDBC, also a JDBC-wrapped library, is a Scala 3 library that combines aspects of each, providing a type-safe, refactorable SQL interface that can express SQL expressions on a MySQL database.
 
 The concept of LDBC also allows development to centralize Scala models, sql schemas, and documents by using LDBC to manage a single resource.
 
