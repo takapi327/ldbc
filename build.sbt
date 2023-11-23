@@ -18,17 +18,17 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 
-lazy val core = LepusSbtProject("Ldbc-Core", "core")
+lazy val core = LepusSbtProject("ldbc-core", "core")
   .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
 
-lazy val sql = LepusSbtProject("Ldbc-Sql", "module/ldbc-sql")
+lazy val sql = LepusSbtProject("ldbc-sql", "module/ldbc-sql")
   .dependsOn(core)
 
-lazy val queryBuilder = LepusSbtProject("Ldbc-Query-Builder", "module/ldbc-query-builder")
+lazy val queryBuilder = LepusSbtProject("ldbc-query-builder", "module/ldbc-query-builder")
   .settings(libraryDependencies += scalaTest)
   .dependsOn(sql)
 
-lazy val dsl = LepusSbtProject("Ldbc-Dsl", "module/ldbc-dsl")
+lazy val dsl = LepusSbtProject("ldbc-dsl", "module/ldbc-dsl")
   .settings(libraryDependencies ++= Seq(
     catsEffect,
     mockito,
@@ -37,15 +37,15 @@ lazy val dsl = LepusSbtProject("Ldbc-Dsl", "module/ldbc-dsl")
   ) ++ specs2)
   .dependsOn(queryBuilder)
 
-lazy val schemaSpy = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
+lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(libraryDependencies += schemaspy)
   .dependsOn(core)
 
-lazy val codegen = LepusSbtProject("Ldbc-Codegen", "module/ldbc-codegen")
+lazy val codegen = LepusSbtProject("ldbc-codegen", "module/ldbc-codegen")
   .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
   .dependsOn(core)
 
-lazy val hikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
+lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(libraryDependencies ++= Seq(
     catsEffect,
     typesafeConfig,
@@ -53,7 +53,7 @@ lazy val hikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
   ) ++ specs2)
   .dependsOn(dsl)
 
-lazy val plugin = LepusSbtPluginProject("Ldbc-Plugin", "plugin")
+lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
       version      = version.value,
@@ -109,7 +109,7 @@ lazy val moduleProjects: Seq[ProjectReference] = Seq(
   hikari
 )
 
-lazy val ldbc = Project("Ldbc", file("."))
+lazy val ldbc = project.in(file("."))
   .settings(scalaVersion := (core / scalaVersion).value)
   .settings(publish / skip := true)
   .settings(commonSettings)
