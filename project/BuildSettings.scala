@@ -69,7 +69,7 @@ object BuildSettings {
   def commonSettings: Seq[Setting[_]] = Def.settings(
     organization := "com.github.takapi327",
     startYear    := Some(2023),
-    homepage     := Some(url(s"https://github.com/takapi327/ldbc")),
+    homepage     := Some(url("https://takapi327.github.io/ldbc/")),
     licenses     := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
     Test / fork  := true,
     run / fork   := true,
