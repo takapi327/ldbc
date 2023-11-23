@@ -4,13 +4,13 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import ScalaVersions._
-import JavaVersions._
-import BuildSettings._
-import Dependencies._
-import Workflows._
+import ScalaVersions.*
+import JavaVersions.*
+import BuildSettings.*
+import Dependencies.*
+import Workflows.*
 
-ThisBuild / crossScalaVersions         := Seq(scala3)
+ThisBuild / crossScalaVersions := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin(java11))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(

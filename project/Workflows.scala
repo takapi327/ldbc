@@ -4,15 +4,15 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import sbt._
+import sbt.*
 
-import sbtghactions.GenerativePlugin.autoImport._
+import sbtghactions.GenerativePlugin.autoImport.*
 
-import ScalaVersions._
-import JavaVersions._
+import ScalaVersions.*
+import JavaVersions.*
 
 object Workflows {
-  val scalaFmt = Def.setting(
+  val scalaFmt: Def.Initialize[WorkflowJob] = Def.setting(
     WorkflowJob(
       "scalafmt",
       "Scalafmt",
@@ -27,7 +27,7 @@ object Workflows {
     )
   )
 
-  val sbtScripted = Def.setting(
+  val sbtScripted: Def.Initialize[WorkflowJob] = Def.setting(
     WorkflowJob(
       "sbtScripted",
       "sbt scripted",
@@ -46,12 +46,12 @@ object Workflows {
     )
   )
 
-  val dockerRun = WorkflowStep.Run(
+  val dockerRun: WorkflowStep.Run = WorkflowStep.Run(
     commands = List("docker compose up -d"),
     name = Some("Start up MySQL on Docker"),
   )
 
-  val dockerStop = WorkflowStep.Run(
+  val dockerStop: WorkflowStep.Run = WorkflowStep.Run(
     commands = List("docker compose down"),
     name = Some("Stop MySQL on Docker"),
   )
