@@ -67,7 +67,7 @@ object BuildSettings {
 
   /** These settings are used by all projects. */
   def commonSettings: Seq[Setting[_]] = Def.settings(
-    organization := "com.github.takapi327",
+    organization := "org.takapi327",
     startYear    := Some(2023),
     homepage     := Some(url("https://takapi327.github.io/ldbc/")),
     licenses     := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
