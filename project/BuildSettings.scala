@@ -80,6 +80,7 @@ object BuildSettings {
   object LepusSbtProject {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
+        .settings(scalaVersion := scala3)
         .settings(scalacOptions ++= scala3Settings)
         .settings(commonSettings)
         .settings(publishSettings)

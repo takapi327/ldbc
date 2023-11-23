@@ -19,20 +19,16 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 
 lazy val core = LepusSbtProject("Ldbc-Core", "core")
-  .settings(scalaVersion := sys.props.get("scala.version").getOrElse(scala3))
   .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
 
 lazy val sql = LepusSbtProject("Ldbc-Sql", "module/ldbc-sql")
-  .settings(scalaVersion := (core / scalaVersion).value)
   .dependsOn(core)
 
 lazy val queryBuilder = LepusSbtProject("Ldbc-Query-Builder", "module/ldbc-query-builder")
-  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies += scalaTest)
   .dependsOn(sql)
 
 lazy val dsl = LepusSbtProject("Ldbc-Dsl", "module/ldbc-dsl")
-  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
     catsEffect,
     mockito,
@@ -42,17 +38,14 @@ lazy val dsl = LepusSbtProject("Ldbc-Dsl", "module/ldbc-dsl")
   .dependsOn(queryBuilder)
 
 lazy val schemaSpy = LepusSbtProject("Ldbc-SchemaSpy", "module/ldbc-schemaspy")
-  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies += schemaspy)
   .dependsOn(core)
 
 lazy val codegen = LepusSbtProject("Ldbc-Codegen", "module/ldbc-codegen")
-  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
   .dependsOn(core)
 
 lazy val hikari = LepusSbtProject("Ldbc-Hikari", "module/ldbc-hikari")
-  .settings(scalaVersion := (core / scalaVersion).value)
   .settings(libraryDependencies ++= Seq(
     catsEffect,
     typesafeConfig,
