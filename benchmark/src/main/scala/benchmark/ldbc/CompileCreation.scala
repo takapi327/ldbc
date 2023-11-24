@@ -31,8 +31,8 @@ class CompileCreation:
     source =
       s"""
          |import ldbc.core.*
-         |import benchmark.ldbc.Table$size
-         |val table = Table[Table$size](\"table$size\")(
+         |import benchmark.Model$size
+         |val table = Table[Model$size](\"model$size\")(
          |  $columns
          |)
          |""".stripMargin

@@ -10,6 +10,8 @@ import org.openjdk.jmh.annotations.*
 
 import ldbc.core.*
 
+import benchmark.Model25
+
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 10, time = 200, timeUnit = TimeUnit.MILLISECONDS)
@@ -17,7 +19,7 @@ import ldbc.core.*
 @State(Scope.Thread)
 class FieldAccess:
 
-  var table = Table[Table25]("table25")(
+  var table = Table[Model25]("model25")(
     column("p1", INT),
     column("p2", INT),
     column("p3", INT),

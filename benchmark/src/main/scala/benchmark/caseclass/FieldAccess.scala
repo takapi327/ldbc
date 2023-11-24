@@ -8,6 +8,8 @@ import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 
+import benchmark.Model25
+
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Warmup(iterations = 10, time = 200, timeUnit = TimeUnit.MILLISECONDS)
@@ -15,105 +17,105 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class FieldAccess:
 
-  var model = Model(
-    p1 = 1,
-    p2 = 2,
-    p3 = 3,
-    p4 = 4,
-    p5 = 5,
-    p6 = 6,
-    p7 = 7,
-    p8 = 8,
-    p9 = 9,
-    p10 = 10,
-    p11 = 11,
-    p12 = 12,
-    p13 = 13,
-    p14 = 14,
-    p15 = 15,
-    p16 = 16,
-    p17 = 17,
-    p18 = 18,
-    p19 = 19,
-    p20 = 20,
-    p21 = 21,
-    p22 = 22,
-    p23 = 23,
-    p24 = 24,
-    p25 = 25,
+  var model = Model25(
+    c1 = 1,
+    c2 = 2,
+    c3 = 3,
+    c4 = 4,
+    c5 = 5,
+    c6 = 6,
+    c7 = 7,
+    c8 = 8,
+    c9 = 9,
+    c10 = 10,
+    c11 = 11,
+    c12 = 12,
+    c13 = 13,
+    c14 = 14,
+    c15 = 15,
+    c16 = 16,
+    c17 = 17,
+    c18 = 18,
+    c19 = 19,
+    c20 = 20,
+    c21 = 21,
+    c22 = 22,
+    c23 = 23,
+    c24 = 24,
+    c25 = 25,
   )
 
   @Benchmark
-  def accessP1 = model.p1
+  def accessC1 = model.c1
 
   @Benchmark
-  def accessP2 = model.p2
+  def accessC2 = model.c2
 
   @Benchmark
-  def accessP3 = model.p3
+  def accessC3 = model.c3
 
   @Benchmark
-  def accessP4 = model.p4
+  def accessC4 = model.c4
 
   @Benchmark
-  def accessP5 = model.p5
+  def accessC5 = model.c5
 
   @Benchmark
-  def accessP6 = model.p6
+  def accessC6 = model.c6
 
   @Benchmark
-  def accessP7 = model.p7
+  def accessC7 = model.c7
 
   @Benchmark
-  def accessP8 = model.p8
+  def accessC8 = model.c8
 
   @Benchmark
-  def accessP9 = model.p9
+  def accessC9 = model.c9
 
   @Benchmark
-  def accessP10 = model.p10
+  def accessC10 = model.c10
 
   @Benchmark
-  def accessP11 = model.p11
+  def accessC11 = model.c11
 
   @Benchmark
-  def accessP12 = model.p12
+  def accessC12 = model.c12
 
   @Benchmark
-  def accessP13 = model.p13
+  def accessC13 = model.c13
 
   @Benchmark
-  def accessP14 = model.p14
+  def accessC14 = model.c14
 
   @Benchmark
-  def accessP15 = model.p15
+  def accessC15 = model.c15
 
   @Benchmark
-  def accessP16 = model.p16
+  def accessC16 = model.c16
 
   @Benchmark
-  def accessP17 = model.p17
+  def accessC17 = model.c17
 
   @Benchmark
-  def accessP18 = model.p18
+  def accessC18 = model.c18
 
   @Benchmark
-  def accessP19 = model.p19
+  def accessC19 = model.c19
 
   @Benchmark
-  def accessP20 = model.p20
+  def accessC20 = model.c20
 
   @Benchmark
-  def accessP21 = model.p21
+  def accessC21 = model.c21
 
   @Benchmark
-  def accessP22 = model.p22
+  def accessC22 = model.c22
 
   @Benchmark
-  def accessP23 = model.p23
+  def accessC23 = model.c23
 
   @Benchmark
-  def accessP24 = model.p24
+  def accessC24 = model.c24
 
   @Benchmark
-  def accessP25 = model.p25
+  def accessC25 = model.c25
