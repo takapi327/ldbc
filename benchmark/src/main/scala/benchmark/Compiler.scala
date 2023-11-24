@@ -2,12 +2,12 @@
  * distributed with this source code.
  */
 
-package ldbc.benchmark
-
-import java.io.{ ByteArrayOutputStream, PrintStream }
+package benchmark
 
 import dotty.tools.dotc.core.Contexts.inContext
-import dotty.tools.repl.{ State, ParseResult, Parsed, Command, ReplDriver as DottyReplDriver }
+import dotty.tools.repl.{Command, ParseResult, Parsed, State, ReplDriver as DottyReplDriver}
+
+import java.io.{ByteArrayOutputStream, PrintStream}
 
 class Compiler:
 
