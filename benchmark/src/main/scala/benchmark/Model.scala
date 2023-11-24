@@ -2,13 +2,13 @@
  * distributed with this source code.
  */
 
-package benchmark.ldbc
+package benchmark
 
-case class Table1(
+case class Model1(
   c1: Int
 )
 
-case class Table5(
+case class Model5(
   c1: Int,
   c2: Int,
   c3: Int,
@@ -16,7 +16,7 @@ case class Table5(
   c5: Int,
 )
 
-case class Table10(
+case class Model10(
   c1: Int,
   c2: Int,
   c3: Int,
@@ -29,7 +29,7 @@ case class Table10(
   c10: Int,
 )
 
-case class Table20(
+case class Model20(
   c1: Int,
   c2: Int,
   c3: Int,
@@ -52,7 +52,7 @@ case class Table20(
   c20: Int,
 )
 
-case class Table25(
+case class Model25(
   c1: Int,
   c2: Int,
   c3: Int,
