@@ -77,7 +77,11 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(scalacOptions ++= scala3Settings)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .settings(libraryDependencies += scala3Compiler)
+  .settings(libraryDependencies ++= Seq(
+    scala3Compiler,
+    mysql,
+    doobie
+  ))
   .dependsOn(dsl)
   .enablePlugins(JmhPlugin)
 
