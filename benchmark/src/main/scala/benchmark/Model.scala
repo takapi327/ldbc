@@ -79,3 +79,11 @@ case class Model25(
   c24: Int,
   c25: Int,
 )
+
+case class City(
+  id:          Int,
+  name:        String,
+  countryCode: String,
+  district:    String,
+  population:  Int
+)
