@@ -6,68 +6,45 @@ package benchmark.jdbc
 
 import java.util.concurrent.TimeUnit
 
+import scala.util.Using
+
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
+@State(Scope.Benchmark)
 class Select:
 
-  @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements", "org.wartremover.warts.While"))
-  def selectN(num: Int): Int =
-    val connection = Select.dataSource.getConnection
-    try {
-      connection.setAutoCommit(false)
-      val statement = connection.prepareStatement("SELECT ID, Name, CountryCode FROM city LIMIT ?")
-      try {
-        statement.setInt(1, num)
-        val resultSet = statement.executeQuery()
-        try {
-          val records = List.newBuilder[(Int, String, String)]
-          while (resultSet.next()) {
-            val code = resultSet.getInt(1)
-            resultSet.wasNull()
-            val name = resultSet.getString(2)
-            resultSet.wasNull()
-            val region = resultSet.getString(3)
-            resultSet.wasNull()
-            records += ((code, name, region))
-          }
-          records.result().length
-        } finally resultSet.close()
-      } finally statement.close()
-    } finally {
-      connection.commit()
-      connection.close()
-    }
+  @volatile
+  var dataSource: MysqlDataSource = _
+
+  @Setup
+  def setupDataSource(): Unit =
+    dataSource = new MysqlDataSource()
+    dataSource.setServerName("127.0.0.1")
+    dataSource.setPortNumber(13306)
+    dataSource.setDatabaseName("world")
+    dataSource.setUser("ldbc")
+    dataSource.setPassword("password")
+
+  @Param(Array("10", "100", "1000", "2000", "4000"))
+  var len: Int = _
 
   @Benchmark
-  @OperationsPerInvocation(10)
-  def select10: Int = selectN(10)
-
-  @Benchmark
-  @OperationsPerInvocation(100)
-  def select100: Int = selectN(100)
-
-  @Benchmark
-  @OperationsPerInvocation(1000)
-  def select1000: Int = selectN(1000)
-
-  @Benchmark
-  @OperationsPerInvocation(2000)
-  def select2000: Int = selectN(2000)
-
-  @Benchmark
-  @OperationsPerInvocation(4000)
-  def select4000: Int = selectN(4000)
-
-object Select:
-
-  @State(Scope.Benchmark)
-  val dataSource = new MysqlDataSource()
-  dataSource.setServerName("127.0.0.1")
-  dataSource.setPortNumber(13306)
-  dataSource.setDatabaseName("world")
-  dataSource.setUser("ldbc")
-  dataSource.setPassword("password")
+  def selectN: Int =
+    Using.Manager { use =>
+      val connection = use(dataSource.getConnection)
+      val statement = use(connection.prepareStatement("SELECT ID, Name, CountryCode FROM city LIMIT ?"))
+      statement.setInt(1, len)
+      val resultSet = use(statement.executeQuery())
+      val records = List.newBuilder[(Int, String, String)]
+      while (resultSet.next()) {
+        val code = resultSet.getInt(1)
+        val name = resultSet.getString(2)
+        val region = resultSet.getString(3)
+        records += ((code, name, region))
+      }
+      records.result().length
+    }.getOrElse(throw new RuntimeException("Error during database operation"))
