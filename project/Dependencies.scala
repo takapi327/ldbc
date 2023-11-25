@@ -26,8 +26,10 @@ object Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
 
   val hikariCP = "com.zaxxer" % "HikariCP" % "5.0.1"
-  
+
   val scala3Compiler = "org.scala-lang" %% "scala3-compiler" % scala3
+
+  val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC4"
 
   val specs2Version = "5.4.0"
   val specs2: Seq[ModuleID] = Seq(
