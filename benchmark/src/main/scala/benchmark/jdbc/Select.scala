@@ -33,7 +33,7 @@ class Select:
   var len: Int = _
 
   @Benchmark
-  def selectN: Int =
+  def selectN: List[(Int, String, String)] =
     Using.Manager { use =>
       val connection = use(dataSource.getConnection)
       val statement = use(connection.prepareStatement("SELECT ID, Name, CountryCode FROM city LIMIT ?"))
@@ -46,5 +46,5 @@ class Select:
         val region = resultSet.getString(3)
         records += ((code, name, region))
       }
-      records.result().length
+      records.result()
     }.getOrElse(throw new RuntimeException("Error during database operation"))
