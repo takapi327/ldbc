@@ -11,7 +11,7 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
-import ldbc.dsl.{SQL, ConnectionProvider}
+import ldbc.dsl.{ SQL, ConnectionProvider }
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 /** Trait for giving database connection information to SQL.

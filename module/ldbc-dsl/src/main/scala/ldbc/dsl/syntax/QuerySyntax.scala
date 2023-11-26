@@ -19,7 +19,8 @@ import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Sync]:
 
-  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true) extends ConnectionProvider[F]:
+  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true)
+    extends ConnectionProvider[F]:
 
     /** Methods for returning an array of data to be retrieved from the database.
       */
