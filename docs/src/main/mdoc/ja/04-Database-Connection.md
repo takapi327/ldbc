@@ -114,37 +114,29 @@ def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
 
 ## Query
 
-`select`文を構築すると`query`メソッドを使用できるようになります。`query`メソッドは取得後のデータ形式を決定するために使用します。特段何も型を指定しない場合は`select`メソッドで指定したカラムの型がTupleとして返却されます。
-
-```scala 3
-val query1 = userQuery.selectAll.query // (Long, String, Option[Int])
-val query2 = userQuery.select(user => (user.name, user.age)).query // (String, Option[Int])
-```
-
-`query`メソッドにモデルを指定すると取得後のデータを指定したモデルに変換することができます。
-
-```scala 3
-val query = userQuery.selectAll.query[User] // User
-```
-
-`query`メソッドで指定するモデルの型は`select`メソッドで指定したTupleの型と一致するか、Tupleの型から指定したモデルへの型変換が可能なものでなければなりません。
-
-```scala 3
-val query1 = userQuery.select(user => (user.name, user.age)).query[User] // Compile error
-
-case class Test(name: String, age: Option[Int])
-val query2 = userQuery.select(user => (user.name, user.age)).query[Test] // Test
-```
+`select`文を構築すると`toList`/`headOption`/`unsafe`メソッドを使用できるようになります。これらのメソッドは取得後のデータ形式を決定するために使用します。特段何も型を指定しない場合は`select`メソッドで指定したカラムの型がTupleとして返却されます。
 
 ### toList
-
-`query`メソッドで取得する型を決定したあとは、取得するデータを配列で取得するかOptionalなデータとして取得するかを決定します。
 
 クエリを実行した結果データの一覧を取得したい場合は、`toList`メソッドを使用します。`toList`メソッドを使用してデータベース処理を行なった結果、データ取得件数が0件であった場合空の配列が返されます。
 
 ```scala 3
-val query1 = userQuery.selectAll.query.toList // List[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].toList // List[User]
+val query1 = userQuery.selectAll.toList // List[(Long, String, Option[Int])]
+```
+
+`toList`メソッドにモデルを指定すると取得後のデータを指定したモデルに変換することができます。
+
+```scala 3
+val query = userQuery.selectAll.toList[User] // User
+```
+
+`toList`メソッドで指定するモデルの型は`select`メソッドで指定したTupleの型と一致するか、Tupleの型から指定したモデルへの型変換が可能なものでなければなりません。
+
+```scala 3
+val query1 = userQuery.select(user => (user.name, user.age)).toList[User] // Compile error
+
+case class Test(name: String, age: Option[Int])
+val query2 = userQuery.select(user => (user.name, user.age)).toList[Test] // Test
 ```
 
 ### headOption
@@ -154,8 +146,8 @@ val query2 = userQuery.selectAll.query[User].toList // List[User]
 `headOption`メソッドを使用した場合、複数のデータを取得するクエリを実行したとしても最初のデータのみ返されることに注意してください。
 
 ```scala 3
-val query1 = userQuery.selectAll.query.headOption // Option[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].headOption // Option[User]
+val query1 = userQuery.selectAll.headOption // Option[(Long, String, Option[Int])]
+val query2 = userQuery.selectAll.headOption[User] // Option[User]
 ```
 
 ### unsafe
@@ -165,8 +157,8 @@ val query2 = userQuery.selectAll.query[User].headOption // Option[User]
 実行時に例外を発生する可能性が高いため`unsafe`という名前になっています。
 
 ```scala 3
-val query1 = userQuery.selectAll.query.unsafe // (Long, String, Option[Int])
-val query2 = userQuery.selectAll.query[User].unsafe // User
+val query1 = userQuery.selectAll.unsafe // (Long, String, Option[Int])
+val query2 = userQuery.selectAll.unsafe[User] // User
 ```
 
 ## Update
@@ -198,7 +190,7 @@ MySQLではデータ挿入時に返却できる値はAutoIncrementのカラム�
 `readOnly`メソッドを使用することで実行するクエリの処理を読み込み専用にすることができます。`readOnly`メソッドは`insert/update/delete`文でも使用することができますが、書き込み処理を行うので実行時にエラーとなります。
 
 ```scala 3
-val read = userQuery.selectAll.query.readOnly
+val read = userQuery.selectAll.toList.readOnly
 ```
 
 ### 自動コミット
@@ -233,13 +225,13 @@ yield ...).transaction
 `readOnly/autoCommit/transaction`メソッドを使用すると戻り値の型は`Kleisli[F, DataSource, T]`となるためJDBCのDataSourceを`run`に渡すことで戻り値の型を`F`に持ち上げることができます。
 
 ```scala 3
-val effect = userQuery.selectAll.query[User].headOption.readOnly(dataSource) // F[User]
+val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
 ```
 
 Cats Effect IOを使用している場合は、`IOApp`内で実行を行うか`unsafeRunSync`などを使用することでデータベース接続処理を実行することができます。
 
 ```scala 3
-val user: Option[User] = userQuery.selectAll.query[User].headOption.readOnly(dataSource).unsafeRunSync()
+val user: Option[User] = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
 ```
 
 `Kleisli`に関してはCatsの[ドキュメント](https://typelevel.org/cats/datatypes/kleisli.html)を参照してください。
@@ -265,7 +257,7 @@ val db = Database.fromMySQLDriver[IO]("database name", "host", "port number", "u
 **Read Only**
 
 ```scala 3
-val user: Option[User] = db.readOnly(userQuery.selectAll.query[User].headOption).unsafeRunSync()
+val user: Option[User] = db.readOnly(userQuery.selectAll.headOption[User]).unsafeRunSync()
 ```
 
 **Auto Commit**
