@@ -80,7 +80,8 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(libraryDependencies ++= Seq(
     scala3Compiler,
     mysql,
-    doobie
+    doobie,
+    slick
   ))
   .dependsOn(dsl)
   .enablePlugins(JmhPlugin)
