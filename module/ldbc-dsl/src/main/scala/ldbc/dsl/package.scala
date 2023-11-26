@@ -32,7 +32,7 @@ package object dsl:
 
     extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
 
-      def readOnly: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
+      def readOnly(dataSource: DataSource): F[T] =
         buildConnectionResource {
           for
             connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
@@ -40,9 +40,8 @@ package object dsl:
           yield connection
         }
           .use(connectionKleisli.run)
-      }
 
-      def autoCommit: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
+      def autoCommit(dataSource: DataSource): F[T] =
         buildConnectionResource {
           for
             connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
@@ -50,9 +49,8 @@ package object dsl:
           yield connection
         }
           .use(connectionKleisli.run)
-      }
 
-      def transaction: Kleisli[F, DataSource, T] = Kleisli { dataSource =>
+      def transaction(dataSource: DataSource): F[T] =
         (for
           connection <- buildConnectionResource {
                           for
@@ -65,7 +63,6 @@ package object dsl:
                         case (conn, _)                   => conn.commit()
                       }
         yield transact).use(connectionKleisli.run)
-      }
 
     extension (database: CoreDatabase)
 
