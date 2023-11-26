@@ -29,7 +29,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query = user.selectAll.query[User].toList
+        |val query = user.selectAll.toList[User]
         |""".stripMargin
     )
   }
@@ -56,7 +56,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
         |case class FailedUser(id: Long, name: String, age: Option[Int])
-        |val query = user.selectAll.query[FailedUser].toList
+        |val query = user.selectAll.toList[FailedUser]
         |""".stripMargin
     )
   }
@@ -84,7 +84,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], List[(Long, String, Int)]] = user.selectAll.query.toList
+        |val query: Kleisli[IO, Connection[IO], List[(Long, String, Int)]] = user.selectAll.toList
         |""".stripMargin
     )
   }
@@ -110,7 +110,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query = user.selectAll.where(_.id === 1).query[User].headOption
+        |val query = user.selectAll.where(_.id === 1).headOption[User]
         |""".stripMargin
     )
   }
@@ -137,7 +137,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
         |case class FailedUser(id: Long, name: String, age: Option[Int])
-        |val query = user.selectAll.where(_.id === 1).query[FailedUser].headOption
+        |val query = user.selectAll.where(_.id === 1).headOption[FailedUser]
         |""".stripMargin
     )
   }
@@ -165,7 +165,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], Option[(Long, String, Int)]] = user.selectAll.where(_.id === 1).query.headOption
+        |val query: Kleisli[IO, Connection[IO], Option[(Long, String, Int)]] = user.selectAll.where(_.id === 1).headOption
         |""".stripMargin
     )
   }
@@ -193,7 +193,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], User] = user.selectAll.where(_.id === 1).query[User].unsafe
+        |val query: Kleisli[IO, Connection[IO], User] = user.selectAll.where(_.id === 1).unsafe[User]
         |""".stripMargin
     )
   }
@@ -220,7 +220,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
         |case class FailedUser(id: Long, name: String, age: Option[Int])
-        |val query = user.selectAll.where(_.id === 1).query[FailedUser].unsafe
+        |val query = user.selectAll.where(_.id === 1).unsafe[FailedUser]
         |""".stripMargin
     )
   }
@@ -248,7 +248,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |
         |given LogHandler[IO] = LogHandler.consoleLogger
-        |val query: Kleisli[IO, Connection[IO], (Long, String, Int)] = user.selectAll.where(_.id === 1).query.unsafe
+        |val query: Kleisli[IO, Connection[IO], (Long, String, Int)] = user.selectAll.where(_.id === 1).unsafe
         |""".stripMargin
     )
   }
@@ -290,7 +290,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val query: Kleisli[IO, Connection[IO], List[(String, String)]] = (user join category)((user, category) => user.categoryId === category.id)
         |  .select((user, category) => (user.name, category.name))
-        |  .query
         |  .toList
         |""".stripMargin
     )
@@ -333,8 +332,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val query = (user join category)((user, category) => user.categoryId === category.id)
         |  .select((user, category) => (user.name, category.name))
-        |  .query[UserCategory]
-        |  .toList
+        |  .toList[UserCategory]
         |""".stripMargin
     )
   }
@@ -394,7 +392,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val query: Kleisli[IO, Connection[IO], List[(String, String, Option[String])]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
         |  .leftJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
         |  .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language))
-        |  .query
         |  .toList
         |""".stripMargin
     )
@@ -455,7 +452,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val query: Kleisli[IO, Connection[IO], List[(Option[String], Option[String], String)]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
         |  .rightJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
         |  .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language))
-        |  .query
         |  .toList
         |""".stripMargin
     )
@@ -516,7 +512,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val query: Kleisli[IO, Connection[IO], List[(String, String, Option[String])]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
         |  .leftJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
         |  .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language))
-        |  .query
         |  .toList
         |""".stripMargin
     )

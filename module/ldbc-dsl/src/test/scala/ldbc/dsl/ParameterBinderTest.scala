@@ -9,25 +9,13 @@ import org.specs2.mutable.Specification
 import org.mockito.Mockito.*
 
 import cats.Id
-import cats.data.Kleisli
 
 import ldbc.sql.*
-import ldbc.dsl.syntax.SQLSyntax
-import ldbc.dsl.logging.LogHandler
+import ldbc.dsl.syntax.StringContextSyntax
 
 object ParameterBinderTest extends Specification:
 
-  given SQLSyntax[Id] = new SQLSyntax[Id]:
-    extension (sql: SQL[Id])
-      def query[T](using
-        consumer:   ResultSetConsumer[Id, T],
-        logHandler: LogHandler[Id]
-      ): Kleisli[Id, Connection[Id], T] =
-        throw new IllegalStateException("This method is never called in this test.")
-      def update()(using logHandler: LogHandler[Id]): Kleisli[Id, Connection[Id], Int] =
-        throw new IllegalStateException(
-          "This method is never called in this test."
-        )
+  given StringContextSyntax[Id] = new StringContextSyntax[Id] {}
 
   "ParameterBinder Test" should {
 

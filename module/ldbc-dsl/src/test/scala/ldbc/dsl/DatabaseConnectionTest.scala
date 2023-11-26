@@ -35,17 +35,17 @@ object DatabaseConnectionTest extends Specification:
 
   "Database Connection Test" should {
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = country.selectAll.query[Country].toList.readOnly.run(dataSource).unsafeRunSync()
+      val result = country.selectAll.toList[Country].readOnly(dataSource).unsafeRunSync()
       result.length === 239
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = city.selectAll.query[City].toList.readOnly.run(dataSource).unsafeRunSync()
+      val result = city.selectAll.toList[City].readOnly(dataSource).unsafeRunSync()
       result.length === 4079
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = countryLanguage.selectAll.query[CountryLanguage].toList.readOnly.run(dataSource).unsafeRunSync()
+      val result = countryLanguage.selectAll.toList[CountryLanguage].readOnly(dataSource).unsafeRunSync()
       result.length === 984
     }
 
@@ -53,10 +53,8 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select(v => (v.name, v.countryCode))
         .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
-        .query
         .toList
-        .readOnly
-        .run(dataSource)
+        .readOnly(dataSource)
         .unsafeRunSync()
       result.length === 248
     }
@@ -64,10 +62,8 @@ object DatabaseConnectionTest extends Specification:
     "The acquired data matches the specified model." in {
       val result = country.selectAll
         .where(_.code _equals "JPN")
-        .query[Country]
-        .headOption
-        .readOnly
-        .run(dataSource)
+        .headOption[Country]
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(
         Country(
@@ -93,10 +89,8 @@ object DatabaseConnectionTest extends Specification:
     "The acquired data matches the specified model." in {
       val result = city.selectAll
         .where(_.id _equals 1532)
-        .query[City]
-        .headOption
-        .readOnly
-        .run(dataSource)
+        .headOption[City]
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230))
     }
@@ -105,10 +99,8 @@ object DatabaseConnectionTest extends Specification:
       val result = countryLanguage.selectAll
         .where(_.countryCode _equals "JPN")
         .and(_.language _equals "Japanese")
-        .query[CountryLanguage]
-        .headOption
-        .readOnly
-        .run(dataSource)
+        .headOption[CountryLanguage]
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(CountryLanguage("JPN", "Japanese", CountryLanguage.IsOfficial.T, BigDecimal.decimal(99.1)))
     }
@@ -118,10 +110,8 @@ object DatabaseConnectionTest extends Specification:
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .query
         .headOption
-        .readOnly
-        .run(dataSource)
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(("Tokyo", "Japan"))
     }
@@ -133,10 +123,8 @@ object DatabaseConnectionTest extends Specification:
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .query[CountryCity]
-        .headOption
-        .readOnly
-        .run(dataSource)
+        .headOption[CountryCity]
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(CountryCity("Tokyo", "Japan"))
     }
@@ -146,10 +134,8 @@ object DatabaseConnectionTest extends Specification:
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .query
         .headOption
-        .readOnly
-        .run(dataSource)
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(("Tokyo", Some("Japan")))
     }
@@ -161,10 +147,8 @@ object DatabaseConnectionTest extends Specification:
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .query[CountryCity]
-        .headOption
-        .readOnly
-        .run(dataSource)
+        .headOption[CountryCity]
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(CountryCity("Tokyo", Some("Japan")))
     }
@@ -174,10 +158,8 @@ object DatabaseConnectionTest extends Specification:
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .query
         .headOption
-        .readOnly
-        .run(dataSource)
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some((Some("Tokyo"), "Japan"))
     }
@@ -189,10 +171,8 @@ object DatabaseConnectionTest extends Specification:
         .select((city, country) => (city.name, country.name))
         .where((_, country) => country.code _equals "JPN")
         .and((city, _) => city.name _equals "Tokyo")
-        .query[CountryCity]
-        .headOption
-        .readOnly
-        .run(dataSource)
+        .headOption[CountryCity]
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(CountryCity(Some("Tokyo"), "Japan"))
     }
@@ -201,10 +181,8 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select(v => (v.countryCode, v.id.count))
         .where(_.countryCode _equals "JPN")
-        .query
         .headOption
-        .readOnly
-        .run(dataSource)
+        .readOnly(dataSource)
         .unsafeRunSync()
       result === Some(("JPN", 248))
     }
@@ -215,27 +193,24 @@ object DatabaseConnectionTest extends Specification:
       val result = city
         .select(v => (v.countryCode, v.id.count))
         .groupBy(_._1)
-        .query[CountryCodeGroup]
-        .toList
-        .readOnly
-        .run(dataSource)
+        .toList[CountryCodeGroup]
+        .readOnly(dataSource)
         .unsafeRunSync()
       result.length === 232
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       (for
-        codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.headOption
+        codeOpt <- country.select(_.code).where(_.code _equals "JPN").headOption
         cities <- codeOpt match
                     case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
                         .select(v => (v.name, v.countryCode))
                         .where(_.countryCode _equals code)
-                        .query
                         .toList
-      yield cities.length === 248).readOnly
-        .run(dataSource)
+      yield cities.length === 248)
+        .readOnly(dataSource)
         .unsafeRunSync()
     }
 
@@ -261,8 +236,7 @@ object DatabaseConnectionTest extends Specification:
           )
         )
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 1
@@ -307,8 +281,7 @@ object DatabaseConnectionTest extends Specification:
           )
         )
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 2
@@ -332,8 +305,8 @@ object DatabaseConnectionTest extends Specification:
         None,
         "T4"
       )
-      val result = (country += newCountry).update.autoCommit
-        .run(dataSource)
+      val result = (country += newCountry).update
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 1
@@ -374,8 +347,8 @@ object DatabaseConnectionTest extends Specification:
         None,
         "T6"
       )
-      val result = (country ++= List(newCountry1, newCountry2)).update.autoCommit
-        .run(dataSource)
+      val result = (country ++= List(newCountry1, newCountry2)).update
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 2
@@ -386,8 +359,7 @@ object DatabaseConnectionTest extends Specification:
         .insertInto(v => (v.name, v.countryCode, v.district, v.population))
         .values(("Test", "T1", "T", 1))
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 1
@@ -398,8 +370,7 @@ object DatabaseConnectionTest extends Specification:
         .insertInto(v => (v.name, v.countryCode, v.district, v.population))
         .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 2
@@ -410,8 +381,7 @@ object DatabaseConnectionTest extends Specification:
         .update("district", "Tokyo-test")
         .where(_.name _equals "Tokyo")
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 1
@@ -419,7 +389,7 @@ object DatabaseConnectionTest extends Specification:
 
     "A stand-alone update from the model will be successful." in {
       (for
-        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query[City].headOption
+        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption[City]
         result <- cityOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
                     case Some(cityModel) =>
@@ -427,8 +397,8 @@ object DatabaseConnectionTest extends Specification:
                         .update(cityModel.copy(district = "Tokyo-to"))
                         .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
                         .update
-      yield result === 1).transaction
-        .run(dataSource)
+      yield result === 1)
+        .transaction(dataSource)
         .unsafeRunSync()
     }
 
@@ -440,8 +410,7 @@ object DatabaseConnectionTest extends Specification:
         .set("population", 2)
         .where(_.name _equals "Jokohama [Yokohama]")
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 1
@@ -454,9 +423,9 @@ object DatabaseConnectionTest extends Specification:
                .set("district", "not update Kanagawa", false)
                .where(_.id _equals 1637)
                .update
-        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
-      yield updated).transaction
-        .run(dataSource)
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).unsafe
+      yield updated)
+        .transaction(dataSource)
         .unsafeRunSync()
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
@@ -464,9 +433,9 @@ object DatabaseConnectionTest extends Specification:
     "If the primary key is duplicated, the data is updated." in {
       val result = (for
         _       <- city.insertOrUpdates(List(City(1638, "update Kofu", "JPN", "Yamanashi", 199753))).update
-        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1638).query.unsafe
-      yield updated).transaction
-        .run(dataSource)
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1638).unsafe
+      yield updated)
+        .transaction(dataSource)
         .unsafeRunSync()
       (result._1 === "update Kofu") and (result._2 !== Some("not update Yamanashi"))
     }
@@ -476,20 +445,20 @@ object DatabaseConnectionTest extends Specification:
         _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608))
                .onDuplicateKeyUpdate(_.name)
                .update
-        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1639).query.unsafe
-      yield updated).transaction
-        .run(dataSource)
+        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1639).unsafe
+      yield updated)
+        .transaction(dataSource)
         .unsafeRunSync()
       (result._1 === "update Kushiro") and (result._2 !== Some("not update Hokkaido"))
     }
 
     "Data is added if the primary key is not duplicated." in {
       (for
-        empty <- city.selectAll.where(_.id _equals 5000).query.headOption
+        empty <- city.selectAll.where(_.id _equals 5000).headOption
         _     <- city.insertOrUpdate((5000, "Nishinomiya", "JPN", "Hyogo", 0)).update
-        data  <- city.selectAll.where(_.id _equals 5000).query.headOption
-      yield empty.isEmpty and data.nonEmpty).transaction
-        .run(dataSource)
+        data  <- city.selectAll.where(_.id _equals 5000).headOption
+      yield empty.isEmpty and data.nonEmpty)
+        .transaction(dataSource)
         .unsafeRunSync()
     }
 
@@ -499,7 +468,6 @@ object DatabaseConnectionTest extends Specification:
                      .select(_.code)
                      .where(_.name _equals "Test1")
                      .and(_.continent _equals Country.Continent.Asia)
-                     .query
                      .headOption
         result <- codeOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
@@ -511,8 +479,8 @@ object DatabaseConnectionTest extends Specification:
                         .set("population", 2)
                         .where(_.name _equals "Test2")
                         .update
-      yield result === 1).transaction
-        .run(dataSource)
+      yield result === 1)
+        .transaction(dataSource)
         .unsafeRunSync()
     }
 
@@ -521,8 +489,7 @@ object DatabaseConnectionTest extends Specification:
         .update("isOfficial", CountryLanguage.IsOfficial.T)
         .where(_.countryCode _equals "JPN")
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 6
@@ -534,21 +501,20 @@ object DatabaseConnectionTest extends Specification:
         .where(_.countryCode _equals "JPN")
         .limit(3)
         .update
-        .autoCommit
-        .run(dataSource)
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 3
     }
 
     "Deletion by itself is successful." in {
-      val result = country.delete.where(_.code _equals "T5").update.autoCommit.run(dataSource).unsafeRunSync()
+      val result = country.delete.where(_.code _equals "T5").update.autoCommit(dataSource).unsafeRunSync()
       result === 1
     }
 
     "The number of deletions in multiple cases matches the number specified." in {
       val result =
-        countryLanguage.delete.where(_.countryCode _equals "AFG").update.autoCommit.run(dataSource).unsafeRunSync()
+        countryLanguage.delete.where(_.countryCode _equals "AFG").update.autoCommit(dataSource).unsafeRunSync()
       result === 5
     }
   }
