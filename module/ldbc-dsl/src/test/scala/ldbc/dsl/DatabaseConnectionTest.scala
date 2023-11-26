@@ -209,7 +209,8 @@ object DatabaseConnectionTest extends Specification:
                         .select(v => (v.name, v.countryCode))
                         .where(_.countryCode _equals code)
                         .toList
-      yield cities.length === 248).readOnly(dataSource)
+      yield cities.length === 248)
+        .readOnly(dataSource)
         .unsafeRunSync()
     }
 
@@ -304,7 +305,8 @@ object DatabaseConnectionTest extends Specification:
         None,
         "T4"
       )
-      val result = (country += newCountry).update.autoCommit(dataSource)
+      val result = (country += newCountry).update
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 1
@@ -345,7 +347,8 @@ object DatabaseConnectionTest extends Specification:
         None,
         "T6"
       )
-      val result = (country ++= List(newCountry1, newCountry2)).update.autoCommit(dataSource)
+      val result = (country ++= List(newCountry1, newCountry2)).update
+        .autoCommit(dataSource)
         .unsafeRunSync()
 
       result === 2
@@ -394,7 +397,8 @@ object DatabaseConnectionTest extends Specification:
                         .update(cityModel.copy(district = "Tokyo-to"))
                         .where(v => (v.countryCode _equals "JPN") and (v.name _equals "Tokyo"))
                         .update
-      yield result === 1).transaction(dataSource)
+      yield result === 1)
+        .transaction(dataSource)
         .unsafeRunSync()
     }
 
@@ -420,7 +424,8 @@ object DatabaseConnectionTest extends Specification:
                .where(_.id _equals 1637)
                .update
         updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).unsafe
-      yield updated).transaction(dataSource)
+      yield updated)
+        .transaction(dataSource)
         .unsafeRunSync()
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
     }
@@ -429,7 +434,8 @@ object DatabaseConnectionTest extends Specification:
       val result = (for
         _       <- city.insertOrUpdates(List(City(1638, "update Kofu", "JPN", "Yamanashi", 199753))).update
         updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1638).unsafe
-      yield updated).transaction(dataSource)
+      yield updated)
+        .transaction(dataSource)
         .unsafeRunSync()
       (result._1 === "update Kofu") and (result._2 !== Some("not update Yamanashi"))
     }
@@ -440,7 +446,8 @@ object DatabaseConnectionTest extends Specification:
                .onDuplicateKeyUpdate(_.name)
                .update
         updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1639).unsafe
-      yield updated).transaction(dataSource)
+      yield updated)
+        .transaction(dataSource)
         .unsafeRunSync()
       (result._1 === "update Kushiro") and (result._2 !== Some("not update Hokkaido"))
     }
@@ -450,7 +457,8 @@ object DatabaseConnectionTest extends Specification:
         empty <- city.selectAll.where(_.id _equals 5000).headOption
         _     <- city.insertOrUpdate((5000, "Nishinomiya", "JPN", "Hyogo", 0)).update
         data  <- city.selectAll.where(_.id _equals 5000).headOption
-      yield empty.isEmpty and data.nonEmpty).transaction(dataSource)
+      yield empty.isEmpty and data.nonEmpty)
+        .transaction(dataSource)
         .unsafeRunSync()
     }
 
@@ -471,7 +479,8 @@ object DatabaseConnectionTest extends Specification:
                         .set("population", 2)
                         .where(_.name _equals "Test2")
                         .update
-      yield result === 1).transaction(dataSource)
+      yield result === 1)
+        .transaction(dataSource)
         .unsafeRunSync()
     }
 
