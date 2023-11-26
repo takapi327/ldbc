@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.jdbc
 
@@ -34,17 +34,19 @@ class Select:
 
   @Benchmark
   def selectN: List[(Int, String, String)] =
-    Using.Manager { use =>
-      val connection = use(dataSource.getConnection)
-      val statement = use(connection.prepareStatement("SELECT ID, Name, CountryCode FROM city LIMIT ?"))
-      statement.setInt(1, len)
-      val resultSet = use(statement.executeQuery())
-      val records = List.newBuilder[(Int, String, String)]
-      while (resultSet.next()) {
-        val code = resultSet.getInt(1)
-        val name = resultSet.getString(2)
-        val region = resultSet.getString(3)
-        records += ((code, name, region))
+    Using
+      .Manager { use =>
+        val connection = use(dataSource.getConnection)
+        val statement  = use(connection.prepareStatement("SELECT ID, Name, CountryCode FROM city LIMIT ?"))
+        statement.setInt(1, len)
+        val resultSet = use(statement.executeQuery())
+        val records   = List.newBuilder[(Int, String, String)]
+        while (resultSet.next()) {
+          val code   = resultSet.getInt(1)
+          val name   = resultSet.getString(2)
+          val region = resultSet.getString(3)
+          records += ((code, name, region))
+        }
+        records.result()
       }
-      records.result()
-    }.getOrElse(throw new RuntimeException("Error during database operation"))
+      .getOrElse(throw new RuntimeException("Error during database operation"))

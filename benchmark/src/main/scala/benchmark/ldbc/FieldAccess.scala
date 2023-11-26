@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.ldbc
 
@@ -44,7 +44,7 @@ class FieldAccess:
     column("p22", INT),
     column("p23", INT),
     column("p24", INT),
-    column("p25", INT),
+    column("p25", INT)
   )
 
   @Benchmark

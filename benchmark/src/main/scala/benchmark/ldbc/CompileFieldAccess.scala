@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.ldbc
 
@@ -10,7 +10,7 @@ import org.openjdk.jmh.annotations.*
 
 import ldbc.core.*
 
-import benchmark.{Compiler, Model25}
+import benchmark.{ Compiler, Model25 }
 
 @BenchmarkMode(Array(Mode.SingleShotTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -27,8 +27,7 @@ class CompileFieldAccess:
   def setup(): Unit =
     compiler = new Compiler
 
-    source =
-      s"""
+    source = s"""
          |import benchmark.ldbc.CompileFieldAccess.table
          |object CompileFieldAccess {
          |  table.c$index
@@ -65,5 +64,5 @@ object CompileFieldAccess:
     column("c22", INT),
     column("c23", INT),
     column("c24", INT),
-    column("c25", INT),
+    column("c25", INT)
   )

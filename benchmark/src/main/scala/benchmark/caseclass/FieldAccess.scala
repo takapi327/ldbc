@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.caseclass
 
@@ -18,15 +18,15 @@ import benchmark.Model25
 class FieldAccess:
 
   var model = Model25(
-    c1 = 1,
-    c2 = 2,
-    c3 = 3,
-    c4 = 4,
-    c5 = 5,
-    c6 = 6,
-    c7 = 7,
-    c8 = 8,
-    c9 = 9,
+    c1  = 1,
+    c2  = 2,
+    c3  = 3,
+    c4  = 4,
+    c5  = 5,
+    c6  = 6,
+    c7  = 7,
+    c8  = 8,
+    c9  = 9,
     c10 = 10,
     c11 = 11,
     c12 = 12,
@@ -42,7 +42,7 @@ class FieldAccess:
     c22 = 22,
     c23 = 23,
     c24 = 24,
-    c25 = 25,
+    c25 = 25
   )
 
   @Benchmark

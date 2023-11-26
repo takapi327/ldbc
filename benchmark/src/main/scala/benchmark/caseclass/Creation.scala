@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.caseclass
 
@@ -19,7 +19,7 @@ class Creation:
 
   @Benchmark
   def createM1 = Model1(
-    c1 = 1,
+    c1 = 1
   )
 
   @Benchmark
@@ -28,34 +28,34 @@ class Creation:
     c2 = 2,
     c3 = 3,
     c4 = 4,
-    c5 = 5,
+    c5 = 5
   )
 
   @Benchmark
   def createM10 = Model10(
-    c1 = 1,
-    c2 = 2,
-    c3 = 3,
-    c4 = 4,
-    c5 = 5,
-    c6 = 6,
-    c7 = 7,
-    c8 = 8,
-    c9 = 9,
-    c10 = 10,
+    c1  = 1,
+    c2  = 2,
+    c3  = 3,
+    c4  = 4,
+    c5  = 5,
+    c6  = 6,
+    c7  = 7,
+    c8  = 8,
+    c9  = 9,
+    c10 = 10
   )
 
   @Benchmark
   def createM20 = Model20(
-    c1 = 1,
-    c2 = 2,
-    c3 = 3,
-    c4 = 4,
-    c5 = 5,
-    c6 = 6,
-    c7 = 7,
-    c8 = 8,
-    c9 = 9,
+    c1  = 1,
+    c2  = 2,
+    c3  = 3,
+    c4  = 4,
+    c5  = 5,
+    c6  = 6,
+    c7  = 7,
+    c8  = 8,
+    c9  = 9,
     c10 = 10,
     c11 = 11,
     c12 = 12,
@@ -66,20 +66,20 @@ class Creation:
     c17 = 17,
     c18 = 18,
     c19 = 19,
-    c20 = 20,
+    c20 = 20
   )
 
   @Benchmark
   def createM25 = Model25(
-    c1 = 1,
-    c2 = 2,
-    c3 = 3,
-    c4 = 4,
-    c5 = 5,
-    c6 = 6,
-    c7 = 7,
-    c8 = 8,
-    c9 = 9,
+    c1  = 1,
+    c2  = 2,
+    c3  = 3,
+    c4  = 4,
+    c5  = 5,
+    c6  = 6,
+    c7  = 7,
+    c8  = 8,
+    c9  = 9,
     c10 = 10,
     c11 = 11,
     c12 = 12,
@@ -95,5 +95,5 @@ class Creation:
     c22 = 22,
     c23 = 23,
     c24 = 24,
-    c25 = 25,
+    c25 = 25
   )

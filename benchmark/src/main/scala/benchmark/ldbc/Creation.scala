@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.ldbc
 
@@ -30,7 +30,7 @@ class Creation:
     column("c2", INT),
     column("c3", INT),
     column("c4", INT),
-    column("c5", INT),
+    column("c5", INT)
   )
 
   @Benchmark
@@ -44,7 +44,7 @@ class Creation:
     column("c7", INT),
     column("c8", INT),
     column("c9", INT),
-    column("c10", INT),
+    column("c10", INT)
   )
 
   @Benchmark
@@ -68,7 +68,7 @@ class Creation:
     column("c17", INT),
     column("c18", INT),
     column("c19", INT),
-    column("c20", INT),
+    column("c20", INT)
   )
 
   @Benchmark
@@ -97,5 +97,5 @@ class Creation:
     column("c22", INT),
     column("c23", INT),
     column("c24", INT),
-    column("c25", INT),
+    column("c25", INT)
   )

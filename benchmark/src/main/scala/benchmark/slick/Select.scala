@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.slick
 
@@ -29,10 +29,10 @@ class Select:
   @Setup
   def setup(): Unit =
     db = Database.forURL(
-      url = "jdbc:mysql://127.0.0.1:13306/world",
-      user = "ldbc",
+      url      = "jdbc:mysql://127.0.0.1:13306/world",
+      user     = "ldbc",
       password = "password",
-      driver = "com.mysql.cj.jdbc.Driver"
+      driver   = "com.mysql.cj.jdbc.Driver"
     )
 
     query = TableQuery[CityTable]
@@ -48,10 +48,10 @@ class Select:
     )
 
 class CityTable(tag: Tag) extends Table[City](tag, "city"):
-  def id = column[Int]("ID", O.AutoInc, O.PrimaryKey)
-  def name = column[String]("Name")
+  def id          = column[Int]("ID", O.AutoInc, O.PrimaryKey)
+  def name        = column[String]("Name")
   def countryCode = column[String]("CountryCode")
-  def district = column[String]("District")
-  def population = column[Int]("Population")
+  def district    = column[String]("District")
+  def population  = column[Int]("Population")
 
   def * = (id, name, countryCode, district, population).mapTo[City]

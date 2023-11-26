@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.ldbc
 
@@ -28,8 +28,7 @@ class CompileCreation:
 
     val columns = (1 to size).map(i => s"column(\"c$i\", INT)").mkString(",\n")
 
-    source =
-      s"""
+    source = s"""
          |import ldbc.core.*
          |import benchmark.Model$size
          |val table = Table[Model$size](\"model$size\")(

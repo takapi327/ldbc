@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.caseclass
 
@@ -28,8 +28,7 @@ class CompileCreation:
 
     val properties = (1 to size).map(i => s"c$i: Int").mkString(",\n")
 
-    source =
-      s"""
+    source = s"""
          |case class Table$size(
          |  $properties
          |)

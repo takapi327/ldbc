@@ -1,13 +1,13 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark
 
 import dotty.tools.dotc.core.Contexts.inContext
-import dotty.tools.repl.{Command, ParseResult, Parsed, State, ReplDriver as DottyReplDriver}
+import dotty.tools.repl.{ Command, ParseResult, Parsed, State, ReplDriver as DottyReplDriver }
 
-import java.io.{ByteArrayOutputStream, PrintStream}
+import java.io.{ ByteArrayOutputStream, PrintStream }
 
 class Compiler:
 
@@ -33,25 +33,26 @@ class Compiler:
   def compile(source: String): State =
     ParseResult.complete(source) match
       case parsed: Parsed => compile(parsed)
-      case _: Command => throw new UnsupportedOperationException("Command is not supported")
-      case _ => driver.initialState
+      case _: Command     => throw new UnsupportedOperationException("Command is not supported")
+      case _              => driver.initialState
 
 object Compiler:
-  class ReplDriver(out: PrintStream) extends DottyReplDriver(
-    Array(
-      "-classpath",
-      "",
-      "-usejavacp",
-      "-color:never",
-      "-Xrepl-disable-display",
-      "-Xmax-inlines",
-      "1000",
-    ),
-    out,
-    None,
-  ):
+  class ReplDriver(out: PrintStream)
+    extends DottyReplDriver(
+      Array(
+        "-classpath",
+        "",
+        "-usejavacp",
+        "-color:never",
+        "-Xrepl-disable-display",
+        "-Xmax-inlines",
+        "1000"
+      ),
+      out,
+      None
+    ):
     override def interpret(res: ParseResult, quiet: Boolean = false)(using state: State): State =
       super.interpret(res, quiet)
 
-  class TypeError(msg: String) extends Exception(msg)
+  class TypeError(msg: String)   extends Exception(msg)
   class SyntaxError(msg: String) extends Exception(msg)

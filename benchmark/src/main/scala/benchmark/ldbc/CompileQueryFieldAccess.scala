@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.ldbc
 
@@ -13,7 +13,7 @@ import cats.effect.IO
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
 
-import benchmark.{Compiler, Model25}
+import benchmark.{ Compiler, Model25 }
 
 @BenchmarkMode(Array(Mode.SingleShotTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -30,8 +30,7 @@ class CompileQueryFieldAccess:
   def setup(): Unit =
     compiler = new Compiler
 
-    source =
-      s"""
+    source = s"""
          |import benchmark.ldbc.CompileQueryFieldAccess.query
          |object CompileFieldAccess {
          |  query.c$index
@@ -68,7 +67,7 @@ object CompileQueryFieldAccess:
     column("c22", INT),
     column("c23", INT),
     column("c24", INT),
-    column("c25", INT),
+    column("c25", INT)
   )
 
   val query = TableQuery[IO, Model25](table)
