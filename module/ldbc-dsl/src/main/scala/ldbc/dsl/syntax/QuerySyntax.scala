@@ -11,39 +11,15 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
-import ldbc.dsl.logging.{ LogEvent, LogHandler }
+import ldbc.dsl.ConnectionProvider
+import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.ColumnQuery
 import ldbc.query.builder.statement.Query
 import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Sync]:
 
-  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true):
-    private def connection[A](
-      statement:        String,
-      params:           Seq[ParameterBinder[F]],
-      consumer:         ResultSetConsumer[F, A]
-    )(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], A] =
-      Kleisli { connection =>
-        for
-          prepareStatement <- connection.prepareStatement(statement)
-          resultSet <- params.zipWithIndex.traverse {
-                         case (param, index) => param.bind(prepareStatement, index + 1)
-                       } >> prepareStatement
-                         .executeQuery()
-                         .onError(ex =>
-                           logHandler.run(
-                             LogEvent.ExecFailure(statement, params.map(_.parameter).toList, ex)
-                           )
-                         )
-          result <-
-            consumer
-              .consume(resultSet)
-              .onError(ex => logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.parameter).toList, ex)))
-              <* prepareStatement.close()
-              <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter).toList))
-        yield result
-      }
+  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true) extends ConnectionProvider[F]:
 
     /** Methods for returning an array of data to be retrieved from the database.
       */
@@ -58,11 +34,7 @@ trait QuerySyntax[F[_]: Sync]:
         }
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
 
-      connection[List[Tuples.InverseColumnMap[F, T]]](
-        buildQuery.statement,
-        buildQuery.params,
-        summon[ResultSetConsumer[F, List[Tuples.InverseColumnMap[F, T]]]]
-      )
+      connectionToList[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
 
     def toList[P <: Product](using
       mirror: Mirror.ProductOf[P],
@@ -78,11 +50,7 @@ trait QuerySyntax[F[_]: Sync]:
         }
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
 
-      connection[List[P]](
-        buildQuery.statement,
-        buildQuery.params,
-        summon[ResultSetConsumer[F, List[P]]]
-      )
+      connectionToList[P](buildQuery.statement, buildQuery.params)
 
     /** A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
       * first one is retrieved.
@@ -98,11 +66,7 @@ trait QuerySyntax[F[_]: Sync]:
         }
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
 
-      connection[Option[Tuples.InverseColumnMap[F, T]]](
-        buildQuery.statement,
-        buildQuery.params,
-        summon[ResultSetConsumer[F, Option[Tuples.InverseColumnMap[F, T]]]]
-      )
+      connectionToHeadOption[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
 
     def headOption[P <: Product](using
       mirror: Mirror.ProductOf[P],
@@ -118,11 +82,7 @@ trait QuerySyntax[F[_]: Sync]:
         }
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
 
-      connection[Option[P]](
-        buildQuery.statement,
-        buildQuery.params,
-        summon[ResultSetConsumer[F, Option[P]]]
-      )
+      connectionToHeadOption[P](buildQuery.statement, buildQuery.params)
 
     /** A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
       * raised. Use the [[headOption]] method if you want to retrieve individual data.
@@ -138,11 +98,7 @@ trait QuerySyntax[F[_]: Sync]:
         }
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
 
-      connection[Tuples.InverseColumnMap[F, T]](
-        buildQuery.statement,
-        buildQuery.params,
-        summon[ResultSetConsumer[F, Tuples.InverseColumnMap[F, T]]]
-      )
+      connectionToUnsafe[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
 
     def unsafe[P <: Product](using
       mirror: Mirror.ProductOf[P],
@@ -158,8 +114,4 @@ trait QuerySyntax[F[_]: Sync]:
         }
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
 
-      connection[P](
-        buildQuery.statement,
-        buildQuery.params,
-        summon[ResultSetConsumer[F, P]]
-      )
+      connectionToUnsafe[P](buildQuery.statement, buildQuery.params)

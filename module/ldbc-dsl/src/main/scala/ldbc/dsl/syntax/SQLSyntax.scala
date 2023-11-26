@@ -11,7 +11,7 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
-import ldbc.dsl.SQL
+import ldbc.dsl.{SQL, ConnectionProvider}
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 /** Trait for giving database connection information to SQL.
@@ -21,34 +21,7 @@ import ldbc.dsl.logging.{ LogEvent, LogHandler }
   */
 trait SQLSyntax[F[_]: Sync]:
 
-  implicit class SqlOps(sql: SQL[F]):
-
-    private def connection[A](
-      statement:        String,
-      params:           Seq[ParameterBinder[F]],
-      consumer:         ResultSetConsumer[F, A]
-    )(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], A] =
-      Kleisli { connection =>
-        for
-          prepareStatement <- connection.prepareStatement(statement)
-          resultSet <- params.zipWithIndex.traverse {
-                         case (param, index) => param.bind(prepareStatement, index + 1)
-                       } >> prepareStatement
-                         .executeQuery()
-                         .onError(ex =>
-                           logHandler.run(
-                             LogEvent.ExecFailure(statement, params.map(_.parameter).toList, ex)
-                           )
-                         )
-          result <-
-            consumer
-              .consume(resultSet)
-              .onError(ex => logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.parameter).toList, ex)))
-              <* prepareStatement.close()
-              <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter).toList))
-        yield result
-      }
-
+  implicit class SqlOps(sql: SQL[F]) extends ConnectionProvider[F]:
     /** Methods for returning an array of data to be retrieved from the database.
       */
     inline def toList[T <: Tuple]: LogHandler[F] ?=> Kleisli[F, Connection[F], List[T]] =
@@ -63,11 +36,7 @@ trait SQLSyntax[F[_]: Sync]:
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
       }
 
-      connection[List[T]](
-        sql.statement,
-        sql.params,
-        summon[ResultSetConsumer[F, List[T]]]
-      )
+      connectionToList[T](sql.statement, sql.params)
 
     inline def toList[P <: Product](using
       mirror: Mirror.ProductOf[P]
@@ -83,11 +52,7 @@ trait SQLSyntax[F[_]: Sync]:
           .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       }
 
-      connection[List[P]](
-        sql.statement,
-        sql.params,
-        summon[ResultSetConsumer[F, List[P]]]
-      )
+      connectionToList[P](sql.statement, sql.params)
 
     /** A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
       * first one is retrieved.
@@ -104,11 +69,7 @@ trait SQLSyntax[F[_]: Sync]:
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
       }
 
-      connection[Option[T]](
-        sql.statement,
-        sql.params,
-        summon[ResultSetConsumer[F, Option[T]]]
-      )
+      connectionToHeadOption[T](sql.statement, sql.params)
 
     inline def headOption[P <: Product](using
       mirror: Mirror.ProductOf[P]
@@ -124,11 +85,7 @@ trait SQLSyntax[F[_]: Sync]:
           .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       }
 
-      connection[Option[P]](
-        sql.statement,
-        sql.params,
-        summon[ResultSetConsumer[F, Option[P]]]
-      )
+      connectionToHeadOption[P](sql.statement, sql.params)
 
     /** A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
       * raised. Use the [[headOption]] method if you want to retrieve individual data.
@@ -145,11 +102,7 @@ trait SQLSyntax[F[_]: Sync]:
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
       }
 
-      connection[T](
-        sql.statement,
-        sql.params,
-        summon[ResultSetConsumer[F, T]]
-      )
+      connectionToUnsafe[T](sql.statement, sql.params)
 
     inline def unsafe[P <: Product](using mirror: Mirror.ProductOf[P]): LogHandler[F] ?=> Kleisli[F, Connection[F], P] =
       given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
@@ -163,11 +116,7 @@ trait SQLSyntax[F[_]: Sync]:
           .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       }
 
-      connection[P](
-        sql.statement,
-        sql.params,
-        summon[ResultSetConsumer[F, P]]
-      )
+      connectionToUnsafe[P](sql.statement, sql.params)
 
     def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
       (for
