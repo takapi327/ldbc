@@ -55,10 +55,8 @@ class Select:
     query
       .select(city => (city.id, city.name, city.countryCode))
       .limit(len)
-      .query
       .toList(using noLog)
-      .readOnly
-      .run(dataSource)
+      .readOnly(dataSource)
       .unsafeRunSync()
 
 object City:
