@@ -233,13 +233,13 @@ yield ...).transaction
 `readOnly/autoCommit/transaction`メソッドを使用すると戻り値の型は`Kleisli[F, DataSource, T]`となるためJDBCのDataSourceを`run`に渡すことで戻り値の型を`F`に持ち上げることができます。
 
 ```scala 3
-val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource) // F[User]
+val effect = userQuery.selectAll.query[User].headOption.readOnly(dataSource) // F[User]
 ```
 
 Cats Effect IOを使用している場合は、`IOApp`内で実行を行うか`unsafeRunSync`などを使用することでデータベース接続処理を実行することができます。
 
 ```scala 3
-val user: Option[User] = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+val user: Option[User] = userQuery.selectAll.query[User].headOption.readOnly(dataSource).unsafeRunSync()
 ```
 
 `Kleisli`に関してはCatsの[ドキュメント](https://typelevel.org/cats/datatypes/kleisli.html)を参照してください。

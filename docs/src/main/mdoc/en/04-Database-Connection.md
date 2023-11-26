@@ -233,13 +233,13 @@ You need to run `run` on `Kleisli` to execute the database process.
 If you use the `readOnly/autoCommit/transaction` method, the return type will be `Kleisli[F, DataSource, T]`, so you can raise the return type to `F` by passing JDBC's DataSource to `run`.
 
 ```scala 3
-val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource) // F[User]
+val effect = userQuery.selectAll.query[User].headOption.readOnly(dataSource) // F[User]
 ```
 
 If you are using Cats Effect IO, you can perform the database connection process by executing it in `IOApp` or by using `unsafeRunSync` or similar.
 
 ```scala 3
-val user: User = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+val user: User = userQuery.selectAll.query[User].headOption.readOnly(dataSource).unsafeRunSync()
 ```
 
 For more information on `Kleisli`, please refer to Cats' [documentation](https://typelevel.org/cats/datatypes/kleisli.html).
