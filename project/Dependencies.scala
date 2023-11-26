@@ -31,6 +31,8 @@ object Dependencies {
 
   val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC4"
 
+  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-M5"
+
   val specs2Version = "5.4.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
