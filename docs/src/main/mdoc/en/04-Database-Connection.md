@@ -114,48 +114,40 @@ def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
 
 ## Query
 
-Constructing a `select` statement allows you to use the `query` method. The `query` method is used to determine the format of the data to be retrieved. If no type is specified, the column type specified in the `select` method is returned as a Tuple.
-
-```scala 3
-val query1 = userQuery.selectAll.query // (Long, String, Option[Int])
-val query2 = userQuery.select(user => (user.name, user.age)).query // (String, Option[Int])
-```
-
-Specifying a model in the `query` method will convert the acquired data to the specified model.
-
-```scala 3
-val query = userQuery.selectAll.query[User] // User
-```
-
-The model type specified in the `query` method must match the Tuple type specified in the `select` method or be type-convertible from the Tuple type to the specified model.
-
-```scala 3
-val query1 = userQuery.select(user => (user.name, user.age)).query[User] // Compile error
-
-case class Test(name: String, age: Option[Int])
-val query2 = userQuery.select(user => (user.name, user.age)).query[Test] // Test
-```
+Constructing a `select` statement allows the use of the `toList`/`headOption`/`unsafe` methods. These methods are used to determine the format of the data to be retrieved. If you do not specify any particular type, the column type specified in the `select` method will be returned as a Tuple.
 
 ### toList
-
-After determining the type of data to retrieve with the `query` method, it is then up to the user to decide whether the data to be retrieved is to be retrieved as an array or as Optional data.
 
 The `toList` method is used to retrieve a list of data as a result of executing a query. If you use the `toList` method to process the database and get zero data, an empty array will be returned.
 
 ```scala 3
-val query1 = userQuery.selectAll.query.toList // List[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].toList // List[User]
+val query1 = userQuery.selectAll.toList // List[(Long, String, Option[Int])]
+```
+
+Specifying a model in the `toList` method allows the data after acquisition to be converted to the specified model.
+
+```scala 3
+val query = userQuery.selectAll.toList[User] // User
+```
+
+The model type specified in the `toList` method must match the Tuple type specified in the `select` method or be type-convertible from the Tuple type to the specified model.
+
+```scala 3
+val query1 = userQuery.select(user => (user.name, user.age)).toList[User] // Compile error
+
+case class Test(name: String, age: Option[Int])
+val query2 = userQuery.select(user => (user.name, user.age)).toList[Test] // Test
 ```
 
 ### headOption
 
-クエリのOptionalな結果として最初のデータを取得したい場合は、`headOption` メソッドを使用する。headOption` メソッドを使用したデータベース処理の結果が 0 の場合は、何も返されない。
+If you want to get the first data as an Optional result of the query, use the `headOption` method. If the result of database processing using the `headOption` method is zero, none is returned.
 
 Note that if you use the `headOption` method, only the first data will be returned, even if you execute a query that retrieves multiple data.
 
 ```scala 3
-val query1 = userQuery.selectAll.query.headOption // Option[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].headOption // Option[User]
+val query1 = userQuery.selectAll.headOption // Option[(Long, String, Option[Int])]
+val query2 = userQuery.selectAll.headOption[User] // Option[User]
 ```
 
 ### unsafe
@@ -165,8 +157,8 @@ When using the `unsafe` method, it is the same as the `headOption` method in tha
 It is named `unsafe` because it is likely to raise an exception at runtime.
 
 ```scala 3
-val query1 = userQuery.selectAll.query.unsafe // (Long, String, Option[Int])
-val query2 = userQuery.selectAll.query[User].unsafe // User
+val query1 = userQuery.selectAll.unsafe // (Long, String, Option[Int])
+val query2 = userQuery.selectAll.unsafe[User] // User
 ```
 
 ## Update
@@ -198,7 +190,7 @@ Before making a database connection, commit timing, read/write-only, and other s
 The `readOnly` method can be used to make the processing of a query to be executed read-only. The `readOnly` method can also be used with `insert/update/delete` statements, but it will result in an error at runtime because of the write operation.
 
 ```scala 3
-val read = userQuery.selectAll.query.readOnly
+val read = userQuery.selectAll.toList.readOnly
 ```
 
 ### Auto Commit
@@ -233,13 +225,13 @@ You need to run `run` on `Kleisli` to execute the database process.
 If you use the `readOnly/autoCommit/transaction` method, the return type will be `Kleisli[F, DataSource, T]`, so you can raise the return type to `F` by passing JDBC's DataSource to `run`.
 
 ```scala 3
-val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource) // F[User]
+val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
 ```
 
 If you are using Cats Effect IO, you can perform the database connection process by executing it in `IOApp` or by using `unsafeRunSync` or similar.
 
 ```scala 3
-val user: User = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+val user: User = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
 ```
 
 For more information on `Kleisli`, please refer to Cats' [documentation](https://typelevel.org/cats/datatypes/kleisli.html).
@@ -265,7 +257,7 @@ The only difference is whether the processes are combined using `flatMap` or oth
 **Read Only**
 
 ```scala 3
-val user: Option[User] = db.readOnly(userQuery.selectAll.query[User].headOption).unsafeRunSync()
+val user: Option[User] = db.readOnly(userQuery.selectAll.headOption[User]).unsafeRunSync()
 ```
 
 **Auto Commit**

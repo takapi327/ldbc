@@ -27,17 +27,17 @@ object DatabaseTest extends Specification:
 
   "Database Connection Test" should {
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = db.readOnly(country.selectAll.query[Country].toList).unsafeRunSync()
+      val result = db.readOnly(country.selectAll.toList[Country]).unsafeRunSync()
       result.length === 239
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = db.readOnly(city.selectAll.query[City].toList).unsafeRunSync()
+      val result = db.readOnly(city.selectAll.toList[City]).unsafeRunSync()
       result.length === 4079
     }
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
-      val result = db.readOnly(countryLanguage.selectAll.query[CountryLanguage].toList).unsafeRunSync()
+      val result = db.readOnly(countryLanguage.selectAll.toList[CountryLanguage]).unsafeRunSync()
       result.length === 984
     }
 
@@ -47,7 +47,6 @@ object DatabaseTest extends Specification:
           city
             .select(v => (v.name, v.countryCode))
             .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
-            .query
             .toList
         )
         .unsafeRunSync()
@@ -59,8 +58,7 @@ object DatabaseTest extends Specification:
         .readOnly(
           country.selectAll
             .where(_.code _equals "JPN")
-            .query[Country]
-            .headOption
+            .headOption[Country]
         )
         .unsafeRunSync()
       result === Some(
@@ -89,8 +87,7 @@ object DatabaseTest extends Specification:
         .readOnly(
           city.selectAll
             .where(_.id _equals 1532)
-            .query[City]
-            .headOption
+            .headOption[City]
         )
         .unsafeRunSync()
       result === Some(City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230))
@@ -102,8 +99,7 @@ object DatabaseTest extends Specification:
           countryLanguage.selectAll
             .where(_.countryCode _equals "JPN")
             .and(_.language _equals "Japanese")
-            .query[CountryLanguage]
-            .headOption
+            .headOption[CountryLanguage]
         )
         .unsafeRunSync()
       result === Some(CountryLanguage("JPN", "Japanese", CountryLanguage.IsOfficial.T, BigDecimal.decimal(99.1)))
@@ -116,7 +112,6 @@ object DatabaseTest extends Specification:
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
-            .query
             .headOption
         )
         .unsafeRunSync()
@@ -132,8 +127,7 @@ object DatabaseTest extends Specification:
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
-            .query[CountryCity]
-            .headOption
+            .headOption[CountryCity]
         )
         .unsafeRunSync()
       result === Some(CountryCity("Tokyo", "Japan"))
@@ -146,7 +140,6 @@ object DatabaseTest extends Specification:
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
-            .query
             .headOption
         )
         .unsafeRunSync()
@@ -162,8 +155,7 @@ object DatabaseTest extends Specification:
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
-            .query[CountryCity]
-            .headOption
+            .headOption[CountryCity]
         )
         .unsafeRunSync()
       result === Some(CountryCity("Tokyo", Some("Japan")))
@@ -176,7 +168,6 @@ object DatabaseTest extends Specification:
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
-            .query
             .headOption
         )
         .unsafeRunSync()
@@ -192,8 +183,7 @@ object DatabaseTest extends Specification:
             .select((city, country) => (city.name, country.name))
             .where((_, country) => country.code _equals "JPN")
             .and((city, _) => city.name _equals "Tokyo")
-            .query[CountryCity]
-            .headOption
+            .headOption[CountryCity]
         )
         .unsafeRunSync()
       result === Some(CountryCity(Some("Tokyo"), "Japan"))
@@ -205,7 +195,6 @@ object DatabaseTest extends Specification:
           city
             .select(v => (v.countryCode, v.id.count))
             .where(_.countryCode _equals "JPN")
-            .query
             .headOption
         )
         .unsafeRunSync()
@@ -220,8 +209,7 @@ object DatabaseTest extends Specification:
           city
             .select(v => (v.countryCode, v.id.count))
             .groupBy(_._1)
-            .query[CountryCodeGroup]
-            .toList
+            .toList[CountryCodeGroup]
         )
         .unsafeRunSync()
       result.length === 232
@@ -229,14 +217,13 @@ object DatabaseTest extends Specification:
 
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       db.readOnly(for
-        codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.headOption
+        codeOpt <- country.select(_.code).where(_.code _equals "JPN").headOption
         cities <- codeOpt match
                     case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
                         .select(v => (v.name, v.countryCode))
                         .where(_.countryCode _equals code)
-                        .query
                         .toList
       yield cities.length === 248)
         .unsafeRunSync()
@@ -431,7 +418,7 @@ object DatabaseTest extends Specification:
 
     "A stand-alone update from the model will be successful." in {
       db.transaction(for
-        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query[City].headOption
+        cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption[City]
         result <- cityOpt match
                     case None => ConnectionIO.pure[IO, Int](0)
                     case Some(cityModel) =>
@@ -467,7 +454,7 @@ object DatabaseTest extends Specification:
                  .set("district", "not update Kanagawa", false)
                  .where(_.id _equals 1637)
                  .update
-          updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).query.unsafe
+          updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1637).unsafe
         yield updated)
         .unsafeRunSync()
       (result._1 === "update Odawara") and (result._2 !== Some("not update Kanagawa"))
@@ -479,7 +466,6 @@ object DatabaseTest extends Specification:
                      .select(_.code)
                      .where(_.name _equals "Test1")
                      .and(_.continent _equals Country.Continent.Asia)
-                     .query
                      .headOption
         result <- codeOpt match
                     case None => ConnectionIO.pure[IO, Int](0)

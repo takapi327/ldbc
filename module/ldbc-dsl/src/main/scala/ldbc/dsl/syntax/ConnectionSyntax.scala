@@ -13,8 +13,8 @@ import ldbc.sql.Connection
 trait ConnectionSyntax[F[_]]:
 
   extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
-    def readOnly: Kleisli[F, DataSource, T]
+    def readOnly(dataSource: DataSource): F[T]
 
-    def autoCommit: Kleisli[F, DataSource, T]
+    def autoCommit(dataSource: DataSource): F[T]
 
-    def transaction: Kleisli[F, DataSource, T]
+    def transaction(dataSource: DataSource): F[T]

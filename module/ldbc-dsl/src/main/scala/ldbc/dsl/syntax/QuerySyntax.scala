@@ -11,51 +11,108 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
-import ldbc.dsl.Command
+import ldbc.dsl.ConnectionProvider
+import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.ColumnQuery
 import ldbc.query.builder.statement.Query
 import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Sync]:
 
-  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true):
+  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true)
+    extends ConnectionProvider[F]:
 
-    def query: Command[F, Tuples.InverseColumnMap[F, T]] =
-      Command(
-        buildQuery.statement,
-        buildQuery.params,
-        (buildQuery.columns match
-          case h *: t => h *: t
-          case h      => h *: EmptyTuple
-        ).toList
-          .asInstanceOf[List[ColumnQuery[F, ?]]]
-          .traverse {
-            case reader: ColumnQuery[F, ?] => reader.read
-          }
-          .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
-      )
+    /** Methods for returning an array of data to be retrieved from the database.
+      */
+    def toList: LogHandler[F] ?=> Kleisli[F, Connection[F], List[Tuples.InverseColumnMap[F, T]]] =
+      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (buildQuery.columns match
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnQuery[F, ?]]]
+        .traverse {
+          case reader: ColumnQuery[F, ?] => reader.read
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
 
-    def query[P <: Product](using
+      connectionToList[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
+
+    def toList[P <: Product](using
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
-    ): Command[F, P] =
-      Command(
-        buildQuery.statement,
-        buildQuery.params,
-        (buildQuery.columns match
-          case h *: t => h *: t
-          case h      => h *: EmptyTuple
-        ).toList
-          .asInstanceOf[List[ColumnQuery[F, ?]]]
-          .traverse {
-            case reader: ColumnQuery[F, ?] => reader.read
-          }
-          .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
-      )
+    ): LogHandler[F] ?=> Kleisli[F, Connection[F], List[P]] =
+      given Kleisli[F, ResultSet[F], P] = (buildQuery.columns match
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnQuery[F, ?]]]
+        .traverse {
+          case reader: ColumnQuery[F, ?] => reader.read
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
 
-    def query[A](func: T => Kleisli[F, ResultSet[F], A]): Command[F, A] =
-      Command(
-        buildQuery.statement,
-        buildQuery.params,
-        func(buildQuery.columns)
-      )
+      connectionToList[P](buildQuery.statement, buildQuery.params)
+
+    /** A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
+      * first one is retrieved.
+      */
+    def headOption: LogHandler[F] ?=> Kleisli[F, Connection[F], Option[Tuples.InverseColumnMap[F, T]]] =
+      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (buildQuery.columns match
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnQuery[F, ?]]]
+        .traverse {
+          case reader: ColumnQuery[F, ?] => reader.read
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
+
+      connectionToHeadOption[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
+
+    def headOption[P <: Product](using
+      mirror: Mirror.ProductOf[P],
+      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
+    ): LogHandler[F] ?=> Kleisli[F, Connection[F], Option[P]] =
+      given Kleisli[F, ResultSet[F], P] = (buildQuery.columns match
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnQuery[F, ?]]]
+        .traverse {
+          case reader: ColumnQuery[F, ?] => reader.read
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+
+      connectionToHeadOption[P](buildQuery.statement, buildQuery.params)
+
+    /** A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
+      * raised. Use the [[headOption]] method if you want to retrieve individual data.
+      */
+    def unsafe: LogHandler[F] ?=> Kleisli[F, Connection[F], Tuples.InverseColumnMap[F, T]] =
+      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (buildQuery.columns match
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnQuery[F, ?]]]
+        .traverse {
+          case reader: ColumnQuery[F, ?] => reader.read
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
+
+      connectionToUnsafe[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
+
+    def unsafe[P <: Product](using
+      mirror: Mirror.ProductOf[P],
+      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
+    ): LogHandler[F] ?=> Kleisli[F, Connection[F], P] =
+      given Kleisli[F, ResultSet[F], P] = (buildQuery.columns match
+        case h *: t => h *: t
+        case h      => h *: EmptyTuple
+      ).toList
+        .asInstanceOf[List[ColumnQuery[F, ?]]]
+        .traverse {
+          case reader: ColumnQuery[F, ?] => reader.read
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+
+      connectionToUnsafe[P](buildQuery.statement, buildQuery.params)
