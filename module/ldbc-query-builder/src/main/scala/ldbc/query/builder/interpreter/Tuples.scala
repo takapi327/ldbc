@@ -55,12 +55,6 @@ object Tuples:
     case Tuple => MapToColumn[T, F]
     case _     => ColumnQuery[F, T]
 
-  type ToColumnQuery[F[_], T] <: Tuple = T match
-    case EmptyTuple                      => EmptyTuple
-    case ColumnQuery[F, h]               => ColumnQuery[F, h] *: EmptyTuple
-    case ColumnQuery[F, h] *: EmptyTuple => ColumnQuery[F, h] *: EmptyTuple
-    case ColumnQuery[F, h] *: t          => ColumnQuery[F, h] *: ToColumnQuery[F, t]
-
   type ToTableOpt[F[_], T <: Tuple] <: Tuple = T match
     case TableQuery[F, t] *: EmptyTuple => TableOpt[F, t] *: EmptyTuple
     case TableOpt[F, t] *: EmptyTuple   => TableOpt[F, t] *: EmptyTuple
