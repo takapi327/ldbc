@@ -43,7 +43,8 @@ class PlainSelect:
 
   @Benchmark
   def selectN: List[(Int, String, String)] =
+    given LogHandler[IO] = noLog
     sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
-      .toList[(Int, String, String)](using noLog)
+      .toList[(Int, String, String)]()
       .readOnly(dataSource)
       .unsafeRunSync()

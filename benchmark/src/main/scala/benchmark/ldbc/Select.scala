@@ -52,10 +52,11 @@ class Select:
 
   @Benchmark
   def selectN: List[(Int, String, String)] =
+    given LogHandler[IO] = noLog
     query
       .select(city => (city.id, city.name, city.countryCode))
       .limit(len)
-      .toList(using noLog)
+      .toList
       .readOnly(dataSource)
       .unsafeRunSync()
 
