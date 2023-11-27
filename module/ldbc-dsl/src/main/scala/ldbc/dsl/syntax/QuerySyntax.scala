@@ -11,6 +11,7 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
+import ldbc.sql.util.FactoryCompat
 import ldbc.dsl.ConnectionProvider
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.ColumnQuery
@@ -19,16 +20,14 @@ import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Sync]:
 
-  implicit class QueryOps[T](buildQuery: Query[F, T])(using Tuples.IsColumnQuery[F, T] =:= true)
+  implicit class QueryOps[T](buildQuery: Query[F, T])(using cast: T =:= Tuples.ToColumnQuery[F, T])
     extends ConnectionProvider[F]:
 
     /** Methods for returning an array of data to be retrieved from the database.
       */
-    def toList: LogHandler[F] ?=> Kleisli[F, Connection[F], List[Tuples.InverseColumnMap[F, T]]] =
-      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (buildQuery.columns match
-        case h *: t => h *: t
-        case h      => h *: EmptyTuple
-      ).toList
+    def toList: FactoryCompat[Tuples.InverseColumnMap[F, T], List[Tuples.InverseColumnMap[F, T]]] ?=> LogHandler[F] ?=> Kleisli[F, Connection[F], List[Tuples.InverseColumnMap[F, T]]] =
+      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = cast(buildQuery.columns)
+        .toList
         .asInstanceOf[List[ColumnQuery[F, ?]]]
         .traverse {
           case reader: ColumnQuery[F, ?] => reader.read
@@ -39,12 +38,11 @@ trait QuerySyntax[F[_]: Sync]:
 
     def toList[P <: Product](using
       mirror: Mirror.ProductOf[P],
-      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
+      check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
+      factory: FactoryCompat[P, List[P]]
     ): LogHandler[F] ?=> Kleisli[F, Connection[F], List[P]] =
-      given Kleisli[F, ResultSet[F], P] = (buildQuery.columns match
-        case h *: t => h *: t
-        case h      => h *: EmptyTuple
-      ).toList
+      given Kleisli[F, ResultSet[F], P] = cast(buildQuery.columns)
+        .toList
         .asInstanceOf[List[ColumnQuery[F, ?]]]
         .traverse {
           case reader: ColumnQuery[F, ?] => reader.read
@@ -57,10 +55,8 @@ trait QuerySyntax[F[_]: Sync]:
       * first one is retrieved.
       */
     def headOption: LogHandler[F] ?=> Kleisli[F, Connection[F], Option[Tuples.InverseColumnMap[F, T]]] =
-      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = (buildQuery.columns match
-        case h *: t => h *: t
-        case h      => h *: EmptyTuple
-      ).toList
+      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]] = cast(buildQuery.columns)
+        .toList
         .asInstanceOf[List[ColumnQuery[F, ?]]]
         .traverse {
           case reader: ColumnQuery[F, ?] => reader.read
@@ -73,10 +69,8 @@ trait QuerySyntax[F[_]: Sync]:
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
     ): LogHandler[F] ?=> Kleisli[F, Connection[F], Option[P]] =
-      given Kleisli[F, ResultSet[F], P] = (buildQuery.columns match
-        case h *: t => h *: t
-        case h      => h *: EmptyTuple
-      ).toList
+      given Kleisli[F, ResultSet[F], P] = cast(buildQuery.columns)
+        .toList
         .asInstanceOf[List[ColumnQuery[F, ?]]]
         .traverse {
           case reader: ColumnQuery[F, ?] => reader.read
@@ -105,10 +99,8 @@ trait QuerySyntax[F[_]: Sync]:
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
     ): LogHandler[F] ?=> Kleisli[F, Connection[F], P] =
-      given Kleisli[F, ResultSet[F], P] = (buildQuery.columns match
-        case h *: t => h *: t
-        case h      => h *: EmptyTuple
-      ).toList
+      given Kleisli[F, ResultSet[F], P] = cast(buildQuery.columns)
+        .toList
         .asInstanceOf[List[ColumnQuery[F, ?]]]
         .traverse {
           case reader: ColumnQuery[F, ?] => reader.read
