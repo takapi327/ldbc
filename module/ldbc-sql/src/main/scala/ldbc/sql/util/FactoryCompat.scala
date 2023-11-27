@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.sql.util
 
@@ -13,8 +13,8 @@ trait FactoryCompat[-A, +C]:
   def newBuilder: mutable.Builder[A, C]
 
 object FactoryCompat:
-  //given [A, C]: Conversion[Factory[A, C], FactoryCompat[A, C]] =
+  // given [A, C]: Conversion[Factory[A, C], FactoryCompat[A, C]] =
   //  factory => new FactoryCompat[A, C]:
   //    override def newBuilder: mutable.Builder[A, C] = factory.newBuilder
   given [A, C](using factory: Factory[A, C]): FactoryCompat[A, C] = new FactoryCompat[A, C]:
-      override def newBuilder: mutable.Builder[A, C] = factory.newBuilder
+    override def newBuilder: mutable.Builder[A, C] = factory.newBuilder

@@ -25,7 +25,8 @@ trait SQLSyntax[F[_]: Sync]:
   implicit class SqlOps(sql: SQL[F]) extends ConnectionProvider[F]:
     /** Methods for returning an array of data to be retrieved from the database.
       */
-    inline def toList[T <: Tuple](): FactoryCompat[T, List[T]] ?=> LogHandler[F] ?=> Kleisli[F, Connection[F], List[T]] =
+    inline def toList[T <: Tuple]()
+      : FactoryCompat[T, List[T]] ?=> LogHandler[F] ?=> Kleisli[F, Connection[F], List[T]] =
       given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
         ResultSetReader
           .fold[F, T]
@@ -40,9 +41,9 @@ trait SQLSyntax[F[_]: Sync]:
       connectionToList[T](sql.statement, sql.params)
 
     inline def toList[P <: Product](using
-      mirror: Mirror.ProductOf[P],
+      mirror:     Mirror.ProductOf[P],
       logHandler: LogHandler[F],
-      factory: FactoryCompat[P, List[P]]
+      factory:    FactoryCompat[P, List[P]]
     ): Kleisli[F, Connection[F], List[P]] =
       given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
         ResultSetReader
