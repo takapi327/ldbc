@@ -64,6 +64,17 @@ package object dsl:
                       }
         yield transact).use(connectionKleisli.run)
 
+      def rollback(dataSource: DataSource): F[T] =
+        val connectionResource = buildConnectionResource {
+          for
+            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+            _ <- connection.setAutoCommit(false)
+          yield connection
+        }
+        connectionResource.use { connection =>
+          connectionKleisli.run(connection) <* connection.rollback()
+        }
+
     extension (database: CoreDatabase)
 
       def fromDriverManager(): Database[F] =
