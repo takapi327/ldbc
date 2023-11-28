@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.jdbc
 
@@ -48,10 +48,11 @@ class Insert:
       .Manager { use =>
         val connection = use(dataSource.getConnection)
         connection.setAutoCommit(false)
-        val statement = use(connection.prepareStatement(s"INSERT INTO test (c1, c2) VALUES$values"))
-        records.zipWithIndex.foreach { case ((id, value), index) =>
-          statement.setInt(index * 2 + 1, id)
-          statement.setString(index * 2 + 2, value)
+        val statement = use(connection.prepareStatement(s"INSERT INTO test (c1, c2) VALUES $values"))
+        records.zipWithIndex.foreach {
+          case ((id, value), index) =>
+            statement.setInt(index * 2 + 1, id)
+            statement.setString(index * 2 + 2, value)
         }
         statement.executeUpdate()
         connection.rollback()
@@ -64,11 +65,12 @@ class Insert:
       .Manager { use =>
         val connection = use(dataSource.getConnection)
         connection.setAutoCommit(false)
-        val statement = use(connection.prepareStatement("INSERT INTO test (c1, c2) VALUES(?, ?)"))
-        records.foreach { case (id, value) =>
-          statement.setInt(1, id)
-          statement.setString(2, value)
-          statement.addBatch()
+        val statement = use(connection.prepareStatement("INSERT INTO test (c1, c2) VALUES (?, ?)"))
+        records.foreach {
+          case (id, value) =>
+            statement.setInt(1, id)
+            statement.setString(2, value)
+            statement.addBatch()
         }
         statement.executeBatch()
         connection.rollback()

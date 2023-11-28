@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.doobie
 
@@ -48,15 +48,14 @@ class Insert:
 
   @Benchmark
   def insertN: Unit =
-    (sql"INSERT INTO test (c1, c2)" ++ values(records))
-      .update
-      .run
+    (sql"INSERT INTO test (c1, c2)" ++ values(records)).update.run
       .transact(xa)
       .unsafeRunSync()
 
   @Benchmark
   def batchN: Unit =
     val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
-    Update[(Int, String)](sql).updateMany(records)
+    Update[(Int, String)](sql)
+      .updateMany(records)
       .transact(xa)
       .unsafeRunSync()

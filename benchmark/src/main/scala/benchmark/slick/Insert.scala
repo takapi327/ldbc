@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.slick
 
@@ -30,10 +30,10 @@ class Insert:
   @Setup
   def setupDataSource(): Unit =
     db = Database.forURL(
-      url = "jdbc:mysql://127.0.0.1:13306/world",
-      user = "ldbc",
+      url      = "jdbc:mysql://127.0.0.1:13306/world",
+      user     = "ldbc",
       password = "password",
-      driver = "com.mysql.cj.jdbc.Driver"
+      driver   = "com.mysql.cj.jdbc.Driver"
     )
 
     query = TableQuery[TestTable]
@@ -50,8 +50,8 @@ class Insert:
       Duration.Inf
     )
 
-  //@Benchmark
-  //def batchN: Unit =
+  // @Benchmark
+  // def batchN: Unit =
   //  Await.result(
   //    db.run(query ++= records),
   //    Duration.Inf

@@ -68,7 +68,7 @@ package object dsl:
         val connectionResource = buildConnectionResource {
           for
             connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
-            _ <- connection.setAutoCommit(false)
+            _          <- connection.setAutoCommit(false)
           yield connection
         }
         connectionResource.use { connection =>
