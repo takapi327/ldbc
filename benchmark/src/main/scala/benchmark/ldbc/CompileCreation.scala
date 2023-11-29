@@ -20,7 +20,7 @@ class CompileCreation:
 
   var source: String = ""
 
-  var compiler: Compiler = null
+  var compiler: Compiler = _
 
   @Setup(Level.Iteration)
   def setup(): Unit =

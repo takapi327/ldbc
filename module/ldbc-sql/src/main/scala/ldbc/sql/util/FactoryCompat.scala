@@ -13,8 +13,5 @@ trait FactoryCompat[-A, +C]:
   def newBuilder: mutable.Builder[A, C]
 
 object FactoryCompat:
-  // given [A, C]: Conversion[Factory[A, C], FactoryCompat[A, C]] =
-  //  factory => new FactoryCompat[A, C]:
-  //    override def newBuilder: mutable.Builder[A, C] = factory.newBuilder
   given [A, C](using factory: Factory[A, C]): FactoryCompat[A, C] = new FactoryCompat[A, C]:
     override def newBuilder: mutable.Builder[A, C] = factory.newBuilder
