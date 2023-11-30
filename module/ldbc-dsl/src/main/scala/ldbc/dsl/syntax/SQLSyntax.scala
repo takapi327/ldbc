@@ -23,7 +23,7 @@ import ldbc.dsl.logging.{ LogEvent, LogHandler }
 trait SQLSyntax[F[_]: Sync]:
 
   implicit class SqlOps(sql: SQL[F]) extends ConnectionProvider[F]:
-    
+
     /** Methods for returning an array of data to be retrieved from the database.
       */
     inline def toList[T <: Tuple]()

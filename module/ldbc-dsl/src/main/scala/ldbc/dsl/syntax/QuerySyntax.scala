@@ -45,7 +45,8 @@ trait QuerySyntax[F[_]: Sync]:
       check:   Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes,
       factory: FactoryCompat[P, List[P]]
     ): LogHandler[F] ?=> Kleisli[F, Connection[F], List[P]] =
-      given Kleisli[F, ResultSet[F], P] = summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
+      given Kleisli[F, ResultSet[F], P] =
+        summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
       connectionToList[P](buildQuery.statement, buildQuery.params)
 
     /** A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
@@ -58,7 +59,8 @@ trait QuerySyntax[F[_]: Sync]:
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
     ): LogHandler[F] ?=> Kleisli[F, Connection[F], Option[P]] =
-      given Kleisli[F, ResultSet[F], P] = summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
+      given Kleisli[F, ResultSet[F], P] =
+        summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
       connectionToHeadOption[P](buildQuery.statement, buildQuery.params)
 
     /** A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
@@ -71,5 +73,6 @@ trait QuerySyntax[F[_]: Sync]:
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[F, T] =:= mirror.MirroredElemTypes
     ): LogHandler[F] ?=> Kleisli[F, Connection[F], P] =
-      given Kleisli[F, ResultSet[F], P] = summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
+      given Kleisli[F, ResultSet[F], P] =
+        summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
       connectionToUnsafe[P](buildQuery.statement, buildQuery.params)

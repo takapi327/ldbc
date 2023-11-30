@@ -38,7 +38,7 @@ class CompileQuery:
          |)
          |val tableQuery = TableQuery[IO, Model$size](table)
          |
-         |val query = tableQuery.select(v => (${(1 to size).map(i => s"v.c$i").mkString(", ")}))
+         |val query = tableQuery.select(v => (${ (1 to size).map(i => s"v.c$i").mkString(", ") }))
          |  .limit(5000)
          |""".stripMargin
 

@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.slick
 
@@ -26,18 +26,17 @@ class CompileQuery:
     compiler = new Compiler
 
     val columns = (1 to size).map(i => s"def c$i = column[Int](\"c$i\")").mkString("\n  ")
-    val * = (1 to size).map(i => s"c$i").mkString(", ")
+    val *       = (1 to size).map(i => s"c$i").mkString(", ")
 
-    source =
-      s"""
+    source = s"""
          |import slick.jdbc.MySQLProfile.api.*
          |import benchmark.Model$size
-         |class Model${size}Table(tag: Tag) extends Table[Model$size](tag, "model$size"):
+         |class Model${ size }Table(tag: Tag) extends Table[Model$size](tag, "model$size"):
          |  $columns
-         |  def * = (${*}).mapTo[Model$size]
+         |  def * = (${ * }).mapTo[Model$size]
          |
-         |val tableQuery = TableQuery[Model${size}Table]
-         |val query = tableQuery.map(v => (${(1 to size).map(i => s"v.c$i").mkString(", ")})).take(5000)
+         |val tableQuery = TableQuery[Model${ size }Table]
+         |val query = tableQuery.map(v => (${ (1 to size).map(i => s"v.c$i").mkString(", ") })).take(5000)
          |""".stripMargin
 
   @Benchmark
