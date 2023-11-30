@@ -23,6 +23,7 @@ import ldbc.dsl.logging.{ LogEvent, LogHandler }
 trait SQLSyntax[F[_]: Sync]:
 
   implicit class SqlOps(sql: SQL[F]) extends ConnectionProvider[F]:
+    
     /** Methods for returning an array of data to be retrieved from the database.
       */
     inline def toList[T <: Tuple]()
@@ -33,7 +34,7 @@ trait SQLSyntax[F[_]: Sync]:
           .toList
           .zipWithIndex
           .traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+            case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
           }
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
       }
@@ -51,7 +52,7 @@ trait SQLSyntax[F[_]: Sync]:
           .toList
           .zipWithIndex
           .traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+            case (reader: ResultSetReader[F, ?], index) => reader.read(resultSet, index + 1)
           }
           .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       }
@@ -68,7 +69,7 @@ trait SQLSyntax[F[_]: Sync]:
           .toList
           .zipWithIndex
           .traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+            case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
           }
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
       }
@@ -84,7 +85,7 @@ trait SQLSyntax[F[_]: Sync]:
           .toList
           .zipWithIndex
           .traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+            case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
           }
           .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       }
@@ -101,7 +102,7 @@ trait SQLSyntax[F[_]: Sync]:
           .toList
           .zipWithIndex
           .traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+            case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
           }
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
       }
@@ -115,7 +116,7 @@ trait SQLSyntax[F[_]: Sync]:
           .toList
           .zipWithIndex
           .traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+            case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
           }
           .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
       }
