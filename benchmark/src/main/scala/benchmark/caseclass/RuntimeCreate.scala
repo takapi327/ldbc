@@ -15,7 +15,7 @@ import benchmark.*
 @Warmup(iterations = 10, time = 200, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 20, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(Scope.Thread)
-class Creation:
+class RuntimeCreate:
 
   @Benchmark
   def createM1 = Model1(

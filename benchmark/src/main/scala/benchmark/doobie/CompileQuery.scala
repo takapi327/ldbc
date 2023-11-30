@@ -27,7 +27,6 @@ class CompileQuery:
     compiler = new Compiler
 
     source = s"""
-         |import cats.effect.IO
          |import doobie.*
          |import doobie.implicits.*
          |
