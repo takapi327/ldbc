@@ -13,7 +13,7 @@ import benchmark.Compiler
 @BenchmarkMode(Array(Mode.SingleShotTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Thread)
-class CompileQuery:
+class CompileCreateQuery:
 
   @Param(Array("1", "5", "10", "20", "25"))
   var size: Int = 0
@@ -31,8 +31,8 @@ class CompileQuery:
          |import doobie.implicits.*
          |
          |val len = 5000
-         |val query = sql"SELECT ${(1 to size).map(i => s"c$i").mkString(", ")} FROM model$size LIMIT $$len"
-         |  .query[(${(1 to size).map(_ => "Int").mkString(", ")})]
+         |val query = sql"SELECT ${ (1 to size).map(i => s"c$i").mkString(", ") } FROM model$size LIMIT $$len"
+         |  .query[(${ (1 to size).map(_ => "Int").mkString(", ") })]
          |""".stripMargin
 
   @Benchmark

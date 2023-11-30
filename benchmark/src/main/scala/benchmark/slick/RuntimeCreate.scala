@@ -23,7 +23,7 @@ class RuntimeCreate:
   def createM1 =
     class Model1Table(tag: Tag) extends Table[Model1](tag, "model1"):
       def c1 = column[Int]("c1")
-      def * = (c1).mapTo[Model1]
+      def *  = (c1).mapTo[Model1]
     TableQuery[Model1Table]
 
   @Benchmark
@@ -34,37 +34,37 @@ class RuntimeCreate:
       def c3 = column[Int]("c3")
       def c4 = column[Int]("c4")
       def c5 = column[Int]("c5")
-      def * = (c1, c2, c3, c4, c5).mapTo[Model5]
+      def *  = (c1, c2, c3, c4, c5).mapTo[Model5]
     TableQuery[Model5Table]
 
   @Benchmark
   def createM10 =
     class Model10Table(tag: Tag) extends Table[Model10](tag, "model10"):
-      def c1 = column[Int]("c1")
-      def c2 = column[Int]("c2")
-      def c3 = column[Int]("c3")
-      def c4 = column[Int]("c4")
-      def c5 = column[Int]("c5")
-      def c6 = column[Int]("c6")
-      def c7 = column[Int]("c7")
-      def c8 = column[Int]("c8")
-      def c9 = column[Int]("c9")
+      def c1  = column[Int]("c1")
+      def c2  = column[Int]("c2")
+      def c3  = column[Int]("c3")
+      def c4  = column[Int]("c4")
+      def c5  = column[Int]("c5")
+      def c6  = column[Int]("c6")
+      def c7  = column[Int]("c7")
+      def c8  = column[Int]("c8")
+      def c9  = column[Int]("c9")
       def c10 = column[Int]("c10")
-      def * = (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10).mapTo[Model10]
+      def *   = (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10).mapTo[Model10]
     TableQuery[Model10Table]
 
   @Benchmark
   def createM20 =
     class Model20Table(tag: Tag) extends Table[Model20](tag, "model20"):
-      def c1 = column[Int]("c1")
-      def c2 = column[Int]("c2")
-      def c3 = column[Int]("c3")
-      def c4 = column[Int]("c4")
-      def c5 = column[Int]("c5")
-      def c6 = column[Int]("c6")
-      def c7 = column[Int]("c7")
-      def c8 = column[Int]("c8")
-      def c9 = column[Int]("c9")
+      def c1  = column[Int]("c1")
+      def c2  = column[Int]("c2")
+      def c3  = column[Int]("c3")
+      def c4  = column[Int]("c4")
+      def c5  = column[Int]("c5")
+      def c6  = column[Int]("c6")
+      def c7  = column[Int]("c7")
+      def c8  = column[Int]("c8")
+      def c9  = column[Int]("c9")
       def c10 = column[Int]("c10")
       def c11 = column[Int]("c11")
       def c12 = column[Int]("c12")

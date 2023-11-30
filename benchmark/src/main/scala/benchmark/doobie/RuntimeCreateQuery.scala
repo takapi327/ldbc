@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.doobie
 
@@ -27,10 +27,43 @@ class RuntimeCreateQuery:
   def createM5 = sql"SELECT c1, c2, c3, c4, c5 FROM model5".query[(Int, Int, Int, Int, Int)]
 
   @Benchmark
-  def createM10 = sql"SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 FROM model10".query[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]
+  def createM10 = sql"SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 FROM model10"
+    .query[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]
 
   @Benchmark
-  def createM20 = sql"SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20 FROM model20".query[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]
+  def createM20 =
+    sql"SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20 FROM model20"
+      .query[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]
 
   @Benchmark
-  def createM25 = sql"SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25 FROM model25".query[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]
+  def createM25 =
+    sql"SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25 FROM model25"
+      .query[
+        (
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int
+        )
+      ]

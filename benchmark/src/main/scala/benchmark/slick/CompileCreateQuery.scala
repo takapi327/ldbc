@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Array(Mode.SingleShotTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Thread)
-class CompileQuery:
+class CompileCreateQuery:
 
   @Param(Array("1", "5", "10", "20", "25"))
   var size: Int = 0

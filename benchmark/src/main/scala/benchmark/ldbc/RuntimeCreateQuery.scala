@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package benchmark.ldbc
 
@@ -80,7 +80,30 @@ class RuntimeCreateQuery:
       column("c19", INT),
       column("c20", INT)
     )
-    TableQuery[IO, Model20](table).select(v => (v.c1, v.c2, v.c3, v.c4, v.c5, v.c6, v.c7, v.c8, v.c9, v.c10, v.c11, v.c12, v.c13, v.c14, v.c15, v.c16, v.c17, v.c18, v.c19, v.c20))
+    TableQuery[IO, Model20](table).select(v =>
+      (
+        v.c1,
+        v.c2,
+        v.c3,
+        v.c4,
+        v.c5,
+        v.c6,
+        v.c7,
+        v.c8,
+        v.c9,
+        v.c10,
+        v.c11,
+        v.c12,
+        v.c13,
+        v.c14,
+        v.c15,
+        v.c16,
+        v.c17,
+        v.c18,
+        v.c19,
+        v.c20
+      )
+    )
 
   @Benchmark
   def createM25 =
@@ -111,4 +134,32 @@ class RuntimeCreateQuery:
       column("c24", INT),
       column("c25", INT)
     )
-    TableQuery[IO, Model25](table).select(v => (v.c1, v.c2, v.c3, v.c4, v.c5, v.c6, v.c7, v.c8, v.c9, v.c10, v.c11, v.c12, v.c13, v.c14, v.c15, v.c16, v.c17, v.c18, v.c19, v.c20, v.c21, v.c22, v.c23, v.c24, v.c25))
+    TableQuery[IO, Model25](table).select(v =>
+      (
+        v.c1,
+        v.c2,
+        v.c3,
+        v.c4,
+        v.c5,
+        v.c6,
+        v.c7,
+        v.c8,
+        v.c9,
+        v.c10,
+        v.c11,
+        v.c12,
+        v.c13,
+        v.c14,
+        v.c15,
+        v.c16,
+        v.c17,
+        v.c18,
+        v.c19,
+        v.c20,
+        v.c21,
+        v.c22,
+        v.c23,
+        v.c24,
+        v.c25
+      )
+    )
