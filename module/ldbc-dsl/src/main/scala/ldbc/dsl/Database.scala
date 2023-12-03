@@ -40,37 +40,66 @@ case class Database[F[_]: Sync](
   def setCollate(collate: Collate[String]): Database[F] = this.copy(collate = Some(collate))
   def setTables(tables: Set[Table[?]]):     Database[F] = this.copy(tables = tables)
 
+  /** Functions to manage the processing of connections independently.
+    *
+    * @param connectionKleisli
+    *   A Kleisli function that receives a Connection.
+    * @tparam T
+    *   Type of data to be retrieved after database processing is executed.
+    */
+  def connection[T](connectionKleisli: Connection[F] => F[T]): F[T] =
+    buildConnectionResource(connectionF()).use(connection => connectionKleisli(connection))
+
+  /** Functions for managing the processing of connections in a read-only manner.
+    *
+    * @param connectionKleisli
+    *   A Kleisli function that receives a Connection.
+    * @tparam T
+    *   Type of data to be retrieved after database processing is executed.
+    */
   def readOnly[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
-    buildConnectionResource {
-      for
-        connection <- connectionF()
-        _          <- connection.setReadOnly(true)
-      yield connection
-    }
-      .use(connectionKleisli.run)
+    connection(connection => connection.setReadOnly(true) >> connectionKleisli.run(connection))
 
+  /** Functions to manage the processing of connections for writing.
+    *
+    * @param connectionKleisli
+    *   A Kleisli function that receives a Connection.
+    * @tparam T
+    *   Type of data to be retrieved after database processing is executed.
+    */
   def autoCommit[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
-    buildConnectionResource {
-      for
-        connection <- connectionF()
-        _          <- connection.setReadOnly(false) >> connection.setAutoCommit(true)
-      yield connection
-    }
-      .use(connectionKleisli.run)
+    connection(connection =>
+      connection.setReadOnly(false) >> connection.setAutoCommit(true) >> connectionKleisli.run(connection)
+    )
 
+  /** Functions to manage the processing of connections in a transaction.
+    *
+    * @param connectionKleisli
+    *   A Kleisli function that receives a Connection.
+    * @tparam T
+    *   Type of data to be retrieved after database processing is executed.
+    */
   def transaction[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
-    (for
-      connection <- buildConnectionResource {
-                      for
-                        connection <- connectionF()
-                        _          <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
-                      yield connection
-                    }
-      transact <- Resource.makeCase(Sync[F].pure(connection)) {
-                    case (conn, ExitCase.Errored(e)) => conn.rollback() >> Sync[F].raiseError(e)
-                    case (conn, _)                   => conn.commit()
-                  }
-    yield transact).use(connectionKleisli.run)
+    connection(connection =>
+      connection.setReadOnly(false) >> connection.setAutoCommit(false) >> Resource
+        .makeCase(Sync[F].pure(connection)) {
+          case (conn, ExitCase.Errored(e)) => conn.rollback() >> Sync[F].raiseError(e)
+          case (conn, _)                   => conn.commit()
+        }
+        .use(connectionKleisli.run)
+    )
+
+  /** Functions to manage the processing of connections, always rolling back.
+    *
+    * @param connectionKleisli
+    *   A Kleisli function that receives a Connection.
+    * @tparam T
+    *   Type of data to be retrieved after database processing is executed.
+    */
+  def rollback[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
+    connection(connection =>
+      connection.setAutoCommit(false) >> connectionKleisli.run(connection) <* connection.rollback()
+    )
 
 object Database:
 
