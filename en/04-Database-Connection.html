@@ -5,8 +5,8 @@
 <title>Database Connection · LDBC</title>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content='docs'/>
-<link rel="canonical" href="https://github.com/takapi327/ldbc../en/04-Database-Connection.html"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../en/04-Database-Connection.html"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../js/page.js"></script>
@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -44,6 +44,7 @@
   <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
   <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
   <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
 </ul>
 </div>
 
@@ -75,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -87,6 +88,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
   <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
   <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
 </ul>
 </div>
 
@@ -115,7 +117,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>This chapter describes how to use queries built with LDBC to process connections to databases.</p>
 <p>The following dependencies must be set up for the project</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
   &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
 )
 </code></pre>
@@ -198,36 +200,31 @@ dataSource.setPassword(&quot;password&quot;)
     ) &gt;&gt; Console[F].printStackTrace(failure)
 </code></pre>
 <h2><a href="#query" name="query" class="anchor"><span class="anchor-link"></span></a>Query</h2>
-<p>Constructing a <code>select</code> statement allows you to use the <code>query</code> method. The <code>query</code> method is used to determine the format of the data to be retrieved. If no type is specified, the column type specified in the <code>select</code> method is returned as a Tuple.</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query // (Long, String, Option[Int])
-val query2 = userQuery.select(user =&gt; (user.name, user.age)).query // (String, Option[Int])
+<p>Constructing a <code>select</code> statement allows the use of the <code>toList</code>/<code>headOption</code>/<code>unsafe</code> methods. These methods are used to determine the format of the data to be retrieved. If you do not specify any particular type, the column type specified in the <code>select</code> method will be returned as a Tuple.</p>
+<h3><a href="#tolist" name="tolist" class="anchor"><span class="anchor-link"></span></a>toList</h3>
+<p>The <code>toList</code> method is used to retrieve a list of data as a result of executing a query. If you use the <code>toList</code> method to process the database and get zero data, an empty array will be returned.</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.toList // List[(Long, String, Option[Int])]
 </code></pre>
-<p>Specifying a model in the <code>query</code> method will convert the acquired data to the specified model.</p>
-<pre class="prettyprint"><code class="language-scala 3">val query = userQuery.selectAll.query[User] // User
+<p>Specifying a model in the <code>toList</code> method allows the data after acquisition to be converted to the specified model.</p>
+<pre class="prettyprint"><code class="language-scala 3">val query = userQuery.selectAll.toList[User] // User
 </code></pre>
-<p>The model type specified in the <code>query</code> method must match the Tuple type specified in the <code>select</code> method or be type-convertible from the Tuple type to the specified model.</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.select(user =&gt; (user.name, user.age)).query[User] // Compile error
+<p>The model type specified in the <code>toList</code> method must match the Tuple type specified in the <code>select</code> method or be type-convertible from the Tuple type to the specified model.</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.select(user =&gt; (user.name, user.age)).toList[User] // Compile error
 
 case class Test(name: String, age: Option[Int])
-val query2 = userQuery.select(user =&gt; (user.name, user.age)).query[Test] // Test
-</code></pre>
-<h3><a href="#tolist" name="tolist" class="anchor"><span class="anchor-link"></span></a>toList</h3>
-<p>After determining the type of data to retrieve with the <code>query</code> method, it is then up to the user to decide whether the data to be retrieved is to be retrieved as an array or as Optional data.</p>
-<p>The <code>toList</code> method is used to retrieve a list of data as a result of executing a query. If you use the <code>toList</code> method to process the database and get zero data, an empty array will be returned.</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.toList // List[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].toList // List[User]
+val query2 = userQuery.select(user =&gt; (user.name, user.age)).toList[Test] // Test
 </code></pre>
 <h3><a href="#headoption" name="headoption" class="anchor"><span class="anchor-link"></span></a>headOption</h3>
-<p>クエリのOptionalな結果として最初のデータを取得したい場合は、<code>headOption</code> メソッドを使用する。headOption` メソッドを使用したデータベース処理の結果が 0 の場合は、何も返されない。</p>
+<p>If you want to get the first data as an Optional result of the query, use the <code>headOption</code> method. If the result of database processing using the <code>headOption</code> method is zero, none is returned.</p>
 <p>Note that if you use the <code>headOption</code> method, only the first data will be returned, even if you execute a query that retrieves multiple data.</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.headOption // Option[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].headOption // Option[User]
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.headOption // Option[(Long, String, Option[Int])]
+val query2 = userQuery.selectAll.headOption[User] // Option[User]
 </code></pre>
 <h3><a href="#unsafe" name="unsafe" class="anchor"><span class="anchor-link"></span></a>unsafe</h3>
 <p>When using the <code>unsafe</code> method, it is the same as the <code>headOption</code> method in that it returns only the first case of the retrieved data, but the data is returned as is, not as Optional. If the number of data returned is zero, an exception will be raised and appropriate exception handling is required.</p>
 <p>It is named <code>unsafe</code> because it is likely to raise an exception at runtime.</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.unsafe // (Long, String, Option[Int])
-val query2 = userQuery.selectAll.query[User].unsafe // User
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.unsafe // (Long, String, Option[Int])
+val query2 = userQuery.selectAll.unsafe[User] // User
 </code></pre>
 <h2><a href="#update" name="update" class="anchor"><span class="anchor-link"></span></a>Update</h2>
 <p>Constructing an <code>insert/update/delete</code> statement allows you to use the <code>update</code> method. The <code>update</code> method returns the number of write operations to the database.</p>
@@ -244,7 +241,7 @@ val delete = userQuery.delete.update // Int
 <p>Before making a database connection, commit timing, read/write-only, and other settings must be made.</p>
 <h3><a href="#read-only" name="read-only" class="anchor"><span class="anchor-link"></span></a>Read Only</h3>
 <p>The <code>readOnly</code> method can be used to make the processing of a query to be executed read-only. The <code>readOnly</code> method can also be used with <code>insert/update/delete</code> statements, but it will result in an error at runtime because of the write operation.</p>
-<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.query.readOnly
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly
 </code></pre>
 <h3><a href="#auto-commit" name="auto-commit" class="anchor"><span class="anchor-link"></span></a>Auto Commit</h3>
 <p>The <code>autoCommit</code> method can be used to set the query processing to commit at each query execution.</p>
@@ -263,10 +260,10 @@ yield ...).transaction
 <h3><a href="#execution" name="execution" class="anchor"><span class="anchor-link"></span></a>Execution</h3>
 <p>The return type and connection method have been set up, but since the process so far built with LDBC is of type <code>Kleisli[F, XXX, T]</code>, the database connection process (side effect) will not occur just by defining it. You need to run <code>run</code> on <code>Kleisli</code> to execute the database process.</p>
 <p>If you use the <code>readOnly/autoCommit/transaction</code> method, the return type will be <code>Kleisli[F, DataSource, T]</code>, so you can raise the return type to <code>F</code> by passing JDBC&rsquo;s DataSource to <code>run</code>.</p>
-<pre class="prettyprint"><code class="language-scala 3">val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource) // F[User]
+<pre class="prettyprint"><code class="language-scala 3">val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
 </code></pre>
 <p>If you are using Cats Effect IO, you can perform the database connection process by executing it in <code>IOApp</code> or by using <code>unsafeRunSync</code> or similar.</p>
-<pre class="prettyprint"><code class="language-scala 3">val user: User = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+<pre class="prettyprint"><code class="language-scala 3">val user: User = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
 </code></pre>
 <p>For more information on <code>Kleisli</code>, please refer to Cats&rsquo; <a href="https://typelevel.org/cats/datatypes/kleisli.html">documentation</a>.</p>
 <h2><a href="#database-action" name="database-action" class="anchor"><span class="anchor-link"></span></a>Database Action</h2>
@@ -281,7 +278,7 @@ yield ...).transaction
 </ul>
 <p>The method using <code>Database</code> is merely a simplified method of passing a DataSource, so there is no difference in execution results between the two. The only difference is whether the processes are combined using <code>flatMap</code> or other methods and executed in a method chain, or whether the combined processes are executed using <code>Database</code>. Therefore, the user can choose the execution method of his/her choice.</p>
 <p><strong>Read Only</strong></p>
-<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = db.readOnly(userQuery.selectAll.query[User].headOption).unsafeRunSync()
+<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = db.readOnly(userQuery.selectAll.headOption[User]).unsafeRunSync()
 </code></pre>
 <p><strong>Auto Commit</strong></p>
 <pre class="prettyprint"><code class="language-scala 3">val result = db.autoCommit(userQuery.insert((1L, &quot;name&quot;, None)).update).unsafeRunSync()
@@ -307,7 +304,7 @@ val db = database.fromDriverManager(&quot;user name&quot;, &quot;password&quot;)
 <h2><a href="#using-a-hikaricp-connection-pool" name="using-a-hikaricp-connection-pool" class="anchor"><span class="anchor-link"></span></a>Using a HikariCP Connection Pool</h2>
 <p><code>ldbc-hikari</code> provides a builder to build HikariConfig and HikariDataSource for building HikariCP connection pools.</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
 )
 </code></pre>
 <p><code>HikariConfigBuilder</code> is a builder to build <code>HikariConfig</code> of HikariCP as the name suggests.</p>
@@ -492,7 +489,7 @@ val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfi
     }
 </code></pre>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/en/04-Database-Connection.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/en/04-Database-Connection.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -581,7 +578,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0-SNAPSHOT', 'https://github.com/takapi327/ldbc')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>

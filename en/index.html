@@ -5,8 +5,8 @@
 <title>LDBC</title>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content='docs'/>
-<link rel="canonical" href="https://github.com/takapi327/ldbc../en/index.html"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../en/index.html"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../js/page.js"></script>
@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -44,6 +44,7 @@
   <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
   <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
   <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
 </ul>
 </div>
 
@@ -75,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -87,6 +88,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
   <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
   <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
 </ul>
 </div>
 
@@ -113,7 +115,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   <li>Functional DSL (slick, quill, zio-sql)</li>
   <li>SQL string interpolator (Anorm, doobie)</li>
 </ul>
-<p>LDBC, also a JDBC-wrapped library, is a Scala 3 library that combines aspects of each, providing a type-safe, refactorable SQL interface that can express all SQL expressions on a MySQL database.</p>
+<p>LDBC, also a JDBC-wrapped library, is a Scala 3 library that combines aspects of each, providing a type-safe, refactorable SQL interface that can express SQL expressions on a MySQL database.</p>
 <p>The concept of LDBC also allows development to centralize Scala models, sql schemas, and documents by using LDBC to manage a single resource.</p>
 <p>This concept was influenced by <a href="https://github.com/softwaremill/tapir">tapir</a>, a declarative, type-safe web endpoint library.<br>By using tapir, you can build type-safe endpoints and even generate OpenAPI documents from the endpoints you build.</p>
 <p>LDBC uses Scala at the database layer to allow for the same type-safe construction and to allow documentation generation using what has been constructed.</p>
@@ -166,12 +168,12 @@ val table = Table[User](&quot;user&quot;)(
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
 
   // Start with this one.
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-core&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-core&quot; % &quot;0.1.0&quot;,
 
   // Then add these as needed
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-dsl&quot;           % &quot;0.1.0&quot;, // Plain Query Database Connection
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.1.0&quot;, // Type-safe query construction
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-schemaspy&quot;     % &quot;0.1.0&quot;, // SchemaSPY document generation
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot;           % &quot;0.1.0&quot;, // Plain Query Database Connection
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.1.0&quot;, // Type-safe query construction
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-schemaspy&quot;     % &quot;0.1.0&quot;, // SchemaSPY document generation
 )
 </code></pre>
 <p>For more information on how to use the sbt plugin, please refer to this <a href="/ldbc/en/07-Schema-Code-Generation.html">documentation</a>.</p>
@@ -189,7 +191,7 @@ val table = Table[User](&quot;user&quot;)(
   <li>etc&hellip;</li>
 </ul>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/en/index.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/en/index.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -275,7 +277,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0-SNAPSHOT', 'https://github.com/takapi327/ldbc')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>

@@ -2,11 +2,11 @@
 <html class="no-js" lang="en">
 
 <head>
-<title>SchemaSPY Document Generation · LDBC</title>
+<title>Performance · LDBC</title>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="description" content='Documentation for ldbc'/>
-<link rel="canonical" href="https://takapi327.github.io/ldbc/../en/06-Generating-SchemaSPY-Documentation.html"/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../en/08-Perdormance.html"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../js/page.js"></script>
@@ -42,9 +42,9 @@
   <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
   <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
   <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
-  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="active page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
   <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
-  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+  <li><a href="../en/08-Perdormance.html" class="active page">Performance</a></li>
 </ul>
 </div>
 
@@ -86,9 +86,9 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
   <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
   <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
-  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="active page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
   <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
-  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+  <li><a href="../en/08-Perdormance.html" class="active page">Performance</a></li>
 </ul>
 </div>
 
@@ -105,7 +105,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <div class="nav-breadcrumbs">
 <ul>
   <li><a href="../en/index.html">LDBC</a></li>
-  <li>SchemaSPY Document Generation</li>
+  <li>Performance</li>
 </ul>
 </div>
 </div>
@@ -113,63 +113,33 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 
 <div class="page-content row">
 <div class="small-12 large-9 column" id="docs">
-<h1><a href="#schemaspy-document-generation" name="schemaspy-document-generation" class="anchor"><span class="anchor-link"></span></a>SchemaSPY Document Generation</h1>
-<p>This chapter describes how to use table definitions built in LDBC to create SchemaSPY documents.</p>
-<p>The following dependencies must be set up for the project</p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-schemaspy&quot; % &quot;0.1.0&quot;
-</code></pre>
-<p>If you have not yet read how to define tables in LDBC, we recommend that you read the chapter <a href="/ldbc/en/01-Table-Definitions.html">Table Definitions</a> first.</p>
-<p>The following code example assumes the following import</p>
-<pre class="prettyprint"><code class="language-scala 3">import ldbc.core.*
-import ldbc.schemaspy.SchemaSpyGenerator
-</code></pre>
-<h2><a href="#generated-from-table-definitions" name="generated-from-table-definitions" class="anchor"><span class="anchor-link"></span></a>Generated from table definitions</h2>
-<p>SchemaSPY connects to the database to obtain Meta information and table structures, and generates documents based on this information. LDBC, on the other hand, does not connect to the database, but generates SchemaSPY documents using the table structures constructed by LDBC. Some items deviate from the documentation generated using SchemaSPY simply because it does not make a connection to the database. For example, information such as the number of records currently stored in a table cannot be displayed.</p>
-<p>Database information is required to generate documents, and LDBC has a trait for representing database information.</p>
-<p>A sample of database information built using <code>ldbc.core.Database</code> is shown below.</p>
-<pre class="prettyprint"><code class="language-scala 3">case class SampleLdbcDatabase(
-  schemaMeta: Option[String] = None,
-  catalog: Option[String] = Some(&quot;def&quot;),
-  host: String = &quot;127.0.0.1&quot;,
-  port: Int = 3306
-) extends Database:
-
-  override val databaseType: Database.Type = Database.Type.MySQL
-
-  override val name: String = &quot;sample_ldbc&quot;
-
-  override val schema: String = &quot;sample_ldbc&quot;
-
-  override val character: Option[Character] = None
-
-  override val collate: Option[Collate] = None
-
-  override val tables = Set(
-    ... // Enumerate table structures built with LDBC
-  )
-</code></pre>
-<p>Use <code>SchemaSpyGenerator</code> to generate SchemaSPY documents. Pass the generated database definition to the <code>default</code> method and call <code>generate</code> to generate SchemaSPY files at the file location specified in the second argument.</p>
-<pre class="prettyprint"><code class="language-scala 3">@main
-def run(): Unit =
-  val file = java.io.File(&quot;document&quot;)
-  SchemaSpyGenerator.default(SampleLdbcDatabase(), file).generate()
-</code></pre>
-<p>Open the generated file <code>index.html</code> to see the SchemaSPY documentation.</p>
-<h2><a href="#generated-from-database-connection" name="generated-from-database-connection" class="anchor"><span class="anchor-link"></span></a>Generated from database connection</h2>
-<p>SchemaSpyGenerator also has a <code>connect</code> method. This method connects to the database and generates documents in the same way as the standard SchemaSpy generator.</p>
-<pre class="prettyprint"><code class="language-scala 3">@main
-def run(): Unit =
-  val file = java.io.File(&quot;document&quot;)
-  SchemaSpyGenerator.connect(SampleLdbcDatabase(), &quot;user name&quot;, &quot;password&quot; file).generate()
-</code></pre>
-<p>The process of making database connections is done in a Java-written implementation inside SchemaSpy. Note that threads are not managed by the Effect system.</p>
+<h1><a href="#performance" name="performance" class="anchor"><span class="anchor-link"></span></a>Performance</h1>
+<h2><a href="#compile-time-overhead" name="compile-time-overhead" class="anchor"><span class="anchor-link"></span></a>Compile-time Overhead</h2>
+<p>Compilation time for table definitions increases with the number of columns</p>
+<p align="center">Create compile time</p>
+<img src="../img/compile_create.png">
+<p>Compile time for query construction increases with the number of columns to select</p>
+<p align="center">Create query compile time</p>
+<img src="../img/compile_create_query.png">
+<h2><a href="#runtime-overhead" name="runtime-overhead" class="anchor"><span class="anchor-link"></span></a>Runtime Overhead</h2>
+<p>Since ldbc uses Tuple internally, it is much slower than pure class definition.</p>
+<p align="center">Create runtime</p>
+<img src="../img/runtime_create.png">
+<p>ldbc is much slower than the others with table definitions.</p>
+<p align="center">Create query runtime</p>
+<img src="../img/runtime_create_query.png">
+<h2><a href="#query-execution-overhead" name="query-execution-overhead" class="anchor"><span class="anchor-link"></span></a>Query execution Overhead</h2>
+<p>Throughput of select query execution decreases as the number of records to retrieve increases.</p>
+<p align="center">Select Throughput</p>
+<img src="../img/select_throughput.png">
+<p>Throughput of insert query execution decreases as the number of records to insert increases.</p>
+<p>※ Not accurate because the query performed is not an exact match.</p>
+<p align="center">Insert Throughput</p>
+<img src="../img/insert_throughput.png">
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/en/06-Generating-SchemaSPY-Documentation.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/en/08-Perdormance.md">here</a>.
 </div>
 
-<div class="nav-next">
-<p><strong>Next:</strong> <a href="../en/07-Schema-Code-Generation.html">Schema Code Generation</a></p>
-</div>
 </div>
 <div class="large-3 show-for-large column" data-sticky-container>
 <nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
@@ -177,10 +147,11 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <div class="nav-title">On this page:</div>
 <div class="nav-toc">
 <ul>
-  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html#schemaspy-document-generation" class="header">SchemaSPY Document Generation</a>
+  <li><a href="../en/08-Perdormance.html#performance" class="header">Performance</a>
   <ul>
-    <li><a href="../en/06-Generating-SchemaSPY-Documentation.html#generated-from-table-definitions" class="header">Generated from table definitions</a></li>
-    <li><a href="../en/06-Generating-SchemaSPY-Documentation.html#generated-from-database-connection" class="header">Generated from database connection</a></li>
+    <li><a href="../en/08-Perdormance.html#compile-time-overhead" class="header">Compile-time Overhead</a></li>
+    <li><a href="../en/08-Perdormance.html#runtime-overhead" class="header">Runtime Overhead</a></li>
+    <li><a href="../en/08-Perdormance.html#query-execution-overhead" class="header">Query execution Overhead</a></li>
   </ul></li>
 </ul>
 </div>

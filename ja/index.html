@@ -5,8 +5,8 @@
 <title>LDBC</title>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content='docs'/>
-<link rel="canonical" href="https://github.com/takapi327/ldbc../ja/index.html"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../ja/index.html"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../js/page.js"></script>
@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -44,6 +44,7 @@
   <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
   <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
   <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
 </ul>
 </div>
 
@@ -75,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -87,6 +88,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
   <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
   <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
 </ul>
 </div>
 
@@ -113,7 +115,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   <li>関数型DSL (Slick, quill, zio-sql)</li>
   <li>SQL文字列インターポレーター (Anorm, doobie)</li>
 </ul>
-<p>LDBCも同じくJDBCをラップしたライブラリであり、LDBCはそれぞれの側面を組み合わせたScala 3ライブラリで、型安全でリファクタブルなSQLインターフェイスを提供し、MySQLのデータベース上ですべてのSQL式を表現できます。</p>
+<p>LDBCも同じくJDBCをラップしたライブラリであり、LDBCはそれぞれの側面を組み合わせたScala 3ライブラリで、型安全でリファクタブルなSQLインターフェイスを提供し、MySQLのデータベース上でのSQL式を表現できます。</p>
 <p>また、LDBCのコンセプトは、LDBCを使用することで単一リソースを管理することでScalaのモデルやsqlのスキーマ、ドキュメントを一元化できる開発を行えることです。</p>
 <p>このコンセプトは宣言的でタイプセーフなWebエンドポイントライブラリである<a href="https://github.com/softwaremill/tapir">tapir</a>から影響を受けました。<br>tapirを使用することで、型安全なエンドポイントを構築することができ、構築したエンドポイントからOpenAPIドキュメントを生成することもできます。</p>
 <p>LDBCはデータベース層でScalaを使用して、同じように型安全な構築を可能にし、構築されたものを使用してドキュメントの生成を行えるようにします。</p>
@@ -166,12 +168,12 @@ val table = Table[User](&quot;user&quot;)(
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
 
   // まずはこの1つから
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-core&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-core&quot; % &quot;0.1.0&quot;,
 
   // そして、必要に応じてこれらを加える
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-dsl&quot;           % &quot;0.1.0&quot;, // プレーンクエリー データベース接続
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.1.0&quot;, // 型安全なクエリ構築
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-schemaspy&quot;     % &quot;0.1.0&quot;, // SchemaSPYドキュメント生成
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot;           % &quot;0.1.0&quot;, // プレーンクエリー データベース接続
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.1.0&quot;, // 型安全なクエリ構築
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-schemaspy&quot;     % &quot;0.1.0&quot;, // SchemaSPYドキュメント生成
 )
 </code></pre>
 <p>sbtプラグインの使い方については、こちらの<a href="/ldbc/ja/07-Schema-Code-Generation.html">documentation</a>を参照してください。</p>
@@ -189,7 +191,7 @@ val table = Table[User](&quot;user&quot;)(
   <li>etc&hellip;</li>
 </ul>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/ja/index.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/ja/index.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -275,7 +277,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0-SNAPSHOT', 'https://github.com/takapi327/ldbc')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>

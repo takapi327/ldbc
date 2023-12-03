@@ -5,8 +5,8 @@
 <title>データベース接続 · LDBC</title>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content='docs'/>
-<link rel="canonical" href="https://github.com/takapi327/ldbc../ja/04-Database-Connection.html"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../ja/04-Database-Connection.html"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
 <script type="text/javascript" src="../js/page.js"></script>
@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -44,6 +44,7 @@
   <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
   <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
   <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
 </ul>
 </div>
 
@@ -75,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -87,6 +88,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
   <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
   <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
   <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
 </ul>
 </div>
 
@@ -115,7 +117,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>この章では、LDBCで構築したクエリを使用して、データベースへの接続処理を行うための方法について説明します。</p>
 <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
   &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
 )
 </code></pre>
@@ -198,36 +200,31 @@ dataSource.setPassword(&quot;password&quot;)
     ) &gt;&gt; Console[F].printStackTrace(failure)
 </code></pre>
 <h2><a href="#query" name="query" class="anchor"><span class="anchor-link"></span></a>Query</h2>
-<p><code>select</code>文を構築すると<code>query</code>メソッドを使用できるようになります。<code>query</code>メソッドは取得後のデータ形式を決定するために使用します。特段何も型を指定しない場合は<code>select</code>メソッドで指定したカラムの型がTupleとして返却されます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query // (Long, String, Option[Int])
-val query2 = userQuery.select(user =&gt; (user.name, user.age)).query // (String, Option[Int])
+<p><code>select</code>文を構築すると<code>toList</code>/<code>headOption</code>/<code>unsafe</code>メソッドを使用できるようになります。これらのメソッドは取得後のデータ形式を決定するために使用します。特段何も型を指定しない場合は<code>select</code>メソッドで指定したカラムの型がTupleとして返却されます。</p>
+<h3><a href="#tolist" name="tolist" class="anchor"><span class="anchor-link"></span></a>toList</h3>
+<p>クエリを実行した結果データの一覧を取得したい場合は、<code>toList</code>メソッドを使用します。<code>toList</code>メソッドを使用してデータベース処理を行なった結果、データ取得件数が0件であった場合空の配列が返されます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.toList // List[(Long, String, Option[Int])]
 </code></pre>
-<p><code>query</code>メソッドにモデルを指定すると取得後のデータを指定したモデルに変換することができます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val query = userQuery.selectAll.query[User] // User
+<p><code>toList</code>メソッドにモデルを指定すると取得後のデータを指定したモデルに変換することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query = userQuery.selectAll.toList[User] // User
 </code></pre>
-<p><code>query</code>メソッドで指定するモデルの型は<code>select</code>メソッドで指定したTupleの型と一致するか、Tupleの型から指定したモデルへの型変換が可能なものでなければなりません。</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.select(user =&gt; (user.name, user.age)).query[User] // Compile error
+<p><code>toList</code>メソッドで指定するモデルの型は<code>select</code>メソッドで指定したTupleの型と一致するか、Tupleの型から指定したモデルへの型変換が可能なものでなければなりません。</p>
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.select(user =&gt; (user.name, user.age)).toList[User] // Compile error
 
 case class Test(name: String, age: Option[Int])
-val query2 = userQuery.select(user =&gt; (user.name, user.age)).query[Test] // Test
-</code></pre>
-<h3><a href="#tolist" name="tolist" class="anchor"><span class="anchor-link"></span></a>toList</h3>
-<p><code>query</code>メソッドで取得する型を決定したあとは、取得するデータを配列で取得するかOptionalなデータとして取得するかを決定します。</p>
-<p>クエリを実行した結果データの一覧を取得したい場合は、<code>toList</code>メソッドを使用します。<code>toList</code>メソッドを使用してデータベース処理を行なった結果、データ取得件数が0件であった場合空の配列が返されます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.toList // List[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].toList // List[User]
+val query2 = userQuery.select(user =&gt; (user.name, user.age)).toList[Test] // Test
 </code></pre>
 <h3><a href="#headoption" name="headoption" class="anchor"><span class="anchor-link"></span></a>headOption</h3>
 <p>クエリを実行した結果最初の1件のデータをOptionalで取得したい場合は、<code>headOption</code>メソッドを使用します。<code>headOption</code>メソッドを使用してデータベース処理を行なった結果データ取得件数が0件であった場合Noneが返されます。</p>
 <p><code>headOption</code>メソッドを使用した場合、複数のデータを取得するクエリを実行したとしても最初のデータのみ返されることに注意してください。</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.headOption // Option[(Long, String, Option[Int])]
-val query2 = userQuery.selectAll.query[User].headOption // Option[User]
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.headOption // Option[(Long, String, Option[Int])]
+val query2 = userQuery.selectAll.headOption[User] // Option[User]
 </code></pre>
 <h3><a href="#unsafe" name="unsafe" class="anchor"><span class="anchor-link"></span></a>unsafe</h3>
 <p><code>unsafe</code>メソッドを使用した場合、取得したデータの最初の1件のみ返されることは<code>headOption</code>メソッドと同じですが、データはOptionalにはならずそのままのデータが返却されます。もし取得したデータの件数が0件であった場合は例外が発生するため適切な例外ハンドリングを行う必要があります。</p>
 <p>実行時に例外を発生する可能性が高いため<code>unsafe</code>という名前になっています。</p>
-<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.query.unsafe // (Long, String, Option[Int])
-val query2 = userQuery.selectAll.query[User].unsafe // User
+<pre class="prettyprint"><code class="language-scala 3">val query1 = userQuery.selectAll.unsafe // (Long, String, Option[Int])
+val query2 = userQuery.selectAll.unsafe[User] // User
 </code></pre>
 <h2><a href="#update" name="update" class="anchor"><span class="anchor-link"></span></a>Update</h2>
 <p><code>insert/update/delete</code>文を構築すると<code>update</code>メソッドを使用できるようになります。<code>update</code>メソッドはデータベースへの書き込み処理件数を返却します。</p>
@@ -244,7 +241,7 @@ val delete = userQuery.delete.update // Int
 <p>データベース接続を行う前にコミットのタイミングや読み書き専用などの設定を行う必要があります。</p>
 <h3><a href="#読み取り専用" name="読み取り専用" class="anchor"><span class="anchor-link"></span></a>読み取り専用</h3>
 <p><code>readOnly</code>メソッドを使用することで実行するクエリの処理を読み込み専用にすることができます。<code>readOnly</code>メソッドは<code>insert/update/delete</code>文でも使用することができますが、書き込み処理を行うので実行時にエラーとなります。</p>
-<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.query.readOnly
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly
 </code></pre>
 <h3><a href="#自動コミット" name="自動コミット" class="anchor"><span class="anchor-link"></span></a>自動コミット</h3>
 <p><code>autoCommit</code>メソッドを使用することで実行するクエリの処理をクエリ実行時ごとにコミットするように設定することができます。</p>
@@ -263,10 +260,10 @@ yield ...).transaction
 <h3><a href="#実行" name="実行" class="anchor"><span class="anchor-link"></span></a>実行</h3>
 <p>戻り値の型、接続方法の設定を行いましたがLDBCで構築された今までの処理は<code>Kleisli[F, XXX, T]</code>型となっているため定義を行なっただけではデータベース接続処理(副作用)は発生しません。 データベース処理を実行するためには<code>Kleisli</code>の<code>run</code>を実行する必要があります。</p>
 <p><code>readOnly/autoCommit/transaction</code>メソッドを使用すると戻り値の型は<code>Kleisli[F, DataSource, T]</code>となるためJDBCのDataSourceを<code>run</code>に渡すことで戻り値の型を<code>F</code>に持ち上げることができます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val effect = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource) // F[User]
+<pre class="prettyprint"><code class="language-scala 3">val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
 </code></pre>
 <p>Cats Effect IOを使用している場合は、<code>IOApp</code>内で実行を行うか<code>unsafeRunSync</code>などを使用することでデータベース接続処理を実行することができます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = userQuery.selectAll.query[User].headOption.readOnly.run(dataSource).unsafeRunSync()
+<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
 </code></pre>
 <p><code>Kleisli</code>に関してはCatsの<a href="https://typelevel.org/cats/datatypes/kleisli.html">ドキュメント</a>を参照してください。</p>
 <h2><a href="#database-action" name="database-action" class="anchor"><span class="anchor-link"></span></a>Database Action</h2>
@@ -281,7 +278,7 @@ yield ...).transaction
 </ul>
 <p><code>Database</code>を使用する方法は、DataSourceを受け渡す方法を簡略化しただけにすぎないため、どちらを使用しても実行結果に差が出ることはありません。 <code>flatMap</code>などで処理を結合しメソッドチェーンで実行するか、結合した処理を<code>Database</code>を使用して実行するかの違いでしかありません。そのため実行方法はユーザーの好きの方法を選択できます。</p>
 <p><strong>Read Only</strong></p>
-<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = db.readOnly(userQuery.selectAll.query[User].headOption).unsafeRunSync()
+<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = db.readOnly(userQuery.selectAll.headOption[User]).unsafeRunSync()
 </code></pre>
 <p><strong>Auto Commit</strong></p>
 <pre class="prettyprint"><code class="language-scala 3">val result = db.autoCommit(userQuery.insert((1L, &quot;name&quot;, None)).update).unsafeRunSync()
@@ -307,7 +304,7 @@ val db = database.fromDriverManager(&quot;user name&quot;, &quot;password&quot;)
 <h2><a href="#hikaricpコネクションプールの使用" name="hikaricpコネクションプールの使用" class="anchor"><span class="anchor-link"></span></a>HikariCPコネクションプールの使用</h2>
 <p><code>ldbc-hikari</code>は、HikariCP接続プールを構築するためのHikariConfigおよびHikariDataSourceを構築するためのビルダーを提供します。</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;com.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
 )
 </code></pre>
 <p><code>HikariConfigBuilder</code>は名前の通りHikariCPの<code>HikariConfig</code>を構築するためのビルダーです。</p>
@@ -492,7 +489,7 @@ val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfi
     }
 </code></pre>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/ja/04-Database-Connection.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/ja/04-Database-Connection.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -581,7 +578,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0-SNAPSHOT', 'https://github.com/takapi327/ldbc')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
