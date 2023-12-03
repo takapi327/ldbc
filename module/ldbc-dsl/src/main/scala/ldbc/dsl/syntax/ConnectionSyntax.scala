@@ -13,10 +13,19 @@ import ldbc.sql.Connection
 trait ConnectionSyntax[F[_]]:
 
   extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
+
+    /** Functions for managing the processing of connections in a read-only manner.
+      */
     def readOnly(dataSource: DataSource): F[T]
 
+    /** Functions to manage the processing of connections for writing.
+      */
     def autoCommit(dataSource: DataSource): F[T]
 
+    /** Functions to manage the processing of connections in a transaction.
+      */
     def transaction(dataSource: DataSource): F[T]
 
+    /** Functions to manage the processing of connections, always rolling back.
+      */
     def rollback(dataSource: DataSource): F[T]
