@@ -6,6 +6,7 @@
  * [Plain SQL Queries](./05-Plain-SQL-Queries.md)
  * [Generating SchemaSPY Documentation](./06-Generating-SchemaSPY-Documentation.md)
  * [Schema Code Generation](./07-Schema-Code-Generation.md)
+ * [Performance](./08-Perdormance.md)
 @@@
 
 # LDBC

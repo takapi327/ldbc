@@ -71,6 +71,21 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
+lazy val benchmark = (project in file("benchmark"))
+  .settings(scalaVersion := (core / scalaVersion).value)
+  .settings(description := "Projects for Benchmark Measurement")
+  .settings(scalacOptions ++= scala3Settings)
+  .settings(commonSettings)
+  .settings(publish / skip := true)
+  .settings(libraryDependencies ++= Seq(
+    scala3Compiler,
+    mysql,
+    doobie,
+    slick
+  ))
+  .dependsOn(dsl)
+  .enablePlugins(JmhPlugin)
+
 lazy val docs = (project in file("docs"))
   .settings(
     scalaVersion := (core / scalaVersion).value,
@@ -106,7 +121,8 @@ lazy val docs = (project in file("docs"))
 lazy val projects: Seq[ProjectReference] = Seq(
   core,
   plugin,
-  docs
+  docs,
+  benchmark
 )
 
 lazy val moduleProjects: Seq[ProjectReference] = Seq(

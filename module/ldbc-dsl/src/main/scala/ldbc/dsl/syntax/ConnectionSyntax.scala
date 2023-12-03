@@ -18,3 +18,5 @@ trait ConnectionSyntax[F[_]]:
     def autoCommit(dataSource: DataSource): F[T]
 
     def transaction(dataSource: DataSource): F[T]
+
+    def rollback(dataSource: DataSource): F[T]

@@ -9,6 +9,7 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
+import ldbc.sql.util.FactoryCompat
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 /** Trait provides a connection method to the database.
@@ -49,7 +50,7 @@ trait ConnectionProvider[F[_]: Sync]:
   protected def connectionToList[T](
     statement: String,
     params:    Seq[ParameterBinder[F]]
-  )(using Kleisli[F, ResultSet[F], T], LogHandler[F]): Kleisli[F, Connection[F], List[T]] =
+  )(using Kleisli[F, ResultSet[F], T], LogHandler[F], FactoryCompat[T, List[T]]): Kleisli[F, Connection[F], List[T]] =
     connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
 
   /** A method to return the data to be retrieved from the database as Option type. If there are multiple data, the

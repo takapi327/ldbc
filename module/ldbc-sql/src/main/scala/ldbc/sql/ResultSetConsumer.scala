@@ -4,9 +4,13 @@
 
 package ldbc.sql
 
+import scala.collection.mutable
+
 import cats.{ Monad, MonadError, Traverse, Alternative }
 import cats.data.Kleisli
 import cats.implicits.*
+
+import ldbc.sql.util.FactoryCompat
 
 /** Trait for generating the specified data type from a ResultSet.
   *
@@ -47,7 +51,13 @@ object ResultSetConsumer:
       yield result
 
   given [F[_]: Monad, T, S[_]: Traverse: Alternative](using
-    resultSetKleisli: Kleisli[F, ResultSet[F], T]
+    resultSetKleisli: Kleisli[F, ResultSet[F], T],
+    factory:          FactoryCompat[T, S[T]]
   ): ResultSetConsumer[F, S[T]] with
     override def consume(resultSet: ResultSet[F]): F[S[T]] =
-      Monad[F].whileM[S, T](resultSet.next())(resultSetKleisli.run(resultSet))
+      def loop(acc: mutable.Builder[T, S[T]]): F[S[T]] =
+        resultSet.next().flatMap {
+          case false => Monad[F].pure(acc.result())
+          case true  => resultSetKleisli.run(resultSet).flatMap(v => loop(acc += v))
+        }
+      loop(factory.newBuilder)
