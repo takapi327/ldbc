@@ -28,7 +28,7 @@ trait QuerySyntax[F[_]: Sync]:
         .toList
         .zipWithIndex
         .traverse {
-          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
+          case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
         }
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
     }
