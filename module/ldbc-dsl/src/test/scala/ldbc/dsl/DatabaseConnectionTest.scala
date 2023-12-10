@@ -461,6 +461,15 @@ object DatabaseConnectionTest extends Specification:
         .transaction(dataSource)
         .unsafeRunSync()
     }
+    
+    "The value of AutoIncrement obtained during insert matches the specified value." in {
+      val result = city.insertInto(v => (v.name, v.countryCode, v.district, v.population))
+        .values(("Test4", "T4", "T", 1))
+        .returning("id")
+        .autoCommit(dataSource)
+        .unsafeRunSync()
+      result === 5001
+    }
 
     "The update succeeds in the combined processing of multiple queries." in {
       (for
