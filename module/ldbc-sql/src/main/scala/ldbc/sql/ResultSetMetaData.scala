@@ -158,7 +158,7 @@ trait ResultSetMetaData[F[_]]:
     * @param column
     *   the first column is 1, the second is 2, ...
     * @return
-    *   SQL type from [[ldbc.sql.JdbcType]]
+    *   SQL type from [[ldbc.core.JdbcType]]
     */
   def getColumnType(column: Int): F[JdbcType]
 

@@ -63,7 +63,7 @@ trait ConnectionProvider[F[_]: Sync]:
     connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
 
   /** A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
-    * raised. Use the [[headOption]] method if you want to retrieve individual data.
+    * raised. Use the [[connectionToHeadOption]] method if you want to retrieve individual data.
     */
   protected def connectionToUnsafe[T](
     statement: String,

@@ -4,6 +4,8 @@
 
 package ldbc.dsl
 
+import scala.concurrent.duration.DurationInt
+
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.specs2.mutable.Specification
@@ -454,22 +456,24 @@ object DatabaseConnectionTest extends Specification:
 
     "Data is added if the primary key is not duplicated." in {
       (for
-        empty <- city.selectAll.where(_.id _equals 5000).headOption
-        _     <- city.insertOrUpdate((5000, "Nishinomiya", "JPN", "Hyogo", 0)).update
-        data  <- city.selectAll.where(_.id _equals 5000).headOption
+        length <- city.select(_.id.count).unsafe.map(_._1 + 1)
+        empty  <- city.selectAll.where(_.id _equals length).headOption
+        _      <- city.insertOrUpdate((length, "Nishinomiya", "JPN", "Hyogo", 0)).update
+        data   <- city.selectAll.where(_.id _equals length).headOption
       yield empty.isEmpty and data.nonEmpty)
         .transaction(dataSource)
         .unsafeRunSync()
     }
 
     "The value of AutoIncrement obtained during insert matches the specified value." in {
-      val result = city
-        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test4", "T4", "T", 1))
-        .returning("id")
-        .autoCommit(dataSource)
-        .unsafeRunSync()
-      result === 5001
+      // Tests are executed in parallel, so wait for Inserts from other tests to avoid overlap.
+      (IO.sleep(5.seconds) >> (for
+        length <- city.select(_.id.count).unsafe.map(_._1 + 1)
+        result <- city
+                    .insertInto(v => (v.name, v.countryCode, v.district, v.population))
+                    .values(("Test4", "T4", "T", 1))
+                    .returning("id")
+      yield result === length).transaction(dataSource)).unsafeRunSync()
     }
 
     "The update succeeds in the combined processing of multiple queries." in {

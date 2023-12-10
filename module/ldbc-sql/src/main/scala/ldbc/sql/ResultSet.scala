@@ -827,8 +827,8 @@ trait ResultSet[F[_]]:
     * any time.
     *
     * @param direction
-    *   an int specifying the suggested fetch direction; one of [[ResultSet.FETCH_FORWARD]],
-    *   [[ResultSet.FETCH_REVERSE]], or [[ResultSet.FETCH_UNKNOWN]]
+    *   an int specifying the suggested fetch direction; one of [[ResultSet.FetchType.FETCH_FORWARD]],
+    *   [[ResultSet.FetchType.FETCH_REVERSE]], or [[ResultSet.FetchType.FETCH_UNKNOWN]]
     */
   def setFetchDirection(direction: ResultSet.FetchType): F[Unit]
 
