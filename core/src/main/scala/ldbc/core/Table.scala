@@ -35,13 +35,6 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
     */
   private[ldbc] def all: List[Column[[A] => A => A]]
 
-  /** Method to retrieve all column information that a table has as a Tuple.
-    *
-    * @param mirror
-    *   product isomorphism map
-    */
-  def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column]
-
   /** Methods for setting key information for tables.
     *
     * @param func
@@ -103,11 +96,6 @@ object Table extends Dynamic:
 
     override private[ldbc] def all: List[Column[[A] => A => A]] =
       columns.toList.asInstanceOf[List[Column[[A] => A => A]]]
-
-    override def *(using mirror: Mirror.ProductOf[P]): Tuple.Map[mirror.MirroredElemTypes, Column] =
-      alias
-        .fold(columns)(name => columns.map[Column]([t] => (x: t) => x.asInstanceOf[Column[t]].as(name)))
-        .asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]]
 
     override def keySet(func: Table[P] => Key): Table[P] = this.copy(keyDefinitions = this.keyDefinitions :+ func(this))
 
