@@ -232,20 +232,20 @@ object ColumnQuery:
     _label:      String,
     _dataType:   DataType[T],
     _attributes: Seq[Attribute[T]],
-    _alias:      Option[String],
+    _alias:      Option[String]
   ): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label:      String                = _label
-      override def dataType:   DataType[T]           = _dataType
-      override def attributes: Seq[Attribute[T]]     = _attributes
-      override def alias:      Option[String]        = _alias
+      override def label:      String            = _label
+      override def dataType:   DataType[T]       = _dataType
+      override def attributes: Seq[Attribute[T]] = _attributes
+      override def alias:      Option[String]    = _alias
 
   def fromColumn[F[_], T](column: Column[T]): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label:      String                = column.label
-      override def dataType:   DataType[T]           = column.dataType
-      override def attributes: Seq[Attribute[T]]     = column.attributes
-      override def alias:      Option[String]        = column.alias
+      override def label:      String            = column.label
+      override def dataType:   DataType[T]       = column.dataType
+      override def attributes: Seq[Attribute[T]] = column.attributes
+      override def alias:      Option[String]    = column.alias
 
   private[ldbc] case class MultiColumn[F[_], T](flag: String, left: ColumnQuery[F, T], right: ColumnQuery[F, T]):
     val label: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"

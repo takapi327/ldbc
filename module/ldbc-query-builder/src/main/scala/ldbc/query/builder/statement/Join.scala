@@ -275,5 +275,5 @@ case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
       _label      = column.label,
       _dataType   = column.dataType.toOption,
       _attributes = Seq.empty,
-      _alias      = column.alias,
+      _alias      = column.alias
     )
