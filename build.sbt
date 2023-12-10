@@ -21,6 +21,9 @@ ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / githubWorkflowPublish := Seq(ciRelease)
 
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+
 lazy val core = LepusSbtProject("ldbc-core", "core")
   .settings(description := "ldbc core project")
   .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
