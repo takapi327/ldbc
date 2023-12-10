@@ -4,6 +4,8 @@
 
 package ldbc.dsl
 
+import scala.concurrent.duration.DurationInt
+
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.specs2.mutable.Specification
@@ -464,13 +466,14 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The value of AutoIncrement obtained during insert matches the specified value." in {
-      (for
+      // Tests are executed in parallel, so wait for Inserts from other tests to avoid overlap.
+      (IO.sleep(5.seconds) >> (for
         length <- city.select(_.id.count).unsafe.map(_._1 + 1)
         result <- city
                     .insertInto(v => (v.name, v.countryCode, v.district, v.population))
                     .values(("Test4", "T4", "T", 1))
                     .returning("id")
-      yield result === length).transaction(dataSource).unsafeRunSync()
+      yield result === length).transaction(dataSource)).unsafeRunSync()
     }
 
     "The update succeeds in the combined processing of multiple queries." in {
