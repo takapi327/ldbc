@@ -464,12 +464,12 @@ object DatabaseConnectionTest extends Specification:
 
     "The value of AutoIncrement obtained during insert matches the specified value." in {
       (for
-        length <- city.select(_.id.count).headOption
+        length <- city.select(_.id.count).unsafe
         result <- city
                     .insertInto(v => (v.name, v.countryCode, v.district, v.population))
                     .values(("Test4", "T4", "T", 1))
                     .returning("id")
-      yield result === (length + 1)).transaction(dataSource).unsafeRunSync()
+      yield result === (length._1 + 1)).transaction(dataSource).unsafeRunSync()
     }
 
     "The update succeeds in the combined processing of multiple queries." in {
