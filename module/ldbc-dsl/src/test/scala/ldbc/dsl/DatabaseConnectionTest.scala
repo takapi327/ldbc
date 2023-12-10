@@ -463,13 +463,10 @@ object DatabaseConnectionTest extends Specification:
     }
 
     "The value of AutoIncrement obtained during insert matches the specified value." in {
-      val result = city
-        .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-        .values(("Test4", "T4", "T", 1))
-        .returning("id")
-        .autoCommit(dataSource)
-        .unsafeRunSync()
-      result === 5001
+      (for 
+        length <- city.select(_.id.count).headOption
+        result <- city.insertInto(v => (v.name, v.countryCode, v.district, v.population)).values(("Test4", "T4", "T", 1)).returning("id")
+      yield result === (length + 1)).transaction(dataSource).unsafeRunSync()
     }
 
     "The update succeeds in the combined processing of multiple queries." in {
