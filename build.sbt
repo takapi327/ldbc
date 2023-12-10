@@ -17,6 +17,9 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   scalaFmt.value, sbtScripted.value
 )
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
+ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
+ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+ThisBuild / githubWorkflowPublish := Seq(ciRelease)
 
 lazy val core = LepusSbtProject("ldbc-core", "core")
   .settings(description := "ldbc core project")
