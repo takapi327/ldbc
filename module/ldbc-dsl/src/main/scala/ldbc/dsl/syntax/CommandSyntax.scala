@@ -68,8 +68,7 @@ trait CommandSyntax[F[_]: Sync]:
           F,
           ResultSet[F],
           Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-        ] =
-          column.read(1)
+        ] = Kleisli { resultSet => reader.read(resultSet, 1) }
         (for
           statement <- connection.prepareStatement(insert.statement, Statement.Generated.RETURN_GENERATED_KEYS)
           resultSet <- insert.params.zipWithIndex.traverse {

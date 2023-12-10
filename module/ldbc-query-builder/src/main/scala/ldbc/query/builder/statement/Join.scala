@@ -264,10 +264,7 @@ case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   transparent inline def selectDynamic[Tag <: Singleton](tag: Tag)(using
     mirror:                                                   Mirror.ProductOf[P],
-    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    reader: ResultSetReader[F, Option[
-      ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
-    ]]
+    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): ColumnQuery[F, Option[
     ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ]] =
@@ -278,6 +275,5 @@ case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
       _label      = column.label,
       _dataType   = column.dataType.toOption,
       _attributes = Seq.empty,
-      _alias      = column.alias,
-      _reader     = reader
+      _alias      = column.alias
     )

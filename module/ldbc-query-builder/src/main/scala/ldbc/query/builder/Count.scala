@@ -5,7 +5,6 @@
 package ldbc.query.builder
 
 import ldbc.core.*
-import ldbc.sql.ResultSetReader
 
 /** Model used to obtain the number of specific columns.
   *
@@ -23,8 +22,6 @@ case class Count[F[_]](_label: String) extends ColumnQuery[F, Int]:
   override def attributes: Seq[attribute.Attribute[Int]] = Seq.empty
 
   override def alias: Option[String] = None
-
-  override def reader: ResultSetReader[F, Int] = ResultSetReader.given_ResultSetReader_F_Int
 
   override def toString: String = label
 

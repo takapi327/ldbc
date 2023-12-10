@@ -29,8 +29,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     tag: Tag
   )(using
     mirror: Mirror.ProductOf[P],
-    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    reader: ResultSetReader[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): ColumnQuery[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
     ColumnQuery.fromColumn[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]](
       table.selectDynamic[Tag](tag)
@@ -45,15 +44,10 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   product isomorphism map
     */
   inline def selectAll(using mirror: Mirror.ProductOf[P]): Select[F, P, Tuples.ToColumn[F, mirror.MirroredElemTypes]] =
-    val columns = table.*.zip(ResultSetReader.fold[F, mirror.MirroredElemTypes])
-      .map(
-        [t] =>
-          (x: t) =>
-            val (column, reader) = x.asInstanceOf[(Column[t], ResultSetReader[F, t])]
-            ColumnQuery.fromColumn(column)(using reader)
-      )
+    val columns = Tuple
+      .fromArray(table.all.map(ColumnQuery.fromColumn).toArray)
       .asInstanceOf[Tuples.ToColumn[F, mirror.MirroredElemTypes]]
-    val statement = s"SELECT ${ table.*.toList.mkString(", ") } FROM ${ table._name }"
+    val statement = s"SELECT ${ table.all.mkString(", ") } FROM ${ table._name }"
     new Select[F, P, Tuples.ToColumn[F, mirror.MirroredElemTypes]](this, statement, columns, Seq.empty)
 
   /** A method to build a query model that specifies and retrieves columns defined in a table.

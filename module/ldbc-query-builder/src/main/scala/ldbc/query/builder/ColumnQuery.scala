@@ -6,8 +6,6 @@ package ldbc.query.builder
 
 import scala.annotation.targetName
 
-import cats.data.Kleisli
-
 import ldbc.core.*
 import ldbc.core.attribute.Attribute
 import ldbc.core.interpreter.Extract
@@ -23,16 +21,6 @@ import ldbc.query.builder.statement.ExpressionSyntax.*
   *   Scala types that match SQL DataType
   */
 private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
-
-  def reader: ResultSetReader[F, T]
-
-  val read: Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-    reader.read(resultSet, alias.fold(label)(name => s"$name.$label"))
-  }
-
-  def read(index: Int): Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-    reader.read(resultSet, index)
-  }
 
   private val noBagQuotLabel: String =
     alias.fold(label)(name => s"$name.$label")
@@ -244,23 +232,20 @@ object ColumnQuery:
     _label:      String,
     _dataType:   DataType[T],
     _attributes: Seq[Attribute[T]],
-    _alias:      Option[String],
-    _reader:     ResultSetReader[F, T]
+    _alias:      Option[String]
   ): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label:      String                = _label
-      override def dataType:   DataType[T]           = _dataType
-      override def attributes: Seq[Attribute[T]]     = _attributes
-      override def alias:      Option[String]        = _alias
-      override def reader:     ResultSetReader[F, T] = _reader
+      override def label:      String            = _label
+      override def dataType:   DataType[T]       = _dataType
+      override def attributes: Seq[Attribute[T]] = _attributes
+      override def alias:      Option[String]    = _alias
 
-  def fromColumn[F[_], T](column: Column[T])(using _reader: ResultSetReader[F, T]): ColumnQuery[F, T] =
+  def fromColumn[F[_], T](column: Column[T]): ColumnQuery[F, T] =
     new ColumnQuery[F, T]:
-      override def label:      String                = column.label
-      override def dataType:   DataType[T]           = column.dataType
-      override def attributes: Seq[Attribute[T]]     = column.attributes
-      override def alias:      Option[String]        = column.alias
-      override def reader:     ResultSetReader[F, T] = _reader
+      override def label:      String            = column.label
+      override def dataType:   DataType[T]       = column.dataType
+      override def attributes: Seq[Attribute[T]] = column.attributes
+      override def alias:      Option[String]    = column.alias
 
   private[ldbc] case class MultiColumn[F[_], T](flag: String, left: ColumnQuery[F, T], right: ColumnQuery[F, T]):
     val label: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
