@@ -29,7 +29,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     tag: Tag
   )(using
     mirror: Mirror.ProductOf[P],
-    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): ColumnQuery[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
     ColumnQuery.fromColumn[F, Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]](
       table.selectDynamic[Tag](tag)
