@@ -454,9 +454,10 @@ object DatabaseConnectionTest extends Specification:
 
     "Data is added if the primary key is not duplicated." in {
       (for
-        empty <- city.selectAll.where(_.id _equals 5000).headOption
-        _     <- city.insertOrUpdate((5000, "Nishinomiya", "JPN", "Hyogo", 0)).update
-        data  <- city.selectAll.where(_.id _equals 5000).headOption
+        length <- city.select(_.id.count).unsafe
+        empty  <- city.selectAll.where(_.id _equals length._1).headOption
+        _      <- city.insertOrUpdate((length._1 + 1, "Nishinomiya", "JPN", "Hyogo", 0)).update
+        data   <- city.selectAll.where(_.id _equals (length._1 + 1)).headOption
       yield empty.isEmpty and data.nonEmpty)
         .transaction(dataSource)
         .unsafeRunSync()
