@@ -76,7 +76,7 @@ trait ParameterMetaData[F[_]]:
     * @param param
     *   the first parameter is 1, the second is 2, ...
     * @return
-    *   SQL type from [[ldbc.sql.JdbcType]]
+    *   SQL type from [[ldbc.core.JdbcType]]
     */
   def getParameterType(param: Int): F[JdbcType]
 
