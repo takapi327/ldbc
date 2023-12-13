@@ -82,6 +82,7 @@ CREATE TABLE `test` (
   `p21` YEAR(4) NOT NULL,
   `p22` YEAR NULL DEFAULT NULL,
   `p23` ENUM('Active', 'InActive') NOT NULL DEFAULT 'Active',
+  `p24` DOUBLE DEFAULT 5.55,
   PRIMARY KEY (`id`),
   INDEX (`sub_id`) KEY_BLOCK_SIZE=1,
   INDEX (`id`),
