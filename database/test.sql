@@ -5450,7 +5450,7 @@ DROP TABLE IF EXISTS `government_office`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `government_office` (
   `ID` int NOT NULL AUTO_INCREMENT,
-  `CityID` int NOT NULL AUTO_INCREMENT,
+  `CityID` int NOT NULL,
   `Name` char(35) NOT NULL DEFAULT '',
   `EstablishmentDate` date DEFAULT NULL,
   PRIMARY KEY (`ID`),
