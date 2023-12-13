@@ -570,7 +570,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    def DEFAULT(value: T): CFloat[T] = value match
+    def DEFAULT(value: Double | Float | Option[Double | Float]): CFloat[T] = value match
       case v: Option[?] => this.copy(default = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(default = Some(Default.Value(v)))
 
