@@ -121,17 +121,16 @@ object ResultSetReader:
 
     override def read(resultSet: ResultSet[F], columnLabel: String): F[Option[A]] =
       for
-        bool   <- resultSet.wasNull()
-        result <- if bool then
-          reader.read(resultSet, columnLabel).map(Some(_))
-        else Monad[F].pure(None)
+        bool <- resultSet.wasNull()
+        result <- if bool then reader.read(resultSet, columnLabel).map(Some(_))
+                  else Monad[F].pure(None)
       yield result
 
     override def read(resultSet: ResultSet[F], index: Int): F[Option[A]] =
       for
         bool <- resultSet.wasNull()
         result <- if bool then reader.read(resultSet, index).map(Some(_))
-        else Monad[F].pure(None)
+                  else Monad[F].pure(None)
       yield result
 
   type MapToTuple[F[_], T <: Tuple] <: Tuple = T match
