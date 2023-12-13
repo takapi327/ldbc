@@ -97,41 +97,39 @@ object ResultSetReader:
   given [F[_]]: ResultSetReader[F, BigDecimal]  = ResultSetReader(_.getBigDecimal, _.getBigDecimal)
 
   given [F[_]: Functor](using reader: ResultSetReader[F, String]): ResultSetReader[F, BigInt] =
-    reader.map(BigInt(_))
+    reader.map(str => if str == null then null else BigInt(str))
 
   given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, Instant] =
-    reader.map(_.toInstant)
+    reader.map(timestamp => if timestamp == null then null else timestamp.toInstant)
 
   given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, UtilDate] =
-    reader.map(timestamp => new UtilDate(timestamp.getTime))
+    reader.map(timestamp => if timestamp == null then null else UtilDate(timestamp.getTime))
 
   given [F[_]: Functor](using reader: ResultSetReader[F, Instant]): ResultSetReader[F, ZonedDateTime] =
-    reader.map(instant => ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()))
+    reader.map(instant => if instant == null then null else ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()))
 
   given [F[_]: Functor](using reader: ResultSetReader[F, Time]): ResultSetReader[F, LocalTime] =
-    reader.map(_.toLocalTime)
+    reader.map(time => if time == null then null else time.toLocalTime)
 
   given [F[_]: Functor](using reader: ResultSetReader[F, Date]): ResultSetReader[F, LocalDate] =
-    reader.map(_.toLocalDate)
+    reader.map(date => if date == null then null else date.toLocalDate)
 
   given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, LocalDateTime] =
-    reader.map(_.toLocalDateTime)
+    reader.map(timestamp => if timestamp == null then null else timestamp.toLocalDateTime)
 
   given [F[_]: Monad, A](using reader: ResultSetReader[F, A]): ResultSetReader[F, Option[A]] with
 
     override def read(resultSet: ResultSet[F], columnLabel: String): F[Option[A]] =
       for
-        bool <- resultSet.next()
-        result <- if bool then reader.read(resultSet, columnLabel).map(Some(_))
-                  else Monad[F].pure(None)
-      yield result
+        result <- reader.read(resultSet, columnLabel)
+        bool   <- resultSet.wasNull()
+      yield if bool then None else Some(result)
 
     override def read(resultSet: ResultSet[F], index: Int): F[Option[A]] =
       for
-        bool <- resultSet.next()
-        result <- if bool then reader.read(resultSet, index).map(Some(_))
-                  else Monad[F].pure(None)
-      yield result
+        result <- reader.read(resultSet, index)
+        bool   <- resultSet.wasNull()
+      yield if bool then None else Some(result)
 
   type MapToTuple[F[_], T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
