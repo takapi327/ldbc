@@ -31,9 +31,10 @@ object DatabaseConnectionTest extends Specification:
 
   given LogHandler[IO] = LogHandler.consoleLogger
 
-  private val country         = TableQuery[IO, Country](Country.table)
-  private val city            = TableQuery[IO, City](City.table)
-  private val countryLanguage = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+  private val country          = TableQuery[IO, Country](Country.table)
+  private val city             = TableQuery[IO, City](City.table)
+  private val countryLanguage  = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+  private val governmentOffice = TableQuery[IO, GovernmentOffice](GovernmentOffice.table)
 
   "Database Connection Test" should {
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
@@ -530,5 +531,10 @@ object DatabaseConnectionTest extends Specification:
       val result =
         countryLanguage.delete.where(_.countryCode _equals "AFG").update.autoCommit(dataSource).unsafeRunSync()
       result === 5
+    }
+
+    "Nullable records can be obtained as None of Option type." in {
+      val result = governmentOffice.selectAll.toList[GovernmentOffice].readOnly(dataSource).unsafeRunSync()
+      result.length === 2
     }
   }
