@@ -5440,3 +5440,26 @@ commit;
 SET autocommit=@old_autocommit;
 
 -- Dump completed on 2020-01-22  9:56:18
+
+--
+-- Table structure for table ``
+--
+
+DROP TABLE IF EXISTS `government_office`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `government_office` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `CityID` int NOT NULL AUTO_INCREMENT,
+  `Name` char(35) NOT NULL DEFAULT '',
+  `EstablishmentDate` date DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  CONSTRAINT `government_office_ibfk_1` FOREIGN KEY (`CityID`) REFERENCES `city` (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+set autocommit=0;
+INSERT INTO `government_office` VALUES (1, 1, 'Test');
+INSERT INTO `government_office` VALUES (2, 2, 'Test', '2023-12-13');
+SET autocommit=@old_autocommit;
