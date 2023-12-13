@@ -5458,8 +5458,7 @@ CREATE TABLE `government_office` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-
 set autocommit=0;
-INSERT INTO `government_office` VALUES (1, 1, 'Test');
+INSERT INTO `government_office` VALUES (1, 1, 'Test', NULL);
 INSERT INTO `government_office` VALUES (2, 2, 'Test', '2023-12-13');
 SET autocommit=@old_autocommit;
