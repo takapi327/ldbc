@@ -130,7 +130,7 @@ object ResultSetReader:
       for
         bool <- resultSet.wasNull()
         result <- if bool then Monad[F].pure(None)
-                  else reader.read(resultSet, columnLabel).map(Some(_))
+                  else reader.read(resultSet, index).map(Some(_))
       yield result
 
   type MapToTuple[F[_], T <: Tuple] <: Tuple = T match
