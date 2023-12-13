@@ -4,7 +4,7 @@
 
 package ldbc.dsl.schema
 
-import java.date.LocalDate
+import java.time.LocalDate
 
 import ldbc.sql.*
 
