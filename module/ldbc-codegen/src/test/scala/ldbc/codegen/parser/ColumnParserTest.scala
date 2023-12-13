@@ -31,6 +31,7 @@ class ColumnParserTest extends AnyFlatSpec, ColumnParser:
     assert(parseAll(columnDefinition, "`id` BIGINT(64) column_format FIXED").successful)
     assert(parseAll(columnDefinition, "`id` BIGINT(64) Column_format dynamic").successful)
     assert(parseAll(columnDefinition, "`id` BIGINT(64) COLUMN_FORMAT default").successful)
+    assert(parseAll(columnDefinition, "`id` DOUBLE DEFAULT 5.4").successful)
     assert(
       parseAll(
         columnDefinition,
