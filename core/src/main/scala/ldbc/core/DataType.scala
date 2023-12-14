@@ -1293,7 +1293,7 @@ object DataType:
             error(
               "The DATETIME type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'."
             )
-        case _: 0                                      => this.copy(default = Some(Default.Value(value)))
+        case _: 0         => this.copy(default = Some(Default.Value(value)))
         case _: Some[Int] => this.copy(default = Some(Default.Value(value.asInstanceOf[Some[Int]].get)))
         case _: (Instant | LocalDateTime | OffsetTime) => this.copy(default = Some(Default.Value(value)))
 
@@ -1353,7 +1353,7 @@ object DataType:
             error(
               "The TIMESTAMP type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'."
             )
-        case _: 0 => this.copy(default = Some(Default.Value(value)))
+        case _: 0         => this.copy(default = Some(Default.Value(value)))
         case _: Some[Int] => this.copy(default = value.asInstanceOf[Some[Int]].map(Default.Value(_)))
         case _: (Instant | LocalDateTime | OffsetDateTime | ZonedDateTime) =>
           this.copy(default = Some(Default.Value(value)))
