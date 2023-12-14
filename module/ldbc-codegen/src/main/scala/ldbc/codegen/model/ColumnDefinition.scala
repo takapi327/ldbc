@@ -57,7 +57,7 @@ object ColumnDefinition:
         * @param value
         *   Value set as the default value for DataType
         */
-      case class Value(value: String | Int | Boolean) extends Default:
+      case class Value(value: String | Int | Double | Boolean) extends Default:
         private val str = value match
           case v: String => s"\"$v\""
           case v         => v

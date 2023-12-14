@@ -13,7 +13,8 @@ import ldbc.codegen.model.DataType
   */
 trait DataTypeParser extends SqlParser:
 
-  protected def digit: Parser[Int] = """-?\d+""".r ^^ (_.toInt)
+  protected def digit:  Parser[Int]    = """-?\d+""".r ^^ (_.toInt)
+  protected def double: Parser[Double] = """-?\d+\.\d+""".r ^^ (_.toDouble)
 
   private def unsigned: Parser[String] = "(?i)unsigned".r ^^ (_.toUpperCase)
   private def zerofill: Parser[String] = "(?i)zerofill".r ^^ (_.toUpperCase)

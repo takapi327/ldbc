@@ -87,7 +87,7 @@ trait SqlParser extends JavaTokenParsers:
     }
 
   private def blockComment: Parser[CommentOut] =
-    "/*" ~> rep(chrExcept(EofCh, '*')) <~ "*/" <~ opt(";") ^^ { str =>
+    "/*" ~> rep(chrExcept(EofCh, '*')) <~ "*/" ^^ { str =>
       CommentOut(str.mkString(" "))
     }
 
