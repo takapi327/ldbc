@@ -101,7 +101,10 @@ DROP TABLE IF EXISTS `alias`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `alias` (
   `id` SERIAL,
-  `bool` BOOLEAN NOT NULL DEFAULT true
+  `bool` BOOLEAN NOT NULL DEFAULT true,
+  `optBool` BOOLEAN DEFAULT false,
+  `intBool` BOOLEAN NOT NULL DEFAULT 0,
+  `optIntBool` BOOLEAN DEFAULT 1
 );
 
 SET GLOBAL max_connections = 1000, sort_buffer_size = 1000000;
