@@ -17,7 +17,7 @@
 
 ---- Comment
 
-/* Comment */ CREATE /* Comment */ DATABASE /* Comment */ `location`;
+/* Comment */ CREATE /* Comment */ DATABASE /* Comment */ `location` /* Comment */;
 
 /* Comment */ USE /* Comment */ `location`;
 
