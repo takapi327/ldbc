@@ -13,7 +13,8 @@ case class Parser(fileName: String) extends DatabaseStatementParser, SetParser:
   private def end: util.matching.Regex = """\s*""".r
 
   private def sentence: Parser[Product | List[Product]] =
-    Seq[Parser[Product | List[Product]]](comment <~ opt(";"), databaseStatements, tableStatements, setStatements).reduceLeft(_ | _)
+    Seq[Parser[Product | List[Product]]](comment <~ opt(";"), databaseStatements, tableStatements, setStatements)
+      .reduceLeft(_ | _)
 
   private type Statements = Table.CreateStatement | Database.CreateStatement
 
