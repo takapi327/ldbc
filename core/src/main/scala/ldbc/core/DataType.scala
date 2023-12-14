@@ -1225,7 +1225,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    inline def DEFAULT(value: T | 0 | String): Date[T] =
+    inline def DEFAULT(value: T | String | 0 | Some[Int]): Date[T] =
       inline erasedValue[value.type] match
         case _: Option[?] =>
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
@@ -1239,6 +1239,7 @@ object DataType:
               "The DATE type must be passed a string in the format YYYY-MM-DD, ranging from '1000-01-01' to '9999-12-31'."
             )
         case _: 0         => this.copy(default = Some(Default.Value(value)))
+        case _: Some[Int] => this.copy(default = Some(Default.Value(value.asInstanceOf[Some[Int]].get)))
         case _: LocalDate => this.copy(default = Some(Default.Value(value)))
 
     /** Methods for setting default values for dates.
@@ -1276,7 +1277,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    inline def DEFAULT(value: T | 0 | String): DateTime[T] =
+    inline def DEFAULT(value: T | String | 0 | Some[Int]): DateTime[T] =
       inline erasedValue[value.type] match
         case _: Option[?] =>
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
@@ -1293,6 +1294,7 @@ object DataType:
               "The DATETIME type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'."
             )
         case _: 0                                      => this.copy(default = Some(Default.Value(value)))
+        case _: Some[Int] => this.copy(default = Some(Default.Value(value.asInstanceOf[Some[Int]].get)))
         case _: (Instant | LocalDateTime | OffsetTime) => this.copy(default = Some(Default.Value(value)))
 
     /** Methods for setting default values for dates.
@@ -1335,7 +1337,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    inline def DEFAULT(value: T | 0 | String): TimeStamp[T] =
+    inline def DEFAULT(value: T | String | 0 | Some[Int]): TimeStamp[T] =
       inline erasedValue[value.type] match
         case _: Option[?] =>
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
@@ -1352,6 +1354,7 @@ object DataType:
               "The TIMESTAMP type must be passed a string in the format YYYY-MM-DD hh:mm:ss, ranging from '1000-01-01 00:00:00' to '9999-12-31 23:59:59'."
             )
         case _: 0 => this.copy(default = Some(Default.Value(value)))
+        case _: Some[Int] => this.copy(default = value.asInstanceOf[Some[Int]].map(Default.Value(_)))
         case _: (Instant | LocalDateTime | OffsetDateTime | ZonedDateTime) =>
           this.copy(default = Some(Default.Value(value)))
 
@@ -1392,7 +1395,7 @@ object DataType:
       * @param value
       *   Value set as the default value for DataType
       */
-    inline def DEFAULT(value: T | 0 | String): Time[T] =
+    inline def DEFAULT(value: T | String | 0 | Some[Int]): Time[T] =
       inline erasedValue[value.type] match
         case _: Option[?] =>
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
@@ -1406,6 +1409,7 @@ object DataType:
               "A string in hh:mm:ss or hhh:mm:ss format and in the range from '-838:59:59' to '838:59:59' must be passed to the TIME type."
             )
         case _: 0         => this.copy(default = Some(Default.Value(value)))
+        case _: Some[Int] => this.copy(default = value.asInstanceOf[Some[Int]].map(Default.Value(_)))
         case _: LocalTime => this.copy(default = Some(Default.Value(value)))
 
   /** This model is used to represent SQL DataType Year data.

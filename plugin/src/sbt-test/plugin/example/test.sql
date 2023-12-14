@@ -114,9 +114,13 @@ DROP TABLE IF EXISTS `java_time`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `java_time` (
   `date` DATE NOT NULL DEFAULT '2023-10-24',
+  `zero_date` DATE DEFAULT 0,
   `date_time` DATETIME NOT NULL DEFAULT '2023-10-24 09:28:55',
+  `zero_date_time` DATETIME NULL DEFAULT 0,
   `timestamp` TIMESTAMP NOT NULL DEFAULT '2023-10-24 09:28:55',
+  `zero_timestamp` TIMESTAMP NULL DEFAULT 0,
   `time` TIME NOT NULL DEFAULT '09:28:55',
+  `zero_time` TIME NULL DEFAULT 0,
   `year` YEAR NOT NULL DEFAULT 2023
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
