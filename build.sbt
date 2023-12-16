@@ -103,7 +103,7 @@ lazy val docs = (project in file("docs"))
     paradoxProperties ++= Map(
       "org"          -> organization.value,
       "scalaVersion" -> scalaVersion.value,
-      "version"      -> version.value.replace("-SNAPSHOT", ""),
+      "version"      -> version.value.takeWhile(_ != '+'),
       "mysqlVersion" -> mysqlVersion
     ),
     Compile / paradox / sourceDirectory := mdocOut.value,
