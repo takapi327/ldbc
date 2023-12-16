@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.1+1-e5866f8e*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -76,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.1+1-e5866f8e*
+0.1.0
 </div>
 </div>
 <div class="nav-toc">
@@ -117,7 +117,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>この章では、LDBCで構築したクエリを使用して、データベースへの接続処理を行うための方法について説明します。</p>
 <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.1+1-e5866f8e&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
   &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
 )
 </code></pre>
@@ -304,7 +304,7 @@ val db = database.fromDriverManager(&quot;user name&quot;, &quot;password&quot;)
 <h2><a href="#hikaricpコネクションプールの使用" name="hikaricpコネクションプールの使用" class="anchor"><span class="anchor-link"></span></a>HikariCPコネクションプールの使用</h2>
 <p><code>ldbc-hikari</code>は、HikariCP接続プールを構築するためのHikariConfigおよびHikariDataSourceを構築するためのビルダーを提供します。</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.1+1-e5866f8e&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
 )
 </code></pre>
 <p><code>HikariConfigBuilder</code>は名前の通りHikariCPの<code>HikariConfig</code>を構築するためのビルダーです。</p>
@@ -489,7 +489,7 @@ val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfi
     }
 </code></pre>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/master/docs/target/mdoc/ja/04-Database-Connection.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/ja/04-Database-Connection.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -578,7 +578,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.1+1-e5866f8e-SNAPSHOT', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
