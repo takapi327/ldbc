@@ -58,7 +58,7 @@ case class DataTypeCodeBuilder(scalaType: String, formatter: Naming):
       case data: DataType.TIME => data.fsp.fold(s"${ data.name }[$scalaType]")(n => s"${ data.name }[$scalaType]($n)")
       case data: DataType.YEAR => data.digit.fold(s"${ data.name }[$scalaType]")(n => s"${ data.name }[$scalaType]($n)")
       case data: DataType.SERIAL  => s"${ data.name }[${ data.scalaType.code }]"
-      case data: DataType.BOOLEAN => s"${ data.name }[${ data.scalaType.code }]"
+      case data: DataType.BOOLEAN => s"${ data.name }[$scalaType]"
 
   private def buildNumberDataType(unsigned: Boolean, zerofill: Boolean): String =
     (unsigned, zerofill) match
