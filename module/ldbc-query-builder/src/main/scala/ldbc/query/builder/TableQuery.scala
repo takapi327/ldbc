@@ -330,3 +330,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
   /** Method to construct a query to delete a table.
     */
   def delete: Delete[F, P] = Delete[F, P](this)
+
+  /** Method to construct a query to drop a table.
+    */
+  def dropTable: Drop[F, P] = new Drop[F, P](this)
