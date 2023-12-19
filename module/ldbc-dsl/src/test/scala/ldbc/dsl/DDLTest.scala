@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl
 
@@ -48,11 +48,13 @@ object DDLTest extends Specification, BeforeAfterSpec:
     "Records can be inserted into tables created before the test begins." in {
       val result = tableQuery
         .insertInto(user => (user.name, user.age))
-        .values(List(
-          ("Alice", Some(20)),
-          ("Bob", Some(21)),
-          ("Carol", None)
-        ))
+        .values(
+          List(
+            ("Alice", Some(20)),
+            ("Bob", Some(21)),
+            ("Carol", None)
+          )
+        )
         .update
         .autoCommit(dataSource)
         .unsafeRunSync()
@@ -62,9 +64,9 @@ object DDLTest extends Specification, BeforeAfterSpec:
   }
 
 case class User(
-  id: Long,
+  id:   Long,
   name: String,
-  age: Option[Int]
+  age:  Option[Int]
 )
 
 val table = Table[User]("user")(
