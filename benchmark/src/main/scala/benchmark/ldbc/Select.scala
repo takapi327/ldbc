@@ -15,6 +15,8 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
+import ldbc.sql.DataSource
+import ldbc.dsl.DataSourceIO
 import ldbc.dsl.io.*
 import ldbc.dsl.logging.*
 
@@ -26,7 +28,7 @@ import benchmark.City
 class Select:
 
   @volatile
-  var dataSource: MysqlDataSource = _
+  var dataSource: DataSource[IO] = _
 
   @volatile
   var noLog: LogHandler[IO] = _
@@ -36,12 +38,13 @@ class Select:
 
   @Setup
   def setup(): Unit =
-    dataSource = new MysqlDataSource()
-    dataSource.setServerName("127.0.0.1")
-    dataSource.setPortNumber(13306)
-    dataSource.setDatabaseName("world")
-    dataSource.setUser("ldbc")
-    dataSource.setPassword("password")
+    val ds = new MysqlDataSource()
+    ds.setServerName("127.0.0.1")
+    ds.setPortNumber(13306)
+    ds.setDatabaseName("world")
+    ds.setUser("ldbc")
+    ds.setPassword("password")
+    dataSource = DataSourceIO[IO](ds)
 
     noLog = _ => IO.unit
 

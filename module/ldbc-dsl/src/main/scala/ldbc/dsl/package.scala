@@ -4,8 +4,6 @@
 
 package ldbc
 
-import javax.sql.DataSource
-
 import cats.data.Kleisli
 import cats.implicits.*
 
@@ -32,29 +30,29 @@ package object dsl:
 
     extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
 
-      def readOnly(dataSource: DataSource): F[T] =
+      def readOnly(dataSource: DataSource[F]): F[T] =
         buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+            connection <- dataSource.getConnection
             _          <- connection.setReadOnly(true)
           yield connection
         }
           .use(connectionKleisli.run)
 
-      def autoCommit(dataSource: DataSource): F[T] =
+      def autoCommit(dataSource: DataSource[F]): F[T] =
         buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+            connection <- dataSource.getConnection
             _          <- connection.setReadOnly(false) >> connection.setAutoCommit(true)
           yield connection
         }
           .use(connectionKleisli.run)
 
-      def transaction(dataSource: DataSource): F[T] =
+      def transaction(dataSource: DataSource[F]): F[T] =
         (for
           connection <- buildConnectionResource {
                           for
-                            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+                            connection <- dataSource.getConnection
                             _          <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
                           yield connection
                         }
@@ -64,10 +62,10 @@ package object dsl:
                       }
         yield transact).use(connectionKleisli.run)
 
-      def rollback(dataSource: DataSource): F[T] =
+      def rollback(dataSource: DataSource[F]): F[T] =
         val connectionResource = buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+            connection <- dataSource.getConnection
             _          <- connection.setAutoCommit(false)
           yield connection
         }
@@ -93,7 +91,7 @@ package object dsl:
           Some(password)
         )
 
-      def fromDataSource(dataSource: DataSource): Database[F] =
+      def fromDataSource(dataSource: DataSource[F]): Database[F] =
         Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
 
   val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
