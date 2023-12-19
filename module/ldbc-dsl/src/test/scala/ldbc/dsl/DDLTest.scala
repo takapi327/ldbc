@@ -8,7 +8,7 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
-import org.specs2.specification.BeforeAfterSpec
+import org.specs2.specification.BeforeAfterEach
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -18,7 +18,7 @@ import ldbc.dsl.io.*
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
 
-object DDLTest extends Specification, BeforeAfterSpec:
+object DDLTest extends Specification, BeforeAfterEach:
 
   private val ds = new MysqlDataSource()
   ds.setServerName("127.0.0.1")
@@ -33,10 +33,10 @@ object DDLTest extends Specification, BeforeAfterSpec:
 
   private val tableQuery = TableQuery[IO, User](table)
 
-  override def beforeSpec: Fragments =
+  override def before: Fragments =
     step((tableQuery.createTable.update.autoCommit(dataSource) >> IO.println("Complete create table")).unsafeRunSync())
 
-  override def afterSpec: Fragments =
+  override def after: Fragments =
     step((tableQuery.dropTable.update.autoCommit(dataSource) >> IO.println("Complete drop table")).unsafeRunSync())
 
   "DDL Test" should {
