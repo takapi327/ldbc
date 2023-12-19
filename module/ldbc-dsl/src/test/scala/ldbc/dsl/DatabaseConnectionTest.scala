@@ -15,6 +15,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
+import ldbc.dsl.DataSourceIO
 import ldbc.dsl.io.*
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
@@ -22,12 +23,14 @@ import ldbc.dsl.schema.*
 
 object DatabaseConnectionTest extends Specification:
 
-  private val dataSource = new MysqlDataSource()
-  dataSource.setServerName("127.0.0.1")
-  dataSource.setPortNumber(13306)
-  dataSource.setDatabaseName("world")
-  dataSource.setUser("ldbc")
-  dataSource.setPassword("password")
+  private val ds = new MysqlDataSource()
+  ds.setServerName("127.0.0.1")
+  ds.setPortNumber(13306)
+  ds.setDatabaseName("world")
+  ds.setUser("ldbc")
+  ds.setPassword("password")
+
+  private val dataSource = DataSourceIO[IO](ds)
 
   given LogHandler[IO] = LogHandler.consoleLogger
 
