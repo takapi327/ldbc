@@ -3,7 +3,10 @@
  */
 
 package ldbc.query.builder.statement
+
+import ldbc.core.builder.TableQueryBuilder
 import ldbc.sql.ParameterBinder
+import ldbc.query.builder.TableQuery
 
 /**
  * A model for constructing Drop Table statements in MySQL.
@@ -21,4 +24,4 @@ class Drop[F[_], P <: Product](
 
   override def params: Seq[ParameterBinder[F]] = Seq.empty
 
-  override def statement: String = s"DROP TABLE ${tableQuery.table._name}"
+  override def statement: String = TableQueryBuilder(tableQuery.table).dropStatement
