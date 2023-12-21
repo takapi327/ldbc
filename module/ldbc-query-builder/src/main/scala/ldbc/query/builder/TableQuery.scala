@@ -9,6 +9,7 @@ import scala.deriving.Mirror
 import scala.annotation.targetName
 
 import ldbc.core.*
+import ldbc.core.builder.TableQueryBuilder
 import ldbc.core.interpreter.Tuples as CoreTuples
 import ldbc.sql.*
 import ldbc.query.builder.statement.*
@@ -23,7 +24,7 @@ import ldbc.query.builder.interpreter.Tuples
   * @tparam P
   *   A class that implements a [[Product]] that is one-to-one with the table definition.
   */
-case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
+case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, TableQueryBuilder:
 
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
@@ -333,12 +334,18 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   /** Method to construct a query to drop a table.
     */
-  def createTable: Create[F, P] = new Create[F, P](this)
+  def createTable: Command[F] = new Command[F]:
+    override def params: Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String = createStatement
 
   /** Method to construct a query to drop a table.
     */
-  def dropTable: Drop[F, P] = new Drop[F, P](this)
+  def dropTable: Command[F] = new Command[F]:
+    override def params: Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String = dropStatement
 
   /** Method to construct a query to truncate a table.
     */
-  def truncateTable: Truncate[F, P] = new Truncate[F, P](this)
+  def truncateTable: Command[F] = new Command[F]:
+    override def params: Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String = truncateStatement
