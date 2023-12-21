@@ -44,12 +44,11 @@ trait TableQueryBuilder extends TableValidator:
 
 object TableQueryBuilder:
 
-  /**
-   * Factory method for creating a TableQueryBuilder from a Table.
-   *
-   * @param _table
-   *   Trait for generating SQL table information.
-   */
+  /** Factory method for creating a TableQueryBuilder from a Table.
+    *
+    * @param _table
+    *   Trait for generating SQL table information.
+    */
   def apply(_table: Table[?]): TableQueryBuilder =
     new TableQueryBuilder:
       override val table: Table[?] = _table

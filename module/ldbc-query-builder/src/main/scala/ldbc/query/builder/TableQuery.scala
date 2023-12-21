@@ -335,17 +335,17 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
   /** Method to construct a query to drop a table.
     */
   def createTable: Command[F] = new Command[F]:
-    override def params: Seq[ParameterBinder[F]] = Seq.empty
-    override def statement: String = createStatement
+    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String                  = createStatement
 
   /** Method to construct a query to drop a table.
     */
   def dropTable: Command[F] = new Command[F]:
-    override def params: Seq[ParameterBinder[F]] = Seq.empty
-    override def statement: String = dropStatement
+    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String                  = dropStatement
 
   /** Method to construct a query to truncate a table.
     */
   def truncateTable: Command[F] = new Command[F]:
-    override def params: Seq[ParameterBinder[F]] = Seq.empty
-    override def statement: String = truncateStatement
+    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String                  = truncateStatement
