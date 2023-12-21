@@ -330,22 +330,22 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
 
   /** Method to construct a query to delete a table.
     */
-  def delete: Delete[F, P] = Delete[F, P](this)
+  val delete: Delete[F, P] = Delete[F, P](this)
 
-  /** Method to construct a query to drop a table.
+  /** Method to construct a query to create a table.
     */
-  def createTable: Command[F] = new Command[F]:
+  val createTable: Command[F] = new Command[F]:
     override def params:    Seq[ParameterBinder[F]] = Seq.empty
     override def statement: String                  = createStatement
 
   /** Method to construct a query to drop a table.
     */
-  def dropTable: Command[F] = new Command[F]:
+  val dropTable: Command[F] = new Command[F]:
     override def params:    Seq[ParameterBinder[F]] = Seq.empty
     override def statement: String                  = dropStatement
 
   /** Method to construct a query to truncate a table.
     */
-  def truncateTable: Command[F] = new Command[F]:
+  val truncateTable: Command[F] = new Command[F]:
     override def params:    Seq[ParameterBinder[F]] = Seq.empty
     override def statement: String                  = truncateStatement

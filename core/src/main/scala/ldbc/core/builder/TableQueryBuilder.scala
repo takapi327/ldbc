@@ -51,4 +51,4 @@ object TableQueryBuilder:
     */
   def apply(_table: Table[?]): TableQueryBuilder =
     new TableQueryBuilder:
-      override val table: Table[?] = _table
+      override def table: Table[?] = _table
