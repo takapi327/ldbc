@@ -31,6 +31,11 @@ object DatabaseTest extends Specification:
       result.length === 239
     }
 
+    "A method that takes a Database model as an argument is successfully processed." in {
+      val result = country.selectAll.toList[Country].readOnly(db).unsafeRunSync()
+      result.length === 239
+    }
+
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       val result = db.readOnly(city.selectAll.toList[City]).unsafeRunSync()
       result.length === 4079
@@ -521,10 +526,5 @@ object DatabaseTest extends Specification:
       val result =
         db.autoCommit(countryLanguage.delete.where(_.countryCode _equals "AFG").update).unsafeRunSync()
       result === 5
-    }
-
-    "A method that takes a Database model as an argument is successfully processed." in {
-      val result = country.selectAll.toList[Country].readOnly(db).unsafeRunSync()
-      result.length === 245
     }
   }
