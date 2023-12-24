@@ -20,15 +20,15 @@ trait ConnectionSyntax[F[_]]:
     def readOnly(database: Database[F]): F[T]
 
     /** Functions to manage the processing of connections for writing.
-        */
+      */
     def autoCommit(dataSource: DataSource[F]): F[T]
-  
+
     def autoCommit(database: Database[F]): F[T]
 
     /** Functions to manage the processing of connections in a transaction.
-        */
+      */
     def transaction(dataSource: DataSource[F]): F[T]
-  
+
     def transaction(database: Database[F]): F[T]
 
     /** Functions to manage the processing of connections, always rolling back.

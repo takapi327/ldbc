@@ -39,7 +39,7 @@ package object dsl:
           yield connection
         }
           .use(connectionKleisli.run)
-      
+
       def readOnly(database: Database[F]): F[T] =
         database.readOnly(connectionKleisli)
 
