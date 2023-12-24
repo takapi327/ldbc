@@ -4,5 +4,5 @@
 
 package ldbc.dsl
 
-trait internalSyntax extends internal.ConnectionSyntax, internal.ResultSetMetaDataSyntax
+trait internalSyntax extends internal.ConnectionSyntax, internal.ResultSetMetaDataSyntax, internal.ParameterMetaDataSyntax
 package object internal extends internalSyntax

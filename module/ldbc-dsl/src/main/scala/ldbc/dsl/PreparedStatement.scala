@@ -136,7 +136,7 @@ object PreparedStatement:
       Sync[F].blocking(statement.setURL(parameterIndex, x))
 
     override def getParameterMetaData(): F[ParameterMetaData[F]] =
-      Sync[F].blocking(statement.getParameterMetaData).map(ParameterMetaDataIO(_))
+      Sync[F].blocking(statement.getParameterMetaData).map(ParameterMetaData(_))
 
     override def setRowId(parameterIndex: Int, x: java.sql.RowId): F[Unit] =
       Sync[F].blocking(statement.setRowId(parameterIndex, x))
