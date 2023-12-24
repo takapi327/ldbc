@@ -190,7 +190,7 @@ MySQLではデータ挿入時に返却できる値はAutoIncrementのカラム�
 `readOnly`メソッドを使用することで実行するクエリの処理を読み込み専用にすることができます。`readOnly`メソッドは`insert/update/delete`文でも使用することができますが、書き込み処理を行うので実行時にエラーとなります。
 
 ```scala 3
-val read = userQuery.selectAll.toList.readOnly
+val read = userQuery.selectAll.toList.readOnly(dataSource)
 ```
 
 ### 自動コミット
@@ -198,7 +198,7 @@ val read = userQuery.selectAll.toList.readOnly
 `autoCommit`メソッドを使用することで実行するクエリの処理をクエリ実行時ごとにコミットするように設定することができます。
 
 ```scala 3
-val read = userQuery.insert((1L, "name", None)).update.autoCommit
+val read = userQuery.insert((1L, "name", None)).update.autoCommit(dataSource)
 ```
 
 ### トランザクション
@@ -214,27 +214,8 @@ val read = userQuery.insert((1L, "name", None)).update.autoCommit
   result1 <- userQuery.insert((1L, "name", None)).returning("id")
   result2 <- userQuery.update("name", "update name").update
   ...
-yield ...).transaction
+yield ...).transaction(dataSource)
 ```
-
-### 実行
-
-戻り値の型、接続方法の設定を行いましたがLDBCで構築された今までの処理は`Kleisli[F, XXX, T]`型となっているため定義を行なっただけではデータベース接続処理(副作用)は発生しません。
-データベース処理を実行するためには`Kleisli`の`run`を実行する必要があります。
-
-`readOnly/autoCommit/transaction`メソッドを使用すると戻り値の型は`Kleisli[F, DataSource, T]`となるためJDBCのDataSourceを`run`に渡すことで戻り値の型を`F`に持ち上げることができます。
-
-```scala 3
-val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
-```
-
-Cats Effect IOを使用している場合は、`IOApp`内で実行を行うか`unsafeRunSync`などを使用することでデータベース接続処理を実行することができます。
-
-```scala 3
-val user: Option[User] = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
-```
-
-`Kleisli`に関してはCatsの[ドキュメント](https://typelevel.org/cats/datatypes/kleisli.html)を参照してください。
 
 ## Database Action
 
@@ -290,6 +271,20 @@ val database: Database = ???
 val db = database.fromDriverManager()
 // or
 val db = database.fromDriverManager("user name", "password")
+```
+
+### メソッドチェーンでの使用
+
+`Database`モデルは`TableQuery`のメソッドで`DataSource`の代わりに使用することもできます。
+
+```scala 3
+val read = userQuery.selectAll.toList.readOnly(db)
+val commit = userQuery.insert((1L, "name", None)).update.autoCommit(db)
+val transaction = (for
+  result1 <- userQuery.insert((1L, "name", None)).returning("id")
+  result2 <- userQuery.update("name", "update name").update
+  ...
+yield ...).transaction(db)
 ```
 
 ## HikariCPコネクションプールの使用
