@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl.internal
 
@@ -34,7 +34,7 @@ import ldbc.sql.ResultSet
 import ResultSet.*
 
 trait ResultSetSyntax:
-  
+
   implicit class ResultSetF(resultSetObject: ResultSet.type):
 
     def apply[F[_]: Sync](resultSet: java.sql.ResultSet): ResultSet[F] = new ResultSet[F]:
@@ -102,7 +102,8 @@ trait ResultSetSyntax:
 
       override def getTimestamp(columnIndex: Int): F[Timestamp] = Sync[F].blocking(resultSet.getTimestamp(columnIndex))
 
-      override def getTimestamp(columnLabel: String): F[Timestamp] = Sync[F].blocking(resultSet.getTimestamp(columnLabel))
+      override def getTimestamp(columnLabel: String): F[Timestamp] =
+        Sync[F].blocking(resultSet.getTimestamp(columnLabel))
 
       override def getTimestamp(columnIndex: Int, cal: Calendar): F[Timestamp] =
         Sync[F].blocking(resultSet.getTimestamp(columnIndex, cal))
@@ -148,7 +149,8 @@ trait ResultSetSyntax:
       override def getCharacterStream(columnLabel: String): F[Reader] =
         Sync[F].blocking(resultSet.getCharacterStream(columnLabel))
 
-      override def getBigDecimal(columnIndex: Int): F[BigDecimal] = Sync[F].blocking(resultSet.getBigDecimal(columnIndex))
+      override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
+        Sync[F].blocking(resultSet.getBigDecimal(columnIndex))
 
       override def getBigDecimal(columnLabel: String): F[BigDecimal] =
         Sync[F].blocking(resultSet.getBigDecimal(columnLabel))
@@ -206,7 +208,8 @@ trait ResultSetSyntax:
       override def updateBoolean(columnLabel: String, x: Boolean): F[Unit] =
         Sync[F].blocking(resultSet.updateBoolean(columnLabel, x))
 
-      override def updateByte(columnIndex: Int, x: Byte): F[Unit] = Sync[F].blocking(resultSet.updateByte(columnIndex, x))
+      override def updateByte(columnIndex: Int, x: Byte): F[Unit] =
+        Sync[F].blocking(resultSet.updateByte(columnIndex, x))
 
       override def updateByte(columnLabel: String, x: Byte): F[Unit] =
         Sync[F].blocking(resultSet.updateByte(columnLabel, x))
@@ -219,9 +222,11 @@ trait ResultSetSyntax:
 
       override def updateInt(columnIndex: Int, x: Int): F[Unit] = Sync[F].blocking(resultSet.updateInt(columnIndex, x))
 
-      override def updateInt(columnLabel: String, x: Int): F[Unit] = Sync[F].blocking(resultSet.updateInt(columnLabel, x))
+      override def updateInt(columnLabel: String, x: Int): F[Unit] =
+        Sync[F].blocking(resultSet.updateInt(columnLabel, x))
 
-      override def updateLong(columnIndex: Int, x: Long): F[Unit] = Sync[F].blocking(resultSet.updateLong(columnIndex, x))
+      override def updateLong(columnIndex: Int, x: Long): F[Unit] =
+        Sync[F].blocking(resultSet.updateLong(columnIndex, x))
 
       override def updateLong(columnLabel: String, x: Long): F[Unit] =
         Sync[F].blocking(resultSet.updateLong(columnLabel, x))
@@ -256,12 +261,14 @@ trait ResultSetSyntax:
       override def updateBytes(columnLabel: String, x: Array[Byte]): F[Unit] =
         Sync[F].blocking(resultSet.updateBytes(columnLabel, x))
 
-      override def updateDate(columnIndex: Int, x: Date): F[Unit] = Sync[F].blocking(resultSet.updateDate(columnIndex, x))
+      override def updateDate(columnIndex: Int, x: Date): F[Unit] =
+        Sync[F].blocking(resultSet.updateDate(columnIndex, x))
 
       override def updateDate(columnLabel: String, x: Date): F[Unit] =
         Sync[F].blocking(resultSet.updateDate(columnLabel, x))
 
-      override def updateTime(columnIndex: Int, x: Time): F[Unit] = Sync[F].blocking(resultSet.updateTime(columnIndex, x))
+      override def updateTime(columnIndex: Int, x: Time): F[Unit] =
+        Sync[F].blocking(resultSet.updateTime(columnIndex, x))
 
       override def updateTime(columnLabel: String, x: Time): F[Unit] =
         Sync[F].blocking(resultSet.updateTime(columnLabel, x))
