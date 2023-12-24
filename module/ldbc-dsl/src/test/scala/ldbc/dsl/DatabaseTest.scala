@@ -522,4 +522,9 @@ object DatabaseTest extends Specification:
         db.autoCommit(countryLanguage.delete.where(_.countryCode _equals "AFG").update).unsafeRunSync()
       result === 5
     }
+
+    "A method that takes a Database model as an argument is successfully processed." in {
+      val result = country.selectAll.toList[Country].readOnly(db).unsafeRunSync()
+      result.length === 239
+    }
   }
