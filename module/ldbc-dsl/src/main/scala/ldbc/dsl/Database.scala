@@ -13,14 +13,14 @@ import cats.effect.{ Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.core.{ Character, Collate, Table, Database as CoreDatabase }
-import ldbc.sql.{ DataSource, Connection }
+import ldbc.sql.{ DataSource, Connection as BaseConnection }
 
 case class Database[F[_]: Sync](
   databaseType: CoreDatabase.Type,
   name:         String,
   host:         String,
   port:         Option[Int],
-  connectionF:  () => F[Connection[F]],
+  connectionF:  () => F[BaseConnection[F]],
   character:    Option[Character]       = None,
   collate:      Option[Collate[String]] = None,
   tables:       Set[Table[?]]           = Set.empty
@@ -30,8 +30,8 @@ case class Database[F[_]: Sync](
   override val schemaMeta: Option[String] = None
   override val catalog:    Option[String] = None
 
-  private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
-    val release: Connection[F] => F[Unit] = connection => connection.close()
+  private def buildConnectionResource(acquire: F[BaseConnection[F]]): Resource[F, BaseConnection[F]] =
+    val release: BaseConnection[F] => F[Unit] = connection => connection.close()
     Resource.make(acquire)(release)
 
   def setCharacter(character: Character):   Database[F] = this.copy(character = Some(character))
@@ -45,7 +45,7 @@ case class Database[F[_]: Sync](
     * @tparam T
     *   Type of data to be retrieved after database processing is executed.
     */
-  def connection[T](connectionKleisli: Connection[F] => F[T]): F[T] =
+  def connection[T](connectionKleisli: BaseConnection[F] => F[T]): F[T] =
     buildConnectionResource(connectionF()).use(connection => connectionKleisli(connection))
 
   /** Functions for managing the processing of connections in a read-only manner.
@@ -55,7 +55,7 @@ case class Database[F[_]: Sync](
     * @tparam T
     *   Type of data to be retrieved after database processing is executed.
     */
-  def readOnly[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
+  def readOnly[T](connectionKleisli: Kleisli[F, BaseConnection[F], T]): F[T] =
     connection(connection => connection.setReadOnly(true) >> connectionKleisli.run(connection))
 
   /** Functions to manage the processing of connections for writing.
@@ -65,7 +65,7 @@ case class Database[F[_]: Sync](
     * @tparam T
     *   Type of data to be retrieved after database processing is executed.
     */
-  def autoCommit[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
+  def autoCommit[T](connectionKleisli: Kleisli[F, BaseConnection[F], T]): F[T] =
     connection(connection =>
       connection.setReadOnly(false) >> connection.setAutoCommit(true) >> connectionKleisli.run(connection)
     )
@@ -77,7 +77,7 @@ case class Database[F[_]: Sync](
     * @tparam T
     *   Type of data to be retrieved after database processing is executed.
     */
-  def transaction[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
+  def transaction[T](connectionKleisli: Kleisli[F, BaseConnection[F], T]): F[T] =
     connection(connection =>
       connection.setReadOnly(false) >> connection.setAutoCommit(false) >> Resource
         .makeCase(Sync[F].pure(connection)) {
@@ -94,7 +94,7 @@ case class Database[F[_]: Sync](
     * @tparam T
     *   Type of data to be retrieved after database processing is executed.
     */
-  def rollback[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
+  def rollback[T](connectionKleisli: Kleisli[F, BaseConnection[F], T]): F[T] =
     connection(connection =>
       connection.setAutoCommit(false) >> connectionKleisli.run(connection) <* connection.rollback()
     )
@@ -113,7 +113,7 @@ object Database:
       case Some(p) => s"jdbc:${ databaseType.name }://$host:$p/$name"
       case None    => s"jdbc:${ databaseType.name }://$host/$name"
 
-    val connection: F[Connection[F]] =
+    val connection: F[BaseConnection[F]] =
       Sync[F]
         .blocking {
           Class.forName(databaseType.driver)
@@ -121,7 +121,7 @@ object Database:
             case (Some(u), Some(p)) => DriverManager.getConnection(jdbcUrl, u, p)
             case _                  => DriverManager.getConnection(jdbcUrl)
         }
-        .map(ConnectionIO[F])
+        .map(Connection[F])
 
     Database[F](databaseType, name, host, port, () => connection)
 

@@ -11,7 +11,7 @@ import cats.implicits.*
 
 import ldbc.core.Database as CoreDatabase
 import ldbc.dsl.*
-import ldbc.sql.Connection
+import ldbc.sql.Connection as BaseConnection
 
 object HikariDatabase:
 
@@ -27,7 +27,7 @@ object HikariDatabase:
     builder
       .buildFromConfig(hikariConfig)
       .map(dataSource =>
-        val connection: F[Connection[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+        val connection: F[BaseConnection[F]] = Sync[F].blocking(dataSource.getConnection).map(Connection[F])
         Database[F](
           CoreDatabase.Type.MySQL,
           hikariConfig.getUsername,
