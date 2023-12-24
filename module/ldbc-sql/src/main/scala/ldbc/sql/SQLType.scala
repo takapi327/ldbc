@@ -32,5 +32,3 @@ trait SQLType[F[_]]:
     *   An Integer representing the vendor specific data type
     */
   def getVendorTypeNumber(): F[Int]
-
-object SQLType
