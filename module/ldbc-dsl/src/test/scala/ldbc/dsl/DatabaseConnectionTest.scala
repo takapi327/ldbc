@@ -29,7 +29,7 @@ object DatabaseConnectionTest extends Specification:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  private val dataSource = DataSourceIO[IO](ds)
+  private val dataSource = DataSource[IO](ds)
 
   given LogHandler[IO] = LogHandler.consoleLogger
 
@@ -208,7 +208,7 @@ object DatabaseConnectionTest extends Specification:
       (for
         codeOpt <- country.select(_.code).where(_.code _equals "JPN").headOption
         cities <- codeOpt match
-                    case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
+                    case None => Connection.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
                         .select(v => (v.name, v.countryCode))
@@ -396,7 +396,7 @@ object DatabaseConnectionTest extends Specification:
       (for
         cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption[City]
         result <- cityOpt match
-                    case None => ConnectionIO.pure[IO, Int](0)
+                    case None => Connection.pure[IO, Int](0)
                     case Some(cityModel) =>
                       city
                         .update(cityModel.copy(district = "Tokyo-to"))
@@ -487,7 +487,7 @@ object DatabaseConnectionTest extends Specification:
                      .and(_.continent _equals Country.Continent.Asia)
                      .headOption
         result <- codeOpt match
-                    case None => ConnectionIO.pure[IO, Int](0)
+                    case None => Connection.pure[IO, Int](0)
                     case Some(code *: EmptyTuple) =>
                       city
                         .update("name", "Test1")

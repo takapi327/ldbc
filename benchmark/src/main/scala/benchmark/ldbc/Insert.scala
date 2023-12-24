@@ -16,7 +16,7 @@ import cats.effect.unsafe.implicits.global
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
 import ldbc.sql.DataSource
-import ldbc.dsl.DataSourceIO
+import ldbc.dsl.DataSource
 import ldbc.dsl.io.*
 import ldbc.dsl.logging.*
 
@@ -45,7 +45,7 @@ class Insert:
     ds.setDatabaseName("world")
     ds.setUser("ldbc")
     ds.setPassword("password")
-    dataSource = DataSourceIO[IO](ds)
+    dataSource = DataSource[IO](ds)
 
     records = (1 to len).map(num => (num, s"record$num")).toList
 

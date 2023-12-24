@@ -14,6 +14,7 @@ import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.core.{ Character, Collate, Table, Database as CoreDatabase }
 import ldbc.sql.{ DataSource, Connection }
+import ldbc.dsl.internal.*
 
 case class Database[F[_]: Sync](
   databaseType: CoreDatabase.Type,
@@ -121,7 +122,7 @@ object Database:
             case (Some(u), Some(p)) => DriverManager.getConnection(jdbcUrl, u, p)
             case _                  => DriverManager.getConnection(jdbcUrl)
         }
-        .map(ConnectionIO[F])
+        .map(Connection[F])
 
     Database[F](databaseType, name, host, port, () => connection)
 

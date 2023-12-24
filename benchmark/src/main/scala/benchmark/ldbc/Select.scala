@@ -16,7 +16,7 @@ import cats.effect.unsafe.implicits.global
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
 import ldbc.sql.DataSource
-import ldbc.dsl.DataSourceIO
+import ldbc.dsl.DataSource
 import ldbc.dsl.io.*
 import ldbc.dsl.logging.*
 
@@ -44,7 +44,7 @@ class Select:
     ds.setDatabaseName("world")
     ds.setUser("ldbc")
     ds.setPassword("password")
-    dataSource = DataSourceIO[IO](ds)
+    dataSource = DataSource[IO](ds)
 
     noLog = _ => IO.unit
 

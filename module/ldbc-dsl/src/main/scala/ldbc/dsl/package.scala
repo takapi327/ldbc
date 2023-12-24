@@ -22,7 +22,8 @@ package object dsl:
             ConnectionSyntax[F],
             QuerySyntax[F],
             CommandSyntax[F],
-            DatabaseSyntax[F]:
+            DatabaseSyntax[F],
+            internalSyntax:
 
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
       val release: Connection[F] => F[Unit] = connection => connection.close()
