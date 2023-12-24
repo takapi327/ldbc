@@ -11,4 +11,5 @@ object ScalaVersions {
 
 object JavaVersions {
   val java11 = "11"
+  val java17 = "17"
 }
