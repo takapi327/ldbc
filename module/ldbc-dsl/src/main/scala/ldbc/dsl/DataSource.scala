@@ -4,18 +4,20 @@
 
 package ldbc.dsl
 
+import java.io.PrintWriter
+
 import cats.implicits.*
 import cats.effect.Sync
-import ldbc.sql.{ DataSource, Connection as BaseConnection }
 
-import java.io.PrintWriter
+import ldbc.sql.{ DataSource, Connection }
+import ldbc.dsl.internal.*
 
 object DataSource:
 
   def apply[F[_]: Sync](dataSource: javax.sql.DataSource): DataSource[F] = new DataSource[F]:
-    override def getConnection: F[BaseConnection[F]] = Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
+    override def getConnection: F[Connection[F]] = Sync[F].blocking(dataSource.getConnection).map(Connection[F](_))
 
-    override def getConnection(username: String, password: String): F[BaseConnection[F]] =
+    override def getConnection(username: String, password: String): F[Connection[F]] =
       Sync[F].blocking(dataSource.getConnection(username, password)).map(Connection[F](_))
 
     override def getLogWriter: F[PrintWriter] = Sync[F].blocking(dataSource.getLogWriter)

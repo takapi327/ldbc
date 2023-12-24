@@ -7,11 +7,9 @@ package ldbc.hikari
 import com.zaxxer.hikari.HikariConfig
 
 import cats.effect.{ Resource, Sync }
-import cats.implicits.*
 
 import ldbc.core.Database as CoreDatabase
 import ldbc.dsl.*
-import ldbc.sql.Connection as BaseConnection
 
 object HikariDatabase:
 
@@ -27,12 +25,11 @@ object HikariDatabase:
     builder
       .buildFromConfig(hikariConfig)
       .map(dataSource =>
-        val connection: F[BaseConnection[F]] = Sync[F].blocking(dataSource.getConnection).map(Connection[F])
         Database[F](
           CoreDatabase.Type.MySQL,
           hikariConfig.getUsername,
           hikariConfig.getJdbcUrl,
           None,
-          () => connection
+          () => DataSource[F](dataSource).getConnection
         )
       )
