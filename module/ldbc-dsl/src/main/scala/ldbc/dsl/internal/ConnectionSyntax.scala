@@ -1,6 +1,6 @@
 /** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
- * distributed with this source code.
- */
+  * distributed with this source code.
+  */
 
 package ldbc.dsl.internal
 
@@ -23,7 +23,7 @@ transparent trait ConnectionSyntax extends StatementSyntax:
 
   extension (connectionObject: Connection.type)
 
-    def apply[F[_] : Sync](connection: java.sql.Connection): Connection[F] = new Connection[F]:
+    def apply[F[_]: Sync](connection: java.sql.Connection): Connection[F] = new Connection[F]:
 
       override def createStatement(): F[Statement[F]] =
         Sync[F].blocking(connection.createStatement()).map(Statement[F])
@@ -63,16 +63,16 @@ transparent trait ConnectionSyntax extends StatementSyntax:
       override def clearWarnings(): F[Unit] = Sync[F].blocking(connection.clearWarnings())
 
       override def createStatement(
-                                    resultSetType: ResultSet.Type,
-                                    resultSetConcurrency: ResultSet.Concur
-                                  ): F[Statement[F]] =
+        resultSetType:        ResultSet.Type,
+        resultSetConcurrency: ResultSet.Concur
+      ): F[Statement[F]] =
         Sync[F].blocking(connection.createStatement(resultSetType.code, resultSetConcurrency.code)).map(Statement[F])
 
       override def prepareStatement(
-                                     sql: String,
-                                     resultSetType: ResultSet.Type,
-                                     resultSetConcurrency: ResultSet.Concur
-                                   ): F[PreparedStatement[F]] =
+        sql:                  String,
+        resultSetType:        ResultSet.Type,
+        resultSetConcurrency: ResultSet.Concur
+      ): F[PreparedStatement[F]] =
         Sync[F]
           .blocking(connection.prepareStatement(sql, resultSetType.code, resultSetConcurrency.code))
           .map(PreparedStatementIO[F])
@@ -86,19 +86,19 @@ transparent trait ConnectionSyntax extends StatementSyntax:
       override def getHoldability(): F[Int] = Sync[F].blocking(connection.getHoldability)
 
       override def createStatement(
-                                    resultSetType: ResultSet.Type,
-                                    resultSetConcurrency: ResultSet.Concur,
-                                    resultSetHoldability: ResultSet.Holdability
-                                  ): F[Statement[F]] = Sync[F]
+        resultSetType:        ResultSet.Type,
+        resultSetConcurrency: ResultSet.Concur,
+        resultSetHoldability: ResultSet.Holdability
+      ): F[Statement[F]] = Sync[F]
         .blocking(connection.createStatement(resultSetType.code, resultSetConcurrency.code, resultSetHoldability.code))
         .map(Statement[F])
 
       override def prepareStatement(
-                                     sql: String,
-                                     resultSetType: ResultSet.Type,
-                                     resultSetConcurrency: ResultSet.Concur,
-                                     resultSetHoldability: ResultSet.Holdability
-                                   ): F[PreparedStatement[F]] = Sync[F]
+        sql:                  String,
+        resultSetType:        ResultSet.Type,
+        resultSetConcurrency: ResultSet.Concur,
+        resultSetHoldability: ResultSet.Holdability
+      ): F[PreparedStatement[F]] = Sync[F]
         .blocking(
           connection.prepareStatement(sql, resultSetType.code, resultSetConcurrency.code, resultSetHoldability.code)
         )
@@ -126,7 +126,8 @@ transparent trait ConnectionSyntax extends StatementSyntax:
       override def setClientInfo(name: String, value: String): F[Unit] =
         Sync[F].blocking(connection.setClientInfo(name, value))
 
-      override def setClientInfo(properties: Properties): F[Unit] = Sync[F].blocking(connection.setClientInfo(properties))
+      override def setClientInfo(properties: Properties): F[Unit] =
+        Sync[F].blocking(connection.setClientInfo(properties))
 
       override def getClientInfo(name: String): F[String] = Sync[F].blocking(connection.getClientInfo(name))
 
@@ -149,5 +150,5 @@ transparent trait ConnectionSyntax extends StatementSyntax:
 
       override def getNetworkTimeout(): F[Int] = Sync[F].blocking(connection.getNetworkTimeout)
 
-    def pure[F[_] : Applicative, T](value: T): Kleisli[F, Connection[F], T] =
+    def pure[F[_]: Applicative, T](value: T): Kleisli[F, Connection[F], T] =
       Kleisli.pure[F, Connection[F], T](value)
