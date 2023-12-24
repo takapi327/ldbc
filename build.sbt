@@ -11,7 +11,7 @@ import Dependencies.*
 import Workflows.*
 
 ThisBuild / crossScalaVersions := Seq(scala3)
-ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin(java11))
+ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin(java11), JavaSpec.temurin(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(
   scalaFmt.value, sbtScripted.value
