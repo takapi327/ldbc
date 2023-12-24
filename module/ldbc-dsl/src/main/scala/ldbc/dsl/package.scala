@@ -39,6 +39,9 @@ package object dsl:
           yield connection
         }
           .use(connectionKleisli.run)
+      
+      def readOnly(database: Database[F]): F[T] =
+        database.readOnly(connectionKleisli)
 
       def autoCommit(dataSource: DataSource[F]): F[T] =
         buildConnectionResource {
@@ -48,6 +51,9 @@ package object dsl:
           yield connection
         }
           .use(connectionKleisli.run)
+
+      def autoCommit(database: Database[F]): F[T] =
+        database.autoCommit(connectionKleisli)
 
       def transaction(dataSource: DataSource[F]): F[T] =
         (for
@@ -63,6 +69,9 @@ package object dsl:
                       }
         yield transact).use(connectionKleisli.run)
 
+      def transaction(database: Database[F]): F[T] =
+        database.transaction(connectionKleisli)
+
       def rollback(dataSource: DataSource[F]): F[T] =
         val connectionResource = buildConnectionResource {
           for
@@ -73,6 +82,9 @@ package object dsl:
         connectionResource.use { connection =>
           connectionKleisli.run(connection) <* connection.rollback()
         }
+
+      def rollback(database: Database[F]): F[T] =
+        database.rollback(connectionKleisli)
 
     extension (database: CoreDatabase)
 
