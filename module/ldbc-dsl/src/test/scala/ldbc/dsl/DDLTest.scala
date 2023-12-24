@@ -27,7 +27,7 @@ object DDLTest extends Specification, BeforeAfterEach:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  private val dataSource = DataSourceIO[IO](ds)
+  private val dataSource = DataSource[IO](ds)
 
   given LogHandler[IO] = LogHandler.consoleLogger
 
