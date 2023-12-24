@@ -130,7 +130,7 @@ object PreparedStatement:
       Sync[F].blocking(statement.setArray(parameterIndex, x))
 
     override def getMetaData(): F[ResultSetMetaData[F]] =
-      Sync[F].blocking(statement.getMetaData).map(ResultSetMetaDataIO(_))
+      Sync[F].blocking(statement.getMetaData).map(ResultSetMetaData(_))
 
     override def setURL(parameterIndex: Int, x: java.net.URL): F[Unit] =
       Sync[F].blocking(statement.setURL(parameterIndex, x))
