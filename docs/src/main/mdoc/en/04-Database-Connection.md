@@ -190,7 +190,7 @@ Before making a database connection, commit timing, read/write-only, and other s
 The `readOnly` method can be used to make the processing of a query to be executed read-only. The `readOnly` method can also be used with `insert/update/delete` statements, but it will result in an error at runtime because of the write operation.
 
 ```scala 3
-val read = userQuery.selectAll.toList.readOnly
+val read = userQuery.selectAll.toList.readOnly(dataSource)
 ```
 
 ### Auto Commit
@@ -198,7 +198,7 @@ val read = userQuery.selectAll.toList.readOnly
 The `autoCommit` method can be used to set the query processing to commit at each query execution.
 
 ```scala 3
-val read = userQuery.insert((1L, "name", None)).update.autoCommit
+val read = userQuery.insert((1L, "name", None)).update.autoCommit(dataSource)
 ```
 
 ### Transaction
@@ -214,27 +214,8 @@ By using the `transaction` method on a single `Kleisli[F, Connection[F], T]`, al
   result1 <- userQuery.insert((1L, "name", None)).returning("id")
   result2 <- userQuery.update("name", "update name").update
   ...
-yield ...).transaction
+yield ...).transaction(dataSource)
 ```
-
-### Execution
-
-The return type and connection method have been set up, but since the process so far built with LDBC is of type `Kleisli[F, XXX, T]`, the database connection process (side effect) will not occur just by defining it.
-You need to run `run` on `Kleisli` to execute the database process.
-
-If you use the `readOnly/autoCommit/transaction` method, the return type will be `Kleisli[F, DataSource, T]`, so you can raise the return type to `F` by passing JDBC's DataSource to `run`.
-
-```scala 3
-val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
-```
-
-If you are using Cats Effect IO, you can perform the database connection process by executing it in `IOApp` or by using `unsafeRunSync` or similar.
-
-```scala 3
-val user: User = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
-```
-
-For more information on `Kleisli`, please refer to Cats' [documentation](https://typelevel.org/cats/datatypes/kleisli.html).
 
 ## Database Action
 
@@ -290,6 +271,20 @@ val database: Database = ???
 val db = database.fromDriverManager()
 // or
 val db = database.fromDriverManager("user name", "password")
+```
+
+### Use in method chain
+
+The `Database` model can also be used in place of `DataSource` in `TableQuery` methods.
+
+```scala 3
+val read = userQuery.selectAll.toList.readOnly(db)
+val commit = userQuery.insert((1L, "name", None)).update.autoCommit(db)
+val transaction = (for
+  result1 <- userQuery.insert((1L, "name", None)).returning("id")
+  result2 <- userQuery.update("name", "update name").update
+  ...
+yield ...).transaction(db)
 ```
 
 ## Using a HikariCP Connection Pool
