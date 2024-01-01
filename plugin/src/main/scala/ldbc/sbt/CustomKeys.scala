@@ -11,4 +11,6 @@ object CustomKeys {
     "baseClassloader",
     "The base classloader"
   )
+
+  val generateBySQLSchema = TaskKey[Seq[File]]("generateBySQLSchema", "Generate models from SQL schema")
 }
