@@ -24,7 +24,7 @@ object Settings {
     ldbcPackage        := "ldbc.generated",
     (Compile / sourceGenerators) += Generator.generate.taskValue,
     generateBySQLSchema := {
-      Generator.generate.value
+      Generator.alwaysGenerate.value
     },
     commands += Commands.generateBySchema
   )

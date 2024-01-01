@@ -20,6 +20,10 @@ object Generator {
 
   private val logger = ProcessLogger()
 
+  /**
+   * Generate code from SQL schema.
+   * Create a cache, and if a cache exists, do not generate it.
+   */
   val generate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
       Compile / parseFiles,
@@ -31,6 +35,24 @@ object Generator {
       Compile / sourceManaged,
       Compile / baseDirectory,
       Compile / ldbcPackage
+    )
+
+  /**
+   * Generate code from SQL schema.
+   * Always generate code.
+   */
+  val alwaysGenerate: Def.Initialize[Task[Seq[File]]] =
+    generateCode(
+      Compile / parseFiles,
+      Compile / parseDirectories,
+      Compile / excludeFiles,
+      Compile / customYamlFiles,
+      Compile / classNameFormat,
+      Compile / propertyNameFormat,
+      Compile / sourceManaged,
+      Compile / baseDirectory,
+      Compile / ldbcPackage,
+      alwaysGenerate = true
     )
 
   private def convertToUrls(files: Seq[File]): Array[URL] = files.map(_.toURI.toURL).toArray
@@ -64,7 +86,8 @@ object Generator {
     propertyNameFormat: SettingKey[Format],
     sourceManaged:      SettingKey[File],
     baseDirectory:      SettingKey[File],
-    packageName:        SettingKey[String]
+    packageName:        SettingKey[String],
+    alwaysGenerate:     Boolean = false
   ): Def.Initialize[Task[Seq[File]]] = Def.task {
 
     type LdbcGenerator = {
@@ -103,11 +126,12 @@ object Generator {
 
     val customChanged = changedHits(customYamlFiles.value)
 
-    val executeFiles = (changed.nonEmpty, generatedCache.count(_.exists()) == 0, customChanged.nonEmpty) match {
-      case (_, _, true)      => combinedFiles
-      case (true, _, _)      => changed
-      case (false, true, _)  => combinedFiles
-      case (false, false, _) => List.empty
+    val executeFiles = (alwaysGenerate, changed.nonEmpty, generatedCache.count(_.exists()) == 0, customChanged.nonEmpty) match {
+      case (true, _, _, _)          => combinedFiles
+      case (false, _, _, true)      => combinedFiles
+      case (false, true, _, _)      => changed
+      case (false, false, true, _)  => combinedFiles
+      case (false, false, false, _) => List.empty
     }
 
     if (executeFiles.nonEmpty) {
@@ -126,7 +150,9 @@ object Generator {
       packageName.value
     )
 
-    logger.debug("Generated files: [" + generated.map(_.getAbsoluteFile.getName).mkString(", ") + "]")
+    if (generated.nonEmpty) {
+      logger.debug("Generated files: [" + generated.map(_.getAbsoluteFile.getName).mkString(", ") + "]")
+    }
 
     if (generatedCache.isEmpty) {
       generatedCache = generated.toSet
