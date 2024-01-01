@@ -47,8 +47,8 @@ trait CommandSyntax[F[_]: Sync]:
     }
 
     def returning[Tag <: Singleton](tag: Tag)(using
-      mirror:                            Mirror.ProductOf[P],
-      index:                             ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+      mirror: Mirror.ProductOf[P],
+      index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
       reader: ResultSetReader[
         F,
         Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]

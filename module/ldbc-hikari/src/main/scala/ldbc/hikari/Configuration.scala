@@ -33,6 +33,7 @@ trait ConfigLoader[A]:
   self =>
 
   def load(config: Config, path: String): A
+
   def map[B](f: A => B): ConfigLoader[B] = (config: Config, path: String) => f(self.load(config, path))
 
 object ConfigLoader:

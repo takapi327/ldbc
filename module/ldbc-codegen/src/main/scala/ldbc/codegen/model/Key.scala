@@ -40,11 +40,16 @@ object Key:
     secondary:  Option[SecondaryEngineAttribute]
   ):
 
-    def setSize(value: KeyBlockSize):                                 IndexOption = this.copy(size = Some(value))
-    def setIndexType(value: IndexType):                               IndexOption = this.copy(indexType = Some(value))
-    def setWithParser(value: WithParser):                             IndexOption = this.copy(parserName = Some(value))
-    def setComment(value: CommentSet):                                IndexOption = this.copy(comment = Some(value))
-    def setEngineAttribute(value: EngineAttribute):                   IndexOption = this.copy(engine = Some(value))
+    def setSize(value: KeyBlockSize): IndexOption = this.copy(size = Some(value))
+
+    def setIndexType(value: IndexType): IndexOption = this.copy(indexType = Some(value))
+
+    def setWithParser(value: WithParser): IndexOption = this.copy(parserName = Some(value))
+
+    def setComment(value: CommentSet): IndexOption = this.copy(comment = Some(value))
+
+    def setEngineAttribute(value: EngineAttribute): IndexOption = this.copy(engine = Some(value))
+
     def setSecondaryEngineAttribute(value: SecondaryEngineAttribute): IndexOption = this.copy(secondary = Some(value))
 
     def toCode: String =

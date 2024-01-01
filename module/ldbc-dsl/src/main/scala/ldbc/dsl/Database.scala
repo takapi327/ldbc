@@ -35,9 +35,11 @@ case class Database[F[_]: Sync](
     val release: Connection[F] => F[Unit] = connection => connection.close()
     Resource.make(acquire)(release)
 
-  def setCharacter(character: Character):   Database[F] = this.copy(character = Some(character))
+  def setCharacter(character: Character): Database[F] = this.copy(character = Some(character))
+
   def setCollate(collate: Collate[String]): Database[F] = this.copy(collate = Some(collate))
-  def setTables(tables: Set[Table[?]]):     Database[F] = this.copy(tables = tables)
+
+  def setTables(tables: Set[Table[?]]): Database[F] = this.copy(tables = tables)
 
   /** Functions to manage the processing of connections independently.
     *

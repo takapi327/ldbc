@@ -1158,10 +1158,10 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Enum[T <: EnumModel | Option[EnumModel]](
-    isOptional:         Boolean,
-    character:          Option[Character]  = None,
-    collate:            Option[Collate[T]] = None,
-    default:            Option[Default]    = None
+    isOptional: Boolean,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
   )(using enumDataType: EnumDataType[?])
     extends DataType[T]:
 

@@ -20,9 +20,9 @@ import ldbc.dsl.logging.{ LogEvent, LogHandler }
 trait ConnectionProvider[F[_]: Sync]:
 
   private def connection[T](
-    statement:        String,
-    params:           Seq[ParameterBinder[F]],
-    consumer:         ResultSetConsumer[F, T]
+    statement: String,
+    params:    Seq[ParameterBinder[F]],
+    consumer:  ResultSetConsumer[F, T]
   )(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] =
     Kleisli { connection =>
       for
