@@ -12,7 +12,7 @@ import AutoImport._
 
 object Settings {
 
-  lazy val projectSettings = Def.settings(
+  lazy val projectSettings: Seq[Def.Setting[?]] = Def.settings(
     libraryDependencies += ldbcCodegen,
     baseClassloader    := Commands.baseClassloaderTask.value,
     parseFiles         := List.empty,
@@ -22,6 +22,10 @@ object Settings {
     classNameFormat    := Format.PASCAL,
     propertyNameFormat := Format.CAMEL,
     ldbcPackage        := "ldbc.generated",
-    (Compile / sourceGenerators) += Generator.generate.taskValue
+    (Compile / sourceGenerators) += Generator.generate.taskValue,
+    generateBySQLSchema := {
+      Generator.alwaysGenerate.value
+    },
+    commands += Commands.generateBySchema
   )
 }
