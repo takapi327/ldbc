@@ -17,6 +17,9 @@ import ldbc.sbt.CustomKeys._
 import ldbc.sbt.AutoImport._
 
 object Generator {
+
+  private val logger = ProcessLogger()
+
   val generate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
       Compile / parseFiles,
@@ -109,7 +112,7 @@ object Generator {
 
     if (executeFiles.nonEmpty) {
       executeFiles.foreach(file => {
-        println(s"[debug] Analyze the ${ file.getName } file.")
+        logger.debug(s"Analyze the ${ file.getName } file.")
       })
     }
 
@@ -122,6 +125,8 @@ object Generator {
       baseDirectory.value,
       packageName.value
     )
+
+    logger.debug("Generated files: [" + generated.map(_.getAbsoluteFile.getName).mkString(", ") + "]")
 
     if (generatedCache.isEmpty) {
       generatedCache = generated.toSet
