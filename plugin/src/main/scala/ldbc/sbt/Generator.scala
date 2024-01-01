@@ -20,10 +20,8 @@ object Generator {
 
   private val logger = ProcessLogger()
 
-  /**
-   * Generate code from SQL schema.
-   * Create a cache, and if a cache exists, do not generate it.
-   */
+  /** Generate code from SQL schema. Create a cache, and if a cache exists, do not generate it.
+    */
   val generate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
       Compile / parseFiles,
@@ -37,10 +35,8 @@ object Generator {
       Compile / ldbcPackage
     )
 
-  /**
-   * Generate code from SQL schema.
-   * Always generate code.
-   */
+  /** Generate code from SQL schema. Always generate code.
+    */
   val alwaysGenerate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
       Compile / parseFiles,
@@ -126,13 +122,14 @@ object Generator {
 
     val customChanged = changedHits(customYamlFiles.value)
 
-    val executeFiles = (alwaysGenerate, changed.nonEmpty, generatedCache.count(_.exists()) == 0, customChanged.nonEmpty) match {
-      case (true, _, _, _)          => combinedFiles
-      case (false, _, _, true)      => combinedFiles
-      case (false, true, _, _)      => changed
-      case (false, false, true, _)  => combinedFiles
-      case (false, false, false, _) => List.empty
-    }
+    val executeFiles =
+      (alwaysGenerate, changed.nonEmpty, generatedCache.count(_.exists()) == 0, customChanged.nonEmpty) match {
+        case (true, _, _, _)          => combinedFiles
+        case (false, _, _, true)      => combinedFiles
+        case (false, true, _, _)      => changed
+        case (false, false, true, _)  => combinedFiles
+        case (false, false, false, _) => List.empty
+      }
 
     if (executeFiles.nonEmpty) {
       executeFiles.foreach(file => {
