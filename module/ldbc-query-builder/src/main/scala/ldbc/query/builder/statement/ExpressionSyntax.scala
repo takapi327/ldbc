@@ -246,7 +246,7 @@ object ExpressionSyntax:
       val not = if isNot then "NOT " else ""
       s"$column $not$flag (${ values.map(_ => "?").mkString(", ") })"
 
-    def NOT: In[F, T] = In[F, T](this.column, true, this.values: _*)
+    def NOT: In[F, T] = In[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Between[F[_], T](column: String, isNot: Boolean, values: Extract[T]*)(using
     _parameter: Parameter[F, Extract[T]]
@@ -257,7 +257,7 @@ object ExpressionSyntax:
       val not = if isNot then "NOT " else ""
       s"$column $not$flag ? AND ?"
 
-    def NOT: Between[F, T] = Between[F, T](this.column, true, this.values: _*)
+    def NOT: Between[F, T] = Between[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Like[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
     _parameter: Parameter[F, Extract[T]]
@@ -279,7 +279,7 @@ object ExpressionSyntax:
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? ESCAPE ?"
 
-    def NOT: LikeEscape[F, T] = LikeEscape[F, T](this.column, true, this.values: _*)
+    def NOT: LikeEscape[F, T] = LikeEscape[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Regexp[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
     _parameter: Parameter[F, Extract[T]]
@@ -323,7 +323,7 @@ object ExpressionSyntax:
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
 
-    def NOT: Div[F, T] = Div[F, T](this.column, true, this.values: _*)
+    def NOT: Div[F, T] = Div[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Mod[F[_], T](flag: String, column: String, isNot: Boolean, values: Extract[T]*)(using
     _parameter: Parameter[F, Extract[T]]
@@ -333,7 +333,7 @@ object ExpressionSyntax:
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
 
-    def NOT: Mod[F, T] = Mod[F, T](this.flag, this.column, true, this.values: _*)
+    def NOT: Mod[F, T] = Mod[F, T](this.flag, this.column, true, this.values*)
 
   private[ldbc] case class BitXOR[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
     _parameter: Parameter[F, Extract[T]]
