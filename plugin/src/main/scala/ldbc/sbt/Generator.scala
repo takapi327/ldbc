@@ -48,13 +48,8 @@ object Generator {
   })
 
   private def sqlFileFilter(excludes: List[String]) = new FilenameFilter {
-    override def accept(dir: File, name: String): Boolean = {
-      if (name.toLowerCase.endsWith(".sql") && !excludes.contains(name)) {
-        true
-      } else {
-        false
-      }
-    }
+    override def accept(dir: File, name: String): Boolean =
+      name.toLowerCase.endsWith(".sql") && !excludes.contains(name)
   }
 
   private def generateCode(
