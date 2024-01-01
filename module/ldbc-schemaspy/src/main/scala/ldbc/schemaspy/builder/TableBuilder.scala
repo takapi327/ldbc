@@ -72,15 +72,15 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
     */
   private def buildIndexFromKeyDefinitions(column: Column[?], keyDefinitions: Seq[Key]): Seq[(String, Boolean)] =
     keyDefinitions.flatMap {
-      case key: (PrimaryKey & Index) if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
-      case key: (UniqueKey & Index) if key.keyPart.find(_ == column).nonEmpty =>
+      case key: (PrimaryKey & Index) if key.keyPart.contains(column) => Some(("PRIMARY", true))
+      case key: (UniqueKey & Index) if key.keyPart.contains(column) =>
         Some((key.indexName.getOrElse(column.label), true))
-      case key: IndexKey if key.keyPart.find(_ == column).nonEmpty =>
+      case key: IndexKey if key.keyPart.contains(column) =>
         Some((key.indexName.getOrElse(column.label), false))
       case constraint: Constraint =>
         constraint.key match
-          case key: (PrimaryKey & Index) if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
-          case key: (UniqueKey & Index) if key.keyPart.find(_ == column).nonEmpty =>
+          case key: (PrimaryKey & Index) if key.keyPart.contains(column) => Some(("PRIMARY", true))
+          case key: (UniqueKey & Index) if key.keyPart.contains(column) =>
             Some((key.indexName.getOrElse(column.label), true))
           case _ => List.empty
       case _ => List.empty
