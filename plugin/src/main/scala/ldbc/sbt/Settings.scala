@@ -12,7 +12,7 @@ import AutoImport._
 
 object Settings {
 
-  lazy val projectSettings = Def.settings(
+  lazy val projectSettings: Seq[Def.Setting[?]] = Def.settings(
     libraryDependencies += ldbcCodegen,
     baseClassloader    := Commands.baseClassloaderTask.value,
     parseFiles         := List.empty,
