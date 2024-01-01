@@ -135,7 +135,7 @@ object PrimaryKey:
     _indexType:   Option[Index.Type],
     _keyPart:     List[Column[?]],
     _indexOption: Option[Index.IndexOption]
-  ): PrimaryKey with Index = new PrimaryKey with Index:
+  ): PrimaryKey & Index = new PrimaryKey with Index:
 
     override def indexType: Option[Index.Type] = _indexType
 
@@ -166,7 +166,7 @@ object UniqueKey:
     _indexType:   Option[Index.Type],
     _keyPart:     List[Column[?]],
     _indexOption: Option[Index.IndexOption]
-  ): UniqueKey with Index = new UniqueKey with Index:
+  ): UniqueKey & Index = new UniqueKey with Index:
 
     override def indexName: Option[String] = _indexName
 
