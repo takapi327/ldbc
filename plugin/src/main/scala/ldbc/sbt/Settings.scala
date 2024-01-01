@@ -23,7 +23,7 @@ object Settings {
     propertyNameFormat := Format.CAMEL,
     ldbcPackage        := "ldbc.generated",
     (Compile / sourceGenerators) += Generator.generate.taskValue,
-    generateBySQLSchema   := {
+    generateBySQLSchema := {
       Generator.generate.value
     },
     commands += Commands.generateBySchema
