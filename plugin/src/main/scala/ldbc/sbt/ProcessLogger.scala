@@ -1,6 +1,6 @@
 /** This file is part of the Lepus Framework. For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+  * file that was distributed with this source code.
+  */
 
 package ldbc.sbt
 
@@ -9,7 +9,7 @@ import sbt._
 import scala.Console._
 
 /** Class for specifying the format of the logs to be spit out when the sbt project is executed.
- */
+  */
 class ProcessLogger extends Logger {
   def trace(t: => Throwable): Unit = {
     t.printStackTrace()
