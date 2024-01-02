@@ -22,3 +22,6 @@ trait Alias extends CoreAlias, DataTypes:
   type PreparedStatement[F[_]] = ldbc.sql.PreparedStatement[F]
   type ResultSet[F[_]]         = ldbc.sql.ResultSet[F]
   type ResultSetMetaData[F[_]] = ldbc.sql.ResultSetMetaData[F]
+
+  type ResultSetReader[F[_], T] = ldbc.sql.ResultSetReader[F, T]
+  val ResultSetReader: ldbc.sql.ResultSetReader.type = ldbc.sql.ResultSetReader
