@@ -41,7 +41,7 @@ class Select:
         statement.setInt(1, len)
         val resultSet = use(statement.executeQuery())
         val records   = List.newBuilder[(Int, String, String)]
-        while (resultSet.next()) {
+        while resultSet.next() do {
           val code   = resultSet.getInt(1)
           val name   = resultSet.getString(2)
           val region = resultSet.getString(3)

@@ -41,6 +41,6 @@ object ColumnTupleConverter:
     *   The effect type
     */
   def convert[Types <: Tuple, F[_]](columnTuples: ColumnTuples[Types, F])(using
-    converter:                                    ColumnTupleConverter[Types, F]
+    converter: ColumnTupleConverter[Types, F]
   ): Tuple.Map[Types, F] =
     converter(columnTuples)

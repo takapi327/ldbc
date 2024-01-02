@@ -83,10 +83,10 @@ object SchemaSpyGenerator:
 
   private def buildArguments(arguments: Seq[String]): CommandLineArguments =
     val iDefaultProvider =
-      factory.create(configFileArgumentParser.parseConfigFileArgumentValue(arguments: _*).orElse(null))
+      factory.create(configFileArgumentParser.parseConfigFileArgumentValue(arguments*).orElse(null))
     val parser = CommandLineArgumentParser(commandLineArguments, iDefaultProvider)
 
-    parser.parse(arguments: _*)
+    parser.parse(arguments*)
 
   def default(
     database:        Database,

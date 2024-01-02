@@ -29,5 +29,6 @@ object ExecutionContexts:
 
   /** Execution context that runs everything synchronously. This can be useful for testing. */
   object synchronous extends ExecutionContext:
-    def execute(runnable: Runnable):     Unit = runnable.run()
+    def execute(runnable: Runnable): Unit = runnable.run()
+
     def reportFailure(cause: Throwable): Unit = cause.printStackTrace()

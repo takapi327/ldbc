@@ -51,10 +51,14 @@ private[ldbc] case class Where[F[_], P <: Product, T](
     )
 
   def and(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("AND", func(tableQuery))
-  def or(func: TableQuery[F, P] => ExpressionSyntax[F]):  Where[F, P, T] = union("OR", func(tableQuery))
-  def ||(func: TableQuery[F, P] => ExpressionSyntax[F]):  Where[F, P, T] = union("||", func(tableQuery))
+
+  def or(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("OR", func(tableQuery))
+
+  def ||(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("||", func(tableQuery))
+
   def xor(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("XOR", func(tableQuery))
-  def &&(func: TableQuery[F, P] => ExpressionSyntax[F]):  Where[F, P, T] = union("&&", func(tableQuery))
+
+  def &&(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("&&", func(tableQuery))
 
   def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
     GroupBy(
