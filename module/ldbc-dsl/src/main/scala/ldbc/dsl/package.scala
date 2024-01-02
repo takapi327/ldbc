@@ -23,7 +23,8 @@ package object dsl:
             QuerySyntax[F],
             CommandSyntax[F],
             DatabaseSyntax[F],
-            internalSyntax:
+            internalSyntax,
+            Alias:
 
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
       val release: Connection[F] => F[Unit] = connection => connection.close()
@@ -107,4 +108,12 @@ package object dsl:
       def fromDataSource(dataSource: DataSource[F]): Database[F] =
         Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
 
+  /** Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
+    * might look something like this.
+    *
+    * example:
+    * {{{
+    *   import ldbc.dsl.io.*
+    * }}}
+    */
   val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
