@@ -13,7 +13,6 @@ import org.specs2.specification.BeforeAfterEach
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.*
 import ldbc.dsl.io.*
 import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.TableQuery
