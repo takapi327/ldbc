@@ -109,11 +109,11 @@ package object dsl:
         Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
 
   /** Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
-   * might look something like this.
-   *
-   * example:
-   * {{{
-   *   import ldbc.dsl.io.*
-   * }}}
-   */
+    * might look something like this.
+    *
+    * example:
+    * {{{
+    *   import ldbc.dsl.io.*
+    * }}}
+    */
   val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
