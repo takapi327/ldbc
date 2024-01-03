@@ -4,10 +4,9 @@
 
 package ldbc.dsl.syntax
 
-import javax.sql.DataSource
-
 import ldbc.core.Database as CoreDatabase
 import ldbc.dsl.Database
+import ldbc.sql.DataSource
 
 /** Trait to provide a way to convert from Database model to Database model with connection information to db.
   *
@@ -25,4 +24,4 @@ trait DatabaseSyntax[F[_]]:
       password: String
     ): Database[F]
 
-    def fromDataSource(dataSource: DataSource): Database[F]
+    def fromDataSource(dataSource: DataSource[F]): Database[F]

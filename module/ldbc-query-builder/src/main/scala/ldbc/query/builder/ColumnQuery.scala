@@ -81,7 +81,7 @@ private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
   def <=>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NullSafeEqual[F, T] = nullSafeEqual(value)
 
   def IN(value: Extract[T]*)(using parameter: Parameter[F, Extract[T]]): In[F, T] =
-    In[F, T](noBagQuotLabel, false, value: _*)
+    In[F, T](noBagQuotLabel, false, value*)
 
   def BETWEEN(start: Extract[T], end: Extract[T])(using parameter: Parameter[F, Extract[T]]): Between[F, T] =
     Between[F, T](noBagQuotLabel, false, start, end)
@@ -299,7 +299,7 @@ object ColumnQuery:
     @targetName("multiColumnNullSafeEqual")
     def <=>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NullSafeEqual[F, T] = nullSafeEqual(value)
 
-    def IN(value: Extract[T]*)(using parameter: Parameter[F, Extract[T]]): In[F, T] = In[F, T](label, false, value: _*)
+    def IN(value: Extract[T]*)(using parameter: Parameter[F, Extract[T]]): In[F, T] = In[F, T](label, false, value*)
 
     def BETWEEN(start: Extract[T], end: Extract[T])(using parameter: Parameter[F, Extract[T]]): Between[F, T] =
       Between[F, T](label, false, start, end)

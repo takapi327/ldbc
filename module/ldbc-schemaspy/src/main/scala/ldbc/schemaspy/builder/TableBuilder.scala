@@ -41,8 +41,8 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
       case c: Column[?] if c.attributes.exists(_.isInstanceOf[PrimaryKey]) => Some(c)
       case _                                                               => None
     } ++ table.keyDefinitions.flatMap {
-      case key: PrimaryKey with Index => key.keyPart.toList
-      case _                          => List.empty
+      case key: (PrimaryKey & Index) => key.keyPart
+      case _                         => List.empty
     }).distinct
 
   /** Method for extracting Index key information from Column.
@@ -72,15 +72,15 @@ case class TableBuilder(db: SchemaspyDatabase, table: Table[?]) extends TableVal
     */
   private def buildIndexFromKeyDefinitions(column: Column[?], keyDefinitions: Seq[Key]): Seq[(String, Boolean)] =
     keyDefinitions.flatMap {
-      case key: PrimaryKey with Index if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
-      case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty =>
+      case key: (PrimaryKey & Index) if key.keyPart.contains(column) => Some(("PRIMARY", true))
+      case key: (UniqueKey & Index) if key.keyPart.contains(column) =>
         Some((key.indexName.getOrElse(column.label), true))
-      case key: IndexKey if key.keyPart.find(_ == column).nonEmpty =>
+      case key: IndexKey if key.keyPart.contains(column) =>
         Some((key.indexName.getOrElse(column.label), false))
       case constraint: Constraint =>
         constraint.key match
-          case key: PrimaryKey with Index if key.keyPart.find(_ == column).nonEmpty => Some(("PRIMARY", true))
-          case key: UniqueKey with Index if key.keyPart.find(_ == column).nonEmpty =>
+          case key: (PrimaryKey & Index) if key.keyPart.contains(column) => Some(("PRIMARY", true))
+          case key: (UniqueKey & Index) if key.keyPart.contains(column) =>
             Some((key.indexName.getOrElse(column.label), true))
           case _ => List.empty
       case _ => List.empty

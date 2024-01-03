@@ -50,7 +50,7 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
     *   Base trait for all products
     */
   def join[P <: Product](other: TableQuery[F, P])(
-    on:                         Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
+    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
   )(using
     Tuples.IsTableQueryOpt[F, SELECTS] =:= true
   ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableQuery[F, P]]]] =
@@ -74,7 +74,7 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
     *   Base trait for all products
     */
   def leftJoin[P <: Product](other: TableQuery[F, P])(
-    on:                             Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
+    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
   )(using
     Tuples.IsTableQueryOpt[F, SELECTS] =:= true
   ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[F, P]]]] =
@@ -98,7 +98,7 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
     *   Base trait for all products
     */
   def rightJoin[P <: Product](other: TableQuery[F, P])(
-    on:                              Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
+    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
   )(using
     Tuples.IsTableQueryOpt[F, SELECTS] =:= true
   ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[Tuples.ToTableOpt[F, SELECTS], Tuple1[
@@ -263,8 +263,8 @@ object Join:
 case class TableOpt[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   transparent inline def selectDynamic[Tag <: Singleton](tag: Tag)(using
-    mirror:                                                   Mirror.ProductOf[P],
-    index: ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    mirror: Mirror.ProductOf[P],
+    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): ColumnQuery[F, Option[
     ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ]] =

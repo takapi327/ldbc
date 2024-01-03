@@ -8,11 +8,8 @@ import ldbc.core.*
 import ldbc.core.validator.TableValidator
 
 /** Class for generating query strings such as Create statements from Table values.
-  *
-  * @param table
-  *   Trait for generating SQL table information.
   */
-private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidator:
+trait TableQueryBuilder extends TableValidator:
 
   private val columnDefinitions: Seq[String] =
     table.all.map(_.queryString)
@@ -45,4 +42,13 @@ private[ldbc] case class TableQueryBuilder(table: Table[?]) extends TableValidat
   lazy val truncateStatement: String =
     s"TRUNCATE TABLE `${ table._name }`"
 
-object TableQueryBuilder
+object TableQueryBuilder:
+
+  /** Factory method for creating a TableQueryBuilder from a Table.
+    *
+    * @param _table
+    *   Trait for generating SQL table information.
+    */
+  def apply(_table: Table[?]): TableQueryBuilder =
+    new TableQueryBuilder:
+      override def table: Table[?] = _table

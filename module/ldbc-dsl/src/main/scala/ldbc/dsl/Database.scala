@@ -6,8 +6,6 @@ package ldbc.dsl
 
 import java.sql.DriverManager
 
-import javax.sql.DataSource
-
 import cats.data.Kleisli
 import cats.implicits.*
 
@@ -15,7 +13,8 @@ import cats.effect.{ Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.core.{ Character, Collate, Table, Database as CoreDatabase }
-import ldbc.sql.Connection
+import ldbc.sql.{ DataSource, Connection }
+import ldbc.dsl.internal.*
 
 case class Database[F[_]: Sync](
   databaseType: CoreDatabase.Type,
@@ -36,9 +35,11 @@ case class Database[F[_]: Sync](
     val release: Connection[F] => F[Unit] = connection => connection.close()
     Resource.make(acquire)(release)
 
-  def setCharacter(character: Character):   Database[F] = this.copy(character = Some(character))
+  def setCharacter(character: Character): Database[F] = this.copy(character = Some(character))
+
   def setCollate(collate: Collate[String]): Database[F] = this.copy(collate = Some(collate))
-  def setTables(tables: Set[Table[?]]):     Database[F] = this.copy(tables = tables)
+
+  def setTables(tables: Set[Table[?]]): Database[F] = this.copy(tables = tables)
 
   /** Functions to manage the processing of connections independently.
     *
@@ -123,7 +124,7 @@ object Database:
             case (Some(u), Some(p)) => DriverManager.getConnection(jdbcUrl, u, p)
             case _                  => DriverManager.getConnection(jdbcUrl)
         }
-        .map(ConnectionIO[F])
+        .map(Connection[F])
 
     Database[F](databaseType, name, host, port, () => connection)
 
@@ -156,19 +157,18 @@ object Database:
     name:         String,
     host:         String,
     port:         Option[Int],
-    dataSource:   DataSource
+    dataSource:   DataSource[F]
   ): Database[F] =
-    val connection: F[Connection[F]] = Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
-    Database[F](databaseType, name, host, port, () => connection)
+    Database[F](databaseType, name, host, port, () => dataSource.getConnection)
 
-  def fromMySQLDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+  def fromMySQLDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource[F]): Database[F] =
     fromDataSource[F](CoreDatabase.Type.MySQL, name, host, Some(port), dataSource)
 
-  def fromMySQLDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource): Database[F] =
+  def fromMySQLDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource[F]): Database[F] =
     fromDataSource[F](CoreDatabase.Type.MySQL, name, host, None, dataSource)
 
-  def fromAwsDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource): Database[F] =
+  def fromAwsDataSource[F[_]: Sync](name: String, host: String, port: Int, dataSource: DataSource[F]): Database[F] =
     fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, Some(port), dataSource)
 
-  def fromAwsDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource): Database[F] =
+  def fromAwsDataSource[F[_]: Sync](name: String, host: String, dataSource: DataSource[F]): Database[F] =
     fromDataSource[F](CoreDatabase.Type.AWSMySQL, name, host, None, dataSource)

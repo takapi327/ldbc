@@ -84,6 +84,13 @@ object Country:
   )
 ```
 
+If the SQL file has been modified or the cache has been removed by running the clean command, Compile will generate the code again. If the SQL file has been modified or the cache has been removed by executing the clean command, the code will be generated again by executing Compile.
+If you want to generate code again without using the cache, execute the command `generateBySchema`. This command will always generate code without using the cache.
+
+```shell
+sbt generateBySchema
+```
+
 ## Customize
 
 There may be times when you want to convert the type of code generated from an SQL file to something else. This can be done by passing `customYamlFiles` with the yml files to be customized.

@@ -1158,10 +1158,10 @@ object DataType:
     *   Scala types that match SQL DataType
     */
   private[ldbc] case class Enum[T <: EnumModel | Option[EnumModel]](
-    isOptional:         Boolean,
-    character:          Option[Character]  = None,
-    collate:            Option[Collate[T]] = None,
-    default:            Option[Default]    = None
+    isOptional: Boolean,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
   )(using enumDataType: EnumDataType[?])
     extends DataType[T]:
 
@@ -1448,12 +1448,13 @@ object DataType:
         case _: Option[?] =>
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: Int =>
-          inline if (
-            (constValue[v.type >= 0] & constValue[v.type <= 0]) | (constValue[
-              v.type >= 1901
-            ] & constValue[v.type <= 2155])
-          )
-          then this.copy(default = Some(Default.Value(value)))
+          // TODO: Scalafmt removes extra parentheses that wrap the entire condition.
+          //       It detects it as extra parentheses, but if you remove those parentheses, the if ... then writing method results in an error
+          //       Therefore, the variable is used to avoid the error.
+          inline val bool = (constValue[v.type >= 0] & constValue[v.type <= 0]) | (constValue[
+            v.type >= 1901
+          ] & constValue[v.type <= 2155])
+          inline if bool then this.copy(default = Some(Default.Value(value)))
           else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
         case _ => this.copy(default = Some(Default.Value(value)))
 

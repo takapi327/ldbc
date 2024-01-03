@@ -7,7 +7,6 @@ package ldbc.dsl.schema
 import cats.effect.IO
 
 import ldbc.core.model.*
-import ldbc.sql.*
 import ldbc.dsl.io.*
 
 case class Country(

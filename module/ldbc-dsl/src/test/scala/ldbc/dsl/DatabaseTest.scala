@@ -31,6 +31,11 @@ object DatabaseTest extends Specification:
       result.length === 239
     }
 
+    "A method that takes a Database model as an argument is successfully processed." in {
+      val result = country.selectAll.toList[Country].readOnly(db).unsafeRunSync()
+      result.length === 239
+    }
+
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value." in {
       val result = db.readOnly(city.selectAll.toList[City]).unsafeRunSync()
       result.length === 4079
@@ -219,7 +224,7 @@ object DatabaseTest extends Specification:
       db.readOnly(for
         codeOpt <- country.select(_.code).where(_.code _equals "JPN").headOption
         cities <- codeOpt match
-                    case None => ConnectionIO.pure[IO, List[(String, String)]](List.empty[(String, String)])
+                    case None => Connection.pure[IO, List[(String, String)]](List.empty[(String, String)])
                     case Some(code *: EmptyTuple) =>
                       city
                         .select(v => (v.name, v.countryCode))
@@ -420,7 +425,7 @@ object DatabaseTest extends Specification:
       db.transaction(for
         cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").headOption[City]
         result <- cityOpt match
-                    case None => ConnectionIO.pure[IO, Int](0)
+                    case None => Connection.pure[IO, Int](0)
                     case Some(cityModel) =>
                       city
                         .update(cityModel.copy(district = "Tokyo-to"))
@@ -468,7 +473,7 @@ object DatabaseTest extends Specification:
                      .and(_.continent _equals Country.Continent.Asia)
                      .headOption
         result <- codeOpt match
-                    case None => ConnectionIO.pure[IO, Int](0)
+                    case None => Connection.pure[IO, Int](0)
                     case Some(code *: EmptyTuple) =>
                       city
                         .update("name", "Test1")

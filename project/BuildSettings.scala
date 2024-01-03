@@ -25,6 +25,10 @@ object BuildSettings {
     "-language:implicitConversions"
   )
 
+  val scala2Settings: Seq[String] = baseScalaSettings ++ Seq(
+    "-Xsource:3",
+  )
+
   val scala3Settings: Seq[String] = baseScalaSettings ++ Seq(
     "-Wunused:all",
   )
@@ -66,7 +70,7 @@ object BuildSettings {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
         .settings(scalaVersion := scala2)
-        .settings(scalacOptions ++= baseScalaSettings)
+        .settings(scalacOptions ++= scala2Settings)
         .settings(commonSettings)
         .settings(scriptedSettings)
         .enablePlugins(SbtPlugin)

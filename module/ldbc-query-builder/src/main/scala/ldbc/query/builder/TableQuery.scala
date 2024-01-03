@@ -9,6 +9,7 @@ import scala.deriving.Mirror
 import scala.annotation.targetName
 
 import ldbc.core.*
+import ldbc.core.builder.TableQueryBuilder
 import ldbc.core.interpreter.Tuples as CoreTuples
 import ldbc.sql.*
 import ldbc.query.builder.statement.*
@@ -23,7 +24,7 @@ import ldbc.query.builder.interpreter.Tuples
   * @tparam P
   *   A class that implements a [[Product]] that is one-to-one with the table definition.
   */
-case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
+case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, TableQueryBuilder:
 
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
@@ -75,7 +76,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
   def join[O <: Product](other: TableQuery[F, O])(
-    on:                         TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
+    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
   ): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableQuery[F, O]]] =
     val main:      TableQuery[F, P]                             = setNameForJoin(this)
     val joinTable: TableQuery[F, O]                             = setNameForJoin(other)
@@ -97,7 +98,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
   def leftJoin[O <: Product](other: TableQuery[F, O])(
-    on:                             TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
+    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
   ): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableOpt[F, O]]] =
     val main:      TableQuery[F, P]                             = setNameForJoin(this)
     val joinTable: TableQuery[F, O]                             = setNameForJoin(other)
@@ -119,7 +120,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   A class that implements a [[Product]] that is one-to-one with the table definition.
     */
   def rightJoin[O <: Product](other: TableQuery[F, O])(
-    on:                              TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
+    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
   ): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableOpt[F, P] *: Tuple1[TableQuery[F, O]]] =
     val main:      TableQuery[F, P]                             = setNameForJoin(this)
     val joinTable: TableQuery[F, O]                             = setNameForJoin(other)
@@ -146,7 +147,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   A list of Tuples constructed with all the property types that Table has.
     */
   inline def insert(using mirror: Mirror.ProductOf[P])(
-    values:                       mirror.MirroredElemTypes*
+    values: mirror.MirroredElemTypes*
   ): Insert[F, P] =
     val parameterBinders = values
       .flatMap(
@@ -231,7 +232,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   A list of Tuples constructed with all the property types that Table has.
     */
   inline def insertOrUpdate(using mirror: Mirror.ProductOf[P])(
-    values:                               mirror.MirroredElemTypes*
+    values: mirror.MirroredElemTypes*
   ): DuplicateKeyUpdateInsert[F] =
     val parameterBinders = values
       .flatMap(
@@ -290,9 +291,9 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
     *   Scala types that match SQL DataType
     */
   inline def update[Tag <: Singleton, T](tag: Tag, value: T)(using
-    mirror:                                   Mirror.ProductOf[P],
-    index:                                    ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    check: T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    mirror: Mirror.ProductOf[P],
+    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[F, P] =
     type PARAM = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val params = List(ParameterBinder[F, PARAM](check(value))(using Parameter.infer[F, PARAM]))
@@ -329,4 +330,22 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic:
 
   /** Method to construct a query to delete a table.
     */
-  def delete: Delete[F, P] = Delete[F, P](this)
+  val delete: Delete[F, P] = Delete[F, P](this)
+
+  /** Method to construct a query to create a table.
+    */
+  val createTable: Command[F] = new Command[F]:
+    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String                  = createStatement
+
+  /** Method to construct a query to drop a table.
+    */
+  val dropTable: Command[F] = new Command[F]:
+    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String                  = dropStatement
+
+  /** Method to construct a query to truncate a table.
+    */
+  val truncateTable: Command[F] = new Command[F]:
+    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def statement: String                  = truncateStatement

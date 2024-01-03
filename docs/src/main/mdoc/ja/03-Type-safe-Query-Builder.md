@@ -457,3 +457,30 @@ delete.statement === "DELETE FROM user WHERE id = ?"
 ```
 
 `where`メソッドで使用できる条件はInsert文の[where項目](/ldbc/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
+
+## DDL
+
+型安全にDDLを構築する方法はTableQueryが提供する以下のメソッドを使用することです。
+
+- createTable
+- dropTable
+- truncateTable
+
+spec2を使用している場合は以下のようにしてテストの前後にDDLを実行することができます。
+
+```scala 3
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+
+import org.specs2.mutable.Specification
+import org.specs2.specification.core.Fragments
+import org.specs2.specification.BeforeAfterEach
+
+object Test extends Specification, BeforeAfterEach:
+
+  override def before: Fragments =
+    step((tableQuery.createTable.update.autoCommit(dataSource) >> IO.println("Complete create table")).unsafeRunSync())
+
+  override def after: Fragments =
+    step((tableQuery.dropTable.update.autoCommit(dataSource) >> IO.println("Complete drop table")).unsafeRunSync())
+```

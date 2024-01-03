@@ -23,7 +23,7 @@ private[ldbc] trait Alias:
     label:      String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  ): Column[T] = Column[T](label, dataType, attributes: _*)
+  ): Column[T] = Column[T](label, dataType, attributes*)
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 
@@ -45,10 +45,10 @@ private[ldbc] trait Alias:
   def PRIMARY_KEY[T]: PrimaryKey & Attribute[T] = new PrimaryKey with Attribute[T]:
     override def queryString: String = label
 
-  def PRIMARY_KEY(keyPart: Column[?]): PrimaryKey with Index =
+  def PRIMARY_KEY(keyPart: Column[?]): PrimaryKey & Index =
     PrimaryKey(None, List(keyPart), None)
 
-  def PRIMARY_KEY(keyPart: Column[?]*): PrimaryKey with Index =
+  def PRIMARY_KEY(keyPart: Column[?]*): PrimaryKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -58,7 +58,7 @@ private[ldbc] trait Alias:
   def PRIMARY_KEY(
     indexType: Index.Type,
     keyPart:   Column[?]*
-  ): PrimaryKey with Index =
+  ): PrimaryKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -68,7 +68,7 @@ private[ldbc] trait Alias:
   def PRIMARY_KEY(
     keyPart:     List[Column[?]],
     indexOption: Index.IndexOption
-  ): PrimaryKey with Index =
+  ): PrimaryKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -79,7 +79,7 @@ private[ldbc] trait Alias:
     indexType:   Index.Type,
     indexOption: Index.IndexOption,
     keyPart:     Column[?]*
-  ): PrimaryKey with Index =
+  ): PrimaryKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -91,7 +91,7 @@ private[ldbc] trait Alias:
 
     override def queryString: String = label
 
-  def UNIQUE_KEY(keyPart: Column[?]*): UniqueKey with Index =
+  def UNIQUE_KEY(keyPart: Column[?]*): UniqueKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -101,7 +101,7 @@ private[ldbc] trait Alias:
   def UNIQUE_KEY(
     indexName: String,
     keyPart:   Column[?]*
-  ): UniqueKey with Index =
+  ): UniqueKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -112,7 +112,7 @@ private[ldbc] trait Alias:
     indexName: String,
     indexType: Index.Type,
     keyPart:   Column[?]*
-  ): UniqueKey with Index =
+  ): UniqueKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -124,14 +124,14 @@ private[ldbc] trait Alias:
     indexType:   Index.Type,
     indexOption: Index.IndexOption,
     keyPart:     Column[?]*
-  ): UniqueKey with Index = UniqueKey(Some(indexName), Some(indexType), keyPart.toList, Some(indexOption))
+  ): UniqueKey & Index = UniqueKey(Some(indexName), Some(indexType), keyPart.toList, Some(indexOption))
 
   def UNIQUE_KEY(
     indexName:   Option[String],
     indexType:   Option[Index.Type],
     indexOption: Option[Index.IndexOption],
     keyPart:     Column[?]*
-  ): UniqueKey with Index = UniqueKey(indexName, indexType, keyPart.toList, indexOption)
+  ): UniqueKey & Index = UniqueKey(indexName, indexType, keyPart.toList, indexOption)
 
   def INDEX_KEY(keyPart: Column[?]*): IndexKey =
     require(

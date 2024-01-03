@@ -4,8 +4,6 @@
 
 package ldbc
 
-import javax.sql.DataSource
-
 import cats.data.Kleisli
 import cats.implicits.*
 
@@ -24,7 +22,9 @@ package object dsl:
             ConnectionSyntax[F],
             QuerySyntax[F],
             CommandSyntax[F],
-            DatabaseSyntax[F]:
+            DatabaseSyntax[F],
+            internalSyntax,
+            Alias:
 
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
       val release: Connection[F] => F[Unit] = connection => connection.close()
@@ -32,29 +32,35 @@ package object dsl:
 
     extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
 
-      def readOnly(dataSource: DataSource): F[T] =
+      def readOnly(dataSource: DataSource[F]): F[T] =
         buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+            connection <- dataSource.getConnection
             _          <- connection.setReadOnly(true)
           yield connection
         }
           .use(connectionKleisli.run)
 
-      def autoCommit(dataSource: DataSource): F[T] =
+      def readOnly(database: Database[F]): F[T] =
+        database.readOnly(connectionKleisli)
+
+      def autoCommit(dataSource: DataSource[F]): F[T] =
         buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+            connection <- dataSource.getConnection
             _          <- connection.setReadOnly(false) >> connection.setAutoCommit(true)
           yield connection
         }
           .use(connectionKleisli.run)
 
-      def transaction(dataSource: DataSource): F[T] =
+      def autoCommit(database: Database[F]): F[T] =
+        database.autoCommit(connectionKleisli)
+
+      def transaction(dataSource: DataSource[F]): F[T] =
         (for
           connection <- buildConnectionResource {
                           for
-                            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+                            connection <- dataSource.getConnection
                             _          <- connection.setReadOnly(false) >> connection.setAutoCommit(false)
                           yield connection
                         }
@@ -64,16 +70,22 @@ package object dsl:
                       }
         yield transact).use(connectionKleisli.run)
 
-      def rollback(dataSource: DataSource): F[T] =
+      def transaction(database: Database[F]): F[T] =
+        database.transaction(connectionKleisli)
+
+      def rollback(dataSource: DataSource[F]): F[T] =
         val connectionResource = buildConnectionResource {
           for
-            connection <- Sync[F].blocking(dataSource.getConnection).map(ConnectionIO[F])
+            connection <- dataSource.getConnection
             _          <- connection.setAutoCommit(false)
           yield connection
         }
         connectionResource.use { connection =>
           connectionKleisli.run(connection) <* connection.rollback()
         }
+
+      def rollback(database: Database[F]): F[T] =
+        database.rollback(connectionKleisli)
 
     extension (database: CoreDatabase)
 
@@ -93,7 +105,15 @@ package object dsl:
           Some(password)
         )
 
-      def fromDataSource(dataSource: DataSource): Database[F] =
+      def fromDataSource(dataSource: DataSource[F]): Database[F] =
         Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
 
+  /** Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
+    * might look something like this.
+    *
+    * example:
+    * {{{
+    *   import ldbc.dsl.io.*
+    * }}}
+    */
   val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
