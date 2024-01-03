@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -76,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -117,7 +117,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>この章では、LDBCで構築したクエリを使用して、データベースへの接続処理を行うための方法について説明します。</p>
 <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.2.0&quot;,
   &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
 )
 </code></pre>
@@ -241,11 +241,11 @@ val delete = userQuery.delete.update // Int
 <p>データベース接続を行う前にコミットのタイミングや読み書き専用などの設定を行う必要があります。</p>
 <h3><a href="#読み取り専用" name="読み取り専用" class="anchor"><span class="anchor-link"></span></a>読み取り専用</h3>
 <p><code>readOnly</code>メソッドを使用することで実行するクエリの処理を読み込み専用にすることができます。<code>readOnly</code>メソッドは<code>insert/update/delete</code>文でも使用することができますが、書き込み処理を行うので実行時にエラーとなります。</p>
-<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly(dataSource)
 </code></pre>
 <h3><a href="#自動コミット" name="自動コミット" class="anchor"><span class="anchor-link"></span></a>自動コミット</h3>
 <p><code>autoCommit</code>メソッドを使用することで実行するクエリの処理をクエリ実行時ごとにコミットするように設定することができます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.insert((1L, &quot;name&quot;, None)).update.autoCommit
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.insert((1L, &quot;name&quot;, None)).update.autoCommit(dataSource)
 </code></pre>
 <h3><a href="#トランザクション" name="トランザクション" class="anchor"><span class="anchor-link"></span></a>トランザクション</h3>
 <p><code>transaction</code>メソッドを使用することで複数のデータベース接続処理を1つのトランザクションにまとめることができます。</p>
@@ -255,17 +255,8 @@ val delete = userQuery.delete.update // Int
   result1 &lt;- userQuery.insert((1L, &quot;name&quot;, None)).returning(&quot;id&quot;)
   result2 &lt;- userQuery.update(&quot;name&quot;, &quot;update name&quot;).update
   ...
-yield ...).transaction
+yield ...).transaction(dataSource)
 </code></pre>
-<h3><a href="#実行" name="実行" class="anchor"><span class="anchor-link"></span></a>実行</h3>
-<p>戻り値の型、接続方法の設定を行いましたがLDBCで構築された今までの処理は<code>Kleisli[F, XXX, T]</code>型となっているため定義を行なっただけではデータベース接続処理(副作用)は発生しません。 データベース処理を実行するためには<code>Kleisli</code>の<code>run</code>を実行する必要があります。</p>
-<p><code>readOnly/autoCommit/transaction</code>メソッドを使用すると戻り値の型は<code>Kleisli[F, DataSource, T]</code>となるためJDBCのDataSourceを<code>run</code>に渡すことで戻り値の型を<code>F</code>に持ち上げることができます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
-</code></pre>
-<p>Cats Effect IOを使用している場合は、<code>IOApp</code>内で実行を行うか<code>unsafeRunSync</code>などを使用することでデータベース接続処理を実行することができます。</p>
-<pre class="prettyprint"><code class="language-scala 3">val user: Option[User] = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
-</code></pre>
-<p><code>Kleisli</code>に関してはCatsの<a href="https://typelevel.org/cats/datatypes/kleisli.html">ドキュメント</a>を参照してください。</p>
 <h2><a href="#database-action" name="database-action" class="anchor"><span class="anchor-link"></span></a>Database Action</h2>
 <p>データベース処理を実行する方法としてデータベースへの接続情報を持った<code>Database</code>を使用して行う方法も存在します。</p>
 <p><code>Database</code>を構築する方法はDriverManagerを使用した方法と、DataSourceから生成する方法の2種類があります。以下はMySQLのドライバーを使用してデータベースへの接続情報を持った<code>Database</code>を構築する例です。</p>
@@ -301,10 +292,20 @@ val db = database.fromDriverManager()
 // or
 val db = database.fromDriverManager(&quot;user name&quot;, &quot;password&quot;)
 </code></pre>
+<h3><a href="#メソッドチェーンでの使用" name="メソッドチェーンでの使用" class="anchor"><span class="anchor-link"></span></a>メソッドチェーンでの使用</h3>
+<p><code>Database</code>モデルは<code>TableQuery</code>のメソッドで<code>DataSource</code>の代わりに使用することもできます。</p>
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly(db)
+val commit = userQuery.insert((1L, &quot;name&quot;, None)).update.autoCommit(db)
+val transaction = (for
+  result1 &lt;- userQuery.insert((1L, &quot;name&quot;, None)).returning(&quot;id&quot;)
+  result2 &lt;- userQuery.update(&quot;name&quot;, &quot;update name&quot;).update
+  ...
+yield ...).transaction(db)
+</code></pre>
 <h2><a href="#hikaricpコネクションプールの使用" name="hikaricpコネクションプールの使用" class="anchor"><span class="anchor-link"></span></a>HikariCPコネクションプールの使用</h2>
 <p><code>ldbc-hikari</code>は、HikariCP接続プールを構築するためのHikariConfigおよびHikariDataSourceを構築するためのビルダーを提供します。</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.2.0&quot;,
 )
 </code></pre>
 <p><code>HikariConfigBuilder</code>は名前の通りHikariCPの<code>HikariConfig</code>を構築するためのビルダーです。</p>
@@ -489,7 +490,7 @@ val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfi
     }
 </code></pre>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/ja/04-Database-Connection.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.0/docs/target/mdoc/ja/04-Database-Connection.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -553,7 +554,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 
 <!--
 <div class="copyright">
-<span class="text">&copy; 2023</span>
+<span class="text">&copy; 2024</span>
 <a href="https://www.example.com" class="logo">logo</a>
 </div>
 -->
@@ -578,7 +579,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>

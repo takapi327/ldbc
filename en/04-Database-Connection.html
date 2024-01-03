@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -76,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -117,7 +117,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>This chapter describes how to use queries built with LDBC to process connections to databases.</p>
 <p>The following dependencies must be set up for the project</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;0.2.0&quot;,
   &quot;mysql&quot; % &quot;mysql-connector-java&quot; % &quot;8.0.33&quot;
 )
 </code></pre>
@@ -241,11 +241,11 @@ val delete = userQuery.delete.update // Int
 <p>Before making a database connection, commit timing, read/write-only, and other settings must be made.</p>
 <h3><a href="#read-only" name="read-only" class="anchor"><span class="anchor-link"></span></a>Read Only</h3>
 <p>The <code>readOnly</code> method can be used to make the processing of a query to be executed read-only. The <code>readOnly</code> method can also be used with <code>insert/update/delete</code> statements, but it will result in an error at runtime because of the write operation.</p>
-<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly(dataSource)
 </code></pre>
 <h3><a href="#auto-commit" name="auto-commit" class="anchor"><span class="anchor-link"></span></a>Auto Commit</h3>
 <p>The <code>autoCommit</code> method can be used to set the query processing to commit at each query execution.</p>
-<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.insert((1L, &quot;name&quot;, None)).update.autoCommit
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.insert((1L, &quot;name&quot;, None)).update.autoCommit(dataSource)
 </code></pre>
 <h3><a href="#transaction" name="transaction" class="anchor"><span class="anchor-link"></span></a>Transaction</h3>
 <p>The <code>transaction</code> method can be used to combine multiple database connection operations into a single transaction.</p>
@@ -255,17 +255,8 @@ val delete = userQuery.delete.update // Int
   result1 &lt;- userQuery.insert((1L, &quot;name&quot;, None)).returning(&quot;id&quot;)
   result2 &lt;- userQuery.update(&quot;name&quot;, &quot;update name&quot;).update
   ...
-yield ...).transaction
+yield ...).transaction(dataSource)
 </code></pre>
-<h3><a href="#execution" name="execution" class="anchor"><span class="anchor-link"></span></a>Execution</h3>
-<p>The return type and connection method have been set up, but since the process so far built with LDBC is of type <code>Kleisli[F, XXX, T]</code>, the database connection process (side effect) will not occur just by defining it. You need to run <code>run</code> on <code>Kleisli</code> to execute the database process.</p>
-<p>If you use the <code>readOnly/autoCommit/transaction</code> method, the return type will be <code>Kleisli[F, DataSource, T]</code>, so you can raise the return type to <code>F</code> by passing JDBC&rsquo;s DataSource to <code>run</code>.</p>
-<pre class="prettyprint"><code class="language-scala 3">val effect = userQuery.selectAll.headOption[User].readOnly(dataSource) // F[User]
-</code></pre>
-<p>If you are using Cats Effect IO, you can perform the database connection process by executing it in <code>IOApp</code> or by using <code>unsafeRunSync</code> or similar.</p>
-<pre class="prettyprint"><code class="language-scala 3">val user: User = userQuery.selectAll.headOption[User].readOnly(dataSource).unsafeRunSync()
-</code></pre>
-<p>For more information on <code>Kleisli</code>, please refer to Cats&rsquo; <a href="https://typelevel.org/cats/datatypes/kleisli.html">documentation</a>.</p>
 <h2><a href="#database-action" name="database-action" class="anchor"><span class="anchor-link"></span></a>Database Action</h2>
 <p>There is also a way to perform database processing using <code>Database</code> with connection information to the database.</p>
 <p>There are two ways to construct a <code>Database</code>: using the DriverManager or generating one from a DataSource. The following is an example of constructing a <code>Database</code> with connection information to a database using a MySQL driver.</p>
@@ -301,10 +292,20 @@ val db = database.fromDriverManager()
 // or
 val db = database.fromDriverManager(&quot;user name&quot;, &quot;password&quot;)
 </code></pre>
+<h3><a href="#use-in-method-chain" name="use-in-method-chain" class="anchor"><span class="anchor-link"></span></a>Use in method chain</h3>
+<p>The <code>Database</code> model can also be used in place of <code>DataSource</code> in <code>TableQuery</code> methods.</p>
+<pre class="prettyprint"><code class="language-scala 3">val read = userQuery.selectAll.toList.readOnly(db)
+val commit = userQuery.insert((1L, &quot;name&quot;, None)).update.autoCommit(db)
+val transaction = (for
+  result1 &lt;- userQuery.insert((1L, &quot;name&quot;, None)).returning(&quot;id&quot;)
+  result2 &lt;- userQuery.update(&quot;name&quot;, &quot;update name&quot;).update
+  ...
+yield ...).transaction(db)
+</code></pre>
 <h2><a href="#using-a-hikaricp-connection-pool" name="using-a-hikaricp-connection-pool" class="anchor"><span class="anchor-link"></span></a>Using a HikariCP Connection Pool</h2>
 <p><code>ldbc-hikari</code> provides a builder to build HikariConfig and HikariDataSource for building HikariCP connection pools.</p>
 <pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
-  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.1.0&quot;,
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-hikari&quot; % &quot;0.2.0&quot;,
 )
 </code></pre>
 <p><code>HikariConfigBuilder</code> is a builder to build <code>HikariConfig</code> of HikariCP as the name suggests.</p>
@@ -489,7 +490,7 @@ val dataSource = HikariDataSourceBuilder.default[IO].buildFromConfig(hikariConfi
     }
 </code></pre>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/en/04-Database-Connection.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.0/docs/target/mdoc/en/04-Database-Connection.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -553,7 +554,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 
 <!--
 <div class="copyright">
-<span class="text">&copy; 2023</span>
+<span class="text">&copy; 2024</span>
 <a href="https://www.example.com" class="logo">logo</a>
 </div>
 -->
@@ -578,7 +579,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>

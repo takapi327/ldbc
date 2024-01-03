@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -76,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -116,7 +116,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <h1><a href="#型安全なクエリ構築" name="型安全なクエリ構築" class="anchor"><span class="anchor-link"></span></a>型安全なクエリ構築</h1>
 <p>この章では、LDBCで構築したテーブル定義を使用して、型安全にクエリを構築するための方法について説明します。</p>
 <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.1.0&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.2.0&quot;
 </code></pre>
 <p>LDBCでのテーブル定義方法をまだ読んでいない場合は、<a href="/ldbc/ja/01-Table-Definitions.html">テーブル定義</a>の章を先に読むことをオススメしましす。</p>
 <p>以下のコード例では、以下のimportを想定しています。</p>
@@ -484,8 +484,31 @@ delete.statement === &quot;DELETE FROM user&quot;
 delete.statement === &quot;DELETE FROM user WHERE id = ?&quot;
 </code></pre>
 <p><code>where</code>メソッドで使用できる条件はInsert文の<a href="/ldbc/ja/03-Type-safe-Query-Builder.html#where">where項目</a>を参照してください。</p>
+<h2><a href="#ddl" name="ddl" class="anchor"><span class="anchor-link"></span></a>DDL</h2>
+<p>型安全にDDLを構築する方法はTableQueryが提供する以下のメソッドを使用することです。</p>
+<ul>
+  <li>createTable</li>
+  <li>dropTable</li>
+  <li>truncateTable</li>
+</ul>
+<p>spec2を使用している場合は以下のようにしてテストの前後にDDLを実行することができます。</p>
+<pre class="prettyprint"><code class="language-scala 3">import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+
+import org.specs2.mutable.Specification
+import org.specs2.specification.core.Fragments
+import org.specs2.specification.BeforeAfterEach
+
+object Test extends Specification, BeforeAfterEach:
+
+  override def before: Fragments =
+    step((tableQuery.createTable.update.autoCommit(dataSource) &gt;&gt; IO.println(&quot;Complete create table&quot;)).unsafeRunSync())
+
+  override def after: Fragments =
+    step((tableQuery.dropTable.update.autoCommit(dataSource) &gt;&gt; IO.println(&quot;Complete drop table&quot;)).unsafeRunSync())
+</code></pre>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/ja/03-Type-safe-Query-Builder.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.0/docs/target/mdoc/ja/03-Type-safe-Query-Builder.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -506,6 +529,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
     <li><a href="../ja/03-Type-safe-Query-Builder.html#insert" class="header">INSERT</a></li>
     <li><a href="../ja/03-Type-safe-Query-Builder.html#update" class="header">UPDATE</a></li>
     <li><a href="../ja/03-Type-safe-Query-Builder.html#delete" class="header">DELETE</a></li>
+    <li><a href="../ja/03-Type-safe-Query-Builder.html#ddl" class="header">DDL</a></li>
   </ul></li>
 </ul>
 </div>
@@ -548,7 +572,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 
 <!--
 <div class="copyright">
-<span class="text">&copy; 2023</span>
+<span class="text">&copy; 2024</span>
 <a href="https://www.example.com" class="logo">logo</a>
 </div>
 -->
@@ -573,7 +597,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>

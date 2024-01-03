@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -76,7 +76,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.1.0
+0.2.0
 </div>
 </div>
 <div class="nav-toc">
@@ -116,7 +116,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <h1><a href="#スキーマコード生成" name="スキーマコード生成" class="anchor"><span class="anchor-link"></span></a>スキーマコード生成</h1>
 <p>この章では、LDBCのテーブル定義をSQLファイルから自動生成する方法について説明します。</p>
 <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
-<pre class="prettyprint"><code class="language-scala 3">addSbtPlugin(&quot;io.github.takapi327&quot; % &quot;ldbc-plugin&quot; % &quot;0.1.0&quot;)
+<pre class="prettyprint"><code class="language-scala 3">addSbtPlugin(&quot;io.github.takapi327&quot; % &quot;ldbc-plugin&quot; % &quot;0.2.0&quot;)
 </code></pre>
 <h2><a href="#生成" name="生成" class="anchor"><span class="anchor-link"></span></a>生成</h2>
 <p>プロジェクトに対してプラグインを有効にします。</p>
@@ -200,95 +200,54 @@ object Country:
     column(&quot;code&quot;, INT)
   )
 </code></pre>
-<h2><a href="#カスタマイズ" name="カスタマイズ" class="anchor"><span class="anchor-link"></span></a>カスタマイズ</h2>
-<p>SQLファイルから生成されるコードの型を別のものに変換したい時があるかもしれません。その場合は<code>customYamlFiles</code>にカスタマイズを行うymlファイルを渡してあげることで行うことができます。</p>
-<pre class="prettyprint"><code class="language-sbt">Compile / customYamlFiles := List(
-  baseDirectory.value / &quot;custom.yml&quot;
-)
+<p>Compileでコードを生成した場合、その生成されたファイルはキャッシュされるので、SQLファイルを変更していない場合再度生成されることはありません。SQLファイルを変更した場合もしくは、cleanコマンドを実行してキャッシュを削除した場合はCompileを実行すると再度コードが生成されます。 キャッシュを利用せず再度コード生成を行いたい場合は、<code>generateBySchema</code>コマンドを実行してください。このコマンドはキャッシュを使用せず常にコード生成を行います。</p>
+<pre class="prettyprint"><code class="language-shell">sbt generateBySchema
 </code></pre>
-<p>ymlファイルの形式は以下のようなものである必要があります。</p>
-<pre class="prettyprint"><code class="language-yaml">database:
-  name: &#39;{データベース名}&#39;
-  tables:
-    - name: &#39;{テーブル名}&#39;
-      columns: # Optional
-        - name: &#39;{カラム名}&#39;
-          type: &#39;{変更したいScalaの型}&#39;
-      class: # Optional
-        extends:
-          - &#39;{モデルクラスに継承させたいtraitなどのpackageパス}&#39; // package.trait.name
-      object: # Optional
-        extends:
-          - &#39;{オブジェクトに継承させたいtraitなどのpackageパス}&#39;
-    - name: &#39;{テーブル名}&#39;
-      ...
+<pre class="prettyprint"><code class="language-shell"><br/>## カスタマイズ
+
+SQLファイルから生成されるコードの型を別のものに変換したい時があるかもしれません。その場合は`customYamlFiles`にカスタマイズを行うymlファイルを渡してあげることで行うことができます。
+
 </code></pre>
-<p><code>database</code>は解析対象のSQLファイルに記載されているデータベース名である必要があります。またテーブル名は解析対象のSQLファイルに記載されているデータベースに所属しているテーブル名である必要があります。</p>
-<p><code>columns</code>には型を変更したいカラム名と変更したいScalaの型を文字列で記載を行います。<code>columns</code>には複数の値を設定できますが、nameに記載されたカラム名が対象のテーブルに含まれいてなければなりません。 また、変換を行うScalaの型はカラムのData型がサポートしている型である必要があります。もしサポート対象外の型を指定したい場合は、<code>object</code>に対して暗黙の型変換を行う設定を持ったtraitやabstract classなどを渡してあげる必要があります。</p>
-<p>Data型がサポートしている型に関しては<a href="/ldbc/ja/01-Table-Definitions.html">こちら</a>を、サポート対象外の型を設定する方法は<a href="/ldbc/ja/02-Custom-Data-Type.html">こちら</a>を参照してください。</p>
-<p>Int型をユーザー独自の型であるCountryCodeに変換する場合は、以下のような<code>CustomMapping</code>traitを実装します。</p>
-<pre class="prettyprint"><code class="language-scala 3">trait CountryCode:
-  val code: Int
-object Japan extends CountryCode:
-  override val code: Int = 1
+<p>Compile / customYamlFiles := List(  baseDirectory.value / &ldquo;custom.yml&rdquo; )</p>
+<pre><code><br/>ymlファイルの形式は以下のようなものである必要があります。
 
-trait CustomMapping: // 任意の名前
-  given Conversion[INT[Int], CountryCode] = DataType.mappingp[INT[Int], CountryCode]
 </code></pre>
-<p>カスタマイズを行うためのymlファイルに実装を行なった<code>CustomMapping</code>traitを設定し、対象のカラムの型をCountryCodeに変換してあげます。</p>
-<pre class="prettyprint"><code class="language-yaml">database:
-  name: &#39;location&#39;
-  tables:
-    - name: &#39;country&#39;
-      columns:
-        - name: &#39;code&#39;
-          type: &#39;Country.CountryCode&#39; // CustomMappingをCountryオブジェクトにミックスインさせるのでそこから取得できるように記載
-      object:
-        extends:
-          - &#39;{package.name.}CustomMapping&#39;
+<p>database:  name: &lsquo;{データベース名}&rsquo;  tables:  - name: &lsquo;{テーブル名}&rsquo;  columns: # Optional  - name: &lsquo;{カラム名}&rsquo;  type: &lsquo;{変更したいScalaの型}&rsquo;  class: # Optional  extends:  - &lsquo;{モデルクラスに継承させたいtraitなどのpackageパス}&rsquo; // package.trait.name  object: # Optional  extends:  - &lsquo;{オブジェクトに継承させたいtraitなどのpackageパス}&rsquo;  - name: &lsquo;{テーブル名}&rsquo;  &hellip;</p>
+<pre><code><br/>`database`は解析対象のSQLファイルに記載されているデータベース名である必要があります。またテーブル名は解析対象のSQLファイルに記載されているデータベースに所属しているテーブル名である必要があります。
+
+`columns`には型を変更したいカラム名と変更したいScalaの型を文字列で記載を行います。`columns`には複数の値を設定できますが、nameに記載されたカラム名が対象のテーブルに含まれいてなければなりません。
+また、変換を行うScalaの型はカラムのData型がサポートしている型である必要があります。もしサポート対象外の型を指定したい場合は、`object`に対して暗黙の型変換を行う設定を持ったtraitやabstract classなどを渡してあげる必要があります。
+
+Data型がサポートしている型に関しては[こちら](/ldbc/ja/01-Table-Definitions.html)を、サポート対象外の型を設定する方法は[こちら](/ldbc/ja/02-Custom-Data-Type.html)を参照してください。
+
+Int型をユーザー独自の型であるCountryCodeに変換する場合は、以下のような`CustomMapping`traitを実装します。
+
 </code></pre>
-<p>上記設定で生成されるコードは以下のようになり、ユーザー独自の型でモデルとテーブル定義を生成できるようになります。</p>
-<pre class="prettyprint"><code class="language-scala 3">case class Country(
-  id: Long,
-  name: String,
-  code: Country.CountryCode
-)
+<p>trait CountryCode:  val code: Int object Japan extends CountryCode:  override val code: Int = 1</p>
+<p>trait CustomMapping: // 任意の名前  given Conversion[INT[Int], CountryCode] = DataType.mappingp[INT[Int], CountryCode]</p>
+<pre><code><br/>カスタマイズを行うためのymlファイルに実装を行なった`CustomMapping`traitを設定し、対象のカラムの型をCountryCodeに変換してあげます。
 
-object Country extends /*{package.name.}*/CustomMapping:
-  val table = Table[Country](&quot;country&quot;)(
-    column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-    column(&quot;name&quot;, VARCHAR(255)),
-    column(&quot;code&quot;, INT)
-  )
 </code></pre>
-<p>データベースモデルに関してもSQLファイルから自動生成が行われています。</p>
-<pre class="prettyprint"><code class="language-scala 3">package ldbc.generated.location
+<p>database:  name: &lsquo;location&rsquo;  tables:  - name: &lsquo;country&rsquo;  columns:  - name: &lsquo;code&rsquo;  type: &lsquo;Country.CountryCode&rsquo; // CustomMappingをCountryオブジェクトにミックスインさせるのでそこから取得できるように記載  object:  extends:  - &lsquo;{package.name.}CustomMapping&rsquo;</p>
+<pre><code><br/>上記設定で生成されるコードは以下のようになり、ユーザー独自の型でモデルとテーブル定義を生成できるようになります。
 
-import ldbc.core.*
-
-case class LocationDatabase(
-  schemaMeta: Option[String] = None,
-  catalog: Option[String] = Some(&quot;def&quot;),
-  host: String = &quot;127.0.0.1&quot;,
-  port: Int = 3306
-) extends Database:
-
-  override val databaseType: Database.Type = Database.Type.MySQL
-
-  override val name: String = &quot;location&quot;
-
-  override val schema: String = &quot;location&quot;
-
-  override val character: Option[Character] = None
-
-  override val collate: Option[Collate] = None
-
-  override val tables = Set(
-    Country.table
-  )
 </code></pre>
+<p>case class Country(  id: Long,  name: String,  code: Country.CountryCode )</p>
+<p>object Country extends /*{package.name.}*/CustomMapping:  val table = Table<a href=""country"">Country</a>(  column(&ldquo;id&rdquo;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY),  column(&ldquo;name&rdquo;, VARCHAR(255)),  column(&ldquo;code&rdquo;, INT)  )</p>
+<pre><code><br/>データベースモデルに関してもSQLファイルから自動生成が行われています。
+
+</code></pre>
+<p>package ldbc.generated.location</p>
+<p>import ldbc.core.*</p>
+<p>case class LocationDatabase(  schemaMeta: Option[String] = None,  catalog: Option[String] = Some(&ldquo;def&rdquo;),  host: String = &ldquo;127.0.0.1&rdquo;,  port: Int = 3306 ) extends Database:</p>
+<p>override val databaseType: Database.Type = Database.Type.MySQL</p>
+<p>override val name: String = &ldquo;location&rdquo;</p>
+<p>override val schema: String = &ldquo;location&rdquo;</p>
+<p>override val character: Option[Character] = None</p>
+<p>override val collate: Option[Collate] = None</p>
+<p>override val tables = Set(  Country.table  ) ```</p>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.1.0/docs/target/mdoc/ja/07-Schema-Code-Generation.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.0/docs/target/mdoc/ja/07-Schema-Code-Generation.md">here</a>.
 </div>
 
 <div class="nav-next">
@@ -305,7 +264,6 @@ The source code for this page can be found <a href="https://github.com/takapi327
   <ul>
     <li><a href="../ja/07-Schema-Code-Generation.html#生成" class="header">生成</a></li>
     <li><a href="../ja/07-Schema-Code-Generation.html#生成コード" class="header">生成コード</a></li>
-    <li><a href="../ja/07-Schema-Code-Generation.html#カスタマイズ" class="header">カスタマイズ</a></li>
   </ul></li>
 </ul>
 </div>
@@ -348,7 +306,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 
 <!--
 <div class="copyright">
-<span class="text">&copy; 2023</span>
+<span class="text">&copy; 2024</span>
 <a href="https://www.example.com" class="logo">logo</a>
 </div>
 -->
@@ -373,7 +331,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.1.0', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.0', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
