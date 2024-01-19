@@ -90,7 +90,7 @@ lazy val benchmark = (project in file("benchmark"))
     slick
   ))
   .dependsOn(dsl)
-  .enablePlugins(JmhPlugin)
+  .enablePlugins(JmhPlugin, AutomateHeaderPlugin)
 
 lazy val docs = (project in file("docs"))
   .settings(
