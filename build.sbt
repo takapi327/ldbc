@@ -14,7 +14,7 @@ ThisBuild / crossScalaVersions := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(
-  scalaFmt.value, sbtScripted.value
+  scalaFmt.value, copyrightHeaderCheck.value, sbtScripted.value
 )
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
