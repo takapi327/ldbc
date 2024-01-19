@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.sbt
 
@@ -8,8 +10,9 @@ import sbt._
 
 import scala.Console._
 
-/** Class for specifying the format of the logs to be spit out when the sbt project is executed.
-  */
+/**
+ * Class for specifying the format of the logs to be spit out when the sbt project is executed.
+ */
 class ProcessLogger extends Logger {
   def trace(t: => Throwable): Unit = {
     t.printStackTrace()

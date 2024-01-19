@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core
 
@@ -9,11 +11,12 @@ import scala.deriving.Mirror
 
 import ldbc.core.interpreter.*
 
-/** Trait for generating SQL table information.
-  *
-  * @tparam P
-  *   A class that implements a [[Product]] that is one-to-one with the table definition.
-  */
+/**
+ * Trait for generating SQL table information.
+ *
+ * @tparam P
+ *   A class that implements a [[Product]] that is one-to-one with the table definition.
+ */
 private[ldbc] trait Table[P <: Product] extends Dynamic:
 
   /** Table name */
@@ -31,50 +34,57 @@ private[ldbc] trait Table[P <: Product] extends Dynamic:
   /** Additional table information */
   private[ldbc] def options: Seq[TableOption | Character | Collate[String]]
 
-  /** Method to retrieve an array of column information that a table has.
-    */
+  /**
+   * Method to retrieve an array of column information that a table has.
+   */
   private[ldbc] def all: List[Column[[A] => A => A]]
 
-  /** Methods for setting key information for tables.
-    *
-    * @param func
-    *   Function to construct an expression using the columns that Table has.
-    */
+  /**
+   * Methods for setting key information for tables.
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
   def keySet(func: Table[P] => Key): Table[P]
 
-  /** Methods for setting multiple key information for a table.
-    *
-    * @param func
-    *   Function to construct an expression using the columns that Table has.
-    */
+  /**
+   * Methods for setting multiple key information for a table.
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
   def keySets(func: Table[P] => Seq[Key]): Table[P]
 
-  /** Methods for setting additional information for the table.
-    *
-    * @param option
-    *   Additional information to be given to the table.
-    */
+  /**
+   * Methods for setting additional information for the table.
+   *
+   * @param option
+   *   Additional information to be given to the table.
+   */
   def setOption(option: TableOption | Character | Collate[String]): Table[P]
 
-  /** Methods for setting multiple additional information for a table.
-    *
-    * @param options
-    *   Additional information to be given to the table.
-    */
+  /**
+   * Methods for setting multiple additional information for a table.
+   *
+   * @param options
+   *   Additional information to be given to the table.
+   */
   def setOptions(options: Seq[TableOption]): Table[P]
 
-  /** Methods for setting alias names for tables.
-    *
-    * @param name
-    *   Alias name to be set for the table
-    */
+  /**
+   * Methods for setting alias names for tables.
+   *
+   * @param name
+   *   Alias name to be set for the table
+   */
   def as(name: String): Table[P]
 
 object Table extends Dynamic:
 
   extension [P <: Product](table: Table[P])
-    /** Methods for statically accessing column information held by a Table.
-      */
+    /**
+     * Methods for statically accessing column information held by a Table.
+     */
     transparent inline def selectDynamic[Tag <: Singleton](
       tag: Tag
     )(using
@@ -109,38 +119,40 @@ object Table extends Dynamic:
 
     override def as(name: String): Table[P] = this.copy(alias = Some(name))
 
-  /** Methods for static Table construction using Dynamic.
-    *
-    * @param nameApply
-    *   The apply method
-    * @param mirror
-    *   product isomorphism map
-    * @param converter
-    *   An object that converts a Column's Tuple to a Tuple Map
-    * @param name
-    *   Table name
-    * @param columns
-    *   Tuple of columns matching the Product's Elem type
-    * @tparam P
-    *   A class that implements a [[Product]] that is one-to-one with the table definition.
-    */
+  /**
+   * Methods for static Table construction using Dynamic.
+   *
+   * @param nameApply
+   *   The apply method
+   * @param mirror
+   *   product isomorphism map
+   * @param converter
+   *   An object that converts a Column's Tuple to a Tuple Map
+   * @param name
+   *   Table name
+   * @param columns
+   *   Tuple of columns matching the Product's Elem type
+   * @tparam P
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
   def applyDynamic[P <: Product](using
     mirror:    Mirror.ProductOf[P],
     converter: ColumnTupleConverter[mirror.MirroredElemTypes, Column]
   )(nameApply: "apply")(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, Column]): Table[P] =
     fromTupleMap[P](name, ColumnTupleConverter.convert(columns))
 
-  /** Methods for generating a Table from a Column's Tuple Map.
-    *
-    * @param mirror
-    *   product isomorphism map
-    * @param name
-    *   Table name
-    * @param columns
-    *   Tuple of columns matching the Product's Elem type
-    * @tparam P
-    *   A class that implements a [[Product]] that is one-to-one with the table definition.
-    */
+  /**
+   * Methods for generating a Table from a Column's Tuple Map.
+   *
+   * @param mirror
+   *   product isomorphism map
+   * @param name
+   *   Table name
+   * @param columns
+   *   Tuple of columns matching the Product's Elem type
+   * @tparam P
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
   private def fromTupleMap[P <: Product](using
     mirror: Mirror.ProductOf[P]
   )(

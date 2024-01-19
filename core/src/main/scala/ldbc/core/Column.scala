@@ -1,16 +1,19 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core
 
 import ldbc.core.attribute.Attribute
 
-/** Trait for representing SQL Column
-  *
-  * @tparam T
-  *   Scala types that match SQL DataType
-  */
+/**
+ * Trait for representing SQL Column
+ *
+ * @tparam T
+ *   Scala types that match SQL DataType
+ */
 trait Column[T]:
 
   /** Column Field Name */
@@ -25,11 +28,12 @@ trait Column[T]:
   /** Column alias name */
   def alias: Option[String] = None
 
-  /** Define SQL query string for each Column
-    *
-    * @return
-    *   SQL query string
-    */
+  /**
+   * Define SQL query string for each Column
+   *
+   * @return
+   *   SQL query string
+   */
   def queryString: String =
     val str = s"`$label` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
     alias.fold(str)(name => s"$name.$str")

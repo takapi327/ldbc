@@ -1,13 +1,16 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core
 
 import cats.kernel.Order
 
-/** Enum that defines constants to identify generic SQL types called JDBC types.
-  */
+/**
+ * Enum that defines constants to identify generic SQL types called JDBC types.
+ */
 enum JdbcType(val code: Int):
   case Array                 extends JdbcType(java.sql.Types.ARRAY)
   case BigInt                extends JdbcType(java.sql.Types.BIGINT)

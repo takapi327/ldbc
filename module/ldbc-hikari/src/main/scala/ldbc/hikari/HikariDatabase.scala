@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.hikari
 
@@ -13,13 +15,14 @@ import ldbc.dsl.*
 
 object HikariDatabase:
 
-  /** Methods for building a Database using the HikariCP connection pool.
-    *
-    * @param hikariConfig
-    *   User-generated HikariCP Config file
-    * @tparam F
-    *   the effect type.
-    */
+  /**
+   * Methods for building a Database using the HikariCP connection pool.
+   *
+   * @param hikariConfig
+   *   User-generated HikariCP Config file
+   * @tparam F
+   *   the effect type.
+   */
   def fromHikariConfig[F[_]: Sync](hikariConfig: HikariConfig): Resource[F, Database[F]] =
     val builder = new HikariDataSourceBuilder[F] {}
     builder

@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.dsl.syntax
 
@@ -15,17 +17,19 @@ import ldbc.sql.util.FactoryCompat
 import ldbc.dsl.{ SQL, ConnectionProvider }
 import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
-/** Trait for giving database connection information to SQL.
-  *
-  * @tparam F
-  *   The effect type
-  */
+/**
+ * Trait for giving database connection information to SQL.
+ *
+ * @tparam F
+ *   The effect type
+ */
 trait SQLSyntax[F[_]: Sync]:
 
   implicit class SqlOps(sql: SQL[F]) extends ConnectionProvider[F]:
 
-    /** Methods for returning an array of data to be retrieved from the database.
-      */
+    /**
+     * Methods for returning an array of data to be retrieved from the database.
+     */
     inline def toList[T <: Tuple]()
       : FactoryCompat[T, List[T]] ?=> LogHandler[F] ?=> Kleisli[F, Connection[F], List[T]] =
       given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
@@ -59,9 +63,10 @@ trait SQLSyntax[F[_]: Sync]:
 
       connectionToList[P](sql.statement, sql.params)
 
-    /** A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
-      * first one is retrieved.
-      */
+    /**
+     * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
+     * first one is retrieved.
+     */
     inline def headOption[T <: Tuple]: LogHandler[F] ?=> Kleisli[F, Connection[F], Option[T]] =
       given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
         ResultSetReader
@@ -92,9 +97,10 @@ trait SQLSyntax[F[_]: Sync]:
 
       connectionToHeadOption[P](sql.statement, sql.params)
 
-    /** A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
-      * raised. Use the [[headOption]] method if you want to retrieve individual data.
-      */
+    /**
+     * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
+     * raised. Use the [[headOption]] method if you want to retrieve individual data.
+     */
     inline def unsafe[T <: Tuple]: LogHandler[F] ?=> Kleisli[F, Connection[F], T] =
       given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
         ResultSetReader

@@ -1,26 +1,30 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.sql
 
-/** Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.
-  *
-  * @tparam F
-  *   The effect type
-  */
+/**
+ * Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.
+ *
+ * @tparam F
+ *   The effect type
+ */
 trait ParameterBinder[F[_]]:
 
   /** Query parameters to be plugged into the Statement. */
   def parameter: Any
 
-  /** Methods for setting Scala and Java values to the specified position in PreparedStatement.
-    *
-    * @param statement
-    *   An object that represents a precompiled SQL statement.
-    * @param index
-    *   the first parameter is 1, the second is 2, ...
-    */
+  /**
+   * Methods for setting Scala and Java values to the specified position in PreparedStatement.
+   *
+   * @param statement
+   *   An object that represents a precompiled SQL statement.
+   * @param index
+   *   the first parameter is 1, the second is 2, ...
+   */
   def bind(statement: PreparedStatement[F], index: Int): F[Unit]
 
 object ParameterBinder:

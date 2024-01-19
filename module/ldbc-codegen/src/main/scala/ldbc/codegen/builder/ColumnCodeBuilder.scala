@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.codegen.builder
 
@@ -8,11 +10,12 @@ import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
 import ldbc.codegen.formatter.Naming
 
-/** Column model for constructing code strings.
-  *
-  * @param formatter
-  *   A formatter that converts strings to an arbitrary format
-  */
+/**
+ * Column model for constructing code strings.
+ *
+ * @param formatter
+ *   A formatter that converts strings to an arbitrary format
+ */
 case class ColumnCodeBuilder(formatter: Naming):
 
   def build(column: ColumnDefinition, customColumn: Option[Parser.Column]): String =

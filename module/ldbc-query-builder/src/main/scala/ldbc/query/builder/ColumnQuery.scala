@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.query.builder
 
@@ -13,13 +15,14 @@ import ldbc.sql.*
 import ldbc.query.builder.statement.{ ExpressionSyntax, OrderBy, Query }
 import ldbc.query.builder.statement.ExpressionSyntax.*
 
-/** Trait for retrieving data from a ResultSet using the column's information.
-  *
-  * @tparam F
-  *   The effect type
-  * @tparam T
-  *   Scala types that match SQL DataType
-  */
+/**
+ * Trait for retrieving data from a ResultSet using the column's information.
+ *
+ * @tparam F
+ *   The effect type
+ * @tparam T
+ *   Scala types that match SQL DataType
+ */
 private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
 
   private val noBagQuotLabel: String =

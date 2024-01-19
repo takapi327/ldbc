@@ -1,13 +1,16 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.codegen.parser
 
 import ldbc.codegen.model.SetDefinition
 
-/** Parser for parsing SET definitions.
-  */
+/**
+ * Parser for parsing SET definitions.
+ */
 trait SetParser extends SqlParser:
 
   private def systemVariable(str: "global" | "persist" | "persist_only" | "session" | "local"): Parser[String] =

@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.schemaspy
 
@@ -24,11 +26,12 @@ import ldbc.core.*
 import ldbc.schemaspy.result.Status
 import ldbc.schemaspy.builder.DbmsMetaBuilder
 
-/** Class for generating SchemaSpy documents.
-  *
-  * @param analyzer
-  *   Classes for analyzing database models or actual databases.
-  */
+/**
+ * Class for generating SchemaSpy documents.
+ *
+ * @param analyzer
+ *   Classes for analyzing database models or actual databases.
+ */
 class SchemaSpyGenerator(analyzer: SchemaAnalyzer | LdbcSchemaAnalyzer):
 
   def generate(): Status =

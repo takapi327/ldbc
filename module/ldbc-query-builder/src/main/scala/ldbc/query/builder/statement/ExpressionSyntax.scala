@@ -1,6 +1,8 @@
-/** Copyright (c) 2023-2024 by Takahiko Tominaga This software is licensed under the MIT License (MIT). For more
-  * information see LICENSE or https://opensource.org/licenses/MIT
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.query.builder.statement
 
@@ -9,50 +11,57 @@ import ldbc.core.interpreter.Extract
 import ldbc.sql.{ Parameter, ParameterBinder }
 import ldbc.query.builder.ColumnQuery
 
-/** Trait for the syntax of expressions available in MySQL.
-  *
-  * SEE: https://dev.mysql.com/doc/refman/8.0/en/expressions.html
-  */
+/**
+ * Trait for the syntax of expressions available in MySQL.
+ *
+ * SEE: https://dev.mysql.com/doc/refman/8.0/en/expressions.html
+ */
 private[ldbc] trait ExpressionSyntax[F[_]]:
 
-  /** Formula to determine
-    */
+  /**
+   * Formula to determine
+   */
   def flag: String
 
-  /** Statement of the expression to be judged
-    */
+  /**
+   * Statement of the expression to be judged
+   */
   def statement: String
 
-  /** Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.
-    */
+  /**
+   * Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.
+   */
   def parameter: Seq[ParameterBinder[F]]
 
-  /** Methods for combining expressions. Both conditions must be positive for the expression to be combined with this
-    * method.
-    *
-    * @param other
-    *   Right side of combined expression
-    */
+  /**
+   * Methods for combining expressions. Both conditions must be positive for the expression to be combined with this
+   * method.
+   *
+   * @param other
+   *   Right side of combined expression
+   */
   def and(other: ExpressionSyntax[F]): ExpressionSyntax[F] =
     ExpressionSyntax.Pair(" AND ", this, other)
   def &&(other: ExpressionSyntax[F]): ExpressionSyntax[F] = and(other)
 
-  /** A method for combining expressions. The expressions combined with this method must have one of the conditions be
-    * positive.
-    *
-    * @param other
-    *   Right side of combined expression
-    */
+  /**
+   * A method for combining expressions. The expressions combined with this method must have one of the conditions be
+   * positive.
+   *
+   * @param other
+   *   Right side of combined expression
+   */
   def or(other: ExpressionSyntax[F]): ExpressionSyntax[F] =
     ExpressionSyntax.Pair(" OR ", this, other)
   def ||(other: ExpressionSyntax[F]): ExpressionSyntax[F] = or(other)
 
-  /** A method for combining expressions. The expressions combined with this method must be positive either individually
-    * or in one of the combined conditions.
-    *
-    * @param other
-    *   Right side of combined expression
-    */
+  /**
+   * A method for combining expressions. The expressions combined with this method must be positive either individually
+   * or in one of the combined conditions.
+   *
+   * @param other
+   *   Right side of combined expression
+   */
   def xor(other: ExpressionSyntax[F]): ExpressionSyntax[F] =
     ExpressionSyntax.Pair(" XOR ", this, other)
 
@@ -60,31 +69,35 @@ object ExpressionSyntax:
 
   private[ldbc] trait SingleValue[F[_], T] extends ExpressionSyntax[F]:
 
-    /** Column name to be judged
-      */
+    /**
+     * Column name to be judged
+     */
     def column: String
 
-    /** Value to be set for Statement.
-      */
+    /**
+     * Value to be set for Statement.
+     */
     def value: Extract[T]
 
   private[ldbc] trait MultiValue[F[_], T] extends ExpressionSyntax[F]:
 
-    /** List of values to be set for the Statement.
-      */
+    /**
+     * List of values to be set for the Statement.
+     */
     def values: Seq[Extract[T]]
 
-  /** A model for joining expressions together.
-    *
-    * @param flag
-    *   Symbols for joining expressions.
-    * @param left
-    *   Left side of combined expression
-    * @param right
-    *   Right side of combined expression
-    * @tparam F
-    *   The effect type
-    */
+  /**
+   * A model for joining expressions together.
+   *
+   * @param flag
+   *   Symbols for joining expressions.
+   * @param left
+   *   Left side of combined expression
+   * @param right
+   *   Right side of combined expression
+   * @tparam F
+   *   The effect type
+   */
   private[ldbc] case class Pair[F[_]](
     flag:  String,
     left:  ExpressionSyntax[F],
@@ -102,19 +115,20 @@ object ExpressionSyntax:
 
     override def parameter: Seq[ParameterBinder[F]] = left.parameter ++ right.parameter
 
-  /** Model for building sub queries.
-    *
-    * @param flag
-    *   Sub query Conditional Expressions
-    * @param column
-    *   Name of the column for which the sub query is to be set
-    * @param value
-    *   Trait for constructing Statements that set conditions
-    * @tparam F
-    *   The effect type
-    * @tparam T
-    *   Scala types that match SQL DataType
-    */
+  /**
+   * Model for building sub queries.
+   *
+   * @param flag
+   *   Sub query Conditional Expressions
+   * @param column
+   *   Name of the column for which the sub query is to be set
+   * @param value
+   *   Trait for constructing Statements that set conditions
+   * @tparam F
+   *   The effect type
+   * @tparam T
+   *   Scala types that match SQL DataType
+   */
   private[ldbc] case class SubQuery[F[_], T](
     flag:   String,
     column: String,
@@ -124,19 +138,20 @@ object ExpressionSyntax:
     override def statement: String                  = s"$column $flag (${ value.statement })"
     override def parameter: Seq[ParameterBinder[F]] = value.params
 
-  /** Model for building join queries.
-    *
-    * @param flag
-    *   Join query Conditional Expressions
-    * @param left
-    *   The left-hand column where the join join will be performed.
-    * @param right
-    *   The right-hand column where the join join will be performed.
-    * @tparam F
-    *   The effect type
-    * @tparam T
-    *   Scala types that match SQL DataType
-    */
+  /**
+   * Model for building join queries.
+   *
+   * @param flag
+   *   Join query Conditional Expressions
+   * @param left
+   *   The left-hand column where the join join will be performed.
+   * @param right
+   *   The right-hand column where the join join will be performed.
+   * @tparam F
+   *   The effect type
+   * @tparam T
+   *   Scala types that match SQL DataType
+   */
   private[ldbc] case class JoinQuery[F[_], T](
     flag:  String,
     left:  Column[?],
