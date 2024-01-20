@@ -31,7 +31,7 @@ object Dependencies {
 
   val slick = "com.typesafe.slick" %% "slick" % "3.5.0-M5"
 
-  val specs2Version = "5.4.0"
+  val specs2Version = "5.4.2"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
     "specs2-junit"
