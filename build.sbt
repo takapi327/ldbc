@@ -9,7 +9,10 @@ import JavaVersions.*
 import BuildSettings.*
 import Dependencies.*
 import Workflows.*
+import ProjectKeys.*
+import Implicits.*
 
+ThisBuild / projectName := "ldbc"
 ThisBuild / crossScalaVersions := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
@@ -26,46 +29,23 @@ sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
 lazy val core = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("core"))
-  .settings(name := "ldbc-core")
-  .settings(description := "ldbc core project")
-  .settings(scalaVersion := scala3)
-  .settings(scalacOptions ++= scala3Settings)
-  .settings(commonSettings)
+  .default("core", "ldbc core project")
   .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
-  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val sql = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("module/ldbc-sql"))
-  .settings(name := "ldbc-sql")
-  .settings(description := "JDBC API wrapped project with Effect System")
-  .settings(scalaVersion := scala3)
-  .settings(scalacOptions ++= scala3Settings)
-  .settings(commonSettings)
+  .module("sql", "JDBC API wrapped project with Effect System")
   .dependsOn(core)
-  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val queryBuilder = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("module/ldbc-query-builder"))
-  .settings(name := "ldbc-query-builder")
-  .settings(description := "Project to build type-safe queries")
-  .settings(scalaVersion := scala3)
-  .settings(scalacOptions ++= scala3Settings)
-  .settings(commonSettings)
+  .module("query-builder", "Project to build type-safe queries")
   .settings(libraryDependencies += scalaTest)
   .dependsOn(sql)
-  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val dsl = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("module/ldbc-dsl"))
-  .settings(name := "ldbc-dsl")
-  .settings(description := "Projects that provide a way to connect to the database")
-  .settings(scalaVersion := scala3)
-  .settings(scalacOptions ++= scala3Settings)
-  .settings(commonSettings)
+  .module("dsl", "Projects that provide a way to connect to the database")
   .settings(libraryDependencies ++= Seq(
     catsEffect,
     mockito,
@@ -73,7 +53,6 @@ lazy val dsl = crossProject(JVMPlatform)
     mysql % Test
   ) ++ specs2)
   .dependsOn(queryBuilder)
-  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(description := "Project to generate SchemaSPY documentation")
@@ -82,15 +61,9 @@ lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
 
 lazy val codegen = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
-  .in(file("module/ldbc-codegen"))
-  .settings(name := "ldbc-codegen")
-  .settings(description := "Project to generate code from Sql")
-  .settings(scalaVersion := scala3)
-  .settings(scalacOptions ++= scala3Settings)
-  .settings(commonSettings)
+  .module("codegen", "Project to generate code from Sql")
   .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
   .dependsOn(core)
-  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
