@@ -80,10 +80,17 @@ lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(libraryDependencies += schemaspy)
   .dependsOn(core.jvm)
 
-lazy val codegen = LepusSbtProject("ldbc-codegen", "module/ldbc-codegen")
+lazy val codegen = crossProject(JVMPlatform)
+  .crossType(CrossType.Full)
+  .in(file("module/ldbc-codegen"))
+  .settings(name := "ldbc-codegen")
   .settings(description := "Project to generate code from Sql")
+  .settings(scalaVersion := scala3)
+  .settings(scalacOptions ++= scala3Settings)
+  .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
-  .dependsOn(core.jvm)
+  .dependsOn(core)
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
@@ -147,7 +154,7 @@ lazy val docs = (project in file("docs"))
     dsl.jvm,
     queryBuilder.jvm,
     schemaSpy,
-    codegen,
+    codegen.jvm,
     hikari
   )
   .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin)
@@ -164,7 +171,7 @@ lazy val moduleProjects: Seq[ProjectReference] = Seq(
   dsl.jvm,
   queryBuilder.jvm,
   schemaSpy,
-  codegen,
+  codegen.jvm,
   hikari
 )
 
