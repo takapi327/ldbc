@@ -24,13 +24,20 @@ ThisBuild / githubWorkflowPublish := Seq(ciRelease)
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
-lazy val core = LepusSbtProject("ldbc-core", "core")
+lazy val core = crossProject(JVMPlatform)
+  .crossType(CrossType.Full)
+  .in(file("core"))
+  .settings(name := "ldbc-core")
   .settings(description := "ldbc core project")
+  .settings(scalaVersion := scala3)
+  .settings(scalacOptions ++= scala3Settings)
+  .settings(commonSettings)
   .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val sql = LepusSbtProject("ldbc-sql", "module/ldbc-sql")
   .settings(description := "JDBC API wrapped project with Effect System")
-  .dependsOn(core)
+  .dependsOn(core.jvm)
 
 lazy val queryBuilder = LepusSbtProject("ldbc-query-builder", "module/ldbc-query-builder")
   .settings(description := "Project to build type-safe queries")
@@ -50,12 +57,12 @@ lazy val dsl = LepusSbtProject("ldbc-dsl", "module/ldbc-dsl")
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(description := "Project to generate SchemaSPY documentation")
   .settings(libraryDependencies += schemaspy)
-  .dependsOn(core)
+  .dependsOn(core.jvm)
 
 lazy val codegen = LepusSbtProject("ldbc-codegen", "module/ldbc-codegen")
   .settings(description := "Project to generate code from Sql")
   .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
-  .dependsOn(core)
+  .dependsOn(core.jvm)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
@@ -71,14 +78,14 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
       version      = version.value,
-      scalaVersion = (core / scalaVersion).value,
+      scalaVersion = (core.jvm / scalaVersion).value,
       sbtVersion   = sbtVersion.value,
       dir          = (Compile / sourceManaged).value
     )
   }.taskValue)
 
 lazy val benchmark = (project in file("benchmark"))
-  .settings(scalaVersion := (core / scalaVersion).value)
+  .settings(scalaVersion := (core.jvm / scalaVersion).value)
   .settings(description := "Projects for Benchmark Measurement")
   .settings(scalacOptions ++= scala3Settings)
   .settings(commonSettings)
@@ -94,7 +101,7 @@ lazy val benchmark = (project in file("benchmark"))
 
 lazy val docs = (project in file("docs"))
   .settings(
-    scalaVersion := (core / scalaVersion).value,
+    scalaVersion := (core.jvm / scalaVersion).value,
     description := "Documentation for ldbc",
     scalacOptions := Nil,
     publish / skip := true,
@@ -114,7 +121,7 @@ lazy val docs = (project in file("docs"))
   )
   .settings(commonSettings)
   .dependsOn(
-    core,
+    core.jvm,
     sql,
     dsl,
     queryBuilder,
@@ -125,7 +132,7 @@ lazy val docs = (project in file("docs"))
   .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin)
 
 lazy val projects: Seq[ProjectReference] = Seq(
-  core,
+  core.jvm,
   plugin,
   docs,
   benchmark
@@ -141,7 +148,7 @@ lazy val moduleProjects: Seq[ProjectReference] = Seq(
 )
 
 lazy val ldbc = project.in(file("."))
-  .settings(scalaVersion := (core / scalaVersion).value)
+  .settings(scalaVersion := (core.jvm / scalaVersion).value)
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(publish / skip := true)
   .settings(commonSettings)
