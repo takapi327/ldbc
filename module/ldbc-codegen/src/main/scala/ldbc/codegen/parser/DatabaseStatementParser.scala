@@ -1,20 +1,24 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.codegen.parser
 
 import ldbc.codegen.model.*
 
-/** Parser for parsing Database definitions.
-  */
+/**
+ * Parser for parsing Database definitions.
+ */
 trait DatabaseStatementParser extends TableParser:
 
-  /** Parser for parsing Database create statement.
-    *
-    * Please refer to the official documentation for MySQL Database create statement. SEE:
-    * https://dev.mysql.com/doc/refman/8.0/en/create-database.html
-    */
+  /**
+   * Parser for parsing Database create statement.
+   *
+   * Please refer to the official documentation for MySQL Database create statement. SEE:
+   * https://dev.mysql.com/doc/refman/8.0/en/create-database.html
+   */
   private def createStatement: Parser[Database.CreateStatement] =
     opt(comment) ~> create ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
       opt(comment) ~> opt(ifNotExists) ~> opt(comment) ~> sqlIdent ~ opt(comment) ~ opt(caseSensitivity("default")) ~
@@ -24,11 +28,12 @@ trait DatabaseStatementParser extends TableParser:
           Database.CreateStatement(name, character, collate, encryption.map(_.value))
       }
 
-  /** Parser for parsing Database drop statement.
-    *
-    * Please refer to the official documentation for MySQL Database drop statement. SEE:
-    * https://dev.mysql.com/doc/refman/8.0/en/drop-database.html
-    */
+  /**
+   * Parser for parsing Database drop statement.
+   *
+   * Please refer to the official documentation for MySQL Database drop statement. SEE:
+   * https://dev.mysql.com/doc/refman/8.0/en/drop-database.html
+   */
   private[ldbc] def dropStatement: Parser[Database.DropStatement] =
     customError(
       opt(comment) ~> drop ~> opt(comment) ~> (caseSensitivity("database") | caseSensitivity("schema")) ~>
@@ -38,8 +43,9 @@ trait DatabaseStatementParser extends TableParser:
       failureMessage("drop database statement", "DROP {DATABASE | SCHEMA} [IF EXISTS] `database_name`")
     )
 
-  /** Parser for parsing Database use statement.
-    */
+  /**
+   * Parser for parsing Database use statement.
+   */
   private def useDatabase: Parser[Database.DropStatement] =
     customError(
       opt(comment) ~> caseSensitivity("use") ~> opt(comment) ~> sqlIdent <~ opt(comment) <~ ";" ^^ { name =>

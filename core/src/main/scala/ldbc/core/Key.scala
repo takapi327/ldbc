@@ -1,27 +1,32 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core
 
 import ldbc.core.interpreter.Tuples
 
-/** Key to be set for the table
-  */
+/**
+ * Key to be set for the table
+ */
 private[ldbc] trait Key:
 
   /** Unique label for key */
   def label: String
 
-  /** Define SQL query string for each Column
-    *
-    * @return
-    *   SQL query string
-    */
+  /**
+   * Define SQL query string for each Column
+   *
+   * @return
+   *   SQL query string
+   */
   def queryString: String
 
-/** Trait for generating SQL keys that will become Indexes
-  */
+/**
+ * Trait for generating SQL keys that will become Indexes
+ */
 private[ldbc] trait Index extends Key:
 
   /** Value that is the type of Index */
@@ -40,22 +45,23 @@ object Index:
     case BTREE
     case HASH
 
-  /** Additional indexing options
-    *
-    * @param keyBlockSize
-    *   Value to specify the size in bytes to be used for the index key block
-    * @param indexType
-    *   Value that is the type of Index
-    * @param parserName
-    *   Value to associate the parser plugin with an index when special handling is required for full-text indexing and
-    *   search operations
-    * @param comment
-    *   Index comment
-    * @param engineAttribute
-    *   Value to specify the index attribute for the primary storage engines.
-    * @param secondaryEngineAttribute
-    *   Value to specify the index attribute for the secondary storage engines.
-    */
+  /**
+   * Additional indexing options
+   *
+   * @param keyBlockSize
+   *   Value to specify the size in bytes to be used for the index key block
+   * @param indexType
+   *   Value that is the type of Index
+   * @param parserName
+   *   Value to associate the parser plugin with an index when special handling is required for full-text indexing and
+   *   search operations
+   * @param comment
+   *   Index comment
+   * @param engineAttribute
+   *   Value to specify the index attribute for the primary storage engines.
+   * @param secondaryEngineAttribute
+   *   Value to specify the index attribute for the secondary storage engines.
+   */
   case class IndexOption(
     keyBlockSize:             Option[1 | 2 | 4 | 8 | 16],
     indexType:                Option[Type],
@@ -73,17 +79,18 @@ object Index:
         + engineAttribute.fold("")(engine => s" ENGINE_ATTRIBUTE = '$engine'")
         + secondaryEngineAttribute.fold("")(secondary => s" SECONDARY_ENGINE_ATTRIBUTE = '$secondary'")
 
-/** A model representing SQL Index key information.
-  *
-  * @param indexName
-  *   Unique name for key
-  * @param indexType
-  *   Value that is the type of Index
-  * @param keyPart
-  *   List of columns for which the Index key is set
-  * @param indexOption
-  *   Additional indexing options
-  */
+/**
+ * A model representing SQL Index key information.
+ *
+ * @param indexName
+ *   Unique name for key
+ * @param indexType
+ *   Value that is the type of Index
+ * @param keyPart
+ *   List of columns for which the Index key is set
+ * @param indexOption
+ *   Additional indexing options
+ */
 private[ldbc] case class IndexKey(
   indexName:   Option[String],
   indexType:   Option[Index.Type],
@@ -100,15 +107,16 @@ private[ldbc] case class IndexKey(
       + indexType.fold("")(index => s" USING $index")
       + indexOption.fold("")(option => s"${ option.queryString }")
 
-/** A model representing SQL Fulltext Index key information.
-  *
-  * @param indexName
-  *   Unique name for key
-  * @param keyPart
-  *   List of columns for which the Index key is set
-  * @param indexOption
-  *   Additional indexing options
-  */
+/**
+ * A model representing SQL Fulltext Index key information.
+ *
+ * @param indexName
+ *   Unique name for key
+ * @param keyPart
+ *   List of columns for which the Index key is set
+ * @param indexOption
+ *   Additional indexing options
+ */
 private[ldbc] case class Fulltext(
   indexName:   Option[String],
   keyPart:     List[Column[?]],
@@ -183,15 +191,16 @@ object UniqueKey:
         + indexType.fold("")(index => s" USING $index")
         + indexOption.fold("")(option => s"${ option.queryString }")
 
-/** A model representing SQL Foreign key information.
-  *
-  * @param indexName
-  *   Unique name for key
-  * @param columns
-  *   List of columns for which the Index key is set
-  * @param reference
-  *   A model for setting reference options used for foreign key constraints, etc.
-  */
+/**
+ * A model representing SQL Foreign key information.
+ *
+ * @param indexName
+ *   Unique name for key
+ * @param columns
+ *   List of columns for which the Index key is set
+ * @param reference
+ *   A model for setting reference options used for foreign key constraints, etc.
+ */
 private[ldbc] case class ForeignKey[T <: Tuple](
   indexName: Option[String],
   columns:   T,
@@ -207,13 +216,14 @@ private[ldbc] case class ForeignKey[T <: Tuple](
       + s" (${ columns.toList.mkString(", ") })"
       + s" ${ reference.queryString }"
 
-/** A model for setting constraints on keys.
-  *
-  * @param symbol
-  *   Unique name of the constraint
-  * @param key
-  *   Types of keys for which constraints can be set
-  */
+/**
+ * A model for setting constraints on keys.
+ *
+ * @param symbol
+ *   Unique name of the constraint
+ * @param key
+ *   Types of keys for which constraints can be set
+ */
 private[ldbc] case class Constraint(
   symbol: Option[String],
   key:    PrimaryKey | UniqueKey | ForeignKey[?]

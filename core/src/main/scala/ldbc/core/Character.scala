@@ -1,15 +1,18 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core
 
 import ldbc.core.model.Enum
 import ldbc.core.attribute.Attribute
 
-/** A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,
-  * TEXT, ENUM, SET, and any synonym.
-  */
+/**
+ * A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,
+ * TEXT, ENUM, SET, and any synonym.
+ */
 trait Character:
 
   /** Character name */
@@ -21,11 +24,12 @@ trait Character:
   /** Maximum number of bytes required to store a single character. */
   def maxLen: Int
 
-  /** Variable that contains the SQL string of Character
-    *
-    * @return
-    *   SQL query string
-    */
+  /**
+   * Variable that contains the SQL string of Character
+   *
+   * @return
+   *   SQL query string
+   */
   val queryString: String = s"CHARACTER SET $name"
 
 object Character:
@@ -235,9 +239,10 @@ object Character:
     override def description: String = "UTF-8 Unicode"
     override def maxLen:      Int    = 4
 
-/** A model for representing collations to be set in column definitions for the string data types CHAR, VARCHAR, TEXT,
-  * ENUM, SET, and any synonym.
-  */
+/**
+ * A model for representing collations to be set in column definitions for the string data types CHAR, VARCHAR, TEXT,
+ * ENUM, SET, and any synonym.
+ */
 trait Collate[T <: Collate.COLLATION_TYPE] extends Attribute[T]:
 
   /** Collate name */
@@ -258,11 +263,12 @@ trait Collate[T <: Collate.COLLATION_TYPE] extends Attribute[T]:
   /** It relates to the amount of memory required to sort a string represented by a character set. */
   def sortLen: Int
 
-  /** Variable that contains the SQL string of Collate
-    *
-    * @return
-    *   SQL query string
-    */
+  /**
+   * Variable that contains the SQL string of Collate
+   *
+   * @return
+   *   SQL query string
+   */
   val queryString: String = s"COLLATE $name"
 
 object Collate:

@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.dsl
 
@@ -41,45 +43,49 @@ case class Database[F[_]: Sync](
 
   def setTables(tables: Set[Table[?]]): Database[F] = this.copy(tables = tables)
 
-  /** Functions to manage the processing of connections independently.
-    *
-    * @param connectionKleisli
-    *   A Kleisli function that receives a Connection.
-    * @tparam T
-    *   Type of data to be retrieved after database processing is executed.
-    */
+  /**
+   * Functions to manage the processing of connections independently.
+   *
+   * @param connectionKleisli
+   *   A Kleisli function that receives a Connection.
+   * @tparam T
+   *   Type of data to be retrieved after database processing is executed.
+   */
   def connection[T](connectionKleisli: Connection[F] => F[T]): F[T] =
     buildConnectionResource(connectionF()).use(connection => connectionKleisli(connection))
 
-  /** Functions for managing the processing of connections in a read-only manner.
-    *
-    * @param connectionKleisli
-    *   A Kleisli function that receives a Connection.
-    * @tparam T
-    *   Type of data to be retrieved after database processing is executed.
-    */
+  /**
+   * Functions for managing the processing of connections in a read-only manner.
+   *
+   * @param connectionKleisli
+   *   A Kleisli function that receives a Connection.
+   * @tparam T
+   *   Type of data to be retrieved after database processing is executed.
+   */
   def readOnly[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
     connection(connection => connection.setReadOnly(true) >> connectionKleisli.run(connection))
 
-  /** Functions to manage the processing of connections for writing.
-    *
-    * @param connectionKleisli
-    *   A Kleisli function that receives a Connection.
-    * @tparam T
-    *   Type of data to be retrieved after database processing is executed.
-    */
+  /**
+   * Functions to manage the processing of connections for writing.
+   *
+   * @param connectionKleisli
+   *   A Kleisli function that receives a Connection.
+   * @tparam T
+   *   Type of data to be retrieved after database processing is executed.
+   */
   def autoCommit[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
     connection(connection =>
       connection.setReadOnly(false) >> connection.setAutoCommit(true) >> connectionKleisli.run(connection)
     )
 
-  /** Functions to manage the processing of connections in a transaction.
-    *
-    * @param connectionKleisli
-    *   A Kleisli function that receives a Connection.
-    * @tparam T
-    *   Type of data to be retrieved after database processing is executed.
-    */
+  /**
+   * Functions to manage the processing of connections in a transaction.
+   *
+   * @param connectionKleisli
+   *   A Kleisli function that receives a Connection.
+   * @tparam T
+   *   Type of data to be retrieved after database processing is executed.
+   */
   def transaction[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
     connection(connection =>
       connection.setReadOnly(false) >> connection.setAutoCommit(false) >> Resource
@@ -90,13 +96,14 @@ case class Database[F[_]: Sync](
         .use(connectionKleisli.run)
     )
 
-  /** Functions to manage the processing of connections, always rolling back.
-    *
-    * @param connectionKleisli
-    *   A Kleisli function that receives a Connection.
-    * @tparam T
-    *   Type of data to be retrieved after database processing is executed.
-    */
+  /**
+   * Functions to manage the processing of connections, always rolling back.
+   *
+   * @param connectionKleisli
+   *   A Kleisli function that receives a Connection.
+   * @tparam T
+   *   Type of data to be retrieved after database processing is executed.
+   */
   def rollback[T](connectionKleisli: Kleisli[F, Connection[F], T]): F[T] =
     connection(connection =>
       connection.setAutoCommit(false) >> connectionKleisli.run(connection) <* connection.rollback()

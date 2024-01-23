@@ -1,16 +1,19 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.codegen.model
 
-/** A model to hold the results of parsing the SET syntax for variable assignments.
-  *
-  * @param variable
-  *   Definition Variable Name
-  * @param expr
-  *   Variable value
-  */
+/**
+ * A model to hold the results of parsing the SET syntax for variable assignments.
+ *
+ * @param variable
+ *   Definition Variable Name
+ * @param expr
+ *   Variable value
+ */
 case class SetDefinition(
   variable: String,
   expr:     String

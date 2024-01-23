@@ -14,7 +14,7 @@ ThisBuild / crossScalaVersions := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(
-  scalaFmt.value, sbtScripted.value
+  scalaFmt.value, copyrightHeaderCheck.value, sbtScripted.value
 )
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
@@ -90,7 +90,7 @@ lazy val benchmark = (project in file("benchmark"))
     slick
   ))
   .dependsOn(dsl)
-  .enablePlugins(JmhPlugin)
+  .enablePlugins(JmhPlugin, AutomateHeaderPlugin)
 
 lazy val docs = (project in file("docs"))
   .settings(

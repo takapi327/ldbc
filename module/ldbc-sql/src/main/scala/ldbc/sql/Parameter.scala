@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.sql
 
@@ -13,24 +15,26 @@ import scala.compiletime.*
 
 import ldbc.core.model.Enum
 
-/** Trait for setting Scala and Java values to PreparedStatement.
-  *
-  * @tparam F
-  *   The effect type
-  * @tparam T
-  *   Scala and Java types available in PreparedStatement.
-  */
+/**
+ * Trait for setting Scala and Java values to PreparedStatement.
+ *
+ * @tparam F
+ *   The effect type
+ * @tparam T
+ *   Scala and Java types available in PreparedStatement.
+ */
 trait Parameter[F[_], -T]:
 
-  /** Methods for setting Scala and Java values to the specified position in PreparedStatement.
-    *
-    * @param statement
-    *   An object that represents a precompiled SQL statement.
-    * @param index
-    *   the first parameter is 1, the second is 2, ...
-    * @param value
-    *   the parameter value
-    */
+  /**
+   * Methods for setting Scala and Java values to the specified position in PreparedStatement.
+   *
+   * @param statement
+   *   An object that represents a precompiled SQL statement.
+   * @param index
+   *   the first parameter is 1, the second is 2, ...
+   * @param value
+   *   the parameter value
+   */
   def bind(statement: PreparedStatement[F], index: Int, value: T): F[Unit]
 
 object Parameter:

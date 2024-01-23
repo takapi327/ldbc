@@ -27,6 +27,21 @@ object Workflows {
     )
   )
 
+  val copyrightHeaderCheck: Def.Initialize[WorkflowJob] = Def.setting(
+    WorkflowJob(
+      "headerCheck",
+      "HeaderCheck",
+      githubWorkflowJobSetup.value.toList ::: List(
+        WorkflowStep.Run(
+          List("sbt headerCheckAll"),
+          name = Some("Copyright Header Check"),
+        )
+      ),
+      scalas = List(scala3),
+      javas = List(JavaSpec.temurin(java11), JavaSpec.temurin(java17)),
+    )
+  )
+
   val sbtScripted: Def.Initialize[WorkflowJob] = Def.setting(
     WorkflowJob(
       "sbtScripted",

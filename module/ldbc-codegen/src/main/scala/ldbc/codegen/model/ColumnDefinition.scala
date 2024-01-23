@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.codegen.model
 
@@ -37,26 +39,29 @@ object ColumnDefinition:
 
   object Attribute:
 
-    /** A model for determining if a data type is null tolerant.
-      *
-      * @param bool
-      *   true: NULL, false: NOT NULL
-      */
+    /**
+     * A model for determining if a data type is null tolerant.
+     *
+     * @param bool
+     *   true: NULL, false: NOT NULL
+     */
     case class Condition(bool: Boolean) extends Attribute
 
-    /** Trait for setting SQL Default values
-      */
+    /**
+     * Trait for setting SQL Default values
+     */
     trait Default extends Attribute:
 
       def toCode(isOptional: Boolean): String
 
     object Default:
 
-      /** Model to be used when a value matching the DataType type is set.
-        *
-        * @param value
-        *   Value set as the default value for DataType
-        */
+      /**
+       * Model to be used when a value matching the DataType type is set.
+       *
+       * @param value
+       *   Value set as the default value for DataType
+       */
       case class Value(value: String | Int | Double | Boolean) extends Default:
         private val str = value match
           case v: String => s"\"$v\""
@@ -66,55 +71,62 @@ object ColumnDefinition:
           if isOptional then s".DEFAULT(Some($str))"
           else s".DEFAULT($str)"
 
-      /** Object for setting NULL as the Default value when the SQL DataType is NULL-allowed.
-        */
+      /**
+       * Object for setting NULL as the Default value when the SQL DataType is NULL-allowed.
+       */
       object Null extends Default:
         override def toCode(isOptional: Boolean): String =
           if isOptional then ".DEFAULT(None)"
           else
             throw new IllegalArgumentException("NULL cannot be set as the default value for non-null-allowed columns.")
 
-      /** Model for setting TimeStamp-specific Default values.
-        *
-        * @param onUpdate
-        *   Value to determine whether to set additional information
-        */
+      /**
+       * Model for setting TimeStamp-specific Default values.
+       *
+       * @param onUpdate
+       *   Value to determine whether to set additional information
+       */
       case class CurrentTimestamp(onUpdate: Boolean) extends Default:
         override def toCode(isOptional: Boolean): String =
           if onUpdate then ".DEFAULT_CURRENT_TIMESTAMP(true)"
           else ".DEFAULT_CURRENT_TIMESTAMP(false)"
 
-    /** A model representing the VISIBLE attribute to be set on the column.
-      *
-      * @param kind
-      *   VISIBLE or INVISIBLE
-      */
+    /**
+     * A model representing the VISIBLE attribute to be set on the column.
+     *
+     * @param kind
+     *   VISIBLE or INVISIBLE
+     */
     case class Visible(kind: String) extends Attribute
 
-    /** A model representing the KEY attribute to be set on the column.
-      *
-      * @param kind
-      *   KEY Type
-      */
+    /**
+     * A model representing the KEY attribute to be set on the column.
+     *
+     * @param kind
+     *   KEY Type
+     */
     case class Key(kind: String) extends Attribute
 
-    /** A model representing the Collate attribute to be set on the column.
-      *
-      * @param set
-      *   String to be set for Collate.
-      */
+    /**
+     * A model representing the Collate attribute to be set on the column.
+     *
+     * @param set
+     *   String to be set for Collate.
+     */
     case class Collate(set: String) extends Attribute
 
-    /** A model representing the COLUMN_FORMAT attribute to be set on the column.
-      *
-      * @param format
-      *   FIXED, DYNAMIC or DEFAULT
-      */
+    /**
+     * A model representing the COLUMN_FORMAT attribute to be set on the column.
+     *
+     * @param format
+     *   FIXED, DYNAMIC or DEFAULT
+     */
     case class ColumnFormat(format: String) extends Attribute
 
-    /** A model representing the STORAGE attribute to be set on the column.
-      *
-      * @param kind
-      *   DISK or MEMORY
-      */
+    /**
+     * A model representing the STORAGE attribute to be set on the column.
+     *
+     * @param kind
+     *   DISK or MEMORY
+     */
     case class Storage(kind: String) extends Attribute

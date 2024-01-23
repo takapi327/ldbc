@@ -1,16 +1,19 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.codegen.parser
 
 import ldbc.codegen.model.DataType
 
-/** Parser for parsing data type definitions.
-  *
-  * Please refer to the official documentation for MySQL data type definitions. SEE:
-  * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
-  */
+/**
+ * Parser for parsing data type definitions.
+ *
+ * Please refer to the official documentation for MySQL data type definitions. SEE:
+ * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+ */
 trait DataTypeParser extends SqlParser:
 
   protected def digit:  Parser[Int]    = """-?\d+""".r ^^ (_.toInt)
@@ -72,8 +75,9 @@ trait DataTypeParser extends SqlParser:
            |""".stripMargin
     )
 
-  /** Numeric data type parsing
-    */
+  /**
+   * Numeric data type parsing
+   */
   private[ldbc] def bitType: Parser[DataType] =
     customError(
       caseSensitivity("bit") ~> opt(argument("BIT", 1, 64, 1)) ^^ { n =>
@@ -280,8 +284,9 @@ trait DataTypeParser extends SqlParser:
         |""".stripMargin
     )
 
-  /** String data type parsing
-    */
+  /**
+   * String data type parsing
+   */
   private[ldbc] def charType: Parser[DataType] =
     customError(
       opt(caseSensitivity("national")) ~> (caseSensitivity("char") ||| caseSensitivity("character")) ~>
@@ -533,8 +538,9 @@ trait DataTypeParser extends SqlParser:
         |""".stripMargin
     )
 
-  /** Date data type parsing
-    */
+  /**
+   * Date data type parsing
+   */
   private[ldbc] def dateType: Parser[DataType] =
     customError(
       caseSensitivity("date") ^^ (_ => DataType.DATE()),
@@ -637,8 +643,9 @@ trait DataTypeParser extends SqlParser:
         |""".stripMargin
     )
 
-  /** Alias data type parsing
-    */
+  /**
+   * Alias data type parsing
+   */
   private[ldbc] def serialType: Parser[DataType] =
     customError(
       caseSensitivity("serial") ^^ (_ => DataType.SERIAL()),
