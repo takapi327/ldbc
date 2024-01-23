@@ -46,10 +46,16 @@ lazy val sql = crossProject(JVMPlatform)
   .dependsOn(core)
   .enablePlugins(AutomateHeaderPlugin)
 
-lazy val queryBuilder = LepusSbtProject("ldbc-query-builder", "module/ldbc-query-builder")
+lazy val queryBuilder = crossProject(JVMPlatform)
+  .crossType(CrossType.Full)
+  .in(file("module/ldbc-query-builder"))
+  .settings(name := "ldbc-query-builder")
   .settings(description := "Project to build type-safe queries")
-  .settings(libraryDependencies += scalaTest)
-  .dependsOn(sql.jvm)
+  .settings(scalaVersion := scala3)
+  .settings(scalacOptions ++= scala3Settings)
+  .settings(commonSettings)
+  .dependsOn(sql)
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val dsl = LepusSbtProject("ldbc-dsl", "module/ldbc-dsl")
   .settings(description := "Projects that provide a way to connect to the database")
@@ -59,7 +65,7 @@ lazy val dsl = LepusSbtProject("ldbc-dsl", "module/ldbc-dsl")
     scalaTest,
     mysql % Test
   ) ++ specs2)
-  .dependsOn(queryBuilder)
+  .dependsOn(queryBuilder.jvm)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(description := "Project to generate SchemaSPY documentation")
@@ -131,7 +137,7 @@ lazy val docs = (project in file("docs"))
     core.jvm,
     sql.jvm,
     dsl,
-    queryBuilder,
+    queryBuilder.jvm,
     schemaSpy,
     codegen,
     hikari
@@ -148,7 +154,7 @@ lazy val projects: Seq[ProjectReference] = Seq(
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
   sql.jvm,
   dsl,
-  queryBuilder,
+  queryBuilder.jvm,
   schemaSpy,
   codegen,
   hikari
