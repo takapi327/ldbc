@@ -159,25 +159,26 @@ lazy val docs = (project in file("docs"))
   )
   .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin)
 
-lazy val projects: Seq[ProjectReference] = Seq(
+lazy val jvmProjects: Seq[ProjectReference] = Seq(
   core.jvm,
+  sql.jvm,
+  queryBuilder.jvm,
+  dsl.jvm,
+  codegen.jvm,
   plugin,
   docs,
-  benchmark
-)
-
-lazy val moduleProjects: Seq[ProjectReference] = Seq(
-  sql.jvm,
-  dsl.jvm,
-  queryBuilder.jvm,
+  benchmark,
   schemaSpy,
-  codegen.jvm,
   hikari
 )
+
+lazy val jsProjects: Seq[ProjectReference] = Seq()
+
+lazy val nativeProjects: Seq[ProjectReference] = Seq()
 
 lazy val ldbc = project.in(file("."))
   .settings(scalaVersion := (core.jvm / scalaVersion).value)
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(publish / skip := true)
   .settings(commonSettings)
-  .aggregate((projects ++ moduleProjects): _*)
+  .aggregate((jvmProjects ++ jsProjects ++ nativeProjects)*)
