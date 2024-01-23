@@ -54,6 +54,7 @@ lazy val queryBuilder = crossProject(JVMPlatform)
   .settings(scalaVersion := scala3)
   .settings(scalacOptions ++= scala3Settings)
   .settings(commonSettings)
+  .settings(libraryDependencies += scalaTest)
   .dependsOn(sql)
   .enablePlugins(AutomateHeaderPlugin)
 
