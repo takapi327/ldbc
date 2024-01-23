@@ -35,14 +35,21 @@ lazy val core = crossProject(JVMPlatform)
   .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
   .enablePlugins(AutomateHeaderPlugin)
 
-lazy val sql = LepusSbtProject("ldbc-sql", "module/ldbc-sql")
+lazy val sql = crossProject(JVMPlatform)
+  .crossType(CrossType.Full)
+  .in(file("module/ldbc-sql"))
+  .settings(name := "ldbc-sql")
   .settings(description := "JDBC API wrapped project with Effect System")
-  .dependsOn(core.jvm)
+  .settings(scalaVersion := scala3)
+  .settings(scalacOptions ++= scala3Settings)
+  .settings(commonSettings)
+  .dependsOn(core)
+  .enablePlugins(AutomateHeaderPlugin)
 
 lazy val queryBuilder = LepusSbtProject("ldbc-query-builder", "module/ldbc-query-builder")
   .settings(description := "Project to build type-safe queries")
   .settings(libraryDependencies += scalaTest)
-  .dependsOn(sql)
+  .dependsOn(sql.jvm)
 
 lazy val dsl = LepusSbtProject("ldbc-dsl", "module/ldbc-dsl")
   .settings(description := "Projects that provide a way to connect to the database")
@@ -122,7 +129,7 @@ lazy val docs = (project in file("docs"))
   .settings(commonSettings)
   .dependsOn(
     core.jvm,
-    sql,
+    sql.jvm,
     dsl,
     queryBuilder,
     schemaSpy,
@@ -139,7 +146,7 @@ lazy val projects: Seq[ProjectReference] = Seq(
 )
 
 lazy val moduleProjects: Seq[ProjectReference] = Seq(
-  sql,
+  sql.jvm,
   dsl,
   queryBuilder,
   schemaSpy,
