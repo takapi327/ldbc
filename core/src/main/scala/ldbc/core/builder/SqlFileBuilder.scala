@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core.builder
 
@@ -13,8 +15,9 @@ import scala.io.Codec
 import ldbc.core.Database
 import ldbc.core.syntax.given
 
-/** Object to generate sql files that write out Create statements for databases and tables.
-  */
+/**
+ * Object to generate sql files that write out Create statements for databases and tables.
+ */
 object SqlFileBuilder:
 
   private def build(

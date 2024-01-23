@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.query.builder.statement
 
@@ -13,15 +15,16 @@ import ldbc.sql.*
 import ldbc.query.builder.interpreter.Tuples
 import ldbc.query.builder.{ TableQuery, ColumnQuery }
 
-/** Trait to build a Join.
-  *
-  * @tparam F
-  *   The effect type
-  * @tparam JOINS
-  *   Tuple type of TableQuery used to perform the Join.
-  * @tparam SELECTS
-  *   Tuple type of TableQuery used to construct Select statements, etc.
-  */
+/**
+ * Trait to build a Join.
+ *
+ * @tparam F
+ *   The effect type
+ * @tparam JOINS
+ *   Tuple type of TableQuery used to perform the Join.
+ * @tparam SELECTS
+ *   Tuple type of TableQuery used to construct Select statements, etc.
+ */
 trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
   self =>
 
@@ -40,15 +43,16 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
   /** Statement of Join. */
   def statement: String = s"FROM ${ main.table._name } ${ joinStatements.mkString(" ") }"
 
-  /** A method to perform a simple Join.
-    *
-    * @param other
-    *   [[TableQuery]] to do a Join.
-    * @param on
-    *   Comparison function that performs a Join.
-    * @tparam P
-    *   Base trait for all products
-    */
+  /**
+   * A method to perform a simple Join.
+   *
+   * @param other
+   *   [[TableQuery]] to do a Join.
+   * @param on
+   *   Comparison function that performs a Join.
+   * @tparam P
+   *   Base trait for all products
+   */
   def join[P <: Product](other: TableQuery[F, P])(
     on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
   )(using
@@ -64,15 +68,16 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
       joinStatements :+ s"${ Join.JoinType.JOIN.statement } ${ other.table._name } ON ${ on(joins ++ Tuple(joinTable)).statement }"
     )
 
-  /** Method to perform Left Join.
-    *
-    * @param other
-    *   [[TableQuery]] to do a Join.
-    * @param on
-    *   Comparison function that performs a Join.
-    * @tparam P
-    *   Base trait for all products
-    */
+  /**
+   * Method to perform Left Join.
+   *
+   * @param other
+   *   [[TableQuery]] to do a Join.
+   * @param on
+   *   Comparison function that performs a Join.
+   * @tparam P
+   *   Base trait for all products
+   */
   def leftJoin[P <: Product](other: TableQuery[F, P])(
     on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
   )(using
@@ -88,15 +93,16 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
       joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.table._name } ON ${ on(joins ++ Tuple(joinTable)).statement }"
     )
 
-  /** Method to perform Right Join.
-    *
-    * @param other
-    *   [[TableQuery]] to do a Join.
-    * @param on
-    *   Comparison function that performs a Join.
-    * @tparam P
-    *   Base trait for all products
-    */
+  /**
+   * Method to perform Right Join.
+   *
+   * @param other
+   *   [[TableQuery]] to do a Join.
+   * @param on
+   *   Comparison function that performs a Join.
+   * @tparam P
+   *   Base trait for all products
+   */
   def rightJoin[P <: Product](other: TableQuery[F, P])(
     on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
   )(using

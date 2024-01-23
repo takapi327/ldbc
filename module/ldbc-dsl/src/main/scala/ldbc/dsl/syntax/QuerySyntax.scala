@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.dsl.syntax
 
@@ -33,8 +35,9 @@ trait QuerySyntax[F[_]: Sync]:
         .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[F, T]])
     }
 
-    /** Methods for returning an array of data to be retrieved from the database.
-      */
+    /**
+     * Methods for returning an array of data to be retrieved from the database.
+     */
     inline def toList: FactoryCompat[Tuples.InverseColumnMap[F, T], List[Tuples.InverseColumnMap[F, T]]] ?=> LogHandler[
       F
     ] ?=> Kleisli[F, Connection[F], List[Tuples.InverseColumnMap[F, T]]] =
@@ -49,9 +52,10 @@ trait QuerySyntax[F[_]: Sync]:
         summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
       connectionToList[P](buildQuery.statement, buildQuery.params)
 
-    /** A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
-      * first one is retrieved.
-      */
+    /**
+     * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
+     * first one is retrieved.
+     */
     inline def headOption: LogHandler[F] ?=> Kleisli[F, Connection[F], Option[Tuples.InverseColumnMap[F, T]]] =
       connectionToHeadOption[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
 
@@ -63,9 +67,10 @@ trait QuerySyntax[F[_]: Sync]:
         summon[Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[F, T]]].map(mirror.fromProduct)
       connectionToHeadOption[P](buildQuery.statement, buildQuery.params)
 
-    /** A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
-      * raised. Use the [[headOption]] method if you want to retrieve individual data.
-      */
+    /**
+     * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
+     * raised. Use the [[headOption]] method if you want to retrieve individual data.
+     */
     inline def unsafe: LogHandler[F] ?=> Kleisli[F, Connection[F], Tuples.InverseColumnMap[F, T]] =
       connectionToUnsafe[Tuples.InverseColumnMap[F, T]](buildQuery.statement, buildQuery.params)
 

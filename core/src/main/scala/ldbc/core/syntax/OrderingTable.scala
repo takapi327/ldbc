@@ -1,20 +1,24 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core.syntax
 
 import ldbc.core.{ Table, ForeignKey, Constraint }
 
-/** Trait that provides for sorting an array of tables.
-  */
+/**
+ * Trait that provides for sorting an array of tables.
+ */
 trait OrderingTable:
 
-  /** Methods for calculating specific weights according to external reference keys.
-    *
-    * @param table
-    *   Trait for generating SQL table information.
-    */
+  /**
+   * Methods for calculating specific weights according to external reference keys.
+   *
+   * @param table
+   *   Trait for generating SQL table information.
+   */
   private def calculateWeightByReference(table: Table[?]): Int =
     if table.keyDefinitions.nonEmpty then
       table.keyDefinitions.map {

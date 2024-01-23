@@ -1,15 +1,18 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.dsl.logging
 
-/** copied from doobie:
-  * https://github.com/tpolecat/doobie/blob/main/modules/free/src/main/scala/doobie/util/log.scala#L22
-  *
-  * Algebraic type of events that can be passed to a `LogHandler`, both parameterized by the argument type of the SQL
-  * input parameters (this is typically an `HList`).
-  */
+/**
+ * copied from doobie:
+ * https://github.com/tpolecat/doobie/blob/main/modules/free/src/main/scala/doobie/util/log.scala#L22
+ *
+ * Algebraic type of events that can be passed to a `LogHandler`, both parameterized by the argument type of the SQL
+ * input parameters (this is typically an `HList`).
+ */
 sealed trait LogEvent:
 
   /** The complete SQL string as seen by JDBC. */

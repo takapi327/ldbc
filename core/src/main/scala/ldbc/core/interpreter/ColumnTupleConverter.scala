@@ -1,21 +1,25 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.core.interpreter
 
-/** Column Type representing the conversion from Tuple to Tuple Map.
-  *
-  * @tparam Types
-  *   Primitive Tuples
-  * @tparam F
-  *   Column Type
-  */
+/**
+ * Column Type representing the conversion from Tuple to Tuple Map.
+ *
+ * @tparam Types
+ *   Primitive Tuples
+ * @tparam F
+ *   Column Type
+ */
 opaque type ColumnTupleConverter[Types <: Tuple, F[_]] =
   ColumnTuples[Types, F] => Tuple.Map[Types, F]
 
-/** An object that converts a Column's Tuple to a Tuple Map
-  */
+/**
+ * An object that converts a Column's Tuple to a Tuple Map
+ */
 object ColumnTupleConverter:
 
   /** Implicit value of ColumnTupleConverter according to the number of Tuples. */
@@ -29,17 +33,18 @@ object ColumnTupleConverter:
   ): ColumnTupleConverter[T1 *: T2 *: TN, F] =
     (columns: F[T1] *: ColumnTuples[T2 *: TN, F]) => columns.head *: converter(columns.tail)
 
-  /** Method for converting Column Tuple to Tuple Map.
-    *
-    * @param columnTuples
-    *   Tuple of Columns
-    * @param converter
-    *   An object that converts a Column's Tuple to a Tuple Map
-    * @tparam Types
-    *   Primitive Tuples
-    * @tparam F
-    *   The effect type
-    */
+  /**
+   * Method for converting Column Tuple to Tuple Map.
+   *
+   * @param columnTuples
+   *   Tuple of Columns
+   * @param converter
+   *   An object that converts a Column's Tuple to a Tuple Map
+   * @tparam Types
+   *   Primitive Tuples
+   * @tparam F
+   *   The effect type
+   */
   def convert[Types <: Tuple, F[_]](columnTuples: ColumnTuples[Types, F])(using
     converter: ColumnTupleConverter[Types, F]
   ): Tuple.Map[Types, F] =

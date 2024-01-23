@@ -1,17 +1,20 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.codegen.parser
 
 import ldbc.codegen.model.*
 import ldbc.codegen.model.ColumnDefinition.*
 
-/** Parser for parsing column definitions.
-  *
-  * Please refer to the official documentation for MySQL column definitions. SEE:
-  * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
-  */
+/**
+ * Parser for parsing column definitions.
+ *
+ * Please refer to the official documentation for MySQL column definitions. SEE:
+ * https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+ */
 trait ColumnParser extends DataTypeParser:
 
   private def condition: Parser[Attribute.Condition] =

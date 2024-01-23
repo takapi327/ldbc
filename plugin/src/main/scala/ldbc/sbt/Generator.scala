@@ -1,6 +1,8 @@
-/** This file is part of the Lepus Framework. For the full copyright and license information, please view the LICENSE
-  * file that was distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.sbt
 
@@ -20,8 +22,9 @@ object Generator {
 
   private val logger = ProcessLogger()
 
-  /** Generate code from SQL schema. Create a cache, and if a cache exists, do not generate it.
-    */
+  /**
+   * Generate code from SQL schema. Create a cache, and if a cache exists, do not generate it.
+   */
   val generate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
       Compile / parseFiles,
@@ -35,8 +38,9 @@ object Generator {
       Compile / ldbcPackage
     )
 
-  /** Generate code from SQL schema. Always generate code.
-    */
+  /**
+   * Generate code from SQL schema. Always generate code.
+   */
   val alwaysGenerate: Def.Initialize[Task[Seq[File]]] =
     generateCode(
       Compile / parseFiles,
