@@ -33,7 +33,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies ++= Seq(
     "org.typelevel" %%% "cats-core" % "2.10.0",
     "org.scalatest" %%% "scalatest" % "3.2.17" % Test,
-    "org.specs2"    %%% "specs2-core" % "5.4.2" % Test,
+    "org.specs2"    %%% "specs2-core" % "4.20.5" % Test,
   ))
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
