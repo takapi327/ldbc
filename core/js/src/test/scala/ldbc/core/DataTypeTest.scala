@@ -6,24 +6,22 @@
 
 package ldbc.core
 
-import java.time.{ LocalTime, LocalDate, LocalDateTime }
-import java.time.Year as JYear
-
-import org.specs2.mutable.Specification
-
 import ldbc.core.DataType.*
 import ldbc.core.model.EnumDataType
+import org.specs2.mutable.Specification
+
+import java.time.{LocalDate, LocalDateTime, LocalTime, Year as JYear}
 
 object DataTypeTest extends Specification:
 
   "DataType Test" should {
     "The query string generated from the Bit DataType model matches the specified one." in {
       BIT[Byte](1).queryString === "BIT(1) NOT NULL" and
-        BIT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "BIT(64) NOT NULL DEFAULT '98'" and
+        BIT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "BIT(64) NOT NULL DEFAULT 98" and
         BIT[Option[Short]](1).queryString === "BIT(1) NULL" and
         BIT[Option[Short]](64).DEFAULT(None).queryString === "BIT(64) NULL DEFAULT NULL" and
         BIT[Byte].queryString === "BIT NOT NULL" and
-        BIT[Byte].DEFAULT("byte".getBytes.head).queryString === "BIT NOT NULL DEFAULT '98'" and
+        BIT[Byte].DEFAULT("byte".getBytes.head).queryString === "BIT NOT NULL DEFAULT 98" and
         BIT[Option[Short]].queryString === "BIT NULL" and
         BIT[Option[Short]].DEFAULT(None).queryString === "BIT NULL DEFAULT NULL"
     }
@@ -31,32 +29,32 @@ object DataTypeTest extends Specification:
     "The query string generated from the Tinyint DataType model matches the specified one." in {
       TINYINT[Byte](1).queryString === "TINYINT(1) NOT NULL" and
         TINYINT[Byte](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NOT NULL" and
-        TINYINT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "TINYINT(64) NOT NULL DEFAULT '98'" and
+        TINYINT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "TINYINT(64) NOT NULL DEFAULT 98" and
         TINYINT[Byte](64)
           .DEFAULT("byte".getBytes.head)
           .UNSIGNED
-          .queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT '98'" and
+          .queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT 98" and
         TINYINT[Option[Byte]](1).queryString === "TINYINT(1) NULL" and
         TINYINT[Option[Byte]](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NULL" and
         TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL" and
         TINYINT[Option[Byte]](64)
           .DEFAULT("byte".getBytes.headOption)
-          .queryString === "TINYINT(64) NULL DEFAULT '98'" and
+          .queryString === "TINYINT(64) NULL DEFAULT 98" and
         TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL" and
         TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL" and
         TINYINT[Byte].queryString === "TINYINT NOT NULL" and
         TINYINT[Byte].UNSIGNED.queryString === "TINYINT UNSIGNED NOT NULL" and
-        TINYINT[Byte].DEFAULT("byte".getBytes.head).queryString === "TINYINT NOT NULL DEFAULT '98'" and
+        TINYINT[Byte].DEFAULT("byte".getBytes.head).queryString === "TINYINT NOT NULL DEFAULT 98" and
         TINYINT[Byte]
           .DEFAULT("byte".getBytes.head)
           .UNSIGNED
-          .queryString === "TINYINT UNSIGNED NOT NULL DEFAULT '98'" and
+          .queryString === "TINYINT UNSIGNED NOT NULL DEFAULT 98" and
         TINYINT[Option[Byte]].queryString === "TINYINT NULL" and
         TINYINT[Option[Byte]].UNSIGNED.queryString === "TINYINT UNSIGNED NULL" and
         TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL" and
         TINYINT[Option[Byte]]
           .DEFAULT("byte".getBytes.headOption)
-          .queryString === "TINYINT NULL DEFAULT '98'" and
+          .queryString === "TINYINT NULL DEFAULT 98" and
         TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL" and
         TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL"
     }
@@ -150,10 +148,10 @@ object DataTypeTest extends Specification:
 
     "The query string generated from the Float DataType model matches the specified one." in {
       FLOAT[Float](0).queryString === "FLOAT(0) NOT NULL" and
-        FLOAT[Float](0).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT 1.2" and
+        FLOAT[Float](0).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT 1.2000000476837158" and
         FLOAT[Option[Float]](0).queryString === "FLOAT(0) NULL" and
         FLOAT[Option[Float]](0).DEFAULT(None).queryString === "FLOAT(0) NULL DEFAULT NULL" and
-        FLOAT[Option[Float]](0).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT 1.2"
+        FLOAT[Option[Float]](0).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT 1.2000000476837158"
     }
 
     "The query string generated from the Char DataType model matches the specified one." in {
