@@ -47,7 +47,7 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .dependsOn(core)
 
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Full)
+  .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
   .dependsOn(sql)
