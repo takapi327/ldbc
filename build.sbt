@@ -30,7 +30,16 @@ sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .default("core", "ldbc core project")
-  .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
+  .settings(libraryDependencies ++= Seq(
+    "org.typelevel" %%% "cats-core" % "2.10.0",
+    "org.scalatest" %%% "scalatest" % "3.2.17" % Test,
+    "org.specs2"    %%% "specs2-core" % "5.4.2" % Test,
+  ))
+  .platformsSettings(JSPlatform, NativePlatform)(
+    libraryDependencies ++= Seq(
+      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+    )
+  )
 
 lazy val sql = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
