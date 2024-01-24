@@ -10,7 +10,6 @@ import cats.syntax.either.*
 
 import io.circe.*
 import io.circe.generic.semiauto.deriveDecoder
-import io.circe.yaml
 
 /**
  * A model for storing the results of parsing strings in Yaml format.
