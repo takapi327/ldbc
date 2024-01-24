@@ -42,7 +42,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
 
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Full)
+  .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
   .dependsOn(core)
 
