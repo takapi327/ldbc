@@ -67,21 +67,20 @@ object Parser:
 
   given Decoder[Column] = (c: HCursor) =>
     for
-      name  <- c.downField("name").as[String]
+      name   <- c.downField("name").as[String]
       `type` <- c.downField("type").as[String]
     yield Column(name, `type`)
 
   given Decoder[Extend] = (c: HCursor) =>
-    for
-      `extends` <- c.downField("extends").as[Seq[String]]
+    for `extends` <- c.downField("extends").as[Seq[String]]
     yield Extend(`extends`)
 
   given Decoder[Table] = (c: HCursor) =>
     for
-      name    <- c.downField("name").as[String]
-      columns <- c.downField("columns").as[Option[Seq[Column]]]
+      name     <- c.downField("name").as[String]
+      columns  <- c.downField("columns").as[Option[Seq[Column]]]
       `object` <- c.downField("object").as[Option[Extend]]
-      `class` <- c.downField("class").as[Option[Extend]]
+      `class`  <- c.downField("class").as[Option[Extend]]
     yield Table(name, columns, `object`, `class`)
 
   given Decoder[Database] = (c: HCursor) =>
@@ -91,8 +90,7 @@ object Parser:
     yield Database(name, tables)
 
   given Decoder[Parser] = (c: HCursor) =>
-    for
-      database <- c.downField("database").as[Database]
+    for database <- c.downField("database").as[Database]
     yield Parser(database)
 
   /**
