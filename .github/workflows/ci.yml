@@ -61,7 +61,7 @@ jobs:
         run: docker compose down
 
       - name: Compress target directories
-        run: tar cf targets.tar module/ldbc-codegen/jvm/target module/ldbc-query-builder/jvm/target core/native/target docs/target module/ldbc-sql/.js/target target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target plugin/target module/ldbc-dsl/jvm/target benchmark/target project/target
+        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target core/native/target docs/target module/ldbc-sql/.js/target target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target plugin/target module/ldbc-dsl/jvm/target benchmark/target project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v4

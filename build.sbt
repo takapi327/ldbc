@@ -46,10 +46,10 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("sql", "JDBC API wrapped project with Effect System")
   .dependsOn(core)
 
-lazy val queryBuilder = crossProject(JVMPlatform)
-  .crossType(CrossType.Full)
+lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
-  .settings(libraryDependencies += scalaTest)
+  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
   .dependsOn(sql)
 
 lazy val dsl = crossProject(JVMPlatform)
@@ -156,12 +156,14 @@ lazy val jvmProjects: Seq[ProjectReference] = Seq(
 
 lazy val jsProjects: Seq[ProjectReference] = Seq(
   core.js,
-  sql.js
+  sql.js,
+  queryBuilder.js
 )
 
 lazy val nativeProjects: Seq[ProjectReference] = Seq(
   core.native,
-  sql.native
+  sql.native,
+  queryBuilder.native
 )
 
 lazy val ldbc = project.in(file("."))
