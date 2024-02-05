@@ -27,10 +27,19 @@ ThisBuild / githubWorkflowPublish := Seq(ciRelease)
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
 
-lazy val core = crossProject(JVMPlatform)
+lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .default("core", "ldbc core project")
-  .settings(libraryDependencies ++= Seq(cats, scalaTest) ++ specs2)
+  .settings(libraryDependencies ++= Seq(
+    "org.typelevel" %%% "cats-core" % "2.10.0",
+    "org.scalatest" %%% "scalatest" % "3.2.17" % Test,
+    "org.specs2"    %%% "specs2-core" % "4.20.5" % Test,
+  ))
+  .platformsSettings(JSPlatform, NativePlatform)(
+    libraryDependencies ++= Seq(
+      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+    )
+  )
 
 lazy val sql = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
@@ -145,9 +154,13 @@ lazy val jvmProjects: Seq[ProjectReference] = Seq(
   hikari
 )
 
-lazy val jsProjects: Seq[ProjectReference] = Seq()
+lazy val jsProjects: Seq[ProjectReference] = Seq(
+  core.js
+)
 
-lazy val nativeProjects: Seq[ProjectReference] = Seq()
+lazy val nativeProjects: Seq[ProjectReference] = Seq(
+  core.native
+)
 
 lazy val ldbc = project.in(file("."))
   .settings(scalaVersion := (core.jvm / scalaVersion).value)

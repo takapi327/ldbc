@@ -61,7 +61,6 @@ object BuildSettings {
     startYear := Some(2023),
     homepage := Some(url("https://takapi327.github.io/ldbc/")),
     licenses := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
-    Test / fork := true,
     run / fork := true,
     developers += Developer("takapi327", "Takahiko Tominaga", "t.takapi0327@gmail.com", url("https://github.com/takapi327")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> customCommentStyle),
