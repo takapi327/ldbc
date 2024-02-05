@@ -41,8 +41,8 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
 
-lazy val sql = crossProject(JVMPlatform)
-  .crossType(CrossType.Full)
+lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
   .dependsOn(core)
 
@@ -155,11 +155,13 @@ lazy val jvmProjects: Seq[ProjectReference] = Seq(
 )
 
 lazy val jsProjects: Seq[ProjectReference] = Seq(
-  core.js
+  core.js,
+  sql.js
 )
 
 lazy val nativeProjects: Seq[ProjectReference] = Seq(
-  core.native
+  core.native,
+  sql.native
 )
 
 lazy val ldbc = project.in(file("."))
