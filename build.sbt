@@ -68,10 +68,21 @@ lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(libraryDependencies += schemaspy)
   .dependsOn(core.jvm)
 
-lazy val codegen = crossProject(JVMPlatform)
+lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("codegen", "Project to generate code from Sql")
-  .settings(libraryDependencies ++= Seq(parserCombinators, circeYaml, circeGeneric, scalaTest) ++ specs2)
+  .settings(libraryDependencies ++= Seq(
+    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
+    "org.scalatest" %%% "scalatest" % "3.2.17" % Test,
+    "org.specs2" %%% "specs2-core" % "4.20.5" % Test,
+  ))
+  .jvmSettings(libraryDependencies ++= Seq(
+    "io.circe" %%% "circe-generic" % "0.14.6",
+    "io.circe" %%% "circe-yaml" % "0.15.1",
+  ))
+  .platformsSettings(JSPlatform, NativePlatform)(
+    libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
+  )
   .dependsOn(core)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
@@ -157,13 +168,15 @@ lazy val jvmProjects: Seq[ProjectReference] = Seq(
 lazy val jsProjects: Seq[ProjectReference] = Seq(
   core.js,
   sql.js,
-  queryBuilder.js
+  queryBuilder.js,
+  codegen.js
 )
 
 lazy val nativeProjects: Seq[ProjectReference] = Seq(
   core.native,
   sql.native,
-  queryBuilder.native
+  queryBuilder.native,
+  codegen.native
 )
 
 lazy val ldbc = project.in(file("."))
