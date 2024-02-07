@@ -19,6 +19,10 @@ import ScalaVersions.*
 
 object BuildSettings {
 
+  val additionalSettings: Seq[String] = Seq(
+    "-language:implicitConversions"
+  )
+
   val removeSettings: Seq[String] = Seq(
     "-Ykind-projector:underscores",
     "-Wvalue-discard"
@@ -66,6 +70,7 @@ object BuildSettings {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
         .settings(scalaVersion := scala3)
+        .settings(scalacOptions ++= additionalSettings)
         .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .enablePlugins(AutomateHeaderPlugin)
@@ -76,6 +81,7 @@ object BuildSettings {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
         .settings(scalaVersion := scala2)
+        .settings(scalacOptions ++= additionalSettings)
         .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .settings(scriptedSettings)
