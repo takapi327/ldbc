@@ -147,7 +147,7 @@ object PrimaryKey:
 
     override def indexType: Option[Index.Type] = _indexType
 
-    override def keyPart: List[Column[_]] = _keyPart
+    override def keyPart: List[Column[?]] = _keyPart
 
     override def indexOption: Option[Index.IndexOption] = _indexOption
 
@@ -180,7 +180,7 @@ object UniqueKey:
 
     override def indexType: Option[Index.Type] = _indexType
 
-    override def keyPart: List[Column[_]] = _keyPart
+    override def keyPart: List[Column[?]] = _keyPart
 
     override def indexOption: Option[Index.IndexOption] = _indexOption
 
