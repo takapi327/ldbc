@@ -17,15 +17,27 @@ on:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
+concurrency:
+  group: ${{ github.workflow }} @ ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build and Test
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [3.3.1]
+        scala: [3]
         java: [corretto@11, corretto@17]
+        project: [ldbcJS, ldbcNative, ldbcJVM]
+        exclude:
+          - project: ldbcJS
+            java: corretto@17
+          - project: ldbcNative
+            java: corretto@17
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     steps:
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
@@ -33,6 +45,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
         uses: actions/setup-java@v4
         with:
@@ -40,7 +53,12 @@ jobs:
           java-version: 11
           cache: sbt
 
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
         uses: actions/setup-java@v4
         with:
@@ -48,25 +66,55 @@ jobs:
           java-version: 17
           cache: sbt
 
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Start up MySQL on Docker
         run: docker compose up -d
 
       - name: Check that workflows are up to date
-        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
+        run: sbt githubWorkflowCheck
 
-      - name: Build project
-        run: sbt '++ ${{ matrix.scala }}' test
+      - name: Check headers and formatting
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
+
+      - name: scalaJSLink
+        if: matrix.project == 'ldbcJS'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' Test/scalaJSLinkerResult
+
+      - name: nativeLink
+        if: matrix.project == 'ldbcNative'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' Test/nativeLink
+
+      - name: Test
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' test
+
+      - name: Check binary compatibility
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' mimaReportBinaryIssues
+
+      - name: Generate API documentation
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
+        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' doc
 
       - name: Stop MySQL on Docker
         run: docker compose down
 
+      - name: Make target directories
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
+        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
+
       - name: Compress target directories
-        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-codegen/js/target core/native/target docs/target module/ldbc-sql/.js/target target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target plugin/target module/ldbc-dsl/jvm/target benchmark/target project/target
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
+        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
 
       - name: Upload target directories
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         uses: actions/upload-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-${{ matrix.project }}
           path: targets.tar
 
   publish:
@@ -76,7 +124,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.18]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
@@ -86,6 +133,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
         uses: actions/setup-java@v4
         with:
@@ -93,7 +141,12 @@ jobs:
           java-version: 11
           cache: sbt
 
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
         uses: actions/setup-java@v4
         with:
@@ -101,31 +154,71 @@ jobs:
           java-version: 17
           cache: sbt
 
-      - name: Download target directories (3.3.1)
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Download target directories (3, ldbcJS)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-3.3.1-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3-ldbcJS
 
-      - name: Inflate target directories (3.3.1)
+      - name: Inflate target directories (3, ldbcJS)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Publish project
+      - name: Download target directories (3, ldbcNative)
+        uses: actions/download-artifact@v4
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3-ldbcNative
+
+      - name: Inflate target directories (3, ldbcNative)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Download target directories (3, ldbcJVM)
+        uses: actions/download-artifact@v4
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3-ldbcJVM
+
+      - name: Inflate target directories (3, ldbcJVM)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Import signing key
+        if: env.PGP_SECRET != '' && env.PGP_PASSPHRASE == ''
         env:
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        run: echo $PGP_SECRET | base64 -d -i - | gpg --import
+
+      - name: Import signing key and strip passphrase
+        if: env.PGP_SECRET != '' && env.PGP_PASSPHRASE != ''
+        env:
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+        run: |
+          echo "$PGP_SECRET" | base64 -d -i - > /tmp/signing-key.gpg
+          echo "$PGP_PASSPHRASE" | gpg --pinentry-mode loopback --passphrase-fd 0 --import /tmp/signing-key.gpg
+          (echo "$PGP_PASSPHRASE"; echo; echo) | gpg --command-fd 0 --pinentry-mode loopback --change-passphrase $(gpg --list-secret-keys --with-colons 2> /dev/null | grep '^sec:' | cut --delimiter ':' --fields 5 | tail -n 1)
+
+      - name: Publish
+        env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: sbt ci-release
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_CREDENTIAL_HOST: ${{ secrets.SONATYPE_CREDENTIAL_HOST }}
+        run: sbt tlCiRelease
 
-  scalafmt:
-    name: Scalafmt
+  dependency-submission:
+    name: Submit Dependencies
+    if: github.event_name != 'pull_request'
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [3.3.1]
-        java: [temurin@11, temurin@17]
+        java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -134,6 +227,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
         uses: actions/setup-java@v4
         with:
@@ -141,7 +235,12 @@ jobs:
           java-version: 11
           cache: sbt
 
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
         uses: actions/setup-java@v4
         with:
@@ -149,41 +248,40 @@ jobs:
           java-version: 17
           cache: sbt
 
-      - name: Scalafmt check
-        run: sbt scalafmtCheck
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
 
-  headerCheck:
-    name: HeaderCheck
+      - name: Submit Dependencies
+        uses: scalacenter/sbt-dependency-submission@v2
+        with:
+          modules-ignore: ldbcjs_3 docs_3 ldbcnative_3 ldbcjvm_3 benchmark_3
+          configs-ignore: test scala-tool scala-doc-tool test-internal
+
+  validate-steward:
+    name: Validate Steward Config
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [3.3.1]
-        java: [temurin@11, temurin@17]
+        java: [temurin@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout current branch (full)
+      - name: Checkout current branch (fast)
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Setup Java (corretto@11)
-        if: matrix.java == 'corretto@11'
+      - name: Setup Java (temurin@11)
+        id: setup-java-temurin-11
+        if: matrix.java == 'temurin@11'
         uses: actions/setup-java@v4
         with:
-          distribution: corretto
+          distribution: temurin
           java-version: 11
-          cache: sbt
 
-      - name: Setup Java (corretto@17)
-        if: matrix.java == 'corretto@17'
-        uses: actions/setup-java@v4
+      - uses: coursier/setup-action@v1
         with:
-          distribution: corretto
-          java-version: 17
-          cache: sbt
+          apps: scala-steward
 
-      - name: Copyright Header Check
-        run: sbt headerCheckAll
+      - run: scala-steward validate-repo-config .scala-steward.conf
 
   sbtScripted:
     name: sbt scripted
@@ -200,6 +298,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
         uses: actions/setup-java@v4
         with:
@@ -207,13 +306,22 @@ jobs:
           java-version: 11
           cache: sbt
 
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
         uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 17
           cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
 
       - name: sbt publishLocal
         run: sbt +publishLocal
