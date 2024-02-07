@@ -149,35 +149,19 @@ lazy val docs = (project in file("docs"))
   )
   .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin, NoPublishPlugin)
 
-lazy val jvmProjects: Seq[ProjectReference] = Seq(
-  core.jvm,
-  sql.jvm,
-  queryBuilder.jvm,
-  dsl.jvm,
-  codegen.jvm,
-  plugin,
-  docs,
-  benchmark,
-  schemaSpy,
-  hikari
-)
-
-lazy val jsProjects: Seq[ProjectReference] = Seq(
-  core.js,
-  sql.js,
-  queryBuilder.js,
-  codegen.js
-)
-
-lazy val nativeProjects: Seq[ProjectReference] = Seq(
-  core.native,
-  sql.native,
-  queryBuilder.native,
-  codegen.native
-)
-
-lazy val ldbc = project.in(file("."))
+lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(commonSettings)
-  .aggregate((jvmProjects ++ jsProjects ++ nativeProjects)*)
+  .aggregate(
+    core,
+    sql,
+    queryBuilder,
+    dsl,
+    codegen,
+    plugin,
+    docs,
+    benchmark,
+    schemaSpy,
+    hikari
+  )
   .enablePlugins(NoPublishPlugin)
