@@ -14,6 +14,7 @@ import Implicits.*
 
 ThisBuild / tlBaseVersion := "0.3"
 ThisBuild / projectName := "ldbc"
+ThisBuild / scalaVersion := scala3
 ThisBuild / crossScalaVersions := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
@@ -100,14 +101,13 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
       version      = version.value,
-      scalaVersion = (core.jvm / scalaVersion).value,
+      scalaVersion = scalaVersion.value,
       sbtVersion   = sbtVersion.value,
       dir          = (Compile / sourceManaged).value
     )
   }.taskValue)
 
 lazy val benchmark = (project in file("benchmark"))
-  .settings(scalaVersion := (core.jvm / scalaVersion).value)
   .settings(description := "Projects for Benchmark Measurement")
   .settings(scalacOptions ++= scala3Settings)
   .settings(scalacOptions --= removeSettings)
@@ -124,7 +124,6 @@ lazy val benchmark = (project in file("benchmark"))
 
 lazy val docs = (project in file("docs"))
   .settings(
-    scalaVersion := (core.jvm / scalaVersion).value,
     description := "Documentation for ldbc",
     scalacOptions := Nil,
     publish / skip := true,
@@ -182,7 +181,6 @@ lazy val nativeProjects: Seq[ProjectReference] = Seq(
 )
 
 lazy val ldbc = project.in(file("."))
-  .settings(scalaVersion := (core.jvm / scalaVersion).value)
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(publish / skip := true)
   .settings(commonSettings)
