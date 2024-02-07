@@ -46,9 +46,9 @@ class Insert:
   var len: Int = _
 
   @Benchmark
-  def insertN: Int =
+  def insertN: Unit =
     Await.result(
-      db.run((query ++= records).asInstanceOf[slick.dbio.DBIOAction[Int, slick.dbio.NoStream, Nothing]]),
+      db.run(query ++= records),
       Duration.Inf
     )
 
