@@ -19,11 +19,6 @@ object BuildSettings {
 
   val baseScalaSettings: Seq[String] = Seq(
     "-Xfatal-warnings",
-    "-deprecation",
-    "-feature",
-    "-unchecked",
-    "-encoding",
-    "utf8",
     "-language:existentials",
     "-language:higherKinds",
     "-language:implicitConversions"
@@ -35,6 +30,11 @@ object BuildSettings {
 
   val scala3Settings: Seq[String] = baseScalaSettings ++ Seq(
     "-Wunused:all",
+  )
+
+  val removeSettings: Seq[String] = Seq(
+    "-Ykind-projector:underscores",
+    "-Wvalue-discard"
   )
 
   /**
@@ -78,6 +78,7 @@ object BuildSettings {
       Project(name, file(dir))
         .settings(scalaVersion := scala3)
         .settings(scalacOptions ++= scala3Settings)
+        .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .enablePlugins(AutomateHeaderPlugin)
   }
@@ -88,6 +89,7 @@ object BuildSettings {
       Project(name, file(dir))
         .settings(scalaVersion := scala2)
         .settings(scalacOptions ++= scala2Settings)
+        .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .settings(scriptedSettings)
         .enablePlugins(SbtPlugin, AutomateHeaderPlugin)
