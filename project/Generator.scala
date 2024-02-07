@@ -25,7 +25,7 @@ object Generator {
           |}
           |""".stripMargin
 
-    if !file.exists() || IO.read(file) != scalaSource then {
+    if (!file.exists() || IO.read(file) != scalaSource) {
       IO.write(file, scalaSource)
     }
 
