@@ -6,7 +6,7 @@
 
 import sbt.*
 
-import sbtghactions.GenerativePlugin.autoImport.*
+import org.typelevel.sbt.gha.GenerativePlugin.autoImport.*
 
 import ScalaVersions.*
 import JavaVersions.*
