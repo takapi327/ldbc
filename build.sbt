@@ -18,11 +18,9 @@ ThisBuild / scalaVersion := scala3
 ThisBuild / crossScalaVersions := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
-ThisBuild / githubWorkflowAddedJobs ++= Seq(
-  scalaFmt.value, copyrightHeaderCheck.value, sbtScripted.value
-)
+ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
-ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
+ThisBuild / githubWorkflowTargetBranches := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / githubWorkflowPublish := Seq(ciRelease)
 
@@ -112,7 +110,6 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(scalacOptions ++= scala3Settings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
-  .settings(publish / skip := true)
   .settings(libraryDependencies ++= Seq(
     scala3Compiler,
     mysql,
@@ -120,13 +117,12 @@ lazy val benchmark = (project in file("benchmark"))
     slick
   ))
   .dependsOn(dsl.jvm)
-  .enablePlugins(JmhPlugin, AutomateHeaderPlugin)
+  .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
   .settings(
     description := "Documentation for ldbc",
     scalacOptions := Nil,
-    publish / skip := true,
     mdocIn := baseDirectory.value / "src" / "main" / "mdoc",
     paradoxTheme := Some(builtinParadoxTheme("generic")),
     paradoxProperties ++= Map(
@@ -151,7 +147,7 @@ lazy val docs = (project in file("docs"))
     codegen.jvm,
     hikari
   )
-  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin)
+  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin, NoPublishPlugin)
 
 lazy val jvmProjects: Seq[ProjectReference] = Seq(
   core.jvm,
@@ -182,6 +178,6 @@ lazy val nativeProjects: Seq[ProjectReference] = Seq(
 
 lazy val ldbc = project.in(file("."))
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
-  .settings(publish / skip := true)
   .settings(commonSettings)
   .aggregate((jvmProjects ++ jsProjects ++ nativeProjects)*)
+  .enablePlugins(NoPublishPlugin)
