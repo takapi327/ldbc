@@ -13,6 +13,8 @@ import de.heikoseeberger.sbtheader.{ CommentStyle, CommentBlockCreator, Automate
 import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.HeaderPattern.commentBetween
 import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.*
 
+import org.typelevel.sbt.TypelevelGitHubPlugin.autoImport.tlGitHubDev
+
 import ScalaVersions.*
 
 object BuildSettings {
@@ -62,7 +64,7 @@ object BuildSettings {
     homepage := Some(url("https://takapi327.github.io/ldbc/")),
     licenses := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
     run / fork := true,
-    developers += Developer("takapi327", "Takahiko Tominaga", "t.takapi0327@gmail.com", url("https://github.com/takapi327")),
+    developers += tlGitHubDev("takapi327", "Takahiko Tominaga"),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> customCommentStyle),
     headerLicense  := Some(HeaderLicense.Custom(
       """|Copyright (c) 2023-2024 by Takahiko Tominaga
