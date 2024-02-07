@@ -21,15 +21,15 @@ package object packet:
       Attempt.successful(BitVector(value.getBytes(java.nio.charset.StandardCharsets.UTF_8) :+ 0.toByte))
 
     def decode(bits: BitVector): Attempt[DecodeResult[String]] =
-      val bytes = bits.bytes.takeWhile(_ != 0)
-      val string = new String(bytes.toArray, java.nio.charset.StandardCharsets.UTF_8)
+      val bytes     = bits.bytes.takeWhile(_ != 0)
+      val string    = new String(bytes.toArray, java.nio.charset.StandardCharsets.UTF_8)
       val remainder = bits.drop((bytes.size + 1) * 8) // +1 is a null character, so *8 is a byte to bit
       Attempt.successful(DecodeResult(string, remainder))
 
   def time: Decoder[LocalTime] =
     for
-      hour <- uint8
-      minute <- uint8
-      second <- uint8
+      hour        <- uint8
+      minute      <- uint8
+      second      <- uint8
       microsecond <- uint32L
     yield LocalTime.of(hour, minute, second, microsecond.toInt * 1000)
