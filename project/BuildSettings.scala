@@ -27,11 +27,11 @@ object BuildSettings {
   )
 
   val scala2Settings: Seq[String] = baseScalaSettings ++ Seq(
-    "-Xsource:3",
+    "-Xsource:3"
   )
 
   val scala3Settings: Seq[String] = baseScalaSettings ++ Seq(
-    "-Wunused:all",
+    "-Wunused:all"
   )
 
   val removeSettings: Seq[String] = Seq(
@@ -58,20 +58,22 @@ object BuildSettings {
 
   /** These settings are used by all projects. */
   def commonSettings: Seq[Setting[?]] = Def.settings(
-    organization := "io.github.takapi327",
+    organization     := "io.github.takapi327",
     organizationName := "takapi327",
-    startYear := Some(2023),
-    homepage := Some(url("https://takapi327.github.io/ldbc/")),
-    licenses := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
-    run / fork := true,
+    startYear        := Some(2023),
+    homepage         := Some(url("https://takapi327.github.io/ldbc/")),
+    licenses         := Seq("MIT" -> url("https://img.shields.io/badge/license-MIT-green")),
+    run / fork       := true,
     developers += tlGitHubDev("takapi327", "Takahiko Tominaga"),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> customCommentStyle),
-    headerLicense  := Some(HeaderLicense.Custom(
-      """|Copyright (c) 2023-2024 by Takahiko Tominaga
+    headerLicense := Some(
+      HeaderLicense.Custom(
+        """|Copyright (c) 2023-2024 by Takahiko Tominaga
          |This software is licensed under the MIT License (MIT).
          |For more information see LICENSE or https://opensource.org/licenses/MIT
          |""".stripMargin
-    )),
+      )
+    )
   )
 
   /** A project that runs in the sbt runtime. */

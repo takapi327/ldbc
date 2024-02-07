@@ -12,29 +12,31 @@ import Workflows.*
 import ProjectKeys.*
 import Implicits.*
 
-ThisBuild / tlBaseVersion := "0.3"
-ThisBuild / projectName := "ldbc"
-ThisBuild / scalaVersion := scala3
-ThisBuild / crossScalaVersions := Seq(scala3)
+ThisBuild / tlBaseVersion              := "0.3"
+ThisBuild / projectName                := "ldbc"
+ThisBuild / scalaVersion               := scala3
+ThisBuild / crossScalaVersions         := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
-ThisBuild / githubWorkflowTargetBranches := Seq("**")
+ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
-ThisBuild / githubWorkflowPublish := Seq(ciRelease)
+ThisBuild / githubWorkflowPublish               := Seq(ciRelease)
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
 
 lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .default("core", "ldbc core project")
-  .settings(libraryDependencies ++= Seq(
-    "org.typelevel" %%% "cats-core" % "2.10.0",
-    "org.scalatest" %%% "scalatest" % "3.2.17" % Test,
-    "org.specs2"    %%% "specs2-core" % "4.20.5" % Test,
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-core"   % "2.10.0",
+      "org.scalatest" %%% "scalatest"   % "3.2.17" % Test,
+      "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
+    )
+  )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
@@ -55,12 +57,14 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val dsl = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
   .module("dsl", "Projects that provide a way to connect to the database")
-  .settings(libraryDependencies ++= Seq(
-    catsEffect,
-    mockito,
-    scalaTest,
-    mysql % Test
-  ) ++ specs2)
+  .settings(
+    libraryDependencies ++= Seq(
+      catsEffect,
+      mockito,
+      scalaTest,
+      mysql % Test
+    ) ++ specs2
+  )
   .dependsOn(queryBuilder)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
@@ -71,15 +75,19 @@ lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
 lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("codegen", "Project to generate code from Sql")
-  .settings(libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
-    "org.scalatest" %%% "scalatest" % "3.2.17" % Test,
-    "org.specs2" %%% "specs2-core" % "4.20.5" % Test,
-  ))
-  .jvmSettings(libraryDependencies ++= Seq(
-    "io.circe" %%% "circe-generic" % "0.14.6",
-    "io.circe" %%% "circe-yaml" % "0.15.1",
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
+      "org.scalatest"          %%% "scalatest"                % "3.2.17" % Test,
+      "org.specs2"             %%% "specs2-core"              % "4.20.5" % Test
+    )
+  )
+  .jvmSettings(
+    libraryDependencies ++= Seq(
+      "io.circe" %%% "circe-generic" % "0.14.6",
+      "io.circe" %%% "circe-yaml"    % "0.15.1"
+    )
+  )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
@@ -87,11 +95,13 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
-  .settings(libraryDependencies ++= Seq(
-    catsEffect,
-    typesafeConfig,
-    hikariCP
-  ) ++ specs2)
+  .settings(
+    libraryDependencies ++= Seq(
+      catsEffect,
+      typesafeConfig,
+      hikariCP
+    ) ++ specs2
+  )
   .dependsOn(dsl.jvm)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
@@ -110,21 +120,23 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(scalacOptions ++= scala3Settings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
-  .settings(libraryDependencies ++= Seq(
-    scala3Compiler,
-    mysql,
-    doobie,
-    slick
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      scala3Compiler,
+      mysql,
+      doobie,
+      slick
+    )
+  )
   .dependsOn(dsl.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
   .settings(
-    description := "Documentation for ldbc",
+    description   := "Documentation for ldbc",
     scalacOptions := Nil,
-    mdocIn := baseDirectory.value / "src" / "main" / "mdoc",
-    paradoxTheme := Some(builtinParadoxTheme("generic")),
+    mdocIn        := baseDirectory.value / "src" / "main" / "mdoc",
+    paradoxTheme  := Some(builtinParadoxTheme("generic")),
     paradoxProperties ++= Map(
       "org"          -> organization.value,
       "scalaVersion" -> scalaVersion.value,
@@ -132,10 +144,10 @@ lazy val docs = (project in file("docs"))
       "mysqlVersion" -> mysqlVersion
     ),
     Compile / paradox / sourceDirectory := mdocOut.value,
-    Compile / paradoxRoots := List("index.html", "en/index.html", "ja/index.html"),
-    makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
-    git.remoteRepo := "git@github.com:takapi327/ldbc.git",
-    ghpagesNoJekyll := true,
+    Compile / paradoxRoots              := List("index.html", "en/index.html", "ja/index.html"),
+    makeSite                            := makeSite.dependsOn(mdoc.toTask("")).value,
+    git.remoteRepo                      := "git@github.com:takapi327/ldbc.git",
+    ghpagesNoJekyll                     := true
   )
   .settings(commonSettings)
   .dependsOn(
