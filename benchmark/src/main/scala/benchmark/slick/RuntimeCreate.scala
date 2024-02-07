@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark._slick
+package benchmark.slick
 
 import java.util.concurrent.TimeUnit
 

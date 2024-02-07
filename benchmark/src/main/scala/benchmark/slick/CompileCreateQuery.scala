@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark._slick
+package benchmark.slick
 
 import benchmark.Compiler
 import org.openjdk.jmh.annotations.*
