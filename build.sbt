@@ -116,7 +116,7 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
 
 lazy val benchmark = (project in file("benchmark"))
   .settings(description := "Projects for Benchmark Measurement")
-  .settings(scalacOptions ++= scala3Settings)
+  //.settings(scalacOptions ++= scala3Settings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
   .settings(

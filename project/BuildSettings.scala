@@ -19,21 +19,6 @@ import ScalaVersions.*
 
 object BuildSettings {
 
-  val baseScalaSettings: Seq[String] = Seq(
-    "-Xfatal-warnings",
-    "-language:existentials",
-    "-language:higherKinds",
-    "-language:implicitConversions"
-  )
-
-  val scala2Settings: Seq[String] = baseScalaSettings ++ Seq(
-    "-Xsource:3"
-  )
-
-  val scala3Settings: Seq[String] = baseScalaSettings ++ Seq(
-    "-Wunused:all"
-  )
-
   val removeSettings: Seq[String] = Seq(
     "-Ykind-projector:underscores",
     "-Wvalue-discard"
@@ -81,7 +66,6 @@ object BuildSettings {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
         .settings(scalaVersion := scala3)
-        .settings(scalacOptions ++= scala3Settings)
         .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .enablePlugins(AutomateHeaderPlugin)
@@ -92,7 +76,6 @@ object BuildSettings {
     def apply(name: String, dir: String): Project =
       Project(name, file(dir))
         .settings(scalaVersion := scala2)
-        .settings(scalacOptions ++= scala2Settings)
         .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .settings(scriptedSettings)
