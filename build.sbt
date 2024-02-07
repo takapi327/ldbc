@@ -12,6 +12,7 @@ import Workflows.*
 import ProjectKeys.*
 import Implicits.*
 
+ThisBuild / tlBaseVersion := "0.3"
 ThisBuild / projectName := "ldbc"
 ThisBuild / crossScalaVersions := Seq(scala3)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
@@ -109,6 +110,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(scalaVersion := (core.jvm / scalaVersion).value)
   .settings(description := "Projects for Benchmark Measurement")
   .settings(scalacOptions ++= scala3Settings)
+  .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
   .settings(publish / skip := true)
   .settings(libraryDependencies ++= Seq(

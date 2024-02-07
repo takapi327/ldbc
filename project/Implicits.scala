@@ -43,6 +43,7 @@ object Implicits {
       project
         .settings(scalaVersion := scala3)
         .settings(scalacOptions ++= scala3Settings)
+        .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .enablePlugins(AutomateHeaderPlugin)
   }
