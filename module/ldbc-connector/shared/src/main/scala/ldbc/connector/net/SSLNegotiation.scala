@@ -41,16 +41,17 @@ object SSLNegotiation:
     header.toBitVector ++ request
 
   def negotiateSSL[F[_]](
-    socket:     Socket[F],
+    socket:          Socket[F],
     capabilityFlags: Seq[CapabilitiesFlags],
-    sslOptions: SSLNegotiation.Options[F],
-    sequenceIdRef: Ref[F, Byte]
+    sslOptions:      SSLNegotiation.Options[F],
+    sequenceIdRef:   Ref[F, Byte]
   ): Resource[F, Socket[F]] =
     for
       sequenceId <- Resource.eval(sequenceIdRef.get)
-      request <- Resource.pure(buildRequest(sequenceId, SSLRequestPacket(capabilityFlags).encode))
-      _ <- Resource.eval(socket.write(Chunk.byteVector(request.bytes)))
-      socket$ <- sslOptions.tlsContext
+      request    <- Resource.pure(buildRequest(sequenceId, SSLRequestPacket(capabilityFlags).encode))
+      _          <- Resource.eval(socket.write(Chunk.byteVector(request.bytes)))
+      socket$ <-
+        sslOptions.tlsContext
           .clientBuilder(socket)
           .withParameters(sslOptions.tlsParameters)
           .withLogger(
