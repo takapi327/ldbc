@@ -38,9 +38,9 @@ trait PacketSocket[F[_]]:
 
 object PacketSocket:
 
-  def fromBitVectorSocket[F[_] : Concurrent : Console](
-    bvs: BitVectorSocket[F],
-    debugEnabled: Boolean,
+  def fromBitVectorSocket[F[_]: Concurrent: Console](
+    bvs:           BitVectorSocket[F],
+    debugEnabled:  Boolean,
     sequenceIdRef: Ref[F, Byte]
   ): PacketSocket[F] = new PacketSocket[F]:
     private def debug(msg: => String): F[Unit] =
@@ -58,19 +58,19 @@ object PacketSocket:
         response = decoder.decodeValue(payload).require
         _ <-
           debug(
-            s"Client ${AnsiColor.BLUE}←${AnsiColor.RESET} Server: ${AnsiColor.GREEN}$response${AnsiColor.RESET}"
+            s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$response${ AnsiColor.RESET }"
           )
         _ <- sequenceIdRef.update(_ => ((header.toByteArray(3) + 1) % 256).toByte)
       yield response).onError {
         case t =>
           debug(
-            s"Client ${AnsiColor.BLUE}←${AnsiColor.RESET} Server: ${AnsiColor.RED}${t.getMessage}${AnsiColor.RESET}"
+            s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.RED }${ t.getMessage }${ AnsiColor.RESET }"
           )
       }
 
     private def buildRequest(request: RequestPacket): F[BitVector] =
       sequenceIdRef.get.map(sequenceId =>
-        val bits = request.encode
+        val bits        = request.encode
         val payloadSize = bits.toByteArray.length
         val header = Chunk(
           payloadSize.toByte,
@@ -86,16 +86,16 @@ object PacketSocket:
         bits <- buildRequest(request)
         _ <-
           debug(
-            s"Client ${AnsiColor.BLUE}→${AnsiColor.RESET} Server: ${AnsiColor.YELLOW}$request${AnsiColor.RESET}"
+            s"Client ${ AnsiColor.BLUE }→${ AnsiColor.RESET } Server: ${ AnsiColor.YELLOW }$request${ AnsiColor.RESET }"
           )
         _ <- bvs.write(bits)
         _ <- sequenceIdRef.update(sequenceId => ((sequenceId + 1) % 256).toByte)
       yield ()
 
-  def apply[F[_] : Console : Temporal](
-    debug: Boolean,
-    sockets: Resource[F, Socket[F]],
+  def apply[F[_]: Console: Temporal](
+    debug:         Boolean,
+    sockets:       Resource[F, Socket[F]],
     sequenceIdRef: Ref[F, Byte],
-    readTimeout: Duration
+    readTimeout:   Duration
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket[F](sockets, readTimeout).map(fromBitVectorSocket(_, debug, sequenceIdRef))
