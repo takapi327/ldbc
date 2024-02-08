@@ -34,7 +34,7 @@ trait PacketSocket[F[_]]:
   def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P]
 
   /** Send the specified request packet. */
-  def send(message: RequestPacket): F[Unit]
+  def send(request: RequestPacket): F[Unit]
 
 object PacketSocket:
 
