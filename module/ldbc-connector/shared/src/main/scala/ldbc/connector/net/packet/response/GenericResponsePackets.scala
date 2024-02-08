@@ -30,6 +30,6 @@ object GenericResponsePackets:
     int8.flatMap { status =>
       (status: @switch) match
         case OKPacket.STATUS  => OKPacket.decoder(capabilityFlags)
-        case EOFPacket.STATUS => EOFPacket.decoder
+        case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
     }

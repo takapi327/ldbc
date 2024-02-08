@@ -10,6 +10,10 @@ package response
 import scodec.*
 import scodec.codecs.*
 
+import cats.syntax.option.*
+
+import ldbc.connector.data.CapabilitiesFlags
+
 /**
  * If CLIENT_PROTOCOL_41 is enabled, the EOF packet contains a warning count and status flags.
  * 
@@ -30,8 +34,8 @@ import scodec.codecs.*
  */
 case class EOFPacket(
   status:      Int,
-  warnings:    Int,
-  statusFlags: Int
+  warnings:    Option[Int],
+  statusFlags: Option[Int]
 ) extends GenericResponsePackets:
 
   override def toString: String = "EOF_Packet"
@@ -40,9 +44,10 @@ object EOFPacket:
 
   val STATUS = 0xfe
 
-  val decoder: Decoder[EOFPacket] =
+  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[EOFPacket] =
+    val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
     for
       status      <- uint4
-      warnings    <- uint4
-      statusFlags <- uint4
+      warnings    <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
+      statusFlags <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
     yield EOFPacket(status, warnings, statusFlags)
