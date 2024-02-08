@@ -74,7 +74,6 @@ object BitVectorSocket:
 
   def apply[F[_]: Temporal](
     socket:      Resource[F, Socket[F]],
-    sslOptions:  Option[SSLNegotiation.Options[F]],
     readTimeout: Duration
   ): Resource[F, BitVectorSocket[F]] =
     for
