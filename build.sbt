@@ -13,6 +13,7 @@ import ProjectKeys.*
 import Implicits.*
 
 ThisBuild / tlBaseVersion              := "0.3"
+ThisBuild / tlFatalWarnings            := true
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
 ThisBuild / crossScalaVersions         := Seq(scala3)
