@@ -77,9 +77,9 @@ object OKPacket:
       status       <- uint4
       affectedRows <- uint4
       lastInsertId <- uint4
-      statusFlags <- (if hasClientProtocol41Flag || hasClientTransactionsFlag then
-                       uint4.map(int => ServerStatusFlags(int.toLong))
-                     else provide(Nil))
+      statusFlags <-
+        (if hasClientProtocol41Flag || hasClientTransactionsFlag then uint4.map(int => ServerStatusFlags(int.toLong))
+         else provide(Nil))
       warnings <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
       info     <- if hasClientSessionTrackFlag then uint4 else provide(0)
       sessionStateInfo <- if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then uint4.map(_.some)

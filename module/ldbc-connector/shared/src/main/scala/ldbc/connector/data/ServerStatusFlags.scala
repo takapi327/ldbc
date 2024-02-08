@@ -15,20 +15,20 @@ import scala.math.pow
  *  The numeric value of the bit-field.
  */
 enum ServerStatusFlags(val code: Long):
-  case SERVER_STATUS_IN_TRANS extends ServerStatusFlags(1L << 0)
-  case SERVER_STATUS_AUTOCOMMIT extends ServerStatusFlags(1L << 1)
-  case SERVER_MORE_RESULTS_EXISTS extends ServerStatusFlags(1L << 3)
-  case SERVER_STATUS_NO_GOOD_INDEX_USED extends ServerStatusFlags(1L << 4)
-  case SERVER_STATUS_NO_INDEX_USED extends ServerStatusFlags(1L << 5)
-  case SERVER_STATUS_CURSOR_EXISTS extends ServerStatusFlags(1L << 6)
-  case SERVER_STATUS_LAST_ROW_SENT extends ServerStatusFlags(1L << 7)
-  case SERVER_STATUS_DB_DROPPED extends ServerStatusFlags(1L << 8)
+  case SERVER_STATUS_IN_TRANS             extends ServerStatusFlags(1L << 0)
+  case SERVER_STATUS_AUTOCOMMIT           extends ServerStatusFlags(1L << 1)
+  case SERVER_MORE_RESULTS_EXISTS         extends ServerStatusFlags(1L << 3)
+  case SERVER_STATUS_NO_GOOD_INDEX_USED   extends ServerStatusFlags(1L << 4)
+  case SERVER_STATUS_NO_INDEX_USED        extends ServerStatusFlags(1L << 5)
+  case SERVER_STATUS_CURSOR_EXISTS        extends ServerStatusFlags(1L << 6)
+  case SERVER_STATUS_LAST_ROW_SENT        extends ServerStatusFlags(1L << 7)
+  case SERVER_STATUS_DB_DROPPED           extends ServerStatusFlags(1L << 8)
   case SERVER_STATUS_NO_BACKSLASH_ESCAPES extends ServerStatusFlags(1L << 9)
-  case SERVER_STATUS_METADATA_CHANGED extends ServerStatusFlags(1L << 10)
-  case SERVER_QUERY_WAS_SLOW extends ServerStatusFlags(1L << 11)
-  case SERVER_PS_OUT_PARAMS extends ServerStatusFlags(1L << 12)
-  case SERVER_STATUS_IN_TRANS_READONLY extends ServerStatusFlags(1L << 13)
-  case SERVER_SESSION_STATE_CHANGED extends ServerStatusFlags(1L << 14)
+  case SERVER_STATUS_METADATA_CHANGED     extends ServerStatusFlags(1L << 10)
+  case SERVER_QUERY_WAS_SLOW              extends ServerStatusFlags(1L << 11)
+  case SERVER_PS_OUT_PARAMS               extends ServerStatusFlags(1L << 12)
+  case SERVER_STATUS_IN_TRANS_READONLY    extends ServerStatusFlags(1L << 13)
+  case SERVER_SESSION_STATE_CHANGED       extends ServerStatusFlags(1L << 14)
 
 object ServerStatusFlags:
 
