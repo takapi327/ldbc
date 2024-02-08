@@ -12,14 +12,24 @@ import scala.annotation.switch
 import scodec.*
 import scodec.codecs.*
 
+import ldbc.connector.data.CapabilitiesFlags
+
+/**
+ * A generic response packet that can be either an OK packet, an EOF packet, or an ERR packet.
+ *
+ * For most commands the client sends to the server, the server returns one of these packets in response:
+ * - An [[OKPacket]] indicates that the command was successful.
+ * - An [[EOFPacket]] indicates that the command was successful, but that the server has no more data to send in response to the command.
+ * - An [[ERRPacket]] indicates that the command was unsuccessful.
+ */
 trait GenericResponsePackets extends ResponsePacket
 
 object GenericResponsePackets:
 
-  val decoder: Decoder[GenericResponsePackets] =
+  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[GenericResponsePackets] =
     int8.flatMap { status =>
       (status: @switch) match
-        case OKPacket.STATUS  => OKPacket.decoder
+        case OKPacket.STATUS  => OKPacket.decoder(capabilityFlags)
         case EOFPacket.STATUS => EOFPacket.decoder
         case ERRPacket.STATUS => ERRPacket.decoder
     }

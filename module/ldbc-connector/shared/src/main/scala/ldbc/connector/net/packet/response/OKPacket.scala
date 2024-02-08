@@ -10,6 +10,10 @@ package response
 import scodec.*
 import scodec.codecs.*
 
+import cats.syntax.option.*
+
+import ldbc.connector.data.*
+
 /**
  * An OK packet is sent from the server to the client to signal successful completion of a command.
  *
@@ -43,15 +47,20 @@ import scodec.codecs.*
  *   Type: string<lenenc>
  *   Name: session state info
  *   Description: Session State Information
+ * @param msg
+ *   Type: string<EOF>
+ *   Name: info
+ *   Description: human readable status information
  */
 case class OKPacket(
   status:           Int,
   affectedRows:     Int,
   lastInsertId:     Int,
-  statusFlags:      Int,
+  statusFlags:      Seq[ServerStatusFlags],
   warnings:         Option[Int],
   info:             Int,
-  sessionStateInfo: Option[Int]
+  sessionStateInfo: Option[Int],
+  msg:              Option[String]
 ) extends GenericResponsePackets:
 
   override def toString: String = "OK_Packet"
@@ -60,13 +69,20 @@ object OKPacket:
 
   val STATUS = 0x00
 
-  val decoder: Decoder[OKPacket] =
+  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[OKPacket] =
+    val hasClientProtocol41Flag   = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+    val hasClientTransactionsFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_TRANSACTIONS)
+    val hasClientSessionTrackFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_SESSION_TRACK)
     for
-      status           <- uint4
-      affectedRows     <- uint4
-      lastInsertId     <- uint4
-      statusFlags      <- uint4
-      warnings         <- uint4
-      info             <- uint4
-      sessionStateInfo <- uint4
-    yield OKPacket(status, affectedRows, lastInsertId, statusFlags, Some(warnings), info, Some(sessionStateInfo))
+      status       <- uint4
+      affectedRows <- uint4
+      lastInsertId <- uint4
+      statusFlags <- if hasClientProtocol41Flag || hasClientTransactionsFlag then
+                       uint4.map(int => ServerStatusFlags(int.toLong))
+                     else provide(Nil)
+      warnings <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
+      info     <- if hasClientSessionTrackFlag then uint4 else provide(0)
+      sessionStateInfo <- if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then uint4.map(_.some)
+                          else provide(None)
+      msg <- if !hasClientSessionTrackFlag then utf8.map(_.some) else provide(None)
+    yield OKPacket(status, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg)
