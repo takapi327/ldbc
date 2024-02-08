@@ -50,8 +50,8 @@ object InitialPacket:
       serverVersion   <- nullTerminatedStringCodec.asDecoder
       threadId        <- threadIdCodec.asDecoder
       authPluginDataPart1 <- authPluginDataPart1Codec.map {
-        case (a, b, c, d, e, f, g, h) => Array(a, b, c, d, e, f, g, h)
-      }
+                               case (a, b, c, d, e, f, g, h) => Array(a, b, c, d, e, f, g, h)
+                             }
       _                    <- ignore(8)     // Skip filter [0x00]
       capabilityFlagsLower <- capabilityFlagsLowerCodec.asDecoder
       _                    <- ignore(8 * 3) // Skip character set and status flags
