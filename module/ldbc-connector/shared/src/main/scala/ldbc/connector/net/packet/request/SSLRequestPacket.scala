@@ -30,15 +30,15 @@ case class SSLRequestPacket(capabilityFlags: Seq[CapabilitiesFlags]) extends Req
   override protected def encodeBody: Attempt[BitVector] = SSLRequestPacket.encoder.encode(this)
 
   override def encode: BitVector = encodeBody.require
-  
+
   override def toString: String = "Protocol::SSLRequest"
 
 object SSLRequestPacket:
-  
+
   val encoder: Encoder[SSLRequestPacket] = Encoder { (packet: SSLRequestPacket) =>
     val hasClientProtocol41 = packet.capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val clientFlag = if hasClientProtocol41 then CapabilitiesFlags.toBitset(packet.capabilityFlags) else 0
-    val maxPacketSize = if hasClientProtocol41 then 0xffffff00 else 0
+    val clientFlag          = if hasClientProtocol41 then CapabilitiesFlags.toBitset(packet.capabilityFlags) else 0
+    val maxPacketSize       = if hasClientProtocol41 then 0xffffff00 else 0
     Attempt.successful(
       BitVector.fromInt(clientFlag.toInt, 4) |+|
         BitVector(maxPacketSize) |+|
