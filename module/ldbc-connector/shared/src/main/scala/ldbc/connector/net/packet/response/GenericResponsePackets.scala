@@ -31,5 +31,5 @@ object GenericResponsePackets:
       (status: @switch) match
         case OKPacket.STATUS  => OKPacket.decoder(capabilityFlags)
         case EOFPacket.STATUS => EOFPacket.decoder
-        case ERRPacket.STATUS => ERRPacket.decoder
+        case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
     }

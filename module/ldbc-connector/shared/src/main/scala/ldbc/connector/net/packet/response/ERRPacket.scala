@@ -10,13 +10,17 @@ package response
 import scodec.*
 import scodec.codecs.*
 
+import cats.syntax.option.*
+
+import ldbc.connector.data.CapabilitiesFlags
+
 /**
  * This packet signals that an error occurred.
  *
  * It contains a SQL state value if CLIENT_PROTOCOL_41 is enabled.
  *
  * Error texts cannot exceed MYSQL_ERRMSG_SIZE
- * 
+ *
  * @param status
  *   Type: int<1>
  *   Name: header
@@ -42,7 +46,7 @@ case class ERRPacket(
   status:         Int,
   errorCode:      Int,
   sqlStateMarker: Int,
-  sqlState:       String,
+  sqlState:       Option[String],
   errorMessage:   String
 ) extends GenericResponsePackets:
 
@@ -52,16 +56,17 @@ object ERRPacket:
 
   val STATUS = 0xff
 
-  val decoder: Decoder[ERRPacket] =
+  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[ERRPacket] =
+    val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
     for
       errorCode      <- uint16L
-      sqlStateMarker <- uint8
-      sqlState       <- bytes(5)
+      sqlStateMarker <- if hasClientProtocol41Flag then uint8 else provide(0)
+      sqlState       <- if hasClientProtocol41Flag then bytes(5).map(_.decodeUtf8Lenient.some) else provide(None)
       errorMessage   <- bytes
     yield ERRPacket(
       STATUS,
       errorCode,
       sqlStateMarker,
-      sqlState.decodeUtf8Lenient,
+      sqlState,
       errorMessage.decodeUtf8Lenient
     )
