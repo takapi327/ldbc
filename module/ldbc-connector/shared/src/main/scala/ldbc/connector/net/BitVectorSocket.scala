@@ -45,21 +45,21 @@ object BitVectorSocket:
    * @group Constructors
    */
   def fromSocket[F[_]](
-    socket: Socket[F],
+    socket:      Socket[F],
     readTimeout: Duration,
-    carryRef: Ref[F, Chunk[Byte]]
+    carryRef:    Ref[F, Chunk[Byte]]
   )(using F: Temporal[F]): BitVectorSocket[F] =
     new BitVectorSocket[F]:
 
       private val withTimeout: F[Option[Chunk[Byte]]] => F[Option[Chunk[Byte]]] = readTimeout match
-        case _: Duration.Infinite => identity
+        case _: Duration.Infinite   => identity
         case finite: FiniteDuration => _.timeout(finite)
 
       private def readUntilN(nBytes: Int, carry: Chunk[Byte]): F[BitVector] =
         if carry.size < nBytes then
           withTimeout(socket.read(8192)).flatMap {
             case Some(bytes) => readUntilN(nBytes, carry ++ bytes)
-            case None => F.raiseError(EofException(nBytes, carry.size))
+            case None        => F.raiseError(EofException(nBytes, carry.size))
           }
         else
           val (output, remainder) = carry.splitAt(nBytes)
@@ -72,12 +72,12 @@ object BitVectorSocket:
         // nb: unsafe for concurrent reads but protected by protocol mutex
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
 
-  def apply[F[_] : Temporal](
-    socket: Resource[F, Socket[F]],
-    sslOptions: Option[SSLNegotiation.Options[F]],
+  def apply[F[_]: Temporal](
+    socket:      Resource[F, Socket[F]],
+    sslOptions:  Option[SSLNegotiation.Options[F]],
     readTimeout: Duration
   ): Resource[F, BitVectorSocket[F]] =
     for
-      socket <- socket
+      socket   <- socket
       carryRef <- Resource.eval(Ref[F].of(Chunk.empty[Byte]))
     yield fromSocket(socket, readTimeout, carryRef)

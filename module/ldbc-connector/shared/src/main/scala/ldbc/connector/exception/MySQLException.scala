@@ -9,11 +9,11 @@ package ldbc.connector.exception
 import org.typelevel.otel4s.Attribute
 
 class MySQLException(
-                      sql: Option[String],
-                      message: String,
-                      detail:   Option[String] = None,
-                      hint:     Option[String] = None
-                    ) extends Exception(message):
+  sql:     Option[String],
+  message: String,
+  detail:  Option[String] = None,
+  hint:    Option[String] = None
+) extends Exception(message):
 
   def fields: List[Attribute[?]] =
     val builder = List.newBuilder[Attribute[?]]
