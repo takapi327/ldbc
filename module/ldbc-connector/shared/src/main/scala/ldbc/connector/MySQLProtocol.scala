@@ -86,5 +86,5 @@ object MySQLProtocol:
 
       override def resetSequenceId: F[Unit] =
         sequenceIdRef.update(_ => 0.toByte)
-        
+
       override def close(): F[Unit] = resetSequenceId *> packetSocket.send(ComQuitPacket())
