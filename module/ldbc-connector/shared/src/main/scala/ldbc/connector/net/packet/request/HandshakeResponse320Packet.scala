@@ -18,11 +18,11 @@ import scodec.interop.cats.*
 import ldbc.connector.data.CapabilitiesFlags
 
 case class HandshakeResponse320Packet(
-                                      capabilityFlags: Seq[CapabilitiesFlags],
-                                      user:            String,
-                                      hashedPassword:  Array[Byte],
-                                      pluginName:      String
-                                    ) extends RequestPacket:
+  capabilitiesFlags: Seq[CapabilitiesFlags],
+  user:              String,
+  hashedPassword:    Array[Byte],
+  pluginName:        String
+) extends HandshakeResponsePacket:
 
   override protected def encodeBody: Attempt[BitVector] = HandshakeResponse320Packet.encoder.encode(this)
 
