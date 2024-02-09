@@ -32,11 +32,11 @@ import ldbc.connector.data.CapabilitiesFlags
  *   The authentication plugin name.
  */
 case class HandshakeResponse41Packet(
-                                      capabilityFlags: Seq[CapabilitiesFlags],
-                                      user: String,
-                                      hashedPassword: Array[Byte],
-                                      pluginName: String
-                                    ) extends RequestPacket:
+  capabilityFlags: Seq[CapabilitiesFlags],
+  user:            String,
+  hashedPassword:  Array[Byte],
+  pluginName:      String
+) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] = HandshakeResponse41Packet.encoder.encode(this)
 

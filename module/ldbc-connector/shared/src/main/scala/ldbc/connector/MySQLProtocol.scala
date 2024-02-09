@@ -9,19 +9,23 @@ package ldbc.connector
 import scala.concurrent.duration.Duration
 
 import cats.*
+import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.*
 
 import fs2.io.net.Socket
 
+import ldbc.connector.authenticator.*
 import ldbc.connector.net.*
-import ldbc.connector.net.packet.*
-import ldbc.connector.net.packet.response.InitialPacket
+import ldbc.connector.net.packet.request.*
+import ldbc.connector.net.packet.response.*
 
 trait MySQLProtocol[F[_]]:
 
   def initialPacket: InitialPacket
+
+  def authenticate(user: String, password: String): F[Unit]
 
   def changeCommandPhase: F[Unit]
 
@@ -45,5 +49,31 @@ object MySQLProtocol:
                  )
     yield new MySQLProtocol[F]:
       override def initialPacket: InitialPacket = initialPacket$
+
+      private def readUntilOk(): F[Unit] =
+        socket$.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+          case _: AuthMoreDataPacket => readUntilOk()
+          case _: OKPacket           => Concurrent[F].unit
+          case error: ERRPacket =>
+            Concurrent[F].raiseError(new Exception(s"Connection error: ${ error.errorMessage }"))
+        }
+
+      override def authenticate(user: String, password: String): F[Unit] =
+        val plugin = initialPacket.authPlugin match
+          case "mysql_native_password" => new MysqlNativePasswordPlugin
+          case "caching_sha2_password" => CachingSha2PasswordPlugin(Some(password), None)
+          case _                       => throw new Exception(s"Unknown plugin: ${ initialPacket.authPlugin }")
+
+        val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
+
+        val handshakeResponse41 = HandshakeResponse41Packet(
+          initialPacket.capabilityFlags,
+          user,
+          Array(hashedPassword.length.toByte) ++ hashedPassword,
+          plugin.name
+        )
+
+        socket$.send(handshakeResponse41) <* readUntilOk()
+
       override def changeCommandPhase: F[Unit] =
         sequenceIdRef.update(_ => 0.toByte)
