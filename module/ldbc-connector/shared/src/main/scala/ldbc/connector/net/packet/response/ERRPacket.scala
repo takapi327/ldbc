@@ -13,6 +13,7 @@ import scodec.codecs.*
 import cats.syntax.option.*
 
 import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.exception.ERRPacketException
 
 /**
  * This packet signals that an error occurred.
@@ -51,6 +52,12 @@ case class ERRPacket(
 ) extends GenericResponsePackets:
 
   override def toString: String = "ERR_Packet"
+  
+  def toException(message: String): ERRPacketException = ERRPacketException(
+    None,
+    message = message,
+    detail = Some(errorMessage)
+  )
 
 object ERRPacket:
 

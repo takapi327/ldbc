@@ -54,21 +54,21 @@ object MySQLProtocol:
     yield protocol
 
   def fromPacketSocket[F[_]: Temporal: Console](
-    packetSocket:    PacketSocket[F],
-    initialPacket$ : InitialPacket,
-    sequenceIdRef:   Ref[F, Byte]
+    packetSocket:  PacketSocket[F],
+    packet:        InitialPacket,
+    sequenceIdRef: Ref[F, Byte]
   ): F[MySQLProtocol[F]] =
     Exchange[F].map { implicit ex =>
       new MySQLProtocol[F]:
 
-        override def initialPacket: InitialPacket = initialPacket$
+        override def initialPacket: InitialPacket = packet
 
         private def readUntilOk(): F[Unit] =
           packetSocket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
             case _: AuthMoreDataPacket => readUntilOk()
             case _: OKPacket           => Concurrent[F].unit
             case error: ERRPacket =>
-              Concurrent[F].raiseError(new Exception(s"Connection error: ${ error.errorMessage }"))
+              Concurrent[F].raiseError(error.toException("Connection error"))
           }
 
         override def authenticate(user: String, password: String): F[Unit] =
