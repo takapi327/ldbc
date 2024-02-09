@@ -66,14 +66,14 @@ object MySQLProtocol:
 
         val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
 
-        val handshakeResponse41 = HandshakeResponse41Packet(
+        val handshakeResponse = HandshakeResponsePacket(
           initialPacket.capabilityFlags,
           user,
           Array(hashedPassword.length.toByte) ++ hashedPassword,
           plugin.name
         )
 
-        socket$.send(handshakeResponse41) <* readUntilOk()
+        socket$.send(handshakeResponse) <* readUntilOk()
 
       override def changeCommandPhase: F[Unit] =
         sequenceIdRef.update(_ => 0.toByte)
