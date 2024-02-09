@@ -15,8 +15,6 @@ import cats.effect.std.*
 
 import fs2.io.net.Socket
 
-import scodec.Decoder
-
 import ldbc.connector.net.*
 import ldbc.connector.net.packet.*
 import ldbc.connector.net.packet.response.InitialPacket
@@ -45,7 +43,7 @@ object MySQLProtocol:
                      .negotiateSSL(socket, initialPacket$.capabilityFlags, option, sequenceIdRef)
                      .flatMap(ssl => Resource.eval(PacketSocket[F](debug, ssl, sequenceIdRef, readTimeout)))
                  )
-    yield new MySQLSocket[F]:
+    yield new MySQLProtocol[F]:
       override def initialPacket: InitialPacket = initialPacket$
       override def changeCommandPhase: F[Unit] =
         sequenceIdRef.update(_ => 0.toByte)
