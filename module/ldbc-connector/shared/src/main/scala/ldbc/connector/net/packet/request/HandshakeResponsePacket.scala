@@ -9,6 +9,9 @@ package request
 
 import ldbc.connector.data.CapabilitiesFlags
 
+/**
+ * Depending on the servers support for the CLIENT_PROTOCOL_41 capability and the clients understanding of that flag the client has to send either a Protocol::HandshakeResponse320 or Protocol::HandshakeResponse41.
+ */
 trait HandshakeResponsePacket extends RequestPacket:
 
   def capabilitiesFlags: Seq[CapabilitiesFlags]

@@ -17,6 +17,18 @@ import scodec.interop.cats.*
 
 import ldbc.connector.data.CapabilitiesFlags
 
+/**
+ * Old Handshake Response Packet used by old clients or if the server doesn't support CLIENT_PROTOCOL_41 Capabilities Flags flag.
+ *
+ * @param capabilitiesFlags
+ *   [[CapabilitiesFlags]], only the lower 16 bits. CLIENT_PROTOCOL_41 should never be set.
+ * @param user
+ *   The username of the client.
+ * @param hashedPassword
+ *   The password of the client, hashed with the given method.
+ * @param pluginName
+ *   The authentication plugin name.
+ */
 case class HandshakeResponse320Packet(
   capabilitiesFlags: Seq[CapabilitiesFlags],
   user:              String,

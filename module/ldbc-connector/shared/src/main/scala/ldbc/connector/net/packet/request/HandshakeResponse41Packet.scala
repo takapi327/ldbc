@@ -22,7 +22,7 @@ import ldbc.connector.data.CapabilitiesFlags
  * if the server announced it in its Protocol::Handshake. 
  * Otherwise (talking to an old server) the Protocol::HandshakeResponse320 packet must be used.
  * 
- * @param capabilityFlags
+ * @param capabilitiesFlags
  *   [[CapabilitiesFlags]], CLIENT_PROTOCOL_41 always set.
  * @param user
  *   The username of the client.
