@@ -47,11 +47,18 @@ object MySQLProtocol:
                      .negotiateSSL(socket, initialPacket$.capabilityFlags, option, sequenceIdRef)
                      .flatMap(ssl => Resource.eval(PacketSocket[F](debug, ssl, sequenceIdRef, readTimeout)))
                  )
-    yield new MySQLProtocol[F]:
+    yield fromPacketSocket[F](socket$, initialPacket$, sequenceIdRef)
+
+  def fromPacketSocket[F[_]: Temporal: Console](
+    packetSocket:    PacketSocket[F],
+    initialPacket$ : InitialPacket,
+    sequenceIdRef:   Ref[F, Byte]
+  ): MySQLProtocol[F] =
+    new MySQLProtocol[F]:
       override def initialPacket: InitialPacket = initialPacket$
 
       private def readUntilOk(): F[Unit] =
-        socket$.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+        packetSocket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
           case _: AuthMoreDataPacket => readUntilOk()
           case _: OKPacket           => Concurrent[F].unit
           case error: ERRPacket =>
@@ -73,7 +80,7 @@ object MySQLProtocol:
           plugin.name
         )
 
-        socket$.send(handshakeResponse) <* readUntilOk()
+        packetSocket.send(handshakeResponse) <* readUntilOk()
 
       override def resetSequenceId: F[Unit] =
         sequenceIdRef.update(_ => 0.toByte)
