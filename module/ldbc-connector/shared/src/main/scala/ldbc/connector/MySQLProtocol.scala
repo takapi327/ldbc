@@ -34,9 +34,9 @@ object MySQLProtocol:
     readTimeout: Duration
   ): Resource[F, MySQLProtocol[F]] =
     for
-      sequenceIdRef <- Resource.eval(Ref[F].of[Byte](0x01))
-      socket        <- sockets
-      ps            <- Resource.eval(PacketSocket[F](debug, socket, sequenceIdRef, readTimeout))
+      sequenceIdRef  <- Resource.eval(Ref[F].of[Byte](0x01))
+      socket         <- sockets
+      ps             <- Resource.eval(PacketSocket[F](debug, socket, sequenceIdRef, readTimeout))
       initialPacket$ <- Resource.eval(ps.receive(InitialPacket.decoder))
       socket$ <- sslOptions.fold(Resource.pure(ps))(option =>
                    SSLNegotiation
