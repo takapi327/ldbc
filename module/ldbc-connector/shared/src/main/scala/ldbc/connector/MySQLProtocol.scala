@@ -49,7 +49,8 @@ object MySQLProtocol:
                      .negotiateSSL(socket, initialPacket$.capabilityFlags, option, sequenceIdRef)
                      .flatMap(ssl => Resource.eval(PacketSocket[F](debug, ssl, sequenceIdRef, readTimeout)))
                  )
-    yield fromPacketSocket[F](socket$, initialPacket$, sequenceIdRef)
+      protocol <- Resource.make(Temporal[F].pure(fromPacketSocket(socket$, initialPacket$, sequenceIdRef)))(_.close())
+    yield protocol
 
   def fromPacketSocket[F[_]: Temporal: Console](
     packetSocket:    PacketSocket[F],
