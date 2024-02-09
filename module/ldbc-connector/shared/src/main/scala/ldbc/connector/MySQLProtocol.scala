@@ -27,7 +27,7 @@ trait MySQLProtocol[F[_]]:
 
   def authenticate(user: String, password: String): F[Unit]
 
-  def changeCommandPhase: F[Unit]
+  def resetSequenceId: F[Unit]
 
 object MySQLProtocol:
 
@@ -75,5 +75,5 @@ object MySQLProtocol:
 
         socket$.send(handshakeResponse) <* readUntilOk()
 
-      override def changeCommandPhase: F[Unit] =
+      override def resetSequenceId: F[Unit] =
         sequenceIdRef.update(_ => 0.toByte)
