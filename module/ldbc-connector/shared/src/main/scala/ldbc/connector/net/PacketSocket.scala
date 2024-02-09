@@ -94,8 +94,8 @@ object PacketSocket:
 
   def apply[F[_]: Console: Temporal](
     debug:         Boolean,
-    sockets:       Resource[F, Socket[F]],
+    socket:        Socket[F],
     sequenceIdRef: Ref[F, Byte],
     readTimeout:   Duration
-  ): Resource[F, PacketSocket[F]] =
-    BitVectorSocket[F](sockets, readTimeout).map(fromBitVectorSocket(_, debug, sequenceIdRef))
+  ): F[PacketSocket[F]] =
+    BitVectorSocket[F](socket, readTimeout).map(fromBitVectorSocket(_, debug, sequenceIdRef))

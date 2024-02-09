@@ -36,16 +36,11 @@ object MySQLSocket:
     for
       sequenceIdRef <- Resource.eval(Ref[F].of[Byte](0x01))
       socket        <- sockets
-      ps            <- PacketSocket[F](debug, Resource.pure(socket), sequenceIdRef, readTimeout)
+      ps            <- Resource.eval(PacketSocket[F](debug, socket, sequenceIdRef, readTimeout))
       initialPacket <- Resource.eval(ps.receive(InitialPacket.decoder))
-      socket$ <- sslOptions.fold(Resource.pure(ps))(option =>
-                   PacketSocket[F](
-                     debug,
-                     SSLNegotiation.negotiateSSL(socket, initialPacket.capabilityFlags, option, sequenceIdRef),
-                     sequenceIdRef,
-                     readTimeout
-                   )
-                 )
+      socket$ <- sslOptions.fold(Resource.pure(ps))(option => SSLNegotiation.negotiateSSL(socket, initialPacket.capabilityFlags, option, sequenceIdRef).flatMap(ssl => 
+          Resource.eval(PacketSocket[F](debug, ssl, sequenceIdRef, readTimeout))
+      ))
     yield new MySQLSocket[F]:
       override def receive[P <: ResponsePacket](decoder: Decoder[P]):    F[P]    = socket$.receive[P](decoder)
       override def send(request:                         RequestPacket): F[Unit] = socket$.send(request)

@@ -73,10 +73,9 @@ object BitVectorSocket:
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
 
   def apply[F[_]: Temporal](
-    socket:      Resource[F, Socket[F]],
+    socket:      Socket[F],
     readTimeout: Duration
-  ): Resource[F, BitVectorSocket[F]] =
-    for
-      socket   <- socket
-      carryRef <- Resource.eval(Ref[F].of(Chunk.empty[Byte]))
-    yield fromSocket(socket, readTimeout, carryRef)
+  ): F[BitVectorSocket[F]] =
+    Ref[F].of(Chunk.empty[Byte]).map { carryRef =>
+      fromSocket(socket, readTimeout, carryRef)
+    }
