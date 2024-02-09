@@ -62,34 +62,34 @@ object MySQLProtocol:
       new MySQLProtocol[F]:
 
         override def initialPacket: InitialPacket = initialPacket$
-  
+
         private def readUntilOk(): F[Unit] =
           packetSocket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
             case _: AuthMoreDataPacket => readUntilOk()
-            case _: OKPacket => Concurrent[F].unit
+            case _: OKPacket           => Concurrent[F].unit
             case error: ERRPacket =>
-              Concurrent[F].raiseError(new Exception(s"Connection error: ${error.errorMessage}"))
+              Concurrent[F].raiseError(new Exception(s"Connection error: ${ error.errorMessage }"))
           }
-  
+
         override def authenticate(user: String, password: String): F[Unit] =
           val plugin = initialPacket.authPlugin match
             case "mysql_native_password" => new MysqlNativePasswordPlugin
             case "caching_sha2_password" => CachingSha2PasswordPlugin(Some(password), None)
-            case _ => throw new Exception(s"Unknown plugin: ${initialPacket.authPlugin}")
-  
+            case _                       => throw new Exception(s"Unknown plugin: ${ initialPacket.authPlugin }")
+
           val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
-  
+
           val handshakeResponse = HandshakeResponsePacket(
             initialPacket.capabilityFlags,
             user,
             Array(hashedPassword.length.toByte) ++ hashedPassword,
             plugin.name
           )
-  
+
           packetSocket.send(handshakeResponse) <* readUntilOk()
-  
+
         override def resetSequenceId: F[Unit] =
           sequenceIdRef.update(_ => 0.toByte)
-  
+
         override def close(): F[Unit] = resetSequenceId *> packetSocket.send(ComQuitPacket())
     }
