@@ -43,18 +43,18 @@ object Initial:
                        case Some(chunk) => Monad[F].pure(chunk)
                        case None        => ev.raiseError(new Exception("Failed to read payload"))
                      }
-          initialPacket: InitialPacket <- InitialPacket.decoder
-                                            .decode(payload.toBitVector)
-                                            .fold(
-                                              err =>
-                                                ev.raiseError[InitialPacket](
-                                                  new MySQLException(
-                                                    None,
-                                                    s"Failed to decode initial packet: $err ${ payload.toBitVector.toHex }"
-                                                  )
-                                                ),
-                                              result => Monad[F].pure(result.value)
-                                            )
+          initialPacket <- InitialPacket.decoder
+                             .decode(payload.toBitVector)
+                             .fold(
+                               err =>
+                                 ev.raiseError[InitialPacket](
+                                   new MySQLException(
+                                     None,
+                                     s"Failed to decode initial packet: $err ${ payload.toBitVector.toHex }"
+                                   )
+                                 ),
+                               result => Monad[F].pure(result.value)
+                             )
           _ <-
             Console[F].println(
               s"[1] Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$initialPacket${ AnsiColor.RESET }"
