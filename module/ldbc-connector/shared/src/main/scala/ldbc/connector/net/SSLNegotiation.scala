@@ -36,7 +36,7 @@ object SSLNegotiation:
   ): Resource[F, Socket[F]] =
     for
       sequenceId <- Resource.eval(sequenceIdRef.get)
-      _          <- Resource.eval(socket.write(Chunk.byteVector(SSLRequestPacket(sequenceId, capabilityFlags).encode.bytes)))
+      _ <- Resource.eval(socket.write(Chunk.byteVector(SSLRequestPacket(sequenceId, capabilityFlags).encode.bytes)))
       socket$ <-
         sslOptions.tlsContext
           .clientBuilder(socket)

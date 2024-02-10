@@ -44,7 +44,7 @@ object PacketSocket:
     debugEnabled:  Boolean,
     sequenceIdRef: Ref[F, Byte]
   ): PacketSocket[F] = new PacketSocket[F]:
-    
+
     private def debug(msg: => String): F[Unit] =
       sequenceIdRef.get
         .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
@@ -95,11 +95,13 @@ object PacketSocket:
       yield ()
 
   def apply[F[_]: Console: Temporal](
-    debug:         Boolean,
-    sockets:     Resource[F, Socket[F]],
-    sslOptions:  Option[SSLNegotiation.Options[F]],
-    sequenceIdRef: Ref[F, Byte],
+    debug:            Boolean,
+    sockets:          Resource[F, Socket[F]],
+    sslOptions:       Option[SSLNegotiation.Options[F]],
+    sequenceIdRef:    Ref[F, Byte],
     initialPacketRef: Ref[F, Option[InitialPacket]],
-    readTimeout:   Duration
+    readTimeout:      Duration
   ): Resource[F, PacketSocket[F]] =
-    BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout).map(fromBitVectorSocket(_, debug, sequenceIdRef))
+    BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout).map(
+      fromBitVectorSocket(_, debug, sequenceIdRef)
+    )
