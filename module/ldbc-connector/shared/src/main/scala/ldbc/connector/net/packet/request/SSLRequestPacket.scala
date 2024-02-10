@@ -25,7 +25,7 @@ import ldbc.connector.data.*
  * @param capabilityFlags
  *  The capability flags of the client.
  */
-case class SSLRequestPacket(capabilityFlags: Seq[CapabilitiesFlags]) extends RequestPacket:
+case class SSLRequestPacket(sequenceId: Byte, capabilityFlags: Seq[CapabilitiesFlags]) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] = SSLRequestPacket.encoder.encode(this)
 
@@ -36,13 +36,13 @@ case class SSLRequestPacket(capabilityFlags: Seq[CapabilitiesFlags]) extends Req
 object SSLRequestPacket:
 
   val encoder: Encoder[SSLRequestPacket] = Encoder { (packet: SSLRequestPacket) =>
-    val hasClientProtocol41 = packet.capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val clientFlag          = if hasClientProtocol41 then CapabilitiesFlags.toBitset(packet.capabilityFlags) else 0
-    val maxPacketSize       = if hasClientProtocol41 then 0xffffff00 else 0
-    Attempt.successful(
-      BitVector.fromInt(clientFlag.toInt, 4) |+|
-        BitVector(maxPacketSize) |+|
-        BitVector(0xff) |+|
-        BitVector(new Array[Byte](23))
-    )
+    //val hasClientProtocol41 = packet.capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+    //val clientFlag          = if hasClientProtocol41 then CapabilitiesFlags.toBitset(packet.capabilityFlags) else 0
+    //val maxPacketSize       = if hasClientProtocol41 then 0xffffff00 else 0
+    val clientFlag = BitVector(0x07) |+| BitVector(0xaa) |+| BitVector(0x3e) |+| BitVector(0x19)
+    val maxPacketSize = BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0x0)
+    val payload = clientFlag |+| maxPacketSize |+| BitVector(0xff) |+| BitVector(new Array[Byte](23))
+    val payloadSize = payload.bytes.size
+    val header = BitVector(payloadSize) |+| BitVector(0) |+| BitVector(0) |+| BitVector(packet.sequenceId)
+    Attempt.successful(header |+| payload)
   }
