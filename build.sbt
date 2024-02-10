@@ -97,6 +97,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("connector", "MySQL connector written in pure Scala3")
   .settings(
+    scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"         % "2.10.0",
       "org.typelevel" %%% "cats-effect"       % "3.5.3",
@@ -107,7 +108,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
       "org.typelevel" %%% "otel4s-core-trace" % "0.4.0",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0"
-    )
+    ),
   )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
