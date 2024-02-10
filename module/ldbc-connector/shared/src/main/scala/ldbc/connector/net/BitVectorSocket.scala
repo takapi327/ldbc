@@ -13,6 +13,7 @@ import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
+import cats.effect.std.Console
 import cats.effect.syntax.temporal.*
 
 import fs2.Chunk
@@ -38,37 +39,6 @@ trait BitVectorSocket[F[_]]:
   def read(nBytes: Int): F[BitVector]
 
 object BitVectorSocket:
-
-  private def parseHeader(chunk: Chunk[Byte]): Int =
-    val headerBytes = chunk.toArray
-    (headerBytes(0) & 0xff) | ((headerBytes(1) & 0xff) << 8) | ((headerBytes(2) & 0xff) << 16)
-
-  private def readInitialPacket[F[_]: Temporal](
-    socket: Socket[F]
-  )(using ev: ApplicativeError[F, Throwable]): F[InitialPacket] =
-    for
-      header <- socket.read(4).flatMap {
-                  case Some(chunk) => Monad[F].pure(chunk)
-                  case None        => ev.raiseError(new Exception("Failed to read header"))
-                }
-      payloadSize = parseHeader(header)
-      payload <- socket.read(payloadSize).flatMap {
-                   case Some(chunk) => Monad[F].pure(chunk)
-                   case None        => ev.raiseError(new Exception("Failed to read payload"))
-                 }
-      initialPacket <- InitialPacket.decoder
-                         .decode(payload.toBitVector)
-                         .fold(
-                           err =>
-                             ev.raiseError[InitialPacket](
-                               new MySQLException(
-                                 None,
-                                 s"Failed to decode initial packet: $err ${ payload.toBitVector.toHex }"
-                               )
-                             ),
-                           result => Monad[F].pure(result.value)
-                         )
-    yield initialPacket
 
   /**
    * Construct a `BitVectorSocket` by wrapping an existing `Socket`.
@@ -104,7 +74,7 @@ object BitVectorSocket:
         // nb: unsafe for concurrent reads but protected by protocol mutex
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
 
-  def apply[F[_]: Temporal](
+  def apply[F[_]: Temporal: Console](
     sockets:          Resource[F, Socket[F]],
     sequenceIdRef:    Ref[F, Byte],
     initialPacketRef: Ref[F, Option[InitialPacket]],
@@ -113,7 +83,7 @@ object BitVectorSocket:
   ): Resource[F, BitVectorSocket[F]] =
     for
       socket        <- sockets
-      initialPacket <- Resource.eval(readInitialPacket(socket))
+      initialPacket <- Resource.eval(ldbc.connector.net.protocol.Initial[F](socket).start)
       _             <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
       socket$ <- sslOptions.fold(socket.pure[Resource[F, *]])(option =>
                    SSLNegotiation.negotiateSSL(socket, initialPacket.capabilityFlags, option, sequenceIdRef)
