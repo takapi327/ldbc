@@ -8,7 +8,7 @@ package ldbc.connector.net.protocol
 
 import scala.io.AnsiColor
 
-import cats.{Monad, ApplicativeError}
+import cats.{ Monad, ApplicativeError }
 import cats.syntax.all.*
 
 import cats.effect.Temporal
@@ -21,7 +21,7 @@ import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.packet.response.InitialPacket
 
 trait Initial[F[_]]:
-  
+
   def start: F[InitialPacket]
 
 object Initial:
@@ -35,25 +35,28 @@ object Initial:
       override def start: F[InitialPacket] =
         for
           header <- socket.read(4).flatMap {
-            case Some(chunk) => Monad[F].pure(chunk)
-            case None        => ev.raiseError(new Exception("Failed to read header"))
-          }
+                      case Some(chunk) => Monad[F].pure(chunk)
+                      case None        => ev.raiseError(new Exception("Failed to read header"))
+                    }
           payloadSize = parseHeader(header)
           payload <- socket.read(payloadSize).flatMap {
-            case Some(chunk) => Monad[F].pure(chunk)
-            case None        => ev.raiseError(new Exception("Failed to read payload"))
-          }
+                       case Some(chunk) => Monad[F].pure(chunk)
+                       case None        => ev.raiseError(new Exception("Failed to read payload"))
+                     }
           initialPacket: InitialPacket <- InitialPacket.decoder
-            .decode(payload.toBitVector)
-            .fold(
-              err =>
-                ev.raiseError[InitialPacket](
-                  new MySQLException(
-                    None,
-                    s"Failed to decode initial packet: $err ${ payload.toBitVector.toHex }"
-                  )
-                ),
-              result => Monad[F].pure(result.value)
+                                            .decode(payload.toBitVector)
+                                            .fold(
+                                              err =>
+                                                ev.raiseError[InitialPacket](
+                                                  new MySQLException(
+                                                    None,
+                                                    s"Failed to decode initial packet: $err ${ payload.toBitVector.toHex }"
+                                                  )
+                                                ),
+                                              result => Monad[F].pure(result.value)
+                                            )
+          _ <-
+            Console[F].println(
+              s"[1] Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$initialPacket${ AnsiColor.RESET }"
             )
-          _ <- Console[F].println(s"[1] Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$initialPacket${ AnsiColor.RESET }")
         yield initialPacket
