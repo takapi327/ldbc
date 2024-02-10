@@ -21,6 +21,7 @@ import scodec.Decoder
 import scodec.bits.BitVector
 
 import ldbc.connector.net.packet.*
+import ldbc.connector.net.packet.response.InitialPacket
 
 /**
  * A higher-level `BitVectorSocket` that speaks in terms of `Packet`.
@@ -43,6 +44,7 @@ object PacketSocket:
     debugEnabled:  Boolean,
     sequenceIdRef: Ref[F, Byte]
   ): PacketSocket[F] = new PacketSocket[F]:
+    
     private def debug(msg: => String): F[Unit] =
       sequenceIdRef.get
         .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
@@ -94,8 +96,10 @@ object PacketSocket:
 
   def apply[F[_]: Console: Temporal](
     debug:         Boolean,
-    socket:        Socket[F],
+    sockets:     Resource[F, Socket[F]],
+    sslOptions:  Option[SSLNegotiation.Options[F]],
     sequenceIdRef: Ref[F, Byte],
+    initialPacketRef: Ref[F, Option[InitialPacket]],
     readTimeout:   Duration
-  ): F[PacketSocket[F]] =
-    BitVectorSocket[F](socket, readTimeout).map(fromBitVectorSocket(_, debug, sequenceIdRef))
+  ): Resource[F, PacketSocket[F]] =
+    BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout).map(fromBitVectorSocket(_, debug, sequenceIdRef))
