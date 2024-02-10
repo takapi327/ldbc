@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector
+package ldbc.connector.net
 
 import scala.concurrent.duration.Duration
 
@@ -17,7 +17,6 @@ import cats.effect.std.*
 import fs2.io.net.Socket
 
 import ldbc.connector.authenticator.*
-import ldbc.connector.net.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.Exchange
