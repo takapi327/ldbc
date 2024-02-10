@@ -43,7 +43,9 @@ object SSLRequestPacket:
     val maxPacketSize =
       if hasClientProtocol41 then BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0x0)
       else BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff)
-    val payload     = clientFlag |+| maxPacketSize |+| BitVector(0xff) |+| BitVector(new Array[Byte](23))
+    val payload =
+      if hasClientProtocol41 then clientFlag |+| maxPacketSize |+| BitVector(0xff) |+| BitVector(new Array[Byte](23))
+      else clientFlag |+| maxPacketSize
     val payloadSize = payload.bytes.size
     val header      = BitVector(payloadSize) |+| BitVector(0) |+| BitVector(0) |+| BitVector(packet.sequenceId)
     Attempt.successful(header |+| payload)
