@@ -20,7 +20,8 @@ import fs2.io.net.Socket
 
 import scodec.bits.BitVector
 
-import ldbc.connector.exception.EofException
+import ldbc.connector.exception.*
+import ldbc.connector.net.packet.response.InitialPacket
 
 /**
  *  A higher-level `Socket` interface defined in terms of `BitVector`.
@@ -37,6 +38,32 @@ trait BitVectorSocket[F[_]]:
   def read(nBytes: Int): F[BitVector]
 
 object BitVectorSocket:
+
+  private def parseHeader(chunk: Chunk[Byte]): Int =
+    val headerBytes = chunk.toArray
+    (headerBytes(0) & 0xff) | ((headerBytes(1) & 0xff) << 8) | ((headerBytes(2) & 0xff) << 16)
+
+  private def readInitialPacket[F[_] : Temporal](socket: Socket[F])(using ev: ApplicativeError[F, Throwable]): F[InitialPacket] =
+    for
+      header <- socket.read(4).flatMap {
+        case Some(chunk) => Monad[F].pure(chunk)
+        case None => ev.raiseError(new Exception("Failed to read header"))
+      }
+      payloadSize = parseHeader(header)
+      payload <- socket.read(payloadSize).flatMap {
+        case Some(chunk) => Monad[F].pure(chunk)
+        case None => ev.raiseError(new Exception("Failed to read payload"))
+      }
+      initialPacket <- InitialPacket.decoder
+        .decode(payload.toBitVector)
+        .fold(
+          err =>
+            ev.raiseError[InitialPacket](
+              new MySQLException(None, s"Failed to decode initial packet: $err ${payload.toBitVector.toHex}")
+            ),
+          result => Monad[F].pure(result.value)
+        )
+    yield initialPacket
 
   /**
    * Construct a `BitVectorSocket` by wrapping an existing `Socket`.
@@ -73,9 +100,16 @@ object BitVectorSocket:
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
 
   def apply[F[_]: Temporal](
-    socket:      Socket[F],
+    sockets:     Resource[F, Socket[F]],
+    sequenceIdRef: Ref[F, Byte],
+    initialPacketRef: Ref[F, Option[InitialPacket]],
+    sslOptions:  Option[SSLNegotiation.Options[F]],
     readTimeout: Duration
-  ): F[BitVectorSocket[F]] =
-    Ref[F].of(Chunk.empty[Byte]).map { carryRef =>
-      fromSocket(socket, readTimeout, carryRef)
-    }
+  ): Resource[F, BitVectorSocket[F]] =
+    for
+      socket        <- sockets
+      initialPacket <- Resource.eval(readInitialPacket(socket))
+      _ <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
+      socket$       <- sslOptions.fold(socket.pure[Resource[F, *]])(option => SSLNegotiation.negotiateSSL(socket, initialPacket.capabilityFlags, option, sequenceIdRef))
+      carryRef      <- Resource.eval(Ref[F].of(Chunk.empty[Byte]))
+    yield fromSocket(socket$, readTimeout, carryRef)
