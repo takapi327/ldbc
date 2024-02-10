@@ -15,8 +15,6 @@ import fs2.Chunk
 import fs2.io.net.*
 import fs2.io.net.tls.*
 
-import scodec.bits.BitVector
-
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.packet.request.SSLRequestPacket
 
@@ -30,16 +28,6 @@ object SSLNegotiation:
     logger:        Option[String => F[Unit]]
   )
 
-  private def buildRequest(sequenceId: Byte, request: BitVector): BitVector =
-    val payloadSize = request.toByteArray.length
-    val header = Chunk(
-      payloadSize.toByte,
-      ((payloadSize >> 8) & 0xff).toByte,
-      ((payloadSize >> 16) & 0xff).toByte,
-      sequenceId
-    )
-    header.toBitVector ++ request
-
   def negotiateSSL[F[_]](
     socket:          Socket[F],
     capabilityFlags: Seq[CapabilitiesFlags],
@@ -48,8 +36,7 @@ object SSLNegotiation:
   ): Resource[F, Socket[F]] =
     for
       sequenceId <- Resource.eval(sequenceIdRef.get)
-      request    <- Resource.pure(buildRequest(sequenceId, SSLRequestPacket(capabilityFlags).encode))
-      _          <- Resource.eval(socket.write(Chunk.byteVector(request.bytes)))
+      _          <- Resource.eval(socket.write(Chunk.byteVector(SSLRequestPacket(sequenceId, capabilityFlags).encode.bytes)))
       socket$ <-
         sslOptions.tlsContext
           .clientBuilder(socket)
