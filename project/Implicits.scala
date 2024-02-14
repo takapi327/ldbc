@@ -9,7 +9,7 @@ import scala.language.implicitConversions
 import sbt.*
 import sbt.Keys.*
 
-import sbtcrossproject.{CrossPlugin, CrossProject}
+import sbtcrossproject.{ CrossPlugin, CrossProject }
 
 import de.heikoseeberger.sbtheader.AutomateHeaderPlugin
 
@@ -25,16 +25,16 @@ object Implicits {
       project
         .in(file(_name))
         .settings(
-          name := s"${(ThisBuild / projectName).value}-${_name}",
+          name        := s"${ (ThisBuild / projectName).value }-${ _name }",
           description := projectDescription
         )
         .defaultSettings
 
     def module(_name: String, projectDescription: String): CrossProject =
       project
-        .in(file(s"module/ldbc-${_name}"))
+        .in(file(s"module/ldbc-${ _name }"))
         .settings(
-          name := s"${(ThisBuild / projectName).value}-${_name}",
+          name        := s"${ (ThisBuild / projectName).value }-${ _name }",
           description := projectDescription
         )
         .defaultSettings
@@ -42,7 +42,8 @@ object Implicits {
     def defaultSettings: CrossProject =
       project
         .settings(scalaVersion := scala3)
-        .settings(scalacOptions ++= scala3Settings)
+        .settings(scalacOptions ++= additionalSettings)
+        .settings(scalacOptions --= removeSettings)
         .settings(commonSettings)
         .enablePlugins(AutomateHeaderPlugin)
   }
