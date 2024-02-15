@@ -16,14 +16,14 @@ import cats.effect.unsafe.implicits.global
 import ldbc.connector.exception.MySQLException
 
 class ConnectionTest extends AnyFlatSpec:
-  
+
   given Tracer[IO] = Tracer.noop[IO]
-  
+
   it should "Passing an empty string to host causes MySQLException" in {
     val connection = Connection.single[IO](
       host = "",
       port = 13306,
-      user = "root",
+      user = "root"
     )
     assertThrows[MySQLException] {
       connection.use(_ => IO.unit).unsafeRunSync()
@@ -34,7 +34,7 @@ class ConnectionTest extends AnyFlatSpec:
     val connection = Connection.single[IO](
       host = "host",
       port = 13306,
-      user = "root",
+      user = "root"
     )
     assertThrows[java.net.UnknownHostException] {
       connection.use(_ => IO.unit).unsafeRunSync()
@@ -45,7 +45,7 @@ class ConnectionTest extends AnyFlatSpec:
     val connection = Connection.single[IO](
       host = "127.0.0.1",
       port = -1,
-      user = "root",
+      user = "root"
     )
     assertThrows[MySQLException] {
       connection.use(_ => IO.unit).unsafeRunSync()
@@ -56,7 +56,7 @@ class ConnectionTest extends AnyFlatSpec:
     val connection = Connection.single[IO](
       host = "127.0.0.1",
       port = 65536,
-      user = "root",
+      user = "root"
     )
     assertThrows[MySQLException] {
       connection.use(_ => IO.unit).unsafeRunSync()
