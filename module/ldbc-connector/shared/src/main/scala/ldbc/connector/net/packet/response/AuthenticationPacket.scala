@@ -16,14 +16,19 @@ trait AuthenticationPacket extends ResponsePacket
 
 object AuthenticationPacket:
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[AuthenticationPacket | GenericResponsePackets | UnknownPacket] =
+  def decoder(
+    capabilityFlags: Seq[CapabilitiesFlags]
+  ): Decoder[AuthenticationPacket | GenericResponsePackets | UnknownPacket] =
     int8.flatMap {
       case OKPacket.STATUS           => OKPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS          => ERRPacket.decoder(capabilityFlags)
       case AuthMoreDataPacket.STATUS => AuthMoreDataPacket.decoder
-      case unknown => Decoder.pure(UnknownPacket(
-        status = unknown, 
-        detail = Some(s"Unknown status: $unknown"),
-        originatedPacket = Some("Authentication Packet")
-      ))
+      case unknown =>
+        Decoder.pure(
+          UnknownPacket(
+            status           = unknown,
+            detail           = Some(s"Unknown status: $unknown"),
+            originatedPacket = Some("Authentication Packet")
+          )
+        )
     }
