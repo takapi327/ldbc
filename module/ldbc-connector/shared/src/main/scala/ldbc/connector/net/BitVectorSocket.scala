@@ -23,6 +23,7 @@ import scodec.bits.BitVector
 
 import ldbc.connector.exception.*
 import ldbc.connector.net.packet.response.InitialPacket
+import ldbc.connector.net.protocol.Initial
 
 /**
  *  A higher-level `Socket` interface defined in terms of `BitVector`.
@@ -83,7 +84,7 @@ object BitVectorSocket:
   ): Resource[F, BitVectorSocket[F]] =
     for
       socket        <- sockets
-      initialPacket <- Resource.eval(ldbc.connector.net.protocol.Initial[F](socket).start)
+      initialPacket <- Resource.eval(Initial[F](socket).start)
       _             <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
       socket$ <- sslOptions.fold(socket.pure[Resource[F, *]])(option =>
                    SSLNegotiation.negotiateSSL(socket, initialPacket.capabilityFlags, option, sequenceIdRef)
