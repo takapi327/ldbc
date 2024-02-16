@@ -12,7 +12,8 @@ class MySQLException(
   message: String,
   sql:     Option[String] = None,
   detail:  Option[String] = None,
-  hint:    Option[String] = None
+  hint:    Option[String] = None,
+  originatedPacket: Option[String] = None
 ) extends Exception(message):
 
   def fields: List[Attribute[?]] =
@@ -23,5 +24,6 @@ class MySQLException(
     sql.foreach(a => builder += Attribute("error.sql", a))
     detail.foreach(a => builder += Attribute("error.detail", a))
     hint.foreach(a => builder += Attribute("error.hint", a))
+    originatedPacket.foreach(packet => builder += Attribute("error.originatedPacket", packet))
 
     builder.result()

@@ -67,6 +67,8 @@ object MySQLProtocol:
               case _: OKPacket           => Concurrent[F].unit
               case error: ERRPacket =>
                 Concurrent[F].raiseError(error.toException("Connection error"))
+              case unknown: UnknownPacket =>
+                Concurrent[F].raiseError(unknown.toException("Error during database operation"))
             }
 
           override def authenticate(user: String, password: String): F[Unit] =

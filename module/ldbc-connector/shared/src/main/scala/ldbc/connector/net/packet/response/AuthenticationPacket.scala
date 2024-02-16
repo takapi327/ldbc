@@ -21,5 +21,9 @@ object AuthenticationPacket:
       case OKPacket.STATUS           => OKPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS          => ERRPacket.decoder(capabilityFlags)
       case AuthMoreDataPacket.STATUS => AuthMoreDataPacket.decoder
-      case unknown => Decoder.pure(UnknownPacket(unknown, Some(s"Unknown status: $unknown")))
+      case unknown => Decoder.pure(UnknownPacket(
+        status = unknown, 
+        detail = Some(s"Unknown status: $unknown"),
+        originatedPacket = Some("Authentication Packet")
+      ))
     }
