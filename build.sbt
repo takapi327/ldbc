@@ -117,7 +117,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .jsSettings(
-    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
