@@ -8,6 +8,8 @@ package ldbc.connector
 
 import org.typelevel.otel4s.trace.Tracer
 
+import com.comcast.ip4s.UnknownHostException
+
 import cats.effect.*
 
 import munit.CatsEffectSuite
@@ -35,7 +37,7 @@ class ConnectionTest extends CatsEffectSuite:
       port = 13306,
       user = "root"
     )
-    interceptIO[java.net.UnknownHostException] {
+    interceptIO[UnknownHostException] {
       connection.use(_ => IO.unit)
     }
   }
