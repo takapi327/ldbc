@@ -22,5 +22,6 @@ object AuthenticationPacket:
       case OKPacket.STATUS           => OKPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS          => ERRPacket.decoder(capabilityFlags)
       case AuthMoreDataPacket.STATUS => AuthMoreDataPacket.decoder
-      case unknown                   => throw new MySQLException(None, "Error during database operation", Some(s"Unknown status: $unknown"))
+      case unknown =>
+        throw new MySQLException(None, "Error during database operation", Some(s"Unknown status: $unknown"))
     }

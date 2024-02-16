@@ -64,20 +64,20 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("Communication to MySQL server is successfully established") {
     val connection = Connection.single[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
-      debug = false
+      debug    = false
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
   test("Failure to establish communication to MySQL server if authentication information is incorrect") {
     val connection = Connection.single[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host  = "127.0.0.1",
+      port  = 13306,
+      user  = "ldbc",
       debug = false
     )
     interceptIO[MySQLException] {
