@@ -90,4 +90,4 @@ object MySQLProtocol:
             sequenceIdRef.update(_ => 0.toByte)
 
           override def close(): F[Unit] = resetSequenceId *> packetSocket.send(ComQuitPacket())
-      case None => throw new MySQLException(None, "Initial packet is not set")
+      case None => throw new MySQLException("Initial packet is not set")

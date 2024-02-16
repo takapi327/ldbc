@@ -9,8 +9,8 @@ package ldbc.connector.exception
 import org.typelevel.otel4s.Attribute
 
 class MySQLException(
-  sql:     Option[String],
   message: String,
+  sql:     Option[String] = None,
   detail:  Option[String] = None,
   hint:    Option[String] = None
 ) extends Exception(message):

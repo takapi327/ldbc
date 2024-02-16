@@ -7,8 +7,8 @@
 package ldbc.connector.exception
 
 case class ERRPacketException(
-  sql:     Option[String],
   message: String,
+  sql:     Option[String] = None,
   detail:  Option[String] = None,
   hint:    Option[String] = None
-) extends MySQLException(sql, message, detail, hint)
+) extends MySQLException(message, sql, detail, hint)

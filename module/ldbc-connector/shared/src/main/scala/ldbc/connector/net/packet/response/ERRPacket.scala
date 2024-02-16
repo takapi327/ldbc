@@ -54,7 +54,6 @@ case class ERRPacket(
   override def toString: String = "ERR_Packet"
 
   def toException(message: String): ERRPacketException = ERRPacketException(
-    None,
     message = message,
     detail  = Some(errorMessage)
   )

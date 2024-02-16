@@ -36,12 +36,12 @@ object Initial:
         for
           header <- socket.read(4).flatMap {
                       case Some(chunk) => Monad[F].pure(chunk)
-                      case None        => ev.raiseError(new MySQLException(None, "Failed to read header"))
+                      case None        => ev.raiseError(new MySQLException("Failed to read header"))
                     }
           payloadSize = parseHeader(header)
           payload <- socket.read(payloadSize).flatMap {
                        case Some(chunk) => Monad[F].pure(chunk)
-                       case None        => ev.raiseError(new MySQLException(None, "Failed to read payload"))
+                       case None        => ev.raiseError(new MySQLException("Failed to read payload"))
                      }
           initialPacket <- InitialPacket.decoder
                              .decode(payload.toBitVector)
@@ -49,7 +49,6 @@ object Initial:
                                err =>
                                  ev.raiseError[InitialPacket](
                                    new MySQLException(
-                                     None,
                                      s"Failed to decode initial packet: $err ${ payload.toBitVector.toHex }"
                                    )
                                  ),
