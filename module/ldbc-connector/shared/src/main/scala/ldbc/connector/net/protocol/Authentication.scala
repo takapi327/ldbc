@@ -14,6 +14,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.authenticator.*
 import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
@@ -47,8 +48,11 @@ object Authentication:
         socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
           case _: AuthMoreDataPacket => readUntilOk(password)
           case switchRequestPacket: AuthSwitchRequestPacket =>
-            authSwitchResponse(password, switchRequestPacket.pluginName, switchRequestPacket.pluginProvidedData) *>
-              readUntilOk(password)
+            determinatePlugin(switchRequestPacket.pluginName) match
+              case Left(error) => ev.raiseError(error) *> readUntilOk(password)
+              case Right(plugin) =>
+                authSwitchResponse(password, plugin, switchRequestPacket.pluginProvidedData) *>
+                  readUntilOk(password)
           case _: OKPacket            => ev.unit
           case error: ERRPacket       => ev.raiseError(error.toException("Connection error"))
           case unknown: UnknownPacket => ev.raiseError(unknown.toException("Error during database operation"))
@@ -56,21 +60,19 @@ object Authentication:
 
       private def authSwitchResponse(
         password:     String,
-        pluginName:   String,
+        plugin:   AuthenticationPlugin,
         scrambleBuff: Array[Byte]
       ): F[Unit] =
-        val plugin         = determinatePlugin(pluginName)
         val hashedPassword = plugin.hashPassword(password, scrambleBuff)
         socket.send(AuthSwitchResponsePacket(hashedPassword))
 
       private def handshake(
         username:        String,
         password:        String,
-        pluginName:      String,
+        plugin:          AuthenticationPlugin,
         capabilityFlags: Seq[CapabilitiesFlags],
         scrambleBuff:    Array[Byte]
       ): F[Unit] =
-        val plugin         = determinatePlugin(pluginName)
         val hashedPassword = plugin.hashPassword(password, scrambleBuff)
         val handshakeResponse = HandshakeResponsePacket(
           capabilityFlags,
@@ -82,21 +84,18 @@ object Authentication:
 
       override def apply(username: String, password: String, database: Option[String]): F[Unit] =
         exchange[F, Unit]("authentication") { (span: Span[F]) =>
-          database.fold(span.addAttribute(Attribute("username", username)))(database =>
-            span.addAttributes(Attribute("username", username), Attribute("database", database))
-          ) *>
-            handshake(
-              username,
-              password,
-              initialPacket.authPlugin,
-              initialPacket.capabilityFlags,
-              initialPacket.scrambleBuff
-            ) *>
-            readUntilOk(password)
+          for
+            _ <- database.fold(span.addAttribute(Attribute("username", username)))(database =>
+              span.addAttributes(Attribute("username", username), Attribute("database", database))
+            )
+            _ <- determinatePlugin(initialPacket.authPlugin) match
+              case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
+              case Right(plugin) => handshake(username, password, plugin, initialPacket.capabilityFlags, initialPacket.scrambleBuff) *> readUntilOk(password)
+          yield ()
         }
 
-  private def determinatePlugin(pluginName: String): AuthenticationPlugin =
+  private def determinatePlugin(pluginName: String): Either[MySQLException, AuthenticationPlugin] =
     pluginName match
-      case "mysql_native_password" => new MysqlNativePasswordPlugin
-      case "caching_sha2_password" => CachingSha2PasswordPlugin(None, None)
-      case _                       => throw new Exception(s"Unknown plugin: $pluginName")
+      case "mysql_native_password" => Right(new MysqlNativePasswordPlugin)
+      case "caching_sha2_password" => Right(CachingSha2PasswordPlugin(None, None))
+      case _                       => Left(new MySQLException(s"Unknown authentication plugin: $pluginName"))
