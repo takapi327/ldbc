@@ -46,11 +46,11 @@ object Authentication:
 
       private def readUntilOk(password: String): F[Unit] =
         socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-          case _: AuthMoreDataPacket => readUntilOk(password)
+          case _: AuthMoreDataPacket           => readUntilOk(password)
           case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password)
-          case _: OKPacket            => ev.unit
-          case error: ERRPacket       => ev.raiseError(error.toException("Connection error"))
-          case unknown: UnknownPacket => ev.raiseError(unknown.toException("Error during database operation"))
+          case _: OKPacket                     => ev.unit
+          case error: ERRPacket                => ev.raiseError(error.toException("Connection error"))
+          case unknown: UnknownPacket          => ev.raiseError(unknown.toException("Error during database operation"))
         }
 
       /**
@@ -67,11 +67,11 @@ object Authentication:
         exchange[F, Unit]("authentication method change") { (span: Span[F]) =>
           span.addAttribute(Attribute("plugin", switchRequestPacket.pluginName)) *>
             determinatePlugin(switchRequestPacket.pluginName) match
-              case Left(error) => ev.raiseError(error) *> readUntilOk(password)
-              case Right(plugin) =>
-                val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-                socket.send(AuthSwitchResponsePacket(hashedPassword)) *>
-                  readUntilOk(password)
+            case Left(error) => ev.raiseError(error) *> readUntilOk(password)
+            case Right(plugin) =>
+              val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
+              socket.send(AuthSwitchResponsePacket(hashedPassword)) *>
+                readUntilOk(password)
         }
 
       private def handshake(
