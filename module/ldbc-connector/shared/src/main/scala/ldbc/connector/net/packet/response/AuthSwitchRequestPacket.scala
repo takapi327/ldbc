@@ -17,10 +17,10 @@ import cats.syntax.all.*
  *
  * If both server and the client support [[ldbc.connector.data.CapabilitiesFlags.CLIENT_PLUGIN_AUTH]] capability,
  * server can send this packet tp ask client to use another authentication method.
- * 
+ *
  * @param status
  *   Type: int<1>
- *   Name: 0xFE (254)	
+ *   Name: 0xFE (254)
  *   Description: status tag
  * @param pluginName
  *   Type: string<NUL>
@@ -34,18 +34,17 @@ import cats.syntax.all.*
 case class AuthSwitchRequestPacket(
                                     status:                   Int,
                                     pluginName: String,
-                                    pluginProvidedData: String
+                                    pluginProvidedData: Array[Byte]
                                   ) extends AuthenticationPacket:
 
   override def toString: String = "Protocol::AuthSwitchRequest"
 
 object AuthSwitchRequestPacket:
-  
+
   val STATUS = 254
-  
+
   val decoder: Decoder[AuthSwitchRequestPacket] =
     for
-      status <- uint4
       pluginName <- nullTerminatedStringCodec.asDecoder
-      pluginProvidedData <- nullTerminatedStringCodec.asDecoder
-    yield AuthSwitchRequestPacket(status, pluginName, pluginProvidedData)
+      pluginProvidedData <- bytes.asDecoder
+    yield AuthSwitchRequestPacket(STATUS, pluginName, pluginProvidedData.toArray.dropRight(1))
