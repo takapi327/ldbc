@@ -19,7 +19,7 @@ object AuthenticationPacket:
   def decoder(
     capabilityFlags: Seq[CapabilitiesFlags]
   ): Decoder[AuthenticationPacket | GenericResponsePackets | UnknownPacket] =
-    int8.flatMap {
+    uint8.flatMap {
       case OKPacket.STATUS           => OKPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS          => ERRPacket.decoder(capabilityFlags)
       case AuthMoreDataPacket.STATUS => AuthMoreDataPacket.decoder
