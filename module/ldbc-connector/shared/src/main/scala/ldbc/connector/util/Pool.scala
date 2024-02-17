@@ -93,7 +93,7 @@ object Pool:
                       if canRemove then // we'll pull it out before anyone can complete it
                         ().pure[F]
                       else // someone got to it first and will complete it, so we wait and then return it
-                        d.get.flatMap(_.liftTo[F]).onError(restore).flatMap(take(_))
+                        d.get.flatMap(_.liftTo[F]).onError(restore).flatMap(take)
 
                     ((os, if canRemove then ds.filterNot(_ == d) else ds), cleanupMaybe)
                 }
