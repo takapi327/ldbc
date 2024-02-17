@@ -65,13 +65,14 @@ object Authentication:
        */
       private def changeAuthenticationMethod(switchRequestPacket: AuthSwitchRequestPacket, password: String): F[Unit] =
         exchange[F, Unit]("authentication method change") { (span: Span[F]) =>
-          span.addAttribute(Attribute("plugin", switchRequestPacket.pluginName)) *>
+          span.addAttribute(Attribute("plugin", switchRequestPacket.pluginName)) *> (
             determinatePlugin(switchRequestPacket.pluginName) match
-            case Left(error) => ev.raiseError(error) *> readUntilOk(password)
-            case Right(plugin) =>
-              val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-              socket.send(AuthSwitchResponsePacket(hashedPassword)) *>
-                readUntilOk(password)
+              case Left(error) => ev.raiseError(error) *> readUntilOk(password)
+              case Right(plugin) =>
+                val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
+                socket.send(AuthSwitchResponsePacket(hashedPassword)) *>
+                  readUntilOk(password)
+          )
         }
 
       private def handshake(
@@ -111,5 +112,5 @@ object Authentication:
   private def determinatePlugin(pluginName: String): Either[MySQLException, AuthenticationPlugin] =
     pluginName match
       case "mysql_native_password" => Right(new MysqlNativePasswordPlugin)
-      case "caching_sha2_password" => Right(CachingSha2PasswordPlugin(None, None))
+      case "caching_sha2_password" => Right(new CachingSha2PasswordPlugin)
       case _                       => Left(new MySQLException(s"Unknown authentication plugin: $pluginName"))
