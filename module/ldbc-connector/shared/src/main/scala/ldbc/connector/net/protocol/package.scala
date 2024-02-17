@@ -11,6 +11,6 @@ import org.typelevel.otel4s.trace.Tracer
 
 package object protocol:
 
-  def exchange[F[_] : Tracer, A](label: String)(f: Span[F] => F[A])(
-    using exchange: Exchange[F]
+  def exchange[F[_]: Tracer, A](label: String)(f: Span[F] => F[A])(using
+    exchange: Exchange[F]
   ): F[A] = Tracer[F].span(label).use(span => exchange(f(span)))

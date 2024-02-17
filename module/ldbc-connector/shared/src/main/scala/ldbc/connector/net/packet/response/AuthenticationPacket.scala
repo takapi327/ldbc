@@ -20,9 +20,9 @@ object AuthenticationPacket:
     capabilityFlags: Seq[CapabilitiesFlags]
   ): Decoder[AuthenticationPacket | GenericResponsePackets | UnknownPacket] =
     uint8.flatMap {
-      case OKPacket.STATUS           => OKPacket.decoder(capabilityFlags)
-      case ERRPacket.STATUS          => ERRPacket.decoder(capabilityFlags)
-      case AuthMoreDataPacket.STATUS => AuthMoreDataPacket.decoder
+      case OKPacket.STATUS                => OKPacket.decoder(capabilityFlags)
+      case ERRPacket.STATUS               => ERRPacket.decoder(capabilityFlags)
+      case AuthMoreDataPacket.STATUS      => AuthMoreDataPacket.decoder
       case AuthSwitchRequestPacket.STATUS => AuthSwitchRequestPacket.decoder
       case unknown =>
         Decoder.pure(

@@ -25,8 +25,8 @@ import scodec.bits.*
  *   Description: authentication response data
  */
 case class AuthSwitchResponsePacket(
-                                     hashedPassword:    Array[Byte]
-                                   ) extends RequestPacket:
+  hashedPassword: Array[Byte]
+) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] = AuthSwitchResponsePacket.encoder.encode(this)
 
@@ -36,7 +36,7 @@ case class AuthSwitchResponsePacket(
   override def toString: String = "Protocol::AuthSwitchResponse"
 
 object AuthSwitchResponsePacket:
-  
+
   val encoder: Encoder[AuthSwitchResponsePacket] = Encoder { authSwitchResponsePacket =>
     Attempt.Successful(
       BitVector(copyOf(authSwitchResponsePacket.hashedPassword, authSwitchResponsePacket.hashedPassword.length))

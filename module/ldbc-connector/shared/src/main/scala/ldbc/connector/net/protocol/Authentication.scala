@@ -10,7 +10,7 @@ import cats.*
 import cats.syntax.all.*
 
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{Tracer, Span}
+import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.authenticator.*
 import ldbc.connector.data.CapabilitiesFlags
@@ -38,7 +38,9 @@ trait Authentication[F[_]]:
 
 object Authentication:
 
-  def apply[F[_]: Exchange: Tracer](socket: PacketSocket[F], initialPacket: InitialPacket)(using ev: MonadError[F, Throwable]): Authentication[F] =
+  def apply[F[_]: Exchange: Tracer](socket: PacketSocket[F], initialPacket: InitialPacket)(using
+    ev: MonadError[F, Throwable]
+  ): Authentication[F] =
     new Authentication[F]:
 
       private def readUntilOk(password: String): F[Unit] =
@@ -46,29 +48,29 @@ object Authentication:
           case _: AuthMoreDataPacket => readUntilOk(password)
           case switchRequestPacket: AuthSwitchRequestPacket =>
             authSwitchResponse(password, switchRequestPacket.pluginName, switchRequestPacket.pluginProvidedData) *>
-               readUntilOk(password)
-          case _: OKPacket           => ev.unit
-          case error: ERRPacket => ev.raiseError(error.toException("Connection error"))
+              readUntilOk(password)
+          case _: OKPacket            => ev.unit
+          case error: ERRPacket       => ev.raiseError(error.toException("Connection error"))
           case unknown: UnknownPacket => ev.raiseError(unknown.toException("Error during database operation"))
         }
 
       private def authSwitchResponse(
-                                      password: String,
-                                      pluginName: String,
-                                      scrambleBuff: Array[Byte]
-                                    ): F[Unit] =
-        val plugin = determinatePlugin(pluginName)
+        password:     String,
+        pluginName:   String,
+        scrambleBuff: Array[Byte]
+      ): F[Unit] =
+        val plugin         = determinatePlugin(pluginName)
         val hashedPassword = plugin.hashPassword(password, scrambleBuff)
         socket.send(AuthSwitchResponsePacket(hashedPassword))
 
       private def handshake(
-                             username: String,
-                             password: String,
-                             pluginName: String, 
-                             capabilityFlags: Seq[CapabilitiesFlags],
-                             scrambleBuff: Array[Byte]
-                           ): F[Unit] =
-        val plugin = determinatePlugin(pluginName)
+        username:        String,
+        password:        String,
+        pluginName:      String,
+        capabilityFlags: Seq[CapabilitiesFlags],
+        scrambleBuff:    Array[Byte]
+      ): F[Unit] =
+        val plugin         = determinatePlugin(pluginName)
         val hashedPassword = plugin.hashPassword(password, scrambleBuff)
         val handshakeResponse = HandshakeResponsePacket(
           capabilityFlags,
@@ -83,7 +85,13 @@ object Authentication:
           database.fold(span.addAttribute(Attribute("username", username)))(database =>
             span.addAttributes(Attribute("username", username), Attribute("database", database))
           ) *>
-            handshake(username, password, initialPacket.authPlugin, initialPacket.capabilityFlags, initialPacket.scrambleBuff) *>
+            handshake(
+              username,
+              password,
+              initialPacket.authPlugin,
+              initialPacket.capabilityFlags,
+              initialPacket.scrambleBuff
+            ) *>
             readUntilOk(password)
         }
 
@@ -91,4 +99,4 @@ object Authentication:
     pluginName match
       case "mysql_native_password" => new MysqlNativePasswordPlugin
       case "caching_sha2_password" => CachingSha2PasswordPlugin(None, None)
-      case _ => throw new Exception(s"Unknown plugin: $pluginName")
+      case _                       => throw new Exception(s"Unknown plugin: $pluginName")

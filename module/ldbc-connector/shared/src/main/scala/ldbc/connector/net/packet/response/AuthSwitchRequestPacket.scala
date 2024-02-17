@@ -32,10 +32,10 @@ import cats.syntax.all.*
  *   Description: Initial authentication data for that client plugin
  */
 case class AuthSwitchRequestPacket(
-                                    status:                   Int,
-                                    pluginName: String,
-                                    pluginProvidedData: Array[Byte]
-                                  ) extends AuthenticationPacket:
+  status:             Int,
+  pluginName:         String,
+  pluginProvidedData: Array[Byte]
+) extends AuthenticationPacket:
 
   override def toString: String = "Protocol::AuthSwitchRequest"
 
@@ -45,6 +45,6 @@ object AuthSwitchRequestPacket:
 
   val decoder: Decoder[AuthSwitchRequestPacket] =
     for
-      pluginName <- nullTerminatedStringCodec.asDecoder
+      pluginName         <- nullTerminatedStringCodec.asDecoder
       pluginProvidedData <- bytes.asDecoder
     yield AuthSwitchRequestPacket(STATUS, pluginName, pluginProvidedData.toArray.dropRight(1))
