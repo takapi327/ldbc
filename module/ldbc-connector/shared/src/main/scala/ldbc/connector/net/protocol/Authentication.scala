@@ -60,7 +60,7 @@ object Authentication:
 
       private def authSwitchResponse(
         password:     String,
-        plugin:   AuthenticationPlugin,
+        plugin:       AuthenticationPlugin,
         scrambleBuff: Array[Byte]
       ): F[Unit] =
         val hashedPassword = plugin.hashPassword(password, scrambleBuff)
@@ -84,14 +84,20 @@ object Authentication:
 
       override def apply(username: String, password: String, database: Option[String]): F[Unit] =
         exchange[F, Unit]("authentication") { (span: Span[F]) =>
-          for
-            _ <- database.fold(span.addAttribute(Attribute("username", username)))(database =>
-              span.addAttributes(Attribute("username", username), Attribute("database", database))
-            )
-            _ <- determinatePlugin(initialPacket.authPlugin) match
-              case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
-              case Right(plugin) => handshake(username, password, plugin, initialPacket.capabilityFlags, initialPacket.scrambleBuff) *> readUntilOk(password)
-          yield ()
+          database.fold(span.addAttribute(Attribute("username", username)))(database =>
+            span.addAttributes(Attribute("username", username), Attribute("database", database))
+          ) *> (
+            determinatePlugin(initialPacket.authPlugin) match
+              case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
+              case Right(plugin) =>
+                handshake(
+                  username,
+                  password,
+                  plugin,
+                  initialPacket.capabilityFlags,
+                  initialPacket.scrambleBuff
+                ) *> readUntilOk(password)
+          )
         }
 
   private def determinatePlugin(pluginName: String): Either[MySQLException, AuthenticationPlugin] =
