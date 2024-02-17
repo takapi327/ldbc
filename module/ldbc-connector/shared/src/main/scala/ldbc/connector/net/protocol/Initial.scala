@@ -56,6 +56,6 @@ object Initial:
                              )
           _ <-
             Console[F].println(
-              s"[1] Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$initialPacket${ AnsiColor.RESET }"
+              s"[0] Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$initialPacket${ AnsiColor.RESET }"
             )
         yield initialPacket
