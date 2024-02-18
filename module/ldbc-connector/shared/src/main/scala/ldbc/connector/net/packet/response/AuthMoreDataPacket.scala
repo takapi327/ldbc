@@ -9,7 +9,6 @@ package response
 
 import scodec.*
 import scodec.codecs.*
-
 import cats.syntax.all.*
 
 /**
@@ -28,7 +27,7 @@ import cats.syntax.all.*
  */
 case class AuthMoreDataPacket(
   status:                   Int,
-  authenticationMethodData: Int
+  authenticationMethodData: Array[Byte]
 ) extends AuthenticationPacket:
 
   override def toString: String = "Protocol::AuthMoreData"
@@ -38,7 +37,4 @@ object AuthMoreDataPacket:
   val STATUS = 1
 
   val decoder: Decoder[AuthMoreDataPacket] =
-    for
-      status <- uint4
-      data   <- uint4
-    yield AuthMoreDataPacket(status, data)
+    bytes.asDecoder.map(data => AuthMoreDataPacket(STATUS, data.toArray))
