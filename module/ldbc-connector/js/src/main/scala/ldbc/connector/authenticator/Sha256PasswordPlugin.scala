@@ -13,12 +13,11 @@ import scodec.bits.ByteVector
 
 trait Sha256PasswordPlugin extends AuthenticationPlugin:
 
-  def password:        Option[String]
-  def publicKeyString: Option[String]
+  override def name: String = "sha256_password"
+
+  def transformation: String = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding"
 
   private val crypto = js.Dynamic.global.require("crypto")
-
-  override def name: String = "sha256_password"
 
   override def hashPassword(password: String, scramble: Array[Byte]): Array[Byte] =
     if password.isEmpty then Array[Byte]()
@@ -34,14 +33,8 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
     hash.update(ByteVector(data).toUint8Array)
     ByteVector.view(hash.digest().asInstanceOf[Uint8Array]).toArray
 
+  def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] = ??? // TODO
+
 object Sha256PasswordPlugin:
 
-  def apply(_password: String): Sha256PasswordPlugin =
-    new Sha256PasswordPlugin:
-      override def password:        Option[String] = Some(_password)
-      override def publicKeyString: Option[String] = None
-
-  def apply(_password: String, _publicKeyString: String): Sha256PasswordPlugin =
-    new Sha256PasswordPlugin:
-      override def password:        Option[String] = Some(_password)
-      override def publicKeyString: Option[String] = Some(_publicKeyString)
+  def apply(): Sha256PasswordPlugin = new Sha256PasswordPlugin {}
