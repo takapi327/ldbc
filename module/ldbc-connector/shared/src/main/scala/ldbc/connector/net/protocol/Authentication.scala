@@ -39,7 +39,7 @@ trait Authentication[F[_]]:
 
 object Authentication:
 
-  def apply[F[_]: Exchange: Tracer](socket: PacketSocket[F], initialPacket: InitialPacket)(using
+  def apply[F[_]: Exchange: Tracer](socket: PacketSocket[F], initialPacket: InitialPacket, allowPublicKeyRetrieval: Boolean = false)(using
     ev: MonadError[F, Throwable]
   ): Authentication[F] =
     new Authentication[F]:
@@ -65,7 +65,19 @@ object Authentication:
        */
       private def changeAuthenticationMethod(switchRequestPacket: AuthSwitchRequestPacket, password: String): F[Unit] =
         determinatePlugin(switchRequestPacket.pluginName) match
-          case Left(error) => ev.raiseError(error) *> readUntilOk(password)
+          case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
+          case Right(plugin: Sha256PasswordPlugin) =>
+            if allowPublicKeyRetrieval then
+              socket.send(ComQuitPacket()) *>
+                socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
+                  val publicKeyString = moreData.authenticationMethodData.map("%02x" format _).map(hex =>  Integer.parseInt(hex, 16).toChar).mkString("")
+                  val encryptPassword = plugin.encryptPassword(password, switchRequestPacket.pluginProvidedData, publicKeyString)
+                  socket.send(AuthSwitchResponsePacket(encryptPassword))
+                } *> readUntilOk(password)
+            else
+              val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
+              socket.send(AuthSwitchResponsePacket(hashedPassword)) *>
+                readUntilOk(password)
           case Right(plugin) =>
             val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             socket.send(AuthSwitchResponsePacket(hashedPassword)) *>
@@ -107,6 +119,7 @@ object Authentication:
 
   private def determinatePlugin(pluginName: String): Either[MySQLException, AuthenticationPlugin] =
     pluginName match
-      case "mysql_native_password" => Right(new MysqlNativePasswordPlugin)
-      case "caching_sha2_password" => Right(new CachingSha2PasswordPlugin)
+      case "mysql_native_password" => Right(MysqlNativePasswordPlugin())
+      case "sha256_password" => Right(Sha256PasswordPlugin())
+      case "caching_sha2_password" => Right(CachingSha2PasswordPlugin())
       case _                       => Left(new MySQLException(s"Unknown authentication plugin: $pluginName"))

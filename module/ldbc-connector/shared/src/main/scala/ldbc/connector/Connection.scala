@@ -49,9 +49,10 @@ object Connection:
     password:    Option[String] = None,
     debug:       Boolean = false,
     ssl:         SSL = SSL.None,
-    readTimeout: Duration = Duration.Inf
+    readTimeout: Duration = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean = false
   ): Resource[F, Connection[F]] =
-    singleTracer(host, port, user, password, debug, ssl, readTimeout).apply(Tracer[F])
+    singleTracer(host, port, user, password, debug, ssl, readTimeout, allowPublicKeyRetrieval).apply(Tracer[F])
 
   def singleTracer[F[_]: Temporal: Network: Console](
     host:        String,
@@ -60,7 +61,8 @@ object Connection:
     password:    Option[String] = None,
     debug:       Boolean = false,
     ssl:         SSL = SSL.None,
-    readTimeout: Duration = Duration.Inf
+    readTimeout: Duration = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean = false
   ): Tracer[F] => Resource[F, Connection[F]] =
     Kleisli((_: Tracer[F]) =>
       pooled[F](
@@ -71,7 +73,8 @@ object Connection:
         max         = 1,
         debug       = debug,
         ssl         = ssl,
-        readTimeout = readTimeout
+        readTimeout = readTimeout,
+        allowPublicKeyRetrieval = allowPublicKeyRetrieval
       )
     )
       .flatMap(f => Kleisli { implicit T: Tracer[F] => f(T) })
@@ -85,11 +88,12 @@ object Connection:
     password:    Option[String] = None,
     debug:       Boolean = false,
     sslOptions:  Option[SSLNegotiation.Options[F]],
-    readTimeout: Duration = Duration.Inf
+    readTimeout: Duration = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean = false
   ): Resource[F, Connection[F]] =
     for
       protocol <- MySQLProtocol[F](sockets, debug, sslOptions, readTimeout)
-      _        <- Resource.eval(protocol.authenticate(user, password.getOrElse("")))
+      _        <- Resource.eval(protocol.authenticate(user, password.getOrElse(""), allowPublicKeyRetrieval))
     yield new Connection[F] {}
 
   def fromSocketGroup[F[_]: Tracer: Console](
@@ -101,7 +105,8 @@ object Connection:
     debug:         Boolean = false,
     socketOptions: List[SocketOption],
     sslOptions:    Option[SSLNegotiation.Options[F]],
-    readTimeout:   Duration = Duration.Inf
+    readTimeout:   Duration = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean = false
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
@@ -114,7 +119,7 @@ object Connection:
         case (None, _) => fail(s"""Hostname: "$host" is not syntactically valid.""")
         case (_, None) => fail(s"Port: $port falls out of the allowed range.")
 
-    fromSockets(sockets, host, port, user, password, debug, sslOptions, readTimeout)
+    fromSockets(sockets, host, port, user, password, debug, sslOptions, readTimeout, allowPublicKeyRetrieval)
 
   def pooled[F[_]: Temporal: Network: Console](
     host:          String,
@@ -125,7 +130,8 @@ object Connection:
     debug:         Boolean = false,
     ssl:           SSL = SSL.None,
     socketOptions: List[SocketOption] = Connection.defaultSocketOptions,
-    readTimeout:   Duration = Duration.Inf
+    readTimeout:   Duration = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean = false
   ): Resource[F, Tracer[F] => Resource[F, Connection[F]]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -133,7 +139,7 @@ object Connection:
     def connection(socketGroup: SocketGroup[F], sslOp: Option[SSLNegotiation.Options[F]])(using
       Tracer[F]
     ): Resource[F, Connection[F]] =
-      fromSocketGroup(socketGroup, host, port, user, password, debug, socketOptions, sslOp, readTimeout)
+      fromSocketGroup(socketGroup, host, port, user, password, debug, socketOptions, sslOp, readTimeout, allowPublicKeyRetrieval)
 
     for
       sslOp <- ssl.toSSLNegotiationOptions(if debug then logger.some else none)
