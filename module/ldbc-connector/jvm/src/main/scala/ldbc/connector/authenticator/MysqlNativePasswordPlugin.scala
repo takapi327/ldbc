@@ -22,3 +22,6 @@ class MysqlNativePasswordPlugin extends AuthenticationPlugin:
       val hash3 = sha1.digest(scramble ++ hash2)
 
       hash1.zip(hash3).map { case (a, b) => (a ^ b).toByte }
+
+object MysqlNativePasswordPlugin:
+  def apply(): MysqlNativePasswordPlugin = new MysqlNativePasswordPlugin()
