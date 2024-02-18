@@ -9,7 +9,7 @@ package ldbc.connector.authenticator
 import java.nio.charset.StandardCharsets
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
-import java.security.{KeyFactory, MessageDigest, PublicKey}
+import java.security.{ KeyFactory, MessageDigest, PublicKey }
 import java.util.Base64
 import javax.crypto.Cipher
 
@@ -33,9 +33,9 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
     val mysqlScrambleBuff = xorString(input, scramble, input.length)
     encryptWithRSAPublicKey(
       mysqlScrambleBuff,
-      decodeRSAPublicKey(publicKeyString),
+      decodeRSAPublicKey(publicKeyString)
     )
-    
+
   private def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =
     val scrambleLength = scramble.length
     (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
@@ -46,11 +46,11 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
     cipher.doFinal(input)
 
   private def decodeRSAPublicKey(key: String): RSAPublicKey =
-    val offset = key.indexOf("\n") + 1
-    val len = key.indexOf("-----END PUBLIC KEY-----") - offset
+    val offset          = key.indexOf("\n") + 1
+    val len             = key.indexOf("-----END PUBLIC KEY-----") - offset
     val certificateData = Base64.getMimeDecoder.decode(key.substring(offset, offset + len))
-    val spec = new X509EncodedKeySpec(certificateData)
-    val kf = KeyFactory.getInstance("RSA")
+    val spec            = new X509EncodedKeySpec(certificateData)
+    val kf              = KeyFactory.getInstance("RSA")
     kf.generatePublic(spec).asInstanceOf[RSAPublicKey]
 
 object Sha256PasswordPlugin:

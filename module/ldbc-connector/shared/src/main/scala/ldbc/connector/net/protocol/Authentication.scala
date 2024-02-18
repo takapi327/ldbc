@@ -39,7 +39,11 @@ trait Authentication[F[_]]:
 
 object Authentication:
 
-  def apply[F[_]: Exchange: Tracer](socket: PacketSocket[F], initialPacket: InitialPacket, allowPublicKeyRetrieval: Boolean = false)(using
+  def apply[F[_]: Exchange: Tracer](
+    socket:                  PacketSocket[F],
+    initialPacket:           InitialPacket,
+    allowPublicKeyRetrieval: Boolean = false
+  )(using
     ev: MonadError[F, Throwable]
   ): Authentication[F] =
     new Authentication[F]:
@@ -70,8 +74,12 @@ object Authentication:
             if allowPublicKeyRetrieval then
               socket.send(ComQuitPacket()) *>
                 socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
-                  val publicKeyString = moreData.authenticationMethodData.map("%02x" format _).map(hex =>  Integer.parseInt(hex, 16).toChar).mkString("")
-                  val encryptPassword = plugin.encryptPassword(password, switchRequestPacket.pluginProvidedData, publicKeyString)
+                  val publicKeyString = moreData.authenticationMethodData
+                    .map("%02x" format _)
+                    .map(hex => Integer.parseInt(hex, 16).toChar)
+                    .mkString("")
+                  val encryptPassword =
+                    plugin.encryptPassword(password, switchRequestPacket.pluginProvidedData, publicKeyString)
                   socket.send(AuthSwitchResponsePacket(encryptPassword))
                 } *> readUntilOk(password)
             else
@@ -120,6 +128,6 @@ object Authentication:
   private def determinatePlugin(pluginName: String): Either[MySQLException, AuthenticationPlugin] =
     pluginName match
       case "mysql_native_password" => Right(MysqlNativePasswordPlugin())
-      case "sha256_password" => Right(Sha256PasswordPlugin())
+      case "sha256_password"       => Right(Sha256PasswordPlugin())
       case "caching_sha2_password" => Right(CachingSha2PasswordPlugin())
       case _                       => Left(new MySQLException(s"Unknown authentication plugin: $pluginName"))
