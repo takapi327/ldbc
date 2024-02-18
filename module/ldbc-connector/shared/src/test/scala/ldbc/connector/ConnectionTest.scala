@@ -65,20 +65,20 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("A user using mysql_native_password can establish a connection with the MySQL server.") {
-   val connection = Connection.single[IO](
-     host = "127.0.0.1",
-     port = 13306,
-     user = "ldbc_mysql_native_user",
-     password = Some("ldbc_mysql_native_password"),
-   )
-   assertIOBoolean(connection.use(_ => IO(true)))
+    val connection = Connection.single[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_mysql_native_user",
+      password = Some("ldbc_mysql_native_password")
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
   }
-  
+
   test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
     val connection = Connection.single[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc_sha256_user",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password")
     )
     interceptIO[MySQLException] {
@@ -86,7 +86,9 @@ class ConnectionTest extends CatsEffectSuite:
     }
   }
 
-  test("Connections to MySQL servers using users with sha256_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections.") {
+  test(
+    "Connections to MySQL servers using users with sha256_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
+  ) {
     val connection = Connection.single[IO](
       host                    = "127.0.0.1",
       port                    = 13306,
@@ -96,23 +98,23 @@ class ConnectionTest extends CatsEffectSuite:
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
-  
+
   test("Connections to MySQL servers using users with sha256_password will succeed for SSL connections.") {
     val connection = Connection.single[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc_sha256_user",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
   test("Connections to MySQL servers using users with caching_sha2_password will fail for non-SSL connections.") {
     val connection = Connection.single[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password")
     )
     interceptIO[MySQLException] {
