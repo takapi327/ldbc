@@ -15,10 +15,9 @@ import ldbc.connector.authenticator.Openssl.*
 
 trait Sha256PasswordPlugin extends AuthenticationPlugin:
 
-  def password:        Option[String]
-  def publicKeyString: Option[String]
-
   override def name: String = "sha256_password"
+
+  def transformation: String = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding"
 
   override def hashPassword(password: String, scramble: Array[Byte]): Array[Byte] =
     if password.isEmpty then Array[Byte]()
@@ -26,7 +25,6 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
       val hash1 = sha256(password.getBytes("UTF-8"))
       val hash2 = sha256(hash1)
       val hash3 = sha256(hash2 ++ scramble)
-
       hash1.zip(hash3).map { case (a, b) => (a ^ b).toByte }
 
   private def sha256(data: Array[Byte]): Array[Byte] =
@@ -39,14 +37,8 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
       throw new RuntimeException("EVP_Digest")
     ByteVector.view(md, 0, (!size).toInt).toArray
 
+  def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] = ???
+
 object Sha256PasswordPlugin:
 
-  def apply(_password: String): Sha256PasswordPlugin =
-    new Sha256PasswordPlugin:
-      override def password:        Option[String] = Some(_password)
-      override def publicKeyString: Option[String] = None
-
-  def apply(_password: String, _publicKeyString: String): Sha256PasswordPlugin =
-    new Sha256PasswordPlugin:
-      override def password:        Option[String] = Some(_password)
-      override def publicKeyString: Option[String] = Some(_publicKeyString)
+  def apply(): Sha256PasswordPlugin = new Sha256PasswordPlugin {}
