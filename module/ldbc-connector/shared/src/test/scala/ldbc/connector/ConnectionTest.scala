@@ -74,6 +74,30 @@ class ConnectionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
+  test(
+    "Connections to MySQL servers using users with mysql_native_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
+  ) {
+    val connection = Connection.single[IO](
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc_mysql_native_user",
+      password                = Some("ldbc_mysql_native_password"),
+      allowPublicKeyRetrieval = true
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test("Connections to MySQL servers using users with mysql_native_password will succeed for SSL connections.") {
+    val connection = Connection.single[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_mysql_native_user",
+      password = Some("ldbc_mysql_native_password"),
+      ssl      = SSL.Trusted
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
   test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
     val connection = Connection.single[IO](
       host     = "127.0.0.1",
