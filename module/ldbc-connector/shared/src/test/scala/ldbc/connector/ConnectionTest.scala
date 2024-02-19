@@ -136,22 +136,24 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("Connections to MySQL servers using users with caching_sha2_password will succeed for SSL connections.") {
-   val connection = Connection.single[IO](
-     host     = "127.0.0.1",
-     port     = 13306,
-     user     = "ldbc",
-     password = Some("password"),
-     ssl      = SSL.Trusted
-   )
-   assertIOBoolean(connection.use(_ => IO(true)))
+    val connection = Connection.single[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl      = SSL.Trusted
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
   }
 
-  test("If the login information of a user using caching_sha2_password is cached, the connection to the MySQL server will succeed even for non-SSL connections.") {
-   val connection = Connection.single[IO](
-     host = "127.0.0.1",
-     port = 13306,
-     user = "ldbc",
-     password = Some("password")
-   )
-   assertIOBoolean(connection.use(_ => IO(true)))
+  test(
+    "If the login information of a user using caching_sha2_password is cached, the connection to the MySQL server will succeed even for non-SSL connections."
+  ) {
+    val connection = Connection.single[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password")
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
   }

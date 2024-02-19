@@ -73,7 +73,7 @@ object Authentication:
               case plugin: Sha256PasswordPlugin =>
                 sha256Authentication(plugin, initialPacket.scrambleBuff) *> readUntilOk(plugin)
               case _ => ev.raiseError(new MySQLException("Unexpected authentication method"))
-          case more: AuthMoreDataPacket => readUntilOk(plugin)
+          case more: AuthMoreDataPacket        => readUntilOk(plugin)
           case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet)
           case _: OKPacket                     => ev.unit
           case error: ERRPacket                => ev.raiseError(error.toException("Connection error"))
