@@ -6,11 +6,16 @@
 
 package ldbc.connector.authenticator
 
-class CachingSha2PasswordPlugin extends Sha256PasswordPlugin:
+import ldbc.connector.util.Version
+
+trait CachingSha2PasswordPlugin extends Sha256PasswordPlugin:
 
   override def name: String = "caching_sha2_password"
 
-  override def transformation: String = "RSA/ECB/PKCS1Padding"
-
 object CachingSha2PasswordPlugin:
-  def apply(): CachingSha2PasswordPlugin = new CachingSha2PasswordPlugin()
+  def apply(version: Version): CachingSha2PasswordPlugin =
+    version.compare(Version(8, 0, 5)) match
+      case 1 => new CachingSha2PasswordPlugin {}
+      case _ =>
+        new CachingSha2PasswordPlugin:
+          override def transformation: String = "RSA/ECB/PKCS1Padding"
