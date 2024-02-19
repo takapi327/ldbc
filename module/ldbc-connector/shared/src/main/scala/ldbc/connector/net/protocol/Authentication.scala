@@ -48,6 +48,8 @@ trait Authentication[F[_]]:
 
 object Authentication:
 
+  private val FULL_AUTH = "4"
+
   def apply[F[_]: Exchange: Tracer](
     socket:                  PacketSocket[F],
     initialPacket:           InitialPacket,
@@ -64,19 +66,19 @@ object Authentication:
       private def readUntilOk(plugin: AuthenticationPlugin): F[Unit] =
         socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
           case more: AuthMoreDataPacket
-            if allowPublicKeyRetrieval && more.authenticationMethodData.mkString("") == "4" =>
+            if (allowPublicKeyRetrieval || useSSL) && more.authenticationMethodData.mkString("") == FULL_AUTH =>
             plugin match
               case plugin: CachingSha2PasswordPlugin =>
                 cachingSha2Authentication(plugin, initialPacket.scrambleBuff) *> readUntilOk(plugin)
               case plugin: Sha256PasswordPlugin =>
                 sha256Authentication(plugin, initialPacket.scrambleBuff) *> readUntilOk(plugin)
               case _ => ev.raiseError(new MySQLException("Unexpected authentication method"))
-          case more: AuthMoreDataPacket if more.authenticationMethodData.mkString("") == "4" => readUntilOk(plugin)
-          case more: AuthMoreDataPacket if more.authenticationMethodData.mkString("") == "3" => readUntilOk(plugin)
+          case more: AuthMoreDataPacket => readUntilOk(plugin)
           case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet)
           case _: OKPacket                     => ev.unit
           case error: ERRPacket                => ev.raiseError(error.toException("Connection error"))
           case unknown: UnknownPacket          => ev.raiseError(unknown.toException("Error during database operation"))
+          case _                               => ev.raiseError(new MySQLException("Unexpected packet"))
         }
 
       /**
