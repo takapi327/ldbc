@@ -13,6 +13,7 @@ import scodec.codecs.*
 import cats.syntax.all.*
 
 import ldbc.connector.data.*
+import ldbc.connector.util.Version
 
 /**
  * Initial packet sent by the server to the client.
@@ -26,7 +27,7 @@ import ldbc.connector.data.*
  */
 case class InitialPacket(
   protocolVersion: Int,
-  serverVersion:   String,
+  serverVersion:   Version,
   threadId:        Int,
   capabilityFlags: Seq[CapabilitiesFlags],
   scrambleBuff:    Array[Byte],
@@ -64,9 +65,13 @@ object InitialPacket:
         if (capabilityFlags & (1 << 19)) != 0 then nullTerminatedStringCodec.asDecoder else Decoder.pure("")
     yield
       val capabilityFlags = (capabilityFlagsUpper << 16) | capabilityFlagsLower
+      val version = Version(serverVersion) match
+        case Some(v) => v
+        case None    => Version(0, 0, 0)
+
       InitialPacket(
         protocolVersion,
-        serverVersion,
+        version,
         threadId,
         CapabilitiesFlags(capabilityFlags),
         authPluginDataPart1 ++ authPluginDataPart2.toArray.dropRight(1),
