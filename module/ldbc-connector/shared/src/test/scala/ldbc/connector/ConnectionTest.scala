@@ -121,3 +121,17 @@ class ConnectionTest extends CatsEffectSuite:
       connection.use(_ => IO.unit)
     }
   }
+
+  test(
+    "Connections to MySQL servers using users with caching_sha2_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
+  ) {
+    val connection = Connection.single[IO](
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc",
+      password                = Some("password"),
+      debug                   = true,
+      allowPublicKeyRetrieval = true
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }

@@ -42,18 +42,18 @@ trait Authentication[F[_]]:
   protected def determinatePlugin(pluginName: String, version: Version): Either[MySQLException, AuthenticationPlugin] =
     pluginName match
       case "mysql_native_password" => Right(MysqlNativePasswordPlugin())
-      case "sha256_password" => Right(Sha256PasswordPlugin())
+      case "sha256_password"       => Right(Sha256PasswordPlugin())
       case "caching_sha2_password" => Right(CachingSha2PasswordPlugin(version))
-      case _ => Left(new MySQLException(s"Unknown authentication plugin: $pluginName"))
+      case _                       => Left(new MySQLException(s"Unknown authentication plugin: $pluginName"))
 
 object Authentication:
 
   def apply[F[_]: Exchange: Tracer](
     socket:                  PacketSocket[F],
     initialPacket:           InitialPacket,
-    username: String,
-    password: String,
-    database: Option[String],
+    username:                String,
+    password:                String,
+    database:                Option[String],
     useSSL:                  Boolean = false,
     allowPublicKeyRetrieval: Boolean = false
   )(using
@@ -63,10 +63,13 @@ object Authentication:
 
       private def readUntilOk(plugin: AuthenticationPlugin): F[Unit] =
         socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-          case more: AuthMoreDataPacket if allowPublicKeyRetrieval && more.authenticationMethodData.mkString("") == "4" =>
+          case more: AuthMoreDataPacket
+            if allowPublicKeyRetrieval && more.authenticationMethodData.mkString("") == "4" =>
             plugin match
-              case plugin: CachingSha2PasswordPlugin => cachingSha2Authentication(plugin, initialPacket.scrambleBuff) *> readUntilOk(plugin)
-              case plugin: Sha256PasswordPlugin => sha256Authentication(plugin, initialPacket.scrambleBuff) *> readUntilOk(plugin)
+              case plugin: CachingSha2PasswordPlugin =>
+                cachingSha2Authentication(plugin, initialPacket.scrambleBuff) *> readUntilOk(plugin)
+              case plugin: Sha256PasswordPlugin =>
+                sha256Authentication(plugin, initialPacket.scrambleBuff) *> readUntilOk(plugin)
               case _ => ev.raiseError(new MySQLException("Unexpected authentication method"))
           case more: AuthMoreDataPacket if more.authenticationMethodData.mkString("") == "4" => readUntilOk(plugin)
           case more: AuthMoreDataPacket if more.authenticationMethodData.mkString("") == "3" => readUntilOk(plugin)
@@ -87,8 +90,10 @@ object Authentication:
       private def changeAuthenticationMethod(switchRequestPacket: AuthSwitchRequestPacket): F[Unit] =
         determinatePlugin(switchRequestPacket.pluginName, initialPacket.serverVersion) match
           case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
-          case Right(plugin: CachingSha2PasswordPlugin) => cachingSha2Authentication(plugin, switchRequestPacket.pluginProvidedData) *> readUntilOk(plugin)
-          case Right(plugin: Sha256PasswordPlugin) => sha256Authentication(plugin, switchRequestPacket.pluginProvidedData) *> readUntilOk(plugin)
+          case Right(plugin: CachingSha2PasswordPlugin) =>
+            cachingSha2Authentication(plugin, switchRequestPacket.pluginProvidedData) *> readUntilOk(plugin)
+          case Right(plugin: Sha256PasswordPlugin) =>
+            sha256Authentication(plugin, switchRequestPacket.pluginProvidedData) *> readUntilOk(plugin)
           case Right(plugin) =>
             val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(plugin)
@@ -113,15 +118,15 @@ object Authentication:
 
       private def sha256Authentication(plugin: Sha256PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         (useSSL, allowPublicKeyRetrieval) match
-          case (true, _) => sslHandshake()
+          case (true, _)     => sslHandshake()
           case (false, true) => socket.send(ComQuitPacket()) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
-          case (_, _) => plainTextHandshake(plugin, scrambleBuff)
+          case (_, _)        => plainTextHandshake(plugin, scrambleBuff)
 
       private def cachingSha2Authentication(plugin: CachingSha2PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         (useSSL, allowPublicKeyRetrieval) match
-          case (true, _) => sslHandshake()
+          case (true, _)     => sslHandshake()
           case (false, true) => socket.send(ComInitDBPacket()) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
-          case (_, _) => plainTextHandshake(plugin, scrambleBuff)
+          case (_, _)        => plainTextHandshake(plugin, scrambleBuff)
 
       private def handshake(plugin: AuthenticationPlugin): F[Unit] =
         val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
@@ -139,7 +144,7 @@ object Authentication:
             span.addAttributes(Attribute("username", username), Attribute("database", database))
           ) *> (
             determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
-              case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
+              case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
               case Right(plugin) => handshake(plugin) *> readUntilOk(plugin)
           )
         }

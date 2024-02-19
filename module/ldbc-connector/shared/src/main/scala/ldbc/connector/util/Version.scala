@@ -11,7 +11,7 @@ import scala.util.Try
 case class Version(
   major: Int,
   minor: Int,
-  patch: Int,
+  patch: Int
 ):
 
   override def toString: String = s"$major.$minor.$patch"
@@ -21,11 +21,11 @@ case class Version(
 
   def compare(that: Version): Int =
     val x = this.major.compare(that.major)
-    if (x != 0) return x
+    if x != 0 then return x
     val y = this.minor.compare(that.minor)
-    if (y != 0) return y
+    if y != 0 then return y
     val z = this.patch.compare(that.patch)
-    if (z != 0) return z
+    if z != 0 then return z
     0
 
 object Version:

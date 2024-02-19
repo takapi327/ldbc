@@ -16,5 +16,6 @@ object CachingSha2PasswordPlugin:
   def apply(version: Version): CachingSha2PasswordPlugin =
     version.compare(Version(8, 0, 5)) match
       case 1 => new CachingSha2PasswordPlugin {}
-      case _ => new CachingSha2PasswordPlugin:
-        override def transformation: String = "RSA/ECB/PKCS1Padding"
+      case _ =>
+        new CachingSha2PasswordPlugin:
+          override def transformation: String = "RSA/ECB/PKCS1Padding"

@@ -93,7 +93,9 @@ object Connection:
   ): Resource[F, Connection[F]] =
     for
       protocol <- MySQLProtocol[F](sockets, debug, sslOptions, readTimeout)
-      _        <- Resource.eval(protocol.authenticate(user, password.getOrElse(""), allowPublicKeyRetrieval))
+      _ <- Resource.eval(
+             protocol.authenticate(user, password.getOrElse(""), sslOptions.isDefined, allowPublicKeyRetrieval)
+           )
     yield new Connection[F] {}
 
   def fromSocketGroup[F[_]: Tracer: Console](
