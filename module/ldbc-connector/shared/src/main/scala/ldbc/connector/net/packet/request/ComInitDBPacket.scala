@@ -19,7 +19,7 @@ case class ComInitDBPacket() extends RequestPacket:
 
   override def encode: BitVector = encodeBody.require
 
-  override def toString: String = "COM_QUIT Request"
+  override def toString: String = "COM_INIT_DB Request"
 
 object ComInitDBPacket:
 
