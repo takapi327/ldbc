@@ -6,6 +6,8 @@
 
 package ldbc.connector.authenticator
 
+import java.nio.charset.StandardCharsets
+
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*
 
@@ -37,7 +39,14 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
       throw new RuntimeException("EVP_Digest")
     ByteVector.view(md, 0, (!size).toInt).toArray
 
-  def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] = ???
+  def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
+    val input = if password.nonEmpty then (password + "\u0000").getBytes(StandardCharsets.UTF_8) else Array[Byte](0)
+    val mysqlScrambleBuff = xorString(input, scramble, input.length)
+    ???
+
+  private def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =
+    val scrambleLength = scramble.length
+    (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
 object Sha256PasswordPlugin:
 
