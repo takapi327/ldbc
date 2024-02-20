@@ -109,7 +109,8 @@ object Authentication:
 
       private def allowPublicKeyRetrievalRequest(plugin: Sha256PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
-          val publicKeyString = moreData.authenticationMethodData
+          // TODO: When converted to Array[Byte], it contains an extra 1 for some reason. This causes an error in public key parsing when executing Scala JS. Therefore, the first 1Byte is excluded.
+          val publicKeyString = moreData.authenticationMethodData.drop(1)
             .map("%02x" format _)
             .map(hex => Integer.parseInt(hex, 16).toChar)
             .mkString("")
