@@ -16,6 +16,8 @@ import scala.scalanative.unsigned.*
 @extern
 private[ldbc] object Openssl:
 
+  final val RSA_PKCS1_OAEP_PADDING = 4
+
   final val EVP_MAX_MD_SIZE = 64
 
   type EVP_MD
@@ -45,6 +47,12 @@ private[ldbc] object Openssl:
   def EVP_PKEY_CTX_new(pkey: Ptr[EVP_PKEY], e: Ptr[ENGINE]): Ptr[EVP_PKEY_CTX] = extern
 
   def EVP_PKEY_encrypt_init(ctx: Ptr[EVP_PKEY_CTX]): CInt = extern
+
+  def EVP_PKEY_CTX_set_rsa_padding(ctx: Ptr[EVP_PKEY_CTX], padding: CInt): CInt = extern
+
+  def EVP_PKEY_CTX_set_rsa_oaep_md(ctx: Ptr[EVP_PKEY_CTX], md: Ptr[EVP_MD]): CInt = extern
+
+  def EVP_PKEY_CTX_set_rsa_mgf1_md(ctx: Ptr[EVP_PKEY_CTX], md: Ptr[EVP_MD]): CInt = extern
 
   def EVP_PKEY_encrypt(
     ctx: Ptr[EVP_PKEY_CTX],
