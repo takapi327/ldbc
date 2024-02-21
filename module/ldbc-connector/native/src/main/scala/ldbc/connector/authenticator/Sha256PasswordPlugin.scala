@@ -52,37 +52,32 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
     (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
   private def encryptWithRSAPublicKey(input: Array[Byte], publicKey: String): Array[Byte] =
-
     Zone { implicit zone =>
       val publicKeyCStr = toCString(publicKey)
-      val bio = BIO_new_mem_buf(publicKeyCStr, publicKey.length)
-      if bio == null then
-        throw new RuntimeException("Failed to create a new memory BIO.")
+      val bio           = BIO_new_mem_buf(publicKeyCStr, publicKey.length)
+      if bio == null then throw new RuntimeException("Failed to create a new memory BIO.")
 
       val evpPkey = PEM_read_bio_PUBKEY(bio, null, null, null)
-      if evpPkey == null then
-        throw new RuntimeException("Failed to load public key.")
+      if evpPkey == null then throw new RuntimeException("Failed to load public key.")
 
       val ctx = EVP_PKEY_CTX_new(evpPkey, null)
-      if EVP_PKEY_encrypt_init(ctx) <= 0 then
-        throw new RuntimeException("Failed to initialize encryption context.")
+      if EVP_PKEY_encrypt_init(ctx) <= 0 then throw new RuntimeException("Failed to initialize encryption context.")
 
-      if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) != 1) {
+      if EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) != 1 then {
         throw new RuntimeException("Failed to set RSA padding.")
       }
 
       val sha1Md = EVP_get_digestbyname(c"sha1")
-      if (EVP_PKEY_CTX_set_rsa_oaep_md(ctx, sha1Md) != 1) {
+      if EVP_PKEY_CTX_set_rsa_oaep_md(ctx, sha1Md) != 1 then {
         throw new RuntimeException("Failed to set OAEP hash function.")
       }
 
-      if (EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, sha1Md) != 1) {
+      if EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, sha1Md) != 1 then {
         throw new RuntimeException("Failed to set MGF1 hash function.")
       }
 
       val inputBuf = alloc[UByte](input.length.toULong)
-      for i <- input.indices do
-        !(inputBuf + i) = input(i).toUByte
+      for i <- input.indices do !(inputBuf + i) = input(i).toUByte
 
       val outLen = stackalloc[CSize](1)
       !outLen = 0.toULong
@@ -95,8 +90,7 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
         throw new RuntimeException("Encryption failed.")
 
       val result = Array.fill[Byte]((!outLen).toInt)(0)
-      for i <- 0 until (!outLen).toInt do
-        result(i) = (!(encryptedBuf + i)).toInt.toByte
+      for i <- 0 until (!outLen).toInt do result(i) = (!(encryptedBuf + i)).toInt.toByte
 
       result
     }

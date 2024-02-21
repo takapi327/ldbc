@@ -42,7 +42,8 @@ private[ldbc] object Openssl:
 
   def BIO_new_mem_buf(buf: Ptr[Byte], len: CInt): Ptr[BIO] = extern
 
-  def PEM_read_bio_PUBKEY(bp: Ptr[BIO], x: Ptr[Ptr[EVP_PKEY]], cb: pem_password_cb, u: Ptr[Byte]): Ptr[EVP_PKEY] = extern
+  def PEM_read_bio_PUBKEY(bp: Ptr[BIO], x: Ptr[Ptr[EVP_PKEY]], cb: pem_password_cb, u: Ptr[Byte]): Ptr[EVP_PKEY] =
+    extern
 
   def EVP_PKEY_CTX_new(pkey: Ptr[EVP_PKEY], e: Ptr[ENGINE]): Ptr[EVP_PKEY_CTX] = extern
 
@@ -55,9 +56,9 @@ private[ldbc] object Openssl:
   def EVP_PKEY_CTX_set_rsa_mgf1_md(ctx: Ptr[EVP_PKEY_CTX], md: Ptr[EVP_MD]): CInt = extern
 
   def EVP_PKEY_encrypt(
-    ctx: Ptr[EVP_PKEY_CTX],
-    out: Ptr[UByte],
+    ctx:    Ptr[EVP_PKEY_CTX],
+    out:    Ptr[UByte],
     outlen: Ptr[CSize],
-    in: Ptr[UByte],
-    inlen: CSize
+    in:     Ptr[UByte],
+    inlen:  CSize
   ): CInt = extern
