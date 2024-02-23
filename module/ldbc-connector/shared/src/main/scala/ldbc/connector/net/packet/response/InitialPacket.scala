@@ -33,7 +33,7 @@ case class InitialPacket(
   threadId:        Int,
   capabilityFlags: Seq[CapabilitiesFlags],
   characterSet:    Int,
-  statusFlags: Seq[ServerStatusFlags],
+  statusFlags:     Seq[ServerStatusFlags],
   scrambleBuff:    Array[Byte],
   authPlugin:      String
 ) extends ResponsePacket:
@@ -57,10 +57,10 @@ object InitialPacket:
       authPluginDataPart1 <- authPluginDataPart1Codec.map {
                                case (a, b, c, d, e, f, g, h) => Array(a, b, c, d, e, f, g, h)
                              }
-      _                    <- ignore(8)  // Skip filter [0x00]
+      _                    <- ignore(8)         // Skip filter [0x00]
       capabilityFlagsLower <- capabilityFlagsLowerCodec.asDecoder
       characterSet         <- uint8L.asDecoder
-      statusFlag           <- uint16L.asDecoder//ignore(16) // Skip character set and status flags
+      statusFlag           <- uint16L.asDecoder // ignore(16) // Skip character set and status flags
       capabilityFlagsUpper <- capabilityFlagsUpperCodec.asDecoder
       capabilityFlags = (capabilityFlagsUpper << 16) | capabilityFlagsLower
       authPluginDataPart2Length <- if (capabilityFlags & (1 << 19)) != 0 then uint8.asDecoder else Decoder.pure(0)
