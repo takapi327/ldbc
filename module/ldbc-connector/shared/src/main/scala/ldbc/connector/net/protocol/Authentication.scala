@@ -16,6 +16,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.authenticator.*
 import ldbc.connector.util.Version
+import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.response.*
@@ -49,6 +50,23 @@ trait Authentication[F[_]]:
 object Authentication:
 
   private val FULL_AUTH = "4"
+
+  private val defaultCapabilityFlags: Seq[CapabilitiesFlags] = Seq(
+    CapabilitiesFlags.CLIENT_LONG_PASSWORD,
+    CapabilitiesFlags.CLIENT_CONNECT_WITH_DB,
+    CapabilitiesFlags.CLIENT_NO_SCHEMA,
+    CapabilitiesFlags.CLIENT_PROTOCOL_41,
+    CapabilitiesFlags.CLIENT_INTERACTIVE,
+    CapabilitiesFlags.CLIENT_SSL,
+    CapabilitiesFlags.CLIENT_IGNORE_SIGPIPE,
+    CapabilitiesFlags.CLIENT_TRANSACTIONS,
+    CapabilitiesFlags.CLIENT_MULTI_RESULTS,
+    CapabilitiesFlags.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA,
+    CapabilitiesFlags.CLIENT_SESSION_TRACK,
+    CapabilitiesFlags.CLIENT_DEPRECATE_EOF,
+    CapabilitiesFlags.CLIENT_OPTIONAL_RESULTSET_METADATA,
+    CapabilitiesFlags.CLIENT_ZSTD_COMPRESSION_ALGORITHM,
+  )
 
   def apply[F[_]: Exchange: Tracer](
     socket:                  PacketSocket[F],
@@ -135,7 +153,7 @@ object Authentication:
       private def handshake(plugin: AuthenticationPlugin): F[Unit] =
         val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
         val handshakeResponse = HandshakeResponsePacket(
-          initialPacket.capabilityFlags,
+          defaultCapabilityFlags,
           username,
           Array(hashedPassword.length.toByte) ++ hashedPassword,
           plugin.name
