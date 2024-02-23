@@ -7,6 +7,9 @@
 package ldbc.connector.net.packet
 package request
 
+import scodec.codecs.uint32
+import scodec.bits.BitVector
+
 import ldbc.connector.data.CapabilitiesFlags
 
 /**
@@ -18,6 +21,10 @@ trait HandshakeResponsePacket extends RequestPacket:
   def user:              String
   def hashedPassword:    Array[Byte]
   def pluginName:        String
+
+  def encodeCapabilitiesFlags(): BitVector =
+    val bitset = CapabilitiesFlags.toBitset(capabilitiesFlags)
+    uint32.encode(bitset).require
 
 object HandshakeResponsePacket:
 

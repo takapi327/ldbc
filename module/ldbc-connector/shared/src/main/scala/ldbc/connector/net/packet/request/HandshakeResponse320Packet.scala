@@ -46,12 +46,11 @@ case class HandshakeResponse320Packet(
 object HandshakeResponse320Packet:
 
   val encoder: Encoder[HandshakeResponse320Packet] = Encoder { handshakeResponse =>
-    val capabilityFlags = hex"07a23e19".bits
     val maxPacketSize   = hex"ffffff00".bits
     val userBytes       = handshakeResponse.user.getBytes("UTF-8")
 
     Attempt.successful(
-      capabilityFlags |+|
+      handshakeResponse.encodeCapabilitiesFlags() |+|
         maxPacketSize |+|
         BitVector(copyOf(userBytes, userBytes.length + 1)) |+|
         BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length))

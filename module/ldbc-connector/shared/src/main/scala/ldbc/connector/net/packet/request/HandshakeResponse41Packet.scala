@@ -48,7 +48,6 @@ case class HandshakeResponse41Packet(
 object HandshakeResponse41Packet:
 
   val encoder: Encoder[HandshakeResponse41Packet] = Encoder { handshakeResponse =>
-    val capabilityFlags = hex"07a23e19".bits
     val maxPacketSize   = hex"ffffff00".bits
     val characterSet    = hex"ff".bits
     val userBytes       = handshakeResponse.user.getBytes("UTF-8")
@@ -57,8 +56,10 @@ object HandshakeResponse41Packet:
 
     val pluginBytes = handshakeResponse.pluginName.getBytes("UTF-8")
 
+    ByteVector.apply(1L).toHex
+
     Attempt.successful(
-      capabilityFlags |+|
+      handshakeResponse.encodeCapabilitiesFlags() |+|
         maxPacketSize |+|
         characterSet |+|
         reserved |+|
