@@ -65,7 +65,7 @@ object Authentication:
     CapabilitiesFlags.CLIENT_SESSION_TRACK,
     CapabilitiesFlags.CLIENT_DEPRECATE_EOF,
     CapabilitiesFlags.CLIENT_OPTIONAL_RESULTSET_METADATA,
-    CapabilitiesFlags.CLIENT_ZSTD_COMPRESSION_ALGORITHM,
+    CapabilitiesFlags.CLIENT_ZSTD_COMPRESSION_ALGORITHM
   )
 
   def apply[F[_]: Exchange: Tracer](

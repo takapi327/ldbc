@@ -46,8 +46,8 @@ case class HandshakeResponse320Packet(
 object HandshakeResponse320Packet:
 
   val encoder: Encoder[HandshakeResponse320Packet] = Encoder { handshakeResponse =>
-    val maxPacketSize   = hex"ffffff00".bits
-    val userBytes       = handshakeResponse.user.getBytes("UTF-8")
+    val maxPacketSize = hex"ffffff00".bits
+    val userBytes     = handshakeResponse.user.getBytes("UTF-8")
 
     Attempt.successful(
       handshakeResponse.encodeCapabilitiesFlags() |+|
