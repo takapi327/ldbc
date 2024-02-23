@@ -22,6 +22,7 @@ import ldbc.connector.util.Version
  * @param serverVersion The server version.
  * @param threadId The thread ID.
  * @param capabilityFlags The capability flags.
+ * @param characterSet The character set.
  * @param scrambleBuff The scramble buffer.
  * @param authPlugin The authentication plugin.
  */
@@ -30,6 +31,7 @@ case class InitialPacket(
   serverVersion:   Version,
   threadId:        Int,
   capabilityFlags: Seq[CapabilitiesFlags],
+  characterSet:    Int,
   scrambleBuff:    Array[Byte],
   authPlugin:      String
 ) extends ResponsePacket:
@@ -55,7 +57,8 @@ object InitialPacket:
                              }
       _                    <- ignore(8)     // Skip filter [0x00]
       capabilityFlagsLower <- capabilityFlagsLowerCodec.asDecoder
-      _                    <- ignore(8 * 3) // Skip character set and status flags
+      characterSet         <- uint8L.asDecoder
+      _                    <- ignore(16) // Skip character set and status flags
       capabilityFlagsUpper <- capabilityFlagsUpperCodec.asDecoder
       capabilityFlags = (capabilityFlagsUpper << 16) | capabilityFlagsLower
       authPluginDataPart2Length <- if (capabilityFlags & (1 << 19)) != 0 then uint8.asDecoder else Decoder.pure(0)
@@ -74,6 +77,7 @@ object InitialPacket:
         version,
         threadId,
         CapabilitiesFlags(capabilityFlags),
+        characterSet,
         authPluginDataPart1 ++ authPluginDataPart2.toArray.dropRight(1),
         authPluginName
       )
