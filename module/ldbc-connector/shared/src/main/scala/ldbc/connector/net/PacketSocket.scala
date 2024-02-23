@@ -22,6 +22,7 @@ import scodec.bits.BitVector
 
 import ldbc.connector.net.packet.*
 import ldbc.connector.net.packet.response.InitialPacket
+import ldbc.connector.net.protocol.parseHeader
 
 /**
  * A higher-level `BitVectorSocket` that speaks in terms of `Packet`.
@@ -48,9 +49,6 @@ object PacketSocket:
     private def debug(msg: => String): F[Unit] =
       sequenceIdRef.get
         .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
-
-    private def parseHeader(headerBytes: Array[Byte]): Int =
-      (headerBytes(0) & 0xff) | ((headerBytes(1) & 0xff) << 8) | ((headerBytes(2) & 0xff) << 16)
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       (for
