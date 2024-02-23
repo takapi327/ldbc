@@ -55,7 +55,7 @@ object InitialPacket:
       authPluginDataPart1 <- authPluginDataPart1Codec.map {
                                case (a, b, c, d, e, f, g, h) => Array(a, b, c, d, e, f, g, h)
                              }
-      _                    <- ignore(8)     // Skip filter [0x00]
+      _                    <- ignore(8)  // Skip filter [0x00]
       capabilityFlagsLower <- capabilityFlagsLowerCodec.asDecoder
       characterSet         <- uint8L.asDecoder
       _                    <- ignore(16) // Skip character set and status flags
