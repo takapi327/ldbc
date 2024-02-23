@@ -35,7 +35,8 @@ case class HandshakeResponse41Packet(
   capabilitiesFlags: Seq[CapabilitiesFlags],
   user:              String,
   hashedPassword:    Array[Byte],
-  pluginName:        String
+  pluginName:        String,
+  characterSet:      Int
 ) extends HandshakeResponsePacket:
 
   override protected def encodeBody: Attempt[BitVector] = HandshakeResponse41Packet.encoder.encode(this)
@@ -49,7 +50,7 @@ object HandshakeResponse41Packet:
 
   val encoder: Encoder[HandshakeResponse41Packet] = Encoder { handshakeResponse =>
     val maxPacketSize = hex"ffffff00".bits
-    val characterSet  = hex"ff".bits
+    //val characterSet  = hex"ff".bits
     val userBytes     = handshakeResponse.user.getBytes("UTF-8")
 
     val reserved = BitVector.fill(23 * 8)(false) // 23 bytes of zero
@@ -61,7 +62,7 @@ object HandshakeResponse41Packet:
     Attempt.successful(
       handshakeResponse.encodeCapabilitiesFlags() |+|
         maxPacketSize |+|
-        characterSet |+|
+        BitVector(handshakeResponse.characterSet) |+|
         reserved |+|
         BitVector(copyOf(userBytes, userBytes.length + 1)) |+|
         BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length)) |+|

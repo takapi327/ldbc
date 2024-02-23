@@ -32,8 +32,9 @@ object HandshakeResponsePacket:
     capabilitiesFlags: Seq[CapabilitiesFlags],
     user:              String,
     hashedPassword:    Array[Byte],
-    pluginName:        String
+    pluginName:        String,
+    characterSet:      Int
   ): HandshakeResponsePacket =
     if capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41) then
-      HandshakeResponse41Packet(capabilitiesFlags, user, hashedPassword, pluginName)
+      HandshakeResponse41Packet(capabilitiesFlags, user, hashedPassword, pluginName, characterSet)
     else HandshakeResponse320Packet(capabilitiesFlags, user, hashedPassword, pluginName)

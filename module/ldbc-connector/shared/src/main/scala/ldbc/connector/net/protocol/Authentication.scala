@@ -156,7 +156,8 @@ object Authentication:
           defaultCapabilityFlags,
           username,
           Array(hashedPassword.length.toByte) ++ hashedPassword,
-          plugin.name
+          plugin.name,
+          initialPacket.characterSet
         )
         socket.send(handshakeResponse)
 
