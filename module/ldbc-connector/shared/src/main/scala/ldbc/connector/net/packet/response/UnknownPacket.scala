@@ -9,6 +9,16 @@ package response
 
 import ldbc.connector.exception.UnknownPacketException
 
+/**
+ * Represents a response packet that is not recognized by the client.
+ *
+ * @param status
+ *   the status code of the packet
+ * @param detail
+ *   the detail message of the packet
+ * @param originatedPacket
+ *   the packet that originated the unknown packet
+ */
 case class UnknownPacket(
   status:           Int,
   detail:           Option[String] = None,
