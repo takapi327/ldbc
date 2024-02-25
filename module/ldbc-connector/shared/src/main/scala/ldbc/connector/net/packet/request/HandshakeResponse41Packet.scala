@@ -49,8 +49,6 @@ case class HandshakeResponse41Packet(
 object HandshakeResponse41Packet:
 
   val encoder: Encoder[HandshakeResponse41Packet] = Encoder { handshakeResponse =>
-    val maxPacketSize = hex"ffffff00".bits
-    // val characterSet  = hex"ff".bits
     val userBytes = handshakeResponse.user.getBytes("UTF-8")
 
     val reserved = BitVector.fill(23 * 8)(false) // 23 bytes of zero
@@ -61,7 +59,7 @@ object HandshakeResponse41Packet:
 
     Attempt.successful(
       handshakeResponse.encodeCapabilitiesFlags() |+|
-        maxPacketSize |+|
+        handshakeResponse.maxPacketSize |+|
         BitVector(handshakeResponse.characterSet) |+|
         reserved |+|
         BitVector(copyOf(userBytes, userBytes.length + 1)) |+|
