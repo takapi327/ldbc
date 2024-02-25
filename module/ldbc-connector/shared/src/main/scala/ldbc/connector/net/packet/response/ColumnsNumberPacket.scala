@@ -23,7 +23,7 @@ import ldbc.connector.data.CapabilitiesFlags
 case class ColumnsNumberPacket(size: Int) extends ResponsePacket:
 
   override def toString: String = "ColumnsNumber Packet"
-  
+
 object ColumnsNumberPacket:
 
   def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[ColumnsNumberPacket | ERRPacket] =

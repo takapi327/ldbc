@@ -50,13 +50,13 @@ import ldbc.connector.data.*
  *     - 0x00 to 0x51 for decimals
  */
 case class ColumnDefinition320Packet(
-  table:        String,
-  name:         String,
-  length:       Int,
-  columnType:   ColumnDataType,
+  table:       String,
+  name:        String,
+  length:      Int,
+  columnType:  ColumnDataType,
   flagsLength: Int,
-  flags:        Seq[ColumnDefinitionFlags],
-  decimals:     Int
+  flags:       Seq[ColumnDefinitionFlags],
+  decimals:    Int
 ) extends ColumnDefinitionPacket:
 
   override def toString: String = "Protocol::ColumnDefinition41"
@@ -65,19 +65,19 @@ object ColumnDefinition320Packet:
 
   val decoder: Decoder[ColumnDefinition320Packet] =
     for
-      table        <- variableSizeBytes(uint8, utf8).asDecoder
-      name         <- variableSizeBytes(uint8, utf8).asDecoder
-      length       <- uint8.asDecoder
-      columnType   <- uint8.asDecoder
+      table       <- variableSizeBytes(uint8, utf8).asDecoder
+      name        <- variableSizeBytes(uint8, utf8).asDecoder
+      length      <- uint8.asDecoder
+      columnType  <- uint8.asDecoder
       flagsLength <- uint8.asDecoder
-      flags        <- uint16L.asDecoder
-      decimals     <- int(1).asDecoder
+      flags       <- uint16L.asDecoder
+      decimals    <- int(1).asDecoder
     yield ColumnDefinition320Packet(
-      table        = table,
-      name         = name,
-      length       = length,
-      columnType   = ColumnDataType(columnType),
+      table       = table,
+      name        = name,
+      length      = length,
+      columnType  = ColumnDataType(columnType),
       flagsLength = flagsLength,
-      flags        = ColumnDefinitionFlags(flags),
-      decimals     = decimals
+      flags       = ColumnDefinitionFlags(flags),
+      decimals    = decimals
     )

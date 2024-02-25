@@ -12,7 +12,7 @@ import cats.*
 import cats.syntax.all.*
 
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{Tracer, Span}
+import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.ResponsePacket
@@ -30,11 +30,11 @@ trait Statement[F[_]]:
   def executeQuery: F[List[ResultSetRowPacket]]
 
 object Statement:
-  
+
   def apply[F[_]: Exchange: Tracer](
-    socket:                  PacketSocket[F],
-    initialPacket:           InitialPacket,
-    sql: String,
+    socket:        PacketSocket[F],
+    initialPacket: InitialPacket,
+    sql:           String
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
 
@@ -47,12 +47,12 @@ object Statement:
 
       private def readUntilEOF[P <: ResponsePacket](
         decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
-        acc: List[P]
+        acc:     List[P]
       ): F[List[P]] =
         socket.receive(decoder).flatMap {
-          case _: EOFPacket => ev.pure(acc)
+          case _: EOFPacket     => ev.pure(acc)
           case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-          case row => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
+          case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
         }
 
       override def executeQuery: F[List[ResultSetRowPacket]] =
@@ -60,12 +60,15 @@ object Statement:
           span.addAttribute(Attribute("sql", sql)) *> (
             for
               columnCount <- socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-                socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-                  case result: ColumnsNumberPacket => ev.pure(result)
-                }
-              columns      <- repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-              resultSetRow <- readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columns), Nil)
+                               socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+                                 case result: ColumnsNumberPacket => ev.pure(result)
+                               }
+              columns <- repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+              resultSetRow <- readUntilEOF[ResultSetRowPacket](
+                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columns),
+                                Nil
+                              )
             yield resultSetRow
           )
         }

@@ -11,10 +11,14 @@ import scodec.*
 
 import ldbc.connector.data.CapabilitiesFlags
 
+/**
+ * A column definition packet is sent by the server to the client after a query is executed.
+ * It contains information about the columns of the result set.
+ */
 trait ColumnDefinitionPacket extends ResponsePacket
 
 object ColumnDefinitionPacket:
-  
+
   def decoder(capabilitiesFlags: Seq[CapabilitiesFlags]): Decoder[ColumnDefinitionPacket] =
     if capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41) then ColumnDefinition41Packet.decoder
     else ColumnDefinition320Packet.decoder
