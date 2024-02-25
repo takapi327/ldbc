@@ -29,12 +29,15 @@ trait Statement[F[_]]:
 
   def executeQuery: F[List[ResultSetRowPacket]]
 
+  def close(): F[Unit]
+
 object Statement:
 
   def apply[F[_]: Exchange: Tracer](
     socket:        PacketSocket[F],
     initialPacket: InitialPacket,
-    sql:           String
+    sql:           String,
+    resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
 
@@ -57,7 +60,7 @@ object Statement:
 
       override def executeQuery: F[List[ResultSetRowPacket]] =
         exchange[F, List[ResultSetRowPacket]]("statement") { (span: Span[F]) =>
-          span.addAttribute(Attribute("sql", sql)) *> (
+          span.addAttribute(Attribute("sql", sql)) *> resetSequenceId *> (
             for
               columnCount <- socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
                                socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
@@ -72,3 +75,5 @@ object Statement:
             yield resultSetRow
           )
         }
+
+      override def close(): F[Unit] = ev.unit

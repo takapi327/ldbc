@@ -21,9 +21,18 @@ import fs2.io.net.*
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.net.*
+import ldbc.connector.net.protocol.*
 import ldbc.connector.exception.MySQLException
 
-trait Connection[F[_]]
+trait Connection[F[_]]:
+
+  /**
+   * Creates a statement with the given SQL.
+   *
+   * @param sql
+   *   SQL queries based on text protocols
+   */
+  def statement(sql: String): Statement[F]
 
 object Connection:
 
@@ -76,7 +85,8 @@ object Connection:
       _ <- Resource.eval(
              protocol.authenticate(user, password.getOrElse(""), sslOptions.isDefined, allowPublicKeyRetrieval)
            )
-    yield new Connection[F] {}
+    yield new Connection[F]:
+      override def statement(sql: String): Statement[F] = protocol.statement(sql)
 
   def fromSocketGroup[F[_]: Tracer: Console](
     socketGroup:             SocketGroup[F],
