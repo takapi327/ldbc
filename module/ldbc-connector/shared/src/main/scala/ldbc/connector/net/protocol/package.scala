@@ -11,6 +11,9 @@ import org.typelevel.otel4s.trace.Tracer
 
 package object protocol:
 
+  /**
+   * The size of the header in bytes.
+   */
   def parseHeader(headerBytes: Array[Byte]): Int =
     (headerBytes(0) & 0xff) | ((headerBytes(1) & 0xff) << 8) | ((headerBytes(2) & 0xff) << 16)
 

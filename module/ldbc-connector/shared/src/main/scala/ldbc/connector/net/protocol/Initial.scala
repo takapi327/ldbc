@@ -16,6 +16,14 @@ import fs2.io.net.Socket
 import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.packet.response.InitialPacket
 
+/**
+ * Initial packet is the first packet sent by the server to the client.
+ * It contains the server version, connection id, and authentication plugin data.
+ * The client uses this information to determine the authentication method to use.
+ * 
+ * @tparam F
+ *   the effect type
+ */
 trait Initial[F[_]]:
 
   def start: F[InitialPacket]

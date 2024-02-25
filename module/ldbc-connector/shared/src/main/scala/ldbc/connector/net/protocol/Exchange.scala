@@ -12,6 +12,10 @@ import cats.effect.implicits.*
 import cats.effect.std.Mutex
 import cats.effect.Concurrent
 
+/**
+ * A trait that represents a function that exchanges a value of type `A` in a context `F` with another value of type `A`.
+ * The exchange operation is atomic and uncancelable.
+ */
 trait Exchange[F[_]]:
   def apply[A](fa: F[A]): F[A]
 
