@@ -16,11 +16,11 @@ import scala.util.Try
  * The version number must be a non-negative integer.
  * 
  * @param major
- * The major version number is incremented when there are significant changes to the software.
+ *   The major version number is incremented when there are significant changes to the software.
  * @param minor
- * The minor version number is incremented when there are minor changes to the software.
+ *   The minor version number is incremented when there are minor changes to the software.
  * @param patch
- * The patch version number is incremented when there are bug fixes to the software.
+ *   The patch version number is incremented when there are bug fixes to the software.
  */
 case class Version(
   major: Int,
@@ -30,20 +30,22 @@ case class Version(
 
   /**
    * This version is compared to the specified version to determine if they are the same series.
+   * 
    * @param that
-   * Version to be compared
+   *   Version to be compared
    * @return
-   * Return true if major version and minor version are the same.
+   *   Return true if major version and minor version are the same.
    */
   def isSameSeries(that: Version): Boolean =
     this.major == that.major && this.minor == that.minor
 
   /**
    * Compare versions and determine if the version being compared is higher or lower.
+   * 
    * @param that
-   * Version to be compared
+   *   Version to be compared
    * @return
-   * Return 1 if the version is above the compared version, -1 if below, and 0 if equal.
+   *   Return 1 if the version is above the compared version, -1 if below, and 0 if equal.
    */
   def compare(that: Version): Int =
     val x = this.major.compare(that.major)
