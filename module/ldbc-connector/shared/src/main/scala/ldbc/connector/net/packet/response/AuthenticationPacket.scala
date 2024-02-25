@@ -12,6 +12,9 @@ import scodec.codecs.*
 
 import ldbc.connector.data.CapabilitiesFlags
 
+/**
+ * AuthenticationPacket is a trait for all authentication packets.
+ */
 trait AuthenticationPacket extends ResponsePacket
 
 object AuthenticationPacket:
