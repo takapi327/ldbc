@@ -82,6 +82,13 @@ object Authentication:
   ): Authentication[F] =
     new Authentication[F]:
 
+      /**
+       * Read until the authentication is OK.
+       * If an error is returned from the server, it throws an exception and exits.
+       * 
+       * @param plugin
+       *   Authentication plugin
+       */
       private def readUntilOk(plugin: AuthenticationPlugin): F[Unit] =
         socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
           case more: AuthMoreDataPacket
@@ -119,13 +126,34 @@ object Authentication:
             val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
             socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(plugin)
 
+      /**
+       * Plain text handshake
+       * 
+       * @param plugin
+       *   Authentication plugin
+       * @param scrambleBuff
+       *   Scramble buffer for authentication payload
+       */
       private def plainTextHandshake(plugin: AuthenticationPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         val hashedPassword = plugin.hashPassword(password, scrambleBuff)
         socket.send(AuthSwitchResponsePacket(hashedPassword))
 
+      /**
+       * SSL handshake.
+       * Send a plain password to use SSL/TLS encrypted secure communication.
+       */
       private def sslHandshake(): F[Unit] =
         socket.send(AuthSwitchResponsePacket((password + "\u0000").getBytes(StandardCharsets.UTF_8)))
 
+      /**
+       * Allow public key retrieval request.
+       * RSA-encrypted communication, where the public key is used to encrypt the password for communication.
+       * 
+       * @param plugin
+       *   Authentication plugin
+       * @param scrambleBuff
+       *   Scramble buffer for authentication payload
+       */
       private def allowPublicKeyRetrievalRequest(plugin: Sha256PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
           // TODO: When converted to Array[Byte], it contains an extra 1 for some reason. This causes an error in public key parsing when executing Scala JS. Therefore, the first 1Byte is excluded.
@@ -139,18 +167,40 @@ object Authentication:
           socket.send(AuthSwitchResponsePacket(encryptPassword))
         }
 
+      /**
+       * SHA-256 authentication
+       * 
+       * @param plugin
+       *   Authentication plugin
+       * @param scrambleBuff
+       *   Scramble buffer for authentication payload
+       */
       private def sha256Authentication(plugin: Sha256PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         (useSSL, allowPublicKeyRetrieval) match
           case (true, _)     => sslHandshake()
           case (false, true) => socket.send(ComQuitPacket()) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
           case (_, _)        => plainTextHandshake(plugin, scrambleBuff)
 
+      /**
+       * Caching SHA-2 authentication
+       * 
+       * @param plugin
+       *   Authentication plugin
+       * @param scrambleBuff
+       *   Scramble buffer for authentication payload
+       */
       private def cachingSha2Authentication(plugin: CachingSha2PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         (useSSL, allowPublicKeyRetrieval) match
           case (true, _)     => sslHandshake()
           case (false, true) => socket.send(ComInitDBPacket()) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
           case (_, _)        => plainTextHandshake(plugin, scrambleBuff)
 
+      /**
+       * Handshake with the server.
+       * 
+       * @param plugin
+       *   Authentication plugin
+       */
       private def handshake(plugin: AuthenticationPlugin): F[Unit] =
         val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
         val handshakeResponse = HandshakeResponsePacket(
