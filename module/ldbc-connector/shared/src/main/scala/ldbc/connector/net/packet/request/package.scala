@@ -10,7 +10,7 @@ import scodec.*
 import scodec.codecs.*
 
 package object request:
-  
+
   def time: Encoder[java.time.LocalTime] = Encoder { localTime =>
     for
       hour   <- uint8.encode(localTime.getHour)
@@ -18,7 +18,7 @@ package object request:
       second <- uint8.encode(localTime.getSecond)
     yield hour ++ minute ++ second
   }
-  
+
   def date: Encoder[java.time.LocalDate] = Encoder { localDate =>
     for
       year  <- uint16.encode(localDate.getYear)
@@ -26,7 +26,7 @@ package object request:
       day   <- uint8.encode(localDate.getDayOfMonth)
     yield year ++ month ++ day
   }
-  
+
   def dateTime: Encoder[java.time.LocalDateTime] = Encoder { localDateTime =>
     for
       date <- date.encode(localDateTime.toLocalDate)

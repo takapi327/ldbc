@@ -43,8 +43,8 @@ package object packet:
         (bitmap << 1) | (
           param match
             case ColumnDataType.MYSQL_TYPE_NULL => 1
-            case _ => 0
-          )
+            case _                              => 0
+        )
       }
       uint8.encode(bitmap).require
     else BitVector.empty
