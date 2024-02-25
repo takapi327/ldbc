@@ -12,6 +12,9 @@ import scodec.bits.BitVector
 
 import ldbc.connector.data.CommandId
 
+/**
+ * A request packet to close the connection.
+ */
 case class ComQuitPacket() extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =
