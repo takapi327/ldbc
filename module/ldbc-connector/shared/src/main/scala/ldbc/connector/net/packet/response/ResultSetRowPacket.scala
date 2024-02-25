@@ -34,7 +34,7 @@ case class ResultSetRowPacket(values: List[Option[String]]) extends ResponsePack
 
 object ResultSetRowPacket:
 
-  private val NULL = 0xFB
+  private val NULL = 0xfb
 
   private def decodeValue(length: Int): Decoder[Option[String]] =
     bytes(length).asDecoder
@@ -48,20 +48,24 @@ object ResultSetRowPacket:
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case length =>
-        columns.zipWithIndex.foldLeft(Decoder.pure(ArrayBuffer.empty[Option[String]])) { case (acc, (column, index)) =>
-          acc.flatMap { buffer =>
-            val valueDecoder = length match
-              case NULL => Decoder.pure(None)
-              case _ if index == 0 => decodeValue(length)
-              case _ => uint8.flatMap {
-                case NULL => Decoder.pure(None)
-                case value => decodeValue(value)
-              }
+        columns.zipWithIndex
+          .foldLeft(Decoder.pure(ArrayBuffer.empty[Option[String]])) {
+            case (acc, (column, index)) =>
+              acc.flatMap { buffer =>
+                val valueDecoder = length match
+                  case NULL            => Decoder.pure(None)
+                  case _ if index == 0 => decodeValue(length)
+                  case _ =>
+                    uint8.flatMap {
+                      case NULL  => Decoder.pure(None)
+                      case value => decodeValue(value)
+                    }
 
-            valueDecoder.map { value =>
-              buffer.append(value)
-              buffer
-            }
+                valueDecoder.map { value =>
+                  buffer.append(value)
+                  buffer
+                }
+              }
           }
-        }.map(array => ResultSetRowPacket(array.toList))
+          .map(array => ResultSetRowPacket(array.toList))
     }
