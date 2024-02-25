@@ -110,7 +110,8 @@ object MySQLProtocol:
             Authentication[F](packetSocket, initialPacket, user, password, None, useSSL, allowPublicKeyRetrieval)
               .start()
 
-          override def statement(sql: String): Statement[F] = Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
+          override def statement(sql: String): Statement[F] =
+            Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
 
           override def resetSequenceId: F[Unit] =
             sequenceIdRef.update(_ => 0.toByte)

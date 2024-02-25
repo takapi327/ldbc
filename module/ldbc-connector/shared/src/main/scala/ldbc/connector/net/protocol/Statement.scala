@@ -34,9 +34,9 @@ trait Statement[F[_]]:
 object Statement:
 
   def apply[F[_]: Exchange: Tracer](
-    socket:        PacketSocket[F],
-    initialPacket: InitialPacket,
-    sql:           String,
+    socket:          PacketSocket[F],
+    initialPacket:   InitialPacket,
+    sql:             String,
     resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
