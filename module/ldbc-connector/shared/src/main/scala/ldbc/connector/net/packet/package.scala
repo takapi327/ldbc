@@ -12,6 +12,8 @@ import scodec.*
 import scodec.codecs.*
 import scodec.bits.BitVector
 
+import ldbc.connector.data.ColumnDataType
+
 package object packet:
 
   /**
@@ -28,6 +30,24 @@ package object packet:
       val string    = new String(bytes.toArray, java.nio.charset.StandardCharsets.UTF_8)
       val remainder = bits.drop((bytes.size + 1) * 8) // +1 is a null character, so *8 is a byte to bit
       Attempt.successful(DecodeResult(string, remainder))
+
+  /**
+   * NULL bitmap, length = (num_params + 7) / 8
+   *
+   * @param columns
+   *   The list of column data types.
+   */
+  def nullBitmap(columns: List[ColumnDataType]): BitVector =
+    if columns.nonEmpty then
+      val bitmap = columns.foldLeft(0) { (bitmap, param) =>
+        (bitmap << 1) | (
+          param match
+            case ColumnDataType.MYSQL_TYPE_NULL => 1
+            case _ => 0
+          )
+      }
+      uint8.encode(bitmap).require
+    else BitVector.empty
 
   /**
    * A codec for a local time.
