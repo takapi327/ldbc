@@ -27,7 +27,7 @@ import ldbc.connector.net.packet.request.*
  */
 trait Statement[F[_]]:
 
-  def executeQuery: F[List[ResultSetRowPacket]]
+  def executeQuery(): F[List[ResultSetRowPacket]]
 
   def close(): F[Unit]
 
@@ -58,7 +58,7 @@ object Statement:
           case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
         }
 
-      override def executeQuery: F[List[ResultSetRowPacket]] =
+      override def executeQuery(): F[List[ResultSetRowPacket]] =
         exchange[F, List[ResultSetRowPacket]]("statement") { (span: Span[F]) =>
           span.addAttribute(Attribute("sql", sql)) *> resetSequenceId *> (
             for
