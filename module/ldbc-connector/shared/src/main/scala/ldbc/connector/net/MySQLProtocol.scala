@@ -23,14 +23,45 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 
+/**
+ * MySQLProtocol is a protocol to communicate with MySQL server.
+ * It provides a way to authenticate, reset sequence id, and close the connection.
+ * 
+ * @tparam F
+ *   the effect type
+ */
 trait MySQLProtocol[F[_]]:
 
+  /**
+   * Returns the initial packet.
+   * 
+   * @return
+   *   the initial packet
+   */
   def initialPacket: InitialPacket
 
+  /**
+   * Authenticates the user with the given password.
+   * 
+   * @param user
+   *   the user name
+   * @param password
+   *   the password
+   * @param useSSL
+   *   whether to use SSL
+   * @param allowPublicKeyRetrieval
+   *   whether to allow public key retrieval
+   */
   def authenticate(user: String, password: String, useSSL: Boolean, allowPublicKeyRetrieval: Boolean): F[Unit]
 
+  /**
+   * Resets the sequence id.
+   */
   def resetSequenceId: F[Unit]
 
+  /**
+   * Closes the connection.
+   */
   def close(): F[Unit]
 
 object MySQLProtocol:
