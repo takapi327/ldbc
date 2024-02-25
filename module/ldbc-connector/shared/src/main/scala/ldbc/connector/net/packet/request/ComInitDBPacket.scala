@@ -12,6 +12,12 @@ import scodec.bits.BitVector
 
 import ldbc.connector.data.CommandId
 
+/**
+ * The COM_INIT_DB request is used to change the default database for the connection.
+ * The database name is specified as an argument to the request.
+ * The server changes the default database to the one specified and sends a OK_Packet to the client.
+ * If the database does not exist, the server sends an ERR_Packet to the client.
+ */
 case class ComInitDBPacket() extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =
