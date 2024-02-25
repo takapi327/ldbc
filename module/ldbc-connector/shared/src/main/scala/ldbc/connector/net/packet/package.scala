@@ -14,6 +14,9 @@ import scodec.bits.BitVector
 
 package object packet:
 
+  /**
+   * A codec for a null-terminated string.
+   */
   def nullTerminatedStringCodec: Codec[String] = new Codec[String]:
     def sizeBound: SizeBound = SizeBound.unknown
 
@@ -26,6 +29,9 @@ package object packet:
       val remainder = bits.drop((bytes.size + 1) * 8) // +1 is a null character, so *8 is a byte to bit
       Attempt.successful(DecodeResult(string, remainder))
 
+  /**
+   * A codec for a local time.
+   */
   def time: Decoder[LocalTime] =
     for
       hour        <- uint8
