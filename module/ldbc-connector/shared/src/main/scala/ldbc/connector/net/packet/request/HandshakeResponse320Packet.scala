@@ -46,7 +46,7 @@ case class HandshakeResponse320Packet(
 object HandshakeResponse320Packet:
 
   val encoder: Encoder[HandshakeResponse320Packet] = Encoder { handshakeResponse =>
-    val userBytes     = handshakeResponse.user.getBytes("UTF-8")
+    val userBytes = handshakeResponse.user.getBytes("UTF-8")
 
     Attempt.successful(
       handshakeResponse.encodeCapabilitiesFlags() |+|
