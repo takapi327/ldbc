@@ -30,7 +30,6 @@ enum ColumnDefinitionFlags(val code: Long):
   case ON_UPDATE_NOW_FLAG    extends ColumnDefinitionFlags(1L << 13)
   case PART_KEY_FLAG         extends ColumnDefinitionFlags(1L << 14)
   case NUM_FLAG              extends ColumnDefinitionFlags(1L << 15)
-  // case GROUP_FLAG extends ColumnDefinitionFlags(1L << 16)
   case UNIQUE_FLAG                    extends ColumnDefinitionFlags(1L << 16)
   case BINCMP_FLAG                    extends ColumnDefinitionFlags(1L << 17)
   case GET_FIXED_FIELDS_FLAG          extends ColumnDefinitionFlags(1L << 18)
