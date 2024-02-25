@@ -7,11 +7,12 @@
 package ldbc.connector.net.packet
 package response
 
+import scala.collection.mutable.ArrayBuffer
+
 import cats.syntax.all.*
 
 import scodec.*
 import scodec.codecs.*
-import scodec.interop.cats.*
 
 import ldbc.connector.data.CapabilitiesFlags
 
@@ -33,10 +34,11 @@ case class ResultSetRowPacket(values: List[Option[String]]) extends ResponsePack
 
 object ResultSetRowPacket:
 
+  private val NULL = 0xFB
+
   private def decodeValue(length: Int): Decoder[Option[String]] =
     bytes(length).asDecoder
-      .map(_.decodeUtf8Lenient)
-      .map(value => if value.toUpperCase == "NULL" then None else value.some)
+      .map(_.decodeUtf8Lenient.some)
 
   def decoder(
     capabilityFlags: Seq[CapabilitiesFlags],
@@ -46,10 +48,20 @@ object ResultSetRowPacket:
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case length =>
-        columns.zipWithIndex.toList
-          .traverse((_, index) =>
-            if index == 0 then decodeValue(length)
-            else uint8.flatMap(length => decodeValue(length))
-          )
-          .map(ResultSetRowPacket(_))
+        columns.zipWithIndex.foldLeft(Decoder.pure(ArrayBuffer.empty[Option[String]])) { case (acc, (column, index)) =>
+          acc.flatMap { buffer =>
+            val valueDecoder = length match
+              case NULL => Decoder.pure(None)
+              case _ if index == 0 => decodeValue(length)
+              case _ => uint8.flatMap {
+                case NULL => Decoder.pure(None)
+                case value => decodeValue(value)
+              }
+
+            valueDecoder.map { value =>
+              buffer.append(value)
+              buffer
+            }
+          }
+        }.map(array => ResultSetRowPacket(array.toList))
     }
