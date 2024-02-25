@@ -22,8 +22,8 @@ class StatementTest extends CatsEffectSuite:
     host     = "127.0.0.1",
     port     = 13306,
     user     = "ldbc",
-    password = Some("password")
-    // ssl = SSL.Trusted,
+    password = Some("password"),
+    ssl      = SSL.Trusted
   )
 
   test("Statement should be able to execute a query") {
