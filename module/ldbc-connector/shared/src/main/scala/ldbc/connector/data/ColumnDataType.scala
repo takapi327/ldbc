@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.connector.data
 
 /**
@@ -25,12 +31,12 @@ enum ColumnDataType(val code: Long, val name: String):
   case MYSQL_TYPE_TIME        extends ColumnDataType(0x0b, "TIME")
   case MYSQL_TYPE_DATETIME    extends ColumnDataType(0x0c, "DATETIME")
   case MYSQL_TYPE_YEAR        extends ColumnDataType(0x0d, "YEAR")
-  case MYSQL_TYPE_NEWDATE     extends ColumnDataType(0x0e, "DATE")
+  case MYSQL_TYPE_NEWDATE     extends ColumnDataType(0x0e, "DATE") // Internal to MySQL. Not used in protocol
   case MYSQL_TYPE_VARCHAR     extends ColumnDataType(0x0f, "VARCHAR")
   case MYSQL_TYPE_BIT         extends ColumnDataType(0x10, "BIT")
   case MYSQL_TYPE_TIMESTAMP2  extends ColumnDataType(0x11, "TIMESTAMP")
-  case MYSQL_TYPE_DATETIME2   extends ColumnDataType(0x12, "DATETIME")
-  case MYSQL_TYPE_TIME2       extends ColumnDataType(0x13, "TIME")
+  case MYSQL_TYPE_DATETIME2   extends ColumnDataType(0x12, "DATETIME") // Internal to MySQL. Not used in protocol
+  case MYSQL_TYPE_TIME2       extends ColumnDataType(0x13, "TIME") // Internal to MySQL. Not used in protocol
   case MYSQL_TYPE_NEWDECIMAL  extends ColumnDataType(0xf6, "DECIMAL")
   case MYSQL_TYPE_ENUM        extends ColumnDataType(0xf7, "ENUM")
   case MYSQL_TYPE_SET         extends ColumnDataType(0xf8, "SET")
