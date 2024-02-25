@@ -11,7 +11,6 @@ import scala.concurrent.duration.Duration
 import com.comcast.ip4s.*
 
 import cats.*
-import cats.data.Kleisli
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -22,7 +21,6 @@ import fs2.io.net.*
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.net.*
-import ldbc.connector.util.*
 import ldbc.connector.exception.MySQLException
 
 trait Connection[F[_]]
@@ -32,53 +30,35 @@ object Connection:
   private val defaultSocketOptions: List[SocketOption] =
     List(SocketOption.noDelay(true))
 
-  object Recyclers:
-
-    /**
-     * Ensure the session is idle, then remove all channel listeners and reset all variables to
-     * system defaults. Note that this is usually more work than you need to do. If your application
-     * isn't running arbitrary statements then `minimal` might be more efficient.
-     */
-    def full[F[_]: Monad]: Recycler[F, Connection[F]] =
-      Recycler.success[F, Connection[F]]
-
-  def single[F[_]: Temporal: Tracer: Network: Console](
+  def apply[F[_]: Temporal: Network: Console](
     host:                    String,
     port:                    Int,
     user:                    String,
     password:                Option[String] = None,
     debug:                   Boolean = false,
     ssl:                     SSL = SSL.None,
+    socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false
-  ): Resource[F, Connection[F]] =
-    singleTracer(host, port, user, password, debug, ssl, readTimeout, allowPublicKeyRetrieval).apply(Tracer[F])
+  ): Tracer[F] ?=> Resource[F, Connection[F]] =
 
-  def singleTracer[F[_]: Temporal: Network: Console](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
-  ): Tracer[F] => Resource[F, Connection[F]] =
-    Kleisli((_: Tracer[F]) =>
-      pooled[F](
-        host                    = host,
-        port                    = port,
-        user                    = user,
-        password                = password,
-        max                     = 1,
-        debug                   = debug,
-        ssl                     = ssl,
-        readTimeout             = readTimeout,
-        allowPublicKeyRetrieval = allowPublicKeyRetrieval
-      )
-    )
-      .flatMap(f => Kleisli { implicit T: Tracer[F] => f(T) })
-      .run
+    val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
+
+    for
+      sslOp <- ssl.toSSLNegotiationOptions(if debug then logger.some else none)
+      connection <- fromSocketGroup(
+                      Network[F],
+                      host,
+                      port,
+                      user,
+                      password,
+                      debug,
+                      socketOptions,
+                      sslOp,
+                      readTimeout,
+                      allowPublicKeyRetrieval
+                    )
+    yield connection
 
   def fromSockets[F[_]: Temporal: Tracer: Console](
     sockets:                 Resource[F, Socket[F]],
@@ -122,39 +102,3 @@ object Connection:
         case (_, None) => fail(s"Port: $port falls out of the allowed range.")
 
     fromSockets(sockets, host, port, user, password, debug, sslOptions, readTimeout, allowPublicKeyRetrieval)
-
-  def pooled[F[_]: Temporal: Network: Console](
-    host:                    String,
-    port:                    Int,
-    user:                    String,
-    password:                Option[String] = None,
-    max:                     Int,
-    debug:                   Boolean = false,
-    ssl:                     SSL = SSL.None,
-    socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
-    readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
-  ): Resource[F, Tracer[F] => Resource[F, Connection[F]]] =
-
-    val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
-
-    def connection(socketGroup: SocketGroup[F], sslOp: Option[SSLNegotiation.Options[F]])(using
-      Tracer[F]
-    ): Resource[F, Connection[F]] =
-      fromSocketGroup(
-        socketGroup,
-        host,
-        port,
-        user,
-        password,
-        debug,
-        socketOptions,
-        sslOp,
-        readTimeout,
-        allowPublicKeyRetrieval
-      )
-
-    for
-      sslOp <- ssl.toSSLNegotiationOptions(if debug then logger.some else none)
-      pool  <- Pool.ofF({ implicit T: Tracer[F] => connection(Network[F], sslOp) }, max)(Recyclers.full)
-    yield pool
