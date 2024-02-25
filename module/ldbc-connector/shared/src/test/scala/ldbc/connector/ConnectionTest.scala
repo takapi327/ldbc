@@ -21,7 +21,7 @@ class ConnectionTest extends CatsEffectSuite:
   given Tracer[IO] = Tracer.noop[IO]
 
   test("Passing an empty string to host causes MySQLException") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host = "",
       port = 13306,
       user = "root"
@@ -32,7 +32,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("UnknownHostException occurs when invalid host is passed") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host = "host",
       port = 13306,
       user = "root"
@@ -43,7 +43,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("Passing a negative value to Port causes MySQLException") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host = "127.0.0.1",
       port = -1,
       user = "root"
@@ -54,7 +54,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("MySQLException occurs when passing more than 65535 values to Port") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host = "127.0.0.1",
       port = 65536,
       user = "root"
@@ -65,7 +65,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("A user using mysql_native_password can establish a connection with the MySQL server.") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc_mysql_native_user",
@@ -77,7 +77,7 @@ class ConnectionTest extends CatsEffectSuite:
   test(
     "Connections to MySQL servers using users with mysql_native_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host                    = "127.0.0.1",
       port                    = 13306,
       user                    = "ldbc_mysql_native_user",
@@ -88,7 +88,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("Connections to MySQL servers using users with mysql_native_password will succeed for SSL connections.") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc_mysql_native_user",
@@ -99,7 +99,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc_sha256_user",
@@ -113,7 +113,7 @@ class ConnectionTest extends CatsEffectSuite:
   test(
     "Connections to MySQL servers using users with sha256_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host                    = "127.0.0.1",
       port                    = 13306,
       user                    = "ldbc_sha256_user",
@@ -124,7 +124,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("Connections to MySQL servers using users with sha256_password will succeed for SSL connections.") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc_sha256_user",
@@ -135,7 +135,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("Connections to MySQL servers using users with caching_sha2_password will fail for non-SSL connections.") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc",
@@ -149,7 +149,7 @@ class ConnectionTest extends CatsEffectSuite:
   test(
     "Connections to MySQL servers using users with caching_sha2_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host                    = "127.0.0.1",
       port                    = 13306,
       user                    = "ldbc",
@@ -160,7 +160,7 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test("Connections to MySQL servers using users with caching_sha2_password will succeed for SSL connections.") {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc",
@@ -173,7 +173,7 @@ class ConnectionTest extends CatsEffectSuite:
   test(
     "If the login information of a user using caching_sha2_password is cached, the connection to the MySQL server will succeed even for non-SSL connections."
   ) {
-    val connection = Connection.single[IO](
+    val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc",
