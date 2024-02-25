@@ -55,8 +55,6 @@ object HandshakeResponse41Packet:
 
     val pluginBytes = handshakeResponse.pluginName.getBytes("UTF-8")
 
-    ByteVector.apply(1L).toHex
-
     Attempt.successful(
       handshakeResponse.encodeCapabilitiesFlags() |+|
         handshakeResponse.maxPacketSize |+|
