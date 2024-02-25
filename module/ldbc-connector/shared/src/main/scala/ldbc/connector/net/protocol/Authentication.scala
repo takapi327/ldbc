@@ -75,7 +75,8 @@ object Authentication:
     password:                String,
     database:                Option[String],
     useSSL:                  Boolean = false,
-    allowPublicKeyRetrieval: Boolean = false
+    allowPublicKeyRetrieval: Boolean = false,
+    capabilityFlags:         Seq[CapabilitiesFlags] = defaultCapabilityFlags
   )(using
     ev: MonadError[F, Throwable]
   ): Authentication[F] =
@@ -153,7 +154,7 @@ object Authentication:
       private def handshake(plugin: AuthenticationPlugin): F[Unit] =
         val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
         val handshakeResponse = HandshakeResponsePacket(
-          defaultCapabilityFlags,
+          capabilityFlags,
           username,
           Array(hashedPassword.length.toByte) ++ hashedPassword,
           plugin.name,
