@@ -50,8 +50,8 @@ object Statement:
 
       private def readUntilEOF[P <: ResponsePacket](
         decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
-        acc:     List[P]
-      ): F[List[P]] =
+        acc:     Vector[P]
+      ): F[Vector[P]] =
         socket.receive(decoder).flatMap {
           case _: EOFPacket     => ev.pure(acc)
           case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
@@ -70,9 +70,9 @@ object Statement:
               columns <- repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
               resultSetRow <- readUntilEOF[ResultSetRowPacket](
                                 ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columns),
-                                Nil
+                                Vector.empty
                               )
-            yield resultSetRow
+            yield resultSetRow.toList
           )
         }
 
