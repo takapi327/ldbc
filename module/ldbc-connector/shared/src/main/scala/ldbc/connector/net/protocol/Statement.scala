@@ -27,8 +27,20 @@ import ldbc.connector.net.packet.request.*
  */
 trait Statement[F[_]]:
 
+  /**
+   * Executes the specified SQL statement and returns one or more ResultSet objects.
+   */
   def executeQuery(): F[List[ResultSetRowPacket]]
 
+  /**
+   * Releases this Statement object's database and LDBC resources immediately instead of waiting for this to happen when
+   * it is automatically closed. It is generally good practice to release resources as soon as you are finished with
+   * them to avoid tying up database resources.
+   *
+   * Calling the method close on a Statement object that is already closed has no effect.
+   *
+   * Note: When a Statement object is closed, its current ResultSet object, if one exists, is also closed.
+   */
   def close(): F[Unit]
 
 object Statement:
