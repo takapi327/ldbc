@@ -14,6 +14,9 @@
   <a href="https://github.com/lampepfl/dotty">
     <img src="https://img.shields.io/badge/scala-v3.3.x-red">
   </a>
+  <a href="https://typelevel.org/projects/affiliate/">
+    <img src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg">
+  </a>
 </div>
 
 ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
