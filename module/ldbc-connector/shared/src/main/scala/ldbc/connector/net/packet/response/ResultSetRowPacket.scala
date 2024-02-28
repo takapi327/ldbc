@@ -42,7 +42,7 @@ object ResultSetRowPacket:
 
   def decoder(
     capabilityFlags: Seq[CapabilitiesFlags],
-    columns:         Seq[ColumnDefinitionPacket]
+    columns:         Vector[ColumnDefinitionPacket]
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
     uint8.flatMap {
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)

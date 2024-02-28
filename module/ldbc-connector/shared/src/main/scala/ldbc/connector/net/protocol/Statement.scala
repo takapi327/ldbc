@@ -41,12 +41,12 @@ object Statement:
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
 
-      private def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[List[P]] =
-        def read(remaining: Int, acc: List[P]): F[List[P]] =
+      private def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[Vector[P]] =
+        def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
           if remaining <= 0 then ev.pure(acc)
           else socket.receive(decoder).flatMap(result => read(remaining - 1, acc :+ result))
 
-        read(times, List.empty[P])
+        read(times, Vector.empty[P])
 
       private def readUntilEOF[P <: ResponsePacket](
         decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
