@@ -9,13 +9,25 @@ package response
 
 import scodec.*
 
-import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.data.*
 
 /**
  * A column definition packet is sent by the server to the client after a query is executed.
  * It contains information about the columns of the result set.
  */
-trait ColumnDefinitionPacket extends ResponsePacket
+trait ColumnDefinitionPacket extends ResponsePacket:
+
+  /** Table name */
+  def table: String
+
+  /** Column name */
+  def name: String
+
+  /** Column Data Type */
+  def columnType: ColumnDataType
+
+  /** ColumnDefinitionFlags is a bitset of column definition flags. */
+  def flags: Seq[ColumnDefinitionFlags]
 
 object ColumnDefinitionPacket:
 
