@@ -10,7 +10,7 @@ import BuildSettings.*
 import Dependencies.*
 import Workflows.*
 
-ThisBuild / crossScalaVersions := Seq(scala3)
+ThisBuild / crossScalaVersions := Seq(scala3, scala34)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(
