@@ -62,6 +62,8 @@ object Type:
   def `enum`(values: List[String]): Type = Type(s"enum(${ values.mkString(",") })")
 
   def set(values: List[String]): Type = Type(s"set(${ values.mkString(",") })")
+  
+  val json: Type = Type("json")
 
   val date: Type = Type("date")
 
