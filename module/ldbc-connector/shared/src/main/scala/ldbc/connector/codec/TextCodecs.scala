@@ -19,57 +19,33 @@ trait TextCodecs:
 
   def binary(length: Int): Codec[Array[Byte]] = Codec.simple(
     "\\x" + ByteVector.view(_).toHex,
-    str =>
-      ByteVector
-        .fromHex(str.substring(2))
-        .map(_.toArray)
-        .fold("Cannot decode bytes from HEX String".asLeft[Array[Byte]])(_.asRight[String]),
+    _.getBytes("UTF-8").asRight[String],
     Type.binary(length)
   )
   def varbinary(length: Int): Codec[Array[Byte]] = Codec.simple(
     "\\x" + ByteVector.view(_).toHex,
-    str =>
-      ByteVector
-        .fromHex(str.substring(2))
-        .map(_.toArray)
-        .fold("Cannot decode bytes from HEX String".asLeft[Array[Byte]])(_.asRight[String]),
+    _.getBytes("UTF-8").asRight[String],
     Type.varbinary(length)
   )
 
   def tinyblob(length: Int): Codec[Array[Byte]] = Codec.simple(
     "\\x" + ByteVector.view(_).toHex,
-    str =>
-      ByteVector
-        .fromHex(str.substring(2))
-        .map(_.toArray)
-        .fold("Cannot decode bytes from HEX String".asLeft[Array[Byte]])(_.asRight[String]),
+    _.getBytes("UTF-8").asRight[String],
     Type.tinyblob
   )
   def blob(length: Int): Codec[Array[Byte]] = Codec.simple(
     "\\x" + ByteVector.view(_).toHex,
-    str =>
-      ByteVector
-        .fromHex(str.substring(2))
-        .map(_.toArray)
-        .fold("Cannot decode bytes from HEX String".asLeft[Array[Byte]])(_.asRight[String]),
+    _.getBytes("UTF-8").asRight[String],
     Type.blob
   )
   def mediumblob(length: Int): Codec[Array[Byte]] = Codec.simple(
     "\\x" + ByteVector.view(_).toHex,
-    str =>
-      ByteVector
-        .fromHex(str.substring(2))
-        .map(_.toArray)
-        .fold("Cannot decode bytes from HEX String".asLeft[Array[Byte]])(_.asRight[String]),
+    _.getBytes("UTF-8").asRight[String],
     Type.mediumblob
   )
   def longblob(length: Int): Codec[Array[Byte]] = Codec.simple(
     "\\x" + ByteVector.view(_).toHex,
-    str =>
-      ByteVector
-        .fromHex(str.substring(2))
-        .map(_.toArray)
-        .fold("Cannot decode bytes from HEX String".asLeft[Array[Byte]])(_.asRight[String]),
+    _.getBytes("UTF-8").asRight[String],
     Type.longblob
   )
 
