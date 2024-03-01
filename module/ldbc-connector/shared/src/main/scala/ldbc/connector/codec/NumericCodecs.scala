@@ -18,8 +18,8 @@ trait NumericCodecs:
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
-  def bit(size: Int): Codec[Byte] = Codec.simple(_.toString, safe(_.toByte), Type.bit(size))
-  val bit: Codec[Byte] = Codec.simple(_.toString, safe(_.toByte), Type.bit)
+  def bit(size: Int): Codec[Byte] = Codec.simple(_.toString, safe(_.getBytes("US-ASCII")(0)), Type.bit(size))
+  val bit: Codec[Byte] = Codec.simple(_.toString, safe(_.getBytes("US-ASCII")(0)), Type.bit)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
