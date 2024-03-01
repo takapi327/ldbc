@@ -72,10 +72,6 @@ object Type:
   def time(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Type = Type(s"time($fsp)")
   val time: Type = Type("time")
 
-  @deprecated(
-    "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
-    "0.3.0"
-  )
   def year(digit: 4): Type = Type(s"year($digit)")
   val year: Type = Type("year")
 
