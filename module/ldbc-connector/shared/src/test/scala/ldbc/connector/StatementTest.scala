@@ -38,14 +38,22 @@ class StatementTest extends CatsEffectSuite:
 
   test("Statement should be able to retrieve BIT type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Byte, Option[Byte])](bit *: bit.opt))),
+      connection.use(
+        _.statement("SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Byte, Option[Byte])](bit *: bit.opt))
+      ),
       List((1.toByte, None))
     )
   }
 
   test("Statement should be able to retrieve TINYINT type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Short, Option[Short])](tinyint *: tinyint.opt))),
+      connection.use(
+        _.statement("SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Short, Option[Short])](tinyint *: tinyint.opt))
+      ),
       List((127.toShort, None))
     )
   }
@@ -53,7 +61,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve SMALLINT type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Int, Option[Int])](smallint *: smallint.opt))
+        _.statement("SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Int, Option[Int])](smallint *: smallint.opt))
       ),
       List((32767, None))
     )
@@ -62,7 +72,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MEDIUMINT type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Int, Option[Int])](mediumint *: mediumint.opt))
+        _.statement("SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Int, Option[Int])](mediumint *: mediumint.opt))
       ),
       List((8388607, None))
     )
@@ -70,49 +82,77 @@ class StatementTest extends CatsEffectSuite:
 
   test("Statement should be able to retrieve INT type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `int`, `int_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Int, Option[Int])](int *: int.opt))),
+      connection.use(
+        _.statement("SELECT `int`, `int_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Int, Option[Int])](int *: int.opt))
+      ),
       List((2147483647, None))
     )
   }
 
   test("Statement should be able to retrieve BIGINT type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Long, Option[Long])](bigint *: bigint.opt))),
+      connection.use(
+        _.statement("SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Long, Option[Long])](bigint *: bigint.opt))
+      ),
       List((9223372036854775807L, None))
     )
   }
 
   test("Statement should be able to retrieve FLOAT type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `float`, `float_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Float, Option[Float])](float(0) *: float(0).opt))),
+      connection.use(
+        _.statement("SELECT `float`, `float_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Float, Option[Float])](float(0) *: float(0).opt))
+      ),
       List((3.40282e38f, None))
     )
   }
 
   test("Statement should be able to retrieve DOUBLE type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `double`, `double_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Double, Option[Double])](double(24) *: double(24).opt))),
+      connection.use(
+        _.statement("SELECT `double`, `double_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Double, Option[Double])](double(24) *: double(24).opt))
+      ),
       List((1.7976931348623157e308, None))
     )
   }
 
   test("Statement should be able to retrieve DECIMAL type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt))),
+      connection.use(
+        _.statement("SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt))
+      ),
       List((BigDecimal.decimal(9999999.99), None))
     )
   }
 
   test("Statement should be able to retrieve DATE type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `date`, `date_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(LocalDate, Option[LocalDate])](date *: date.opt))),
+      connection.use(
+        _.statement("SELECT `date`, `date_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(LocalDate, Option[LocalDate])](date *: date.opt))
+      ),
       List((LocalDate.of(2020, 1, 1), None))
     )
   }
 
   test("Statement should be able to retrieve TIME type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `time`, `time_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(LocalTime, Option[LocalTime])](time *: time.opt))),
+      connection.use(
+        _.statement("SELECT `time`, `time_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(LocalTime, Option[LocalTime])](time *: time.opt))
+      ),
       List((LocalTime.of(12, 34, 56), None))
     )
   }
@@ -120,7 +160,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve DATETIME type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt))
+        _.statement("SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt))
       ),
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
     )
@@ -129,7 +171,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve TIMESTAMP type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt))
+        _.statement("SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt))
       ),
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
     )
@@ -137,21 +181,33 @@ class StatementTest extends CatsEffectSuite:
 
   test("Statement should be able to retrieve YEAR type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `year`, `year_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(Year, Option[Year])](year *: year.opt))),
+      connection.use(
+        _.statement("SELECT `year`, `year_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Year, Option[Year])](year *: year.opt))
+      ),
       List((Year.of(2020), None))
     )
   }
 
   test("Statement should be able to retrieve CHAR type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `char`, `char_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](char(10) *: char(10).opt))),
+      connection.use(
+        _.statement("SELECT `char`, `char_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](char(10) *: char(10).opt))
+      ),
       List(("char", None))
     )
   }
 
   test("Statement should be able to retrieve VARCHAR type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](varchar(10) *: varchar(10).opt))),
+      connection.use(
+        _.statement("SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](varchar(10) *: varchar(10).opt))
+      ),
       List(("varchar", None))
     )
   }
@@ -159,8 +215,8 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve BINARY type records.") {
     assertIO(
       connection.use(conn =>
-        for
-          resultSet <- conn.statement("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`").executeQuery()
+        for resultSet <-
+            conn.statement("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`").executeQuery()
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](binary(10) *: binary(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
@@ -172,8 +228,8 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve VARBINARY type records.") {
     assertIO(
       connection.use(conn =>
-        for
-          resultSet <- conn.statement("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`").executeQuery()
+        for resultSet <-
+            conn.statement("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`").executeQuery()
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](varbinary(10) *: varbinary(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
@@ -185,8 +241,8 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve TINYBLOB type records.") {
     assertIO(
       connection.use(conn =>
-        for
-          resultSet <- conn.statement("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`").executeQuery()
+        for resultSet <-
+            conn.statement("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`").executeQuery()
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](tinyblob(10) *: tinyblob(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
@@ -198,8 +254,7 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve BLOB type records.") {
     assertIO(
       connection.use(conn =>
-        for
-          resultSet <- conn.statement("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`").executeQuery()
+        for resultSet <- conn.statement("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`").executeQuery()
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](tinyblob(10) *: tinyblob(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
@@ -211,8 +266,8 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MEDIUMBLOB type records.") {
     assertIO(
       connection.use(conn =>
-        for
-          resultSet <- conn.statement("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`").executeQuery()
+        for resultSet <-
+            conn.statement("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`").executeQuery()
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](mediumblob(10) *: mediumblob(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
@@ -224,8 +279,8 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve LONGBLOB type records.") {
     assertIO(
       connection.use(conn =>
-        for
-          resultSet <- conn.statement("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`").executeQuery()
+        for resultSet <-
+            conn.statement("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`").executeQuery()
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](longblob(10) *: longblob(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
@@ -237,7 +292,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve TINYTEXT type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](tinytext *: tinytext.opt))
+        _.statement("SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](tinytext *: tinytext.opt))
       ),
       List(("tinytext", None))
     )
@@ -245,7 +302,11 @@ class StatementTest extends CatsEffectSuite:
 
   test("Statement should be able to retrieve TEXT type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `text`, `text_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](text *: text.opt))),
+      connection.use(
+        _.statement("SELECT `text`, `text_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](text *: text.opt))
+      ),
       List(("text", None))
     )
   }
@@ -253,7 +314,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MEDIUMTEXT type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](mediumtext *: mediumtext.opt))
+        _.statement("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](mediumtext *: mediumtext.opt))
       ),
       List(("mediumtext", None))
     )
@@ -262,7 +325,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve LONGTEXT type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](longtext *: longtext.opt))
+        _.statement("SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](longtext *: longtext.opt))
       ),
       List(("longtext", None))
     )
@@ -271,7 +336,11 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve ENUM type records.") {
     val t = `enum`("a", "b", "c")
     assertIO(
-      connection.use(_.statement("SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](t *: t.opt))),
+      connection.use(
+        _.statement("SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](t *: t.opt))
+      ),
       List(("a", None))
     )
   }
@@ -279,14 +348,22 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve SET type records.") {
     val s = set("a", "b", "c")
     assertIO(
-      connection.use(_.statement("SELECT `set`, `set_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(List[String], Option[List[String]])](s *: s.opt))),
+      connection.use(
+        _.statement("SELECT `set`, `set_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(List[String], Option[List[String]])](s *: s.opt))
+      ),
       List((List("a", "b"), None))
     )
   }
 
   test("Statement should be able to retrieve JSON type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `json`, `json_null` FROM `connector_test`.`all_types`").executeQuery().map(_.decode[(String, Option[String])](json *: json.opt))),
+      connection.use(
+        _.statement("SELECT `json`, `json_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(String, Option[String])](json *: json.opt))
+      ),
       List(("{\"a\": 1}", None))
     )
   }
@@ -311,7 +388,9 @@ class StatementTest extends CatsEffectSuite:
 
   test("Statement should be able to retrieve POINT type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `point`, `point_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)),
+      connection.use(
+        _.statement("SELECT `point`, `point_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)
+      ),
       Vector(
         ResultSetRowPacket(
           List(
@@ -328,7 +407,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve LINESTRING type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `linestring`, `linestring_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)
+        _.statement("SELECT `linestring`, `linestring_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.rows)
       ),
       Vector(
         ResultSetRowPacket(
@@ -345,7 +426,9 @@ class StatementTest extends CatsEffectSuite:
 
   test("Statement should be able to retrieve POLYGON type records.") {
     assertIO(
-      connection.use(_.statement("SELECT `polygon`, `polygon_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)),
+      connection.use(
+        _.statement("SELECT `polygon`, `polygon_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)
+      ),
       Vector(
         ResultSetRowPacket(
           List(
@@ -362,7 +445,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MULTIPOINT type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `multipoint`, `multipoint_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)
+        _.statement("SELECT `multipoint`, `multipoint_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.rows)
       ),
       Vector(
         ResultSetRowPacket(
@@ -380,7 +465,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MULTILINESTRING type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `multilinestring`, `multilinestring_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)
+        _.statement("SELECT `multilinestring`, `multilinestring_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.rows)
       ),
       Vector(
         ResultSetRowPacket(
@@ -398,7 +485,9 @@ class StatementTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MULTIPOLYGON type records.") {
     assertIO(
       connection.use(
-        _.statement("SELECT `multipolygon`, `multipolygon_null` FROM `connector_test`.`all_types`").executeQuery().map(_.rows)
+        _.statement("SELECT `multipolygon`, `multipolygon_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.rows)
       ),
       Vector(
         ResultSetRowPacket(
@@ -417,7 +506,8 @@ class StatementTest extends CatsEffectSuite:
     assertIO(
       connection.use(
         _.statement("SELECT `geometrycollection`, `geometrycollection_null` FROM `connector_test`.`all_types`")
-          .executeQuery().map(_.rows)
+          .executeQuery()
+          .map(_.rows)
       ),
       Vector(
         ResultSetRowPacket(

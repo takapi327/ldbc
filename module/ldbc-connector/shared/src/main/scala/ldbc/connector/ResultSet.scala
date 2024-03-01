@@ -10,7 +10,7 @@ import ldbc.connector.codec.Codec
 import ldbc.connector.net.packet.response.*
 
 trait ResultSet:
-  
+
   def columns: Vector[ColumnDefinitionPacket]
 
   def rows: Vector[ResultSetRowPacket]

@@ -7,7 +7,7 @@
 package ldbc.connector
 
 package object codec:
-  
+
   trait AllCodecs extends BooleanCodec, NumericCodecs, TextCodecs, TemporalCodecs
-  
+
   object all extends AllCodecs

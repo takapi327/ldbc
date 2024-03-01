@@ -61,7 +61,7 @@ trait TextCodecs:
     str => str.split(",").toList.asRight,
     Type.set(values.toList)
   )
-  
+
   val json: Codec[String] = Codec.simple(s => s, _.asRight, Type.json)
 
 object text extends TextCodecs

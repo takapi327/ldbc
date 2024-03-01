@@ -80,14 +80,15 @@ object Statement:
                                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
                                  case result: ColumnsNumberPacket => ev.pure(result)
                                }
-              columnDefinitions <- repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+              columnDefinitions <-
+                repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
               resultSetRow <- readUntilEOF[ResultSetRowPacket](
                                 ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                                 Vector.empty
                               )
             yield new ResultSet:
               override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-              override def rows: Vector[ResultSetRowPacket] = resultSetRow
+              override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
           )
         }
 
