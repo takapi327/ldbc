@@ -47,6 +47,15 @@ trait Codec[A] extends Decoder[A], Encoder[A]:
 
     override val types: List[Type] = outer.types
 
+  /** Lift this `Codec` into `Option`, where `None` is mapped to and from a vector of `NULL`. */
+  override def opt: Codec[Option[A]] =
+    new Codec[Option[A]]:
+      override def encode(oa: Option[A]): List[Option[Encoded]] = oa.fold(empty)(outer.encode)
+      override def decode(offset: Int, ss: List[Option[String]]): Either[Decoder.Error, Option[A]] =
+        if (ss.forall(_.isEmpty)) Right(None)
+        else outer.decode(offset, ss).map(Some(_))
+      override val types: List[Type] = outer.types
+
 object Codec extends TwiddleSyntax[Codec]:
 
   @scala.annotation.targetName("productTo")

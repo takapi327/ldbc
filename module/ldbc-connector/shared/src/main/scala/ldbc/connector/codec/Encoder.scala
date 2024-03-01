@@ -6,6 +6,8 @@
 
 package ldbc.connector.codec
 
+import cats.syntax.all.*
+
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.connector.data.{ Type, Encoded }
@@ -15,6 +17,8 @@ import ldbc.connector.data.{ Type, Encoded }
  */
 trait Encoder[A] extends TwiddleSyntax[Encoder]:
   outer =>
+
+  protected lazy val empty: List[Option[Encoded]] = types.as(None)
 
   /**
    * Encode a value of type `A`, yielding a list of MySQL text-formatted strings, lifted to

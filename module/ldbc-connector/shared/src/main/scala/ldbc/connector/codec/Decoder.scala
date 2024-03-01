@@ -33,6 +33,14 @@ trait Decoder[A]:
         val (sa, sb) = ss.splitAt(outer.types.length)
         outer.decode(offset, sa) product fb.decode(offset + outer.length, sb)
 
+  /** Lift this `Decoder` into `Option`. */
+  def opt: Decoder[Option[A]] =
+    new Decoder[Option[A]]:
+      override val types: List[Type] = outer.types
+      override def decode(offset: Int, ss: List[Option[String]]): Either[Decoder.Error, Option[A]] =
+        if (ss.forall(_.isEmpty)) Right(None)
+        else outer.decode(offset, ss).map(Some(_))
+
 object Decoder extends TwiddleSyntax[Decoder]:
 
   /**
