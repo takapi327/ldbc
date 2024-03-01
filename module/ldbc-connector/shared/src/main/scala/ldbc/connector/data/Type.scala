@@ -20,45 +20,21 @@ final case class Type(name: String)
 object Type:
   given EqType: Eq[Type] = Eq.fromUniversalEquals
 
-  @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "0.3.0"
-  )
   def bit(size: Int): Type = Type(s"bit($size)")
   val bit: Type = Type("bit")
 
-  @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "0.3.0"
-  )
   def tinyint(n: Int): Type = Type(s"tinyint($n)")
   val tinyint: Type = Type("tinyint")
 
-  @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "0.3.0"
-  )
   def smallint(n: Int): Type = Type(s"smallint($n)")
   val smallint: Type = Type("smallint")
 
-  @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "0.3.0"
-  )
   def mediumint(n: Int): Type = Type(s"mediumint($n)")
   val mediumint: Type = Type("mediumint")
 
-  @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "0.3.0"
-  )
   def int(n: Int): Type = Type(s"int($n)")
   val int: Type = Type("int")
 
-  @deprecated(
-    "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
-    "0.3.0"
-  )
   def bigint(n: Int): Type = Type(s"bigint($n)")
   val bigint: Type = Type("bigint")
 
