@@ -52,9 +52,20 @@ class StatementTest extends CatsEffectSuite:
       connection.use(
         _.statement("SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`")
           .executeQuery()
-          .map(_.decode[(Short, Option[Short])](tinyint *: tinyint.opt))
+          .map(_.decode[(Byte, Option[Byte])](tinyint *: tinyint.opt))
       ),
-      List((127.toShort, None))
+      List((127.toByte, None))
+    )
+  }
+
+  test("Statement should be able to retrieve unsigned TINYINT type records.") {
+    assertIO(
+      connection.use(
+        _.statement("SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Short, Option[Short])](utinyint *: utinyint.opt))
+      ),
+      List((255.toShort, None))
     )
   }
 
@@ -63,9 +74,20 @@ class StatementTest extends CatsEffectSuite:
       connection.use(
         _.statement("SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`")
           .executeQuery()
-          .map(_.decode[(Int, Option[Int])](smallint *: smallint.opt))
+          .map(_.decode[(Short, Option[Short])](smallint *: smallint.opt))
       ),
-      List((32767, None))
+      List((32767.toShort, None))
+    )
+  }
+
+  test("Statement should be able to retrieve unsigned SMALLINT type records.") {
+    assertIO(
+      connection.use(
+        _.statement("SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Int, Option[Int])](usmallint *: usmallint.opt))
+      ),
+      List((65535, None))
     )
   }
 
@@ -91,6 +113,17 @@ class StatementTest extends CatsEffectSuite:
     )
   }
 
+  test("Statement should be able to retrieve unsigned INT type records.") {
+    assertIO(
+      connection.use(
+        _.statement("SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(Long, Option[Long])](uint *: uint.opt))
+      ),
+      List((4294967295L, None))
+    )
+  }
+
   test("Statement should be able to retrieve BIGINT type records.") {
     assertIO(
       connection.use(
@@ -99,6 +132,17 @@ class StatementTest extends CatsEffectSuite:
           .map(_.decode[(Long, Option[Long])](bigint *: bigint.opt))
       ),
       List((9223372036854775807L, None))
+    )
+  }
+
+  test("Statement should be able to retrieve unsigned BIGINT type records.") {
+    assertIO(
+      connection.use(
+        _.statement("SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`")
+          .executeQuery()
+          .map(_.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt))
+      ),
+      List((BigInt("18446744073709551615"), None))
     )
   }
 

@@ -23,12 +23,14 @@ trait ResultSet:
         val dataType = column.flags.flatMap {
           case ColumnDefinitionFlags.UNSIGNED_FLAG => Some("UNSIGNED")
           case ColumnDefinitionFlags.ZEROFILL_FLAG => Some("ZEROFILL")
-          case _ => None
+          case _                                   => None
         }
         throw new IllegalArgumentException(s"""
                                               |==========================
                                               |Failed to decode column: `${ column.name }`
-                                              |Decode To: ${ column.columnType } ${dataType.mkString(" ")} -> ${ value.`type`.name.toUpperCase }
+                                              |Decode To: ${ column.columnType } ${ dataType.mkString(
+                                               " "
+                                             ) } -> ${ value.`type`.name.toUpperCase }
                                               |
                                               |Message [ ${ value.message } ]
                                               |==========================

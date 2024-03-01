@@ -12,7 +12,7 @@ trait NumericCodecs:
 
   private def safe[A](f: String => A): String => Either[String, A] = s =>
     try Right(f(s))
-    catch case ex: NumberFormatException => Left(s"Invalid: $s ${ex.getMessage}")
+    catch case ex: NumberFormatException => Left(s"Invalid: $s ${ ex.getMessage }")
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -48,7 +48,6 @@ trait NumericCodecs:
   )
   def usmallint(size: Int): Codec[Int] = Codec.simple(_.toString, safe(_.toInt), Type.usmallint(size))
   val usmallint: Codec[Int] = Codec.simple(_.toString, safe(_.toInt), Type.usmallint)
-
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
