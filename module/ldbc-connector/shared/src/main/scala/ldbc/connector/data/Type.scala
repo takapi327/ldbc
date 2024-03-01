@@ -26,8 +26,14 @@ object Type:
   def tinyint(n: Int): Type = Type(s"tinyint($n)")
   val tinyint: Type = Type("tinyint")
 
+  def utinyint(n: Int): Type = Type(s"tinyint($n) unsigned")
+  val utinyint: Type = Type("tinyint unsigned")
+
   def smallint(n: Int): Type = Type(s"smallint($n)")
   val smallint: Type = Type("smallint")
+
+  def usmallint(n: Int): Type = Type(s"smallint($n) unsigned")
+  val usmallint: Type = Type("smallint unsigned")
 
   def mediumint(n: Int): Type = Type(s"mediumint($n)")
   val mediumint: Type = Type("mediumint")
@@ -35,8 +41,14 @@ object Type:
   def int(n: Int): Type = Type(s"int($n)")
   val int: Type = Type("int")
 
+  def uint(n: Int): Type = Type(s"int($n) unsigned")
+  val uint: Type = Type("int unsigned")
+
   def bigint(n: Int): Type = Type(s"bigint($n)")
   val bigint: Type = Type("bigint")
+
+  def ubigint(n: Int): Type = Type(s"bigint($n) unsigned")
+  val ubigint: Type = Type("bigint unsigned")
 
   def decimal(accuracy: Int, scale: Int): Type = Type(s"decimal($accuracy, $scale)")
 
