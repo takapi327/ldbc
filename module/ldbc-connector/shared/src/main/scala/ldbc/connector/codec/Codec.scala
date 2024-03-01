@@ -53,10 +53,10 @@ object Codec extends TwiddleSyntax[Codec]:
   type ~[+A, +B] = (A, B)
 
   def apply[A](
-                encode0: A => List[Option[String]],
-                decode0: (Int, List[Option[String]]) => Either[Decoder.Error, A],
-                oids0:   List[Type]
-              ): Codec[A] =
+    encode0: A => List[Option[String]],
+    decode0: (Int, List[Option[String]]) => Either[Decoder.Error, A],
+    oids0:   List[Type]
+  ): Codec[A] =
     new Codec[A]:
       override def encode(a: A): List[Option[Encoded]] = encode0(a).map(_.map(Encoded(_)))
 
@@ -80,6 +80,6 @@ object Codec extends TwiddleSyntax[Codec]:
    * Codec is an invariant semgroupal functor.
    */
   given InvariantSemigroupalCodec: InvariantSemigroupal[Codec] =
-  new InvariantSemigroupal[Codec]:
-    override def imap[A, B](fa:    Codec[A])(f:  A => B)(g: B => A): Codec[B] = fa.imap(f)(g)
-    override def product[A, B](fa: Codec[A], fb: Codec[B]): Codec[(A, B)] = fa product fb
+    new InvariantSemigroupal[Codec]:
+      override def imap[A, B](fa:    Codec[A])(f:  A => B)(g: B => A): Codec[B] = fa.imap(f)(g)
+      override def product[A, B](fa: Codec[A], fb: Codec[B]): Codec[(A, B)] = fa product fb
