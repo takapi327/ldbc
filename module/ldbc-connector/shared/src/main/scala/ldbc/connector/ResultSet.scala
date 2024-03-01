@@ -7,6 +7,7 @@
 package ldbc.connector
 
 import ldbc.connector.codec.Codec
+import ldbc.connector.data.ColumnDefinitionFlags
 import ldbc.connector.net.packet.response.*
 
 trait ResultSet:
@@ -19,10 +20,15 @@ trait ResultSet:
     codec.decode(0, row.values) match
       case Left(value) =>
         val column = columns(value.offset)
+        val dataType = column.flags.flatMap {
+          case ColumnDefinitionFlags.UNSIGNED_FLAG => Some("UNSIGNED")
+          case ColumnDefinitionFlags.ZEROFILL_FLAG => Some("ZEROFILL")
+          case _ => None
+        }
         throw new IllegalArgumentException(s"""
                                               |==========================
                                               |Failed to decode column: `${ column.name }`
-                                              |Decode To: ${ column.columnType } -> ${ value.`type`.name.toUpperCase }
+                                              |Decode To: ${ column.columnType } ${dataType.mkString(" ")} -> ${ value.`type`.name.toUpperCase }
                                               |
                                               |Message [ ${ value.message } ]
                                               |==========================
