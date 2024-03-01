@@ -61,6 +61,8 @@ object Type:
 
   def `enum`(values: List[String]): Type = Type(s"enum(${ values.mkString(",") })")
 
+  def set(values: List[String]): Type = Type(s"set(${ values.mkString(",") })")
+
   val date: Type = Type("date")
 
   def datetime(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Type = Type(s"datetime($fsp)")

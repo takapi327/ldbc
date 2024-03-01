@@ -54,6 +54,12 @@ trait TextCodecs:
   val mediumtext: Codec[String] = Codec.simple(s => s, _.asRight, Type.mediumtext)
   val longtext:   Codec[String] = Codec.simple(s => s, _.asRight, Type.longtext)
 
-  def `enum`(values: List[String]): Codec[String] = Codec.simple(s => s, _.asRight, Type.`enum`(values))
+  def `enum`(values: String*): Codec[String] = Codec.simple(s => s, _.asRight, Type.`enum`(values.toList))
+
+  def set(values: String*): Codec[List[String]] = Codec.simple[List[String]](
+    s => s.mkString(","),
+    str => str.split(",").toList.asRight,
+    Type.set(values.toList)
+  )
 
 object text extends TextCodecs
