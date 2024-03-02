@@ -1,21 +1,21 @@
 # LDBC
 
 <div align="center">
-  <img src="./lepus_logo.png">
+  <img alt="LDBC" src="./lepus_logo.png">
 </div>
 
 <div align="center">
   <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.2.1/jar">
-    <img src="https://img.shields.io/badge/ldbc-v0.2.1-blue">
+    <img alt="Maven Central Version" src="https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue">
   </a>
   <a href="https://en.wikipedia.org/wiki/MIT_License">
-    <img src="https://img.shields.io/badge/license-MIT-green">
+    <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green">
   </a>
   <a href="https://github.com/lampepfl/dotty">
-    <img src="https://img.shields.io/badge/scala-v3.3.x-red">
+    <img alt="Scala Version" src="https://img.shields.io/badge/scala-v3.3.x-red">
   </a>
   <a href="https://typelevel.org/projects/affiliate/">
-    <img src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg">
+    <img alt="Typelevel Affiliate Project" src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg">
   </a>
 </div>
 
@@ -26,6 +26,8 @@ ldbc is Created under the influence of [tapir](https://github.com/softwaremill/t
 ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.
 
 Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
+
+Please drop a :star: if this project interests you. I need encouragement.
 
 ## Documentation
 
