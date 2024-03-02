@@ -22,32 +22,25 @@ trait TextCodecs:
     _.getBytes("UTF-8").asRight[String],
     Type.binary(length)
   )
-  def varbinary(length: Int): Codec[Array[Byte]] = Codec.simple(
-    "\\x" + ByteVector.view(_).toHex,
-    _.getBytes("UTF-8").asRight[String],
+  def varbinary(length: Int): Codec[String] = Codec.simple(
+    s => s,
+    _.asRight,
     Type.varbinary(length)
   )
+  
+  private def blob(`type`: Type): Codec[String] = Codec.simple(
+    str => ByteVector.view(str.getBytes("UTF-8")).toHex,
+    hex => ByteVector.fromHexDescriptive(hex) match {
+      case Left(_) => hex.asRight
+      case Right(bytes) => bytes.decodeUtf8Lenient.asRight
+    },
+    `type`
+  )
 
-  def tinyblob(length: Int): Codec[Array[Byte]] = Codec.simple(
-    "\\x" + ByteVector.view(_).toHex,
-    _.getBytes("UTF-8").asRight[String],
-    Type.tinyblob
-  )
-  def blob(length: Int): Codec[Array[Byte]] = Codec.simple(
-    "\\x" + ByteVector.view(_).toHex,
-    _.getBytes("UTF-8").asRight[String],
-    Type.blob
-  )
-  def mediumblob(length: Int): Codec[Array[Byte]] = Codec.simple(
-    "\\x" + ByteVector.view(_).toHex,
-    _.getBytes("UTF-8").asRight[String],
-    Type.mediumblob
-  )
-  def longblob(length: Int): Codec[Array[Byte]] = Codec.simple(
-    "\\x" + ByteVector.view(_).toHex,
-    _.getBytes("UTF-8").asRight[String],
-    Type.longblob
-  )
+  val tinyblob: Codec[String] = blob(Type.tinyblob)
+  val blob: Codec[String] = blob(Type.blob)
+  val mediumblob: Codec[String] = blob(Type.mediumblob)
+  val longblob: Codec[String] = blob(Type.longblob)
 
   val tinytext:   Codec[String] = Codec.simple(s => s, _.asRight, Type.tinytext)
   val text:       Codec[String] = Codec.simple(s => s, _.asRight, Type.text)
