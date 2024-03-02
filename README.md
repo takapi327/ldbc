@@ -5,8 +5,8 @@
 </div>
 
 <div align="center">
-  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.2.0/jar">
-    <img src="https://img.shields.io/badge/ldbc-v0.2.0-blue">
+  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.2.1/jar">
+    <img src="https://img.shields.io/badge/ldbc-v0.2.1-blue">
   </a>
   <a href="https://en.wikipedia.org/wiki/MIT_License">
     <img src="https://img.shields.io/badge/license-MIT-green">

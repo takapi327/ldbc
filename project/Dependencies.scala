@@ -18,26 +18,26 @@ object Dependencies {
   val circeYaml    = "io.circe" %% "circe-yaml"    % "0.15.1"
   val circeGeneric = "io.circe" %% "circe-generic" % "0.14.6"
 
-  val mysqlVersion = "8.0.33"
-  val mysql        = "mysql" % "mysql-connector-java" % mysqlVersion
+  val mysqlVersion = "8.3.0"
+  val mysql        = "com.mysql" % "mysql-connector-j" % mysqlVersion
 
   val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
 
-  val hikariCP = "com.zaxxer" % "HikariCP" % "5.0.1"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "5.1.0"
 
   val scala3Compiler = "org.scala-lang" %% "scala3-compiler" % scala3
 
   val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC5"
 
-  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-M5"
+  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-RC1"
 
-  val specs2Version = "5.4.0"
+  val specs2Version = "5.4.2"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
     "specs2-junit"
   ).map("org.specs2" %% _ % specs2Version % Test)
 
-  val scalaTest = "org.scalatest" %% "scalatest" % "3.2.17" % Test
+  val scalaTest = "org.scalatest" %% "scalatest" % "3.2.18" % Test
 
   val mockito = "org.mockito" % "mockito-inline" % "5.2.0" % Test
 }
