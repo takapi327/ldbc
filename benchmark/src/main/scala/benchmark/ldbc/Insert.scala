@@ -8,6 +8,8 @@ package benchmark.ldbc
 
 import java.util.concurrent.TimeUnit
 
+import scala.compiletime.uninitialized
+
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
@@ -25,13 +27,13 @@ import ldbc.dsl.logging.*
 class Insert:
 
   @volatile
-  var dataSource: DataSource[IO] = _
+  var dataSource: DataSource[IO] = uninitialized
 
   @volatile
-  var noLog: LogHandler[IO] = _
+  var noLog: LogHandler[IO] = uninitialized
 
   @volatile
-  var query: TableQuery[IO, Test] = _
+  var query: TableQuery[IO, Test] = uninitialized
 
   @volatile
   var records: List[(Int, String)] = List.empty
@@ -53,7 +55,7 @@ class Insert:
     query = TableQuery[IO, Test](Test.table)
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def insertN: Unit =

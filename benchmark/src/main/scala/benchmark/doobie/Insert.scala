@@ -8,6 +8,8 @@ package benchmark.doobie
 
 import java.util.concurrent.TimeUnit
 
+import scala.compiletime.uninitialized
+
 import org.openjdk.jmh.annotations.*
 
 import cats.data.NonEmptyList
@@ -25,10 +27,10 @@ import doobie.util.fragments.values
 class Insert:
 
   @volatile
-  var xa: Transactor[IO] = _
+  var xa: Transactor[IO] = uninitialized
 
   @volatile
-  var records: NonEmptyList[(Int, String)] = _
+  var records: NonEmptyList[(Int, String)] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
@@ -46,7 +48,7 @@ class Insert:
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def insertN: Unit =
