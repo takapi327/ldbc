@@ -8,7 +8,7 @@ The following dependencies must be set up for the project
 ```scala
 libraryDependencies ++= Seq(
   "$org$" %% "ldbc-dsl" % "$version$",
-  "mysql" % "mysql-connector-java" % "$mysqlVersion$"
+  "com.mysql" % "mysql-connector-j" % "$mysqlVersion$"
 )
 ```
 @@@
