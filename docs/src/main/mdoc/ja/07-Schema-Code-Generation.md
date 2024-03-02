@@ -40,7 +40,7 @@ Compile / parseFiles := List(baseDirectory.value / "test.sql")
 解析対象のSQLファイルの先頭には必ずデータベースのCreate文もしくはUse文を定義する必要があります。LDBCはファイルの解析を1ファイルずつ行い、テーブル定義を生成しデータベースモデルにテーブルのリストを格納させます。
 そのためテーブルがどのデータベースに所属しているかを教えてあげる必要があるからです。
 
-```mysql
+```sql
 CREATE DATABASE `location`;
 
 USE `location`;
@@ -90,8 +90,6 @@ Compileでコードを生成した場合、その生成されたファイルは�
 ```shell
 sbt generateBySchema
 ```
-
-```shell
 
 ## カスタマイズ
 
