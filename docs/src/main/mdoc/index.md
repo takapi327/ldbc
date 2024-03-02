@@ -27,6 +27,20 @@ ldbc allows the same type-safe construction with Scala at the database layer and
 
 Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
 
+## Modules availability
+
+|  Module / Platform   | JVM | Scala Native | Scala.js |  
+|:--------------------:|:---:|:------------:|:--------:|
+|     `ldbc-core`      |  ✅  |      ✅       |    ✅     |
+|      `ldbc-sql`      |  ✅  |      ✅       |    ✅     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
+|      `ldbc-dsl`      |  ✅  |      ❌       |    ❌     | 
+|   `ldbc-schemaSpy`   |  ✅  |      ❌       |    ❌     | 
+|    `ldbc-codegen`    |  ✅  |      ✅       |    ✅     |
+|    `ldbc-hikari`     |  ✅  |      ❌       |    ❌     | 
+|    `ldbc-plugin`     |  ✅  |      ❌       |    ❌     | 
+|   `ldbc-connector`   |  ✅  |      ✅       |    ✅     | 
+
 ## Documentation
 
 - [English](/ldbc/en/index.html)
