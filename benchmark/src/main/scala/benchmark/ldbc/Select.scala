@@ -8,6 +8,8 @@ package benchmark.ldbc
 
 import java.util.concurrent.TimeUnit
 
+import scala.compiletime.uninitialized
+
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
@@ -27,13 +29,13 @@ import benchmark.City
 class Select:
 
   @volatile
-  var dataSource: DataSource[IO] = _
+  var dataSource: DataSource[IO] = uninitialized
 
   @volatile
-  var noLog: LogHandler[IO] = _
+  var noLog: LogHandler[IO] = uninitialized
 
   @volatile
-  var query: TableQuery[IO, City] = _
+  var query: TableQuery[IO, City] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -50,7 +52,7 @@ class Select:
     query = TableQuery[IO, City](City.table)
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def selectN: List[(Int, String, String)] =

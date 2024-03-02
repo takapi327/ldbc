@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.compiletime.uninitialized
 
 import slick.jdbc.MySQLProfile.api.*
 
@@ -21,10 +22,10 @@ import org.openjdk.jmh.annotations.*
 class Insert:
 
   @volatile
-  var db: Database = _
+  var db: Database = uninitialized
 
   @volatile
-  var query: TableQuery[TestTable] = _
+  var query: TableQuery[TestTable] = uninitialized
 
   @volatile
   var records: List[Test] = List.empty
@@ -43,7 +44,7 @@ class Insert:
     records = (1 to len).map(num => Test(None, num, s"record$num")).toList
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def insertN: Unit =

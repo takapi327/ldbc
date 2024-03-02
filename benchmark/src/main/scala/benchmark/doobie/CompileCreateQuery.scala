@@ -8,6 +8,8 @@ package benchmark.doobie
 
 import java.util.concurrent.TimeUnit
 
+import scala.compiletime.uninitialized
+
 import org.openjdk.jmh.annotations.*
 
 import benchmark.Compiler
@@ -22,7 +24,7 @@ class CompileCreateQuery:
 
   var source: String = ""
 
-  var compiler: Compiler = _
+  var compiler: Compiler = uninitialized
 
   @Setup(Level.Iteration)
   def setup(): Unit =
