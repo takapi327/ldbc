@@ -40,6 +40,6 @@ trait ResultSet:
                                               |""".stripMargin)
       case Right(value) => value
   }.toList
-  
+
   def getMetadata(column: String): Option[ColumnDefinitionPacket] =
     columns.find(_.name == column)
