@@ -274,11 +274,9 @@ class StatementTest extends CatsEffectSuite:
       connection.use(conn =>
         for resultSet <-
             conn.statement("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`").executeQuery()
-        yield
-          val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](varbinary(10) *: varbinary(10).opt)
-          decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
+        yield resultSet.decode[(String, Option[String])](varbinary(10) *: varbinary(10).opt)
       ),
-      List((Array[Byte](118, 97, 114, 98, 105, 110, 97, 114, 121).mkString(":"), None))
+      List(("varbinary", None))
     )
   }
 
@@ -287,11 +285,9 @@ class StatementTest extends CatsEffectSuite:
       connection.use(conn =>
         for resultSet <-
             conn.statement("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`").executeQuery()
-        yield
-          val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](tinyblob(10) *: tinyblob(10).opt)
-          decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
+        yield resultSet.decode[(String, Option[String])](tinyblob *: tinyblob.opt)
       ),
-      List((Array[Byte](116, 105, 110, 121, 98, 108, 111, 98).mkString(":"), None))
+      List(("tinyblob", None))
     )
   }
 
@@ -299,11 +295,9 @@ class StatementTest extends CatsEffectSuite:
     assertIO(
       connection.use(conn =>
         for resultSet <- conn.statement("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`").executeQuery()
-        yield
-          val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](tinyblob(10) *: tinyblob(10).opt)
-          decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
+        yield resultSet.decode[(String, Option[String])](blob *: blob.opt)
       ),
-      List((Array[Byte](98, 108, 111, 98).mkString(":"), None))
+      List(("blob", None))
     )
   }
 
@@ -312,11 +306,9 @@ class StatementTest extends CatsEffectSuite:
       connection.use(conn =>
         for resultSet <-
             conn.statement("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`").executeQuery()
-        yield
-          val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](mediumblob(10) *: mediumblob(10).opt)
-          decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
+        yield resultSet.decode[(String, Option[String])](mediumblob *: mediumblob.opt)
       ),
-      List((Array[Byte](109, 101, 100, 105, 117, 109, 98, 108, 111, 98).mkString(":"), None))
+      List(("mediumblob", None))
     )
   }
 
@@ -325,11 +317,9 @@ class StatementTest extends CatsEffectSuite:
       connection.use(conn =>
         for resultSet <-
             conn.statement("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`").executeQuery()
-        yield
-          val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](longblob(10) *: longblob(10).opt)
-          decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
+        yield resultSet.decode[(String, Option[String])](longblob *: longblob.opt)
       ),
-      List((Array[Byte](108, 111, 110, 103, 98, 108, 111, 98).mkString(":"), None))
+      List(("longblob", None))
     )
   }
 
