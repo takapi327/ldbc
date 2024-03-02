@@ -1,18 +1,21 @@
 # LDBC
 
 <div align="center">
-  <img src="./img/lepus_logo.png">
+  <img alt="LDBC" src="./img/lepus_logo.png">
 </div>
 
 <div align="center">
   <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.3.0/jar">
-    <img src="https://img.shields.io/badge/ldbc-v0.3.0-blue">
+    <img alt="Maven Central Version" src="https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue">
   </a>
   <a href="https://en.wikipedia.org/wiki/MIT_License">
-    <img src="https://img.shields.io/badge/license-MIT-green">
+    <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green">
   </a>
   <a href="https://github.com/lampepfl/dotty">
-    <img src="https://img.shields.io/badge/scala-v3.3.x-red">
+    <img alt="Scala Version" src="https://img.shields.io/badge/scala-v3.3.x-red">
+  </a>
+  <a href="https://typelevel.org/projects/affiliate/">
+    <img alt="Typelevel Affiliate Project" src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg">
   </a>
 </div>
 
