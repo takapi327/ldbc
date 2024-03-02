@@ -9,6 +9,7 @@ package benchmark.jdbc
 import java.util.concurrent.TimeUnit
 
 import scala.util.Using
+import scala.compiletime.uninitialized
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
@@ -20,10 +21,10 @@ import org.openjdk.jmh.annotations.*
 class Insert:
 
   @volatile
-  var dataSource: MysqlDataSource = _
+  var dataSource: MysqlDataSource = uninitialized
 
   @volatile
-  var values: String = _
+  var values: String = uninitialized
 
   @volatile
   var records: List[(Int, String)] = List.empty
@@ -42,7 +43,7 @@ class Insert:
     records = (1 to len).map(num => (num, s"record$num")).toList
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def insertN: Unit =

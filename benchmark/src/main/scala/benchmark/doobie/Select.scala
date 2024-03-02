@@ -8,6 +8,8 @@ package benchmark.doobie
 
 import java.util.concurrent.TimeUnit
 
+import scala.compiletime.uninitialized
+
 import org.openjdk.jmh.annotations.*
 
 import cats.effect.IO
@@ -22,7 +24,7 @@ import doobie.implicits.*
 class Select:
 
   @volatile
-  var xa: Transactor[IO] = _
+  var xa: Transactor[IO] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -35,7 +37,7 @@ class Select:
     )
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def selectN: List[(Int, String, String)] =
