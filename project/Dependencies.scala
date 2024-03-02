@@ -29,7 +29,7 @@ object Dependencies {
 
   val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC5"
 
-  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-M5"
+  val slick = "com.typesafe.slick" %% "slick" % "3.5.0-RC1"
 
   val specs2Version = "5.4.2"
   val specs2: Seq[ModuleID] = Seq(
@@ -37,7 +37,7 @@ object Dependencies {
     "specs2-junit"
   ).map("org.specs2" %% _ % specs2Version % Test)
 
-  val scalaTest = "org.scalatest" %% "scalatest" % "3.2.17" % Test
+  val scalaTest = "org.scalatest" %% "scalatest" % "3.2.18" % Test
 
   val mockito = "org.mockito" % "mockito-inline" % "5.2.0" % Test
 }

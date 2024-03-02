@@ -8,7 +8,7 @@
 ```scala
 libraryDependencies ++= Seq(
   "$org$" %% "ldbc-dsl" % "$version$",
-  "mysql" % "mysql-connector-java" % "$mysqlVersion$"
+  "com.mysql" % "mysql-connector-j" % "$mysqlVersion$"
 )
 ```
 @@@

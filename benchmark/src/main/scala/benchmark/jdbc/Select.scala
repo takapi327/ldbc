@@ -9,6 +9,7 @@ package benchmark.jdbc
 import java.util.concurrent.TimeUnit
 
 import scala.util.Using
+import scala.compiletime.uninitialized
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
@@ -20,7 +21,7 @@ import org.openjdk.jmh.annotations.*
 class Select:
 
   @volatile
-  var dataSource: MysqlDataSource = _
+  var dataSource: MysqlDataSource = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
@@ -32,7 +33,7 @@ class Select:
     dataSource.setPassword("password")
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def selectN: List[(Int, String, String)] =

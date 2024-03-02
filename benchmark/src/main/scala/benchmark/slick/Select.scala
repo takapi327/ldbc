@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.compiletime.uninitialized
 
 import org.openjdk.jmh.annotations.*
 
@@ -23,10 +24,10 @@ import benchmark.City
 class Select:
 
   @volatile
-  var db: Database = _
+  var db: Database = uninitialized
 
   @volatile
-  var query: TableQuery[CityTable] = _
+  var query: TableQuery[CityTable] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -40,7 +41,7 @@ class Select:
     query = TableQuery[CityTable]
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def selectN: Seq[(Int, String, String)] =
