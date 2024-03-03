@@ -192,3 +192,75 @@ class NumericCodecsTest extends FunSuite:
       Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.usmallint))
     )
   }
+
+  test("mediumint encode successfully") {
+    assertEquals(mediumint.encode(-8388608), List(Some(Encoded("-8388608", false))))
+    assertEquals(mediumint.encode(8388607), List(Some(Encoded("8388607", false))))
+  }
+
+  test("mediumint decode successfully") {
+    assertEquals(mediumint.decode(0, List(Some("-8388608"))), Right(-8388608))
+    assertEquals(mediumint.decode(0, List(Some("8388607"))), Right(8388607))
+    assertEquals(mediumint.opt.decode(0, List(Some("-8388608"))), Right(Some(-8388608)))
+    assertEquals(mediumint.opt.decode(0, List(Some("8388607"))), Right(Some(8388607)))
+    assertEquals(mediumint.opt.decode(0, List(None)), Right(None))
+  }
+
+  test("mediumint decode error") {
+    assertEquals(
+      mediumint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint  For input string: \"\"", Type.mediumint))
+    )
+    assertEquals(
+      mediumint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint invalid For input string: \"invalid\"", Type.mediumint))
+    )
+    assertEquals(
+      mediumint.decode(0, List(Some("-8388609"))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint -8388609 can only handle the range -8388608 ~ 8388607", Type.mediumint))
+    )
+    assertEquals(
+      mediumint.decode(0, List(Some("8388608"))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint 8388608 can only handle the range -8388608 ~ 8388607", Type.mediumint))
+    )
+    assertEquals(
+      mediumint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.mediumint))
+    )
+  }
+
+  test("unsigned mediumint encode successfully") {
+    assertEquals(umediumint.encode(0), List(Some(Encoded("0", false))))
+    assertEquals(umediumint.encode(16777215), List(Some(Encoded("16777215", false))))
+  }
+
+  test("unsigned mediumint decode successfully") {
+    assertEquals(umediumint.decode(0, List(Some("0"))), Right(0))
+    assertEquals(umediumint.decode(0, List(Some("16777215"))), Right(16777215))
+    assertEquals(umediumint.opt.decode(0, List(Some("0"))), Right(Some(0)))
+    assertEquals(umediumint.opt.decode(0, List(Some("16777215"))), Right(Some(16777215)))
+    assertEquals(umediumint.opt.decode(0, List(None)), Right(None))
+  }
+
+  test("unsigned mediumint decode error") {
+    assertEquals(
+      umediumint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint unsigned  For input string: \"\"", Type.umediumint))
+    )
+    assertEquals(
+      umediumint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint unsigned invalid For input string: \"invalid\"", Type.umediumint))
+    )
+    assertEquals(
+      umediumint.decode(0, List(Some("-1"))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint unsigned -1 can only handle the range 0 ~ 16777215", Type.umediumint))
+    )
+    assertEquals(
+      umediumint.decode(0, List(Some("16777216"))),
+      Left(Decoder.Error(0, 1, "Invalid mediumint unsigned 16777216 can only handle the range 0 ~ 16777215", Type.umediumint))
+    )
+    assertEquals(
+      umediumint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.umediumint))
+    )
+  }
