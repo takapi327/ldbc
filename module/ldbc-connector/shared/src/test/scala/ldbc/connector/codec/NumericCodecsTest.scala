@@ -275,3 +275,75 @@ class NumericCodecsTest extends FunSuite:
       Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.umediumint))
     )
   }
+
+  test("int encode successfully") {
+    assertEquals(int.encode(Int.MinValue), List(Some(Encoded("-2147483648", false))))
+    assertEquals(int.encode(Int.MaxValue), List(Some(Encoded("2147483647", false))))
+  }
+
+  test("int decode successfully") {
+    assertEquals(int.decode(0, List(Some("-2147483648"))), Right(Int.MinValue))
+    assertEquals(int.decode(0, List(Some("2147483647"))), Right(Int.MaxValue))
+    assertEquals(int.opt.decode(0, List(Some("-2147483648"))), Right(Some(Int.MinValue)))
+    assertEquals(int.opt.decode(0, List(Some("2147483647"))), Right(Some(Int.MaxValue)))
+    assertEquals(int.opt.decode(0, List(None)), Right(None))
+  }
+
+  test("int decode error") {
+    assertEquals(
+      int.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid int  For input string: \"\"", Type.int))
+    )
+    assertEquals(
+      int.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid int invalid For input string: \"invalid\"", Type.int))
+    )
+    assertEquals(
+      int.decode(0, List(Some("-2147483649"))),
+      Left(Decoder.Error(0, 1, "Invalid int -2147483649 For input string: \"-2147483649\"", Type.int))
+    )
+    assertEquals(
+      int.decode(0, List(Some("2147483648"))),
+      Left(Decoder.Error(0, 1, "Invalid int 2147483648 For input string: \"2147483648\"", Type.int))
+    )
+    assertEquals(
+      int.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.int))
+    )
+  }
+
+  test("unsigned int encode successfully") {
+    assertEquals(uint.encode(0), List(Some(Encoded("0", false))))
+    assertEquals(uint.encode(4294967295L), List(Some(Encoded("4294967295", false))))
+  }
+
+  test("unsigned int decode successfully") {
+    assertEquals(uint.decode(0, List(Some("0"))), Right(0L))
+    assertEquals(uint.decode(0, List(Some("4294967295"))), Right(4294967295L))
+    assertEquals(uint.opt.decode(0, List(Some("0"))), Right(Some(0L)))
+    assertEquals(uint.opt.decode(0, List(Some("4294967295"))), Right(Some(4294967295L)))
+    assertEquals(uint.opt.decode(0, List(None)), Right(None))
+  }
+
+  test("unsigned int decode error") {
+    assertEquals(
+      uint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid int unsigned  For input string: \"\"", Type.uint))
+    )
+    assertEquals(
+      uint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid int unsigned invalid For input string: \"invalid\"", Type.uint))
+    )
+    assertEquals(
+      uint.decode(0, List(Some("-1"))),
+      Left(Decoder.Error(0, 1, "Invalid int unsigned -1 can only handle the range 0 ~ 4294967295", Type.uint))
+    )
+    assertEquals(
+      uint.decode(0, List(Some("4294967296"))),
+      Left(Decoder.Error(0, 1, "Invalid int unsigned 4294967296 can only handle the range 0 ~ 4294967295", Type.uint))
+    )
+    assertEquals(
+      uint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.uint))
+    )
+  }
