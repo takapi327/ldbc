@@ -149,7 +149,7 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       smallint.decode(0, List(Some("32768"))),
-      Left(Decoder.Error(0, 1, "Invalid smallint 32768 For input string: \"32768\"", Type.smallint))
+      Left(Decoder.Error(0, 1, "Invalid smallint 32768 Value out of range. Value:\"32768\" Radix:10", Type.smallint))
     )
     assertEquals(
       smallint.decode(0, List(None)),
