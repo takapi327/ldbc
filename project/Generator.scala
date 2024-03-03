@@ -1,8 +1,6 @@
-/**
- *  This file is part of the ldbc.
- *  For the full copyright and license information,
- *  please view the LICENSE file that was distributed with this source code.
- */
+/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
+  * distributed with this source code.
+  */
 
 import sbt.*
 
@@ -25,7 +23,7 @@ object Generator {
           |}
           |""".stripMargin
 
-    if (!file.exists() || IO.read(file) != scalaSource) {
+    if !file.exists() || IO.read(file) != scalaSource then {
       IO.write(file, scalaSource)
     }
 

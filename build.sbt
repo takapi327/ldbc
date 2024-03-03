@@ -1,8 +1,6 @@
-/**
- *  This file is part of the ldbc.
- *  For the full copyright and license information,
- *  please view the LICENSE file that was distributed with this source code.
- */
+/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
+  * distributed with this source code.
+  */
 
 import ScalaVersions.*
 import JavaVersions.*
@@ -10,19 +8,20 @@ import BuildSettings.*
 import Dependencies.*
 import Workflows.*
 
-ThisBuild / crossScalaVersions := Seq(scala3, scala34)
+ThisBuild / crossScalaVersions         := Seq(scala3, scala34)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble += dockerRun
 ThisBuild / githubWorkflowAddedJobs ++= Seq(
-  scalaFmt.value, sbtScripted.value
+  scalaFmt.value,
+  sbtScripted.value
 )
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
-ThisBuild / githubWorkflowPublish := Seq(ciRelease)
+ThisBuild / githubWorkflowPublish               := Seq(ciRelease)
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
 
 lazy val core = LepusSbtProject("ldbc-core", "core")
   .settings(description := "ldbc core project")
@@ -39,12 +38,14 @@ lazy val queryBuilder = LepusSbtProject("ldbc-query-builder", "module/ldbc-query
 
 lazy val dsl = LepusSbtProject("ldbc-dsl", "module/ldbc-dsl")
   .settings(description := "Projects that provide a way to connect to the database")
-  .settings(libraryDependencies ++= Seq(
-    catsEffect,
-    mockito,
-    scalaTest,
-    mysql % Test
-  ) ++ specs2)
+  .settings(
+    libraryDependencies ++= Seq(
+      catsEffect,
+      mockito,
+      scalaTest,
+      mysql % Test
+    ) ++ specs2
+  )
   .dependsOn(queryBuilder)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
@@ -59,11 +60,13 @@ lazy val codegen = LepusSbtProject("ldbc-codegen", "module/ldbc-codegen")
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
-  .settings(libraryDependencies ++= Seq(
-    catsEffect,
-    typesafeConfig,
-    hikariCP
-  ) ++ specs2)
+  .settings(
+    libraryDependencies ++= Seq(
+      catsEffect,
+      typesafeConfig,
+      hikariCP
+    ) ++ specs2
+  )
   .dependsOn(dsl)
 
 lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
@@ -83,23 +86,25 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(scalacOptions ++= scala3Settings)
   .settings(commonSettings)
   .settings(publish / skip := true)
-  .settings(libraryDependencies ++= Seq(
-    scala3Compiler,
-    mysql,
-    doobie,
-    slick
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      scala3Compiler,
+      mysql,
+      doobie,
+      slick
+    )
+  )
   .dependsOn(dsl)
   .enablePlugins(JmhPlugin)
 
 lazy val docs = (project in file("docs"))
   .settings(
-    scalaVersion := (core / scalaVersion).value,
-    description := "Documentation for ldbc",
-    scalacOptions := Nil,
+    scalaVersion   := (core / scalaVersion).value,
+    description    := "Documentation for ldbc",
+    scalacOptions  := Nil,
     publish / skip := true,
-    mdocIn := baseDirectory.value / "src" / "main" / "mdoc",
-    paradoxTheme := Some(builtinParadoxTheme("generic")),
+    mdocIn         := baseDirectory.value / "src" / "main" / "mdoc",
+    paradoxTheme   := Some(builtinParadoxTheme("generic")),
     paradoxProperties ++= Map(
       "org"          -> organization.value,
       "scalaVersion" -> scalaVersion.value,
@@ -107,10 +112,10 @@ lazy val docs = (project in file("docs"))
       "mysqlVersion" -> mysqlVersion
     ),
     Compile / paradox / sourceDirectory := mdocOut.value,
-    Compile / paradoxRoots := List("index.html", "en/index.html", "ja/index.html"),
-    makeSite := makeSite.dependsOn(mdoc.toTask("")).value,
-    git.remoteRepo := "git@github.com:takapi327/ldbc.git",
-    ghpagesNoJekyll := true,
+    Compile / paradoxRoots              := List("index.html", "en/index.html", "ja/index.html"),
+    makeSite                            := makeSite.dependsOn(mdoc.toTask("")).value,
+    git.remoteRepo                      := "git@github.com:takapi327/ldbc.git",
+    ghpagesNoJekyll                     := true
   )
   .settings(commonSettings)
   .dependsOn(
@@ -140,9 +145,10 @@ lazy val moduleProjects: Seq[ProjectReference] = Seq(
   hikari
 )
 
-lazy val ldbc = project.in(file("."))
+lazy val ldbc = project
+  .in(file("."))
   .settings(scalaVersion := (core / scalaVersion).value)
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(publish / skip := true)
   .settings(commonSettings)
-  .aggregate((projects ++ moduleProjects): _*)
+  .aggregate((projects ++ moduleProjects)*)
