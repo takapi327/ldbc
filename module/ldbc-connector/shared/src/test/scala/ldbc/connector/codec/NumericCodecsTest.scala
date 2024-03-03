@@ -347,3 +347,75 @@ class NumericCodecsTest extends FunSuite:
       Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.uint))
     )
   }
+
+  test("bigint encode successfully") {
+    assertEquals(bigint.encode(Long.MinValue), List(Some(Encoded("-9223372036854775808", false))))
+    assertEquals(bigint.encode(Long.MaxValue), List(Some(Encoded("9223372036854775807", false))))
+  }
+
+  test("bigint decode successfully") {
+    assertEquals(bigint.decode(0, List(Some("-9223372036854775808"))), Right(Long.MinValue))
+    assertEquals(bigint.decode(0, List(Some("9223372036854775807"))), Right(Long.MaxValue))
+    assertEquals(bigint.opt.decode(0, List(Some("-9223372036854775808"))), Right(Some(Long.MinValue)))
+    assertEquals(bigint.opt.decode(0, List(Some("9223372036854775807"))), Right(Some(Long.MaxValue)))
+    assertEquals(bigint.opt.decode(0, List(None)), Right(None))
+  }
+
+  test("bigint decode error") {
+    assertEquals(
+      bigint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid bigint  For input string: \"\"", Type.bigint))
+    )
+    assertEquals(
+      bigint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid bigint invalid For input string: \"invalid\"", Type.bigint))
+    )
+    assertEquals(
+      bigint.decode(0, List(Some("-9223372036854775809"))),
+      Left(Decoder.Error(0, 1, "Invalid bigint -9223372036854775809 For input string: \"-9223372036854775809\"", Type.bigint))
+    )
+    assertEquals(
+      bigint.decode(0, List(Some("9223372036854775808"))),
+      Left(Decoder.Error(0, 1, "Invalid bigint 9223372036854775808 For input string: \"9223372036854775808\"", Type.bigint))
+    )
+    assertEquals(
+      bigint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.bigint))
+    )
+  }
+
+  test("unsigned bigint encode successfully") {
+    assertEquals(ubigint.encode(BigInt(0)), List(Some(Encoded("0", false))))
+    assertEquals(ubigint.encode(BigInt("18446744073709551615")), List(Some(Encoded("18446744073709551615", false))))
+  }
+
+  test("unsigned bigint decode successfully") {
+    assertEquals(ubigint.decode(0, List(Some("0"))), Right(BigInt("0")))
+    assertEquals(ubigint.decode(0, List(Some("18446744073709551615"))), Right(BigInt("18446744073709551615")))
+    assertEquals(ubigint.opt.decode(0, List(Some("0"))), Right(Some(BigInt("0"))))
+    assertEquals(ubigint.opt.decode(0, List(Some("18446744073709551615"))), Right(Some(BigInt("18446744073709551615"))))
+    assertEquals(ubigint.opt.decode(0, List(None)), Right(None))
+  }
+
+  test("unsigned bigint decode error") {
+    assertEquals(
+      ubigint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid bigint unsigned  Zero length BigInteger", Type.ubigint))
+    )
+    assertEquals(
+      ubigint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid bigint unsigned invalid For input string: \"invalid\"", Type.ubigint))
+    )
+    assertEquals(
+      ubigint.decode(0, List(Some("-1"))),
+      Left(Decoder.Error(0, 1, "Invalid bigint unsigned -1 can only handle the range 0 ~ 18446744073709551615", Type.ubigint))
+    )
+    assertEquals(
+      ubigint.decode(0, List(Some("18446744073709551616"))),
+      Left(Decoder.Error(0, 1, "Invalid bigint unsigned 18446744073709551616 can only handle the range 0 ~ 18446744073709551615", Type.ubigint))
+    )
+    assertEquals(
+      ubigint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.ubigint))
+    )
+  }

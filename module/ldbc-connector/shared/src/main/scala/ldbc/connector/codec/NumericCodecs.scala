@@ -38,6 +38,11 @@ trait NumericCodecs:
     val long = str.toLong
     if 0 <= long && long <= 4294967295L then long
     else throw new NumberFormatException("can only handle the range 0 ~ 4294967295")
+    
+  private def bigintUnsignedRange(str: String): BigInt =
+    val bigInt = BigInt(str)
+    if 0 <= bigInt && bigInt <= BigInt("18446744073709551615") then bigInt
+    else throw new NumberFormatException("can only handle the range 0 ~ 18446744073709551615")
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -117,8 +122,8 @@ trait NumericCodecs:
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
-  def ubigint(size: Int): Codec[BigInt] = Codec.simple(_.toString, safe(Type.ubigint)(BigInt(_)), Type.ubigint(size))
-  val ubigint: Codec[BigInt] = Codec.simple(_.toString, safe(Type.ubigint)(BigInt(_)), Type.ubigint)
+  def ubigint(size: Int): Codec[BigInt] = Codec.simple(_.toString, safe(Type.ubigint)(bigintUnsignedRange), Type.ubigint(size))
+  val ubigint: Codec[BigInt] = Codec.simple(_.toString, safe(Type.ubigint)(bigintUnsignedRange), Type.ubigint)
 
   def decimal(accuracy: Int, scale: Int): Codec[BigDecimal] =
     Codec.simple(
