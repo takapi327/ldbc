@@ -6,6 +6,8 @@
 
 package ldbc.connector.codec
 
+import scala.compiletime.error
+
 import ldbc.connector.data.Type
 
 trait NumericCodecs:
@@ -126,7 +128,13 @@ trait NumericCodecs:
     Codec.simple(_.toString, safe(Type.ubigint)(bigintUnsignedRange), Type.ubigint(size))
   val ubigint: Codec[BigInt] = Codec.simple(_.toString, safe(Type.ubigint)(bigintUnsignedRange), Type.ubigint)
 
-  def decimal(accuracy: Int, scale: Int): Codec[BigDecimal] =
+  inline def decimal(
+    inline accuracy: Int = 10,
+    inline scale:    Int = 0
+  ): Codec[BigDecimal] =
+    inline if accuracy < 0 then error("The value of accuracy for DECIMAL must be an integer.")
+    inline if scale < 0 then error("The DECIMAL scale value must be an integer.")
+    inline if accuracy > 65 then error("The maximum number of digits for DECIMAL is 65.")
     Codec.simple(
       _.toString,
       safe(Type.decimal(accuracy, scale))(str => BigDecimal.decimal(str.toDouble)),
