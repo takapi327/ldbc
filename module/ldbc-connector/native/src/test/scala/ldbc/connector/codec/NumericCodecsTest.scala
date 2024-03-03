@@ -37,11 +37,11 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       bit.decode(0, List(Some("-129"))),
-      Left(Decoder.Error(0, 1, "Invalid bit -129 Value out of range. Value:\"-129\" Radix:10", Type.bit))
+      Left(Decoder.Error(0, 1, "Invalid bit -129 For input string: \"-129\"", Type.bit))
     )
     assertEquals(
       bit.decode(0, List(Some("128"))),
-      Left(Decoder.Error(0, 1, "Invalid bit 128 Value out of range. Value:\"128\" Radix:10", Type.bit))
+      Left(Decoder.Error(0, 1, "Invalid bit 128 For input string: \"128\"", Type.bit))
     )
     assertEquals(
       bit.decode(0, List(None)),
@@ -73,11 +73,11 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       tinyint.decode(0, List(Some("-129"))),
-      Left(Decoder.Error(0, 1, "Invalid tinyint -129 Value out of range. Value:\"-129\" Radix:10", Type.tinyint))
+      Left(Decoder.Error(0, 1, "Invalid tinyint -129 For input string: \"-129\"", Type.tinyint))
     )
     assertEquals(
       tinyint.decode(0, List(Some("128"))),
-      Left(Decoder.Error(0, 1, "Invalid tinyint 128 Value out of range. Value:\"128\" Radix:10", Type.tinyint))
+      Left(Decoder.Error(0, 1, "Invalid tinyint 128 For input string: \"128\"", Type.tinyint))
     )
     assertEquals(
       tinyint.decode(0, List(None)),
@@ -145,11 +145,11 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       smallint.decode(0, List(Some("-32769"))),
-      Left(Decoder.Error(0, 1, "Invalid smallint -32769 Value out of range. Value:\"-32769\" Radix:10", Type.smallint))
+      Left(Decoder.Error(0, 1, "Invalid smallint -32769 For input string: \"-32769\"", Type.smallint))
     )
     assertEquals(
       smallint.decode(0, List(Some("32768"))),
-      Left(Decoder.Error(0, 1, "Invalid smallint 32768 Value out of range. Value:\"32768\" Radix:10", Type.smallint))
+      Left(Decoder.Error(0, 1, "Invalid smallint 32768 For input string: \"32768\"", Type.smallint))
     )
     assertEquals(
       smallint.decode(0, List(None)),
