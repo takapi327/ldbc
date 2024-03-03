@@ -2,7 +2,7 @@
   * distributed with this source code.
   */
 
-addSbtPlugin("com.github.sbt"     % "sbt-github-actions" % "0.22.0")
+addSbtPlugin("com.github.sbt"     % "sbt-github-actions" % "0.23.0")
 addSbtPlugin("com.github.sbt"     % "sbt-site-paradox"   % "1.5.0")
 addSbtPlugin("com.github.sbt"     % "sbt-ghpages"        % "0.8.0")
 addSbtPlugin("com.github.sbt"     % "sbt-ci-release"     % "1.5.12")
