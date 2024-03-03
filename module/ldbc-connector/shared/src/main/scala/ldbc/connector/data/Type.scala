@@ -38,6 +38,10 @@ object Type:
   def mediumint(n: Int): Type = Type(s"mediumint($n)")
   val mediumint: Type = Type("mediumint")
 
+  def umediumint(n: Int): Type = Type(s"mediumint($n) unsigned")
+  val umediumint: Type = Type("mediumint unsigned")
+
+
   def int(n: Int): Type = Type(s"int($n)")
   val int: Type = Type("int")
 
