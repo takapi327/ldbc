@@ -27,11 +27,26 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("bit decode error") {
-    assertEquals(bit.decode(0, List(Some(""))), Left(Decoder.Error(0, 1, "Invalid bit  For input string: \"\"", Type.bit)))
-    assertEquals(bit.decode(0, List(Some("invalid"))), Left(Decoder.Error(0, 1, "Invalid bit invalid For input string: \"invalid\"", Type.bit)))
-    assertEquals(bit.decode(0, List(Some("-129"))), Left(Decoder.Error(0, 1, "Invalid bit -129 Value out of range. Value:\"-129\" Radix:10", Type.bit)))
-    assertEquals(bit.decode(0, List(Some("128"))), Left(Decoder.Error(0, 1, "Invalid bit 128 Value out of range. Value:\"128\" Radix:10", Type.bit)))
-    assertEquals(bit.decode(0, List(None)), Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.bit)))
+    assertEquals(
+      bit.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid bit  For input string: \"\"", Type.bit))
+    )
+    assertEquals(
+      bit.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid bit invalid For input string: \"invalid\"", Type.bit))
+    )
+    assertEquals(
+      bit.decode(0, List(Some("-129"))),
+      Left(Decoder.Error(0, 1, "Invalid bit -129 Value out of range. Value:\"-129\" Radix:10", Type.bit))
+    )
+    assertEquals(
+      bit.decode(0, List(Some("128"))),
+      Left(Decoder.Error(0, 1, "Invalid bit 128 Value out of range. Value:\"128\" Radix:10", Type.bit))
+    )
+    assertEquals(
+      bit.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.bit))
+    )
   }
 
   test("tinyint encode successfully") {
@@ -48,11 +63,26 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("tinyint decode error") {
-    assertEquals(tinyint.decode(0, List(Some(""))), Left(Decoder.Error(0, 1, "Invalid tinyint  For input string: \"\"", Type.tinyint)))
-    assertEquals(tinyint.decode(0, List(Some("invalid"))), Left(Decoder.Error(0, 1, "Invalid tinyint invalid For input string: \"invalid\"", Type.tinyint)))
-    assertEquals(tinyint.decode(0, List(Some("-129"))), Left(Decoder.Error(0, 1, "Invalid tinyint -129 Value out of range. Value:\"-129\" Radix:10", Type.tinyint)))
-    assertEquals(tinyint.decode(0, List(Some("128"))), Left(Decoder.Error(0, 1, "Invalid tinyint 128 Value out of range. Value:\"128\" Radix:10", Type.tinyint)))
-    assertEquals(tinyint.decode(0, List(None)), Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.tinyint)))
+    assertEquals(
+      tinyint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint  For input string: \"\"", Type.tinyint))
+    )
+    assertEquals(
+      tinyint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint invalid For input string: \"invalid\"", Type.tinyint))
+    )
+    assertEquals(
+      tinyint.decode(0, List(Some("-129"))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint -129 Value out of range. Value:\"-129\" Radix:10", Type.tinyint))
+    )
+    assertEquals(
+      tinyint.decode(0, List(Some("128"))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint 128 Value out of range. Value:\"128\" Radix:10", Type.tinyint))
+    )
+    assertEquals(
+      tinyint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.tinyint))
+    )
   }
 
   test("unsigned tinyint encode successfully") {
@@ -69,11 +99,26 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("unsigned tinyint decode error") {
-    assertEquals(utinyint.decode(0, List(Some(""))), Left(Decoder.Error(0, 1, "Invalid tinyint unsigned  For input string: \"\"", Type.utinyint)))
-    assertEquals(utinyint.decode(0, List(Some("invalid"))), Left(Decoder.Error(0, 1, "Invalid tinyint unsigned invalid For input string: \"invalid\"", Type.utinyint)))
-    assertEquals(utinyint.decode(0, List(Some("-1"))), Left(Decoder.Error(0, 1, "Invalid tinyint unsigned -1 can only handle the range 0 ~ 255", Type.utinyint)))
-    assertEquals(utinyint.decode(0, List(Some("256"))), Left(Decoder.Error(0, 1, "Invalid tinyint unsigned 256 can only handle the range 0 ~ 255", Type.utinyint)))
-    assertEquals(utinyint.decode(0, List(None)), Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.utinyint)))
+    assertEquals(
+      utinyint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint unsigned  For input string: \"\"", Type.utinyint))
+    )
+    assertEquals(
+      utinyint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint unsigned invalid For input string: \"invalid\"", Type.utinyint))
+    )
+    assertEquals(
+      utinyint.decode(0, List(Some("-1"))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint unsigned -1 can only handle the range 0 ~ 255", Type.utinyint))
+    )
+    assertEquals(
+      utinyint.decode(0, List(Some("256"))),
+      Left(Decoder.Error(0, 1, "Invalid tinyint unsigned 256 can only handle the range 0 ~ 255", Type.utinyint))
+    )
+    assertEquals(
+      utinyint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.utinyint))
+    )
   }
 
   test("smallint encode successfully") {
@@ -90,11 +135,26 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("smallint decode error") {
-    assertEquals(smallint.decode(0, List(Some(""))), Left(Decoder.Error(0, 1, "Invalid smallint  For input string: \"\"", Type.smallint)))
-    assertEquals(smallint.decode(0, List(Some("invalid"))), Left(Decoder.Error(0, 1, "Invalid smallint invalid For input string: \"invalid\"", Type.smallint)))
-    assertEquals(smallint.decode(0, List(Some("-32769"))), Left(Decoder.Error(0, 1, "Invalid smallint -32769 Value out of range. Value:\"-32769\" Radix:10", Type.smallint)))
-    assertEquals(smallint.decode(0, List(Some("32768"))), Left(Decoder.Error(0, 1, "Invalid smallint 32768 Value out of range. Value:\"32768\" Radix:10", Type.smallint)))
-    assertEquals(smallint.decode(0, List(None)), Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.smallint)))
+    assertEquals(
+      smallint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid smallint  For input string: \"\"", Type.smallint))
+    )
+    assertEquals(
+      smallint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid smallint invalid For input string: \"invalid\"", Type.smallint))
+    )
+    assertEquals(
+      smallint.decode(0, List(Some("-32769"))),
+      Left(Decoder.Error(0, 1, "Invalid smallint -32769 Value out of range. Value:\"-32769\" Radix:10", Type.smallint))
+    )
+    assertEquals(
+      smallint.decode(0, List(Some("32768"))),
+      Left(Decoder.Error(0, 1, "Invalid smallint 32768 Value out of range. Value:\"32768\" Radix:10", Type.smallint))
+    )
+    assertEquals(
+      smallint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.smallint))
+    )
   }
 
   test("unsigned smallint encode successfully") {
@@ -111,9 +171,24 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("unsigned smallint decode error") {
-    assertEquals(usmallint.decode(0, List(Some(""))), Left(Decoder.Error(0, 1, "Invalid smallint unsigned  For input string: \"\"", Type.usmallint)))
-    assertEquals(usmallint.decode(0, List(Some("invalid"))), Left(Decoder.Error(0, 1, "Invalid smallint unsigned invalid For input string: \"invalid\"", Type.usmallint)))
-    assertEquals(usmallint.decode(0, List(Some("-1"))), Left(Decoder.Error(0, 1, "Invalid smallint unsigned -1 can only handle the range 0 ~ 65535", Type.usmallint)))
-    assertEquals(usmallint.decode(0, List(Some("65536"))), Left(Decoder.Error(0, 1, "Invalid smallint unsigned 65536 can only handle the range 0 ~ 65535", Type.usmallint)))
-    assertEquals(usmallint.decode(0, List(None)), Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.usmallint)))
+    assertEquals(
+      usmallint.decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid smallint unsigned  For input string: \"\"", Type.usmallint))
+    )
+    assertEquals(
+      usmallint.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid smallint unsigned invalid For input string: \"invalid\"", Type.usmallint))
+    )
+    assertEquals(
+      usmallint.decode(0, List(Some("-1"))),
+      Left(Decoder.Error(0, 1, "Invalid smallint unsigned -1 can only handle the range 0 ~ 65535", Type.usmallint))
+    )
+    assertEquals(
+      usmallint.decode(0, List(Some("65536"))),
+      Left(Decoder.Error(0, 1, "Invalid smallint unsigned 65536 can only handle the range 0 ~ 65535", Type.usmallint))
+    )
+    assertEquals(
+      usmallint.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.usmallint))
+    )
   }

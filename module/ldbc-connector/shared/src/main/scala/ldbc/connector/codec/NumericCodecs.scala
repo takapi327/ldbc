@@ -12,7 +12,7 @@ trait NumericCodecs:
 
   private def safe[A](`type`: Type)(f: String => A): String => Either[String, A] = s =>
     try Right(f(s))
-    catch case ex: NumberFormatException => Left(s"Invalid ${`type`.name} $s ${ ex.getMessage }")
+    catch case ex: NumberFormatException => Left(s"Invalid ${ `type`.name } $s ${ ex.getMessage }")
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -33,11 +33,15 @@ trait NumericCodecs:
     "0.3.0"
   )
   def utinyint(size: Int): Codec[Short] = Codec.simple(_.toString, safe(Type.utinyint)(_.toShort), Type.utinyint(size))
-  val utinyint: Codec[Short] = Codec.simple(_.toString, safe(Type.utinyint)(str =>
-    val short = str.toShort
-    if 0 <= short && short <= 255 then short
-    else throw new NumberFormatException("can only handle the range 0 ~ 255")
-  ), Type.utinyint)
+  val utinyint: Codec[Short] = Codec.simple(
+    _.toString,
+    safe(Type.utinyint)(str =>
+      val short = str.toShort
+      if 0 <= short && short <= 255 then short
+      else throw new NumberFormatException("can only handle the range 0 ~ 255")
+    ),
+    Type.utinyint
+  )
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -51,11 +55,15 @@ trait NumericCodecs:
     "0.3.0"
   )
   def usmallint(size: Int): Codec[Int] = Codec.simple(_.toString, safe(Type.usmallint)(_.toInt), Type.usmallint(size))
-  val usmallint: Codec[Int] = Codec.simple(_.toString, safe(Type.usmallint)(str => 
-    val int = str.toInt
-    if 0 <= int && int <= 65535 then int
-    else throw new NumberFormatException("can only handle the range 0 ~ 65535")
-  ), Type.usmallint)
+  val usmallint: Codec[Int] = Codec.simple(
+    _.toString,
+    safe(Type.usmallint)(str =>
+      val int = str.toInt
+      if 0 <= int && int <= 65535 then int
+      else throw new NumberFormatException("can only handle the range 0 ~ 65535")
+    ),
+    Type.usmallint
+  )
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -93,9 +101,15 @@ trait NumericCodecs:
   val ubigint: Codec[BigInt] = Codec.simple(_.toString, safe(Type.ubigint)(BigInt(_)), Type.ubigint)
 
   def decimal(accuracy: Int, scale: Int): Codec[BigDecimal] =
-    Codec.simple(_.toString, safe(Type.decimal(accuracy, scale))(str => BigDecimal.decimal(str.toDouble)), Type.decimal(accuracy, scale))
+    Codec.simple(
+      _.toString,
+      safe(Type.decimal(accuracy, scale))(str => BigDecimal.decimal(str.toDouble)),
+      Type.decimal(accuracy, scale)
+    )
 
-  def float(accuracy:  Int): Codec[Float]  = Codec.simple(_.toString, safe(Type.float(accuracy))(_.toFloat), Type.float(accuracy))
-  def double(accuracy: Int): Codec[Double] = Codec.simple(_.toString, safe(Type.float(accuracy))(_.toDouble), Type.float(accuracy))
+  def float(accuracy: Int): Codec[Float] =
+    Codec.simple(_.toString, safe(Type.float(accuracy))(_.toFloat), Type.float(accuracy))
+  def double(accuracy: Int): Codec[Double] =
+    Codec.simple(_.toString, safe(Type.float(accuracy))(_.toDouble), Type.float(accuracy))
 
 object numeric extends NumericCodecs

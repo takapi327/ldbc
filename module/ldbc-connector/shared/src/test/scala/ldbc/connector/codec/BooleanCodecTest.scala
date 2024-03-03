@@ -31,9 +31,21 @@ class BooleanCodecTest extends FunSuite {
 
   test("boolean decode error") {
     assertEquals(boolean.decode(0, List(Some(""))), Left(Decoder.Error(0, 1, "Invalid boolean value: ", Type.boolean)))
-    assertEquals(boolean.decode(0, List(Some("invalid"))), Left(Decoder.Error(0, 1, "Invalid boolean value: invalid", Type.boolean)))
-    assertEquals(boolean.decode(0, List(Some("-1"))), Left(Decoder.Error(0, 1, "Invalid boolean value: -1", Type.boolean)))
-    assertEquals(boolean.decode(0, List(Some("2"))), Left(Decoder.Error(0, 1, "Invalid boolean value: 2", Type.boolean)))
-    assertEquals(boolean.decode(0, List(None)), Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.boolean)))
+    assertEquals(
+      boolean.decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid boolean value: invalid", Type.boolean))
+    )
+    assertEquals(
+      boolean.decode(0, List(Some("-1"))),
+      Left(Decoder.Error(0, 1, "Invalid boolean value: -1", Type.boolean))
+    )
+    assertEquals(
+      boolean.decode(0, List(Some("2"))),
+      Left(Decoder.Error(0, 1, "Invalid boolean value: 2", Type.boolean))
+    )
+    assertEquals(
+      boolean.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.boolean))
+    )
   }
 }
