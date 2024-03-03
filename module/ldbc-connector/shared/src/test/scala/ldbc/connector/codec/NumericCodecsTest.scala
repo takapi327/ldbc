@@ -372,11 +372,20 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       bigint.decode(0, List(Some("-9223372036854775809"))),
-      Left(Decoder.Error(0, 1, "Invalid bigint -9223372036854775809 For input string: \"-9223372036854775809\"", Type.bigint))
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "Invalid bigint -9223372036854775809 For input string: \"-9223372036854775809\"",
+          Type.bigint
+        )
+      )
     )
     assertEquals(
       bigint.decode(0, List(Some("9223372036854775808"))),
-      Left(Decoder.Error(0, 1, "Invalid bigint 9223372036854775808 For input string: \"9223372036854775808\"", Type.bigint))
+      Left(
+        Decoder.Error(0, 1, "Invalid bigint 9223372036854775808 For input string: \"9223372036854775808\"", Type.bigint)
+      )
     )
     assertEquals(
       bigint.decode(0, List(None)),
@@ -408,11 +417,25 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       ubigint.decode(0, List(Some("-1"))),
-      Left(Decoder.Error(0, 1, "Invalid bigint unsigned -1 can only handle the range 0 ~ 18446744073709551615", Type.ubigint))
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "Invalid bigint unsigned -1 can only handle the range 0 ~ 18446744073709551615",
+          Type.ubigint
+        )
+      )
     )
     assertEquals(
       ubigint.decode(0, List(Some("18446744073709551616"))),
-      Left(Decoder.Error(0, 1, "Invalid bigint unsigned 18446744073709551616 can only handle the range 0 ~ 18446744073709551615", Type.ubigint))
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "Invalid bigint unsigned 18446744073709551616 can only handle the range 0 ~ 18446744073709551615",
+          Type.ubigint
+        )
+      )
     )
     assertEquals(
       ubigint.decode(0, List(None)),
