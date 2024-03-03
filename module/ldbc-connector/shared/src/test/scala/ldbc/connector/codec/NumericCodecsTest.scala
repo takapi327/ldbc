@@ -217,11 +217,15 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       mediumint.decode(0, List(Some("-8388609"))),
-      Left(Decoder.Error(0, 1, "Invalid mediumint -8388609 can only handle the range -8388608 ~ 8388607", Type.mediumint))
+      Left(
+        Decoder.Error(0, 1, "Invalid mediumint -8388609 can only handle the range -8388608 ~ 8388607", Type.mediumint)
+      )
     )
     assertEquals(
       mediumint.decode(0, List(Some("8388608"))),
-      Left(Decoder.Error(0, 1, "Invalid mediumint 8388608 can only handle the range -8388608 ~ 8388607", Type.mediumint))
+      Left(
+        Decoder.Error(0, 1, "Invalid mediumint 8388608 can only handle the range -8388608 ~ 8388607", Type.mediumint)
+      )
     )
     assertEquals(
       mediumint.decode(0, List(None)),
@@ -257,7 +261,14 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       umediumint.decode(0, List(Some("16777216"))),
-      Left(Decoder.Error(0, 1, "Invalid mediumint unsigned 16777216 can only handle the range 0 ~ 16777215", Type.umediumint))
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "Invalid mediumint unsigned 16777216 can only handle the range 0 ~ 16777215",
+          Type.umediumint
+        )
+      )
     )
     assertEquals(
       umediumint.decode(0, List(None)),

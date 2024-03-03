@@ -57,7 +57,8 @@ trait NumericCodecs:
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
-  def utinyint(size: Int): Codec[Short] = Codec.simple(_.toString, safe(Type.utinyint)(tinyintUnsignedRange), Type.utinyint(size))
+  def utinyint(size: Int): Codec[Short] =
+    Codec.simple(_.toString, safe(Type.utinyint)(tinyintUnsignedRange), Type.utinyint(size))
   val utinyint: Codec[Short] = Codec.simple(_.toString, safe(Type.utinyint)(tinyintUnsignedRange), Type.utinyint)
 
   @deprecated(
@@ -71,21 +72,24 @@ trait NumericCodecs:
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
-  def usmallint(size: Int): Codec[Int] = Codec.simple(_.toString, safe(Type.usmallint)(smallintUnsignedRange), Type.usmallint(size))
+  def usmallint(size: Int): Codec[Int] =
+    Codec.simple(_.toString, safe(Type.usmallint)(smallintUnsignedRange), Type.usmallint(size))
   val usmallint: Codec[Int] = Codec.simple(_.toString, safe(Type.usmallint)(smallintUnsignedRange), Type.usmallint)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
-  def mediumint(size: Int): Codec[Int] = Codec.simple(_.toString, safe(Type.mediumint)(mediumintSignedRange), Type.mediumint(size))
+  def mediumint(size: Int): Codec[Int] =
+    Codec.simple(_.toString, safe(Type.mediumint)(mediumintSignedRange), Type.mediumint(size))
   val mediumint: Codec[Int] = Codec.simple(_.toString, safe(Type.mediumint)(mediumintSignedRange), Type.mediumint)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
-  def umediumint(size: Int): Codec[Int] = Codec.simple(_.toString, safe(Type.umediumint)(mediumintUnsignedRange), Type.mediumint(size))
+  def umediumint(size: Int): Codec[Int] =
+    Codec.simple(_.toString, safe(Type.umediumint)(mediumintUnsignedRange), Type.mediumint(size))
   val umediumint: Codec[Int] = Codec.simple(_.toString, safe(Type.umediumint)(mediumintUnsignedRange), Type.umediumint)
 
   @deprecated(
