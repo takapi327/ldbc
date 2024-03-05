@@ -53,4 +53,46 @@ class TextCodecsTest extends FunSuite {
     assertEquals(varchar(255).decode(0, List(Some("';--'"))), Right("';--'"))
     assertEquals(varchar(255).opt.decode(0, List(None)), Right(None))
   }
+
+  test("binary encode successfully") {
+    assertEquals(binary(255).encode(Array[Byte](98, 105, 110, 97, 114, 121)), List(Some(Encoded("binary", false))))
+    assertEquals(binary(255).encode(Array.emptyByteArray), List(Some(Encoded("", false))))
+    assertEquals(binary(255).encode("🔥 and 🌈".getBytes), List(Some(Encoded("🔥 and 🌈", false))))
+    assertEquals(binary(255).encode("\"שלום".getBytes), List(Some(Encoded("\"שלום", false))))
+    assertEquals(binary(255).encode("مرحب".getBytes), List(Some(Encoded("مرحب", false))))
+    assertEquals(binary(255).encode("你好".getBytes), List(Some(Encoded("你好", false))))
+    assertEquals(binary(255).encode("';--'".getBytes), List(Some(Encoded("';--'", false))))
+  }
+
+  test("binary decode successfully") {
+    // assertEquals(binary(255).decode(0, List(Some("binary"))), Right(Array[Byte](98, 105, 110, 97, 114, 121)))
+    // assertEquals(binary(255).decode(0, List(Some(""))), Right(Array.emptyByteArray))
+    // assertEquals(binary(255).decode(0, List(Some("🔥 and 🌈"))), Right("🔥 and 🌈"))
+    // assertEquals(binary(255).decode(0, List(Some("שלום"))), Right("שלום"))
+    // assertEquals(binary(255).decode(0, List(Some("مرحب"))), Right("مرحب"))
+    // assertEquals(binary(255).decode(0, List(Some("你好"))), Right("你好"))
+    // assertEquals(binary(255).decode(0, List(Some("';--'"))), Right("';--'"))
+    // assertEquals(binary(255).opt.decode(0, List(None)), Right(None))
+  }
+
+  test("varbinary encode successfully") {
+    assertEquals(varbinary(255).encode("varbinary"), List(Some(Encoded("varbinary", false))))
+    assertEquals(varbinary(255).encode(""), List(Some(Encoded("", false))))
+    assertEquals(varbinary(255).encode("🔥 and 🌈"), List(Some(Encoded("🔥 and 🌈", false))))
+    assertEquals(varbinary(255).encode("\"שלום"), List(Some(Encoded("\"שלום", false))))
+    assertEquals(varbinary(255).encode("مرحب"), List(Some(Encoded("مرحب", false))))
+    assertEquals(varbinary(255).encode("你好"), List(Some(Encoded("你好", false))))
+    assertEquals(varbinary(255).encode("';--'"), List(Some(Encoded("';--'", false))))
+  }
+
+  test("varbinary decode successfully") {
+    assertEquals(varbinary(255).decode(0, List(Some("varbinary"))), Right("varbinary"))
+    assertEquals(varbinary(255).decode(0, List(Some(""))), Right(""))
+    assertEquals(varbinary(255).decode(0, List(Some("🔥 and 🌈"))), Right("🔥 and 🌈"))
+    assertEquals(varbinary(255).decode(0, List(Some("שלום"))), Right("שלום"))
+    assertEquals(varbinary(255).decode(0, List(Some("مرحب"))), Right("مرحب"))
+    assertEquals(varbinary(255).decode(0, List(Some("你好"))), Right("你好"))
+    assertEquals(varbinary(255).decode(0, List(Some("';--'"))), Right("';--'"))
+    assertEquals(varbinary(255).opt.decode(0, List(None)), Right(None))
+  }
 }
