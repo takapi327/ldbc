@@ -466,11 +466,25 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       decimal().decode(0, List(Some("invalid"))),
-      Left(Decoder.Error(0, 1, "Invalid decimal(10, 0) invalid Character i is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark.", Type.decimal()))
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "Invalid decimal(10, 0) invalid Character i is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark.",
+          Type.decimal()
+        )
+      )
     )
     assertEquals(
       decimal().decode(0, List(Some("1.1.1"))),
-      Left(Decoder.Error(0, 1, "Invalid decimal(10, 0) 1.1.1 Character array contains more than one decimal point.", Type.decimal()))
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "Invalid decimal(10, 0) 1.1.1 Character array contains more than one decimal point.",
+          Type.decimal()
+        )
+      )
     )
   }
 
