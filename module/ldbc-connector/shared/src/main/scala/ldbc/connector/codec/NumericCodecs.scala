@@ -152,7 +152,7 @@ trait NumericCodecs:
     val `type` = Type.decimal(accuracy, scale)
     Codec.simple(_.toString, safe(`type`)(BigDecimal(_)), `type`)
 
-  val float: Codec[Float] = Codec.simple(_.toString, safe(Type.float)(_.toFloat), Type.float)
+  val float:  Codec[Float]  = Codec.simple(_.toString, safe(Type.float)(_.toFloat), Type.float)
   val double: Codec[Double] = Codec.simple(_.toString, safe(Type.double)(_.toDouble), Type.double)
 
 object numeric extends NumericCodecs
