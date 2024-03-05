@@ -151,7 +151,7 @@ class StatementTest extends CatsEffectSuite:
       connection.use(
         _.statement("SELECT `float`, `float_null` FROM `connector_test`.`all_types`")
           .executeQuery()
-          .map(_.decode[(Float, Option[Float])](float(0) *: float(0).opt))
+          .map(_.decode[(Float, Option[Float])](float *: float.opt))
       ),
       List((3.40282e38f, None))
     )
@@ -162,7 +162,7 @@ class StatementTest extends CatsEffectSuite:
       connection.use(
         _.statement("SELECT `double`, `double_null` FROM `connector_test`.`all_types`")
           .executeQuery()
-          .map(_.decode[(Double, Option[Double])](double(24) *: double(24).opt))
+          .map(_.decode[(Double, Option[Double])](double *: double.opt))
       ),
       List((1.7976931348623157e308, None))
     )
