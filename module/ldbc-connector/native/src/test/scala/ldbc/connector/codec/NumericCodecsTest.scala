@@ -470,7 +470,7 @@ class NumericCodecsTest extends FunSuite:
         Decoder.Error(
           0,
           1,
-          "Invalid decimal(10, 0) invalid Character i is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark.",
+          "Invalid decimal(10, 0) invalid For input string: \"invalid\"",
           Type.decimal()
         )
       )
@@ -515,7 +515,7 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       float.decode(0, List(Some("1.1.1"))),
-      Left(Decoder.Error(0, 1, "Invalid float 1.1.1 multiple points", Type.float))
+      Left(Decoder.Error(0, 1, "Invalid float 1.1.1 For input string: \"1.1.1\"", Type.float))
     )
   }
 
@@ -546,6 +546,6 @@ class NumericCodecsTest extends FunSuite:
     )
     assertEquals(
       double.decode(0, List(Some("1.1.1"))),
-      Left(Decoder.Error(0, 1, "Invalid double 1.1.1 multiple points", Type.double))
+      Left(Decoder.Error(0, 1, "Invalid double 1.1.1 For input string: \"1.1.1\"", Type.double))
     )
   }
