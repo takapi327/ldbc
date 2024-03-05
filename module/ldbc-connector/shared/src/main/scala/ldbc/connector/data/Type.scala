@@ -53,7 +53,7 @@ object Type:
   def ubigint(n: Int): Type = Type(s"bigint($n) unsigned")
   val ubigint: Type = Type("bigint unsigned")
 
-  def decimal(accuracy: Int, scale: Int): Type = Type(s"decimal($accuracy, $scale)")
+  def decimal(accuracy: Int = 10, scale: Int = 0): Type = Type(s"decimal($accuracy, $scale)")
 
   def float(accuracy:  Int): Type = Type(s"float($accuracy)")
   def double(accuracy: Int): Type = Type(s"double($accuracy)")
