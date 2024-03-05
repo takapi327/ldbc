@@ -152,13 +152,7 @@ trait NumericCodecs:
     val `type` = Type.decimal(accuracy, scale)
     Codec.simple(_.toString, safe(`type`)(BigDecimal(_)), `type`)
 
-  inline def float(inline accuracy: Int): Codec[Float] =
-    inline if accuracy < 0 || accuracy > 24 then error("The length of the FLOAT must be in the range 0 to 24.")
-    val `type` = Type.float(accuracy)
-    Codec.simple(_.toString, safe(`type`)(_.toFloat), `type`)
-  inline def double(inline accuracy: Int): Codec[Double] =
-    inline if accuracy < 24 || accuracy > 53 then error("The length of the DOUBLE must be in the range 24 to 53.")
-    val `type` = Type.double(accuracy)
-    Codec.simple(_.toString, safe(`type`)(_.toDouble), `type`)
+  val float: Codec[Float] = Codec.simple(_.toString, safe(Type.float)(_.toFloat), Type.float)
+  val double: Codec[Double] = Codec.simple(_.toString, safe(Type.double)(_.toDouble), Type.double)
 
 object numeric extends NumericCodecs

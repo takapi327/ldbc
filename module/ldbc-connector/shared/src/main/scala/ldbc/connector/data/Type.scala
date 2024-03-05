@@ -55,8 +55,8 @@ object Type:
 
   def decimal(accuracy: Int = 10, scale: Int = 0): Type = Type(s"decimal($accuracy, $scale)")
 
-  def float(accuracy:  Int): Type = Type(s"float($accuracy)")
-  def double(accuracy: Int): Type = Type(s"double($accuracy)")
+  val float: Type = Type("float")
+  val double: Type = Type("double")
 
   def char(length:    Int): Type = Type(s"char($length)")
   def varchar(length: Int): Type = Type(s"varchar($length)")
