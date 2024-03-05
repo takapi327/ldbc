@@ -442,3 +442,96 @@ class NumericCodecsTest extends FunSuite:
       Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.ubigint))
     )
   }
+
+  test("decimal encode successfully") {
+    assertEquals(decimal().encode(BigDecimal(1L)), List(Some(Encoded("1", false))))
+    assertEquals(decimal().encode(BigDecimal(1.1)), List(Some(Encoded("1.1", false))))
+  }
+
+  test("decimal decode successfully") {
+    assertEquals(decimal().decode(0, List(Some("1"))), Right(BigDecimal(1L)))
+    assertEquals(decimal().decode(0, List(Some("-1"))), Right(BigDecimal(-1.0)))
+    assertEquals(decimal().decode(0, List(Some(".0"))), Right(BigDecimal(0.0)))
+    assertEquals(decimal().decode(0, List(Some("1.1"))), Right(BigDecimal(1.1)))
+    assertEquals(decimal().opt.decode(0, List(Some("1"))), Right(Some(BigDecimal(1L))))
+    assertEquals(decimal().opt.decode(0, List(Some("-1"))), Right(Some(BigDecimal(-1.0))))
+    assertEquals(decimal().opt.decode(0, List(Some(".0"))), Right(Some(BigDecimal(0.0))))
+    assertEquals(decimal().opt.decode(0, List(Some("1.1"))), Right(Some(BigDecimal(1.1))))
+  }
+
+  test("decimal decode error") {
+    assertEquals(
+      decimal().decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid decimal(10, 0)  null", Type.decimal()))
+    )
+    assertEquals(
+      decimal().decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid decimal(10, 0) invalid Character i is neither a decimal digit number, decimal point, nor \"e\" notation exponential mark.", Type.decimal()))
+    )
+    assertEquals(
+      decimal().decode(0, List(Some("1.1.1"))),
+      Left(Decoder.Error(0, 1, "Invalid decimal(10, 0) 1.1.1 Character array contains more than one decimal point.", Type.decimal()))
+    )
+  }
+
+  test("float encode successfully") {
+    assertEquals(float(0).encode(Float.MinValue), List(Some(Encoded("-3.4028235E38", false))))
+    assertEquals(float(24).encode(Float.MaxValue), List(Some(Encoded("3.4028235E38", false))))
+  }
+
+  test("float decode successfully") {
+    assertEquals(float(1).decode(0, List(Some("-3.4028235E38"))), Right(Float.MinValue))
+    assertEquals(float(1).decode(0, List(Some("3.4028235E38"))), Right(Float.MaxValue))
+    assertEquals(float(1).decode(0, List(Some(".0"))), Right(0.0.toFloat))
+    assertEquals(float(1).decode(0, List(Some("1.1"))), Right(1.1.toFloat))
+    assertEquals(float(1).opt.decode(0, List(Some("-3.4028235E38"))), Right(Some(Float.MinValue)))
+    assertEquals(float(1).opt.decode(0, List(Some("3.4028235E38"))), Right(Some(Float.MaxValue)))
+    assertEquals(float(1).opt.decode(0, List(Some(".0"))), Right(Some(0.0.toFloat)))
+    assertEquals(float(1).opt.decode(0, List(Some("1.1"))), Right(Some(1.1.toFloat)))
+  }
+
+  test("float decode error") {
+    assertEquals(
+      float(24).decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid float(24)  empty String", Type.float(24)))
+    )
+    assertEquals(
+      float(24).decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid float(24) invalid For input string: \"invalid\"", Type.float(24)))
+    )
+    assertEquals(
+      float(24).decode(0, List(Some("1.1.1"))),
+      Left(Decoder.Error(0, 1, "Invalid float(24) 1.1.1 multiple points", Type.float(24)))
+    )
+  }
+
+  test("double encode successfully") {
+    assertEquals(double(25).encode(Double.MinValue), List(Some(Encoded("-1.7976931348623157E308", false))))
+    assertEquals(double(52).encode(Double.MaxValue), List(Some(Encoded("1.7976931348623157E308", false))))
+  }
+
+  test("double decode successfully") {
+    assertEquals(double(25).decode(0, List(Some("-1.7976931348623157E308"))), Right(Double.MinValue))
+    assertEquals(double(25).decode(0, List(Some("1.7976931348623157E308"))), Right(Double.MaxValue))
+    assertEquals(double(25).decode(0, List(Some(".0"))), Right(0.0))
+    assertEquals(double(25).decode(0, List(Some("1.1"))), Right(1.1))
+    assertEquals(double(25).opt.decode(0, List(Some("-1.7976931348623157E308"))), Right(Some(Double.MinValue)))
+    assertEquals(double(25).opt.decode(0, List(Some("1.7976931348623157E308"))), Right(Some(Double.MaxValue)))
+    assertEquals(double(25).opt.decode(0, List(Some(".0"))), Right(Some(0.0)))
+    assertEquals(double(25).opt.decode(0, List(Some("1.1"))), Right(Some(1.1)))
+  }
+
+  test("double decode error") {
+    assertEquals(
+      double(52).decode(0, List(Some(""))),
+      Left(Decoder.Error(0, 1, "Invalid double(52)  empty String", Type.double(52)))
+    )
+    assertEquals(
+      double(52).decode(0, List(Some("invalid"))),
+      Left(Decoder.Error(0, 1, "Invalid double(52) invalid For input string: \"invalid\"", Type.double(52)))
+    )
+    assertEquals(
+      double(52).decode(0, List(Some("1.1.1"))),
+      Left(Decoder.Error(0, 1, "Invalid double(52) 1.1.1 multiple points", Type.double(52)))
+    )
+  }
