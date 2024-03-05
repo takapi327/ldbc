@@ -462,7 +462,7 @@ class NumericCodecsTest extends FunSuite:
   test("decimal decode error") {
     assertEquals(
       decimal().decode(0, List(Some(""))),
-      Left(Decoder.Error(0, 1, "Invalid decimal(10, 0)  null", Type.decimal()))
+      Left(Decoder.Error(0, 1, "Invalid decimal(10, 0)  Bad offset/length: offset=0 len=0 in.length=0", Type.decimal()))
     )
     assertEquals(
       decimal().decode(0, List(Some("invalid"))),
@@ -507,7 +507,7 @@ class NumericCodecsTest extends FunSuite:
   test("float decode error") {
     assertEquals(
       float.decode(0, List(Some(""))),
-      Left(Decoder.Error(0, 1, "Invalid float  empty String", Type.float))
+      Left(Decoder.Error(0, 1, "Invalid float  For input string: \"\"", Type.float))
     )
     assertEquals(
       float.decode(0, List(Some("invalid"))),
@@ -538,7 +538,7 @@ class NumericCodecsTest extends FunSuite:
   test("double decode error") {
     assertEquals(
       double.decode(0, List(Some(""))),
-      Left(Decoder.Error(0, 1, "Invalid double  empty String", Type.double))
+      Left(Decoder.Error(0, 1, "Invalid double  For input string: \"\"", Type.double))
     )
     assertEquals(
       double.decode(0, List(Some("invalid"))),
