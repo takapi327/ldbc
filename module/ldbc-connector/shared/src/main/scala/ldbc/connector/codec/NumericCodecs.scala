@@ -149,15 +149,16 @@ trait NumericCodecs:
     inline if accuracy < 0 then error("The value of accuracy for DECIMAL must be an integer.")
     inline if scale < 0 then error("The DECIMAL scale value must be an integer.")
     inline if accuracy > 65 then error("The maximum number of digits for DECIMAL is 65.")
-    Codec.simple(
-      _.toString,
-      safe(Type.decimal(accuracy, scale))(str => BigDecimal.decimal(str.toDouble)),
-      Type.decimal(accuracy, scale)
-    )
+    val `type` = Type.decimal(accuracy, scale)
+    Codec.simple(_.toString, safe(`type`)(BigDecimal(_)), `type`)
 
-  def float(accuracy: Int): Codec[Float] =
-    Codec.simple(_.toString, safe(Type.float(accuracy))(_.toFloat), Type.float(accuracy))
-  def double(accuracy: Int): Codec[Double] =
-    Codec.simple(_.toString, safe(Type.float(accuracy))(_.toDouble), Type.float(accuracy))
+  inline def float(inline accuracy: Int): Codec[Float] =
+    inline if accuracy < 0 || accuracy > 24 then error("The length of the FLOAT must be in the range 0 to 24.")
+    val `type` = Type.float(accuracy)
+    Codec.simple(_.toString, safe(`type`)(_.toFloat), `type`)
+  inline def double(inline accuracy: Int): Codec[Double] =
+    inline if accuracy < 24 || accuracy > 53 then error("The length of the DOUBLE must be in the range 24 to 53.")
+    val `type` = Type.double(accuracy)
+    Codec.simple(_.toString, safe(`type`)(_.toDouble), `type`)
 
 object numeric extends NumericCodecs
