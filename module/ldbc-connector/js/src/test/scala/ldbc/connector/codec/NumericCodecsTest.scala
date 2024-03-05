@@ -489,17 +489,17 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("float encode successfully") {
-    assertEquals(float.encode(Float.MinValue), List(Some(Encoded("-3.4028235E38", false))))
-    assertEquals(float.encode(Float.MaxValue), List(Some(Encoded("3.4028235E38", false))))
+    assertEquals(float.encode(Float.MinValue), List(Some(Encoded("-3.4028234663852886e+38", false))))
+    assertEquals(float.encode(Float.MaxValue), List(Some(Encoded("3.4028234663852886e+38", false))))
   }
 
   test("float decode successfully") {
-    assertEquals(float.decode(0, List(Some("-3.4028235E38"))), Right(Float.MinValue))
-    assertEquals(float.decode(0, List(Some("3.4028235E38"))), Right(Float.MaxValue))
+    assertEquals(float.decode(0, List(Some("-3.4028234663852886e+38"))), Right(Float.MinValue))
+    assertEquals(float.decode(0, List(Some("3.4028234663852886e+38"))), Right(Float.MaxValue))
     assertEquals(float.decode(0, List(Some(".0"))), Right(0.0.toFloat))
     assertEquals(float.decode(0, List(Some("1.1"))), Right(1.1.toFloat))
-    assertEquals(float.opt.decode(0, List(Some("-3.4028235E38"))), Right(Some(Float.MinValue)))
-    assertEquals(float.opt.decode(0, List(Some("3.4028235E38"))), Right(Some(Float.MaxValue)))
+    assertEquals(float.opt.decode(0, List(Some("-3.4028234663852886e+38"))), Right(Some(Float.MinValue)))
+    assertEquals(float.opt.decode(0, List(Some("3.4028234663852886e+38"))), Right(Some(Float.MaxValue)))
     assertEquals(float.opt.decode(0, List(Some(".0"))), Right(Some(0.0.toFloat)))
     assertEquals(float.opt.decode(0, List(Some("1.1"))), Right(Some(1.1.toFloat)))
   }
@@ -507,7 +507,7 @@ class NumericCodecsTest extends FunSuite:
   test("float decode error") {
     assertEquals(
       float.decode(0, List(Some(""))),
-      Left(Decoder.Error(0, 1, "Invalid float  empty String", Type.float))
+      Left(Decoder.Error(0, 1, "Invalid float  For input string: \"\"", Type.float))
     )
     assertEquals(
       float.decode(0, List(Some("invalid"))),
@@ -520,17 +520,17 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("double encode successfully") {
-    assertEquals(double.encode(Double.MinValue), List(Some(Encoded("-1.7976931348623157E308", false))))
-    assertEquals(double.encode(Double.MaxValue), List(Some(Encoded("1.7976931348623157E308", false))))
+    assertEquals(double.encode(Double.MinValue), List(Some(Encoded("-1.7976931348623157e+308", false))))
+    assertEquals(double.encode(Double.MaxValue), List(Some(Encoded("1.7976931348623157e+308", false))))
   }
 
   test("double decode successfully") {
-    assertEquals(double.decode(0, List(Some("-1.7976931348623157E308"))), Right(Double.MinValue))
-    assertEquals(double.decode(0, List(Some("1.7976931348623157E308"))), Right(Double.MaxValue))
+    assertEquals(double.decode(0, List(Some("-1.7976931348623157e+308"))), Right(Double.MinValue))
+    assertEquals(double.decode(0, List(Some("1.7976931348623157e+308"))), Right(Double.MaxValue))
     assertEquals(double.decode(0, List(Some(".0"))), Right(0.0))
     assertEquals(double.decode(0, List(Some("1.1"))), Right(1.1))
-    assertEquals(double.opt.decode(0, List(Some("-1.7976931348623157E308"))), Right(Some(Double.MinValue)))
-    assertEquals(double.opt.decode(0, List(Some("1.7976931348623157E308"))), Right(Some(Double.MaxValue)))
+    assertEquals(double.opt.decode(0, List(Some("-1.7976931348623157e+308"))), Right(Some(Double.MinValue)))
+    assertEquals(double.opt.decode(0, List(Some("1.7976931348623157e+308"))), Right(Some(Double.MaxValue)))
     assertEquals(double.opt.decode(0, List(Some(".0"))), Right(Some(0.0)))
     assertEquals(double.opt.decode(0, List(Some("1.1"))), Right(Some(1.1)))
   }
@@ -538,7 +538,7 @@ class NumericCodecsTest extends FunSuite:
   test("double decode error") {
     assertEquals(
       double.decode(0, List(Some(""))),
-      Left(Decoder.Error(0, 1, "Invalid double  empty String", Type.double))
+      Left(Decoder.Error(0, 1, "Invalid double  For input string: \"\"", Type.double))
     )
     assertEquals(
       double.decode(0, List(Some("invalid"))),
