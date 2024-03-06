@@ -59,7 +59,6 @@ trait TemporalCodecs:
       .append(localDateFormatterWithoutEra)
       .appendLiteral(' ')
       .append(timeFormatter(precision))
-      .appendOptional(eraFormatter)
       .toFormatter(Locale.US)
 
   private def offsetTimeFormatter(precision: Int): DateTimeFormatter =
