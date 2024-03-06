@@ -52,7 +52,6 @@ trait TemporalCodecs:
   private val localDateFormatter: DateTimeFormatter =
     new DateTimeFormatterBuilder()
       .append(localDateFormatterWithoutEra)
-      .appendOptional(eraFormatter)
       .toFormatter(Locale.US)
 
   private def localDateTimeFormatter(precision: Int): DateTimeFormatter =
