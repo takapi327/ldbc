@@ -65,14 +65,23 @@ class TextCodecsTest extends FunSuite {
   }
 
   test("binary decode successfully") {
-    // assertEquals(binary(255).decode(0, List(Some("binary"))), Right(Array[Byte](98, 105, 110, 97, 114, 121)))
-    // assertEquals(binary(255).decode(0, List(Some(""))), Right(Array.emptyByteArray))
-    // assertEquals(binary(255).decode(0, List(Some("🔥 and 🌈"))), Right("🔥 and 🌈"))
-    // assertEquals(binary(255).decode(0, List(Some("שלום"))), Right("שלום"))
-    // assertEquals(binary(255).decode(0, List(Some("مرحب"))), Right("مرحب"))
-    // assertEquals(binary(255).decode(0, List(Some("你好"))), Right("你好"))
-    // assertEquals(binary(255).decode(0, List(Some("';--'"))), Right("';--'"))
-    // assertEquals(binary(255).opt.decode(0, List(None)), Right(None))
+    assertEquals(
+      binary(255).decode(0, List(Some("binary"))).map(_.mkString(":")),
+      Right("binary".getBytes().mkString(":"))
+    )
+    assertEquals(binary(255).decode(0, List(Some(""))).map(_.mkString(":")), Right(""))
+    assertEquals(
+      binary(255).decode(0, List(Some("🔥 and 🌈"))).map(_.mkString(":")),
+      Right("🔥 and 🌈".getBytes().mkString(":"))
+    )
+    assertEquals(binary(255).decode(0, List(Some("שלום"))).map(_.mkString(":")), Right("שלום".getBytes().mkString(":")))
+    assertEquals(binary(255).decode(0, List(Some("مرحب"))).map(_.mkString(":")), Right("مرحب".getBytes().mkString(":")))
+    assertEquals(binary(255).decode(0, List(Some("你好"))).map(_.mkString(":")), Right("你好".getBytes().mkString(":")))
+    assertEquals(
+      binary(255).decode(0, List(Some("';--'"))).map(_.mkString(":")),
+      Right("';--'".getBytes().mkString(":"))
+    )
+    assertEquals(binary(255).opt.decode(0, List(None)), Right(None))
   }
 
   test("varbinary encode successfully") {
