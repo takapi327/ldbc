@@ -98,16 +98,7 @@ trait TemporalCodecs:
   val date: Codec[LocalDate] =
     temporal(localDateFormatter, LocalDate.parse, Type.date)
 
-  def datetime(precision: Int): Codec[LocalDateTime] =
-    val fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6 = precision match
-      case 0 => 0
-      case 1 => 1
-      case 2 => 2
-      case 3 => 3
-      case 4 => 4
-      case 5 => 5
-      case 6 => 6
-      case _ => throw new IllegalArgumentException(s"datetime($precision): invalid precision, expected 0-6")
+  def datetime(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalDateTime] =
     temporal(localDateTimeFormatter(fsp), LocalDateTime.parse, Type.datetime(fsp))
 
   val datetime: Codec[LocalDateTime] =

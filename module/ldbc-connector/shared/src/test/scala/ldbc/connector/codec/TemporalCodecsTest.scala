@@ -40,8 +40,41 @@ class TemporalCodecsTest extends FunSuite:
   }
 
   test("date decode error") {
-    assertEquals(date.decode(0, List(Some(""))), Left(Decoder.Error(0, 1, "java.time.format.DateTimeParseException: Text '' could not be parsed at index 0", Type.date)))
-    assertEquals(date.decode(0, List(Some("invalid"))), Left(Decoder.Error(0, 1, "java.time.format.DateTimeParseException: Text 'invalid' could not be parsed at index 0", Type.date)))
-    assertEquals(date.decode(0, List(Some("-1"))), Left(Decoder.Error(0, 1, "java.time.format.DateTimeParseException: Text '-1' could not be parsed at index 0", Type.date)))
-    assertEquals(date.decode(0, List(None)), Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.date)))
+    assertEquals(
+      date.decode(0, List(Some(""))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '' could not be parsed at index 0",
+          Type.date
+        )
+      )
+    )
+    assertEquals(
+      date.decode(0, List(Some("invalid"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text 'invalid' could not be parsed at index 0",
+          Type.date
+        )
+      )
+    )
+    assertEquals(
+      date.decode(0, List(Some("-1"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '-1' could not be parsed at index 0",
+          Type.date
+        )
+      )
+    )
+    assertEquals(
+      date.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.date))
+    )
   }
