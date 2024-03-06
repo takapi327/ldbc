@@ -103,47 +103,19 @@ trait TemporalCodecs:
   val datetime: Codec[LocalDateTime] =
     temporal(localDateTimeFormatter(0), LocalDateTime.parse, Type.datetime)
 
-  def timestamp(precision: Int): Codec[LocalDateTime] =
-    val fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6 = precision match
-      case 0 => 0
-      case 1 => 1
-      case 2 => 2
-      case 3 => 3
-      case 4 => 4
-      case 5 => 5
-      case 6 => 6
-      case _ => throw new IllegalArgumentException(s"timestamp($precision): invalid precision, expected 0-6")
+  def timestamp(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalDateTime] =
     temporal(localDateTimeFormatter(fsp), LocalDateTime.parse, Type.timestamp(fsp))
 
   val timestamp: Codec[LocalDateTime] =
     temporal(localDateTimeFormatter(0), LocalDateTime.parse, Type.timestamp)
 
-  def timestamptz(precision: Int): Codec[OffsetDateTime] =
-    val fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6 = precision match
-      case 0 => 0
-      case 1 => 1
-      case 2 => 2
-      case 3 => 3
-      case 4 => 4
-      case 5 => 5
-      case 6 => 6
-      case _ => throw new IllegalArgumentException(s"timestamp($precision): invalid precision, expected 0-6")
+  def timestamptz(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[OffsetDateTime] =
     temporal(offsetDateTimeFormatter(fsp), OffsetDateTime.parse, Type.timestamp(fsp))
 
   val timestamptz: Codec[OffsetDateTime] =
     temporal(offsetDateTimeFormatter(0), OffsetDateTime.parse, Type.timestamp)
 
-  def time(precision: Int): Codec[LocalTime] =
-    val fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6 = precision match
-      case 0 => 0
-      case 1 => 1
-      case 2 => 2
-      case 3 => 3
-      case 4 => 4
-      case 5 => 5
-      case 6 => 6
-      case _ => throw new IllegalArgumentException(s"time($precision): invalid precision, expected 0-6")
-
+  def time(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalTime] =
     temporal(timeFormatter(fsp), LocalTime.parse, Type.time(fsp))
 
   val time: Codec[LocalTime] =
@@ -152,17 +124,7 @@ trait TemporalCodecs:
   val timetz: Codec[OffsetTime] =
     temporal(offsetTimeFormatter(0), OffsetTime.parse, Type.time)
 
-  def timetz(precision: Int): Codec[OffsetTime] =
-    val fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6 = precision match
-      case 0 => 0
-      case 1 => 1
-      case 2 => 2
-      case 3 => 3
-      case 4 => 4
-      case 5 => 5
-      case 6 => 6
-      case _ => throw new IllegalArgumentException(s"time($precision): invalid precision, expected 0-6")
-
+  def timetz(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[OffsetTime] =
     temporal(offsetTimeFormatter(fsp), OffsetTime.parse, Type.time(fsp))
 
   @deprecated(
