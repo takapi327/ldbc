@@ -110,7 +110,7 @@ trait TemporalCodecs:
   val time: Codec[LocalTime] = time(0)
 
   def timetz(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[OffsetTime] =
-    temporal(offsetTimeFormatter(fsp), OffsetTime.parse, Type.time(fsp))
+    temporal(offsetTimeFormatter(fsp), OffsetTime.parse, Type.varchar(255))
   val timetz: Codec[OffsetTime] = timetz(0)
 
   @deprecated(
