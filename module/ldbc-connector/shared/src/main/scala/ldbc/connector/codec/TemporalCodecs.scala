@@ -126,16 +126,22 @@ trait TemporalCodecs:
   val year: Codec[Year] =
     Codec.simple(
       _.toString,
-      str => (
-        for
-          int <- Either.catchOnly[NumberFormatException](str.toInt)
-          year <- Either.catchOnly[DateTimeParseException] {
-            val int = str.toInt
-            if (1901 <= int && int <= 2156) || str === "0000" then Year.of(int)
-            else throw new DateTimeParseException(s"Year is out of range: $int. Year must be in the range 1901 to 2155.", str, 0)
-          }
-        yield year
-      ).leftMap(_.toString),
+      str =>
+        (
+          for
+            int <- Either.catchOnly[NumberFormatException](str.toInt)
+            year <- Either.catchOnly[DateTimeParseException] {
+                      val int = str.toInt
+                      if (1901 <= int && int <= 2156) || str === "0000" then Year.of(int)
+                      else
+                        throw new DateTimeParseException(
+                          s"Year is out of range: $int. Year must be in the range 1901 to 2155.",
+                          str,
+                          0
+                        )
+                    }
+          yield year
+        ).leftMap(_.toString),
       Type.year
     )
 
