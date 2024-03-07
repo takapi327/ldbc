@@ -17,7 +17,7 @@ class MySQLException(
 ) extends Exception(message):
 
   override def getMessage: String =
-    s"message: $message${sql.fold("")(s => s", sql: $s")}${ detail.fold("")(d => s", detail: $d") }${ hint
+    s"message: $message${ sql.fold("")(s => s", sql: $s") }${ detail.fold("")(d => s", detail: $d") }${ hint
         .fold("")(h => s", hint: $h") }${ originatedPacket.fold("")(p => s", point of origin: $p") }"
 
   def fields: List[Attribute[?]] =

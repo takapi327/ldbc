@@ -60,8 +60,8 @@ case class ERRPacket(
 
   def toException(message: String, sql: String): ERRPacketException = ERRPacketException(
     message = message,
-    sql = Some(sql),
-    detail = Some(errorMessage)
+    sql     = Some(sql),
+    detail  = Some(errorMessage)
   )
 
 object ERRPacket:
