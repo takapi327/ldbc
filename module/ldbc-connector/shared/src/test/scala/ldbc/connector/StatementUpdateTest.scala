@@ -28,7 +28,7 @@ class StatementUpdateTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          _     <- conn.statement("USE `connector_test`").executeUpdate()
+          _     <- conn.statement("USE `connector_test`").executeQuery()
           _     <- conn.statement("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)").executeUpdate()
           count <- conn.statement("INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')").executeUpdate()
           _     <- conn.statement("DROP TABLE `bit_table`").executeUpdate()
@@ -42,7 +42,7 @@ class StatementUpdateTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          _     <- conn.statement("USE `connector_test`").executeUpdate()
+          _     <- conn.statement("USE `connector_test`").executeQuery()
           _     <- conn.statement("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)").executeUpdate()
           count <- conn.statement("INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')").executeUpdate()
           _     <- conn.statement("DROP TABLE `bit_table`").executeUpdate()
