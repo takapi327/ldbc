@@ -74,16 +74,15 @@ object OKPacket:
     val hasClientTransactionsFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_TRANSACTIONS)
     val hasClientSessionTrackFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_SESSION_TRACK)
     for
-      status       <- uint8
       affectedRows <- uint8
       lastInsertId <- uint8
       statusFlags <-
         (if hasClientProtocol41Flag || hasClientTransactionsFlag then uint16L.map(int => ServerStatusFlags(int.toLong))
          else provide(Nil))
-      warnings <- if hasClientProtocol41Flag then uint8L.map(_.some) else provide(None)
+      warnings <- if hasClientProtocol41Flag then uint16L.map(_.some) else provide(None)
       info     <- if hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
       sessionStateInfo <- (if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then
                              bytes.map(_.decodeUtf8Lenient.some)
                            else provide(None))
       msg <- if !hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
-    yield OKPacket(status, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg)
+    yield OKPacket(STATUS, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg)
