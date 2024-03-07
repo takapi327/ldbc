@@ -58,6 +58,12 @@ case class ERRPacket(
     detail  = Some(errorMessage)
   )
 
+  def toException(message: String, sql: String): ERRPacketException = ERRPacketException(
+    message = message,
+    sql = Some(sql),
+    detail = Some(errorMessage)
+  )
+
 object ERRPacket:
 
   val STATUS = 0xff

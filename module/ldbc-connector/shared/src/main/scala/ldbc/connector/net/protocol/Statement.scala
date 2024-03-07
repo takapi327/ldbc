@@ -90,7 +90,7 @@ object Statement:
                     override def columns: Vector[ColumnDefinitionPacket] = Vector.empty
                     override def rows:    Vector[ResultSetRowPacket]     = Vector.empty
                 )
-              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case result: ColumnsNumberPacket =>
                 for
                   columnDefinitions <-
@@ -111,7 +111,7 @@ object Statement:
             socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
               socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(result.affectedRows)
-                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                 case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
               }
           )
