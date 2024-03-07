@@ -82,6 +82,14 @@ object Authentication:
   ): Authentication[F] =
     new Authentication[F]:
 
+      private val attributes = Seq(
+        Attribute("protocol.version", initialPacket.protocolVersion.toString),
+        Attribute("server.version", initialPacket.serverVersion.toString),
+        Attribute("character", initialPacket.characterSet.toString),
+        Attribute("auth.plugin", initialPacket.authPlugin),
+        Attribute("username", username)
+      ) ++ database.map(db => Attribute("database", db)).toSeq
+
       /**
        * Read until the authentication is OK.
        * If an error is returned from the server, it throws an exception and exits.
@@ -214,9 +222,7 @@ object Authentication:
 
       override def start(): F[Unit] =
         exchange[F, Unit]("authentication") { (span: Span[F]) =>
-          database.fold(span.addAttribute(Attribute("username", username)))(database =>
-            span.addAttributes(Attribute("username", username), Attribute("database", database))
-          ) *> (
+          span.addAttributes(attributes*) *> (
             determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
               case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
               case Right(plugin) => handshake(plugin) *> readUntilOk(plugin)
