@@ -83,25 +83,26 @@ object Statement:
           span.addAttribute(Attribute("sql", sql)) *>
             resetSequenceId *>
             socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-              socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-                case _: OKPacket => ev.pure(
+            socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+              case _: OKPacket =>
+                ev.pure(
                   new ResultSet:
                     override def columns: Vector[ColumnDefinitionPacket] = Vector.empty
                     override def rows:    Vector[ResultSetRowPacket]     = Vector.empty
                 )
-                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-                case result: ColumnsNumberPacket => 
-                  for
-                    columnDefinitions <-
-                      repeatProcess(result.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-                    resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                      ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
-                      Vector.empty
-                    )
-                  yield new ResultSet:
-                    override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-                    override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
-              }
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+              case result: ColumnsNumberPacket =>
+                for
+                  columnDefinitions <-
+                    repeatProcess(result.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+                  resultSetRow <- readUntilEOF[ResultSetRowPacket](
+                                    ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                                    Vector.empty
+                                  )
+                yield new ResultSet:
+                  override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
+                  override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+            }
         }
 
       override def executeUpdate(): F[Int] =
