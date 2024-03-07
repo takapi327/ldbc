@@ -80,23 +80,28 @@ object Statement:
 
       override def executeQuery(): F[ResultSet] =
         exchange[F, ResultSet]("statement") { (span: Span[F]) =>
-          span.addAttribute(Attribute("sql", sql)) *> resetSequenceId *> (
-            for
-              columnCount <- socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-                               socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-                                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-                                 case result: ColumnsNumberPacket => ev.pure(result)
-                               }
-              columnDefinitions <-
-                repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-              resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
-                                Vector.empty
-                              )
-            yield new ResultSet:
-              override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-              override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
-          )
+          span.addAttribute(Attribute("sql", sql)) *>
+            resetSequenceId *>
+            socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
+              socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                case _: OKPacket => ev.pure(
+                  new ResultSet:
+                    override def columns: Vector[ColumnDefinitionPacket] = Vector.empty
+                    override def rows:    Vector[ResultSetRowPacket]     = Vector.empty
+                )
+                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+                case result: ColumnsNumberPacket => 
+                  for
+                    columnDefinitions <-
+                      repeatProcess(result.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+                    resultSetRow <- readUntilEOF[ResultSetRowPacket](
+                      ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                      Vector.empty
+                    )
+                  yield new ResultSet:
+                    override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
+                    override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+              }
         }
 
       override def executeUpdate(): F[Int] =
@@ -104,7 +109,7 @@ object Statement:
           span.addAttribute(Attribute("sql", sql)) *> resetSequenceId *> (
             socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
               socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                case result: OKPacket => ev.pure(println(result)) *> ev.pure(result.affectedRows)
+                case result: OKPacket => ev.pure(result.affectedRows)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
                 case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
               }
