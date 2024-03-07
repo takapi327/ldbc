@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-//import java.time.OffsetTime
+import java.time.OffsetTime
 //import java.time.Year
 //import java.time.temporal.ChronoField.*
 //import java.time.temporal.TemporalAccessor
@@ -544,5 +544,123 @@ class TemporalCodecsTest extends FunSuite:
     assertEquals(
       time(0).decode(0, List(None)),
       Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.time(0)))
+    )
+  }
+
+  test("timetz encode successfully") {
+    assertEquals(
+      timetz(0).encode(OffsetTime.of(11, 55, 55, 0, ZoneOffset.UTC)),
+      List(Some(Encoded("11:55:55Z", false)))
+    )
+    assertEquals(
+      timetz(0).encode(OffsetTime.of(0, 0, 0, 0, ZoneOffset.UTC)),
+      List(Some(Encoded("00:00:00Z", false)))
+    )
+    assertEquals(
+      timetz(0).encode(OffsetTime.of(23, 59, 59, 0, ZoneOffset.UTC)),
+      List(Some(Encoded("23:59:59Z", false)))
+    )
+    assertEquals(
+      timetz(1).encode(OffsetTime.of(11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("11:55:55.0Z", false)))
+    )
+    assertEquals(
+      timetz(2).encode(OffsetTime.of(11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("11:55:55.00Z", false)))
+    )
+    assertEquals(
+      timetz(3).encode(OffsetTime.of(11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("11:55:55.000Z", false)))
+    )
+    assertEquals(
+      timetz(4).encode(OffsetTime.of(11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("11:55:55.0000Z", false)))
+    )
+    assertEquals(
+      timetz(5).encode(OffsetTime.of(11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("11:55:55.00000Z", false)))
+    )
+    assertEquals(
+      timetz(6).encode(OffsetTime.of(11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("11:55:55.000000Z", false)))
+    )
+  }
+
+  test("timetz decode successfully") {
+    assertEquals(
+      timetz(0).decode(0, List(Some("11:55:55Z"))),
+      Right(OffsetTime.of(11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(0).decode(0, List(Some("00:00:00Z"))),
+      Right(OffsetTime.of(0, 0, 0, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(0).decode(0, List(Some("23:59:59Z"))),
+      Right(OffsetTime.of(23, 59, 59, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(1).decode(0, List(Some("11:55:55.0Z"))),
+      Right(OffsetTime.of(11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(2).decode(0, List(Some("11:55:55.00Z"))),
+      Right(OffsetTime.of(11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(3).decode(0, List(Some("11:55:55.000Z"))),
+      Right(OffsetTime.of(11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(4).decode(0, List(Some("11:55:55.0000Z"))),
+      Right(OffsetTime.of(11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(5).decode(0, List(Some("11:55:55.10000Z"))),
+      Right(OffsetTime.of(11, 55, 55, 100000000, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timetz(6).decode(0, List(Some("11:55:55.100000Z"))),
+      Right(OffsetTime.of(11, 55, 55, 100000000, ZoneOffset.UTC))
+    )
+  }
+
+  test("timetz decode error") {
+    assertEquals(
+      timetz(0).decode(0, List(Some(""))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '' could not be parsed at index 0",
+          Type.varchar(255)
+        )
+      )
+    )
+    assertEquals(
+      timetz(0).decode(0, List(Some("invalid"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text 'invalid' could not be parsed at index 0",
+          Type.varchar(255)
+        )
+      )
+    )
+    assertEquals(
+      timetz(0).decode(0, List(Some("-1"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '-1' could not be parsed at index 0",
+          Type.varchar(255)
+        )
+      )
+    )
+    assertEquals(
+      timetz(0).decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.varchar(255)))
     )
   }
