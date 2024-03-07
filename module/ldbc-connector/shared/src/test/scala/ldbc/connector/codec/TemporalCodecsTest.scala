@@ -12,12 +12,7 @@ import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.OffsetTime
-//import java.time.Year
-//import java.time.temporal.ChronoField.*
-//import java.time.temporal.TemporalAccessor
-//import java.time.format.DateTimeFormatterBuilder
-//import java.time.format.SignStyle
-//import java.util.Locale
+import java.time.Year
 
 import munit.FunSuite
 
@@ -662,5 +657,75 @@ class TemporalCodecsTest extends FunSuite:
     assertEquals(
       timetz(0).decode(0, List(None)),
       Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.varchar(255)))
+    )
+  }
+
+  test("year encode successfully") {
+    assertEquals(
+      year.encode(Year.of(2024)),
+      List(Some(Encoded("2024", false)))
+    )
+    assertEquals(
+      year.encode(Year.of(1000)),
+      List(Some(Encoded("1000", false)))
+    )
+    assertEquals(
+      year.encode(Year.of(9999)),
+      List(Some(Encoded("9999", false)))
+    )
+  }
+
+  test("year decode successfully") {
+    assertEquals(
+      year.decode(0, List(Some("2024"))),
+      Right(Year.of(2024))
+    )
+    assertEquals(
+      year.decode(0, List(Some("1000"))),
+      Right(Year.of(1000))
+    )
+    assertEquals(
+      year.decode(0, List(Some("9999"))),
+      Right(Year.of(9999))
+    )
+  }
+
+  test("year decode error") {
+    assertEquals(
+      year.decode(0, List(Some(""))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '' could not be parsed at index 0",
+          Type.year
+        )
+      )
+    )
+    assertEquals(
+      year.decode(0, List(Some("invalid"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text 'invalid' could not be parsed at index 0",
+          Type.year
+        )
+      )
+    )
+    assertEquals(
+      year.decode(0, List(Some("-1"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '-1' could not be parsed at index 1",
+          Type.year
+        )
+      )
+    )
+    assertEquals(
+      year.decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.year))
     )
   }
