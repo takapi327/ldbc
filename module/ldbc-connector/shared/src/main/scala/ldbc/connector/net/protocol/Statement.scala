@@ -34,6 +34,12 @@ trait Statement[F[_]]:
   def executeQuery(): F[ResultSet]
 
   /**
+   * Executes the given SQL statement, which may be an INSERT, UPDATE, or DELETE statement or an SQL statement that
+   * returns nothing, such as an SQL DDL statement.
+   */
+  def executeUpdate(): F[Int]
+
+  /**
    * Releases this Statement object's database and LDBC resources immediately instead of waiting for this to happen when
    * it is automatically closed. It is generally good practice to release resources as soon as you are finished with
    * them to avoid tying up database resources.
@@ -89,6 +95,16 @@ object Statement:
             yield new ResultSet:
               override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
               override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+          )
+        }
+
+      override def executeUpdate(): F[Int] =
+        exchange[F, Int]("statement") { (span: Span[F]) =>
+          span.addAttribute(Attribute("sql", sql)) *> resetSequenceId *> (
+            socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
+              socket.receive(OKPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                result => ev.pure(println(result)) *> ev.pure(result.affectedRows)
+              }
           )
         }
 
