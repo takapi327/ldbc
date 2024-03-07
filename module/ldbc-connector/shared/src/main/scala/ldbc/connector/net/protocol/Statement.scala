@@ -106,7 +106,7 @@ object Statement:
               socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(println(result)) *> ev.pure(result.affectedRows)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-                case _: EOFPacket => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
               }
           )
         }
