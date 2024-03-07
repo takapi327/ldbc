@@ -17,11 +17,11 @@ class StatementUpdateTest extends CatsEffectSuite:
   given Tracer[IO] = Tracer.noop[IO]
 
   private val connection = Connection[IO](
-    host                    = "127.0.0.1",
-    port                    = 13306,
-    user                    = "ldbc",
-    password                = Some("password"),
-    allowPublicKeyRetrieval = true
+    host     = "127.0.0.1",
+    port     = 13306,
+    user     = "ldbc",
+    password = Some("password"),
+    ssl      = SSL.Trusted
   )
 
   test("As a result of entering one case of data, there will be one affected row.") {
