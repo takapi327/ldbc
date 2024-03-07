@@ -660,12 +660,12 @@ class TemporalCodecsTest extends FunSuite:
       List(Some(Encoded("2024", false)))
     )
     assertEquals(
-      year.encode(Year.of(1000)),
-      List(Some(Encoded("1000", false)))
+      year.encode(Year.of(1901)),
+      List(Some(Encoded("1901", false)))
     )
     assertEquals(
-      year.encode(Year.of(9999)),
-      List(Some(Encoded("9999", false)))
+      year.encode(Year.of(2156)),
+      List(Some(Encoded("2156", false)))
     )
   }
 
@@ -675,12 +675,12 @@ class TemporalCodecsTest extends FunSuite:
       Right(Year.of(2024))
     )
     assertEquals(
-      year.decode(0, List(Some("1000"))),
-      Right(Year.of(1000))
+      year.decode(0, List(Some("1901"))),
+      Right(Year.of(1901))
     )
     assertEquals(
-      year.decode(0, List(Some("9999"))),
-      Right(Year.of(9999))
+      year.decode(0, List(Some("2156"))),
+      Right(Year.of(2156))
     )
   }
 
@@ -691,7 +691,7 @@ class TemporalCodecsTest extends FunSuite:
         Decoder.Error(
           0,
           1,
-          "java.time.format.DateTimeParseException: Text '' could not be parsed at index 0",
+          "java.lang.NumberFormatException: For input string: \"\"",
           Type.year
         )
       )
@@ -702,7 +702,7 @@ class TemporalCodecsTest extends FunSuite:
         Decoder.Error(
           0,
           1,
-          "java.time.format.DateTimeParseException: Text 'invalid' could not be parsed at index 0",
+          "java.lang.NumberFormatException: For input string: \"invalid\"",
           Type.year
         )
       )
@@ -713,7 +713,7 @@ class TemporalCodecsTest extends FunSuite:
         Decoder.Error(
           0,
           1,
-          "java.time.format.DateTimeParseException: Text '-1' could not be parsed at index 1",
+          "java.time.format.DateTimeParseException: Year is out of range: -1. Year must be in the range 1901 to 2155.",
           Type.year
         )
       )
