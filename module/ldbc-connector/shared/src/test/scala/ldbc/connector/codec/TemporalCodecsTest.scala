@@ -9,7 +9,8 @@ package ldbc.connector.codec
 import java.time.LocalDate
 import java.time.LocalDateTime
 //import java.time.LocalTime
-//import java.time.OffsetDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 //import java.time.OffsetTime
 //import java.time.Year
 //import java.time.temporal.ChronoField.*
@@ -236,7 +237,10 @@ class TemporalCodecsTest extends FunSuite:
       timestamp(0).decode(0, List(Some("2024-03-07 11:55:55"))),
       Right(LocalDateTime.of(2024, 3, 7, 11, 55, 55))
     )
-    assertEquals(datetime(0).decode(0, List(Some("1000-01-01 00:00:00"))), Right(LocalDateTime.of(1000, 1, 1, 0, 0, 0)))
+    assertEquals(
+      timestamp(0).decode(0, List(Some("1000-01-01 00:00:00"))),
+      Right(LocalDateTime.of(1000, 1, 1, 0, 0, 0))
+    )
     assertEquals(
       timestamp(0).decode(0, List(Some("9999-12-31 23:59:59"))),
       Right(LocalDateTime.of(9999, 12, 31, 23, 59, 59))
@@ -307,3 +311,120 @@ class TemporalCodecsTest extends FunSuite:
     )
   }
 
+  test("timestamptz encode successfully") {
+    assertEquals(
+      timestamptz(0).encode(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 0, ZoneOffset.UTC)),
+      List(Some(Encoded("2024-03-07 11:55:55Z", false)))
+    )
+    assertEquals(
+      timestamptz(0).encode(OffsetDateTime.of(1000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)),
+      List(Some(Encoded("1000-01-01 00:00:00Z", false)))
+    )
+    assertEquals(
+      timestamptz(0).encode(OffsetDateTime.of(9999, 12, 31, 23, 59, 59, 0, ZoneOffset.UTC)),
+      List(Some(Encoded("9999-12-31 23:59:59Z", false)))
+    )
+    assertEquals(
+      timestamptz(1).encode(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("2024-03-07 11:55:55.0Z", false)))
+    )
+    assertEquals(
+      timestamptz(2).encode(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("2024-03-07 11:55:55.00Z", false)))
+    )
+    assertEquals(
+      timestamptz(3).encode(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("2024-03-07 11:55:55.000Z", false)))
+    )
+    assertEquals(
+      timestamptz(4).encode(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("2024-03-07 11:55:55.0000Z", false)))
+    )
+    assertEquals(
+      timestamptz(5).encode(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("2024-03-07 11:55:55.00000Z", false)))
+    )
+    assertEquals(
+      timestamptz(6).encode(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 1, ZoneOffset.UTC)),
+      List(Some(Encoded("2024-03-07 11:55:55.000000Z", false)))
+    )
+  }
+
+  test("timestamptz decode successfully") {
+    assertEquals(
+      timestamptz(0).decode(0, List(Some("2024-03-07 11:55:55Z"))),
+      Right(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(0).decode(0, List(Some("1000-01-01 00:00:00Z"))),
+      Right(OffsetDateTime.of(1000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(0).decode(0, List(Some("9999-12-31 23:59:59Z"))),
+      Right(OffsetDateTime.of(9999, 12, 31, 23, 59, 59, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(1).decode(0, List(Some("2024-03-07 11:55:55.0Z"))),
+      Right(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(2).decode(0, List(Some("2024-03-07 11:55:55.00Z"))),
+      Right(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(3).decode(0, List(Some("2024-03-07 11:55:55.000Z"))),
+      Right(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(4).decode(0, List(Some("2024-03-07 11:55:55.0000Z"))),
+      Right(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 0, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(5).decode(0, List(Some("2024-03-07 11:55:55.10000Z"))),
+      Right(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 100000000, ZoneOffset.UTC))
+    )
+    assertEquals(
+      timestamptz(6).decode(0, List(Some("2024-03-07 11:55:55.100000Z"))),
+      Right(OffsetDateTime.of(2024, 3, 7, 11, 55, 55, 100000000, ZoneOffset.UTC))
+    )
+  }
+
+  test("timestamptz decode error") {
+    assertEquals(
+      timestamptz(0).decode(0, List(Some(""))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '' could not be parsed at index 0",
+          Type.varchar(255)
+        )
+      )
+    )
+    assertEquals(
+      timestamptz(0).decode(0, List(Some("invalid"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text 'invalid' could not be parsed at index 0",
+          Type.varchar(255)
+        )
+      )
+    )
+    assertEquals(
+      timestamptz(0).decode(0, List(Some("-1"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '-1' could not be parsed at index 0",
+          Type.varchar(255)
+        )
+      )
+    )
+    assertEquals(
+      timestamptz(0).decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.varchar(255)))
+    )
+  }
