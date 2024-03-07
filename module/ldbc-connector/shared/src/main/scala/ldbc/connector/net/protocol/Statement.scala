@@ -15,6 +15,7 @@ import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.ResultSet
+import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.ResponsePacket
 import ldbc.connector.net.packet.response.*
@@ -102,8 +103,10 @@ object Statement:
         exchange[F, Int]("statement") { (span: Span[F]) =>
           span.addAttribute(Attribute("sql", sql)) *> resetSequenceId *> (
             socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-              socket.receive(OKPacket.decoder(initialPacket.capabilityFlags)).flatMap { result =>
-                ev.pure(println(result)) *> ev.pure(result.affectedRows)
+              socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+                case result: OKPacket => ev.pure(println(result)) *> ev.pure(result.affectedRows)
+                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+                case _: EOFPacket => ev.raiseError(new MySQLException("Unexpected EOF packet"))
               }
           )
         }
