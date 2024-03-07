@@ -46,9 +46,6 @@ trait TemporalCodecs:
       .appendValue(DAY_OF_MONTH, 2)
       .toFormatter(Locale.US)
 
-  private val eraFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern(" G", Locale.US)
-
   private val localDateFormatter: DateTimeFormatter =
     new DateTimeFormatterBuilder()
       .append(localDateFormatterWithoutEra)
@@ -73,7 +70,6 @@ trait TemporalCodecs:
       .appendLiteral(' ')
       .append(timeFormatter(precision))
       .appendOffset("+HH:mm", "Z")
-      .appendOptional(eraFormatter)
       .toFormatter(Locale.US)
 
   private def timeFormatter(precision: Int): DateTimeFormatter =
@@ -99,33 +95,23 @@ trait TemporalCodecs:
 
   def datetime(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalDateTime] =
     temporal(localDateTimeFormatter(fsp), LocalDateTime.parse, Type.datetime(fsp))
-
-  val datetime: Codec[LocalDateTime] =
-    temporal(localDateTimeFormatter(0), LocalDateTime.parse, Type.datetime)
+  val datetime: Codec[LocalDateTime] = datetime(0)
 
   def timestamp(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalDateTime] =
     temporal(localDateTimeFormatter(fsp), LocalDateTime.parse, Type.timestamp(fsp))
-
-  val timestamp: Codec[LocalDateTime] =
-    temporal(localDateTimeFormatter(0), LocalDateTime.parse, Type.timestamp)
+  val timestamp: Codec[LocalDateTime] = timestamp(0)
 
   def timestamptz(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[OffsetDateTime] =
-    temporal(offsetDateTimeFormatter(fsp), OffsetDateTime.parse, Type.timestamp(fsp))
-
-  val timestamptz: Codec[OffsetDateTime] =
-    temporal(offsetDateTimeFormatter(0), OffsetDateTime.parse, Type.timestamp)
+    temporal(offsetDateTimeFormatter(fsp), OffsetDateTime.parse, Type.varchar(255))
+  val timestamptz: Codec[OffsetDateTime] = timestamptz(0)
 
   def time(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalTime] =
     temporal(timeFormatter(fsp), LocalTime.parse, Type.time(fsp))
-
-  val time: Codec[LocalTime] =
-    temporal(timeFormatter(0), LocalTime.parse, Type.time)
-
-  val timetz: Codec[OffsetTime] =
-    temporal(offsetTimeFormatter(0), OffsetTime.parse, Type.time)
+  val time: Codec[LocalTime] = time(0)
 
   def timetz(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[OffsetTime] =
     temporal(offsetTimeFormatter(fsp), OffsetTime.parse, Type.time(fsp))
+  val timetz: Codec[OffsetTime] = timetz(0)
 
   @deprecated(
     "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
