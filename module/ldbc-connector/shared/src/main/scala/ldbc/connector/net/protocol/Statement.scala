@@ -102,8 +102,8 @@ object Statement:
         exchange[F, Int]("statement") { (span: Span[F]) =>
           span.addAttribute(Attribute("sql", sql)) *> resetSequenceId *> (
             socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-              socket.receive(OKPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-                result => ev.pure(println(result)) *> ev.pure(result.affectedRows)
+              socket.receive(OKPacket.decoder(initialPacket.capabilityFlags)).flatMap { result =>
+                ev.pure(println(result)) *> ev.pure(result.affectedRows)
               }
           )
         }
