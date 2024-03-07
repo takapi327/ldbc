@@ -82,8 +82,8 @@ object OKPacket:
          else provide(Nil))
       warnings <- if hasClientProtocol41Flag then uint8L.map(_.some) else provide(None)
       info     <- if hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
-      sessionStateInfo <- if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then
-                            bytes.map(_.decodeUtf8Lenient.some)
-                          else provide(None)
+      sessionStateInfo <- (if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then
+                             bytes.map(_.decodeUtf8Lenient.some)
+                           else provide(None))
       msg <- if !hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
     yield OKPacket(status, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg)
