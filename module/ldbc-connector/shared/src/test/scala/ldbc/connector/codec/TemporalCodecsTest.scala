@@ -8,7 +8,7 @@ package ldbc.connector.codec
 
 import java.time.LocalDate
 import java.time.LocalDateTime
-//import java.time.LocalTime
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 //import java.time.OffsetTime
@@ -426,5 +426,123 @@ class TemporalCodecsTest extends FunSuite:
     assertEquals(
       timestamptz(0).decode(0, List(None)),
       Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.varchar(255)))
+    )
+  }
+
+  test("time encode successfully") {
+    assertEquals(
+      time(0).encode(LocalTime.of(11, 55, 55)),
+      List(Some(Encoded("11:55:55", false)))
+    )
+    assertEquals(
+      time(0).encode(LocalTime.of(0, 0, 0)),
+      List(Some(Encoded("00:00:00", false)))
+    )
+    assertEquals(
+      time(0).encode(LocalTime.of(23, 59, 59)),
+      List(Some(Encoded("23:59:59", false)))
+    )
+    assertEquals(
+      time(1).encode(LocalTime.of(11, 55, 55, 1)),
+      List(Some(Encoded("11:55:55.0", false)))
+    )
+    assertEquals(
+      time(2).encode(LocalTime.of(11, 55, 55, 1)),
+      List(Some(Encoded("11:55:55.00", false)))
+    )
+    assertEquals(
+      time(3).encode(LocalTime.of(11, 55, 55, 1)),
+      List(Some(Encoded("11:55:55.000", false)))
+    )
+    assertEquals(
+      time(4).encode(LocalTime.of(11, 55, 55, 1)),
+      List(Some(Encoded("11:55:55.0000", false)))
+    )
+    assertEquals(
+      time(5).encode(LocalTime.of(11, 55, 55, 1)),
+      List(Some(Encoded("11:55:55.00000", false)))
+    )
+    assertEquals(
+      time(6).encode(LocalTime.of(11, 55, 55, 1)),
+      List(Some(Encoded("11:55:55.000000", false)))
+    )
+  }
+
+  test("time decode successfully") {
+    assertEquals(
+      time(0).decode(0, List(Some("11:55:55"))),
+      Right(LocalTime.of(11, 55, 55))
+    )
+    assertEquals(
+      time(0).decode(0, List(Some("00:00:00"))),
+      Right(LocalTime.of(0, 0, 0))
+    )
+    assertEquals(
+      time(0).decode(0, List(Some("23:59:59"))),
+      Right(LocalTime.of(23, 59, 59))
+    )
+    assertEquals(
+      time(1).decode(0, List(Some("11:55:55.0"))),
+      Right(LocalTime.of(11, 55, 55))
+    )
+    assertEquals(
+      time(2).decode(0, List(Some("11:55:55.00"))),
+      Right(LocalTime.of(11, 55, 55))
+    )
+    assertEquals(
+      time(3).decode(0, List(Some("11:55:55.000"))),
+      Right(LocalTime.of(11, 55, 55))
+    )
+    assertEquals(
+      time(4).decode(0, List(Some("11:55:55.0000"))),
+      Right(LocalTime.of(11, 55, 55))
+    )
+    assertEquals(
+      time(5).decode(0, List(Some("11:55:55.10000"))),
+      Right(LocalTime.of(11, 55, 55, 100000000))
+    )
+    assertEquals(
+      time(6).decode(0, List(Some("11:55:55.100000"))),
+      Right(LocalTime.of(11, 55, 55, 100000000))
+    )
+  }
+
+  test("time decode error") {
+    assertEquals(
+      time(0).decode(0, List(Some(""))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '' could not be parsed at index 0",
+          Type.time(0)
+        )
+      )
+    )
+    assertEquals(
+      time(0).decode(0, List(Some("invalid"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text 'invalid' could not be parsed at index 0",
+          Type.time(0)
+        )
+      )
+    )
+    assertEquals(
+      time(0).decode(0, List(Some("-1"))),
+      Left(
+        Decoder.Error(
+          0,
+          1,
+          "java.time.format.DateTimeParseException: Text '-1' could not be parsed at index 0",
+          Type.time(0)
+        )
+      )
+    )
+    assertEquals(
+      time(0).decode(0, List(None)),
+      Left(Decoder.Error(0, 1, "Unexpected NULL value in non-optional column.", Type.time(0)))
     )
   }
