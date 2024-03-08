@@ -17,7 +17,7 @@ import munit.CatsEffectSuite
 import ldbc.connector.codec.all.*
 import ldbc.connector.net.packet.response.ResultSetRowPacket
 
-class StatementTest extends CatsEffectSuite:
+class StatementQueryTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
