@@ -221,7 +221,7 @@ object Authentication:
         socket.send(handshakeResponse)
 
       override def start(): F[Unit] =
-        exchange[F, Unit]("authentication") { (span: Span[F]) =>
+        exchange[F, Unit]("database.authentication") { (span: Span[F]) =>
           span.addAttributes(attributes*) *> (
             determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
               case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
