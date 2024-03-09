@@ -55,6 +55,14 @@ trait MySQLProtocol[F[_]]:
   def authenticate(user: String, password: String, useSSL: Boolean, allowPublicKeyRetrieval: Boolean): F[Unit]
 
   /**
+   * Creates a statement with the given SQL.
+   *
+   * @param sql
+   *   SQL queries based on text protocols
+   */
+  def statement(sql: String): Statement[F]
+
+  /**
    * Resets the sequence id.
    */
   def resetSequenceId: F[Unit]
@@ -101,6 +109,9 @@ object MySQLProtocol:
           ): F[Unit] =
             Authentication[F](packetSocket, initialPacket, user, password, None, useSSL, allowPublicKeyRetrieval)
               .start()
+
+          override def statement(sql: String): Statement[F] =
+            Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
 
           override def resetSequenceId: F[Unit] =
             sequenceIdRef.update(_ => 0.toByte)

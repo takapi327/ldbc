@@ -58,8 +58,8 @@ case class OKPacket(
   lastInsertId:     Int,
   statusFlags:      Seq[ServerStatusFlags],
   warnings:         Option[Int],
-  info:             Int,
-  sessionStateInfo: Option[Int],
+  info:             Option[String],
+  sessionStateInfo: Option[String],
   msg:              Option[String]
 ) extends GenericResponsePackets:
 
@@ -74,15 +74,15 @@ object OKPacket:
     val hasClientTransactionsFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_TRANSACTIONS)
     val hasClientSessionTrackFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_SESSION_TRACK)
     for
-      status       <- uint4
-      affectedRows <- uint4
-      lastInsertId <- uint4
+      affectedRows <- uint8
+      lastInsertId <- uint8
       statusFlags <-
-        (if hasClientProtocol41Flag || hasClientTransactionsFlag then uint4.map(int => ServerStatusFlags(int.toLong))
+        (if hasClientProtocol41Flag || hasClientTransactionsFlag then uint16L.map(int => ServerStatusFlags(int.toLong))
          else provide(Nil))
-      warnings <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
-      info     <- if hasClientSessionTrackFlag then uint4 else provide(0)
-      sessionStateInfo <- if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then uint4.map(_.some)
-                          else provide(None)
-      msg <- if !hasClientSessionTrackFlag then utf8.map(_.some) else provide(None)
-    yield OKPacket(status, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg)
+      warnings <- if hasClientProtocol41Flag then uint16L.map(_.some) else provide(None)
+      info     <- if hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
+      sessionStateInfo <- (if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then
+                             bytes.map(_.decodeUtf8Lenient.some)
+                           else provide(None))
+      msg <- if !hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
+    yield OKPacket(STATUS, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg)
