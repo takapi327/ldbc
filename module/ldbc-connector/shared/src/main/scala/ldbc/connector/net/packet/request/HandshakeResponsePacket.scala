@@ -21,6 +21,7 @@ trait HandshakeResponsePacket extends RequestPacket:
   def user:              String
   def hashedPassword:    Array[Byte]
   def pluginName:        String
+  def database:          Option[String]
 
   val maxPacketSize: BitVector = hex"ffffff00".bits
 
@@ -35,8 +36,9 @@ object HandshakeResponsePacket:
     user:              String,
     hashedPassword:    Array[Byte],
     pluginName:        String,
-    characterSet:      Int
+    characterSet:      Int,
+    database:          Option[String]
   ): HandshakeResponsePacket =
     if capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41) then
-      HandshakeResponse41Packet(capabilitiesFlags, user, hashedPassword, pluginName, characterSet)
-    else HandshakeResponse320Packet(capabilitiesFlags, user, hashedPassword, pluginName)
+      HandshakeResponse41Packet(capabilitiesFlags, user, hashedPassword, pluginName, characterSet, database)
+    else HandshakeResponse320Packet(capabilitiesFlags, user, hashedPassword, pluginName, database)
