@@ -20,6 +20,7 @@ import fs2.io.net.Socket
 import scodec.Decoder
 import scodec.bits.BitVector
 
+import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.packet.*
 import ldbc.connector.net.packet.response.InitialPacket
 import ldbc.connector.net.protocol.parseHeader
@@ -98,8 +99,9 @@ object PacketSocket:
     sslOptions:       Option[SSLNegotiation.Options[F]],
     sequenceIdRef:    Ref[F, Byte],
     initialPacketRef: Ref[F, Option[InitialPacket]],
-    readTimeout:      Duration
+    readTimeout:      Duration,
+    capabilitiesFlags: List[CapabilitiesFlags]
   ): Resource[F, PacketSocket[F]] =
-    BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout).map(
+    BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
       fromBitVectorSocket(_, debug, sequenceIdRef)
     )
