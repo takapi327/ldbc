@@ -77,11 +77,11 @@ object BitVectorSocket:
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
 
   def apply[F[_]: Temporal: Console](
-    sockets:          Resource[F, Socket[F]],
-    sequenceIdRef:    Ref[F, Byte],
-    initialPacketRef: Ref[F, Option[InitialPacket]],
-    sslOptions:       Option[SSLNegotiation.Options[F]],
-    readTimeout:      Duration,
+    sockets:           Resource[F, Socket[F]],
+    sequenceIdRef:     Ref[F, Byte],
+    initialPacketRef:  Ref[F, Option[InitialPacket]],
+    sslOptions:        Option[SSLNegotiation.Options[F]],
+    readTimeout:       Duration,
     capabilitiesFlags: List[CapabilitiesFlags]
   ): Resource[F, BitVectorSocket[F]] =
     for

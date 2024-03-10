@@ -54,7 +54,7 @@ object Connection:
     CapabilitiesFlags.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA,
     CapabilitiesFlags.CLIENT_DEPRECATE_EOF,
     CapabilitiesFlags.CLIENT_QUERY_ATTRIBUTES,
-    CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION,
+    CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
   def apply[F[_]: Temporal: Network: Console](
@@ -80,7 +80,7 @@ object Connection:
                       port,
                       user,
                       password,
-        database,
+                      database,
                       debug,
                       socketOptions,
                       sslOp,
@@ -107,7 +107,14 @@ object Connection:
     for
       protocol <- MySQLProtocol[F](sockets, debug, sslOptions, readTimeout, capabilityFlags)
       _ <- Resource.eval(
-             protocol.authenticate(user, password.getOrElse(""), database, sslOptions.isDefined, allowPublicKeyRetrieval, capabilityFlags)
+             protocol.authenticate(
+               user,
+               password.getOrElse(""),
+               database,
+               sslOptions.isDefined,
+               allowPublicKeyRetrieval,
+               capabilityFlags
+             )
            )
     yield new Connection[F]:
       override def statement(sql: String): Statement[F] = protocol.statement(sql)

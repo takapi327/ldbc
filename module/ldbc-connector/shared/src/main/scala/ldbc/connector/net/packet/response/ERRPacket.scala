@@ -55,13 +55,17 @@ case class ERRPacket(
 
   def toException(message: String): ERRPacketException = ERRPacketException(
     message = message,
-    detail  = Some(s"Error code: $errorCode,${sqlState.fold("")(state => s" SQL state: $state,")} Error message: $errorMessage")
+    detail = Some(
+      s"Error code: $errorCode,${ sqlState.fold("")(state => s" SQL state: $state,") } Error message: $errorMessage"
+    )
   )
 
   def toException(message: String, sql: String): ERRPacketException = ERRPacketException(
     message = message,
     sql     = Some(sql),
-    detail  = Some(s"Error code: $errorCode,${sqlState.fold("")(state => s" SQL state: $state,")} Error message: $errorMessage")
+    detail = Some(
+      s"Error code: $errorCode,${ sqlState.fold("")(state => s" SQL state: $state,") } Error message: $errorMessage"
+    )
   )
 
 object ERRPacket:

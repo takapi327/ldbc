@@ -38,7 +38,7 @@ object SSLRequestPacket:
 
   val encoder: Encoder[SSLRequestPacket] = Encoder { (packet: SSLRequestPacket) =>
     val hasClientProtocol41 = packet.capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val clientFlag = uint32L.encode(CapabilitiesFlags.toBitset(packet.capabilityFlags)).require
+    val clientFlag          = uint32L.encode(CapabilitiesFlags.toBitset(packet.capabilityFlags)).require
     val maxPacketSize =
       if hasClientProtocol41 then BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0x0)
       else BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff)

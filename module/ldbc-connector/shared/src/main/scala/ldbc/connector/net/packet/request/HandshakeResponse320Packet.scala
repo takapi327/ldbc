@@ -36,7 +36,7 @@ case class HandshakeResponse320Packet(
   user:              String,
   hashedPassword:    Array[Byte],
   pluginName:        String,
-  database:          Option[String],
+  database:          Option[String]
 ) extends HandshakeResponsePacket:
 
   override protected def encodeBody: Attempt[BitVector] = HandshakeResponse320Packet.encoder.encode(this)
@@ -51,9 +51,15 @@ object HandshakeResponse320Packet:
   val encoder: Encoder[HandshakeResponse320Packet] = Encoder { handshakeResponse =>
     val userBytes = handshakeResponse.user.getBytes("UTF-8")
 
-    val authResponse = (handshakeResponse.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB), handshakeResponse.database) match
-      case (true, Some(database)) => BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length)) |+| BitVector(database.getBytes("UTF-8"))
-      case _                      => BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length))
+    val authResponse = (
+      handshakeResponse.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB),
+      handshakeResponse.database
+    ) match
+      case (true, Some(database)) =>
+        BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length)) |+| BitVector(
+          database.getBytes("UTF-8")
+        )
+      case _ => BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length))
 
     Attempt.successful(
       handshakeResponse.encodeCapabilitiesFlags() |+|

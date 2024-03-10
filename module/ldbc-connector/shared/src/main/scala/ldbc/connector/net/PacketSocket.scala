@@ -94,12 +94,12 @@ object PacketSocket:
       yield ()
 
   def apply[F[_]: Console: Temporal](
-    debug:            Boolean,
-    sockets:          Resource[F, Socket[F]],
-    sslOptions:       Option[SSLNegotiation.Options[F]],
-    sequenceIdRef:    Ref[F, Byte],
-    initialPacketRef: Ref[F, Option[InitialPacket]],
-    readTimeout:      Duration,
+    debug:             Boolean,
+    sockets:           Resource[F, Socket[F]],
+    sslOptions:        Option[SSLNegotiation.Options[F]],
+    sequenceIdRef:     Ref[F, Byte],
+    initialPacketRef:  Ref[F, Option[InitialPacket]],
+    readTimeout:       Duration,
     capabilitiesFlags: List[CapabilitiesFlags]
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
