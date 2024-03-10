@@ -46,8 +46,8 @@ object InitialPacket:
   private val threadIdCodec:        Codec[Int] = int32
   private val authPluginDataPart1Codec: Codec[(Byte, Byte, Byte, Byte, Byte, Byte, Byte, Byte)] =
     byte :: byte :: byte :: byte :: byte :: byte :: byte :: byte
-  private val capabilityFlagsLowerCodec: Codec[Int] = int16
-  private val capabilityFlagsUpperCodec: Codec[Int] = int16
+  private val capabilityFlagsLowerCodec: Codec[Int] = uint16L
+  private val capabilityFlagsUpperCodec: Codec[Int] = uint16L
 
   val decoder: Decoder[InitialPacket] =
     for
