@@ -11,7 +11,7 @@ import cats.syntax.all.*
 
 import scodec.*
 import scodec.bits.*
-import scodec.codecs.uint32
+import scodec.codecs.uint32L
 import scodec.interop.cats.*
 
 import ldbc.connector.data.*
@@ -38,7 +38,7 @@ object SSLRequestPacket:
 
   val encoder: Encoder[SSLRequestPacket] = Encoder { (packet: SSLRequestPacket) =>
     val hasClientProtocol41 = packet.capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    val clientFlag = uint32.encode(CapabilitiesFlags.toBitset(packet.capabilityFlags)).require
+    val clientFlag = uint32L.encode(CapabilitiesFlags.toBitset(packet.capabilityFlags)).require
     val maxPacketSize =
       if hasClientProtocol41 then BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0x0)
       else BitVector(0xff) |+| BitVector(0xff) |+| BitVector(0xff)
