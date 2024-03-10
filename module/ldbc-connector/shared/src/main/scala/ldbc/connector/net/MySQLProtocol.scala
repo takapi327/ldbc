@@ -54,8 +54,10 @@ trait MySQLProtocol[F[_]]:
    *   whether to use SSL
    * @param allowPublicKeyRetrieval
    *   whether to allow public key retrieval
+   * @param capabilitiesFlags
+   *   Values for the capabilities flag bitmask used by the MySQL protocol.
    */
-  def authenticate(user: String, password: String, database: Option[String], useSSL: Boolean, allowPublicKeyRetrieval: Boolean): F[Unit]
+  def authenticate(user: String, password: String, database: Option[String], useSSL: Boolean, allowPublicKeyRetrieval: Boolean, capabilitiesFlags: List[CapabilitiesFlags]): F[Unit]
 
   /**
    * Creates a statement with the given SQL.
@@ -110,9 +112,10 @@ object MySQLProtocol:
             password:                String,
             database: Option[String],
             useSSL:                  Boolean,
-            allowPublicKeyRetrieval: Boolean
+            allowPublicKeyRetrieval: Boolean,
+            capabilitiesFlags: List[CapabilitiesFlags]
           ): F[Unit] =
-            Authentication[F](packetSocket, initialPacket, user, password, database, useSSL, allowPublicKeyRetrieval)
+            Authentication[F](packetSocket, initialPacket, user, password, database, useSSL, allowPublicKeyRetrieval, capabilitiesFlags)
               .start()
 
           override def statement(sql: String): Statement[F] =
