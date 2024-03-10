@@ -36,7 +36,7 @@ import ldbc.connector.data.CapabilitiesFlags
  *   Database used for login
  */
 case class HandshakeResponse41Packet(
-  capabilitiesFlags: Seq[CapabilitiesFlags],
+  capabilitiesFlags: List[CapabilitiesFlags],
   user:              String,
   hashedPassword:    Array[Byte],
   pluginName:        String,
@@ -55,6 +55,8 @@ object HandshakeResponse41Packet:
 
   val encoder: Encoder[HandshakeResponse41Packet] = Encoder { handshakeResponse =>
 
+    val reserved = BitVector.fill(23 * 8)(false) // 23 bytes of zero
+
     val authResponse = if handshakeResponse.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) then
       BitVector(handshakeResponse.hashedPassword)
     else
@@ -64,7 +66,15 @@ object HandshakeResponse41Packet:
       case (true, Some(db)) => nullTerminatedStringCodec.encode(db).require
       case _                => BitVector.empty
 
-    val reserved = BitVector.fill(23 * 8)(false) // 23 bytes of zero
+    val pluginName = if handshakeResponse.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PLUGIN_AUTH) then
+      nullTerminatedStringCodec.encode(handshakeResponse.pluginName).require
+    else
+      BitVector.empty
+
+    val attrs = if handshakeResponse.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_CONNECT_ATTRS) then
+      BitVector(0x00)
+    else
+      BitVector.empty
 
     val zstdCompressionLevel = if handshakeResponse.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_ZSTD_COMPRESSION_ALGORITHM) then
       BitVector(0x00)
@@ -79,7 +89,8 @@ object HandshakeResponse41Packet:
         nullTerminatedStringCodec.encode(handshakeResponse.user).require |+|
         authResponse |+|
         database |+|
-        nullTerminatedStringCodec.encode(handshakeResponse.pluginName).require |+|
+        pluginName |+|
+        attrs |+|
         zstdCompressionLevel
     )
   }
