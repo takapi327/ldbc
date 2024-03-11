@@ -305,7 +305,7 @@ class ClientPreparedStatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <-
-            conn.clientPreparedStatement("SELECT `binary`, `binary_null` FROM `all_types` WHERE HEX(`binary`) = ?")
+            conn.clientPreparedStatement("SELECT `binary`, `binary_null` FROM `all_types` WHERE `binary` = ?")
           resultSet <-
             statement.setBytes(1, Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0)) *> statement.executeQuery()
         yield
