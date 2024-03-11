@@ -529,12 +529,7 @@ object PreparedStatement:
                   socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags))
               resultSet <- (
                              columnCount match
-                               case _: OKPacket =>
-                                 ev.pure(
-                                   new ResultSet:
-                                     override def columns: Vector[ColumnDefinitionPacket] = Vector.empty
-                                     override def rows:    Vector[ResultSetRowPacket]     = Vector.empty
-                                 )
+                               case _: OKPacket      => ev.pure(ResultSet.empty)
                                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                                case result: ColumnsNumberPacket =>
                                  for
