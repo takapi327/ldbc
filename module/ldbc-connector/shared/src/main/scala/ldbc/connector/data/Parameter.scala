@@ -100,7 +100,7 @@ object Parameter:
 
   def bytes(value: Array[Byte]): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VAR_STRING
-    override def sql:            Array[Char]    = ("'" + BitVector.view(value).toHex + "'").toCharArray
+    override def sql:            Array[Char]    = ("0x" + BitVector.view(value).toHex).toCharArray
     override def encode: BitVector =
       BitVector(value.length) |+| BitVector(copyOf(value, value.length))
 
