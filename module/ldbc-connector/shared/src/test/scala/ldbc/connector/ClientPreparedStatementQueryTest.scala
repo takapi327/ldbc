@@ -29,6 +29,18 @@ class ClientPreparedStatementQueryTest extends CatsEffectSuite:
     ssl      = SSL.Trusted
   )
 
+  test("The client's PreparedStatement may use NULL as a parameter.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.clientPreparedStatement("SELECT `bit`, `bit_null` FROM `all_types` WHERE `bit_null` is ?")
+          resultSet <- statement.setNull(1) *> statement.executeQuery()
+        yield resultSet.decode[(Byte, Option[Byte])](bit *: bit.opt)
+      },
+      List((1.toByte, None))
+    )
+  }
+
   test("Client PreparedStatement should be able to retrieve BIT type records.") {
     assertIO(
       connection.use { conn =>
