@@ -455,6 +455,24 @@ trait PreparedStatement[F[_]] extends Statement[F]:
 
 object PreparedStatement:
 
+  /**
+   * PreparedStatement for query construction at the client side.
+   * 
+   * @param socket
+   *   the packet socket
+   * @param initialPacket
+   *   the initial packet
+   * @param sql
+   *   the SQL statement
+   * @param params
+   *   the parameters
+   * @param resetSequenceId
+   *   the reset sequence id
+   * @param ev
+   *   the effect type class
+   * @tparam F
+   *   the effect type
+   */
   case class Client[F[_]: Exchange: Tracer](
     socket:          PacketSocket[F],
     initialPacket:   InitialPacket,
