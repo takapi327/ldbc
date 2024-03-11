@@ -120,7 +120,8 @@ object Connection:
            )
     yield new Connection[F]:
       override def statement(sql: String): Statement[F] = protocol.statement(sql)
-      override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] = protocol.clientPreparedStatement(sql)
+      override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
+        protocol.clientPreparedStatement(sql)
 
   def fromSocketGroup[F[_]: Tracer: Console](
     socketGroup:             SocketGroup[F],

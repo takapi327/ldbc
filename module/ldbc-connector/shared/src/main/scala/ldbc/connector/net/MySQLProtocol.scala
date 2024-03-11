@@ -139,7 +139,7 @@ object MySQLProtocol:
 
           override def statement(sql: String): Statement[F] =
             Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
-            
+
           override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
             Ref[F]
               .of(ListMap.empty[Int, Parameter])

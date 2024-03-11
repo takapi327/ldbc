@@ -16,7 +16,7 @@ import cats.syntax.all.*
 import cats.effect.Ref
 
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{Tracer, Span}
+import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.ResultSet
 import ldbc.connector.data.*
@@ -84,9 +84,10 @@ object PreparedStatement:
     socket:          PacketSocket[F],
     initialPacket:   InitialPacket,
     sql:             String,
-    params: Ref[F, ListMap[Int, Parameter]],
+    params:          Ref[F, ListMap[Int, Parameter]],
     resetSequenceId: F[Unit]
-  )(using ev: MonadError[F, Throwable]) extends PreparedStatement[F]:
+  )(using ev: MonadError[F, Throwable])
+    extends PreparedStatement[F]:
 
     private def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[Vector[P]] =
       def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
@@ -96,13 +97,13 @@ object PreparedStatement:
       read(times, Vector.empty[P])
 
     private def readUntilEOF[P <: ResponsePacket](
-                                                   decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
-                                                   acc: Vector[P]
-                                                 ): F[Vector[P]] =
+      decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
+      acc:     Vector[P]
+    ): F[Vector[P]] =
       socket.receive(decoder).flatMap {
-        case _: EOFPacket => ev.pure(acc)
+        case _: EOFPacket     => ev.pure(acc)
         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-        case row => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
+        case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
       }
 
     private def buildQuery(params: ListMap[Int, Parameter]): String =
@@ -113,7 +114,7 @@ object PreparedStatement:
             val index = query.indexOf('?', offset - 1)
             if index < 0 then query
             else
-              val (head, tail) = query.splitAt(index)
+              val (head, tail)         = query.splitAt(index)
               val (tailHead, tailTail) = tail.splitAt(1)
               head ++ param.sql ++ tailTail
         }
@@ -125,29 +126,34 @@ object PreparedStatement:
           resetSequenceId *> (
             for
               params <- params.get
-              columnCount <- socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
-                socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags))
+              columnCount <-
+                socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
+                  socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags))
               resultSet <- (
-                columnCount match
-                  case _: OKPacket =>
-                    ev.pure(
-                      new ResultSet:
-                        override def columns: Vector[ColumnDefinitionPacket] = Vector.empty
-                        override def rows:    Vector[ResultSetRowPacket]     = Vector.empty
-                    )
-                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                  case result: ColumnsNumberPacket =>
-                    for
-                      columnDefinitions <-
-                        repeatProcess(result.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-                      resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                        ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
-                        Vector.empty
-                      )
-                    yield new ResultSet:
-                      override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-                      override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
-              )
+                             columnCount match
+                               case _: OKPacket =>
+                                 ev.pure(
+                                   new ResultSet:
+                                     override def columns: Vector[ColumnDefinitionPacket] = Vector.empty
+                                     override def rows:    Vector[ResultSetRowPacket]     = Vector.empty
+                                 )
+                               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                               case result: ColumnsNumberPacket =>
+                                 for
+                                   columnDefinitions <-
+                                     repeatProcess(
+                                       result.size,
+                                       ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
+                                     )
+                                   resultSetRow <-
+                                     readUntilEOF[ResultSetRowPacket](
+                                       ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                                       Vector.empty
+                                     )
+                                 yield new ResultSet:
+                                   override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
+                                   override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+                           )
             yield resultSet
           )
       }
