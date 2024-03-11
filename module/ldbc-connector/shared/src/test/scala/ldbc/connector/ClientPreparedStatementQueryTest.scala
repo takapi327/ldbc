@@ -243,7 +243,7 @@ class ClientPreparedStatementQueryTest extends CatsEffectSuite:
         for
           statement <-
             conn.clientPreparedStatement("SELECT `datetime`, `datetime_null` FROM `all_types` WHERE `datetime` = ?")
-          resultSet <- statement.setDateTime(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
+          resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
         yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt)
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
@@ -256,7 +256,7 @@ class ClientPreparedStatementQueryTest extends CatsEffectSuite:
         for
           statement <-
             conn.clientPreparedStatement("SELECT `timestamp`, `timestamp_null` FROM `all_types` WHERE `timestamp` = ?")
-          resultSet <- statement.setDateTime(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
+          resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
         yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt)
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
