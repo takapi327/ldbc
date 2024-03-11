@@ -18,6 +18,7 @@ import fs2.io.net.Socket
 
 import org.typelevel.otel4s.trace.Tracer
 
+import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
@@ -47,12 +48,23 @@ trait MySQLProtocol[F[_]]:
    *   the user name
    * @param password
    *   the password
+   * @param database
+   *   Database used for login
    * @param useSSL
    *   whether to use SSL
    * @param allowPublicKeyRetrieval
    *   whether to allow public key retrieval
+   * @param capabilitiesFlags
+   *   Values for the capabilities flag bitmask used by the MySQL protocol.
    */
-  def authenticate(user: String, password: String, useSSL: Boolean, allowPublicKeyRetrieval: Boolean): F[Unit]
+  def authenticate(
+    user:                    String,
+    password:                String,
+    database:                Option[String],
+    useSSL:                  Boolean,
+    allowPublicKeyRetrieval: Boolean,
+    capabilitiesFlags:       List[CapabilitiesFlags]
+  ): F[Unit]
 
   /**
    * Creates a statement with the given SQL.
@@ -75,16 +87,17 @@ trait MySQLProtocol[F[_]]:
 object MySQLProtocol:
 
   def apply[F[_]: Temporal: Console: Tracer](
-    sockets:     Resource[F, Socket[F]],
-    debug:       Boolean,
-    sslOptions:  Option[SSLNegotiation.Options[F]],
-    readTimeout: Duration
+    sockets:           Resource[F, Socket[F]],
+    debug:             Boolean,
+    sslOptions:        Option[SSLNegotiation.Options[F]],
+    readTimeout:       Duration,
+    capabilitiesFlags: List[CapabilitiesFlags]
   ): Resource[F, MySQLProtocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
       initialPacketRef <- Resource.eval(Ref[F].of[Option[InitialPacket]](None))
-      ps               <- PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout)
-      protocol         <- Resource.make(fromPacketSocket(ps, sequenceIdRef, initialPacketRef))(_.close())
+      ps <- PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout, capabilitiesFlags)
+      protocol <- Resource.make(fromPacketSocket(ps, sequenceIdRef, initialPacketRef))(_.close())
     yield protocol
 
   def fromPacketSocket[F[_]: Temporal: Console: Tracer](
@@ -104,10 +117,21 @@ object MySQLProtocol:
           override def authenticate(
             user:                    String,
             password:                String,
+            database:                Option[String],
             useSSL:                  Boolean,
-            allowPublicKeyRetrieval: Boolean
+            allowPublicKeyRetrieval: Boolean,
+            capabilitiesFlags:       List[CapabilitiesFlags]
           ): F[Unit] =
-            Authentication[F](packetSocket, initialPacket, user, password, None, useSSL, allowPublicKeyRetrieval)
+            Authentication[F](
+              packetSocket,
+              initialPacket,
+              user,
+              password,
+              database,
+              useSSL,
+              allowPublicKeyRetrieval,
+              capabilitiesFlags
+            )
               .start()
 
           override def statement(sql: String): Statement[F] =

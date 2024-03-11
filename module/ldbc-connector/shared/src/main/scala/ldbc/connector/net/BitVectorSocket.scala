@@ -21,6 +21,7 @@ import fs2.io.net.Socket
 
 import scodec.bits.BitVector
 
+import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.exception.*
 import ldbc.connector.net.packet.response.InitialPacket
 import ldbc.connector.net.protocol.Initial
@@ -76,18 +77,19 @@ object BitVectorSocket:
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
 
   def apply[F[_]: Temporal: Console](
-    sockets:          Resource[F, Socket[F]],
-    sequenceIdRef:    Ref[F, Byte],
-    initialPacketRef: Ref[F, Option[InitialPacket]],
-    sslOptions:       Option[SSLNegotiation.Options[F]],
-    readTimeout:      Duration
+    sockets:           Resource[F, Socket[F]],
+    sequenceIdRef:     Ref[F, Byte],
+    initialPacketRef:  Ref[F, Option[InitialPacket]],
+    sslOptions:        Option[SSLNegotiation.Options[F]],
+    readTimeout:       Duration,
+    capabilitiesFlags: List[CapabilitiesFlags]
   ): Resource[F, BitVectorSocket[F]] =
     for
       socket        <- sockets
       initialPacket <- Resource.eval(Initial[F](socket).start)
       _             <- Resource.eval(initialPacketRef.set(Some(initialPacket)))
       socket$ <- sslOptions.fold(socket.pure[Resource[F, *]])(option =>
-                   SSLNegotiation.negotiateSSL(socket, initialPacket.capabilityFlags, option, sequenceIdRef)
+                   SSLNegotiation.negotiateSSL(socket, capabilitiesFlags, option, sequenceIdRef)
                  )
       carryRef <- Resource.eval(Ref[F].of(Chunk.empty[Byte]))
     yield fromSocket(socket$, readTimeout, carryRef)

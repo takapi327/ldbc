@@ -7,7 +7,7 @@
 package ldbc.connector.net.packet
 package request
 
-import scodec.codecs.uint32
+import scodec.codecs.uint32L
 import scodec.bits.*
 
 import ldbc.connector.data.CapabilitiesFlags
@@ -21,22 +21,24 @@ trait HandshakeResponsePacket extends RequestPacket:
   def user:              String
   def hashedPassword:    Array[Byte]
   def pluginName:        String
+  def database:          Option[String]
 
   val maxPacketSize: BitVector = hex"ffffff00".bits
 
   def encodeCapabilitiesFlags(): BitVector =
     val bitset = CapabilitiesFlags.toBitset(capabilitiesFlags)
-    uint32.encode(bitset).require
+    uint32L.encode(bitset).require
 
 object HandshakeResponsePacket:
 
   def apply(
-    capabilitiesFlags: Seq[CapabilitiesFlags],
+    capabilitiesFlags: List[CapabilitiesFlags],
     user:              String,
     hashedPassword:    Array[Byte],
     pluginName:        String,
-    characterSet:      Int
+    characterSet:      Int,
+    database:          Option[String]
   ): HandshakeResponsePacket =
     if capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41) then
-      HandshakeResponse41Packet(capabilitiesFlags, user, hashedPassword, pluginName, characterSet)
-    else HandshakeResponse320Packet(capabilitiesFlags, user, hashedPassword, pluginName)
+      HandshakeResponse41Packet(capabilitiesFlags, user, hashedPassword, pluginName, characterSet, database)
+    else HandshakeResponse320Packet(capabilitiesFlags, user, hashedPassword, pluginName, database)

@@ -20,6 +20,7 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
+import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.exception.MySQLException
@@ -39,11 +40,29 @@ object Connection:
   private val defaultSocketOptions: List[SocketOption] =
     List(SocketOption.noDelay(true))
 
+  private val defaultCapabilityFlags: List[CapabilitiesFlags] = List(
+    CapabilitiesFlags.CLIENT_LONG_PASSWORD,
+    CapabilitiesFlags.CLIENT_FOUND_ROWS,
+    CapabilitiesFlags.CLIENT_LONG_FLAG,
+    CapabilitiesFlags.CLIENT_PROTOCOL_41,
+    CapabilitiesFlags.CLIENT_TRANSACTIONS,
+    CapabilitiesFlags.CLIENT_RESERVED2,
+    CapabilitiesFlags.CLIENT_MULTI_RESULTS,
+    CapabilitiesFlags.CLIENT_PS_MULTI_RESULTS,
+    CapabilitiesFlags.CLIENT_PLUGIN_AUTH,
+    CapabilitiesFlags.CLIENT_CONNECT_ATTRS,
+    CapabilitiesFlags.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA,
+    CapabilitiesFlags.CLIENT_DEPRECATE_EOF,
+    CapabilitiesFlags.CLIENT_QUERY_ATTRIBUTES,
+    CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
+  )
+
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
     port:                    Int,
     user:                    String,
     password:                Option[String] = None,
+    database:                Option[String] = None,
     debug:                   Boolean = false,
     ssl:                     SSL = SSL.None,
     socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
@@ -61,6 +80,7 @@ object Connection:
                       port,
                       user,
                       password,
+                      database,
                       debug,
                       socketOptions,
                       sslOp,
@@ -75,15 +95,26 @@ object Connection:
     port:                    Int,
     user:                    String,
     password:                Option[String] = None,
+    database:                Option[String] = None,
     debug:                   Boolean = false,
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false
   ): Resource[F, Connection[F]] =
+    val capabilityFlags = defaultCapabilityFlags ++
+      (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
+      (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
     for
-      protocol <- MySQLProtocol[F](sockets, debug, sslOptions, readTimeout)
+      protocol <- MySQLProtocol[F](sockets, debug, sslOptions, readTimeout, capabilityFlags)
       _ <- Resource.eval(
-             protocol.authenticate(user, password.getOrElse(""), sslOptions.isDefined, allowPublicKeyRetrieval)
+             protocol.authenticate(
+               user,
+               password.getOrElse(""),
+               database,
+               sslOptions.isDefined,
+               allowPublicKeyRetrieval,
+               capabilityFlags
+             )
            )
     yield new Connection[F]:
       override def statement(sql: String): Statement[F] = protocol.statement(sql)
@@ -94,6 +125,7 @@ object Connection:
     port:                    Int,
     user:                    String,
     password:                Option[String] = None,
+    database:                Option[String] = None,
     debug:                   Boolean = false,
     socketOptions:           List[SocketOption],
     sslOptions:              Option[SSLNegotiation.Options[F]],
@@ -111,4 +143,4 @@ object Connection:
         case (None, _) => fail(s"""Hostname: "$host" is not syntactically valid.""")
         case (_, None) => fail(s"Port: $port falls out of the allowed range.")
 
-    fromSockets(sockets, host, port, user, password, debug, sslOptions, readTimeout, allowPublicKeyRetrieval)
+    fromSockets(sockets, host, port, user, password, database, debug, sslOptions, readTimeout, allowPublicKeyRetrieval)

@@ -28,12 +28,15 @@ import ldbc.connector.data.CapabilitiesFlags
  *   The password of the client, hashed with the given method.
  * @param pluginName
  *   The authentication plugin name.
+ * @param database
+ *   Database used for login
  */
 case class HandshakeResponse320Packet(
-  capabilitiesFlags: Seq[CapabilitiesFlags],
+  capabilitiesFlags: List[CapabilitiesFlags],
   user:              String,
   hashedPassword:    Array[Byte],
-  pluginName:        String
+  pluginName:        String,
+  database:          Option[String]
 ) extends HandshakeResponsePacket:
 
   override protected def encodeBody: Attempt[BitVector] = HandshakeResponse320Packet.encoder.encode(this)
@@ -48,10 +51,20 @@ object HandshakeResponse320Packet:
   val encoder: Encoder[HandshakeResponse320Packet] = Encoder { handshakeResponse =>
     val userBytes = handshakeResponse.user.getBytes("UTF-8")
 
+    val authResponse = (
+      handshakeResponse.capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB),
+      handshakeResponse.database
+    ) match
+      case (true, Some(database)) =>
+        BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length)) |+| BitVector(
+          database.getBytes("UTF-8")
+        )
+      case _ => BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length))
+
     Attempt.successful(
       handshakeResponse.encodeCapabilitiesFlags() |+|
         handshakeResponse.maxPacketSize |+|
         BitVector(copyOf(userBytes, userBytes.length + 1)) |+|
-        BitVector(copyOf(handshakeResponse.hashedPassword, handshakeResponse.hashedPassword.length))
+        authResponse
     )
   }

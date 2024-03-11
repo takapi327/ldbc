@@ -98,6 +98,45 @@ class ConnectionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
+  test("Users using mysql_native_password can establish a connection with the MySQL server by specifying database.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_mysql_native_user",
+      password = Some("ldbc_mysql_native_password"),
+      database = Some("connector_test")
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test(
+    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with mysql_native_password will succeed."
+  ) {
+    val connection = Connection[IO](
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc_mysql_native_user",
+      password                = Some("ldbc_mysql_native_password"),
+      database                = Some("connector_test"),
+      allowPublicKeyRetrieval = true
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test(
+    "A connection to a MySQL server with a database specified using a user with mysql_native_password will succeed with an SSL connection."
+  ) {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_mysql_native_user",
+      password = Some("ldbc_mysql_native_password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
   test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",
@@ -135,6 +174,34 @@ class ConnectionTest extends CatsEffectSuite:
   }
 
   test(
+    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with sha256_password will succeed."
+  ) {
+    val connection = Connection[IO](
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc_sha256_user",
+      password                = Some("ldbc_sha256_password"),
+      database                = Some("connector_test"),
+      allowPublicKeyRetrieval = true
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test(
+    "A connection to a MySQL server with a database specified using a user with sha256_password will succeed with an SSL connection."
+  ) {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_sha256_user",
+      password = Some("ldbc_sha256_password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test(
     "Connections to MySQL servers using users with caching_sha2_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
   ) {
     val connection = Connection[IO](
@@ -166,6 +233,34 @@ class ConnectionTest extends CatsEffectSuite:
       port     = 13306,
       user     = "ldbc",
       password = Some("password")
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test(
+    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with caching_sha2_password will succeed."
+  ) {
+    val connection = Connection[IO](
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc",
+      password                = Some("password"),
+      database                = Some("connector_test"),
+      allowPublicKeyRetrieval = true
+    )
+    assertIOBoolean(connection.use(_ => IO(true)))
+  }
+
+  test(
+    "A connection to a MySQL server with a database specified using a user with caching_sha2_password will succeed with an SSL connection."
+  ) {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
