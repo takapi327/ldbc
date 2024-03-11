@@ -7,6 +7,7 @@
 package ldbc.connector.net
 
 import scala.concurrent.duration.*
+import scala.collection.immutable.ListMap
 
 import cats.*
 import cats.syntax.all.*
@@ -18,7 +19,7 @@ import fs2.io.net.Socket
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.data.*
 import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
@@ -73,6 +74,8 @@ trait MySQLProtocol[F[_]]:
    *   SQL queries based on text protocols
    */
   def statement(sql: String): Statement[F]
+
+  def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]]
 
   /**
    * Resets the sequence id.
@@ -136,6 +139,11 @@ object MySQLProtocol:
 
           override def statement(sql: String): Statement[F] =
             Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
+            
+          override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
+            Ref[F]
+              .of(ListMap.empty[Int, Parameter])
+              .map(params => PreparedStatement.Client[F](packetSocket, initialPacket, sql, params, resetSequenceId))
 
           override def resetSequenceId: F[Unit] =
             sequenceIdRef.update(_ => 0.toByte)
