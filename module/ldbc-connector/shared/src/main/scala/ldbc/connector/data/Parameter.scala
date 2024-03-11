@@ -15,7 +15,6 @@ import scodec.bits.BitVector
 import scodec.codecs.*
 import scodec.interop.cats.*
 
-import ldbc.connector.codec.all.*
 import ldbc.connector.data.Formatter.*
 
 trait Parameter:
@@ -58,6 +57,11 @@ object Parameter:
     override def sql: Array[Char] = value.toString.toCharArray
     override def encode: BitVector = int64L.encode(value).require
 
+  def bigInt(value: BigInt): Parameter = new Parameter:
+    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
+    override def sql: Array[Char] = value.toString.toCharArray
+    override def encode: BitVector = int64L.encode(value.toLong).require
+
   def float(value: Float): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_FLOAT
     override def sql: Array[Char] = value.toString.toCharArray
@@ -74,17 +78,17 @@ object Parameter:
     override def encode: BitVector =
       val bytes = value.bigDecimal.unscaledValue.toByteArray
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
-      
+
   def string(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def sql: Array[Char] = ("'" + value + "'").toCharArray
     override def encode: BitVector =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
-      
+
   def bytes(value: Array[Byte]): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VAR_STRING
-    override def sql: Array[Char] = BitVector.view(value).toHex.toCharArray
+    override def sql: Array[Char] = ("'" + BitVector.view(value).toHex + "'").toCharArray
     override def encode: BitVector =
       BitVector(value.length) |+| BitVector(copyOf(value, value.length))
 
@@ -113,7 +117,7 @@ object Parameter:
             second <- uint32L.encode(second)
             nano <- uint32L.encode(micro)
           yield length |+| hour |+| minute |+| second |+| nano).require
-    
+
   def date(value: LocalDate): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_DATE
     override def sql: Array[Char] = ("'" + localDateFormatter.format(value) + "'").toCharArray
@@ -130,7 +134,7 @@ object Parameter:
             month <- uint8L.encode(month)
             day <- uint8L.encode(day)
           yield length |+| year |+| month |+| day).require
-          
+
   def datetime(value: LocalDateTime): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_TIMESTAMP
     override def sql: Array[Char] = ("'" + localDateTimeFormatter((value.getNano / 1000).toString.length).format(value) + "'").toCharArray
@@ -172,7 +176,7 @@ object Parameter:
             second <- uint32L.encode(second)
             micro  <- uint32L.encode(micro)
           yield length |+| year |+| month |+| day |+| hour |+| minute |+| second |+| micro).require
-  
+
   def year(value: Year): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_YEAR
     override def sql: Array[Char] = ("'" + value.toString + "'").toCharArray
