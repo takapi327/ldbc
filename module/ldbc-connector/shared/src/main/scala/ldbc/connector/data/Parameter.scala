@@ -17,12 +17,24 @@ import scodec.interop.cats.*
 
 import ldbc.connector.data.Formatter.*
 
+/**
+ * A parameter to be used in a prepared statement.
+ */
 trait Parameter:
 
+  /**
+   * The column data type of this parameter.
+   */
   def columnDataType: ColumnDataType
 
+  /**
+   * The SQL representation of this parameter.
+   */
   def sql: Array[Char]
 
+  /**
+   * The binary representation of this parameter.
+   */
   def encode: BitVector
 
 object Parameter:
