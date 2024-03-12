@@ -67,8 +67,8 @@ object Statement:
     new Statement[F]:
 
       private val attributes = List(
-        Attribute("sql", sql),
-        Attribute("type", "Statement")
+        Attribute("type", "Statement"),
+        Attribute("sql", sql)
       )
 
       private def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[Vector[P]] =

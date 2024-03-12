@@ -483,8 +483,8 @@ object PreparedStatement:
     extends PreparedStatement[F]:
 
     private val attributes = List(
-      Attribute("sql", sql),
-      Attribute("type", "Client PreparedStatement")
+      Attribute("type", "Client PreparedStatement"),
+      Attribute("sql", sql)
     )
 
     private def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[Vector[P]] =
@@ -520,61 +520,58 @@ object PreparedStatement:
 
     override def executeQuery(): F[ResultSet] =
       exchange[F, ResultSet]("statement") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("execute", "query"))*) *>
-          resetSequenceId *> (
-            for
-              params <- params.get
-              columnCount <-
-                socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
-                  socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags))
-              resultSet <- (
-                             columnCount match
-                               case _: OKPacket      => ev.pure(ResultSet.empty)
-                               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                               case result: ColumnsNumberPacket =>
-                                 for
-                                   columnDefinitions <-
-                                     repeatProcess(
-                                       result.size,
-                                       ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
-                                     )
-                                   resultSetRow <-
-                                     readUntilEOF[ResultSetRowPacket](
-                                       ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
-                                       Vector.empty
-                                     )
-                                 yield new ResultSet:
-                                   override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-                                   override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
-                           )
-            yield resultSet
-          )
+        params.get.flatMap { params =>
+          span.addAttributes((attributes ++ List(Attribute("params", params.map((_, param) => param.toString).mkString(", ")), Attribute("execute", "query"))) *) *>
+            resetSequenceId *>
+            socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
+            socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+              case _: OKPacket => ev.pure(ResultSet.empty)
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+              case result: ColumnsNumberPacket =>
+                for
+                  columnDefinitions <-
+                    repeatProcess(
+                      result.size,
+                      ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
+                    )
+                  resultSetRow <-
+                    readUntilEOF[ResultSetRowPacket](
+                      ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                      Vector.empty
+                    )
+                yield new ResultSet:
+                  override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
+                  override def rows: Vector[ResultSetRowPacket] = resultSetRow
+            }
+        }
       }
 
     override def executeUpdate(): F[Int] =
       exchange[F, Int]("statement") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("execute", "update"))*) *> resetSequenceId *>
-          params.get.flatMap(values =>
-            socket.send(ComQueryPacket(buildQuery(values), initialPacket.capabilityFlags, ListMap.empty)) *>
-              socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                case result: OKPacket => ev.pure(result.affectedRows)
-                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
-              }
-          )
+        params.get.flatMap { params =>
+          span.addAttributes((attributes ++ List(Attribute("params", params.map((_, param) => param.toString).mkString(", ")), Attribute("execute", "query"))) *) *>
+            resetSequenceId *>
+            socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
+            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+              case result: OKPacket => ev.pure(result.affectedRows)
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+              case _: EOFPacket => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+            }
+        }
       }
 
     override def returningAutoGeneratedKey(): F[Int] =
       exchange[F, Int]("statement") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("execute", "returning update"))*) *> resetSequenceId *>
-          params.get.flatMap(values =>
-            socket.send(ComQueryPacket(buildQuery(values), initialPacket.capabilityFlags, ListMap.empty)) *>
-              socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                case result: OKPacket => ev.pure(result.lastInsertId)
-                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
-              }
-          )
+        params.get.flatMap { params =>
+          span.addAttributes((attributes ++ List(Attribute("params", params.map((_, param) => param.toString).mkString(", ")), Attribute("execute", "query"))) *) *>
+            resetSequenceId *>
+            socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
+            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+              case result: OKPacket => ev.pure(result.lastInsertId)
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+              case _: EOFPacket => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+            }
+        }
       }
 
     override def close(): F[Unit] = ev.unit
