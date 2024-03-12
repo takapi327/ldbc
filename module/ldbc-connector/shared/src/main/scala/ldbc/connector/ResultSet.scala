@@ -43,3 +43,9 @@ trait ResultSet:
 
   def getMetadata(column: String): Option[ColumnDefinitionPacket] =
     columns.find(_.name == column)
+
+object ResultSet:
+
+  val empty: ResultSet = new ResultSet:
+    override def columns: Vector[ColumnDefinitionPacket] = Vector.empty
+    override def rows:    Vector[ResultSetRowPacket]     = Vector.empty

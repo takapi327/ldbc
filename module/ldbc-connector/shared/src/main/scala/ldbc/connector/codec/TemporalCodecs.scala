@@ -14,15 +14,12 @@ import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.OffsetTime
 import java.time.Year
-import java.time.temporal.ChronoField.*
 import java.time.temporal.TemporalAccessor
-import java.time.format.DateTimeFormatterBuilder
-import java.time.format.SignStyle
-import java.util.Locale
 
 import cats.syntax.all.*
 
 import ldbc.connector.data.Type
+import ldbc.connector.data.Formatter.*
 
 trait TemporalCodecs:
 
@@ -36,59 +33,6 @@ trait TemporalCodecs:
       s => Either.catchOnly[DateTimeParseException](parse(s, formatter)).leftMap(_.toString),
       tpe
     )
-
-  private val localDateFormatterWithoutEra: DateTimeFormatter =
-    new DateTimeFormatterBuilder()
-      .appendValue(YEAR_OF_ERA, 4, 19, SignStyle.NOT_NEGATIVE)
-      .appendLiteral('-')
-      .appendValue(MONTH_OF_YEAR, 2)
-      .appendLiteral('-')
-      .appendValue(DAY_OF_MONTH, 2)
-      .toFormatter(Locale.US)
-
-  private val localDateFormatter: DateTimeFormatter =
-    new DateTimeFormatterBuilder()
-      .append(localDateFormatterWithoutEra)
-      .toFormatter(Locale.US)
-
-  private def localDateTimeFormatter(precision: Int): DateTimeFormatter =
-    new DateTimeFormatterBuilder()
-      .append(localDateFormatterWithoutEra)
-      .appendLiteral(' ')
-      .append(timeFormatter(precision))
-      .toFormatter(Locale.US)
-
-  private def offsetTimeFormatter(precision: Int): DateTimeFormatter =
-    new DateTimeFormatterBuilder()
-      .append(timeFormatter(precision))
-      .appendOffset("+HH:mm", "Z")
-      .toFormatter(Locale.US)
-
-  private def offsetDateTimeFormatter(precision: Int): DateTimeFormatter =
-    new DateTimeFormatterBuilder()
-      .append(localDateFormatterWithoutEra)
-      .appendLiteral(' ')
-      .append(timeFormatter(precision))
-      .appendOffset("+HH:mm", "Z")
-      .toFormatter(Locale.US)
-
-  private def timeFormatter(precision: Int): DateTimeFormatter =
-
-    val requiredPart: DateTimeFormatterBuilder =
-      new DateTimeFormatterBuilder()
-        .appendValue(HOUR_OF_DAY, 2)
-        .appendLiteral(':')
-        .appendValue(MINUTE_OF_HOUR, 2)
-        .appendLiteral(':')
-        .appendValue(SECOND_OF_MINUTE, 2)
-
-    if precision > 0 then
-      requiredPart.optionalStart
-        .appendFraction(NANO_OF_SECOND, 0, precision, true)
-        .optionalEnd
-      ()
-
-    requiredPart.toFormatter(Locale.US)
 
   val date: Codec[LocalDate] =
     temporal(localDateFormatter, LocalDate.parse, Type.date)
