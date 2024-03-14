@@ -57,9 +57,9 @@ object ComStmtPrepareOkPacket:
             numParams    <- int16L
             reserved1    <- int8L
             warningCount <- int16L
-            metadataFollows <- if capabilityFlags.contains(CapabilitiesFlags.CLIENT_OPTIONAL_RESULTSET_METADATA) then
-                                 provide(None)
-                               else int8L.map(Some(_))
+            metadataFollows <-
+              (if capabilityFlags.contains(CapabilitiesFlags.CLIENT_OPTIONAL_RESULTSET_METADATA) then provide(None)
+               else int8L.map(Some(_)))
           yield ComStmtPrepareOkPacket(
             status,
             statementId,

@@ -16,6 +16,14 @@ import scodec.interop.cats.*
 
 import ldbc.connector.data.CommandId
 
+/**
+ * COM_STMT_CLOSE deallocates a prepared statement.
+ *
+ * No response packet is sent back to the client.
+ * 
+ * @param statementId
+ *   The ID of the prepared statement to be closed.
+ */
 case class ComStmtClosePacket(statementId: Long) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =
@@ -24,7 +32,7 @@ case class ComStmtClosePacket(statementId: Long) extends RequestPacket:
   override def encode: BitVector = encodeBody.require
 
   override def toString: String = "COM_STMT_CLOSE Request"
-  
+
 object ComStmtClosePacket:
 
   val encoder: Encoder[ComStmtClosePacket] = Encoder { comStmtClose =>
