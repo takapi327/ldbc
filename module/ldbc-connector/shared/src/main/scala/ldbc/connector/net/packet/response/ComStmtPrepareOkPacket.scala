@@ -52,15 +52,14 @@ object ComStmtPrepareOkPacket:
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
         case OKPacket.STATUS =>
           for
-            statementId     <- int32L
-            numColumns      <- int16L
-            numParams       <- int16L
-            reserved1       <- int8L
-            warningCount    <- int16L
+            statementId  <- int32L
+            numColumns   <- int16L
+            numParams    <- int16L
+            reserved1    <- int8L
+            warningCount <- int16L
             metadataFollows <- if capabilityFlags.contains(CapabilitiesFlags.CLIENT_OPTIONAL_RESULTSET_METADATA) then
-              provide(None)
-            else
-              int8L.map(Some(_))
+                                 provide(None)
+                               else int8L.map(Some(_))
           yield ComStmtPrepareOkPacket(
             status,
             statementId,
