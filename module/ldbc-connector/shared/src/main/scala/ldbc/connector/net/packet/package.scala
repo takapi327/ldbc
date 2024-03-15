@@ -49,16 +49,35 @@ package object packet:
       uint8.encode(bitmap).require
     else BitVector.empty
 
+  def time8: Decoder[LocalTime] =
+    for
+      isNegative  <- uint8L
+      days        <- uint32L
+      hour        <- uint8L
+      minute      <- uint8L
+      second      <- uint8L
+    yield LocalTime.of(hour, minute, second)
+  
+  def time12: Decoder[LocalTime] =
+    for
+      isNegative  <- uint8L
+      days        <- uint32L
+      hour        <- uint8L
+      minute      <- uint8L
+      second      <- uint8L
+      microsecond <- uint32L
+    yield LocalTime.of(hour, minute, second, microsecond.toInt * 1000)
+
   /**
    * A codec for a local time.
    */
-  def time: Decoder[LocalTime] =
-    for
-      hour        <- uint8
-      minute      <- uint8
-      second      <- uint8
-      microsecond <- uint32L
-    yield LocalTime.of(hour, minute, second, microsecond.toInt * 1000)
+  def time: Decoder[Option[LocalTime]] =
+    uint8L.flatMap {
+      case 0  => Decoder.pure(None)
+      case 8  => time8.map(Some(_))
+      case 12 => time12.map(Some(_))
+      case _  => throw new IllegalArgumentException("Invalid time length")
+    }
 
   def timestamp4: Decoder[LocalDateTime] =
     for
