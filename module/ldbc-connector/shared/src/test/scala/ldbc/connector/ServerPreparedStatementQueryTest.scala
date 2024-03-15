@@ -201,18 +201,18 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  // test("Server PreparedStatement should be able to retrieve DECIMAL type records.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      for
-  //        statement <-
-  //          conn.serverPreparedStatement("SELECT `decimal`, `decimal_null` FROM `all_types` WHERE `decimal` = ?")
-  //        resultSet <- statement.setBigDecimal(1, BigDecimal.decimal(9999999.99)) *> statement.executeQuery()
-  //      yield resultSet.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt)
-  //    },
-  //    List((BigDecimal.decimal(9999999.99), None))
-  //  )
-  // }
+  test("Server PreparedStatement should be able to retrieve DECIMAL type records.") {
+   assertIO(
+     connection.use { conn =>
+       for
+         statement <-
+           conn.serverPreparedStatement("SELECT `decimal`, `decimal_null` FROM `all_types` WHERE `decimal` = ?")
+         resultSet <- statement.setBigDecimal(1, BigDecimal.decimal(9999999.99)) *> statement.executeQuery()
+       yield resultSet.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt)
+     },
+     List((BigDecimal.decimal(9999999.99), None))
+   )
+  }
 
   test("Server PreparedStatement should be able to retrieve DATE type records.") {
     assertIO(
