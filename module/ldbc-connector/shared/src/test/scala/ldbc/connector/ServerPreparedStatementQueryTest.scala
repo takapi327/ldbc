@@ -162,19 +162,19 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  // test("Server PreparedStatement should be able to retrieve unsigned BIGINT type records.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      for
-  //        statement <- conn.serverPreparedStatement(
-  //                       "SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `all_types` WHERE `bigint_unsigned` = ?"
-  //                     )
-  //        resultSet <- statement.setBigInt(1, BigInt("18446744073709551615")) *> statement.executeQuery()
-  //      yield resultSet.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt)
-  //    },
-  //    List((BigInt("18446744073709551615"), None))
-  //  )
-  // }
+  test("Server PreparedStatement should be able to retrieve unsigned BIGINT type records.") {
+   assertIO(
+     connection.use { conn =>
+       for
+         statement <- conn.serverPreparedStatement(
+                        "SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `all_types` WHERE `bigint_unsigned` = ?"
+                      )
+         resultSet <- statement.setBigInt(1, BigInt("18446744073709551615")) *> statement.executeQuery()
+       yield resultSet.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt)
+     },
+     List((BigInt("18446744073709551615"), None))
+   )
+  }
 
   test("Server PreparedStatement should be able to retrieve FLOAT type records.") {
    assertIO(
