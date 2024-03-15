@@ -37,8 +37,8 @@ object BinaryProtocolResultSetRowPacket:
         case MYSQL_TYPE_TINY                            => uint8L.map(_.toString.some)
         case MYSQL_TYPE_DOUBLE                          => doubleL.map(_.toString.some)
         case MYSQL_TYPE_FLOAT                           => floatL.map(_.toString.some)
-        case MYSQL_TYPE_DATE                            => date.map(localDateFormatter.format(_).some)
-        case MYSQL_TYPE_DATETIME | MYSQL_TYPE_TIMESTAMP => timestamp.map(_.map(localDateFormatter.format(_)))
+        case MYSQL_TYPE_DATE                            => timestamp.map(_.map(localDateTime => localDateFormatter.format(localDateTime.toLocalDate)))
+        case MYSQL_TYPE_DATETIME | MYSQL_TYPE_TIMESTAMP => timestamp.map(_.map(localDateTimeFormatter(0).format(_)))
         case MYSQL_TYPE_TIME                            => time.map(timeFormatter(0).format(_).some)
         case MYSQL_TYPE_NULL                            => provide(None)
         case MYSQL_TYPE_NEWDATE | MYSQL_TYPE_TIMESTAMP2 | MYSQL_TYPE_DATETIME2 | MYSQL_TYPE_TIME2 | MYSQL_TYPE_JSON =>
