@@ -24,17 +24,23 @@ import ldbc.connector.data.CapabilitiesFlags
  * A row with data for each column.
  *   - NULL is sent as 0xFB
  *   - everything else is converted to a string and is sent as string<lenenc>
- *
- * @param values
- *   The values of the row.
  */
-case class ResultSetRowPacket(values: List[Option[String]]) extends ResponsePacket:
+trait ResultSetRowPacket extends ResponsePacket:
+  
+  /**
+   * The values of the row.
+   */
+  def values: List[Option[String]]
 
   override def toString: String = s"ProtocolText::ResultSetRow"
 
 object ResultSetRowPacket:
 
   private val NULL = 0xfb
+  
+  def apply(_values: List[Option[String]]): ResultSetRowPacket =
+    new ResultSetRowPacket:
+      override val values: List[Option[String]] = _values
 
   private def decodeValue(length: Int): Decoder[Option[String]] =
     bytes(length).asDecoder
