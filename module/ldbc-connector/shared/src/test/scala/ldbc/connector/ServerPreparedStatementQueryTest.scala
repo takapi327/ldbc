@@ -226,17 +226,17 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
    )
   }
 
-  // test("Server PreparedStatement should be able to retrieve TIME type records.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      for
-  //        statement <- conn.serverPreparedStatement("SELECT `time`, `time_null` FROM `all_types` WHERE `time` = ?")
-  //        resultSet <- statement.setTime(1, LocalTime.of(12, 34, 56)) *> statement.executeQuery()
-  //      yield resultSet.decode[(LocalTime, Option[LocalTime])](time *: time.opt)
-  //    },
-  //    List((LocalTime.of(12, 34, 56), None))
-  //  )
-  // }
+  test("Server PreparedStatement should be able to retrieve TIME type records.") {
+   assertIO(
+     connection.use { conn =>
+       for
+         statement <- conn.serverPreparedStatement("SELECT `time`, `time_null` FROM `all_types` WHERE `time` = ?")
+         resultSet <- statement.setTime(1, LocalTime.of(12, 34, 56)) *> statement.executeQuery()
+       yield resultSet.decode[(LocalTime, Option[LocalTime])](time *: time.opt)
+     },
+     List((LocalTime.of(12, 34, 56), None))
+   )
+  }
 
   test("Server PreparedStatement should be able to retrieve DATETIME type records.") {
    assertIO(
