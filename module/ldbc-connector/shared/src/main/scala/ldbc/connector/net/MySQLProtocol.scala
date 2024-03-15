@@ -19,8 +19,11 @@ import fs2.io.net.Socket
 
 import org.typelevel.otel4s.trace.Tracer
 
+import scodec.Decoder
+
 import ldbc.connector.data.*
 import ldbc.connector.exception.MySQLException
+import ldbc.connector.net.packet.ResponsePacket
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
@@ -82,6 +85,14 @@ trait MySQLProtocol[F[_]]:
    *   SQL queries based on text protocols
    */
   def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]]
+  
+  /**
+   * Creates a server prepared statement with the given SQL.
+   *
+   * @param sql
+   *   SQL queries based on text protocols
+   */
+  def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]]
 
   /**
    * Resets the sequence id.
@@ -113,7 +124,7 @@ object MySQLProtocol:
     packetSocket:     PacketSocket[F],
     sequenceIdRef:    Ref[F, Byte],
     initialPacketRef: Ref[F, Option[InitialPacket]]
-  ): F[MySQLProtocol[F]] =
+  )(using ev: MonadError[F, Throwable]): F[MySQLProtocol[F]] =
     for
       given Exchange[F] <- Exchange[F]
       initialPacketOpt  <- initialPacketRef.get
@@ -150,6 +161,25 @@ object MySQLProtocol:
             Ref[F]
               .of(ListMap.empty[Int, Parameter])
               .map(params => PreparedStatement.Client[F](packetSocket, initialPacket, sql, params, resetSequenceId))
+            
+          private def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[List[P]] =
+            def read(remaining: Int, acc: List[P]): F[List[P]] =
+              if remaining <= 0 then ev.pure(acc)
+              else packetSocket.receive(decoder).flatMap(result => read(remaining - 1, acc :+ result))
+  
+            read(times, List.empty[P])
+
+          override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
+            for
+              result <- resetSequenceId *> packetSocket.send(ComStmtPreparePacket(sql)) *>
+                packetSocket.receive(ComStmtPrepareOkPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                  case ok: ComStmtPrepareOkPacket => ev.pure(ok)
+                }
+              _ <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+              _ <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+              params <- Ref[F].of(ListMap.empty[Int, Parameter])
+            yield PreparedStatement.Server[F](packetSocket, initialPacket, result.statementId, sql, params, resetSequenceId)
 
           override def resetSequenceId: F[Unit] =
             sequenceIdRef.update(_ => 0.toByte)

@@ -43,6 +43,14 @@ trait Connection[F[_]]:
    */
   def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]]
 
+  /**
+   * Creates a server prepared statement with the given SQL.
+   *
+   * @param sql
+   *   SQL queries based on text protocols
+   */
+  def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]]
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -128,6 +136,8 @@ object Connection:
       override def statement(sql: String): Statement[F] = protocol.statement(sql)
       override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
         protocol.clientPreparedStatement(sql)
+      override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
+        protocol.serverPreparedStatement(sql)
 
   def fromSocketGroup[F[_]: Tracer: Console](
     socketGroup:             SocketGroup[F],
