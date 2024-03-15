@@ -96,10 +96,3 @@ package object packet:
       case 11 => timestamp11.map(Some(_))
       case _  => throw new IllegalArgumentException("Invalid timestamp length")
     }
-
-  def date: Decoder[LocalDate] =
-    for
-      year  <- uint16L
-      month <- uint8L
-      day   <- uint8L
-    yield LocalDate.of(year, month, day)
