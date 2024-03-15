@@ -51,13 +51,13 @@ package object packet:
 
   def time8: Decoder[LocalTime] =
     for
-      isNegative  <- uint8L
-      days        <- uint32L
-      hour        <- uint8L
-      minute      <- uint8L
-      second      <- uint8L
+      isNegative <- uint8L
+      days       <- uint32L
+      hour       <- uint8L
+      minute     <- uint8L
+      second     <- uint8L
     yield LocalTime.of(hour, minute, second)
-  
+
   def time12: Decoder[LocalTime] =
     for
       isNegative  <- uint8L

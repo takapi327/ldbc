@@ -119,22 +119,22 @@ object Parameter:
         case (0, 0, 0, 0) => BitVector(0)
         case (_, _, _, 0) =>
           (for
-            length <- uint8L.encode(8)
+            length     <- uint8L.encode(8)
             isNegative <- uint8L.encode(0)
-            days <- uint32L.encode(0)
-            hour   <- uint8L.encode(hour)
-            minute <- uint8L.encode(minute)
-            second <- uint8L.encode(second)
+            days       <- uint32L.encode(0)
+            hour       <- uint8L.encode(hour)
+            minute     <- uint8L.encode(minute)
+            second     <- uint8L.encode(second)
           yield length |+| isNegative |+| days |+| hour |+| minute |+| second).require
         case _ =>
           (for
-            length <- uint8L.encode(12)
+            length     <- uint8L.encode(12)
             isNegative <- uint8L.encode(0)
-            days <- uint32L.encode(0)
-            hour   <- uint8L.encode(hour)
-            minute <- uint8L.encode(minute)
-            second <- uint8L.encode(second)
-            nano   <- uint32L.encode(micro)
+            days       <- uint32L.encode(0)
+            hour       <- uint8L.encode(hour)
+            minute     <- uint8L.encode(minute)
+            second     <- uint8L.encode(second)
+            nano       <- uint32L.encode(micro)
           yield length |+| isNegative |+| days |+| hour |+| minute |+| second |+| nano).require
 
   def date(value: LocalDate): Parameter = new Parameter:
