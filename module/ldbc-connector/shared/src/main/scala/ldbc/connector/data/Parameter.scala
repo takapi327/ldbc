@@ -177,8 +177,8 @@ object Parameter:
             year   <- uint16L.encode(year)
             month  <- uint8L.encode(month)
             day    <- uint8L.encode(day)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
+            hour   <- uint8L.encode(hour)
+            minute <- uint8L.encode(minute)
             second <- uint32L.encode(second)
           yield length |+| year |+| month |+| day |+| hour |+| minute |+| second).require
         case _ =>
@@ -187,9 +187,9 @@ object Parameter:
             year   <- uint16L.encode(year)
             month  <- uint8L.encode(month)
             day    <- uint8L.encode(day)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
-            second <- uint32L.encode(second)
+            hour   <- uint8L.encode(hour)
+            minute <- uint8L.encode(minute)
+            second <- uint8L.encode(second)
             micro  <- uint32L.encode(micro)
           yield length |+| year |+| month |+| day |+| hour |+| minute |+| second |+| micro).require
 
