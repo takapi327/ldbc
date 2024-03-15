@@ -6,7 +6,7 @@
 
 package ldbc.connector
 
-//import java.time.*
+import java.time.*
 
 import cats.effect.*
 
@@ -214,17 +214,17 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Server PreparedStatement should be able to retrieve DATE type records.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      for
-  //        statement <- conn.serverPreparedStatement("SELECT `date`, `date_null` FROM `all_types` WHERE `date` = ?")
-  //        resultSet <- statement.setDate(1, LocalDate.of(2020, 1, 1)) *> statement.executeQuery()
-  //      yield resultSet.decode[(LocalDate, Option[LocalDate])](date *: date.opt)
-  //    },
-  //    List((LocalDate.of(2020, 1, 1), None))
-  //  )
-  // }
+  test("Server PreparedStatement should be able to retrieve DATE type records.") {
+   assertIO(
+     connection.use { conn =>
+       for
+         statement <- conn.serverPreparedStatement("SELECT `date`, `date_null` FROM `all_types` WHERE `date` = ?")
+         resultSet <- statement.setDate(1, LocalDate.of(2020, 1, 1)) *> statement.executeQuery()
+       yield resultSet.decode[(LocalDate, Option[LocalDate])](date *: date.opt)
+     },
+     List((LocalDate.of(2020, 1, 1), None))
+   )
+  }
 
   // test("Server PreparedStatement should be able to retrieve TIME type records.") {
   //  assertIO(
@@ -238,31 +238,31 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Server PreparedStatement should be able to retrieve DATETIME type records.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      for
-  //        statement <-
-  //          conn.serverPreparedStatement("SELECT `datetime`, `datetime_null` FROM `all_types` WHERE `datetime` = ?")
-  //        resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
-  //      yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt)
-  //    },
-  //    List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
-  //  )
-  // }
+  test("Server PreparedStatement should be able to retrieve DATETIME type records.") {
+   assertIO(
+     connection.use { conn =>
+       for
+         statement <-
+           conn.serverPreparedStatement("SELECT `datetime`, `datetime_null` FROM `all_types` WHERE `datetime` = ?")
+         resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
+       yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt)
+     },
+     List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
+   )
+  }
 
-  // test("Server PreparedStatement should be able to retrieve TIMESTAMP type records.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      for
-  //        statement <-
-  //          conn.serverPreparedStatement("SELECT `timestamp`, `timestamp_null` FROM `all_types` WHERE `timestamp` = ?")
-  //        resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
-  //      yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt)
-  //    },
-  //    List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
-  //  )
-  // }
+  test("Server PreparedStatement should be able to retrieve TIMESTAMP type records.") {
+   assertIO(
+     connection.use { conn =>
+       for
+         statement <-
+           conn.serverPreparedStatement("SELECT `timestamp`, `timestamp_null` FROM `all_types` WHERE `timestamp` = ?")
+         resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery()
+       yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt)
+     },
+     List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
+   )
+  }
 
   // test("Server PreparedStatement should be able to retrieve YEAR type records.") {
   //  assertIO(
