@@ -72,9 +72,11 @@ object Parameter:
     override def encode:         BitVector      = int64L.encode(value).require
 
   def bigInt(value: BigInt): Parameter = new Parameter:
-    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
+    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def sql:            Array[Char]    = value.toString.toCharArray
-    override def encode:         BitVector      = int64L.encode(value.toLong).require
+    override def encode:         BitVector      =
+      val bytes = value.toString.getBytes
+      BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def float(value: Float): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_FLOAT
