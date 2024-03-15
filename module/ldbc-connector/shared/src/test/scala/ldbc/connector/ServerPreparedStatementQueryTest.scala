@@ -176,17 +176,17 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Server PreparedStatement should be able to retrieve FLOAT type records.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      for
-  //        statement <- conn.serverPreparedStatement("SELECT `float`, `float_null` FROM `all_types` WHERE `float` > ?")
-  //        resultSet <- statement.setFloat(1, 3.4f) *> statement.executeQuery()
-  //      yield resultSet.decode[(Float, Option[Float])](float *: float.opt)
-  //    },
-  //    List((3.40282e38f, None))
-  //  )
-  // }
+  test("Server PreparedStatement should be able to retrieve FLOAT type records.") {
+   assertIO(
+     connection.use { conn =>
+       for
+         statement <- conn.serverPreparedStatement("SELECT `float`, `float_null` FROM `all_types` WHERE `float` > ?")
+         resultSet <- statement.setFloat(1, 3.4f) *> statement.executeQuery()
+       yield resultSet.decode[(Float, Option[Float])](float *: float.opt)
+     },
+     List((3.4028235E38f, None))
+   )
+  }
 
   test("Server PreparedStatement should be able to retrieve DOUBLE type records.") {
     assertIO(
