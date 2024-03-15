@@ -62,9 +62,9 @@ package object packet:
 
   def timestamp4: Decoder[LocalDateTime] =
     for
-      year <- uint16L
+      year  <- uint16L
       month <- uint8L
-      day <- uint8L
+      day   <- uint8L
     yield LocalDateTime.of(year, month, day, 0, 0, 0, 0)
 
   def timestamp7: Decoder[LocalDateTime] =
@@ -79,27 +79,27 @@ package object packet:
 
   def timestamp11: Decoder[LocalDateTime] =
     for
-      year <- uint16L
-      month <- uint8L
-      day <- uint8L
-      hour <- uint8L
-      minute <- uint8L
-      second <- uint8L
+      year        <- uint16L
+      month       <- uint8L
+      day         <- uint8L
+      hour        <- uint8L
+      minute      <- uint8L
+      second      <- uint8L
       microsecond <- uint32L
     yield LocalDateTime.of(year, month, day, hour, minute, second, microsecond.toInt * 1000)
 
   def timestamp: Decoder[Option[LocalDateTime]] =
     uint8L.flatMap {
-      case 0 => Decoder.pure(None)
-      case 4 => timestamp4.map(Some(_))
-      case 7 => timestamp7.map(Some(_))
+      case 0  => Decoder.pure(None)
+      case 4  => timestamp4.map(Some(_))
+      case 7  => timestamp7.map(Some(_))
       case 11 => timestamp11.map(Some(_))
-      case _ => throw new IllegalArgumentException("Invalid timestamp length")
+      case _  => throw new IllegalArgumentException("Invalid timestamp length")
     }
 
   def date: Decoder[LocalDate] =
     for
-      year <- uint16L
+      year  <- uint16L
       month <- uint8L
-      day <- uint8L
+      day   <- uint8L
     yield LocalDate.of(year, month, day)

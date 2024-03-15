@@ -614,13 +614,13 @@ object PreparedStatement:
       read(times, Vector.empty[P])
 
     private def readUntilEOF[P <: ResponsePacket](
-                                                   decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
-                                                   acc: Vector[P]
-                                                 ): F[Vector[P]] =
+      decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
+      acc:     Vector[P]
+    ): F[Vector[P]] =
       socket.receive(decoder).flatMap {
-        case _: EOFPacket => ev.pure(acc)
+        case _: EOFPacket     => ev.pure(acc)
         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-        case row => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
+        case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
       }
 
     override def executeQuery(): F[ResultSet] =
@@ -628,20 +628,24 @@ object PreparedStatement:
         for
           params <- params.get
           columnCount <- span.addAttributes(
-            (attributes ++ List(
-              Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-              Attribute("execute", "query")
-            ))*
-          ) *>
-            resetSequenceId *>
-            socket.send(ComStmtExecutePacket(statementId, params)) *>
-            socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-              case _: OKPacket => ev.pure(ColumnsNumberPacket(0))
-              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-              case result: ColumnsNumberPacket => ev.pure(result)
-            }
-          columnDefinitions <- repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-          resultSetRow <- readUntilEOF[BinaryProtocolResultSetRowPacket](BinaryProtocolResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions), Vector.empty)
+                           (attributes ++ List(
+                             Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+                             Attribute("execute", "query")
+                           ))*
+                         ) *>
+                           resetSequenceId *>
+                           socket.send(ComStmtExecutePacket(statementId, params)) *>
+                           socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                             case _: OKPacket      => ev.pure(ColumnsNumberPacket(0))
+                             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                             case result: ColumnsNumberPacket => ev.pure(result)
+                           }
+          columnDefinitions <-
+            repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+          resultSetRow <- readUntilEOF[BinaryProtocolResultSetRowPacket](
+                            BinaryProtocolResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                            Vector.empty
+                          )
         yield new ResultSet:
           override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
           override def rows:    Vector[ResultSetRowPacket]     = resultSetRow

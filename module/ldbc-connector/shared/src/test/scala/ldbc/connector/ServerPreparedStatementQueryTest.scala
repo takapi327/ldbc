@@ -26,7 +26,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     user     = "ldbc",
     password = Some("password"),
     database = Some("connector_test"),
-    //ssl      = SSL.Trusted
+    // ssl      = SSL.Trusted
     allowPublicKeyRetrieval = true
   )
 
@@ -162,7 +162,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  //test("Client PreparedStatement should be able to retrieve unsigned BIGINT type records.") {
+  // test("Client PreparedStatement should be able to retrieve unsigned BIGINT type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -174,9 +174,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((BigInt("18446744073709551615"), None))
   //  )
-  //}
+  // }
 
-  //test("Client PreparedStatement should be able to retrieve FLOAT type records.") {
+  // test("Client PreparedStatement should be able to retrieve FLOAT type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -186,7 +186,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((3.40282e38f, None))
   //  )
-  //}
+  // }
 
   test("Client PreparedStatement should be able to retrieve DOUBLE type records.") {
     assertIO(
@@ -201,7 +201,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  //test("Client PreparedStatement should be able to retrieve DECIMAL type records.") {
+  // test("Client PreparedStatement should be able to retrieve DECIMAL type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -212,9 +212,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((BigDecimal.decimal(9999999.99), None))
   //  )
-  //}
+  // }
 
-  //test("Client PreparedStatement should be able to retrieve DATE type records.") {
+  // test("Client PreparedStatement should be able to retrieve DATE type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -224,9 +224,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((LocalDate.of(2020, 1, 1), None))
   //  )
-  //}
+  // }
 
-  //test("Client PreparedStatement should be able to retrieve TIME type records.") {
+  // test("Client PreparedStatement should be able to retrieve TIME type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -236,9 +236,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((LocalTime.of(12, 34, 56), None))
   //  )
-  //}
+  // }
 
-  //test("Client PreparedStatement should be able to retrieve DATETIME type records.") {
+  // test("Client PreparedStatement should be able to retrieve DATETIME type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -249,9 +249,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
   //  )
-  //}
+  // }
 
-  //test("Client PreparedStatement should be able to retrieve TIMESTAMP type records.") {
+  // test("Client PreparedStatement should be able to retrieve TIMESTAMP type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -262,9 +262,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
   //  )
-  //}
+  // }
 
-  //test("Client PreparedStatement should be able to retrieve YEAR type records.") {
+  // test("Client PreparedStatement should be able to retrieve YEAR type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -274,7 +274,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //    },
   //    List((Year.of(2020), None))
   //  )
-  //}
+  // }
 
   test("Client PreparedStatement should be able to retrieve CHAR type records.") {
     assertIO(

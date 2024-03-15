@@ -26,7 +26,7 @@ import ldbc.connector.data.CapabilitiesFlags
  *   - everything else is converted to a string and is sent as string<lenenc>
  */
 trait ResultSetRowPacket extends ResponsePacket:
-  
+
   /**
    * The values of the row.
    */
@@ -37,7 +37,7 @@ trait ResultSetRowPacket extends ResponsePacket:
 object ResultSetRowPacket:
 
   private val NULL = 0xfb
-  
+
   def apply(_values: List[Option[String]]): ResultSetRowPacket =
     new ResultSetRowPacket:
       override val values: List[Option[String]] = _values

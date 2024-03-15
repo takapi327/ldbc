@@ -40,7 +40,7 @@ case class ComStmtExecutePacket(
   override def encode: BitVector = encodeBody.require
 
   override def toString: String = "COM_STMT_EXECUTE Request"
-  
+
 object ComStmtExecutePacket:
 
   val encoder: Encoder[ComStmtExecutePacket] = Encoder { comStmtExecute =>
@@ -58,9 +58,9 @@ object ComStmtExecutePacket:
     // Flag if parameters must be re-bound
     val newParamsBindFlag =
       if paramCount == 1 && comStmtExecute.params.values
-        .map(_.columnDataType)
-        .toSeq
-        .contains(ColumnDataType.MYSQL_TYPE_NULL)
+          .map(_.columnDataType)
+          .toSeq
+          .contains(ColumnDataType.MYSQL_TYPE_NULL)
       then BitVector(0)
       else BitVector(1)
 
