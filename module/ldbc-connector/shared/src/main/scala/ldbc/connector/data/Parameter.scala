@@ -119,19 +119,23 @@ object Parameter:
         case (0, 0, 0, 0) => BitVector(0)
         case (_, _, _, 0) =>
           (for
-            length <- uint32L.encode(8)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
-            second <- uint32L.encode(second)
-          yield length |+| hour |+| minute |+| second).require
+            length <- uint8L.encode(8)
+            isNegative <- uint8L.encode(0)
+            days <- uint32L.encode(0)
+            hour   <- uint8L.encode(hour)
+            minute <- uint8L.encode(minute)
+            second <- uint8L.encode(second)
+          yield length |+| isNegative |+| days |+| hour |+| minute |+| second).require
         case _ =>
           (for
-            length <- uint32L.encode(12)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
-            second <- uint32L.encode(second)
+            length <- uint8L.encode(12)
+            isNegative <- uint8L.encode(0)
+            days <- uint32L.encode(0)
+            hour   <- uint8L.encode(hour)
+            minute <- uint8L.encode(minute)
+            second <- uint8L.encode(second)
             nano   <- uint32L.encode(micro)
-          yield length |+| hour |+| minute |+| second |+| nano).require
+          yield length |+| isNegative |+| days |+| hour |+| minute |+| second |+| nano).require
 
   def date(value: LocalDate): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_DATE
@@ -179,7 +183,7 @@ object Parameter:
             day    <- uint8L.encode(day)
             hour   <- uint8L.encode(hour)
             minute <- uint8L.encode(minute)
-            second <- uint32L.encode(second)
+            second <- uint8L.encode(second)
           yield length |+| year |+| month |+| day |+| hour |+| minute |+| second).require
         case _ =>
           (for
