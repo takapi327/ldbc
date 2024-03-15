@@ -198,6 +198,6 @@ object Parameter:
           yield length |+| year |+| month |+| day |+| hour |+| minute |+| second |+| micro).require
 
   def year(value: Year): Parameter = new Parameter:
-    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_YEAR
+    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_SHORT
     override def sql:            Array[Char]    = ("'" + value.toString + "'").toCharArray
     override def encode:         BitVector      = uint16L.encode(value.getValue).require
