@@ -74,7 +74,7 @@ object Parameter:
   def bigInt(value: BigInt): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def sql:            Array[Char]    = value.toString.toCharArray
-    override def encode:         BitVector      =
+    override def encode: BitVector =
       val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
