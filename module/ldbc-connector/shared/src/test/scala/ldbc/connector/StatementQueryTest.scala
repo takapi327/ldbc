@@ -15,7 +15,6 @@ import cats.effect.*
 import munit.CatsEffectSuite
 
 import ldbc.connector.codec.all.*
-import ldbc.connector.net.packet.response.ResultSetRowPacket
 
 class StatementQueryTest extends CatsEffectSuite:
 
