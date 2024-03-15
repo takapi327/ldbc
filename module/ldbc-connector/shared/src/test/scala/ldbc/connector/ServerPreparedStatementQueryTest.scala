@@ -30,7 +30,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     allowPublicKeyRetrieval = true
   )
 
-  test("The client's PreparedStatement may use NULL as a parameter.") {
+  test("The server's PreparedStatement may use NULL as a parameter.") {
     assertIO(
       connection.use { conn =>
         for
@@ -42,7 +42,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve BIT type records.") {
+  test("Server PreparedStatement should be able to retrieve BIT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -54,7 +54,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve TINYINT type records.") {
+  test("Server PreparedStatement should be able to retrieve TINYINT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -67,7 +67,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve unsigned TINYINT type records.") {
+  test("Server PreparedStatement should be able to retrieve unsigned TINYINT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -82,7 +82,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve SMALLINT type records.") {
+  test("Server PreparedStatement should be able to retrieve SMALLINT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -95,7 +95,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve unsigned SMALLINT type records.") {
+  test("Server PreparedStatement should be able to retrieve unsigned SMALLINT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -110,7 +110,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve MEDIUMINT type records.") {
+  test("Server PreparedStatement should be able to retrieve MEDIUMINT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -123,7 +123,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve INT type records.") {
+  test("Server PreparedStatement should be able to retrieve INT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -135,7 +135,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve unsigned INT type records.") {
+  test("Server PreparedStatement should be able to retrieve unsigned INT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -149,7 +149,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve BIGINT type records.") {
+  test("Server PreparedStatement should be able to retrieve BIGINT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -162,7 +162,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  // test("Client PreparedStatement should be able to retrieve unsigned BIGINT type records.") {
+  // test("Server PreparedStatement should be able to retrieve unsigned BIGINT type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -176,7 +176,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Client PreparedStatement should be able to retrieve FLOAT type records.") {
+  // test("Server PreparedStatement should be able to retrieve FLOAT type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -188,7 +188,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  test("Client PreparedStatement should be able to retrieve DOUBLE type records.") {
+  test("Server PreparedStatement should be able to retrieve DOUBLE type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -201,7 +201,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  // test("Client PreparedStatement should be able to retrieve DECIMAL type records.") {
+  // test("Server PreparedStatement should be able to retrieve DECIMAL type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -214,7 +214,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Client PreparedStatement should be able to retrieve DATE type records.") {
+  // test("Server PreparedStatement should be able to retrieve DATE type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -226,7 +226,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Client PreparedStatement should be able to retrieve TIME type records.") {
+  // test("Server PreparedStatement should be able to retrieve TIME type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -238,7 +238,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Client PreparedStatement should be able to retrieve DATETIME type records.") {
+  // test("Server PreparedStatement should be able to retrieve DATETIME type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -251,7 +251,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Client PreparedStatement should be able to retrieve TIMESTAMP type records.") {
+  // test("Server PreparedStatement should be able to retrieve TIMESTAMP type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -264,7 +264,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  // test("Client PreparedStatement should be able to retrieve YEAR type records.") {
+  // test("Server PreparedStatement should be able to retrieve YEAR type records.") {
   //  assertIO(
   //    connection.use { conn =>
   //      for
@@ -276,7 +276,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
   //  )
   // }
 
-  test("Client PreparedStatement should be able to retrieve CHAR type records.") {
+  test("Server PreparedStatement should be able to retrieve CHAR type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -288,7 +288,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve VARCHAR type records.") {
+  test("Server PreparedStatement should be able to retrieve VARCHAR type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -301,7 +301,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve BINARY type records.") {
+  test("Server PreparedStatement should be able to retrieve BINARY type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -317,7 +317,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve VARBINARY type records.") {
+  test("Server PreparedStatement should be able to retrieve VARBINARY type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -330,7 +330,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve TINYBLOB type records.") {
+  test("Server PreparedStatement should be able to retrieve TINYBLOB type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -343,7 +343,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve BLOB type records.") {
+  test("Server PreparedStatement should be able to retrieve BLOB type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -355,7 +355,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve MEDIUMBLOB type records.") {
+  test("Server PreparedStatement should be able to retrieve MEDIUMBLOB type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -369,7 +369,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve LONGBLOB type records.") {
+  test("Server PreparedStatement should be able to retrieve LONGBLOB type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -382,7 +382,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve TINYTEXT type records.") {
+  test("Server PreparedStatement should be able to retrieve TINYTEXT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -395,7 +395,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve TEXT type records.") {
+  test("Server PreparedStatement should be able to retrieve TEXT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -407,7 +407,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve MEDIUMTEXT type records.") {
+  test("Server PreparedStatement should be able to retrieve MEDIUMTEXT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -421,7 +421,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve LONGTEXT type records.") {
+  test("Server PreparedStatement should be able to retrieve LONGTEXT type records.") {
     assertIO(
       connection.use { conn =>
         for
@@ -434,7 +434,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve ENUM type records.") {
+  test("Server PreparedStatement should be able to retrieve ENUM type records.") {
     val t = `enum`("a", "b", "c")
     assertIO(
       connection.use { conn =>
@@ -447,7 +447,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     )
   }
 
-  test("Client PreparedStatement should be able to retrieve SET type records.") {
+  test("Server PreparedStatement should be able to retrieve SET type records.") {
     val s = set("a", "b", "c")
     assertIO(
       connection.use { conn =>
