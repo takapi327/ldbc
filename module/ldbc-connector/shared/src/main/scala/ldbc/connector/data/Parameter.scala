@@ -90,7 +90,7 @@ object Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NEWDECIMAL
     override def sql:            Array[Char]    = value.toString.toCharArray
     override def encode: BitVector =
-      val bytes = value.bigDecimal.unscaledValue.toByteArray
+      val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def string(value: String): Parameter = new Parameter:
