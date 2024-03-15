@@ -46,7 +46,7 @@ object ComStmtExecutePacket:
   val encoder: Encoder[ComStmtExecutePacket] = Encoder { comStmtExecute =>
 
     val types = comStmtExecute.params.values.foldLeft(BitVector.empty) { (acc, param) =>
-      acc |+| uint16L.encode(param.columnDataType.code.toInt).require
+      acc |+| uint24L.encode(param.columnDataType.code.toInt).require
     }
 
     val values = comStmtExecute.params.values.foldLeft(BitVector.empty) { (acc, param) =>
@@ -66,10 +66,9 @@ object ComStmtExecutePacket:
 
     Attempt.successful(
       BitVector(CommandId.COM_STMT_EXECUTE) |+|
-        BitVector(comStmtExecute.statementId) |+|
-        BitVector(Array[Byte](0, 0, 0)) |+|
+        uint32L.encode(comStmtExecute.statementId).require |+|
         BitVector(EnumCursorType.PARAMETER_COUNT_AVAILABLE.code) |+|
-        BitVector(Array[Byte](1, 0, 0, 0)) |+|
+        uint32L.encode(1L).require |+|
         BitVector(paramCount) |+|
         nullBitmap(comStmtExecute.params.values.map(_.columnDataType).toList) |+|
         newParamsBindFlag |+|
