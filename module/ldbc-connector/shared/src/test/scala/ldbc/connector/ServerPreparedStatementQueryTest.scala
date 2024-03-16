@@ -168,7 +168,8 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
           statement <- conn.serverPreparedStatement(
                          "SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `all_types` WHERE `bigint_unsigned` = ?"
                        )
-          resultSet <- statement.setBigInt(1, BigInt("18446744073709551615")) *> statement.executeQuery() <* statement.close()
+          resultSet <-
+            statement.setBigInt(1, BigInt("18446744073709551615")) *> statement.executeQuery() <* statement.close()
         yield resultSet.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt)
       },
       List((BigInt("18446744073709551615"), None))
@@ -206,7 +207,8 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
         for
           statement <-
             conn.serverPreparedStatement("SELECT `decimal`, `decimal_null` FROM `all_types` WHERE `decimal` = ?")
-          resultSet <- statement.setBigDecimal(1, BigDecimal.decimal(9999999.99)) *> statement.executeQuery() <* statement.close()
+          resultSet <-
+            statement.setBigDecimal(1, BigDecimal.decimal(9999999.99)) *> statement.executeQuery() <* statement.close()
         yield resultSet.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt)
       },
       List((BigDecimal.decimal(9999999.99), None))
@@ -243,7 +245,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
         for
           statement <-
             conn.serverPreparedStatement("SELECT `datetime`, `datetime_null` FROM `all_types` WHERE `datetime` = ?")
-          resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery() <* statement.close()
+          resultSet <-
+            statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery() <* statement
+              .close()
         yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt)
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
@@ -256,7 +260,9 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
         for
           statement <-
             conn.serverPreparedStatement("SELECT `timestamp`, `timestamp_null` FROM `all_types` WHERE `timestamp` = ?")
-          resultSet <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery() <* statement.close()
+          resultSet <-
+            statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.executeQuery() <* statement
+              .close()
         yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt)
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
@@ -307,7 +313,8 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
           statement <-
             conn.serverPreparedStatement("SELECT `binary`, `binary_null` FROM `all_types` WHERE `binary` = ?")
           resultSet <-
-            statement.setBytes(1, Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0)) *> statement.executeQuery() <* statement.close()
+            statement.setBytes(1, Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0)) *> statement
+              .executeQuery() <* statement.close()
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](binary(10) *: binary(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
