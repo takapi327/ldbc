@@ -26,8 +26,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
     user     = "ldbc",
     password = Some("password"),
     database = Some("connector_test"),
-    // ssl      = SSL.Trusted
-    allowPublicKeyRetrieval = true
+    ssl      = SSL.Trusted
   )
 
   test("The server's PreparedStatement may use NULL as a parameter.") {
