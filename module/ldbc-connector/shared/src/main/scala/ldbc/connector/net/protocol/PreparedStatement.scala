@@ -695,14 +695,14 @@ object PreparedStatement:
             (attributes ++ List(
               Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
               Attribute("execute", "returning.update")
-            )) *
+            ))*
           ) *>
             resetSequenceId *>
             socket.send(ComStmtExecutePacket(statementId, params)) *>
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => ev.pure(result.lastInsertId)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-              case _: EOFPacket => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
             }
         }
       }
