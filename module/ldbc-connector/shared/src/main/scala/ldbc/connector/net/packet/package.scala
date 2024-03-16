@@ -40,7 +40,7 @@ package object packet:
   def nullBitmap(columns: List[ColumnDataType]): BitVector =
     val bits = columns.map {
       case ColumnDataType.MYSQL_TYPE_NULL => true
-      case _                               => false
+      case _                              => false
     }
     val paddedBits = bits.padTo(((bits.length + 7) / 8) * 8, false)
     BitVector.bits(paddedBits.reverse)
