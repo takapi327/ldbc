@@ -36,7 +36,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_boolean_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setBoolean(1, true) *> statement.setBoolean(2, None) *> statement.executeUpdate()
+          count <- statement.setBoolean(1, true) *> statement.setBoolean(2, None) *> statement.executeUpdate() <* statement.close() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_boolean_table`").executeUpdate()
         yield count
       },
@@ -53,7 +53,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_byte_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setByte(1, 1.toByte) *> statement.setByte(2, None) *> statement.executeUpdate()
+          count <- statement.setByte(1, 1.toByte) *> statement.setByte(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_byte_table`").executeUpdate()
         yield count
       },
@@ -70,7 +70,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_short_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setShort(1, 1.toShort) *> statement.setShort(2, None) *> statement.executeUpdate()
+          count <- statement.setShort(1, 1.toShort) *> statement.setShort(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_short_table`").executeUpdate()
         yield count
       },
@@ -87,7 +87,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_int_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setInt(1, 1) *> statement.setInt(2, None) *> statement.executeUpdate()
+          count <- statement.setInt(1, 1) *> statement.setInt(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_int_table`").executeUpdate()
         yield count
       },
@@ -104,7 +104,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_long_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setLong(1, Long.MaxValue) *> statement.setLong(2, None) *> statement.executeUpdate()
+          count <- statement.setLong(1, Long.MaxValue) *> statement.setLong(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_long_table`").executeUpdate()
         yield count
       },
@@ -142,7 +142,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_float_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setFloat(1, 1.1f) *> statement.setFloat(2, None) *> statement.executeUpdate()
+          count <- statement.setFloat(1, 1.1f) *> statement.setFloat(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_float_table`").executeUpdate()
         yield count
       },
@@ -159,7 +159,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_double_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setDouble(1, 1.1) *> statement.setDouble(2, None) *> statement.executeUpdate()
+          count <- statement.setDouble(1, 1.1) *> statement.setDouble(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_double_table`").executeUpdate()
         yield count
       },
@@ -197,7 +197,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_string_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setString(1, "test") *> statement.setString(2, None) *> statement.executeUpdate()
+          count <- statement.setString(1, "test") *> statement.setString(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_string_table`").executeUpdate()
         yield count
       },
@@ -234,7 +234,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_time_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            statement.setTime(1, LocalTime.of(12, 34, 56)) *> statement.setTime(2, None) *> statement.executeUpdate()
+            statement.setTime(1, LocalTime.of(12, 34, 56)) *> statement.setTime(2, None) *> statement.executeUpdate() <* statement.close()
           _ <- conn.statement("DROP TABLE `server_statement_time_table`").executeUpdate()
         yield count
       },
@@ -252,7 +252,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_date_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            statement.setDate(1, LocalDate.of(2020, 1, 1)) *> statement.setDate(2, None) *> statement.executeUpdate()
+            statement.setDate(1, LocalDate.of(2020, 1, 1)) *> statement.setDate(2, None) *> statement.executeUpdate() <* statement.close()
           _ <- conn.statement("DROP TABLE `server_statement_date_table`").executeUpdate()
         yield count
       },
@@ -273,7 +273,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           count <- statement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> statement.setTimestamp(
                      2,
                      None
-                   ) *> statement.executeUpdate()
+                   ) *> statement.executeUpdate() <* statement.close()
           _ <- conn.statement("DROP TABLE `server_statement_datetime_table`").executeUpdate()
         yield count
       },
@@ -290,7 +290,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                  .executeUpdate()
           statement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_year_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- statement.setYear(1, Year.of(2020)) *> statement.setYear(2, None) *> statement.executeUpdate()
+          count <- statement.setYear(1, Year.of(2020)) *> statement.setYear(2, None) *> statement.executeUpdate() <* statement.close()
           _     <- conn.statement("DROP TABLE `server_statement_year_table`").executeUpdate()
         yield count
       },
