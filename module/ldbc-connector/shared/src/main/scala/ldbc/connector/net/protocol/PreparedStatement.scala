@@ -707,4 +707,7 @@ object PreparedStatement:
         }
       }
 
-    override def close(): F[Unit] = resetSequenceId *> socket.send(ComStmtClosePacket(statementId))
+    override def close(): F[Unit] =
+      exchange[F, Unit]("statement") { (span: Span[F]) =>
+        span.addAttributes((attributes ++ List(Attribute("execute", "close"), Attribute("statementId", statementId)))*) *> resetSequenceId *> socket.send(ComStmtClosePacket(statementId))
+      }
