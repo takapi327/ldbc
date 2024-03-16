@@ -38,16 +38,12 @@ package object packet:
    *   The list of column data types.
    */
   def nullBitmap(columns: List[ColumnDataType]): BitVector =
-    if columns.nonEmpty then
-      val bitmap = columns.foldLeft(0) { (bitmap, param) =>
-        (bitmap << 1) | (
-          param match
-            case ColumnDataType.MYSQL_TYPE_NULL => 1
-            case _                              => 0
-        )
-      }
-      uint8.encode(bitmap).require
-    else BitVector.empty
+    val bits = columns.map {
+      case ColumnDataType.MYSQL_TYPE_NULL => true
+      case _                               => false
+    }
+    val paddedBits = bits.padTo(((bits.length + 7) / 8) * 8, false)
+    BitVector.bits(paddedBits.reverse)
 
   def time8: Decoder[LocalTime] =
     for
