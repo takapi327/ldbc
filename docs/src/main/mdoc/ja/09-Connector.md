@@ -122,7 +122,7 @@ LDBCが内部で認証プラグインを判断し、適切な認証プラグイ�
 CREATE TABLE users (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  age INT NOT NULL
+  age INT NULL
 );
 ```
 
@@ -311,6 +311,79 @@ connection.use { conn =>
 ```
 
 ### ResultSet
+
+`ResultSet`はクエリ実行後にMySQLサーバーから返された値を格納するためのAPIです。
+
+SQLを実行して取得したレコードを`ResultSet`から取得するには`decode`メソッドを使用します。
+
+`decode`メソッドは`ResultSet`から取得した値をScalaの型に変換して取得するためのAPIです。
+
+```scala
+connection.use { conn =>
+  for 
+    statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
+    _ <- statement.setLong(1, 1)
+    result <- statement.executeQuery()
+  yield 
+    val decodes: List[(Long, String, Option[Int])] = result.decode(bigint *: varchar *: int.opt)
+    ...
+}
+```
+
+NULL許容のカラムを取得する場合は`Option`型に変換するために`opt`メソッドを使用します。
+これでレコードがNULLの場合はNoneとして取得することができます。
+
+現在のバージョンでは以下のデータ型がサポートされています。
+
+| Codec       | データ型              | Scala 型        |
+|-------------|-------------------|----------------|
+| boolean     | BOOLEAN           | Boolean        |
+| tinyint     | TINYINT           | Byte           |
+| utinyint    | unsigned TINYINT  | Short          |
+| smallint    | SMALLINT          | Short          |
+| usmallint   | unsigned SMALLINT | Int            |
+| int         | INT               | Int            |
+| uint        | unsigned INT      | Long           |
+| bigint      | BIGINT            | Long           |
+| ubigint     | unsigned BIGINT   | BigInt         |
+| float       | FLOAT             | Float          |
+| double      | DOUBLE            | Double         |
+| decimal     | DECIMAL           | BigDecimal     |
+| char        | CHAR              | String         |
+| varchar     | VARCHAR           | String         |
+| binary      | BINARY            | Array[Byte]    |
+| varbinary   | VARBINARY         | String         |
+| tinyblob    | TINYBLOB          | String         |
+| blob        | BLOB              | String         |
+| mediumblob  | MEDIUMBLOB        | String         |
+| longblob    | LONGBLOB          | String         |
+| tinytext    | TINYTEXT          | String         |
+| text        | TEXT              | String         |
+| mediumtext  | MEDIUMTEXT        | String         |
+| longtext    | LONGTEXT          | String         |
+| enum        | ENUM              | String         |
+| set         | SET               | List[String]   |
+| json        | JSON              | String         |
+| date        | DATE              | LocalDate      |
+| time        | TIME              | LocalTime      |
+| timetz      | TIME              | OffsetTime     |
+| datetime    | DATETIME          | LocalDateTime  |
+| timestamp   | TIMESTAMP         | LocalDateTime  |
+| timestamptz | TIMESTAMP         | OffsetDateTime |
+| year        | YEAR              | Year           |
+
+※ 現在MySQLのデータ型を指定して値を取得するような作りとなっていますが、将来的にはより簡潔にScalaの型を指定して値を取得するような作りに変更する可能性があります。
+
+以下サポートされていないデータ型があります。
+
+- GEOMETRY
+- POINT
+- LINESTRING
+- POLYGON
+- MULTIPOINT
+- MULTILINESTRING
+- MULTIPOLYGON
+- GEOMETRYCOLLECTION
 
 ## 未対応機能
 
