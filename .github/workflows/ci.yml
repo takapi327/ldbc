@@ -75,6 +75,24 @@ jobs:
       - name: Start up MySQL on Docker
         run: docker compose up -d
 
+      - name: Install dependencies
+        if: matrix.project == 'ldbcNative'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libssl-dev libcrypto++-dev
+
+      - name: Clone s2n repository
+        if: matrix.project == 'ldbcNative'
+        run: 'git clone https://github.com/aws/s2n-tls.git'
+
+      - name: Build and install s2n
+        if: matrix.project == 'ldbcNative'
+        run: |
+          cd s2n-tls
+          cmake . -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build build
+          sudo cmake --install build
+
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
@@ -106,11 +124,11 @@ jobs:
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
+        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
 
       - name: Compress target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
+        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))

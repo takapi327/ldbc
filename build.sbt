@@ -18,7 +18,7 @@ ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
 ThisBuild / crossScalaVersions         := Seq(scala3, scala34)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
-ThisBuild / githubWorkflowBuildPreamble += dockerRun
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ settings2n
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
@@ -92,6 +92,33 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
   .dependsOn(core)
+
+lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Full)
+  .module("connector", "MySQL connector written in pure Scala3")
+  .settings(
+    scalacOptions += "-Ykind-projector:underscores",
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-core"         % "2.10.0",
+      "org.typelevel" %%% "cats-effect"       % "3.5.3",
+      "co.fs2"        %%% "fs2-core"          % "3.10-365636d",
+      "co.fs2"        %%% "fs2-io"            % "3.10-365636d",
+      "org.scodec"    %%% "scodec-bits"       % "1.1.38",
+      "org.scodec"    %%% "scodec-core"       % "2.2.2",
+      "org.scodec"    %%% "scodec-cats"       % "1.2.0",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.4.0",
+      "org.typelevel" %%% "twiddles-core"     % "0.8.0",
+      "org.typelevel" %%% "munit-cats-effect" % "2.0.0-M4" % Test
+    )
+  )
+  .platformsSettings(JSPlatform, NativePlatform)(
+    libraryDependencies ++= Seq(
+      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+    )
+  )
+  .jsSettings(
+    Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
@@ -169,6 +196,7 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     dsl,
     codegen,
+    connector,
     plugin,
     docs,
     benchmark,
