@@ -72,9 +72,11 @@ object Parameter:
     override def encode:         BitVector      = int64L.encode(value).require
 
   def bigInt(value: BigInt): Parameter = new Parameter:
-    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
+    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
     override def sql:            Array[Char]    = value.toString.toCharArray
-    override def encode:         BitVector      = int64L.encode(value.toLong).require
+    override def encode: BitVector =
+      val bytes = value.toString.getBytes
+      BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def float(value: Float): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_FLOAT
@@ -90,7 +92,7 @@ object Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NEWDECIMAL
     override def sql:            Array[Char]    = value.toString.toCharArray
     override def encode: BitVector =
-      val bytes = value.bigDecimal.unscaledValue.toByteArray
+      val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def string(value: String): Parameter = new Parameter:
@@ -119,19 +121,23 @@ object Parameter:
         case (0, 0, 0, 0) => BitVector(0)
         case (_, _, _, 0) =>
           (for
-            length <- uint32L.encode(8)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
-            second <- uint32L.encode(second)
-          yield length |+| hour |+| minute |+| second).require
+            length     <- uint8L.encode(8)
+            isNegative <- uint8L.encode(0)
+            days       <- uint32L.encode(0)
+            hour       <- uint8L.encode(hour)
+            minute     <- uint8L.encode(minute)
+            second     <- uint8L.encode(second)
+          yield length |+| isNegative |+| days |+| hour |+| minute |+| second).require
         case _ =>
           (for
-            length <- uint32L.encode(12)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
-            second <- uint32L.encode(second)
-            nano   <- uint32L.encode(micro)
-          yield length |+| hour |+| minute |+| second |+| nano).require
+            length     <- uint8L.encode(12)
+            isNegative <- uint8L.encode(0)
+            days       <- uint32L.encode(0)
+            hour       <- uint8L.encode(hour)
+            minute     <- uint8L.encode(minute)
+            second     <- uint8L.encode(second)
+            nano       <- uint32L.encode(micro)
+          yield length |+| isNegative |+| days |+| hour |+| minute |+| second |+| nano).require
 
   def date(value: LocalDate): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_DATE
@@ -177,9 +183,9 @@ object Parameter:
             year   <- uint16L.encode(year)
             month  <- uint8L.encode(month)
             day    <- uint8L.encode(day)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
-            second <- uint32L.encode(second)
+            hour   <- uint8L.encode(hour)
+            minute <- uint8L.encode(minute)
+            second <- uint8L.encode(second)
           yield length |+| year |+| month |+| day |+| hour |+| minute |+| second).require
         case _ =>
           (for
@@ -187,13 +193,13 @@ object Parameter:
             year   <- uint16L.encode(year)
             month  <- uint8L.encode(month)
             day    <- uint8L.encode(day)
-            hour   <- uint32L.encode(hour)
-            minute <- uint32L.encode(minute)
-            second <- uint32L.encode(second)
+            hour   <- uint8L.encode(hour)
+            minute <- uint8L.encode(minute)
+            second <- uint8L.encode(second)
             micro  <- uint32L.encode(micro)
           yield length |+| year |+| month |+| day |+| hour |+| minute |+| second |+| micro).require
 
   def year(value: Year): Parameter = new Parameter:
-    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_YEAR
+    override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_SHORT
     override def sql:            Array[Char]    = ("'" + value.toString + "'").toCharArray
     override def encode:         BitVector      = uint16L.encode(value.getValue).require

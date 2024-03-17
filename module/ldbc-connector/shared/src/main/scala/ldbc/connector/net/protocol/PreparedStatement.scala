@@ -557,7 +557,7 @@ object PreparedStatement:
           span.addAttributes(
             (attributes ++ List(
               Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-              Attribute("execute", "query")
+              Attribute("execute", "update")
             ))*
           ) *>
             resetSequenceId *>
@@ -576,7 +576,7 @@ object PreparedStatement:
           span.addAttributes(
             (attributes ++ List(
               Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-              Attribute("execute", "query")
+              Attribute("execute", "returning.update")
             ))*
           ) *>
             resetSequenceId *>
@@ -590,3 +590,126 @@ object PreparedStatement:
       }
 
     override def close(): F[Unit] = ev.unit
+
+  /**
+   * PreparedStatement for query construction at the server side.
+   *
+   * @param socket
+   *   the packet socket
+   * @param initialPacket
+   *   the initial packet
+   * @param statementId
+   *   the statement id
+   * @param sql
+   *   the SQL statement
+   * @param params
+   *   the parameters
+   * @param resetSequenceId
+   *   the reset sequence id
+   * @tparam F
+   *   The effect type
+   */
+  case class Server[F[_]: Exchange: Tracer](
+    socket:          PacketSocket[F],
+    initialPacket:   InitialPacket,
+    statementId:     Long,
+    sql:             String,
+    params:          Ref[F, ListMap[Int, Parameter]],
+    resetSequenceId: F[Unit]
+  )(using ev: MonadError[F, Throwable])
+    extends PreparedStatement[F]:
+
+    private val attributes = List(
+      Attribute("type", "Server PreparedStatement"),
+      Attribute("sql", sql)
+    )
+
+    private def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[Vector[P]] =
+      def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
+        if remaining <= 0 then ev.pure(acc)
+        else socket.receive(decoder).flatMap(result => read(remaining - 1, acc :+ result))
+
+      read(times, Vector.empty[P])
+
+    private def readUntilEOF[P <: ResponsePacket](
+      decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
+      acc:     Vector[P]
+    ): F[Vector[P]] =
+      socket.receive(decoder).flatMap {
+        case _: EOFPacket     => ev.pure(acc)
+        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+        case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
+      }
+
+    override def executeQuery(): F[ResultSet] =
+      exchange[F, ResultSet]("statement") { (span: Span[F]) =>
+        for
+          params <- params.get
+          columnCount <- span.addAttributes(
+                           (attributes ++ List(
+                             Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+                             Attribute("execute", "query")
+                           ))*
+                         ) *>
+                           resetSequenceId *>
+                           socket.send(ComStmtExecutePacket(statementId, params)) *>
+                           socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                             case _: OKPacket      => ev.pure(ColumnsNumberPacket(0))
+                             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                             case result: ColumnsNumberPacket => ev.pure(result)
+                           }
+          columnDefinitions <-
+            repeatProcess(columnCount.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+          resultSetRow <- readUntilEOF[BinaryProtocolResultSetRowPacket](
+                            BinaryProtocolResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                            Vector.empty
+                          )
+        yield new ResultSet:
+          override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
+          override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+      }
+
+    override def executeUpdate(): F[Int] =
+      exchange[F, Int]("statement") { (span: Span[F]) =>
+        params.get.flatMap { params =>
+          span.addAttributes(
+            (attributes ++ List(
+              Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+              Attribute("execute", "update")
+            ))*
+          ) *>
+            resetSequenceId *>
+            socket.send(ComStmtExecutePacket(statementId, params)) *>
+            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+              case result: OKPacket => ev.pure(result.affectedRows)
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+            }
+        }
+      }
+
+    override def returningAutoGeneratedKey(): F[Int] =
+      exchange[F, Int]("statement") { (span: Span[F]) =>
+        params.get.flatMap { params =>
+          span.addAttributes(
+            (attributes ++ List(
+              Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+              Attribute("execute", "returning.update")
+            ))*
+          ) *>
+            resetSequenceId *>
+            socket.send(ComStmtExecutePacket(statementId, params)) *>
+            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+              case result: OKPacket => ev.pure(result.lastInsertId)
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+            }
+        }
+      }
+
+    override def close(): F[Unit] =
+      exchange[F, Unit]("statement") { (span: Span[F]) =>
+        span.addAttributes(
+          (attributes ++ List(Attribute("execute", "close"), Attribute("statementId", statementId)))*
+        ) *> resetSequenceId *> socket.send(ComStmtClosePacket(statementId))
+      }

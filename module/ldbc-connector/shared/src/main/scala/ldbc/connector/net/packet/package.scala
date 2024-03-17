@@ -6,7 +6,7 @@
 
 package ldbc.connector.net
 
-import java.time.LocalTime
+import java.time.*
 
 import scodec.*
 import scodec.codecs.*
@@ -38,24 +38,76 @@ package object packet:
    *   The list of column data types.
    */
   def nullBitmap(columns: List[ColumnDataType]): BitVector =
-    if columns.nonEmpty then
-      val bitmap = columns.foldLeft(0) { (bitmap, param) =>
-        (bitmap << 1) | (
-          param match
-            case ColumnDataType.MYSQL_TYPE_NULL => 1
-            case _                              => 0
-        )
-      }
-      uint8.encode(bitmap).require
-    else BitVector.empty
+    val bits = columns.map {
+      case ColumnDataType.MYSQL_TYPE_NULL => true
+      case _                              => false
+    }
+    val paddedBits = bits.padTo(((bits.length + 7) / 8) * 8, false)
+    BitVector.bits(paddedBits.reverse)
+
+  def time8: Decoder[LocalTime] =
+    for
+      isNegative <- uint8L
+      days       <- uint32L
+      hour       <- uint8L
+      minute     <- uint8L
+      second     <- uint8L
+    yield LocalTime.of(hour, minute, second)
+
+  def time12: Decoder[LocalTime] =
+    for
+      isNegative  <- uint8L
+      days        <- uint32L
+      hour        <- uint8L
+      minute      <- uint8L
+      second      <- uint8L
+      microsecond <- uint32L
+    yield LocalTime.of(hour, minute, second, microsecond.toInt * 1000)
 
   /**
    * A codec for a local time.
    */
-  def time: Decoder[LocalTime] =
+  def time: Decoder[Option[LocalTime]] =
+    uint8L.flatMap {
+      case 0  => Decoder.pure(None)
+      case 8  => time8.map(Some(_))
+      case 12 => time12.map(Some(_))
+      case _  => throw new IllegalArgumentException("Invalid time length")
+    }
+
+  def timestamp4: Decoder[LocalDateTime] =
     for
-      hour        <- uint8
-      minute      <- uint8
-      second      <- uint8
+      year  <- uint16L
+      month <- uint8L
+      day   <- uint8L
+    yield LocalDateTime.of(year, month, day, 0, 0, 0, 0)
+
+  def timestamp7: Decoder[LocalDateTime] =
+    for
+      year   <- uint16L
+      month  <- uint8L
+      day    <- uint8L
+      hour   <- uint8L
+      minute <- uint8L
+      second <- uint8L
+    yield LocalDateTime.of(year, month, day, hour, minute, second, 0)
+
+  def timestamp11: Decoder[LocalDateTime] =
+    for
+      year        <- uint16L
+      month       <- uint8L
+      day         <- uint8L
+      hour        <- uint8L
+      minute      <- uint8L
+      second      <- uint8L
       microsecond <- uint32L
-    yield LocalTime.of(hour, minute, second, microsecond.toInt * 1000)
+    yield LocalDateTime.of(year, month, day, hour, minute, second, microsecond.toInt * 1000)
+
+  def timestamp: Decoder[Option[LocalDateTime]] =
+    uint8L.flatMap {
+      case 0  => Decoder.pure(None)
+      case 4  => timestamp4.map(Some(_))
+      case 7  => timestamp7.map(Some(_))
+      case 11 => timestamp11.map(Some(_))
+      case _  => throw new IllegalArgumentException("Invalid timestamp length")
+    }
