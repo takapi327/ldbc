@@ -8,7 +8,7 @@ JDBCはJavaで実装が行われているためScalaで使用する場合でもJ
 昨今のScalaを取り巻く環境はJSやNativeなどの環境でも動作できるようプラグインの開発が盛んに行われています。
 ScalaはJavaの資産を使用できるJVMのみで動作する言語から、マルチプラットフォーム環境でも動作できるよう進化を続けています。
 
-しかし、JDBCはJavaの標準ライブラリでありScalaのマルチプラットフォーム環境での動作をサポートしていません。
+しかし、JDBCはJavaの標準APIでありScalaのマルチプラットフォーム環境での動作をサポートしていません。
 
 そのため、ScalaでアプリケーションをJS, Nativeなどで動作できるように作成を行ったとしてもJDBCを使用できないため、MySQLなどのデータベースへ接続を行うことができません。
 
@@ -22,7 +22,7 @@ LDBC コネクタはこのSkunkに影響を受けてJVM, JS, Native環境を問�
 LDBCコネクタは一番低レイヤーのAPIとなります。
 今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。
 
-プロジェクトに以下の依存関係を設定する必要があります。
+使用するにはプロジェクトに以下の依存関係を設定する必要があります。
 
 **JVM**
 
@@ -55,7 +55,7 @@ libraryDependencies += "$org$" %%% "ldbc-connector" % "$version$"
 LDBCコネクタを使用してMySQLへの接続を行うためには、`Connection`を使用します。
 `Connection`は`IO`モナドを使用して非同期でMySQLへの接続を行います。
 
-また、`Connection`はオブザーバビリティ意識した開発を行えるように`Otel4s`を使用しています。
+また、`Connection`はオブザーバビリティを意識した開発を行えるように`Otel4s`を使用してテレメトリデータを収集できるようにしています。
 そのため、`Connection`を使用する際には`Otel4s`の`Tracer`を設定する必要があります。
 
 開発時やトレースを使用したテレメトリデータが不要な場合は`Tracer.noop`を使用することを推奨します。
@@ -89,7 +89,7 @@ val connection = Connection[IO](
 | readTimeout             | Duration           | MySQLサーバーへの接続を試みるまでのタイムアウトを指定します。デフォルトはDuration.Infです。 |
 | allowPublicKeyRetrieval | Boolean            | MySQLサーバーとの認証時にRSA公開鍵を使用するかを指定します。デフォルトはfalseです。       |
 
-`Connection`は`Resource`を使用してリソース管理を行います。そのためコネクション情報を使用する場合は`use`メソッドを使用してリソースを管理を行います。
+`Connection`は`Resource`を使用してリソース管理を行います。そのためコネクション情報を使用する場合は`use`メソッドを使用してリソースの管理を行います。
 
 ```scala
 connection.use { conn =>
@@ -144,9 +144,7 @@ CREATE TABLE users (
 connection.use { conn =>
   val statement: Statement[IO] = conn.createStatement("SELECT * FROM users")
   val result: IO[ResultSet] = statement.executeQuery()
-  result.map { rs =>
-    // ResultSetを使用した処理
-  }
+  // ResultSetを使用した処理
 }
 ```
 
@@ -180,10 +178,10 @@ connection.use { conn =>
 
 LDBCでは`PreparedStatement`を`Client PreparedStatement`と`Server PreparedStatement`に分けて提供しています。
 
-`Client PreparedStatement`は動的なパラメーターを使用してアプリケーション上でSQLを構築しMySQLサーバーに送信を行うためのAPIです。
+`Client PreparedStatement`は動的なパラメーターを使用してアプリケーション上でSQLの構築を行い、MySQLサーバーに送信を行うためのAPIです。
 そのためMySQLサーバーへのクエリ送信方法は`Statement`と同じになります。
 
-こちらはJDBCの`PreparedStatement`に相当します。
+このAPIはJDBCの`PreparedStatement`に相当します。
 
 より安全なMySQLサーバー内でクエリを構築するための`PreparedStatement`は`Server PreparedStatement`で提供されますので、そちらを使用してください。
 
@@ -191,7 +189,7 @@ LDBCでは`PreparedStatement`を`Client PreparedStatement`と`Server PreparedSta
 
 `Server PreparedStatement`では実行するクエリの送信とパラメーターの送信が分けて行われるため、クエリの再利用が可能となります。
 
-`Server PreparedStatement`を使用する場合は事前にクエリをMySQLサーバーで準備を行います。格納するためにMySQLサーバーはメモリを使用しますが、クエリの再利用が可能となるため、パフォーマンスの向上が期待できます。
+`Server PreparedStatement`を使用する場合事前にクエリをMySQLサーバーで準備します。格納するためにMySQLサーバーはメモリを使用しますが、クエリの再利用が可能となるため、パフォーマンスの向上が期待できます。
 
 しかし、事前準備されたクエリは解放されるまでメモリを使用し続けるため、メモリリークのリスクがあります。
 
@@ -199,9 +197,7 @@ LDBCでは`PreparedStatement`を`Client PreparedStatement`と`Server PreparedSta
 
 #### Client PreparedStatement
 
-`Client PreparedStatement`は動的なパラメーターを使用するSQLを実行するためのAPIです。
-
-`Connection`の`clientPreparedStatement`メソッドを使用して`PreparedStatement`を構築します。
+`Connection`の`clientPreparedStatement`メソッドを使用して`Client PreparedStatement`を構築します。
 
 ```scala
 connection.use { conn =>
@@ -214,9 +210,7 @@ connection.use { conn =>
 
 #### Server PreparedStatement
 
-`Server PreparedStatement`は動的なパラメーターを使用するSQLを実行するためのAPIです。
-
-`Connection`の`serverPreparedStatement`メソッドを使用して`PreparedStatement`を構築します。
+`Connection`の`serverPreparedStatement`メソッドを使用して`Server PreparedStatement`を構築します。
 
 ```scala
 connection.use { conn =>
@@ -239,9 +233,8 @@ connection.use { conn =>
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
     result <- statement.executeQuery()
-  yield result.map { rs =>
+  yield
     // ResultSetを使用した処理
-  }
 }
 ```
 
@@ -327,7 +320,7 @@ result.decode(bigint *: varchar *: int.opt)
 ```
 
 NULL許容のカラムを取得する場合は`Option`型に変換するために`opt`メソッドを使用します。
-これでレコードがNULLの場合はNoneとして取得することができます。
+これによりレコードがNULLの場合はNoneとして取得することができます。
 
 クエリ実行からレコード取得までの一連の流れは以下のようになります。
 
@@ -408,4 +401,6 @@ LDBCコネクタは現在実験的な機能となります。そのため、以�
 - コネクションプーリング
 - トランザクション
 - バッチ処理
+- セーブポイント
+- フェイルオーバー対策
 - etc...
