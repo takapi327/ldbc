@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>Connector · LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../en/09-Connector.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../en/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.3.0-alpha1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/01-Table-Definitions.html" class="page">Table Definitions</a></li>
+  <li><a href="../en/02-Custom-Data-Type.html" class="page">Custom Data Type</a></li>
+  <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
+  <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
+  <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+  <li><a href="../en/09-Connector.html" class="active page">Connector</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../en/index.html">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../en/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.3.0-alpha1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/01-Table-Definitions.html" class="page">Table Definitions</a></li>
+  <li><a href="../en/02-Custom-Data-Type.html" class="page">Custom Data Type</a></li>
+  <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
+  <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
+  <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+  <li><a href="../en/09-Connector.html" class="active page">Connector</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+<div class="nav-breadcrumbs">
+<ul>
+  <li><a href="../en/index.html">LDBC</a></li>
+  <li>Connector</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#connector" name="connector" class="anchor"><span class="anchor-link"></span></a>Connector</h1>
+<p>This chapter describes database connections using LDBC&rsquo;s own MySQL connector.</p>
+<p>To make a connection to a MySQL database in Scala, you need to use JDBC, which is a standard Java API that can also be used in Scala. JDBC is implemented in Java and can only work in a JVM environment, even when used in Scala.</p>
+<p>The recent environment surrounding Scala has seen a lot of development of plug-ins to work with JS, Native, and other environments. Scala continues to evolve from a language that runs only in the JVM, where Java assets can be used, to one that can run in a multi-platform environment.</p>
+<p>However, JDBC is a standard Java API and does not support operation in Scala&rsquo;s multiplatform environment.</p>
+<p>Therefore, even if you create an application in Scala that can run on JS, Native, etc., you will not be able to connect to databases such as MySQL because you cannot use JDBC.</p>
+<p>Typelevel Project has a Scala library for <a href="https://www.postgresql.org/">PostgreSQL</a> called <a href="https://github.com/typelevel/skunk">Skunk</a>. This project does not use JDBC and uses only pure Scala to connect to PostgreSQL. Therefore, Skunk can be used to connect to PostgreSQL in any JVM, JS, or Native environment.</p>
+<p>The LDBC connector is a Skunk-inspired project that is being developed to enable connections to MySQL in any JVM, JS, or Native environment.</p>
+<p>※ This connector is currently an experimental feature. Therefore, please do not use it in a production environment.</p>
+<p>The LDBC connector is the lowest layer API. We plan to use this connector to provide higher-layer APIs in the future. We also plan to make it compatible with existing higher-layer APIs.</p>
+<p>The following dependencies must be set up in your project in order to use it.</p>
+<p><strong>JVM</strong></p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha1&quot;
+</code></pre>
+<p><strong>JS/Native</strong></p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha1&quot;
+</code></pre>
+<p><strong>Supported Versions</strong></p>
+<p>The current version supports the following versions of MySQL</p>
+<ul>
+  <li>MySQL 5.7.x</li>
+  <li>MySQL 8.x</li>
+</ul>
+<p>The main support is for MySQL 8.x. MySQL 5.7.x is a sub-support. Therefore, be careful when working with MySQL 5.7.x. We plan to discontinue support for MySQL 5.7.x in the future.</p>
+<h2><a href="#connection" name="connection" class="anchor"><span class="anchor-link"></span></a>Connection</h2>
+<p>Use <code>Connection</code> to make a connection to MySQL using the LDBC connector.</p>
+<p>In addition, <code>Connection</code> allows the use of <code>Otel4s</code> to collect telemetry data in order to allow observer-aware development. Therefore, when using <code>Connection</code>, the <code>Tracer</code> of <code>Otel4s</code> must be set.</p>
+<p>It is recommended to use <code>Tracer.noop</code> during development or when telemetry data using traces is not needed.</p>
+<pre class="prettyprint"><code class="language-scala">import cats.effect.IO
+import org.typelevel.otel4s.trace.Tracer
+import ldbc.connector.Connection
+
+given Tracer[IO] = Tracer.noop[IO]
+
+val connection = Connection[IO](
+  host = &quot;127.0.0.1&quot;,
+  port = 3306,
+  user = &quot;root&quot;,
+)
+</code></pre>
+<p>The following is a list of properties that can be set when constructing a <code>Connection</code>.</p>
+<table>
+  <thead>
+    <tr>
+      <th>Property </th>
+      <th>Type </th>
+      <th>Use </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>host </td>
+      <td>String </td>
+      <td>Specify the host for the MySQL server </td>
+    </tr>
+    <tr>
+      <td>port </td>
+      <td>Int </td>
+      <td>Specify the port number of the MySQL server </td>
+    </tr>
+    <tr>
+      <td>user </td>
+      <td>String </td>
+      <td>Specify the user name to log in to the MySQL server </td>
+    </tr>
+    <tr>
+      <td>password </td>
+      <td>Option[String] </td>
+      <td>Specify the password of the user who will log in to the MySQL server </td>
+    </tr>
+    <tr>
+      <td>database </td>
+      <td>Option[String] </td>
+      <td>Specify the database name to be used after connecting to the MySQL server </td>
+    </tr>
+    <tr>
+      <td>debug </td>
+      <td>Boolean </td>
+      <td>Outputs a log of the process. Default is false. </td>
+    </tr>
+    <tr>
+      <td>ssl </td>
+      <td>SSL </td>
+      <td>Specifies whether SSL/TLS is used for notifications to and from the MySQL server. The default is SSL.None. </td>
+    </tr>
+    <tr>
+      <td>socketOptions </td>
+      <td>List[SocketOption] </td>
+      <td>Specifies socket options for TCP/UDP sockets. </td>
+    </tr>
+    <tr>
+      <td>readTimeout </td>
+      <td>Duration </td>
+      <td>Specifies the timeout before an attempt is made to connect to the MySQL server. Default is Duration.Inf. </td>
+    </tr>
+    <tr>
+      <td>allowPublicKeyRetrieval </td>
+      <td>Boolean </td>
+      <td>Specifies whether to use the RSA public key when authenticating with the MySQL server. Default is false. </td>
+    </tr>
+  </tbody>
+</table>
+<p>Connection<code>uses</code>Resource<code>to manage resources. Therefore, when connection information is used, the</code>use` method is used to manage the resource.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  // Write code
+}
+</code></pre>
+<h3><a href="#authentication" name="authentication" class="anchor"><span class="anchor-link"></span></a>Authentication</h3>
+<p>Authentication in MySQL involves the client sending user information in a phase called LoginRequest when connecting to the MySQL server. The server then looks up the user in the <code>mysql.user</code> table to determine which authentication plugin to use. After the authentication plugin is determined, the server calls the plugin to initiate user authentication and sends the results to the client. In this way, authentication is pluggable (various types of plug-ins can be added and removed) in MySQL.</p>
+<p>Authentication plug-ins supported by MySQL are listed on the <a href="https://dev.mysql.com/doc/refman/8.0/ja/authentication-plugins.html">official page</a>.</p>
+<p>LDBC currently supports the following authentication plug-ins</p>
+<ul>
+  <li>Native pluggable authentication</li>
+  <li>SHA-256 pluggable authentication</li>
+  <li>Cache of SHA-2 pluggable certificates</li>
+</ul>
+<p>※ Native pluggable authentication and SHA-256 pluggable authentication are plugins that have been deprecated since MySQL 8.x. It is recommended that you use the SHA-2 pluggable authentication cache unless you have a good reason to do otherwise.</p>
+<p>There is no need to be aware of authentication plug-ins in the LDBC application code. Users simply create a user created with the authentication plugin they wish to use on the MySQL database and then attempt to connect to MySQL using that user in the LDBC application code. LDBC will internally determine the authentication plugin and use the appropriate authentication plugin to connect to MySQL.</p>
+<h2><a href="#execution" name="execution" class="anchor"><span class="anchor-link"></span></a>Execution</h2>
+<p>The following tables are assumed to be used in the subsequent process.</p>
+<pre class="prettyprint"><code class="language-sql">CREATE TABLE users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  age INT NULL
+);
+</code></pre>
+<h3><a href="#statement" name="statement" class="anchor"><span class="anchor-link"></span></a>Statement</h3>
+<p><code>Statement</code> is an API for executing SQL without dynamic parameters.</p>
+<p>※ Since <code>Statement</code> does not use dynamic parameters, there is a risk of SQL injection depending on its usage. Therefore, it is recommended to use <code>PreparedStatement</code> when dynamic parameters are used.</p>
+<p>Construct a <code>Statement</code> using the <code>createStatement</code> method of <code>Connection</code>.</p>
+<h4><a href="#read-query" name="read-query" class="anchor"><span class="anchor-link"></span></a>Read query</h4>
+<p>Use the <code>executeQuery</code> method to execute read-only SQL.</p>
+<p>The values returned by the MySQL server as a result of executing the query are stored in a <code>ResultSet</code> and returned as the return value.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  val statement: Statement[IO] = conn.createStatement(&quot;SELECT * FROM users&quot;)
+  val result: IO[ResultSet] = statement.executeQuery()
+  // Processing with ResultSet
+}
+</code></pre>
+<h4><a href="#write-query" name="write-query" class="anchor"><span class="anchor-link"></span></a>Write Query</h4>
+<p>Use the <code>executeUpdate</code> method to execute SQL to write.</p>
+<p>The value returned by the MySQL server as a result of executing the query is the number of rows affected.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  val statement: Statement[IO] = conn.createStatement(&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;)
+  val result: IO[Int] = statement.executeUpdate()
+}
+</code></pre>
+<h4><a href="#get-the-value-of-auto-increment" name="get-the-value-of-auto-increment" class="anchor"><span class="anchor-link"></span></a>Get the value of AUTO_INCREMENT</h4>
+<p>Use the <code>returningAutoGeneratedKey</code> method to retrieve the AUTO_INCREMENT value after the query is executed using <code>Statement</code>.</p>
+<p>The value returned by the MySQL server as a result of executing the query will be the value generated for AUTO_INCREMENT as the return value.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  val statement: Statement[IO] = conn.createStatement(&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;)
+  val result: IO[Int] = statement.returningAutoGeneratedKey()
+}
+</code></pre>
+<h3><a href="#client-server-preparedstatement" name="client-server-preparedstatement" class="anchor"><span class="anchor-link"></span></a>Client/Server PreparedStatement</h3>
+<p>LDBC provides <code>PreparedStatement</code> divided into <code>Client PreparedStatement</code> and <code>Server PreparedStatement</code>.</p>
+<p><code>Client PreparedStatement</code> is an API for constructing SQL on the application using dynamic parameters and sending it to the MySQL server. Therefore, the method of sending queries to the MySQL server is the same as for <code>Statement</code>.</p>
+<p>This API is equivalent to JDBC&rsquo;s <code>PreparedStatement</code>.</p>
+<p>A <code>PreparedStatement</code> for building queries in a more secure MySQL server is provided in the <code>Server PreparedStatement</code>, so please use that.</p>
+<p><code>Server PreparedStatement</code> is an API that prepares the query to be executed in advance in the MySQL server and executes it by setting parameters in the application.</p>
+<p>The <code>Server PreparedStatement</code> allows reuse of queries, since the query to be executed and the parameters are sent separately.</p>
+<p>When using <code>Server PreparedStatement</code>, the query is prepared in advance by the MySQL server. Although the MySQL server uses memory to store them, the queries can be reused, which improves performance.</p>
+<p>However, there is a risk of memory leaks because the pre-prepared query will continue to use memory until it is freed.</p>
+<p>If you use <code>Server PreparedStatement</code>, you must use the <code>close</code> method to properly release the query.</p>
+<h4><a href="#client-preparedstatement" name="client-preparedstatement" class="anchor"><span class="anchor-link"></span></a>Client PreparedStatement</h4>
+<p>Construct a <code>Client PreparedStatement</code> using the <code>ClientPreparedStatement</code> method of <code>Connection</code>.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    ...
+  yield ...
+}
+</code></pre>
+<h4><a href="#server-preparedstatement" name="server-preparedstatement" class="anchor"><span class="anchor-link"></span></a>Server PreparedStatement</h4>
+<p>Construct a <code>Server PreparedStatement</code> using the <code>Connection</code> <code>serverPreparedStatement</code> method.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    ...
+  yield ...
+}
+</code></pre>
+<h4><a href="#read-query" name="read-query" class="anchor"><span class="anchor-link"></span></a>Read query</h4>
+<p>Use the <code>executeQuery</code> method to execute read-only SQL.</p>
+<p>The values returned by the MySQL server as a result of executing the query are stored in a <code>ResultSet</code> and returned as the return value.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;) // or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    _ &lt;- statement.setLong(1, 1)
+    result &lt;- statement.executeQuery()
+  yield
+    // Processing with ResultSet
+}
+</code></pre>
+<p>If you want to use dynamic parameters, use the <code>setXXX</code> method to set the parameters. The <code>setXXX</code> method can also use the <code>Option</code> type. If <code>None</code> is passed, the parameter will be set to NULL.</p>
+<p>The <code>setXXX</code> method specifies the index of the parameter and the value of the parameter.</p>
+<pre class="prettyprint"><code class="language-scala">statement.setLong(1, 1)
+</code></pre>
+<p>The following methods are supported in the current version</p>
+<table>
+  <thead>
+    <tr>
+      <th>Method </th>
+      <th align="left">Type </th>
+      <th>Note </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>setNull </td>
+      <td align="left"> </td>
+      <td>Set the parameter to NULL </td>
+    </tr>
+    <tr>
+      <td>setBoolean </td>
+      <td align="left">Boolean/Option[Boolean] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setByte </td>
+      <td align="left">Byte/Option[Byte] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setShort </td>
+      <td align="left">Short/Option[Short] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setInt </td>
+      <td align="left">Int/Option[Int] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setLong </td>
+      <td align="left">Long/Option[Long] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setBigInt </td>
+      <td align="left">BigInt/Option[BigInt] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setFloat </td>
+      <td align="left">Float/Option[Float] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setDouble </td>
+      <td align="left">Double/Option[Double] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setBigDecimal </td>
+      <td align="left">BigDecimal/Option[BigDecimal] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setString </td>
+      <td align="left">String/Option[String] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setBytes </td>
+      <td align="left">Array[Byte]/Option[Array[Byte]] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setDate </td>
+      <td align="left">LocalDate/Option[LocalDate] </td>
+      <td>Directly handle <code>java.time</code> instead of <code>java.sql</code>. </td>
+    </tr>
+    <tr>
+      <td>setTime </td>
+      <td align="left">LocalTime/Option[LocalTime] </td>
+      <td>Directly handle <code>java.time</code> instead of <code>java.sql</code>. </td>
+    </tr>
+    <tr>
+      <td>setTimestamp </td>
+      <td align="left">LocalDateTime/Option[LocalDateTime] </td>
+      <td>Directly handle <code>java.time</code> instead of <code>java.sql</code>. </td>
+    </tr>
+    <tr>
+      <td>setYear </td>
+      <td align="left">Year/Option[Year] </td>
+      <td>Directly handle <code>java.time</code> instead of <code>java.sql</code>. </td>
+    </tr>
+  </tbody>
+</table>
+<h4><a href="#write-query" name="write-query" class="anchor"><span class="anchor-link"></span></a>Write Query</h4>
+<p>Use the <code>executeUpdate</code> method to execute the SQL to be written.</p>
+<p>The value returned by the MySQL server as a result of executing the query is the number of rows affected.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;) // or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
+    _ &lt;- statement.setString(1, &quot;Alice&quot;)
+    _ &lt;- statement.setInt(2, 20)
+    result &lt;- statement.executeUpdate()
+  yield result
+}
+
+</code></pre>
+<h4><a href="#get-the-value-of-auto-increment" name="get-the-value-of-auto-increment" class="anchor"><span class="anchor-link"></span></a>Get the value of AUTO_INCREMENT</h4>
+<p>Use the <code>returningAutoGeneratedKey</code> method to retrieve the value of AUTO_INCREMENT after executing the query.</p>
+<p>The value returned by the MySQL server as a result of executing the query will be the value generated for AUTO_INCREMENT as the return value.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;) // or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
+    _ &lt;- statement.setString(1, &quot;Alice&quot;)
+    _ &lt;- statement.setInt(2, 20)
+    result &lt;- statement.returningAutoGeneratedKey()
+  yield result
+}
+</code></pre>
+<h3><a href="#resultset" name="resultset" class="anchor"><span class="anchor-link"></span></a>ResultSet</h3>
+<p>The <code>ResultSet</code> is an API for storing values returned by the MySQL server after query execution.</p>
+<p>The <code>decode</code> method is used to retrieve records from the <code>ResultSet</code> after they have been retrieved by executing SQL.</p>
+<p>The <code>decode</code> method is an API for converting values retrieved from <code>ResultSet</code> to Scala types.</p>
+<p>The type to be converted is specified using the <code>*:</code> operator depending on the number of columns to be retrieved.</p>
+<p>The example shows how to retrieve the id, name, and age columns of the users table, specifying the type of each column.</p>
+<pre class="prettyprint"><code class="language-scala">result.decode(bigint *: varchar *: int.opt)
+</code></pre>
+<p>If you want to get a NULL-allowed column, use the <code>opt</code> method to convert it to the <code>Option</code> type. If the record is NULL, it can be retrieved as None.</p>
+<p>The sequence of events from query execution to record retrieval is as follows</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;) // or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    _ &lt;- statement.setLong(1, 1)
+    result &lt;- statement.executeQuery()
+  yield 
+    val decodes: List[(Long, String, Option[Int])] = result.decode(bigint *: varchar *: int.opt)
+    ...
+}
+</code></pre>
+<p>The records retrieved from a <code>ResultSet</code> will always be an array. This is because a query in MySQL may always return multiple records.</p>
+<p>If you want to retrieve a single record, use the <code>head</code> or <code>headOption</code> method after the <code>decode</code> process.</p>
+<p>The following data types are supported in the current version</p>
+<table>
+  <thead>
+    <tr>
+      <th>Codec </th>
+      <th>Data Type </th>
+      <th>Scala Type </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>boolean </td>
+      <td>BOOLEAN </td>
+      <td>Boolean </td>
+    </tr>
+    <tr>
+      <td>tinyint </td>
+      <td>TINYINT </td>
+      <td>Byte </td>
+    </tr>
+    <tr>
+      <td>utinyint </td>
+      <td>unsigned TINYINT </td>
+      <td>Short </td>
+    </tr>
+    <tr>
+      <td>smallint </td>
+      <td>SMALLINT </td>
+      <td>Short </td>
+    </tr>
+    <tr>
+      <td>usmallint </td>
+      <td>unsigned SMALLINT </td>
+      <td>Int </td>
+    </tr>
+    <tr>
+      <td>int </td>
+      <td>INT </td>
+      <td>Int </td>
+    </tr>
+    <tr>
+      <td>uint </td>
+      <td>unsigned INT </td>
+      <td>Long </td>
+    </tr>
+    <tr>
+      <td>bigint </td>
+      <td>BIGINT </td>
+      <td>Long </td>
+    </tr>
+    <tr>
+      <td>ubigint </td>
+      <td>unsigned BIGINT </td>
+      <td>BigInt </td>
+    </tr>
+    <tr>
+      <td>float </td>
+      <td>FLOAT </td>
+      <td>Float </td>
+    </tr>
+    <tr>
+      <td>double </td>
+      <td>DOUBLE </td>
+      <td>Double </td>
+    </tr>
+    <tr>
+      <td>decimal </td>
+      <td>DECIMAL </td>
+      <td>BigDecimal </td>
+    </tr>
+    <tr>
+      <td>char </td>
+      <td>CHAR </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>varchar </td>
+      <td>VARCHAR </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>binary </td>
+      <td>BINARY </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>varbinary </td>
+      <td>VARBINARY </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>tinyblob </td>
+      <td>TINYBLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>blob </td>
+      <td>BLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>mediumblob </td>
+      <td>MEDIUMBLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>longblob </td>
+      <td>LONGBLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>tinytext </td>
+      <td>TINYTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>text </td>
+      <td>TEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>mediumtext </td>
+      <td>MEDIUMTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>longtext </td>
+      <td>LONGTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>enum </td>
+      <td>ENUM </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>set </td>
+      <td>SET </td>
+      <td>List[String] </td>
+    </tr>
+    <tr>
+      <td>json </td>
+      <td>JSON </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>date </td>
+      <td>DATE </td>
+      <td>LocalDate </td>
+    </tr>
+    <tr>
+      <td>time </td>
+      <td>TIME </td>
+      <td>LocalTime </td>
+    </tr>
+    <tr>
+      <td>timetz </td>
+      <td>TIME </td>
+      <td>OffsetTime </td>
+    </tr>
+    <tr>
+      <td>datetime </td>
+      <td>DATETIME </td>
+      <td>LocalDateTime </td>
+    </tr>
+    <tr>
+      <td>timestamp </td>
+      <td>TIMESTAMP </td>
+      <td>LocalDateTime </td>
+    </tr>
+    <tr>
+      <td>timestamptz </td>
+      <td>TIMESTAMP </td>
+      <td>OffsetDateTime </td>
+    </tr>
+    <tr>
+      <td>year </td>
+      <td>YEAR </td>
+      <td>Year </td>
+    </tr>
+  </tbody>
+</table>
+<p>※ Currently, it is designed to retrieve values by specifying the MySQL data type, but in the future it may be changed to a more concise Scala type to retrieve values.</p>
+<p>The following data types are not supported</p>
+<ul>
+  <li>GEOMETRY</li>
+  <li>POINT</li>
+  <li>LINESTRING</li>
+  <li>POLYGON</li>
+  <li>MULTIPOINT</li>
+  <li>MULTILINESTRING</li>
+  <li>MULTIPOLYGON</li>
+  <li>GEOMETRYCOLLECTION</li>
+</ul>
+<h2><a href="#unsupported-feature" name="unsupported-feature" class="anchor"><span class="anchor-link"></span></a>Unsupported Feature</h2>
+<p>The LDBC connector is currently an experimental feature. Therefore, the following features are not supported. We plan to provide the features as they become available.</p>
+<ul>
+  <li>Connection Pooling</li>
+  <li>Transaction</li>
+  <li>Batch Processing</li>
+  <li>Save points</li>
+  <li>Failover measures</li>
+  <li>etc&hellip;</li>
+</ul>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha1/docs/target/mdoc/en/09-Connector.md">here</a>.
+</div>
+
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/09-Connector.html#connector" class="header">Connector</a>
+  <ul>
+    <li><a href="../en/09-Connector.html#connection" class="header">Connection</a></li>
+    <li><a href="../en/09-Connector.html#execution" class="header">Execution</a></li>
+    <li><a href="../en/09-Connector.html#unsupported-feature" class="header">Unsupported Feature</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2024</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha1', 'https://takapi327.github.io/ldbc/')});</script>
+
+
+</html>

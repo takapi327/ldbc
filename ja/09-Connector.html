@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>コネクタ · LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../ja/09-Connector.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../ja/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.3.0-alpha1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
+  <li><a href="../ja/09-Connector.html" class="active page">コネクタ</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../ja/index.html">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../ja/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.3.0-alpha1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
+  <li><a href="../ja/09-Connector.html" class="active page">コネクタ</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+<div class="nav-breadcrumbs">
+<ul>
+  <li><a href="../ja/index.html">LDBC</a></li>
+  <li>コネクタ</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#コネクタ" name="コネクタ" class="anchor"><span class="anchor-link"></span></a>コネクタ</h1>
+<p>この章では、LDBC独自のMySQLコネクタを使用したデータベース接続について説明します。</p>
+<p>ScalaでMySQLデータベースへの接続を行うためにはJDBCを使用する必要があります。JDBCはJavaの標準APIであり、Scalaでも使用することができます。 JDBCはJavaで実装が行われているためScalaで使用する場合でもJVM環境でのみ動作することができます。</p>
+<p>昨今のScalaを取り巻く環境はJSやNativeなどの環境でも動作できるようプラグインの開発が盛んに行われています。 ScalaはJavaの資産を使用できるJVMのみで動作する言語から、マルチプラットフォーム環境でも動作できるよう進化を続けています。</p>
+<p>しかし、JDBCはJavaの標準APIでありScalaのマルチプラットフォーム環境での動作をサポートしていません。</p>
+<p>そのため、ScalaでアプリケーションをJS, Nativeなどで動作できるように作成を行ったとしてもJDBCを使用できないため、MySQLなどのデータベースへ接続を行うことができません。</p>
+<p>Typelevel Projectには<a href="https://github.com/typelevel/skunk">Skunk</a>と呼ばれる<a href="https://www.postgresql.org/">PostgreSQL</a>用のScalaライブラリが存在します。 このプロジェクトはJDBCを使用しておらず、純粋なScalaのみでPostgreSQLへの接続を実現しています。そのため、Skunkを使用すればJVM, JS, Native環境を問わずPostgreSQLへの接続を行うことができます。</p>
+<p>LDBC コネクタはこのSkunkに影響を受けてJVM, JS, Native環境を問わずMySQLへの接続を行えるようにするために開発が行われてるプロジェクトです。</p>
+<p>※ このコネクタは現在実験的な機能となります。そのため本番環境での使用しないでください。</p>
+<p>LDBCコネクタは一番低レイヤーのAPIとなります。 今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。</p>
+<p>使用するにはプロジェクトに以下の依存関係を設定する必要があります。</p>
+<p><strong>JVM</strong></p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha1&quot;
+</code></pre>
+<p><strong>JS/Native</strong></p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha1&quot;
+</code></pre>
+<p><strong>サポートバージョン</strong></p>
+<p>現在のバージョンは以下のバージョンのMySQLをサポートしています。</p>
+<ul>
+  <li>MySQL 5.7.x</li>
+  <li>MySQL 8.x</li>
+</ul>
+<p>メインサポートはMySQL 8.xです。MySQL 5.7.xはサブサポートとなります。そのためMySQL 5.7.xでの動作には注意が必要です。 将来的にはMySQL 5.7.xのサポートは終了する予定です。</p>
+<h2><a href="#接続" name="接続" class="anchor"><span class="anchor-link"></span></a>接続</h2>
+<p>LDBCコネクタを使用してMySQLへの接続を行うためには、<code>Connection</code>を使用します。</p>
+<p>また、<code>Connection</code>はオブザーバビリティを意識した開発を行えるように<code>Otel4s</code>を使用してテレメトリデータを収集できるようにしています。 そのため、<code>Connection</code>を使用する際には<code>Otel4s</code>の<code>Tracer</code>を設定する必要があります。</p>
+<p>開発時やトレースを使用したテレメトリデータが不要な場合は<code>Tracer.noop</code>を使用することを推奨します。</p>
+<pre class="prettyprint"><code class="language-scala">import cats.effect.IO
+import org.typelevel.otel4s.trace.Tracer
+import ldbc.connector.Connection
+
+given Tracer[IO] = Tracer.noop[IO]
+
+val connection = Connection[IO](
+  host = &quot;127.0.0.1&quot;,
+  port = 3306,
+  user = &quot;root&quot;,
+)
+</code></pre>
+<p>以下は<code>Connection</code>構築時に設定できるプロパティの一覧です。</p>
+<table>
+  <thead>
+    <tr>
+      <th>プロパティ </th>
+      <th>型 </th>
+      <th>用途 </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>host </td>
+      <td>String </td>
+      <td>MySQLサーバーのホストを指定します </td>
+    </tr>
+    <tr>
+      <td>port </td>
+      <td>Int </td>
+      <td>MySQLサーバーのポート番号を指定します </td>
+    </tr>
+    <tr>
+      <td>user </td>
+      <td>String </td>
+      <td>MySQLサーバーへログインを行うユーザー名を指定します </td>
+    </tr>
+    <tr>
+      <td>password </td>
+      <td>Option[String] </td>
+      <td>MySQLサーバーへログインを行うユーザーのパスワードを指定します </td>
+    </tr>
+    <tr>
+      <td>database </td>
+      <td>Option[String] </td>
+      <td>MySQLサーバーへ接続後に使用するデータベース名を指定します </td>
+    </tr>
+    <tr>
+      <td>debug </td>
+      <td>Boolean </td>
+      <td>処理のログを出力します。デフォルトはfalseです </td>
+    </tr>
+    <tr>
+      <td>ssl </td>
+      <td>SSL </td>
+      <td>MySQLサーバーとの通知んでSSL/TLSを使用するかを指定します。デフォルトはSSL.Noneです </td>
+    </tr>
+    <tr>
+      <td>socketOptions </td>
+      <td>List[SocketOption] </td>
+      <td>TCP/UDP ソケットのソケットオプションを指定します。 </td>
+    </tr>
+    <tr>
+      <td>readTimeout </td>
+      <td>Duration </td>
+      <td>MySQLサーバーへの接続を試みるまでのタイムアウトを指定します。デフォルトはDuration.Infです。 </td>
+    </tr>
+    <tr>
+      <td>allowPublicKeyRetrieval </td>
+      <td>Boolean </td>
+      <td>MySQLサーバーとの認証時にRSA公開鍵を使用するかを指定します。デフォルトはfalseです。 </td>
+    </tr>
+  </tbody>
+</table>
+<p><code>Connection</code>は<code>Resource</code>を使用してリソース管理を行います。そのためコネクション情報を使用する場合は<code>use</code>メソッドを使用してリソースの管理を行います。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  // コードを記述
+}
+</code></pre>
+<h3><a href="#認証" name="認証" class="anchor"><span class="anchor-link"></span></a>認証</h3>
+<p>MySQLでの認証は、クライアントがMySQLサーバーへ接続するときにLoginRequestというフェーズでユーザ情報を送信します。そして、サーバー側では送られたユーザが<code>mysql.user</code>テーブルに存在するか検索を行い、どの認証プラグインを使用するかを決定します。認証プラグインが決定した後にサーバーはそのプラグインを呼び出してユーザー認証を開始し、その結果をクライアント側に送信します。このようにMySQLでは認証がプラガブル（様々なタイプのプラグインを付け外しできる）になっています。</p>
+<p>MySQLでサポートされている認証プラグインは<a href="https://dev.mysql.com/doc/refman/8.0/ja/authentication-plugins.html">公式ページ</a>に記載されています。</p>
+<p>LDBCは現時点で以下の認証プラグインをサポートしています。</p>
+<ul>
+  <li>ネイティブプラガブル認証</li>
+  <li>SHA-256 プラガブル認証</li>
+  <li>SHA-2 プラガブル認証のキャッシュ</li>
+</ul>
+<p>※ ネイティブプラガブル認証とSHA-256 プラガブル認証はMySQL 8.xから非推奨となったプラグインです。特段理由がない場合はSHA-2 プラガブル認証のキャッシュを使用することを推奨します。</p>
+<p>LDBCのアプリケーションコード上で認証プラグインを意識する必要はありません。ユーザーはMySQLのデータベース上で使用したい認証プラグインで作成されたユーザーを作成し、LDBCのアプリケーションコード上ではそのユーザーを使用してMySQLへの接続を試みるだけで問題ありません。 LDBCが内部で認証プラグインを判断し、適切な認証プラグインを使用してMySQLへの接続を行います。</p>
+<h2><a href="#実行" name="実行" class="anchor"><span class="anchor-link"></span></a>実行</h2>
+<p>以降の処理では以下テーブルを使用しているものとします。</p>
+<pre class="prettyprint"><code class="language-sql">CREATE TABLE users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  age INT NULL
+);
+</code></pre>
+<h3><a href="#statement" name="statement" class="anchor"><span class="anchor-link"></span></a>Statement</h3>
+<p><code>Statement</code>は動的なパラメーターを使用しないSQLを実行するためのAPIです。</p>
+<p>※ <code>Statement</code>は動的なパラメーターを使用しないため、使い方によってはSQLインジェクションのリスクがあります。そのため、動的なパラメーターを使用する場合は<code>PreparedStatement</code>を使用することを推奨します。</p>
+<p><code>Connection</code>の<code>createStatement</code>メソッドを使用して<code>Statement</code>を構築します。</p>
+<h4><a href="#読み取りクエリ" name="読み取りクエリ" class="anchor"><span class="anchor-link"></span></a>読み取りクエリ</h4>
+<p>読み取り専用のSQLを実行する場合は<code>executeQuery</code>メソッドを使用します。</p>
+<p>クエリを実行した結果MySQLサーバーから返される値は<code>ResultSet</code>に格納されて戻り値として返却されます。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  val statement: Statement[IO] = conn.createStatement(&quot;SELECT * FROM users&quot;)
+  val result: IO[ResultSet] = statement.executeQuery()
+  // ResultSetを使用した処理
+}
+</code></pre>
+<h4><a href="#書き込みクエリ" name="書き込みクエリ" class="anchor"><span class="anchor-link"></span></a>書き込みクエリ</h4>
+<p>書き込みを行うSQLを実行する場合は<code>executeUpdate</code>メソッドを使用します。</p>
+<p>クエリを実行した結果MySQLサーバーから返される値は影響を受けた行数が戻り値として返却されます。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  val statement: Statement[IO] = conn.createStatement(&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;)
+  val result: IO[Int] = statement.executeUpdate()
+}
+</code></pre>
+<h4><a href="#auto-incrementの値を取得" name="auto-incrementの値を取得" class="anchor"><span class="anchor-link"></span></a>AUTO_INCREMENTの値を取得</h4>
+<p><code>Statement</code>を使用してクエリ実行後にAUTO_INCREMENTの値を取得する場合は<code>returningAutoGeneratedKey</code>メソッドを使用します。</p>
+<p>クエリを実行した結果MySQLサーバーから返される値はAUTO_INCREMENTに生成された値が戻り値として返却されます。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  val statement: Statement[IO] = conn.createStatement(&quot;INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20)&quot;)
+  val result: IO[Int] = statement.returningAutoGeneratedKey()
+}
+</code></pre>
+<h3><a href="#client-server-preparedstatement" name="client-server-preparedstatement" class="anchor"><span class="anchor-link"></span></a>Client/Server PreparedStatement</h3>
+<p>LDBCでは<code>PreparedStatement</code>を<code>Client PreparedStatement</code>と<code>Server PreparedStatement</code>に分けて提供しています。</p>
+<p><code>Client PreparedStatement</code>は動的なパラメーターを使用してアプリケーション上でSQLの構築を行い、MySQLサーバーに送信を行うためのAPIです。 そのためMySQLサーバーへのクエリ送信方法は<code>Statement</code>と同じになります。</p>
+<p>このAPIはJDBCの<code>PreparedStatement</code>に相当します。</p>
+<p>より安全なMySQLサーバー内でクエリを構築するための<code>PreparedStatement</code>は<code>Server PreparedStatement</code>で提供されますので、そちらを使用してください。</p>
+<p><code>Server PreparedStatement</code>は実行を行うクエリをMySQLサーバー内で事前に準備を行い、アプリケーション上でパラメーターを設定して実行を行うためのAPIです。</p>
+<p><code>Server PreparedStatement</code>では実行するクエリの送信とパラメーターの送信が分けて行われるため、クエリの再利用が可能となります。</p>
+<p><code>Server PreparedStatement</code>を使用する場合事前にクエリをMySQLサーバーで準備します。格納するためにMySQLサーバーはメモリを使用しますが、クエリの再利用が可能となるため、パフォーマンスの向上が期待できます。</p>
+<p>しかし、事前準備されたクエリは解放されるまでメモリを使用し続けるため、メモリリークのリスクがあります。</p>
+<p><code>Server PreparedStatement</code>を使用する場合は<code>close</code>メソッドを使用して適切にクエリの解放を行う必要があります。</p>
+<h4><a href="#client-preparedstatement" name="client-preparedstatement" class="anchor"><span class="anchor-link"></span></a>Client PreparedStatement</h4>
+<p><code>Connection</code>の<code>clientPreparedStatement</code>メソッドを使用して<code>Client PreparedStatement</code>を構築します。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    ...
+  yield ...
+}
+</code></pre>
+<h4><a href="#server-preparedstatement" name="server-preparedstatement" class="anchor"><span class="anchor-link"></span></a>Server PreparedStatement</h4>
+<p><code>Connection</code>の<code>serverPreparedStatement</code>メソッドを使用して<code>Server PreparedStatement</code>を構築します。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    ...
+  yield ...
+}
+</code></pre>
+<h4><a href="#読み取りクエリ" name="読み取りクエリ" class="anchor"><span class="anchor-link"></span></a>読み取りクエリ</h4>
+<p>読み取り専用のSQLを実行する場合は<code>executeQuery</code>メソッドを使用します。</p>
+<p>クエリを実行した結果MySQLサーバーから返される値は<code>ResultSet</code>に格納されて戻り値として返却されます。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;) // or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    _ &lt;- statement.setLong(1, 1)
+    result &lt;- statement.executeQuery()
+  yield
+    // ResultSetを使用した処理
+}
+</code></pre>
+<p>動的なパラメーターを使用する場合は<code>setXXX</code>メソッドを使用してパラメーターを設定します。 <code>setXXX</code>メソッドは<code>Option</code>型を使用することもできます。<code>None</code>が渡された場合パラメーターにはNULLがセットされます。</p>
+<p><code>setXXX</code>メソッドはパラメーターのインデックスとパラメーターの値を指定します。</p>
+<pre class="prettyprint"><code class="language-scala">statement.setLong(1, 1)
+</code></pre>
+<p>現在のバージョンでは以下のメソッドがサポートされています。</p>
+<table>
+  <thead>
+    <tr>
+      <th>メソッド </th>
+      <th>型 </th>
+      <th>備考 </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>setNull </td>
+      <td> </td>
+      <td>パラメーターにNULLをセットします </td>
+    </tr>
+    <tr>
+      <td>setBoolean </td>
+      <td>Boolean/Option[Boolean] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setByte </td>
+      <td>Byte/Option[Byte] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setShort </td>
+      <td>Short/Option[Short] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setInt </td>
+      <td>Int/Option[Int] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setLong </td>
+      <td>Long/Option[Long] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setBigInt </td>
+      <td>BigInt/Option[BigInt] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setFloat </td>
+      <td>Float/Option[Float] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setDouble </td>
+      <td>Double/Option[Double] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setBigDecimal </td>
+      <td>BigDecimal/Option[BigDecimal] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setString </td>
+      <td>String/Option[String] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setBytes </td>
+      <td>Array[Byte]/Option[Array[Byte]] </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>setDate </td>
+      <td>LocalDate/Option[LocalDate] </td>
+      <td><code>java.sql</code>ではなく<code>java.time</code>を直接扱います。 </td>
+    </tr>
+    <tr>
+      <td>setTime </td>
+      <td>LocalTime/Option[LocalTime] </td>
+      <td><code>java.sql</code>ではなく<code>java.time</code>を直接扱います。 </td>
+    </tr>
+    <tr>
+      <td>setTimestamp </td>
+      <td>LocalDateTime/Option[LocalDateTime] </td>
+      <td><code>java.sql</code>ではなく<code>java.time</code>を直接扱います。 </td>
+    </tr>
+    <tr>
+      <td>setYear </td>
+      <td>Year/Option[Year] </td>
+      <td><code>java.sql</code>ではなく<code>java.time</code>を直接扱います。 </td>
+    </tr>
+  </tbody>
+</table>
+<h4><a href="#書き込みクエリ" name="書き込みクエリ" class="anchor"><span class="anchor-link"></span></a>書き込みクエリ</h4>
+<p>書き込みを行うSQLを実行する場合は<code>executeUpdate</code>メソッドを使用します。</p>
+<p>クエリを実行した結果MySQLサーバーから返される値は影響を受けた行数が戻り値として返却されます。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;) // or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
+    _ &lt;- statement.setString(1, &quot;Alice&quot;)
+    _ &lt;- statement.setInt(2, 20)
+    result &lt;- statement.executeUpdate()
+  yield result
+}
+
+</code></pre>
+<h4><a href="#auto-incrementの値を取得" name="auto-incrementの値を取得" class="anchor"><span class="anchor-link"></span></a>AUTO_INCREMENTの値を取得</h4>
+<p>クエリ実行後にAUTO_INCREMENTの値を取得する場合は<code>returningAutoGeneratedKey</code>メソッドを使用します。</p>
+<p>クエリを実行した結果MySQLサーバーから返される値はAUTO_INCREMENTに生成された値が戻り値として返却されます。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;) // or conn.serverPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
+    _ &lt;- statement.setString(1, &quot;Alice&quot;)
+    _ &lt;- statement.setInt(2, 20)
+    result &lt;- statement.returningAutoGeneratedKey()
+  yield result
+}
+</code></pre>
+<h3><a href="#resultset" name="resultset" class="anchor"><span class="anchor-link"></span></a>ResultSet</h3>
+<p><code>ResultSet</code>はクエリ実行後にMySQLサーバーから返された値を格納するためのAPIです。</p>
+<p>SQLを実行して取得したレコードを<code>ResultSet</code>から取得するには<code>decode</code>メソッドを使用します。</p>
+<p><code>decode</code>メソッドは<code>ResultSet</code>から取得した値をScalaの型に変換して取得するためのAPIです。</p>
+<p>取得するカラムの数に応じて<code>*:</code>演算子を使用して変換する型を指定します。</p>
+<p>例では、usersテーブルのid, name, ageカラムを取得する場合を示しておりそれぞれのカラムの型を指定しています。</p>
+<pre class="prettyprint"><code class="language-scala">result.decode(bigint *: varchar *: int.opt)
+</code></pre>
+<p>NULL許容のカラムを取得する場合は<code>Option</code>型に変換するために<code>opt</code>メソッドを使用します。 これによりレコードがNULLの場合はNoneとして取得することができます。</p>
+<p>クエリ実行からレコード取得までの一連の流れは以下のようになります。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for 
+    statement &lt;- conn.clientPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;) // or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
+    _ &lt;- statement.setLong(1, 1)
+    result &lt;- statement.executeQuery()
+  yield 
+    val decodes: List[(Long, String, Option[Int])] = result.decode(bigint *: varchar *: int.opt)
+    ...
+}
+</code></pre>
+<p><code>ResultSet</code>から取得するレコードは常に配列になります。 これはMySQLで実行するクエリの結果が常に複数のレコードを返す可能性があるからです。</p>
+<p>単一のレコードを取得する場合は<code>decode</code>処理後に、<code>head</code>や<code>headOption</code>メソッドを使用して取得を行なってください。</p>
+<p>現在のバージョンでは以下のデータ型がサポートされています。</p>
+<table>
+  <thead>
+    <tr>
+      <th>Codec </th>
+      <th>データ型 </th>
+      <th>Scala 型 </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>boolean </td>
+      <td>BOOLEAN </td>
+      <td>Boolean </td>
+    </tr>
+    <tr>
+      <td>tinyint </td>
+      <td>TINYINT </td>
+      <td>Byte </td>
+    </tr>
+    <tr>
+      <td>utinyint </td>
+      <td>unsigned TINYINT </td>
+      <td>Short </td>
+    </tr>
+    <tr>
+      <td>smallint </td>
+      <td>SMALLINT </td>
+      <td>Short </td>
+    </tr>
+    <tr>
+      <td>usmallint </td>
+      <td>unsigned SMALLINT </td>
+      <td>Int </td>
+    </tr>
+    <tr>
+      <td>int </td>
+      <td>INT </td>
+      <td>Int </td>
+    </tr>
+    <tr>
+      <td>uint </td>
+      <td>unsigned INT </td>
+      <td>Long </td>
+    </tr>
+    <tr>
+      <td>bigint </td>
+      <td>BIGINT </td>
+      <td>Long </td>
+    </tr>
+    <tr>
+      <td>ubigint </td>
+      <td>unsigned BIGINT </td>
+      <td>BigInt </td>
+    </tr>
+    <tr>
+      <td>float </td>
+      <td>FLOAT </td>
+      <td>Float </td>
+    </tr>
+    <tr>
+      <td>double </td>
+      <td>DOUBLE </td>
+      <td>Double </td>
+    </tr>
+    <tr>
+      <td>decimal </td>
+      <td>DECIMAL </td>
+      <td>BigDecimal </td>
+    </tr>
+    <tr>
+      <td>char </td>
+      <td>CHAR </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>varchar </td>
+      <td>VARCHAR </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>binary </td>
+      <td>BINARY </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>varbinary </td>
+      <td>VARBINARY </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>tinyblob </td>
+      <td>TINYBLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>blob </td>
+      <td>BLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>mediumblob </td>
+      <td>MEDIUMBLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>longblob </td>
+      <td>LONGBLOB </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>tinytext </td>
+      <td>TINYTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>text </td>
+      <td>TEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>mediumtext </td>
+      <td>MEDIUMTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>longtext </td>
+      <td>LONGTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>enum </td>
+      <td>ENUM </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>set </td>
+      <td>SET </td>
+      <td>List[String] </td>
+    </tr>
+    <tr>
+      <td>json </td>
+      <td>JSON </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>date </td>
+      <td>DATE </td>
+      <td>LocalDate </td>
+    </tr>
+    <tr>
+      <td>time </td>
+      <td>TIME </td>
+      <td>LocalTime </td>
+    </tr>
+    <tr>
+      <td>timetz </td>
+      <td>TIME </td>
+      <td>OffsetTime </td>
+    </tr>
+    <tr>
+      <td>datetime </td>
+      <td>DATETIME </td>
+      <td>LocalDateTime </td>
+    </tr>
+    <tr>
+      <td>timestamp </td>
+      <td>TIMESTAMP </td>
+      <td>LocalDateTime </td>
+    </tr>
+    <tr>
+      <td>timestamptz </td>
+      <td>TIMESTAMP </td>
+      <td>OffsetDateTime </td>
+    </tr>
+    <tr>
+      <td>year </td>
+      <td>YEAR </td>
+      <td>Year </td>
+    </tr>
+  </tbody>
+</table>
+<p>※ 現在MySQLのデータ型を指定して値を取得するような作りとなっていますが、将来的にはより簡潔にScalaの型を指定して値を取得するような作りに変更する可能性があります。</p>
+<p>以下サポートされていないデータ型があります。</p>
+<ul>
+  <li>GEOMETRY</li>
+  <li>POINT</li>
+  <li>LINESTRING</li>
+  <li>POLYGON</li>
+  <li>MULTIPOINT</li>
+  <li>MULTILINESTRING</li>
+  <li>MULTIPOLYGON</li>
+  <li>GEOMETRYCOLLECTION</li>
+</ul>
+<h2><a href="#未対応機能" name="未対応機能" class="anchor"><span class="anchor-link"></span></a>未対応機能</h2>
+<p>LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。 機能提供は順次行っていく予定です。</p>
+<ul>
+  <li>コネクションプーリング</li>
+  <li>トランザクション</li>
+  <li>バッチ処理</li>
+  <li>セーブポイント</li>
+  <li>フェイルオーバー対策</li>
+  <li>etc&hellip;</li>
+</ul>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha1/docs/target/mdoc/ja/09-Connector.md">here</a>.
+</div>
+
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/09-Connector.html#コネクタ" class="header">コネクタ</a>
+  <ul>
+    <li><a href="../ja/09-Connector.html#接続" class="header">接続</a></li>
+    <li><a href="../ja/09-Connector.html#実行" class="header">実行</a></li>
+    <li><a href="../ja/09-Connector.html#未対応機能" class="header">未対応機能</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2024</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha1', 'https://takapi327.github.io/ldbc/')});</script>
+
+
+</html>
