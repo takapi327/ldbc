@@ -29,6 +29,20 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 Please drop a :star: if this project interests you. I need encouragement.
 
+## Modules availability
+
+|  Module / Platform   | JVM | Scala Native | Scala.js |  
+|:--------------------:|:---:|:------------:|:--------:|
+|     `ldbc-core`      |  ✅  |      ✅       |    ✅     |
+|      `ldbc-sql`      |  ✅  |      ✅       |    ✅     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
+|      `ldbc-dsl`      |  ✅  |      ❌       |    ❌     | 
+|   `ldbc-schemaSpy`   |  ✅  |      ❌       |    ❌     | 
+|    `ldbc-codegen`    |  ✅  |      ✅       |    ✅     |
+|    `ldbc-hikari`     |  ✅  |      ❌       |    ❌     | 
+|    `ldbc-plugin`     |  ✅  |      ❌       |    ❌     | 
+|   `ldbc-connector`   |  ✅  |      ✅       |    ✅     | 
+
 ## Documentation
 
 - [English](https://takapi327.github.io/ldbc/en/index.html)
