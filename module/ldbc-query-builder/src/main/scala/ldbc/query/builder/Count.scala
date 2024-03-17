@@ -1,18 +1,21 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.query.builder
 
 import ldbc.core.*
 
-/** Model used to obtain the number of specific columns.
-  *
-  * @param _label
-  *   Column name
-  * @tparam F
-  *   The effect type
-  */
+/**
+ * Model used to obtain the number of specific columns.
+ *
+ * @param _label
+ *   Column name
+ * @tparam F
+ *   The effect type
+ */
 case class Count[F[_]](_label: String) extends ColumnQuery[F, Int]:
 
   override def label: String = s"COUNT($_label)"

@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.schemaspy.builder
 
@@ -8,21 +10,23 @@ import org.schemaspy.input.dbms.service.helper.ImportForeignKey
 
 import ldbc.core.{ Column, ForeignKey, Reference }
 
-/** Object to generate the ImportForeignKey model for SchemaSpy.
-  */
+/**
+ * Object to generate the ImportForeignKey model for SchemaSpy.
+ */
 object ImportForeignKeyBuilder:
 
-  /** Methods for constructing an ImportForeignKey array based on a ForeignKey.
-    *
-    * @param key
-    *   A model representing SQL Foreign key information.
-    * @param catalog
-    *   Database Catalog
-    * @param schema
-    *   Database Schema
-    * @param constraintName
-    *   Unique name of the constraint
-    */
+  /**
+   * Methods for constructing an ImportForeignKey array based on a ForeignKey.
+   *
+   * @param key
+   *   A model representing SQL Foreign key information.
+   * @param catalog
+   *   Database Catalog
+   * @param schema
+   *   Database Schema
+   * @param constraintName
+   *   Unique name of the constraint
+   */
   def build(
     key:            ForeignKey[?],
     catalog:        String,

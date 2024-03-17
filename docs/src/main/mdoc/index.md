@@ -5,7 +5,7 @@
 </div>
 
 <div align="center">
-  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.2.1/jar">
+  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.3.0-alpha1/jar">
     <img alt="Maven Central Version" src="https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue">
   </a>
   <a href="https://en.wikipedia.org/wiki/MIT_License">
@@ -26,6 +26,20 @@ ldbc is Created under the influence of [tapir](https://github.com/softwaremill/t
 ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.
 
 Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
+
+## Modules availability
+
+|  Module / Platform   | JVM | Scala Native | Scala.js |  
+|:--------------------:|:---:|:------------:|:--------:|
+|     `ldbc-core`      |  ✅  |      ✅       |    ✅     |
+|      `ldbc-sql`      |  ✅  |      ✅       |    ✅     |
+| `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
+|      `ldbc-dsl`      |  ✅  |      ❌       |    ❌     | 
+|   `ldbc-schemaSpy`   |  ✅  |      ❌       |    ❌     | 
+|    `ldbc-codegen`    |  ✅  |      ✅       |    ✅     |
+|    `ldbc-hikari`     |  ✅  |      ❌       |    ❌     | 
+|    `ldbc-plugin`     |  ✅  |      ❌       |    ❌     | 
+|   `ldbc-connector`   |  ✅  |      ✅       |    ✅     | 
 
 ## Documentation
 

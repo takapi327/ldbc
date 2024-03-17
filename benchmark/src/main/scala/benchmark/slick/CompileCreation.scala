@@ -1,10 +1,14 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package benchmark.slick
 
 import java.util.concurrent.TimeUnit
+
+import scala.compiletime.uninitialized
 
 import org.openjdk.jmh.annotations.*
 
@@ -20,7 +24,7 @@ class CompileCreation:
 
   var source: String = ""
 
-  var compiler: Compiler = _
+  var compiler: Compiler = uninitialized
 
   @Setup(Level.Iteration)
   def setup(): Unit =

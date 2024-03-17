@@ -1,10 +1,14 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package benchmark.doobie
 
 import java.util.concurrent.TimeUnit
+
+import scala.compiletime.uninitialized
 
 import org.openjdk.jmh.annotations.*
 
@@ -20,7 +24,7 @@ import doobie.implicits.*
 class Select:
 
   @volatile
-  var xa: Transactor[IO] = _
+  var xa: Transactor[IO] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -33,7 +37,7 @@ class Select:
     )
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def selectN: List[(Int, String, String)] =

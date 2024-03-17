@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package benchmark.slick
 
@@ -8,6 +10,7 @@ import java.util.concurrent.TimeUnit
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.compiletime.uninitialized
 
 import org.openjdk.jmh.annotations.*
 
@@ -21,10 +24,10 @@ import benchmark.City
 class Select:
 
   @volatile
-  var db: Database = _
+  var db: Database = uninitialized
 
   @volatile
-  var query: TableQuery[CityTable] = _
+  var query: TableQuery[CityTable] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -38,7 +41,7 @@ class Select:
     query = TableQuery[CityTable]
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
-  var len: Int = _
+  var len: Int = uninitialized
 
   @Benchmark
   def selectN: Seq[(Int, String, String)] =

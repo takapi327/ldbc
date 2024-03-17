@@ -1,6 +1,8 @@
-/** This file is part of the ldbc. For the full copyright and license information, please view the LICENSE file that was
-  * distributed with this source code.
-  */
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
 
 package ldbc.hikari
 
@@ -14,8 +16,9 @@ import scala.jdk.CollectionConverters.*
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory
 
-/** Build the Configuration of HikariCP.
-  */
+/**
+ * Build the Configuration of HikariCP.
+ */
 trait HikariConfigBuilder:
 
   protected val config: Configuration = Configuration.load()
@@ -52,13 +55,14 @@ trait HikariConfigBuilder:
   /** Number of application cores */
   private val maxCore: Int = Runtime.getRuntime.availableProcessors()
 
-  /** Method to retrieve values matching any key from the conf file from the path configuration, with any type.
-    *
-    * @param func
-    *   Process to get values from Configuration wrapped in Option
-    * @tparam T
-    *   Type of value retrieved from conf file
-    */
+  /**
+   * Method to retrieve values matching any key from the conf file from the path configuration, with any type.
+   *
+   * @param func
+   *   Process to get values from Configuration wrapped in Option
+   * @tparam T
+   *   Type of value retrieved from conf file
+   */
   final private def readConfig[T](func: Configuration => Option[T]): Option[T] =
     config.get[Option[Configuration]](path).flatMap(func(_))
 
@@ -185,25 +189,26 @@ trait HikariConfigBuilder:
   val readonly:               Boolean = getReadonly.getOrElse(false)
   val registerMbeans:         Boolean = getRegisterMbeans.getOrElse(false)
 
-  /** Method to generate HikariConfig based on DatabaseConfig and other settings.
-    *
-    * @param jDataSource
-    *   Factories for connection to physical data sources
-    * @param dataSourceProperties
-    *   Properties (name/value pairs) used to configure DataSource/java.sql.Driver
-    * @param healthCheckProperties
-    *   Properties (name/value pairs) used to configure HealthCheck/java.sql.Driver
-    * @param healthCheckRegistry
-    *   Set the HealthCheckRegistry that will be used for registration of health checks by HikariCP.
-    * @param metricRegistry
-    *   Set a MetricRegistry instance to use for registration of metrics used by HikariCP.
-    * @param metricsTrackerFactory
-    *   Set a MetricsTrackerFactory instance to use for registration of metrics used by HikariCP.
-    * @param scheduledExecutor
-    *   Set the ScheduledExecutorService used for housekeeping.
-    * @param threadFactory
-    *   Set the thread factory to be used to create threads.
-    */
+  /**
+   * Method to generate HikariConfig based on DatabaseConfig and other settings.
+   *
+   * @param jDataSource
+   *   Factories for connection to physical data sources
+   * @param dataSourceProperties
+   *   Properties (name/value pairs) used to configure DataSource/java.sql.Driver
+   * @param healthCheckProperties
+   *   Properties (name/value pairs) used to configure HealthCheck/java.sql.Driver
+   * @param healthCheckRegistry
+   *   Set the HealthCheckRegistry that will be used for registration of health checks by HikariCP.
+   * @param metricRegistry
+   *   Set a MetricRegistry instance to use for registration of metrics used by HikariCP.
+   * @param metricsTrackerFactory
+   *   Set a MetricsTrackerFactory instance to use for registration of metrics used by HikariCP.
+   * @param scheduledExecutor
+   *   Set the ScheduledExecutorService used for housekeeping.
+   * @param threadFactory
+   *   Set the thread factory to be used to create threads.
+   */
   def build(
     jDataSource:           Option[JDataSource] = None,
     dataSourceProperties:  Option[Properties] = None,
@@ -257,30 +262,32 @@ trait HikariConfigBuilder:
 
 object HikariConfigBuilder:
 
-  /** Methods for retrieving data from the LDBC default specified path.
-    *
-    * {{{
-    *   ldbc.hikari {
-    *     jdbc_url = ...
-    *     username = ...
-    *     password = ...
-    *   }
-    * }}}
-    */
+  /**
+   * Methods for retrieving data from the LDBC default specified path.
+   *
+   * {{{
+   *   ldbc.hikari {
+   *     jdbc_url = ...
+   *     username = ...
+   *     password = ...
+   *   }
+   * }}}
+   */
   def default: HikariConfigBuilder = new HikariConfigBuilder {}
 
-  /** Methods for retrieving data from a user-specified conf path.
-    *
-    * @param confPath
-    *   Path of conf from which user-specified data is to be retrieved
-    *
-    * {{{
-    *   {user path} {
-    *     jdbc_url = ...
-    *     username = ...
-    *     password = ...
-    *   }
-    * }}}
-    */
+  /**
+   * Methods for retrieving data from a user-specified conf path.
+   *
+   * @param confPath
+   *   Path of conf from which user-specified data is to be retrieved
+   *
+   * {{{
+   *   {user path} {
+   *     jdbc_url = ...
+   *     username = ...
+   *     password = ...
+   *   }
+   * }}}
+   */
   def from(confPath: String): HikariConfigBuilder = new HikariConfigBuilder:
     override protected val path: String = confPath
