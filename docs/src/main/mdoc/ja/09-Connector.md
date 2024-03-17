@@ -53,7 +53,6 @@ libraryDependencies += "$org$" %%% "ldbc-connector" % "$version$"
 ## 接続
 
 LDBCコネクタを使用してMySQLへの接続を行うためには、`Connection`を使用します。
-`Connection`は`IO`モナドを使用して非同期でMySQLへの接続を行います。
 
 また、`Connection`はオブザーバビリティを意識した開発を行えるように`Otel4s`を使用してテレメトリデータを収集できるようにしています。
 そのため、`Connection`を使用する際には`Otel4s`の`Tracer`を設定する必要があります。
