@@ -86,7 +86,9 @@ object Authentication:
             if (allowPublicKeyRetrieval || useSSL) && more.authenticationMethodData.mkString("") == FULL_AUTH =>
             plugin match
               case plugin: CachingSha2PasswordPlugin =>
-                cachingSha2Authentication(plugin, scrambleBuff.getOrElse(initialPacket.scrambleBuff)) *> readUntilOk(plugin)
+                cachingSha2Authentication(plugin, scrambleBuff.getOrElse(initialPacket.scrambleBuff)) *> readUntilOk(
+                  plugin
+                )
               case plugin: Sha256PasswordPlugin =>
                 sha256Authentication(plugin, scrambleBuff.getOrElse(initialPacket.scrambleBuff)) *> readUntilOk(plugin)
               case _ => ev.raiseError(new MySQLException("Unexpected authentication method"))
@@ -111,12 +113,18 @@ object Authentication:
           case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
           case Right(plugin: CachingSha2PasswordPlugin) =>
             val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-            socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(plugin, Some(switchRequestPacket.pluginProvidedData))
+            socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(
+              plugin,
+              Some(switchRequestPacket.pluginProvidedData)
+            )
           case Right(plugin: Sha256PasswordPlugin) =>
             sha256Authentication(plugin, switchRequestPacket.pluginProvidedData) *> readUntilOk(plugin)
           case Right(plugin) =>
             val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-            socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(plugin, Some(switchRequestPacket.pluginProvidedData))
+            socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(
+              plugin,
+              Some(switchRequestPacket.pluginProvidedData)
+            )
 
       /**
        * Plain text handshake
