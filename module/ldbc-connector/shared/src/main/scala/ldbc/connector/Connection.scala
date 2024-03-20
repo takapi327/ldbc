@@ -25,7 +25,83 @@ import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.exception.MySQLException
 
+/**
+ * A connection (session) with a specific database. SQL statements are executed and results are returned within the context of a connection.
+ * 
+ * @tparam F
+ *   the effect type
+ */
 trait Connection[F[_]]:
+
+  /**
+   * Puts this connection in read-only mode as a hint to the driver to enable
+   * database optimizations.
+   *
+   * @param isReadOnly
+   *   true enables read-only mode; false disables it
+   */
+  def setReadOnly(isReadOnly: Boolean): F[Unit]
+
+  /**
+   * Sets this connection's auto-commit mode to the given state.
+   * If a connection is in auto-commit mode, then all its SQL statements will be executed and committed as individual transactions.
+   * Otherwise, its SQL statements are grouped into transactions that are terminated by a call to either the method commit or the method rollback.
+   * By default, new connections are in auto-commit mode.
+   *
+   * @param isAutoCommit
+   *   true to enable auto-commit mode; false to disable it
+   */
+  def setAutoCommit(isAutoCommit: Boolean): F[Unit]
+
+  /**
+   * Retrieves the current auto-commit mode for this Connection object.
+   *
+   * @return
+   *   the current state of this Connection object's auto-commit mode
+   */
+  def getAutoCommit: F[Boolean]
+
+  /**
+   * Makes all changes made since the previous commit/rollback permanent and releases any database locks currently held by this Connection object.
+   * This method should be used only when auto-commit mode has been disabled.
+   */
+  def commit(): F[Unit]
+
+  /**
+   * Undoes all changes made in the current transaction and releases any database locks currently held by this Connection object.
+   * This method should be used only when auto-commit mode has been disabled.
+   */
+  def rollback(): F[Unit]
+
+  /**
+   * Retrieves whether this Connection object is in read-only mode.
+   *
+   * @return
+   *   true if this Connection object is read-only; false otherwise
+   */
+  def isReadOnly: F[Boolean]
+
+  /**
+   * Attempts to change the transaction isolation level for this Connection object to the one given. The constants defined in the interface Connection are the possible transaction isolation levels.
+   *
+   * @param level
+   *   one of the following Connection constants:
+   *   [[Connection.TransactionIsolationLevel.READ_UNCOMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.READ_COMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.REPEATABLE_READ]], or [[Connection.TransactionIsolationLevel.SERIALIZABLE]]
+   */
+  def setTransactionIsolation(level: Connection.TransactionIsolationLevel): F[Unit]
+
+  /**
+   * Retrieves this Connection object's current transaction isolation level.
+   *
+   * @return
+   *   the current transaction isolation level, which will be one of the following constants:
+   *   [[Connection.TransactionIsolationLevel.READ_UNCOMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.READ_COMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.REPEATABLE_READ]], or [[Connection.TransactionIsolationLevel.SERIALIZABLE]]
+   */
+  def getTransactionIsolation: F[Connection.TransactionIsolationLevel]
 
   /**
    * Creates a statement with the given SQL.
@@ -51,6 +127,16 @@ trait Connection[F[_]]:
    */
   def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]]
 
+  /**
+   * Releases this Connection object's database and LDBC resources immediately instead of waiting for them to be automatically released.
+   *
+   * Calling the method close on a Connection object that is already closed is a no-op.
+   *
+   * It is strongly recommended that an application explicitly commits or rolls back an active transaction prior to calling the close method.
+   * If the close method is called and there is an active transaction, the results are implementation-defined.
+   */
+  def close(): F[Unit]
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -72,6 +158,99 @@ object Connection:
     CapabilitiesFlags.CLIENT_QUERY_ATTRIBUTES,
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
+
+  /**
+   * The possible transaction isolation levels.
+   */
+  enum TransactionIsolationLevel(val name: String):
+    /**
+     * A constant indicating that dirty reads, non-repeatable reads and phantom reads can occur.
+     * This level allows a row changed by one transaction to be read by another transaction before any changes in that row have been committed (a "dirty read").
+     * If any of the changes are rolled back, the second transaction will have retrieved an invalid row.
+     */
+    case READ_UNCOMMITTED extends TransactionIsolationLevel("READ UNCOMMITTED")
+
+    /**
+     * A constant indicating that dirty reads are prevented; non-repeatable reads and phantom reads can occur.
+     * This level only prohibits a transaction from reading a row with uncommitted changes in it.
+     */
+    case READ_COMMITTED extends TransactionIsolationLevel("READ COMMITTED")
+
+    /**
+     * A constant indicating that dirty reads and non-repeatable reads are prevented; phantom reads can occur.
+     * This level prohibits a transaction from reading a row with uncommitted changes in it,
+     * and it also prohibits the situation where one transaction reads a row, a second transaction alters the row,
+     * and the first transaction rereads the row, getting different values the second time (a "non-repeatable read").
+     */
+    case REPEATABLE_READ extends TransactionIsolationLevel("REPEATABLE READ")
+
+    /**
+     * A constant indicating that dirty reads, non-repeatable reads and phantom reads are prevented.
+     * This level includes the prohibitions in TRANSACTION_REPEATABLE_READ and further prohibits the situation where one transaction reads all rows that satisfy a WHERE condition,
+     * a second transaction inserts a row that satisfies that WHERE condition, and the first transaction rereads for the same condition, retrieving the additional "phantom" row in the second read.
+     */
+    case SERIALIZABLE extends TransactionIsolationLevel("SERIALIZABLE")
+
+  case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
+    protocol:   MySQLProtocol[F],
+    readOnly:   Ref[F, Boolean],
+    autoCommit: Ref[F, Boolean]
+  )(using ev: MonadError[F, Throwable])
+    extends Connection[F]:
+    override def setReadOnly(isReadOnly: Boolean): F[Unit] =
+      readOnly.update(_ => isReadOnly) *>
+        protocol
+          .statement("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE"))
+          .executeQuery()
+          .void
+
+    override def isReadOnly: F[Boolean] = readOnly.get
+
+    override def setAutoCommit(isAutoCommit: Boolean): F[Unit] =
+      autoCommit.update(_ => isAutoCommit) *>
+        protocol
+          .statement("SET autocommit=" + (if isAutoCommit then "1" else "0"))
+          .executeQuery()
+          .void
+
+    override def getAutoCommit: F[Boolean] = autoCommit.get
+
+    override def commit(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
+      if !autoCommit then protocol.statement("COMMIT").executeQuery().void
+      else ev.raiseError(new MySQLException("Can't call commit when autocommit=true"))
+    }
+
+    override def rollback(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
+      if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
+      else ev.raiseError(new MySQLException("Can't call rollback when autocommit=true"))
+    }
+
+    override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
+      protocol.statement(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }").executeQuery().void
+
+    override def getTransactionIsolation: F[Connection.TransactionIsolationLevel] =
+      protocol.statement("SELECT @@session.transaction_isolation").executeQuery().map { result =>
+        result.rows.headOption.flatMap(_.values.headOption).flatten match
+          case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
+          case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
+          case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
+          case Some("SERIALIZABLE")     => Connection.TransactionIsolationLevel.SERIALIZABLE
+          case Some(unknown)            => throw new MySQLException(s"Unknown transaction isolation level $unknown")
+          case None                     => throw new MySQLException("Unknown transaction isolation level")
+      }
+
+    override def statement(sql: String): Statement[F] = protocol.statement(sql)
+
+    override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
+      protocol.clientPreparedStatement(sql)
+
+    override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
+      protocol.serverPreparedStatement(sql)
+
+    override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
+      if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
+      else ev.unit
+    }
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
@@ -132,12 +311,10 @@ object Connection:
                capabilityFlags
              )
            )
-    yield new Connection[F]:
-      override def statement(sql: String): Statement[F] = protocol.statement(sql)
-      override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
-        protocol.clientPreparedStatement(sql)
-      override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
-        protocol.serverPreparedStatement(sql)
+      readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
+      autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
+      connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, readOnly, autoCommit)))(_.close())
+    yield connection
 
   def fromSocketGroup[F[_]: Tracer: Console](
     socketGroup:             SocketGroup[F],

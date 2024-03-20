@@ -392,6 +392,71 @@ The following data types are not supported
 - MULTIPOLYGON
 - GEOMETRYCOLLECTION
 
+## Transaction
+
+To execute a transaction using `Connection`, use the `setAutoCommit` method in combination with the `commit` and `rollback` methods.
+
+First, use the `setAutoCommit` method to disable transaction autocommit.
+
+```scala
+conn.setAutoCommit(false)
+```
+
+Use the `commit` method to commit the transaction after some processing.
+
+```scala
+for
+  statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+  _ <- statement.setString(1, "Alice")
+  _ <- statement.setInt(2, 20)
+  result <- statement.executeUpdate()
+  _ <- conn.commit()
+yield
+```
+
+Or use the `rollback` method to roll back the transaction.
+
+```scala
+for
+  statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+  _ <- statement.setString(1, "Alice")
+  _ <- statement.setInt(2, 20)
+  result <- statement.executeUpdate()
+  _ <- conn.rollback()
+yield
+```
+
+If transaction autocommit is disabled using the `setAutoCommit` method, rollback will occur automatically when the connection's Resource is released.
+
+### Transaction isolation level
+
+LDBC allows for the setting of transaction isolation levels.
+
+The transaction isolation level is set using the `setTransactionIsolation` method.
+
+The following transaction isolation levels are supported in MySQL.
+
+- READ UNCOMMITTED
+- READ COMMITTED
+- REPEATABLE READ
+- SERIALIZABLE
+
+See [official documentation](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html) for more information on transaction isolation levels in MySQL.
+
+```scala
+import ldbc.connector.Connection.TransactionIsolationLevel
+
+conn.setTransactionIsolation(TransactionIsolationLevel.REPEATABLE_READ)
+```
+
+Use the `getTransactionIsolation` method to get the currently set transaction isolation level.
+
+```scala
+for
+  isolationLevel <- conn.getTransactionIsolation()
+yield
+```
+
 ## Unsupported Feature
 
 The LDBC connector is currently an experimental feature. Therefore, the following features are not supported.

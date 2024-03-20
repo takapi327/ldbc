@@ -172,3 +172,5 @@ INSERT INTO `all_types` VALUES (
   ST_GeomFromText('GEOMETRYCOLLECTION(POINT(1 1))'),
   NULL
 );
+
+CREATE TABLE `transaction_test`(`c1` BIGINT NOT NULL);
