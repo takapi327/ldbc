@@ -115,3 +115,37 @@ class TransactionTest extends CatsEffectSuite:
       yield true
     })
   }
+
+  test("If a transaction initiated in a session is not in autocommit mode, it can be rollback manually.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl      = SSL.Trusted
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _ <- conn.setAutoCommit(false)
+        _ <- conn.rollback()
+      yield true
+    })
+  }
+
+  test(
+    "If a transaction initiated in a session is in autocommit mode, a manual rollback will result in a MySQLException."
+  ) {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl      = SSL.Trusted
+    )
+    interceptMessageIO[MySQLException]("message: Can't call rollback when autocommit=true")(connection.use { conn =>
+      for
+        _ <- conn.setAutoCommit(true)
+        _ <- conn.rollback()
+      yield true
+    })
+  }
