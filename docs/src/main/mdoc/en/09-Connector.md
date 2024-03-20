@@ -428,6 +428,35 @@ yield
 
 If transaction autocommit is disabled using the `setAutoCommit` method, rollback will occur automatically when the connection's Resource is released.
 
+### Transaction isolation level
+
+LDBC allows for the setting of transaction isolation levels.
+
+The transaction isolation level is set using the `setTransactionIsolation` method.
+
+The following transaction isolation levels are supported in MySQL.
+
+- READ UNCOMMITTED
+- READ COMMITTED
+- REPEATABLE READ
+- SERIALIZABLE
+
+See [official documentation](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html) for more information on transaction isolation levels in MySQL.
+
+```scala
+import ldbc.connector.Connection.TransactionIsolationLevel
+
+conn.setTransactionIsolation(TransactionIsolationLevel.REPEATABLE_READ)
+```
+
+Use the `getTransactionIsolation` method to get the currently set transaction isolation level.
+
+```scala
+for
+  isolationLevel <- conn.getTransactionIsolation()
+yield
+```
+
 ## Unsupported Feature
 
 The LDBC connector is currently an experimental feature. Therefore, the following features are not supported.
