@@ -156,11 +156,11 @@ class TransactionTest extends CatsEffectSuite:
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_UNCOMMITTED)
+        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_UNCOMMITTED)
         level <- conn.getTransactionIsolation()
       yield level == Connection.TransactionIsolationLevel.READ_UNCOMMITTED
     })
@@ -172,11 +172,11 @@ class TransactionTest extends CatsEffectSuite:
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_COMMITTED)
+        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_COMMITTED)
         level <- conn.getTransactionIsolation()
       yield level == Connection.TransactionIsolationLevel.READ_COMMITTED
     })
@@ -188,11 +188,11 @@ class TransactionTest extends CatsEffectSuite:
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.SERIALIZABLE)
+        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.SERIALIZABLE)
         level <- conn.getTransactionIsolation()
       yield level == Connection.TransactionIsolationLevel.SERIALIZABLE
     })
@@ -204,11 +204,11 @@ class TransactionTest extends CatsEffectSuite:
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.REPEATABLE_READ)
+        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.REPEATABLE_READ)
         level <- conn.getTransactionIsolation()
       yield level == Connection.TransactionIsolationLevel.REPEATABLE_READ
     })

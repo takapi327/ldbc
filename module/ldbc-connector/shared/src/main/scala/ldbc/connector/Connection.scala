@@ -155,9 +155,9 @@ object Connection:
 
   enum TransactionIsolationLevel(val name: String):
     case READ_UNCOMMITTED extends TransactionIsolationLevel("READ UNCOMMITTED")
-    case READ_COMMITTED extends TransactionIsolationLevel("READ COMMITTED")
-    case REPEATABLE_READ extends TransactionIsolationLevel("REPEATABLE READ")
-    case SERIALIZABLE extends TransactionIsolationLevel("SERIALIZABLE")
+    case READ_COMMITTED   extends TransactionIsolationLevel("READ COMMITTED")
+    case REPEATABLE_READ  extends TransactionIsolationLevel("REPEATABLE READ")
+    case SERIALIZABLE     extends TransactionIsolationLevel("SERIALIZABLE")
 
   case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
     protocol:   MySQLProtocol[F],
@@ -194,11 +194,11 @@ object Connection:
     }
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
-      protocol.statement(s"SET SESSION TRANSACTION ISOLATION LEVEL ${level.name}").executeQuery().void
+      protocol.statement(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }").executeQuery().void
 
     override def getTransactionIsolation(): F[Connection.TransactionIsolationLevel] =
-      protocol.statement("SELECT @@session.transaction_isolation").executeQuery().map {
-        result => result.rows.headOption.flatMap(_.values.headOption).flatten match
+      protocol.statement("SELECT @@session.transaction_isolation").executeQuery().map { result =>
+        result.rows.headOption.flatMap(_.values.headOption).flatten match
           case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
           case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
           case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
