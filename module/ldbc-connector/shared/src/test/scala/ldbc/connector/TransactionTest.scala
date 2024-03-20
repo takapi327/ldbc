@@ -12,6 +12,8 @@ import org.typelevel.otel4s.trace.Tracer
 
 import munit.CatsEffectSuite
 
+import ldbc.connector.exception.MySQLException
+
 class TransactionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
@@ -77,5 +79,37 @@ class TransactionTest extends CatsEffectSuite:
         _          <- conn.setAutoCommit(false)
         autoCommit <- conn.getAutoCommit
       yield !autoCommit
+    })
+  }
+
+  test("If a transaction initiated in a session is not in autocommit mode, it can be committed manually.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl      = SSL.Trusted
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _ <- conn.setAutoCommit(false)
+        _ <- conn.commit()
+      yield true
+    })
+  }
+
+  test("If a transaction initiated in a session is in autocommit mode, a manual commit will result in a MySQLException.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl      = SSL.Trusted
+    )
+    interceptMessageIO[MySQLException]("message: Can't call commit when autocommit=true")(connection.use { conn =>
+      for
+        _ <- conn.setAutoCommit(true)
+        _ <- conn.commit()
+      yield true
     })
   }
