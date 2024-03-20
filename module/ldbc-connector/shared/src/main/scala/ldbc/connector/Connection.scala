@@ -25,6 +25,12 @@ import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.exception.MySQLException
 
+/**
+ * A connection (session) with a specific database. SQL statements are executed and results are returned within the context of a connection.
+ * 
+ * @tparam F
+ *   the effect type
+ */
 trait Connection[F[_]]:
 
   /**
@@ -153,11 +159,37 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
+  /**
+   * The possible transaction isolation levels.
+   */
   enum TransactionIsolationLevel(val name: String):
+    /**
+     * A constant indicating that dirty reads, non-repeatable reads and phantom reads can occur.
+     * This level allows a row changed by one transaction to be read by another transaction before any changes in that row have been committed (a "dirty read").
+     * If any of the changes are rolled back, the second transaction will have retrieved an invalid row.
+     */
     case READ_UNCOMMITTED extends TransactionIsolationLevel("READ UNCOMMITTED")
-    case READ_COMMITTED   extends TransactionIsolationLevel("READ COMMITTED")
-    case REPEATABLE_READ  extends TransactionIsolationLevel("REPEATABLE READ")
-    case SERIALIZABLE     extends TransactionIsolationLevel("SERIALIZABLE")
+
+    /**
+     * A constant indicating that dirty reads are prevented; non-repeatable reads and phantom reads can occur.
+     * This level only prohibits a transaction from reading a row with uncommitted changes in it.
+     */
+    case READ_COMMITTED extends TransactionIsolationLevel("READ COMMITTED")
+
+    /**
+     * A constant indicating that dirty reads and non-repeatable reads are prevented; phantom reads can occur.
+     * This level prohibits a transaction from reading a row with uncommitted changes in it,
+     * and it also prohibits the situation where one transaction reads a row, a second transaction alters the row,
+     * and the first transaction rereads the row, getting different values the second time (a "non-repeatable read").
+     */
+    case REPEATABLE_READ extends TransactionIsolationLevel("REPEATABLE READ")
+
+    /**
+     * A constant indicating that dirty reads, non-repeatable reads and phantom reads are prevented.
+     * This level includes the prohibitions in TRANSACTION_REPEATABLE_READ and further prohibits the situation where one transaction reads all rows that satisfy a WHERE condition,
+     * a second transaction inserts a row that satisfies that WHERE condition, and the first transaction rereads for the same condition, retrieving the additional "phantom" row in the second read.
+     */
+    case SERIALIZABLE extends TransactionIsolationLevel("SERIALIZABLE")
 
   case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
     protocol:   MySQLProtocol[F],
