@@ -162,7 +162,7 @@ class TransactionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use { conn =>
       for
         _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_UNCOMMITTED)
-        level <- conn.getTransactionIsolation()
+        level <- conn.getTransactionIsolation
       yield level == Connection.TransactionIsolationLevel.READ_UNCOMMITTED
     })
   }
@@ -178,7 +178,7 @@ class TransactionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use { conn =>
       for
         _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_COMMITTED)
-        level <- conn.getTransactionIsolation()
+        level <- conn.getTransactionIsolation
       yield level == Connection.TransactionIsolationLevel.READ_COMMITTED
     })
   }
@@ -194,7 +194,7 @@ class TransactionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use { conn =>
       for
         _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.SERIALIZABLE)
-        level <- conn.getTransactionIsolation()
+        level <- conn.getTransactionIsolation
       yield level == Connection.TransactionIsolationLevel.SERIALIZABLE
     })
   }
@@ -210,7 +210,7 @@ class TransactionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use { conn =>
       for
         _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.REPEATABLE_READ)
-        level <- conn.getTransactionIsolation()
+        level <- conn.getTransactionIsolation
       yield level == Connection.TransactionIsolationLevel.REPEATABLE_READ
     })
   }

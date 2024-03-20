@@ -101,7 +101,7 @@ trait Connection[F[_]]:
    *   [[Connection.TransactionIsolationLevel.READ_COMMITTED]],
    *   [[Connection.TransactionIsolationLevel.REPEATABLE_READ]], or [[Connection.TransactionIsolationLevel.SERIALIZABLE]]
    */
-  def getTransactionIsolation(): F[Connection.TransactionIsolationLevel]
+  def getTransactionIsolation: F[Connection.TransactionIsolationLevel]
 
   /**
    * Creates a statement with the given SQL.
@@ -228,7 +228,7 @@ object Connection:
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
       protocol.statement(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }").executeQuery().void
 
-    override def getTransactionIsolation(): F[Connection.TransactionIsolationLevel] =
+    override def getTransactionIsolation: F[Connection.TransactionIsolationLevel] =
       protocol.statement("SELECT @@session.transaction_isolation").executeQuery().map { result =>
         result.rows.headOption.flatMap(_.values.headOption).flatten match
           case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
