@@ -149,3 +149,67 @@ class TransactionTest extends CatsEffectSuite:
       yield true
     })
   }
+
+  test("Transaction isolation level becomes READ_UNCOMMITTED.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl = SSL.Trusted
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_UNCOMMITTED)
+        level <- conn.getTransactionIsolation()
+      yield level == Connection.TransactionIsolationLevel.READ_UNCOMMITTED
+    })
+  }
+
+  test("Transaction isolation level becomes READ_COMMITTED.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl = SSL.Trusted
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_COMMITTED)
+        level <- conn.getTransactionIsolation()
+      yield level == Connection.TransactionIsolationLevel.READ_COMMITTED
+    })
+  }
+
+  test("Transaction isolation level becomes SERIALIZABLE.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl = SSL.Trusted
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.SERIALIZABLE)
+        level <- conn.getTransactionIsolation()
+      yield level == Connection.TransactionIsolationLevel.SERIALIZABLE
+    })
+  }
+
+  test("Transaction isolation level becomes REPEATABLE_READ.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl = SSL.Trusted
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _ <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.REPEATABLE_READ)
+        level <- conn.getTransactionIsolation()
+      yield level == Connection.TransactionIsolationLevel.REPEATABLE_READ
+    })
+  }
