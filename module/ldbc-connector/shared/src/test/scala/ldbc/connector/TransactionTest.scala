@@ -47,3 +47,35 @@ class TransactionTest extends CatsEffectSuite:
       yield !readOnly
     })
   }
+
+  test("Transactions initiated in a session are in auto commit mode.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      allowPublicKeyRetrieval = true,
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _        <- conn.setAutoCommit(true)
+        autoCommit <- conn.getAutoCommit
+      yield autoCommit
+    })
+  }
+
+  test("Transactions initiated in a session do not enter autocommit mode.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      allowPublicKeyRetrieval = true,
+    )
+    assertIOBoolean(connection.use { conn =>
+      for
+        _        <- conn.setAutoCommit(false)
+        autoCommit <- conn.getAutoCommit
+      yield !autoCommit
+    })
+  }
