@@ -76,6 +76,28 @@ trait Connection[F[_]]:
   def isReadOnly: F[Boolean]
 
   /**
+   * Attempts to change the transaction isolation level for this Connection object to the one given. The constants defined in the interface Connection are the possible transaction isolation levels.
+   *
+   * @param level
+   *   one of the following Connection constants:
+   *   [[Connection.TransactionIsolationLevel.READ_UNCOMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.READ_COMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.REPEATABLE_READ]], or [[Connection.TransactionIsolationLevel.SERIALIZABLE]]
+   */
+  def setTransactionIsolation(level: Connection.TransactionIsolationLevel): F[Unit]
+
+  /**
+   * Retrieves this Connection object's current transaction isolation level.
+   *
+   * @return
+   *   the current transaction isolation level, which will be one of the following constants:
+   *   [[Connection.TransactionIsolationLevel.READ_UNCOMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.READ_COMMITTED]],
+   *   [[Connection.TransactionIsolationLevel.REPEATABLE_READ]], or [[Connection.TransactionIsolationLevel.SERIALIZABLE]]
+   */
+  def getTransactionIsolation(): F[Connection.TransactionIsolationLevel]
+
+  /**
    * Creates a statement with the given SQL.
    *
    * @param sql
@@ -131,6 +153,12 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
+  enum TransactionIsolationLevel(val name: String):
+    case READ_UNCOMMITTED extends TransactionIsolationLevel("READ UNCOMMITTED")
+    case READ_COMMITTED extends TransactionIsolationLevel("READ COMMITTED")
+    case REPEATABLE_READ extends TransactionIsolationLevel("REPEATABLE READ")
+    case SERIALIZABLE extends TransactionIsolationLevel("SERIALIZABLE")
+
   case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
     protocol:   MySQLProtocol[F],
     readOnly:   Ref[F, Boolean],
@@ -164,6 +192,20 @@ object Connection:
       if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
       else ev.raiseError(new MySQLException("Can't call rollback when autocommit=true"))
     }
+
+    override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
+      protocol.statement(s"SET SESSION TRANSACTION ISOLATION LEVEL ${level.name}").executeQuery().void
+
+    override def getTransactionIsolation(): F[Connection.TransactionIsolationLevel] =
+      protocol.statement("SELECT @@session.transaction_isolation").executeQuery().map {
+        result => result.rows.headOption.flatMap(_.values.headOption).flatten match
+          case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
+          case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
+          case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
+          case Some("SERIALIZABLE")     => Connection.TransactionIsolationLevel.SERIALIZABLE
+          case Some(unknown)            => throw new MySQLException(s"Unknown transaction isolation level $unknown")
+          case None                     => throw new MySQLException("Unknown transaction isolation level")
+      }
 
     override def statement(sql: String): Statement[F] = protocol.statement(sql)
 
