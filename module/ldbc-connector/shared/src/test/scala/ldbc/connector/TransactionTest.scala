@@ -98,7 +98,9 @@ class TransactionTest extends CatsEffectSuite:
     })
   }
 
-  test("If a transaction initiated in a session is in autocommit mode, a manual commit will result in a MySQLException.") {
+  test(
+    "If a transaction initiated in a session is in autocommit mode, a manual commit will result in a MySQLException."
+  ) {
     val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,

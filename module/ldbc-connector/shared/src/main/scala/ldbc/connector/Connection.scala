@@ -129,7 +129,8 @@ object Connection:
     protocol:   MySQLProtocol[F],
     readOnly:   Ref[F, Boolean],
     autoCommit: Ref[F, Boolean]
-  )(using ev: MonadError[F, Throwable]) extends Connection[F]:
+  )(using ev: MonadError[F, Throwable])
+    extends Connection[F]:
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
       readOnly.update(_ => isReadOnly) *>
         protocol
