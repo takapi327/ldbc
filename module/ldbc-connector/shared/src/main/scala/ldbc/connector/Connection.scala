@@ -120,10 +120,10 @@ object Connection:
   )
 
   case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
-                                 protocol: MySQLProtocol[F],
-                                 readOnly: Ref[F, Boolean],
-                                  autoCommit: Ref[F, Boolean]
-                                 ) extends Connection[F]:
+    protocol:   MySQLProtocol[F],
+    readOnly:   Ref[F, Boolean],
+    autoCommit: Ref[F, Boolean]
+  ) extends Connection[F]:
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
       readOnly.update(_ => isReadOnly) *>
         protocol
@@ -151,10 +151,8 @@ object Connection:
       protocol.serverPreparedStatement(sql)
 
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
-      if !autoCommit then
-        protocol.statement("ROLLBACK").executeQuery().void
-      else
-        Applicative[F].unit
+      if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
+      else Applicative[F].unit
     }
 
   def apply[F[_]: Temporal: Network: Console](
@@ -216,7 +214,7 @@ object Connection:
                capabilityFlags
              )
            )
-      readOnly <- Resource.eval(Ref[F].of[Boolean](false))
+      readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
       connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, readOnly, autoCommit)))(_.close())
     yield connection
