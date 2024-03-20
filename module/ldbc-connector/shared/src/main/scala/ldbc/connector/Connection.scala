@@ -37,6 +37,25 @@ trait Connection[F[_]]:
   def setReadOnly(isReadOnly: Boolean): F[Unit]
 
   /**
+   * Sets this connection's auto-commit mode to the given state.
+   * If a connection is in auto-commit mode, then all its SQL statements will be executed and committed as individual transactions.
+   * Otherwise, its SQL statements are grouped into transactions that are terminated by a call to either the method commit or the method rollback.
+   * By default, new connections are in auto-commit mode.
+   *
+   * @param isAutoCommit
+   *   true to enable auto-commit mode; false to disable it
+   */
+  def setAutoCommit(isAutoCommit: Boolean): F[Unit]
+
+  /**
+   * Retrieves the current auto-commit mode for this Connection object.
+   *
+   * @return
+   *   the current state of this Connection object's auto-commit mode
+   */
+  def getAutoCommit: F[Boolean]
+
+  /**
    * Retrieves whether this Connection object is in read-only mode.
    *
    * @return
@@ -68,6 +87,16 @@ trait Connection[F[_]]:
    */
   def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]]
 
+  /**
+   * Releases this Connection object's database and LDBC resources immediately instead of waiting for them to be automatically released.
+   *
+   * Calling the method close on a Connection object that is already closed is a no-op.
+   *
+   * It is strongly recommended that an application explicitly commits or rolls back an active transaction prior to calling the close method.
+   * If the close method is called and there is an active transaction, the results are implementation-defined.
+   */
+  def close(): F[Unit]
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -89,6 +118,44 @@ object Connection:
     CapabilitiesFlags.CLIENT_QUERY_ATTRIBUTES,
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
+
+  case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
+                                 protocol: MySQLProtocol[F],
+                                 readOnly: Ref[F, Boolean],
+                                  autoCommit: Ref[F, Boolean]
+                                 ) extends Connection[F]:
+    override def setReadOnly(isReadOnly: Boolean): F[Unit] =
+      readOnly.update(_ => isReadOnly) *>
+        protocol
+          .statement("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE"))
+          .executeQuery()
+          .void
+
+    override def isReadOnly: F[Boolean] = readOnly.get
+
+    override def setAutoCommit(isAutoCommit: Boolean): F[Unit] =
+      autoCommit.update(_ => isAutoCommit) *>
+        protocol
+          .statement("SET autocommit=" + (if isAutoCommit then "1" else "0"))
+          .executeQuery()
+          .void
+
+    override def getAutoCommit: F[Boolean] = autoCommit.get
+
+    override def statement(sql: String): Statement[F] = protocol.statement(sql)
+
+    override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
+      protocol.clientPreparedStatement(sql)
+
+    override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
+      protocol.serverPreparedStatement(sql)
+
+    override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
+      if !autoCommit then
+        protocol.statement("ROLLBACK").executeQuery().void
+      else
+        Applicative[F].unit
+    }
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
@@ -149,20 +216,10 @@ object Connection:
                capabilityFlags
              )
            )
-      readOnlyRef <- Resource.eval(Ref[F].of[Boolean](false))
-    yield new Connection[F]:
-      override def setReadOnly(isReadOnly: Boolean): F[Unit] =
-        readOnlyRef.update(_ => isReadOnly) *>
-          protocol
-            .statement("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE"))
-            .executeQuery()
-            .void
-      override def isReadOnly: F[Boolean] = readOnlyRef.get
-      override def statement(sql: String): Statement[F] = protocol.statement(sql)
-      override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
-        protocol.clientPreparedStatement(sql)
-      override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
-        protocol.serverPreparedStatement(sql)
+      readOnly <- Resource.eval(Ref[F].of[Boolean](false))
+      autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
+      connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, readOnly, autoCommit)))(_.close())
+    yield connection
 
   def fromSocketGroup[F[_]: Tracer: Console](
     socketGroup:             SocketGroup[F],
