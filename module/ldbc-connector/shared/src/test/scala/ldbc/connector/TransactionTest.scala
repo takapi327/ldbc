@@ -217,22 +217,22 @@ class TransactionTest extends CatsEffectSuite:
 
   test("The update process is reflected by the commit.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setReadOnly(false)
-        _ <- conn.setAutoCommit(false)
+        _         <- conn.setReadOnly(false)
+        _         <- conn.setAutoCommit(false)
         statement <- conn.clientPreparedStatement("INSERT INTO `transaction_test` VALUES (1)")
-        _ <- statement.executeUpdate()
-        _ <- conn.commit()
-        query <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
-        _ <- query.setLong(1, 1L)
+        _         <- statement.executeUpdate()
+        _         <- conn.commit()
+        query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
+        _         <- query.setLong(1, 1L)
         resultSet <- query.executeQuery()
       yield resultSet.decode(bigint).contains(1L)
     })
@@ -240,22 +240,22 @@ class TransactionTest extends CatsEffectSuite:
 
   test("The update process is not reflected by the rollback.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setReadOnly(false)
-        _ <- conn.setAutoCommit(false)
+        _         <- conn.setReadOnly(false)
+        _         <- conn.setAutoCommit(false)
         statement <- conn.clientPreparedStatement("INSERT INTO `transaction_test` VALUES (2)")
-        _ <- statement.executeUpdate()
-        _ <- conn.rollback()
-        query <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
-        _ <- query.setLong(1, 2L)
+        _         <- statement.executeUpdate()
+        _         <- conn.rollback()
+        query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
+        _         <- query.setLong(1, 2L)
         resultSet <- query.executeQuery()
       yield resultSet.decode(bigint).isEmpty
     })
