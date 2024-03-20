@@ -392,6 +392,41 @@ connection.use { conn =>
 - MULTIPOLYGON
 - GEOMETRYCOLLECTION
 
+## トランザクション
+
+`Connection`を使用してトランザクションを実行するためには`setAutoCommit`メソッドと`commit`メソッド、`rollback`メソッドを組み合わせて使用します。
+
+まず、`setAutoCommit`メソッドを使用してトランザクションの自動コミットを無効にします。
+
+```scala
+conn.setAutoCommit(false)
+```
+
+何かしらの処理を行った後に`commit`メソッドを使用してトランザクションをコミットします。
+
+```scala
+for
+  statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+  _ <- statement.setString(1, "Alice")
+  _ <- statement.setInt(2, 20)
+  result <- statement.executeUpdate()
+  _ <- conn.commit()
+yield
+```
+もしくは、`rollback`メソッドを使用してトランザクションをロールバックします。
+
+```scala
+for
+  statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+  _ <- statement.setString(1, "Alice")
+  _ <- statement.setInt(2, 20)
+  result <- statement.executeUpdate()
+  _ <- conn.rollback()
+yield
+```
+
+`setAutoCommit`メソッドを使用してトランザクションの自動コミットを無効にした場合、コネクションのResourceを解放する際に自動的にロールバックが行われます。
+
 ## 未対応機能
 
 LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。
