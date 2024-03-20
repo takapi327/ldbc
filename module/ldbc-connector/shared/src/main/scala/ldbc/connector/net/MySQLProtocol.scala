@@ -115,21 +115,22 @@ trait MySQLProtocol[F[_]]:
 object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
-    initialPacket: InitialPacket,
-    readOnly:      Boolean,
+    initialPacket:    InitialPacket,
+    readOnly:         Boolean,
     packetSocket:     PacketSocket[F],
     sequenceIdRef:    Ref[F, Byte],
     initialPacketRef: Ref[F, Option[InitialPacket]]
-  )(using ev: MonadError[F, Throwable], ex: Exchange[F]) extends MySQLProtocol[F]:
+  )(using ev: MonadError[F, Throwable], ex: Exchange[F])
+    extends MySQLProtocol[F]:
 
     override def authenticate(
-                               user: String,
-                               password: String,
-                               database: Option[String],
-                               useSSL: Boolean,
-                               allowPublicKeyRetrieval: Boolean,
-                               capabilitiesFlags: List[CapabilitiesFlags]
-                             ): F[Unit] =
+      user:                    String,
+      password:                String,
+      database:                Option[String],
+      useSSL:                  Boolean,
+      allowPublicKeyRetrieval: Boolean,
+      capabilitiesFlags:       List[CapabilitiesFlags]
+    ): F[Unit] =
       Authentication[F](
         packetSocket,
         initialPacket,
@@ -146,9 +147,9 @@ object MySQLProtocol:
       Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
-       Ref[F]
-         .of(ListMap.empty[Int, Parameter])
-         .map(params => PreparedStatement.Client[F](packetSocket, initialPacket, sql, params, resetSequenceId))
+      Ref[F]
+        .of(ListMap.empty[Int, Parameter])
+        .map(params => PreparedStatement.Client[F](packetSocket, initialPacket, sql, params, resetSequenceId))
 
     private def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[List[P]] =
 
@@ -161,12 +162,12 @@ object MySQLProtocol:
     override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
       for
         result <- resetSequenceId *> packetSocket.send(ComStmtPreparePacket(sql)) *>
-          packetSocket.receive(ComStmtPrepareOkPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-            case ok: ComStmtPrepareOkPacket => ev.pure(ok)
-          }
-        _ <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-        _ <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+                    packetSocket.receive(ComStmtPrepareOkPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                      case ok: ComStmtPrepareOkPacket => ev.pure(ok)
+                    }
+        _      <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+        _      <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
         params <- Ref[F].of(ListMap.empty[Int, Parameter])
       yield PreparedStatement
         .Server[F](packetSocket, initialPacket, result.statementId, sql, params, resetSequenceId)
@@ -200,4 +201,4 @@ object MySQLProtocol:
       initialPacketOpt  <- initialPacketRef.get
     yield initialPacketOpt match
       case Some(initial) => MySQLProtocolImpl(initial, false, packetSocket, sequenceIdRef, initialPacketRef)
-      case None => throw new MySQLException("Initial packet is not set")
+      case None          => throw new MySQLException("Initial packet is not set")
