@@ -50,11 +50,11 @@ class TransactionTest extends CatsEffectSuite:
 
   test("Transactions initiated in a session are in auto commit mode.") {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc",
-      password                = Some("password"),
-      allowPublicKeyRetrieval = true
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
@@ -66,11 +66,11 @@ class TransactionTest extends CatsEffectSuite:
 
   test("Transactions initiated in a session do not enter autocommit mode.") {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc",
-      password                = Some("password"),
-      allowPublicKeyRetrieval = true
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
