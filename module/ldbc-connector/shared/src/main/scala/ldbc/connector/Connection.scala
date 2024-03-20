@@ -60,7 +60,7 @@ trait Connection[F[_]]:
    * This method should be used only when auto-commit mode has been disabled.
    */
   def commit(): F[Unit]
-  
+
   /**
    * Undoes all changes made in the current transaction and releases any database locks currently held by this Connection object.
    * This method should be used only when auto-commit mode has been disabled.
@@ -159,7 +159,7 @@ object Connection:
       if !autoCommit then protocol.statement("COMMIT").executeQuery().void
       else ev.raiseError(new MySQLException("Can't call commit when autocommit=true"))
     }
-    
+
     override def rollback(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
       if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
       else ev.raiseError(new MySQLException("Can't call rollback when autocommit=true"))
