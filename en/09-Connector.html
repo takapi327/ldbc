@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha1
+0.3.0-alpha2
 </div>
 </div>
 <div class="nav-toc">
@@ -77,7 +77,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha1
+0.3.0-alpha2
 </div>
 </div>
 <div class="nav-toc">
@@ -127,10 +127,10 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>The LDBC connector is the lowest layer API. We plan to use this connector to provide higher-layer APIs in the future. We also plan to make it compatible with existing higher-layer APIs.</p>
 <p>The following dependencies must be set up in your project in order to use it.</p>
 <p><strong>JVM</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha1&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha2&quot;
 </code></pre>
 <p><strong>JS/Native</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha1&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha2&quot;
 </code></pre>
 <p><strong>Supported Versions</strong></p>
 <p>The current version supports the following versions of MySQL</p>
@@ -647,6 +647,50 @@ val connection = Connection[IO](
   <li>MULTIPOLYGON</li>
   <li>GEOMETRYCOLLECTION</li>
 </ul>
+<h2><a href="#transaction" name="transaction" class="anchor"><span class="anchor-link"></span></a>Transaction</h2>
+<p>To execute a transaction using <code>Connection</code>, use the <code>setAutoCommit</code> method in combination with the <code>commit</code> and <code>rollback</code> methods.</p>
+<p>First, use the <code>setAutoCommit</code> method to disable transaction autocommit.</p>
+<pre class="prettyprint"><code class="language-scala">conn.setAutoCommit(false)
+</code></pre>
+<p>Use the <code>commit</code> method to commit the transaction after some processing.</p>
+<pre class="prettyprint"><code class="language-scala">for
+  statement &lt;- conn.clientPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
+  _ &lt;- statement.setString(1, &quot;Alice&quot;)
+  _ &lt;- statement.setInt(2, 20)
+  result &lt;- statement.executeUpdate()
+  _ &lt;- conn.commit()
+yield
+</code></pre>
+<p>Or use the <code>rollback</code> method to roll back the transaction.</p>
+<pre class="prettyprint"><code class="language-scala">for
+  statement &lt;- conn.clientPreparedStatement(&quot;INSERT INTO users (name, age) VALUES (?, ?)&quot;)
+  _ &lt;- statement.setString(1, &quot;Alice&quot;)
+  _ &lt;- statement.setInt(2, 20)
+  result &lt;- statement.executeUpdate()
+  _ &lt;- conn.rollback()
+yield
+</code></pre>
+<p>If transaction autocommit is disabled using the <code>setAutoCommit</code> method, rollback will occur automatically when the connection&rsquo;s Resource is released.</p>
+<h3><a href="#transaction-isolation-level" name="transaction-isolation-level" class="anchor"><span class="anchor-link"></span></a>Transaction isolation level</h3>
+<p>LDBC allows for the setting of transaction isolation levels.</p>
+<p>The transaction isolation level is set using the <code>setTransactionIsolation</code> method.</p>
+<p>The following transaction isolation levels are supported in MySQL.</p>
+<ul>
+  <li>READ UNCOMMITTED</li>
+  <li>READ COMMITTED</li>
+  <li>REPEATABLE READ</li>
+  <li>SERIALIZABLE</li>
+</ul>
+<p>See <a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html">official documentation</a> for more information on transaction isolation levels in MySQL.</p>
+<pre class="prettyprint"><code class="language-scala">import ldbc.connector.Connection.TransactionIsolationLevel
+
+conn.setTransactionIsolation(TransactionIsolationLevel.REPEATABLE_READ)
+</code></pre>
+<p>Use the <code>getTransactionIsolation</code> method to get the currently set transaction isolation level.</p>
+<pre class="prettyprint"><code class="language-scala">for
+  isolationLevel &lt;- conn.getTransactionIsolation()
+yield
+</code></pre>
 <h2><a href="#unsupported-feature" name="unsupported-feature" class="anchor"><span class="anchor-link"></span></a>Unsupported Feature</h2>
 <p>The LDBC connector is currently an experimental feature. Therefore, the following features are not supported. We plan to provide the features as they become available.</p>
 <ul>
@@ -658,7 +702,7 @@ val connection = Connection[IO](
   <li>etc&hellip;</li>
 </ul>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha1/docs/target/mdoc/en/09-Connector.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha2/docs/target/mdoc/en/09-Connector.md">here</a>.
 </div>
 
 </div>
@@ -672,6 +716,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
   <ul>
     <li><a href="../en/09-Connector.html#connection" class="header">Connection</a></li>
     <li><a href="../en/09-Connector.html#execution" class="header">Execution</a></li>
+    <li><a href="../en/09-Connector.html#transaction" class="header">Transaction</a></li>
     <li><a href="../en/09-Connector.html#unsupported-feature" class="header">Unsupported Feature</a></li>
   </ul></li>
 </ul>
@@ -740,7 +785,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha1', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha2', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
