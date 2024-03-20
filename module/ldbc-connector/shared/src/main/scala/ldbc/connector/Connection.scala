@@ -28,6 +28,23 @@ import ldbc.connector.exception.MySQLException
 trait Connection[F[_]]:
 
   /**
+   * Puts this connection in read-only mode as a hint to the driver to enable
+   * database optimizations.
+   *
+   * @param isReadOnly
+   *   true enables read-only mode; false disables it
+   */
+  def setReadOnly(isReadOnly: Boolean): F[Unit]
+  
+  /**
+   * Retrieves whether this Connection object is in read-only mode.
+   *
+   * @return
+   *   true if this Connection object is read-only; false otherwise
+   */
+  def isReadOnly: F[Boolean]
+
+  /**
    * Creates a statement with the given SQL.
    *
    * @param sql
@@ -132,7 +149,12 @@ object Connection:
                capabilityFlags
              )
            )
+      readOnlyRef <- Resource.eval(Ref[F].of[Boolean](false))
     yield new Connection[F]:
+      override def setReadOnly(isReadOnly: Boolean): F[Unit] = 
+        readOnlyRef.update(_ => isReadOnly) *>
+          protocol.statement("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE")).executeQuery().void
+      override def isReadOnly: F[Boolean] = readOnlyRef.get
       override def statement(sql: String): Statement[F] = protocol.statement(sql)
       override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
         protocol.clientPreparedStatement(sql)

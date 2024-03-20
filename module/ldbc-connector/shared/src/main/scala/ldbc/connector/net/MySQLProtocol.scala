@@ -46,14 +46,6 @@ trait MySQLProtocol[F[_]]:
   def initialPacket: InitialPacket
 
   /**
-   * Returns whether the connection is read-only.
-   *
-   * @return
-   *   true enables read-only mode; false disables it
-   */
-  def readOnly: Boolean
-
-  /**
    * Authenticates the user with the given password.
    * 
    * @param user
@@ -116,7 +108,6 @@ object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
     initialPacket:    InitialPacket,
-    readOnly:         Boolean,
     packetSocket:     PacketSocket[F],
     sequenceIdRef:    Ref[F, Byte],
     initialPacketRef: Ref[F, Option[InitialPacket]]
@@ -200,5 +191,5 @@ object MySQLProtocol:
       given Exchange[F] <- Exchange[F]
       initialPacketOpt  <- initialPacketRef.get
     yield initialPacketOpt match
-      case Some(initial) => MySQLProtocolImpl(initial, false, packetSocket, sequenceIdRef, initialPacketRef)
+      case Some(initial) => MySQLProtocolImpl(initial, packetSocket, sequenceIdRef, initialPacketRef)
       case None          => throw new MySQLException("Initial packet is not set")
