@@ -392,6 +392,70 @@ connection.use { conn =>
 - MULTIPOLYGON
 - GEOMETRYCOLLECTION
 
+## トランザクション
+
+`Connection`を使用してトランザクションを実行するためには`setAutoCommit`メソッドと`commit`メソッド、`rollback`メソッドを組み合わせて使用します。
+
+まず、`setAutoCommit`メソッドを使用してトランザクションの自動コミットを無効にします。
+
+```scala
+conn.setAutoCommit(false)
+```
+
+何かしらの処理を行った後に`commit`メソッドを使用してトランザクションをコミットします。
+
+```scala
+for
+  statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+  _ <- statement.setString(1, "Alice")
+  _ <- statement.setInt(2, 20)
+  result <- statement.executeUpdate()
+  _ <- conn.commit()
+yield
+```
+もしくは、`rollback`メソッドを使用してトランザクションをロールバックします。
+
+```scala
+for
+  statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+  _ <- statement.setString(1, "Alice")
+  _ <- statement.setInt(2, 20)
+  result <- statement.executeUpdate()
+  _ <- conn.rollback()
+yield
+```
+
+`setAutoCommit`メソッドを使用してトランザクションの自動コミットを無効にした場合、コネクションのResourceを解放する際に自動的にロールバックが行われます。
+
+### トランザクション分離レベル
+
+LDBCではトランザクション分離レベルの設定を行うことができます。
+
+トランザクション分離レベルは`setTransactionIsolation`メソッドを使用して設定を行います。
+
+MySQLでは以下のトランザクション分離レベルがサポートされています。
+
+- READ UNCOMMITTED
+- READ COMMITTED
+- REPEATABLE READ
+- SERIALIZABLE
+
+MySQLのトランザクション分離レベルについては[公式ドキュメント](https://dev.mysql.com/doc/refman/8.0/ja/innodb-transaction-isolation-levels.html)を参照してください。
+
+```scala
+import ldbc.connector.Connection.TransactionIsolationLevel
+
+conn.setTransactionIsolation(TransactionIsolationLevel.REPEATABLE_READ)
+```
+
+現在設定されているトランザクション分離レベルを取得するには`getTransactionIsolation`メソッドを使用します。
+
+```scala
+for
+  isolationLevel <- conn.getTransactionIsolation()
+yield
+```
+
 ## 未対応機能
 
 LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。

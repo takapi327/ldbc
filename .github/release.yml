@@ -12,10 +12,14 @@ changelog:
         - 'bugfix'
         - 'bug'
     - title: '🧰 Maintenance'
-      label: 'chore'
+      labels:
+        - 'chore'
     - title: '🔧 Refactoring'
-      label: 'refactor'
+      labels:
+        - 'refactor'
     - title: '📖 Documentation'
-      label: 'documentation'
+      labels:
+        - 'documentation'
     - title: '⛓️ Dependency update'
-      label: 'dependencies'
+      labels:
+        - 'dependencies'
