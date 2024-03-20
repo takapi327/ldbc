@@ -35,7 +35,7 @@ trait Connection[F[_]]:
    *   true enables read-only mode; false disables it
    */
   def setReadOnly(isReadOnly: Boolean): F[Unit]
-  
+
   /**
    * Retrieves whether this Connection object is in read-only mode.
    *
@@ -151,9 +151,12 @@ object Connection:
            )
       readOnlyRef <- Resource.eval(Ref[F].of[Boolean](false))
     yield new Connection[F]:
-      override def setReadOnly(isReadOnly: Boolean): F[Unit] = 
+      override def setReadOnly(isReadOnly: Boolean): F[Unit] =
         readOnlyRef.update(_ => isReadOnly) *>
-          protocol.statement("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE")).executeQuery().void
+          protocol
+            .statement("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE"))
+            .executeQuery()
+            .void
       override def isReadOnly: F[Boolean] = readOnlyRef.get
       override def statement(sql: String): Statement[F] = protocol.statement(sql)
       override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =

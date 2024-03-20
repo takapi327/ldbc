@@ -18,15 +18,15 @@ class TransactionTest extends CatsEffectSuite:
 
   test("Transactions initiated in a session are read-only.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setReadOnly(true)
+        _        <- conn.setReadOnly(true)
         readOnly <- conn.isReadOnly
       yield readOnly
     })
@@ -34,15 +34,15 @@ class TransactionTest extends CatsEffectSuite:
 
   test("Transactions initiated in a session are write-only.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _ <- conn.setReadOnly(false)
+        _        <- conn.setReadOnly(false)
         readOnly <- conn.isReadOnly
       yield !readOnly
     })
