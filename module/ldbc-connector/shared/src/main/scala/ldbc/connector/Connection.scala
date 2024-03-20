@@ -56,6 +56,12 @@ trait Connection[F[_]]:
   def getAutoCommit: F[Boolean]
 
   /**
+   * Makes all changes made since the previous commit/rollback permanent and releases any database locks currently held by this Connection object.
+   * This method should be used only when auto-commit mode has been disabled.
+   */
+  def commit(): F[Unit]
+
+  /**
    * Retrieves whether this Connection object is in read-only mode.
    *
    * @return
@@ -123,7 +129,7 @@ object Connection:
     protocol:   MySQLProtocol[F],
     readOnly:   Ref[F, Boolean],
     autoCommit: Ref[F, Boolean]
-  ) extends Connection[F]:
+  )(using ev: MonadError[F, Throwable]) extends Connection[F]:
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
       readOnly.update(_ => isReadOnly) *>
         protocol
@@ -142,6 +148,11 @@ object Connection:
 
     override def getAutoCommit: F[Boolean] = autoCommit.get
 
+    override def commit(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
+      if !autoCommit then protocol.statement("COMMIT").executeQuery().void
+      else ev.raiseError(new MySQLException("Can't call commit when autocommit=true"))
+    }
+
     override def statement(sql: String): Statement[F] = protocol.statement(sql)
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
@@ -152,7 +163,7 @@ object Connection:
 
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
       if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
-      else Applicative[F].unit
+      else ev.unit
     }
 
   def apply[F[_]: Temporal: Network: Console](
