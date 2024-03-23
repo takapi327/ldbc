@@ -456,14 +456,68 @@ for
 yield
 ```
 
+### セーブポイント
+
+より高度なトランザクション管理のために「Savepoint機能」を使用することができます。これにより、データベース操作中に特定のポイントをマークしておくことが可能になり、何か問題が発生した場合にも、そのポイントまでデータベースの状態を巻き戻すことができます。これは、複雑なデータベース操作や、長いトランザクションの中での安全なポイント設定を必要とする場合に特に役立ちます。
+
+**特徴：**
+
+- 柔軟なトランザクション管理：Savepointを使って、トランザクション内の任意の場所で「チェックポイント」を作成。必要に応じてそのポイントまで状態を戻すことができます。 
+- エラー回復：エラーが発生した時、全てを最初からやり直すのではなく、最後の安全なSavepointまで戻ることで、時間の節約と効率の向上が見込めます。 
+- 高度な制御：複数のSavepointを設定することで、より精密なトランザクション制御が可能に。開発者はより複雑なロジックやエラーハンドリングを簡単に実装できます。
+
+この機能を活用することで、あなたのアプリケーションはより堅牢で信頼性の高いデータベース操作を実現できるようになります。
+
+**セーブポイントの設定**
+
+Savepointを設定するには、`setSavepoint`メソッドを使用します。このメソッドは、Savepointの名前を指定することができます。
+Savepointの名前を指定しない場合、デフォルトの名前としてUUIDで生成された値が設定されます。
+
+`getSavepointName`メソッドを使用して、設定されたSavepointの名前を取得することができます。
+
+※ MySQLではデフォルトで自動コミットが有効になっているため、Savepointを使用する場合は自動コミットを無効にする必要があります。そうしないと全ての処理が都度コミットされてしまうため、Savepointを使用したトランザクションのロールバックを行うことができなくなるためです。
+
+```scala
+for
+  _ <- conn.setAutoCommit(false)
+  savepoint <- conn.setSavepoint("savepoint1")
+yield savepoint.getSavepointName
+```
+
+**セーブポイントのロールバック**
+
+Savepointを使用してトランザクションの一部をロールバックするには、`rollback`メソッドにSavepointを渡すことでロールバックを行います。
+Savepointを使用して部分的にロールバックをした後、トランザクション全体をコミットするとそのSavepoint以降のトランザクションはコミットされません。
+
+```scala
+for
+  _ <- conn.setAutoCommit(false)
+  savepoint <- conn.setSavepoint("savepoint1")
+  _ <- conn.rollback(savepoint)
+  _ <- conn.commit()
+yield
+```
+
+**セーブポイントのリリース**
+
+Savepointをリリースするには、`releaseSavepoint`メソッドにSavepointを渡すことでリリースを行います。
+Savepointをリリースした後、トランザクション全体をコミットするとそのSavepoint以降のトランザクションはコミットされます。
+
+```scala
+for
+  _ <- conn.setAutoCommit(false)
+  savepoint <- conn.setSavepoint("savepoint1")
+  _ <- conn.releaseSavepoint(savepoint)
+  _ <- conn.commit()
+yield
+```
+
 ## 未対応機能
 
 LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。
 機能提供は順次行っていく予定です。
 
 - コネクションプーリング
-- トランザクション
 - バッチ処理
-- セーブポイント
 - フェイルオーバー対策
 - etc...
