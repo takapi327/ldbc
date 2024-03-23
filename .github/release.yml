@@ -2,24 +2,22 @@ changelog:
   categories:
     - title: '🚀 Features'
       labels:
-        - 'feature'
+        - '🚀 feature'
     - title: '💪 Enhancement'
       labels:
-        - 'enhancement'
-    - title: '🐛 Bug Fixes'
+        - '💪 enhancement'
+    - title: '🪲 Bug Fixes'
       labels:
-        - 'fix'
-        - 'bugfix'
-        - 'bug'
+        - '🪲 bug'
     - title: '🧰 Maintenance'
       labels:
-        - 'chore'
+        - '🧰 chore'
     - title: '🔧 Refactoring'
       labels:
-        - 'refactor'
+        - '🔧 refactor'
     - title: '📖 Documentation'
       labels:
-        - 'documentation'
+        - '📖 documentation'
     - title: '⛓️ Dependency update'
       labels:
-        - 'dependencies'
+        - '⛓️ dependencies'
