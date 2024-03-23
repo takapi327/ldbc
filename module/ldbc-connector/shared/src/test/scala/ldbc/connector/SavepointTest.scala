@@ -7,11 +7,8 @@
 package ldbc.connector
 
 import cats.effect.*
-
 import org.typelevel.otel4s.trace.Tracer
-
-import munit.CatsEffectSuite
-
+import munit.{ AnyFixture, CatsEffectSuite }
 import ldbc.connector.codec.all.*
 
 class SavepointTest extends CatsEffectSuite:
@@ -27,27 +24,30 @@ class SavepointTest extends CatsEffectSuite:
     ssl      = SSL.Trusted
   )
 
-  override def beforeEach(context: BeforeEach): Unit =
-    connection
-      .use { conn =>
-        for
-          s1 <- conn.clientPreparedStatement("CREATE TABLE IF NOT EXISTS `savepoint_test` (`c1` BIGINT)")
-          s2 <- conn.clientPreparedStatement("TRUNCATE TABLE `savepoint_test`")
-          _  <- s1.executeUpdate()
-          _  <- s2.executeUpdate()
-        yield ()
-      }
-      .unsafeRunSync()
-
-  override def afterEach(context: AfterEach): Unit =
-    connection
-      .use { conn =>
-        for
-          s1 <- conn.clientPreparedStatement("DROP TABLE IF EXISTS `savepoint_test`")
-          _  <- s1.executeUpdate()
-        yield ()
-      }
-      .unsafeRunSync()
+  override def munitFixtures: Seq[AnyFixture[Unit]] = Seq(
+    ResourceTestLocalFixture(
+      "setup",
+      Resource.make(
+        connection
+          .use { conn =>
+            for
+              s1 <- conn.clientPreparedStatement("CREATE TABLE IF NOT EXISTS `savepoint_test` (`c1` BIGINT)")
+              s2 <- conn.clientPreparedStatement("TRUNCATE TABLE `savepoint_test`")
+              _  <- s1.executeUpdate()
+              _  <- s2.executeUpdate()
+            yield ()
+          }
+      )(_ =>
+        connection
+          .use { conn =>
+            for
+              s1 <- conn.clientPreparedStatement("DROP TABLE IF EXISTS `savepoint_test`")
+              _  <- s1.executeUpdate()
+            yield ()
+          }
+      )
+    )
+  )
 
   test("A Savepoint with the specified name can be set.") {
     assertIO(
