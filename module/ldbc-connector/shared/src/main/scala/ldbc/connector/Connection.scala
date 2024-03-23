@@ -272,10 +272,13 @@ object Connection:
     override def setSavepoint(): F[Savepoint] = setSavepoint(UUID.randomUUID().toString)
 
     override def setSavepoint(name: String): F[Savepoint] =
-      protocol.statement(s"SAVEPOINT `$name`").executeQuery().map(_ =>
-        new Savepoint:
-          override def getSavepointName: String = name
-      )
+      protocol
+        .statement(s"SAVEPOINT `$name`")
+        .executeQuery()
+        .map(_ =>
+          new Savepoint:
+            override def getSavepointName: String = name
+        )
 
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
       if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
