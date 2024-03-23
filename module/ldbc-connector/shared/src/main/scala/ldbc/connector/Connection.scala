@@ -297,12 +297,12 @@ object Connection:
           new Savepoint:
             override def getSavepointName: String = name
         )
-      
+
     override def rollback(savepoint: Savepoint): F[Unit] =
-      protocol.statement(s"ROLLBACK TO SAVEPOINT `${savepoint.getSavepointName}`").executeQuery().void
+      protocol.statement(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName }`").executeQuery().void
 
     override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
-      protocol.statement(s"RELEASE SAVEPOINT `${savepoint.getSavepointName}`").executeQuery().void
+      protocol.statement(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName }`").executeQuery().void
 
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
       if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
