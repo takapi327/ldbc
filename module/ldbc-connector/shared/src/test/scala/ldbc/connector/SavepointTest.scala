@@ -77,6 +77,7 @@ class SavepointTest extends CatsEffectSuite:
           _          <- statement3.setLong(1, 1L)
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
+          _          <- conn.setAutoCommit(true)
         yield resultSet.decode(bigint).length
       },
       1
@@ -101,6 +102,7 @@ class SavepointTest extends CatsEffectSuite:
           _          <- statement3.setLong(1, 1L)
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
+          _          <- conn.setAutoCommit(true)
         yield resultSet.decode(bigint).length
       },
       2
