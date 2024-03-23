@@ -150,6 +150,24 @@ trait Connection[F[_]]:
   def setSavepoint(name: String): F[Savepoint]
 
   /**
+   * Undoes all changes made after the given Savepoint object was set.
+   * This method should be used only when auto-commit has been disabled.
+   *
+   * @param savepoint
+   *   the Savepoint object to roll back to
+   */
+  def rollback(savepoint: Savepoint): F[Unit]
+
+  /**
+   * Removes the specified Savepoint and subsequent Savepoint objects from the current transaction.
+   * Any reference to the savepoint after it have been removed will cause an SQLException to be thrown.
+   * 
+   * @param savepoint
+   *   the Savepoint object to release
+   */
+  def releaseSavepoint(savepoint: Savepoint): F[Unit]
+
+  /**
    * Releases this Connection object's database and LDBC resources immediately instead of waiting for them to be automatically released.
    *
    * Calling the method close on a Connection object that is already closed is a no-op.
@@ -279,6 +297,12 @@ object Connection:
           new Savepoint:
             override def getSavepointName: String = name
         )
+      
+    override def rollback(savepoint: Savepoint): F[Unit] =
+      protocol.statement(s"ROLLBACK TO SAVEPOINT `${savepoint.getSavepointName}`").executeQuery().void
+
+    override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
+      protocol.statement(s"RELEASE SAVEPOINT `${savepoint.getSavepointName}`").executeQuery().void
 
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
       if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
