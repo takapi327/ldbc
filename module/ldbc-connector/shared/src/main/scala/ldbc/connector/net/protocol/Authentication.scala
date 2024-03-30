@@ -192,7 +192,7 @@ object Authentication:
       private def cachingSha2Authentication(plugin: CachingSha2PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         (useSSL, allowPublicKeyRetrieval) match
           case (true, _)     => sslHandshake()
-          case (false, true) => socket.send(ComInitDBPacket()) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
+          case (false, true) => socket.send(ComInitDBPacket("")) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
           case (_, _)        => plainTextHandshake(plugin, scrambleBuff)
 
       /**
