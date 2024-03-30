@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha2
+0.3.0-alpha3
 </div>
 </div>
 <div class="nav-toc">
@@ -77,7 +77,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha2
+0.3.0-alpha3
 </div>
 </div>
 <div class="nav-toc">
@@ -127,10 +127,10 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>LDBCコネクタは一番低レイヤーのAPIとなります。 今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。</p>
 <p>使用するにはプロジェクトに以下の依存関係を設定する必要があります。</p>
 <p><strong>JVM</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha2&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha3&quot;
 </code></pre>
 <p><strong>JS/Native</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha2&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha3&quot;
 </code></pre>
 <p><strong>サポートバージョン</strong></p>
 <p>現在のバージョンは以下のバージョンのMySQLをサポートしています。</p>
@@ -691,18 +691,52 @@ conn.setTransactionIsolation(TransactionIsolationLevel.REPEATABLE_READ)
   isolationLevel &lt;- conn.getTransactionIsolation()
 yield
 </code></pre>
+<h3><a href="#セーブポイント" name="セーブポイント" class="anchor"><span class="anchor-link"></span></a>セーブポイント</h3>
+<p>より高度なトランザクション管理のために「Savepoint機能」を使用することができます。これにより、データベース操作中に特定のポイントをマークしておくことが可能になり、何か問題が発生した場合にも、そのポイントまでデータベースの状態を巻き戻すことができます。これは、複雑なデータベース操作や、長いトランザクションの中での安全なポイント設定を必要とする場合に特に役立ちます。</p>
+<p><strong>特徴：</strong></p>
+<ul>
+  <li>柔軟なトランザクション管理：Savepointを使って、トランザクション内の任意の場所で「チェックポイント」を作成。必要に応じてそのポイントまで状態を戻すことができます。</li>
+  <li>エラー回復：エラーが発生した時、全てを最初からやり直すのではなく、最後の安全なSavepointまで戻ることで、時間の節約と効率の向上が見込めます。</li>
+  <li>高度な制御：複数のSavepointを設定することで、より精密なトランザクション制御が可能に。開発者はより複雑なロジックやエラーハンドリングを簡単に実装できます。</li>
+</ul>
+<p>この機能を活用することで、あなたのアプリケーションはより堅牢で信頼性の高いデータベース操作を実現できるようになります。</p>
+<p><strong>セーブポイントの設定</strong></p>
+<p>Savepointを設定するには、<code>setSavepoint</code>メソッドを使用します。このメソッドは、Savepointの名前を指定することができます。 Savepointの名前を指定しない場合、デフォルトの名前としてUUIDで生成された値が設定されます。</p>
+<p><code>getSavepointName</code>メソッドを使用して、設定されたSavepointの名前を取得することができます。</p>
+<p>※ MySQLではデフォルトで自動コミットが有効になっているため、Savepointを使用する場合は自動コミットを無効にする必要があります。そうしないと全ての処理が都度コミットされてしまうため、Savepointを使用したトランザクションのロールバックを行うことができなくなるためです。</p>
+<pre class="prettyprint"><code class="language-scala">for
+  _ &lt;- conn.setAutoCommit(false)
+  savepoint &lt;- conn.setSavepoint(&quot;savepoint1&quot;)
+yield savepoint.getSavepointName
+</code></pre>
+<p><strong>セーブポイントのロールバック</strong></p>
+<p>Savepointを使用してトランザクションの一部をロールバックするには、<code>rollback</code>メソッドにSavepointを渡すことでロールバックを行います。 Savepointを使用して部分的にロールバックをした後、トランザクション全体をコミットするとそのSavepoint以降のトランザクションはコミットされません。</p>
+<pre class="prettyprint"><code class="language-scala">for
+  _ &lt;- conn.setAutoCommit(false)
+  savepoint &lt;- conn.setSavepoint(&quot;savepoint1&quot;)
+  _ &lt;- conn.rollback(savepoint)
+  _ &lt;- conn.commit()
+yield
+</code></pre>
+<p><strong>セーブポイントのリリース</strong></p>
+<p>Savepointをリリースするには、<code>releaseSavepoint</code>メソッドにSavepointを渡すことでリリースを行います。 Savepointをリリースした後、トランザクション全体をコミットするとそのSavepoint以降のトランザクションはコミットされます。</p>
+<pre class="prettyprint"><code class="language-scala">for
+  _ &lt;- conn.setAutoCommit(false)
+  savepoint &lt;- conn.setSavepoint(&quot;savepoint1&quot;)
+  _ &lt;- conn.releaseSavepoint(savepoint)
+  _ &lt;- conn.commit()
+yield
+</code></pre>
 <h2><a href="#未対応機能" name="未対応機能" class="anchor"><span class="anchor-link"></span></a>未対応機能</h2>
 <p>LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。 機能提供は順次行っていく予定です。</p>
 <ul>
   <li>コネクションプーリング</li>
-  <li>トランザクション</li>
   <li>バッチ処理</li>
-  <li>セーブポイント</li>
   <li>フェイルオーバー対策</li>
   <li>etc&hellip;</li>
 </ul>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha2/docs/target/mdoc/ja/09-Connector.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha3/docs/target/mdoc/ja/09-Connector.md">here</a>.
 </div>
 
 </div>
@@ -785,7 +819,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha2', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha3', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
