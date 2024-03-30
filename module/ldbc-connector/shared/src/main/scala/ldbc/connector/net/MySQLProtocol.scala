@@ -181,7 +181,7 @@ object MySQLProtocol:
         packetSocket.send(ComInitDBPacket(schema)) *>
         packetSocket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
           case error: ERRPacket => ev.raiseError(error.toException("Failed to execute change schema"))
-          case ok: OKPacket => ev.unit
+          case ok: OKPacket     => ev.unit
         }
 
   def apply[F[_]: Temporal: Console: Tracer](
