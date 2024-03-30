@@ -26,6 +26,7 @@ import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.exception.MySQLException
+import ldbc.connector.codec.text.text
 
 /**
  * A connection (session) with a specific database. SQL statements are executed and results are returned within the context of a connection.
@@ -177,6 +178,26 @@ trait Connection[F[_]]:
    */
   def close(): F[Unit]
 
+  /**
+   * Sets the schema name that will be used for subsequent queries.
+   *
+   * Calling setSchema has no effect on previously created or prepared Statement objects.
+   * It is implementation defined whether a DBMS prepare operation takes place immediately when the Connection method [[statement]] or [[clientPreparedStatement]], [[serverPreparedStatement]] is invoked.
+   * For maximum portability, setSchema should be called before a Statement is created or prepared.
+   *
+   * @param schema
+   *   the name of a schema in which to work
+   */
+  def setSchema(schema: String): F[Unit]
+
+  /**
+   * Retrieves this Connection object's current schema name.
+   *
+   * @return
+   *   the current schema name or null if there is none
+   */
+  def getSchema: F[String]
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -307,6 +328,12 @@ object Connection:
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
       if !autoCommit then protocol.statement("ROLLBACK").executeQuery().void
       else ev.unit
+    }
+
+    override def setSchema(schema: String): F[Unit] = protocol.setSchema(schema)
+
+    override def getSchema: F[String] = protocol.statement("SELECT DATABASE()").executeQuery().map { result =>
+      result.decode(text).headOption.getOrElse("")
     }
 
   def apply[F[_]: Temporal: Network: Console](
