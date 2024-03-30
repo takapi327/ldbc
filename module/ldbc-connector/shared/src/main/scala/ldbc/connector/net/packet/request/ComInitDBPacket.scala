@@ -7,8 +7,11 @@
 package ldbc.connector.net.packet
 package request
 
+import cats.syntax.all.*
+
 import scodec.*
 import scodec.bits.BitVector
+import scodec.interop.cats.*
 
 import ldbc.connector.data.CommandId
 
@@ -17,8 +20,11 @@ import ldbc.connector.data.CommandId
  * The database name is specified as an argument to the request.
  * The server changes the default database to the one specified and sends a OK_Packet to the client.
  * If the database does not exist, the server sends an ERR_Packet to the client.
+ * 
+ * @param schema
+ *   The name of the database to change to.
  */
-case class ComInitDBPacket() extends RequestPacket:
+case class ComInitDBPacket(schema: String) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =
     ComInitDBPacket.encoder.encode(this)
@@ -29,4 +35,8 @@ case class ComInitDBPacket() extends RequestPacket:
 
 object ComInitDBPacket:
 
-  val encoder: Encoder[ComInitDBPacket] = Encoder(_ => Attempt.successful(BitVector(CommandId.COM_INIT_DB)))
+  val encoder: Encoder[ComInitDBPacket] = Encoder { comInitDBPacket =>
+    Attempt.successful(
+      BitVector(CommandId.COM_INIT_DB) |+| BitVector(comInitDBPacket.schema.getBytes("UTF-8"))
+    )
+  }
