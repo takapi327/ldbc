@@ -37,6 +37,11 @@ trait UtilityCommands[F[_]]:
    */
   def comInitDB(schema: String): F[Unit]
 
+  /**
+   * Get the statistics of the connection
+   */
+  def comStatistics(): F[StatisticsPacket]
+
 object UtilityCommands:
 
   def apply[F[_]: Exchange: Tracer](
@@ -62,4 +67,11 @@ object UtilityCommands:
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute change schema"))
               case ok: OKPacket     => ev.unit
             }
+        }
+
+      override def comStatistics(): F[StatisticsPacket] =
+        exchange[F, StatisticsPacket]("utility_commands") { (span: Span[F]) =>
+          span.addAttributes((attributes :+ Attribute("command", "COM_STATISTICS"))*) *>
+            socket.send(ComStatisticsPacket()) *>
+            socket.receive(StatisticsPacket.decoder)
         }
