@@ -122,6 +122,8 @@ object MySQLProtocol:
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends MySQLProtocol[F]:
 
+    private val utilityCommands = UtilityCommands[F](packetSocket, initialPacket)
+
     override def authenticate(
       user:                    String,
       password:                String,
@@ -174,15 +176,9 @@ object MySQLProtocol:
     override def resetSequenceId: F[Unit] =
       sequenceIdRef.update(_ => 0.toByte)
 
-    override def close(): F[Unit] = resetSequenceId *> packetSocket.send(ComQuitPacket())
+    override def close(): F[Unit] = resetSequenceId *> utilityCommands.comQuit()
 
-    override def setSchema(schema: String): F[Unit] =
-      resetSequenceId *>
-        packetSocket.send(ComInitDBPacket(schema)) *>
-        packetSocket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute change schema"))
-          case ok: OKPacket     => ev.unit
-        }
+    override def setSchema(schema: String): F[Unit] = resetSequenceId *> utilityCommands.comInitDB(schema)
 
   def apply[F[_]: Temporal: Console: Tracer](
     sockets:           Resource[F, Socket[F]],
