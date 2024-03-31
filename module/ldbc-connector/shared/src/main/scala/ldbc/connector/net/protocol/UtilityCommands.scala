@@ -10,7 +10,7 @@ import cats.*
 import cats.syntax.all.*
 
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{Tracer, Span}
+import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.request.*
@@ -40,13 +40,13 @@ trait UtilityCommands[F[_]]:
 object UtilityCommands:
 
   def apply[F[_]: Exchange: Tracer](
-    socket: PacketSocket[F],
-    initialPacket:    InitialPacket,
+    socket:        PacketSocket[F],
+    initialPacket: InitialPacket
   )(using ev: MonadError[F, Throwable]): UtilityCommands[F] =
     new UtilityCommands[F]:
 
       private val attributes = initialPacket.attributes ++ List(
-        Attribute("type", "Utility Commands"),
+        Attribute("type", "Utility Commands")
       )
 
       override def comQuit(): F[Unit] =
