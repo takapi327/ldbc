@@ -104,6 +104,14 @@ trait MySQLProtocol[F[_]]:
    */
   def close(): F[Unit]
 
+  /**
+   * Sets the schema name that will be used for subsequent queries.
+   *
+   * @param schema
+   *   the name of a schema in which to work
+   */
+  def setSchema(schema: String): F[Unit]
+
 object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
@@ -113,6 +121,8 @@ object MySQLProtocol:
     initialPacketRef: Ref[F, Option[InitialPacket]]
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends MySQLProtocol[F]:
+
+    private val utilityCommands = UtilityCommands[F](packetSocket, initialPacket)
 
     override def authenticate(
       user:                    String,
@@ -166,7 +176,9 @@ object MySQLProtocol:
     override def resetSequenceId: F[Unit] =
       sequenceIdRef.update(_ => 0.toByte)
 
-    override def close(): F[Unit] = resetSequenceId *> packetSocket.send(ComQuitPacket())
+    override def close(): F[Unit] = resetSequenceId *> utilityCommands.comQuit()
+
+    override def setSchema(schema: String): F[Unit] = resetSequenceId *> utilityCommands.comInitDB(schema)
 
   def apply[F[_]: Temporal: Console: Tracer](
     sockets:           Resource[F, Socket[F]],

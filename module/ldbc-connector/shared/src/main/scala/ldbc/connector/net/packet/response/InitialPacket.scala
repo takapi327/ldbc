@@ -12,6 +12,8 @@ import scodec.codecs.*
 
 import cats.syntax.all.*
 
+import org.typelevel.otel4s.Attribute
+
 import ldbc.connector.data.*
 import ldbc.connector.util.Version
 
@@ -37,6 +39,14 @@ case class InitialPacket(
   scrambleBuff:    Array[Byte],
   authPlugin:      String
 ) extends ResponsePacket:
+
+  val attributes: List[Attribute[String]] = List(
+    Attribute("protocol.version", protocolVersion.toString),
+    Attribute("server.version", serverVersion.toString),
+    Attribute("thread.id", threadId.toString),
+    Attribute("character.set", characterSet.toString),
+    Attribute("auth.plugin", authPlugin)
+  )
 
   override def toString: String = "InitialPacket"
 

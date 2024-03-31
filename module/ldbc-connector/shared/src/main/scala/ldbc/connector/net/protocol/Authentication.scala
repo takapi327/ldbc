@@ -65,13 +65,10 @@ object Authentication:
   ): Authentication[F] =
     new Authentication[F]:
 
-      private val attributes = Seq(
-        Attribute("protocol.version", initialPacket.protocolVersion.toString),
-        Attribute("server.version", initialPacket.serverVersion.toString),
-        Attribute("character", initialPacket.characterSet.toString),
-        Attribute("auth.plugin", initialPacket.authPlugin),
-        Attribute("username", username)
-      ) ++ database.map(db => Attribute("database", db)).toSeq
+      private val attributes = initialPacket.attributes ++ List(
+        Some(Attribute("username", username)),
+        database.map(db => Attribute("database", db))
+      ).flatten
 
       /**
        * Read until the authentication is OK.
@@ -192,7 +189,7 @@ object Authentication:
       private def cachingSha2Authentication(plugin: CachingSha2PasswordPlugin, scrambleBuff: Array[Byte]): F[Unit] =
         (useSSL, allowPublicKeyRetrieval) match
           case (true, _)     => sslHandshake()
-          case (false, true) => socket.send(ComInitDBPacket()) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
+          case (false, true) => socket.send(ComInitDBPacket("")) *> allowPublicKeyRetrievalRequest(plugin, scrambleBuff)
           case (_, _)        => plainTextHandshake(plugin, scrambleBuff)
 
       /**

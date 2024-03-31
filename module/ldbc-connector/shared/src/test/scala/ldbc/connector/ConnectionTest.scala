@@ -264,3 +264,21 @@ class ConnectionTest extends CatsEffectSuite:
     )
     assertIOBoolean(connection.use(_ => IO(true)))
   }
+
+  test("Schema change will change the currently connected Schema.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use { conn =>
+        conn.setSchema("world") *> conn.getSchema
+      },
+      "world"
+    )
+  }
