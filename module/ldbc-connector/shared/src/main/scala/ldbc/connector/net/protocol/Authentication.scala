@@ -65,13 +65,10 @@ object Authentication:
   ): Authentication[F] =
     new Authentication[F]:
 
-      private val attributes = Seq(
-        Attribute("protocol.version", initialPacket.protocolVersion.toString),
-        Attribute("server.version", initialPacket.serverVersion.toString),
-        Attribute("character", initialPacket.characterSet.toString),
-        Attribute("auth.plugin", initialPacket.authPlugin),
-        Attribute("username", username)
-      ) ++ database.map(db => Attribute("database", db)).toSeq
+      private val attributes = initialPacket.attributes ++ List(
+        Some(Attribute("username", username)),
+        database.map(db => Attribute("database", db))
+      ).flatten
 
       /**
        * Read until the authentication is OK.
