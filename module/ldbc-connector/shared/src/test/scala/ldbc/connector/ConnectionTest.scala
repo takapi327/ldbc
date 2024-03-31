@@ -285,12 +285,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("Statistics of the MySQL server can be obtained.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(

@@ -33,13 +33,13 @@ import cats.syntax.option.*
  *   The average number of queries executed by the MySQL server per second.
  */
 case class StatisticsPacket(
-  uptime: String,
-  threads: String,
-  questions: String,
-  slowQueries: String,
-  opens: String,
-  flushTables: String,
-  openTables: String,
+  uptime:              String,
+  threads:             String,
+  questions:           String,
+  slowQueries:         String,
+  opens:               String,
+  flushTables:         String,
+  openTables:          String,
   queriesPerSecondAvg: String
 ) extends ResponsePacket:
 
@@ -49,21 +49,21 @@ object StatisticsPacket:
 
   def decoder: Decoder[StatisticsPacket] =
     for
-      _ <- ignore(8 * 8) // "Uptime: " Skip String
-      uptime <- spaceDelimitedStringDecoder
-      _ <- ignore(8 * 10) // "  Threads: " Skip String
-      threads <- spaceDelimitedStringDecoder
-      _ <- ignore(8 * 12) // "  Questions: " Skip String
-      questions <- spaceDelimitedStringDecoder
-      _ <- ignore(8 * 15) // "  Slow queries: " Skip String
-      slowQueries <- spaceDelimitedStringDecoder
-      _ <- ignore(8 * 8) // "  Opens: " Skip String
-      opens <- spaceDelimitedStringDecoder
-      _ <- ignore(8 * 15) // "  Flush tables: " Skip String
-      flushTables <- spaceDelimitedStringDecoder
-      _ <- ignore(8 * 14) // "  Open tables: " Skip String
-      openTables <- spaceDelimitedStringDecoder
-      _ <- ignore(8 * 25) // " Queries per second avg: " Skip String
+      _                   <- ignore(8 * 8)  // "Uptime: " Skip String
+      uptime              <- spaceDelimitedStringDecoder
+      _                   <- ignore(8 * 10) // "  Threads: " Skip String
+      threads             <- spaceDelimitedStringDecoder
+      _                   <- ignore(8 * 12) // "  Questions: " Skip String
+      questions           <- spaceDelimitedStringDecoder
+      _                   <- ignore(8 * 15) // "  Slow queries: " Skip String
+      slowQueries         <- spaceDelimitedStringDecoder
+      _                   <- ignore(8 * 8)  // "  Opens: " Skip String
+      opens               <- spaceDelimitedStringDecoder
+      _                   <- ignore(8 * 15) // "  Flush tables: " Skip String
+      flushTables         <- spaceDelimitedStringDecoder
+      _                   <- ignore(8 * 14) // "  Open tables: " Skip String
+      openTables          <- spaceDelimitedStringDecoder
+      _                   <- ignore(8 * 25) // " Queries per second avg: " Skip String
       queriesPerSecondAvg <- spaceDelimitedStringDecoder
     yield StatisticsPacket(
       uptime,
