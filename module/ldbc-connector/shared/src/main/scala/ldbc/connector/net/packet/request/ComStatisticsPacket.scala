@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.connector.net.packet
 package request
 
@@ -23,5 +29,5 @@ case class ComStatisticsPacket() extends RequestPacket:
   override def toString: String = "COM_STATISTICS Request"
 
 object ComStatisticsPacket:
-  
+
   val encoder: Encoder[ComStatisticsPacket] = Encoder(_ => Attempt.successful(BitVector(CommandId.COM_STATISTICS)))
