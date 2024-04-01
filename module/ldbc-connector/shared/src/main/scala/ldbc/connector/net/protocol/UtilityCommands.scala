@@ -46,6 +46,11 @@ trait UtilityCommands[F[_]]:
    * Check if the server is alive.
    */
   def comPing(): F[Boolean]
+  
+  /**
+   * Reset the connection
+   */
+  def comResetConnection(): F[Unit]
 
 object UtilityCommands:
 
@@ -88,5 +93,15 @@ object UtilityCommands:
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case error: ERRPacket => ev.pure(false)
               case ok: OKPacket     => ev.pure(true)
+            }
+        }
+        
+      override def comResetConnection(): F[Unit] =
+        exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
+          span.addAttributes((attributes :+ Attribute("command", "COM_RESET_CONNECTION"))*) *>
+            socket.send(ComResetConnectionPacket()) *>
+            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute reset connection"))
+              case ok: OKPacket => ev.unit
             }
         }
