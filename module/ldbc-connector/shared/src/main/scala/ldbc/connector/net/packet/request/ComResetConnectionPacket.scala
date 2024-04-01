@@ -23,4 +23,5 @@ case class ComResetConnectionPacket() extends RequestPacket:
 
 object ComResetConnectionPacket:
 
-  val encoder: Encoder[ComResetConnectionPacket] = Encoder(_ => Attempt.successful(BitVector(CommandId.COM_RESET_CONNECTION)))
+  val encoder: Encoder[ComResetConnectionPacket] =
+    Encoder(_ => Attempt.successful(BitVector(CommandId.COM_RESET_CONNECTION)))
