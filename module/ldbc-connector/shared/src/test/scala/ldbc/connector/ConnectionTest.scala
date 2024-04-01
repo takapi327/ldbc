@@ -306,8 +306,21 @@ class ConnectionTest extends CatsEffectSuite:
       user                    = "ldbc",
       password                = Some("password"),
       database                = Some("connector_test"),
-      allowPublicKeyRetrieval = true
+      ssl                     = SSL.Trusted,
     )
 
     assertIOBoolean(connection.use(_.isValid))
+  }
+
+  test("Connection state reset succeeds.") {
+    val connection = Connection[IO](
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc",
+      password                = Some("password"),
+      database                = Some("connector_test"),
+      allowPublicKeyRetrieval = true
+    )
+
+    assertIOBoolean(connection.use(_.resetServerState) *> IO(true))
   }
