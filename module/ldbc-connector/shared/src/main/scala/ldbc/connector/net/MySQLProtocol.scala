@@ -191,7 +191,7 @@ object MySQLProtocol:
     override def setSchema(schema: String): F[Unit] = resetSequenceId *> utilityCommands.comInitDB(schema)
 
     override def getStatistics: F[StatisticsPacket] = resetSequenceId *> utilityCommands.comStatistics()
-    
+
     override def isValid: F[Boolean] = resetSequenceId *> utilityCommands.comPing()
 
   def apply[F[_]: Temporal: Console: Tracer](

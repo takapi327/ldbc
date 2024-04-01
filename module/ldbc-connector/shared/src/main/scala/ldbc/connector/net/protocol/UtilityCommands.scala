@@ -41,7 +41,7 @@ trait UtilityCommands[F[_]]:
    * Get the statistics of the connection
    */
   def comStatistics(): F[StatisticsPacket]
-  
+
   /**
    * Check if the server is alive.
    */
@@ -80,7 +80,7 @@ object UtilityCommands:
             socket.send(ComStatisticsPacket()) *>
             socket.receive(StatisticsPacket.decoder)
         }
-        
+
       override def comPing(): F[Boolean] =
         exchange[F, Boolean]("utility_commands") { (span: Span[F]) =>
           span.addAttributes((attributes :+ Attribute("command", "COM_PING"))*) *>

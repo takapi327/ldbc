@@ -351,7 +351,7 @@ object Connection:
     }
 
     override def getStatistics: F[StatisticsPacket] = protocol.getStatistics
-    
+
     override def isValid: F[Boolean] = protocol.isValid
 
   def apply[F[_]: Temporal: Network: Console](

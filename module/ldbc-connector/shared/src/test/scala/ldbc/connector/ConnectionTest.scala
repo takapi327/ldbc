@@ -301,11 +301,11 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The connection is valid.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc",
+      password                = Some("password"),
+      database                = Some("connector_test"),
       allowPublicKeyRetrieval = true
     )
 
