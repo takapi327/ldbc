@@ -8,6 +8,8 @@ package ldbc.connector.net
 
 import java.time.*
 
+import scala.annotation.tailrec
+
 import scodec.*
 import scodec.codecs.*
 import scodec.bits.BitVector
@@ -30,6 +32,19 @@ package object packet:
       val string    = new String(bytes.toArray, java.nio.charset.StandardCharsets.UTF_8)
       val remainder = bits.drop((bytes.size + 1) * 8) // +1 is a null character, so *8 is a byte to bit
       Attempt.successful(DecodeResult(string, remainder))
+
+  val spaceDelimitedStringDecoder: Decoder[String] = (bits: BitVector) => {
+    @tailrec
+    def readUntilSpace(acc: Vector[Byte], remaining: BitVector): (Vector[Byte], BitVector) =
+      if remaining.isEmpty then (acc, BitVector.empty)
+      else
+        val (nextByte, rest) = remaining.splitAt(8)
+        if nextByte.bytes.head == 0x20 then (acc, rest) // Check space bytes
+        else readUntilSpace(acc :+ nextByte.bytes.head, rest)
+
+    val (collectedBytes, rest) = readUntilSpace(Vector.empty, bits)
+    Attempt.successful(DecodeResult(new String(collectedBytes.toArray), rest))
+  }
 
   /**
    * NULL bitmap, length = (num_params + 7) / 8

@@ -282,3 +282,19 @@ class ConnectionTest extends CatsEffectSuite:
       "world"
     )
   }
+
+  test("Statistics of the MySQL server can be obtained.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getStatistics.map(_.toString)),
+      "COM_STATISTICS Response Packet"
+    )
+  }

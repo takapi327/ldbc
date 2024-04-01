@@ -25,6 +25,7 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
+import ldbc.connector.net.packet.response.StatisticsPacket
 import ldbc.connector.exception.MySQLException
 import ldbc.connector.codec.text.text
 
@@ -198,6 +199,14 @@ trait Connection[F[_]]:
    */
   def getSchema: F[String]
 
+  /**
+   * Retrieves the statistics of this Connection object.
+   *
+   * @return
+   *   the statistics of this Connection object
+   */
+  def getStatistics: F[StatisticsPacket]
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -335,6 +344,8 @@ object Connection:
     override def getSchema: F[String] = protocol.statement("SELECT DATABASE()").executeQuery().map { result =>
       result.decode(text).headOption.getOrElse("")
     }
+
+    override def getStatistics: F[StatisticsPacket] = protocol.getStatistics
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,

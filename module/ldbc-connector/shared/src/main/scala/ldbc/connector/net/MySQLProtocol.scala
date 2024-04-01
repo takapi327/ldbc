@@ -112,6 +112,11 @@ trait MySQLProtocol[F[_]]:
    */
   def setSchema(schema: String): F[Unit]
 
+  /**
+   * Returns the statistics of the connection.
+   */
+  def getStatistics: F[StatisticsPacket]
+
 object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
@@ -179,6 +184,8 @@ object MySQLProtocol:
     override def close(): F[Unit] = resetSequenceId *> utilityCommands.comQuit()
 
     override def setSchema(schema: String): F[Unit] = resetSequenceId *> utilityCommands.comInitDB(schema)
+
+    override def getStatistics: F[StatisticsPacket] = resetSequenceId *> utilityCommands.comStatistics()
 
   def apply[F[_]: Temporal: Console: Tracer](
     sockets:           Resource[F, Socket[F]],
