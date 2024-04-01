@@ -211,6 +211,11 @@ trait Connection[F[_]]:
    * Returns true if the connection has not been closed and is still valid.
    */
   def isValid: F[Boolean]
+  
+  /**
+   * Resets the server-side state of this connection. 
+   */
+  def resetServerState: F[Unit]
 
 object Connection:
 
@@ -353,6 +358,13 @@ object Connection:
     override def getStatistics: F[StatisticsPacket] = protocol.getStatistics
 
     override def isValid: F[Boolean] = protocol.isValid
+    
+    override def resetServerState: F[Unit] =
+      protocol.resetConnection *>
+        protocol.statement("SET NAMES utf8mb4").executeQuery() *>
+        protocol.statement("SET character_set_results = NULL").executeQuery() *>
+        protocol.statement("SET autocommit=1").executeQuery() *>
+        autoCommit.update(_ => true)
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
