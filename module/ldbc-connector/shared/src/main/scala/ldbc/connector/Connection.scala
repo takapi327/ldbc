@@ -207,6 +207,11 @@ trait Connection[F[_]]:
    */
   def getStatistics: F[StatisticsPacket]
 
+  /**
+   * Returns true if the connection has not been closed and is still valid.
+   */
+  def isValid: F[Boolean]
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -346,6 +351,8 @@ object Connection:
     }
 
     override def getStatistics: F[StatisticsPacket] = protocol.getStatistics
+    
+    override def isValid: F[Boolean] = protocol.isValid
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
