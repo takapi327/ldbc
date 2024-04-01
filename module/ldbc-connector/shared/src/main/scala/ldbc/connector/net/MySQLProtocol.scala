@@ -117,6 +117,11 @@ trait MySQLProtocol[F[_]]:
    */
   def getStatistics: F[StatisticsPacket]
 
+  /**
+   * Returns true if the connection has not been closed and is still valid.
+   */
+  def isValid: F[Boolean]
+
 object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
@@ -186,6 +191,8 @@ object MySQLProtocol:
     override def setSchema(schema: String): F[Unit] = resetSequenceId *> utilityCommands.comInitDB(schema)
 
     override def getStatistics: F[StatisticsPacket] = resetSequenceId *> utilityCommands.comStatistics()
+
+    override def isValid: F[Boolean] = resetSequenceId *> utilityCommands.comPing()
 
   def apply[F[_]: Temporal: Console: Tracer](
     sockets:           Resource[F, Socket[F]],

@@ -298,3 +298,16 @@ class ConnectionTest extends CatsEffectSuite:
       "COM_STATISTICS Response Packet"
     )
   }
+
+  test("The connection is valid.") {
+    val connection = Connection[IO](
+      host                    = "127.0.0.1",
+      port                    = 13306,
+      user                    = "ldbc",
+      password                = Some("password"),
+      database                = Some("connector_test"),
+      allowPublicKeyRetrieval = true
+    )
+
+    assertIOBoolean(connection.use(_.isValid))
+  }

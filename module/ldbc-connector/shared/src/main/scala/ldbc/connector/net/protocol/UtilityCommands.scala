@@ -42,6 +42,11 @@ trait UtilityCommands[F[_]]:
    */
   def comStatistics(): F[StatisticsPacket]
 
+  /**
+   * Check if the server is alive.
+   */
+  def comPing(): F[Boolean]
+
 object UtilityCommands:
 
   def apply[F[_]: Exchange: Tracer](
@@ -74,4 +79,14 @@ object UtilityCommands:
           span.addAttributes((attributes :+ Attribute("command", "COM_STATISTICS"))*) *>
             socket.send(ComStatisticsPacket()) *>
             socket.receive(StatisticsPacket.decoder)
+        }
+
+      override def comPing(): F[Boolean] =
+        exchange[F, Boolean]("utility_commands") { (span: Span[F]) =>
+          span.addAttributes((attributes :+ Attribute("command", "COM_PING"))*) *>
+            socket.send(ComPingPacket()) *>
+            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+              case error: ERRPacket => ev.pure(false)
+              case ok: OKPacket     => ev.pure(true)
+            }
         }
