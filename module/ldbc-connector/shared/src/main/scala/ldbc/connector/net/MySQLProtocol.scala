@@ -122,6 +122,11 @@ trait MySQLProtocol[F[_]]:
    */
   def isValid: F[Boolean]
 
+  /**
+   * Resets the connection.
+   */
+  def resetConnection: F[Unit]
+
 object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
@@ -193,6 +198,8 @@ object MySQLProtocol:
     override def getStatistics: F[StatisticsPacket] = resetSequenceId *> utilityCommands.comStatistics()
 
     override def isValid: F[Boolean] = resetSequenceId *> utilityCommands.comPing()
+
+    override def resetConnection: F[Unit] = resetSequenceId *> utilityCommands.comResetConnection()
 
   def apply[F[_]: Temporal: Console: Tracer](
     sockets:           Resource[F, Socket[F]],
