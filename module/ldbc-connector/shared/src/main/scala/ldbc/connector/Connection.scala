@@ -22,7 +22,7 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.data.CapabilitiesFlags
+import ldbc.connector.data.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.response.StatisticsPacket
@@ -217,6 +217,24 @@ trait Connection[F[_]]:
    */
   def resetServerState: F[Unit]
 
+  /**
+   * Controls whether or not multiple SQL statements are allowed to be executed at once.
+   *
+   * @param optionOperation
+   *   [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON]] or [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF]]
+   */
+  def setOption(optionOperation: EnumMySQLSetOption): F[Unit]
+  
+  /**
+   * Enables multiple SQL statements to be executed at once.
+   */
+  def enableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON)
+
+  /**
+   * Disables multiple SQL statements to be executed at once.
+   */
+  def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -365,6 +383,8 @@ object Connection:
         protocol.statement("SET character_set_results = NULL").executeQuery() *>
         protocol.statement("SET autocommit=1").executeQuery() *>
         autoCommit.update(_ => true)
+      
+    override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] = protocol.setOption(optionOperation)
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
