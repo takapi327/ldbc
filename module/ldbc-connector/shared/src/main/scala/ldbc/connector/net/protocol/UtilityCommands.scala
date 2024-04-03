@@ -114,14 +114,16 @@ object UtilityCommands:
               case ok: OKPacket     => ev.unit
             }
         }
-        
+
       override def comSetOption(optionOperation: EnumMySQLSetOption): F[Unit] =
         exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-          span.addAttributes((attributes ++ List(Attribute("command", "COM_SET_OPTION"), Attribute("option", optionOperation.toString)))*) *>
+          span.addAttributes(
+            (attributes ++ List(Attribute("command", "COM_SET_OPTION"), Attribute("option", optionOperation.toString)))*
+          ) *>
             socket.send(ComSetOptionPacket(optionOperation)) *>
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute set option"))
-              case eof: EOFPacket     => ev.unit
+              case eof: EOFPacket   => ev.unit
               case ok: OKPacket     => ev.unit
             }
         }

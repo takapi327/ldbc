@@ -224,7 +224,7 @@ trait Connection[F[_]]:
    *   [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON]] or [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF]]
    */
   def setOption(optionOperation: EnumMySQLSetOption): F[Unit]
-  
+
   /**
    * Enables multiple SQL statements to be executed at once.
    */
@@ -383,7 +383,7 @@ object Connection:
         protocol.statement("SET character_set_results = NULL").executeQuery() *>
         protocol.statement("SET autocommit=1").executeQuery() *>
         autoCommit.update(_ => true)
-      
+
     override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] = protocol.setOption(optionOperation)
 
   def apply[F[_]: Temporal: Network: Console](

@@ -34,7 +34,7 @@ case class ComSetOptionPacket(optionOperation: EnumMySQLSetOption) extends Reque
   override def toString: String = "COM_SET_OPTION Request"
 
 object ComSetOptionPacket:
-  
+
   val encoder: Encoder[ComSetOptionPacket] = Encoder { comSetOptionPacket =>
     Attempt.successful(
       BitVector(CommandId.COM_SET_OPTION) |+| uint16L.encode(comSetOptionPacket.optionOperation.code).require
