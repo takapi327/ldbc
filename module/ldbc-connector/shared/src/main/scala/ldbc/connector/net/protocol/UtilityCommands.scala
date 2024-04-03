@@ -12,6 +12,7 @@ import cats.syntax.all.*
 import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
 
+import ldbc.connector.data.EnumMySQLSetOption
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
@@ -51,6 +52,14 @@ trait UtilityCommands[F[_]]:
    * Reset the connection
    */
   def comResetConnection(): F[Unit]
+
+  /**
+   * Set an option
+   * 
+   * @param optionOperation
+   *   the option operation
+   */
+  def comSetOption(optionOperation: EnumMySQLSetOption): F[Unit]
 
 object UtilityCommands:
 
@@ -102,6 +111,16 @@ object UtilityCommands:
             socket.send(ComResetConnectionPacket()) *>
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute reset connection"))
+              case ok: OKPacket     => ev.unit
+            }
+        }
+        
+      override def comSetOption(optionOperation: EnumMySQLSetOption): F[Unit] =
+        exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
+          span.addAttributes((attributes ++ List(Attribute("command", "COM_SET_OPTION"), Attribute("option", optionOperation.toString)))*) *>
+            socket.send(ComSetOptionPacket(optionOperation)) *>
+            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute set option"))
               case ok: OKPacket     => ev.unit
             }
         }
