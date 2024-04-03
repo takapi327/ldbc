@@ -12,6 +12,9 @@ import scodec.bits.BitVector
 
 import ldbc.connector.data.CommandId
 
+/**
+ * A request packet to reset the connection.
+ */
 case class ComResetConnectionPacket() extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =
