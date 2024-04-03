@@ -121,6 +121,7 @@ object UtilityCommands:
             socket.send(ComSetOptionPacket(optionOperation)) *>
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute set option"))
+              case eof: EOFPacket     => ev.unit
               case ok: OKPacket     => ev.unit
             }
         }
