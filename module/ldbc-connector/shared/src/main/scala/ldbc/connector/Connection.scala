@@ -241,6 +241,16 @@ trait Connection[F[_]]:
    */
   def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
 
+  /**
+   * Changes the user and password for this connection.
+   *
+   * @param user
+   *   the new user name
+   * @param password
+   *   the new password
+   */
+  def changeUser(user: String, password: String): F[Unit]
+
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -392,6 +402,8 @@ object Connection:
 
     override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] = protocol.setOption(optionOperation)
 
+    override def changeUser(user: String, password: String): F[Unit] = protocol.changeUser(user, password)
+
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
     port:                    Int,
@@ -440,17 +452,8 @@ object Connection:
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
       (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
     for
-      protocol <- MySQLProtocol[F](sockets, debug, sslOptions, readTimeout, capabilityFlags)
-      _ <- Resource.eval(
-             protocol.authenticate(
-               user,
-               password.getOrElse(""),
-               database,
-               sslOptions.isDefined,
-               allowPublicKeyRetrieval,
-               capabilityFlags
-             )
-           )
+      protocol <- MySQLProtocol[F](sockets, database, debug, sslOptions, readTimeout, allowPublicKeyRetrieval, capabilityFlags)
+      _ <- Resource.eval(protocol.authenticate(user, password.getOrElse("")))
       readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
       connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, readOnly, autoCommit)))(_.close())
