@@ -512,6 +512,30 @@ for
   _ <- conn.commit()
 yield
 ```
+### Utility Commands
+
+MySQL has several utility commands. ([reference](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase_utility.html))
+
+LDBC provides an API for using these commands.
+
+| Command              | Use                                                                | Support |
+|----------------------|--------------------------------------------------------------------|---------|
+| COM_QUIT             | Tells the server that the client wants it to close the connection. | ✅       |
+| COM_INIT_DB          | Change the default schema of the connection                        | ✅       |
+| COM_STATISTICS       | Get a human readable string of some internal status vars.          | ✅       |
+| COM_DEBUG            | Dump debug info to server's stdout                                 | ❌       |
+| COM_PING             | Check if the server is alive                                       | ✅       |
+| COM_CHANGE_USER      | Changes the user of the current connection.                        | ✅       |
+| COM_RESET_CONNECTION | Resets the session state                                           | ✅       |
+| COM_SET_OPTION       | Sets options for the current connection                            | ✅       |
+
+#### COM_QUIT
+#### COM_INIT_DB
+#### COM_STATISTICS
+#### COM_PING
+#### COM_CHANGE_USER
+#### COM_RESET_CONNECTION
+#### COM_SET_OPTION
 
 ## Unsupported Feature
 
