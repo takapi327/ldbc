@@ -16,4 +16,5 @@ object CommandId:
   val COM_STMT_PREPARE     = 0x16
   val COM_STMT_EXECUTE     = 0x17
   val COM_STMT_CLOSE       = 0x19
+  val COM_SET_OPTION       = 0x1b
   val COM_RESET_CONNECTION = 0x1f

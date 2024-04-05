@@ -14,7 +14,7 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
-import ldbc.connector.exception.MySQLException
+import ldbc.connector.exception.*
 
 class ConnectionTest extends CatsEffectSuite:
 
@@ -323,4 +323,40 @@ class ConnectionTest extends CatsEffectSuite:
     )
 
     assertIOBoolean(connection.use(_.resetServerState) *> IO(true))
+  }
+
+  test("If multi-querying is not enabled, ERRPacketException is raised when multi-querying is performed.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+
+    interceptMessageIO[ERRPacketException](
+      "message: Failed to execute query, sql: SELECT 1; SELECT2, detail: Error code: 1064, SQL state: 42000, Error message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1"
+    )(connection.use(_.statement("SELECT 1; SELECT2").executeQuery()))
+  }
+
+  test("If multi-query is enabled, multi-queries can be performed.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          _ <- conn.enableMultiQueries
+          _ <- conn.statement("SELECT 1; SELECT 2").executeQuery()
+        yield true
+      },
+      true
+    )
   }

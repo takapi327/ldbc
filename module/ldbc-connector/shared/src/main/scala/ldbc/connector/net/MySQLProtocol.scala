@@ -127,6 +127,14 @@ trait MySQLProtocol[F[_]]:
    */
   def resetConnection: F[Unit]
 
+  /**
+   * Controls whether or not multiple SQL statements are allowed to be executed at once.
+   *
+   * @param optionOperation
+   *   [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON]] or [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF]]
+   */
+  def setOption(optionOperation: EnumMySQLSetOption): F[Unit]
+
 object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
@@ -200,6 +208,9 @@ object MySQLProtocol:
     override def isValid: F[Boolean] = resetSequenceId *> utilityCommands.comPing()
 
     override def resetConnection: F[Unit] = resetSequenceId *> utilityCommands.comResetConnection()
+
+    override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] =
+      resetSequenceId *> utilityCommands.comSetOption(optionOperation)
 
   def apply[F[_]: Temporal: Console: Tracer](
     sockets:           Resource[F, Socket[F]],
