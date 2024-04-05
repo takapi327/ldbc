@@ -512,6 +512,138 @@ for
 yield
 ```
 
+## ユーティリティコマンド
+
+MySQLにはいくつかのユーティリティコマンドがあります。([参照](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase_utility.html))
+
+LDBCではこれらのコマンドを使用するためのAPIを提供しています。
+
+| コマンド                 | 用途                                 | サポート |
+|----------------------|------------------------------------|------|
+| COM_QUIT             | クライアントが接続を閉じることをサーバーに要求していることを伝える。 | ✅    |
+| COM_INIT_DB          | 接続のデフォルト・スキーマを変更する                 | ✅    |
+| COM_STATISTICS       | 内部ステータスの文字列を可読形式で取得する。             | ✅    |
+| COM_DEBUG            | サーバーの標準出力にデバッグ情報をダンプする             | ❌    |
+| COM_PING             | サーバーが生きているかチェックする                  | ✅    |
+| COM_CHANGE_USER      | 現在の接続のユーザーを変更する                    | ✅    |
+| COM_RESET_CONNECTION | セッションの状態をリセットする                    | ✅    |
+| COM_SET_OPTION       | 現在の接続のオプションを設定する                   | ✅    |
+
+### COM_QUIT
+
+`COM_QUIT`はクライアントが接続を閉じることをサーバーに要求していることを伝えるためのコマンドです。
+
+LDBCでは`Connection`の`close`メソッドを使用して接続を閉じることができます。
+`close`メソッドを使用すると接続が閉じられるため、その後の処理で接続を使用することはできません。
+
+※ `Connection`は`Resource`を使用してリソース管理を行います。そのため`close`メソッドを使用してリソースの解放を行う必要はありません。
+
+```scala
+connection.use { conn =>
+  conn.close()
+}
+```
+
+### COM_INIT_DB
+
+`COM_INIT_DB`は接続のデフォルト・スキーマを変更するためのコマンドです。
+
+LDBCでは`Connection`の`setSchema`メソッドを使用してデフォルト・スキーマを変更することができます。
+
+```scala
+connection.use { conn =>
+  conn.setSchema("test")
+}
+```
+
+### COM_STATISTICS
+
+`COM_STATISTICS`は内部ステータスの文字列を可読形式で取得するためのコマンドです。
+
+LDBCでは`Connection`の`getStatistics`メソッドを使用して内部ステータスの文字列を取得することができます。
+
+```scala
+connection.use { conn =>
+  conn.getStatistics
+}
+```
+
+取得できるステータスは以下のようになります。
+
+- `uptime` : サーバーが起動してからの時間
+- `threads` : 現在接続しているクライアントの数
+- `questions` : サーバーが起動してからのクエリの数
+- `slowQueries` : 遅いクエリの数
+- `opens` : サーバーが起動してからのテーブルのオープン数
+- `flushTables` : サーバーが起動してからのテーブルのフラッシュ数
+- `openTables` : 現在オープンしているテーブルの数
+- `queriesPerSecondAvg` : 秒間のクエリの平均数
+
+### COM_PING
+
+`COM_PING`はサーバーが生きているかチェックするためのコマンドです。
+
+LDBCでは`Connection`の`isValid`メソッドを使用してサーバーが生きているかチェックすることができます。
+サーバーが生きている場合は`true`を返却し、生きていない場合は`false`を返却します。
+
+```scala
+connection.use { conn =>
+  conn.isValid
+}
+```
+
+### COM_CHANGE_USER
+
+`COM_CHANGE_USER`は現在の接続のユーザーを変更するためのコマンドです。
+また、以下の接続状態をリセットします。
+
+- ユーザー変数 
+- 一時テーブル 
+- プリペアド・ステートメント 
+- etc...
+
+LDBCでは`Connection`の`changeUser`メソッドを使用してユーザーを変更することができます。
+
+```scala
+connection.use { conn =>
+  conn.changeUser("root", "password")
+}
+```
+
+### COM_RESET_CONNECTION
+
+`COM_RESET_CONNECTION`はセッションの状態をリセットするためのコマンドです。
+
+`COM_RESET_CONNECTION`は`COM_CHANGE_USER`をより軽量化したもので、セッションの状態をクリーンアップする機能はほぼ同じだが、次のような機能がある
+
+- 再認証を行わない（そのために余分なクライアント/サーバ交換を行わない）。
+- 接続を閉じない。
+
+LDBCでは`Connection`の`resetServerState`メソッドを使用してセッションの状態をリセットすることができます。
+
+```scala
+connection.use { conn =>
+  conn.resetServerState
+}
+```
+
+### COM_SET_OPTION
+
+`COM_SET_OPTION`は現在の接続のオプションを設定するためのコマンドです。
+
+LDBCでは`Connection`の`enableMultiQueries`メソッドと`disableMultiQueries`メソッドを使用してオプションを設定することができます。
+
+`enableMultiQueries`メソッドを使用すると、複数のクエリを一度に実行することができます。
+`disableMultiQueries`メソッドを使用すると、複数のクエリを一度に実行することができなくなります。
+
+※ これは、Insert、Update、および Delete ステートメントによるバッチ処理にのみ使用できます。Selectステートメントで使用を行なったとしても、最初のクエリの結果のみが返されます。
+
+```scala
+connection.use { conn =>
+  conn.enableMultiQueries *> conn.disableMultiQueries
+}
+```
+
 ## 未対応機能
 
 LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。

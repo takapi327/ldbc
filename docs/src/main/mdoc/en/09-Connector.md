@@ -512,6 +512,137 @@ for
   _ <- conn.commit()
 yield
 ```
+## Utility Commands
+
+MySQL has several utility commands. ([reference](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase_utility.html))
+
+LDBC provides an API for using these commands.
+
+| Command              | Use                                                                | Support |
+|----------------------|--------------------------------------------------------------------|---------|
+| COM_QUIT             | Tells the server that the client wants it to close the connection. | ✅       |
+| COM_INIT_DB          | Change the default schema of the connection                        | ✅       |
+| COM_STATISTICS       | Get a human readable string of some internal status vars.          | ✅       |
+| COM_DEBUG            | Dump debug info to server's stdout                                 | ❌       |
+| COM_PING             | Check if the server is alive                                       | ✅       |
+| COM_CHANGE_USER      | Changes the user of the current connection.                        | ✅       |
+| COM_RESET_CONNECTION | Resets the session state                                           | ✅       |
+| COM_SET_OPTION       | Sets options for the current connection                            | ✅       |
+
+### COM_QUIT
+
+The `COM_QUIT` command is used to tell the server that the client is requesting that the connection be closed.
+
+In LDBC, the `close` method of `Connection` can be used to close a connection.
+Using the `close` method closes the connection, so the connection cannot be used in any subsequent process.
+
+※ Connection` uses `Resource` to manage resources. Therefore, there is no need to use the `close` method to release resources.
+
+```scala
+connection.use { conn =>
+  conn.close()
+}
+```
+
+### COM_INIT_DB
+
+`COM_INIT_DB` is a command to change the default schema for a connection.
+
+In LDBC, the default schema can be changed using the `setSchema` method of `Connection`.
+
+```scala
+connection.use { conn =>
+  conn.setSchema("test")
+}
+```
+
+### COM_STATISTICS
+
+The `COM_STATISTICS` command is used to retrieve internal status strings in readable format.
+
+In LDBC, you can use the `getStatistics` method of `Connection` to get the internal status string.
+
+```scala
+connection.use { conn =>
+  conn.getStatistics
+}
+```
+
+The statuses that can be obtained are as follows
+
+- `uptime` : the time since the server was started
+- `threads` : number of clients currently connected.
+- `questions` : number of queries since the server started
+- `slowQueries` : number of slow queries.
+- `opens` : number of table opens since the server started.
+- `flushTables` : number of tables flushed since the server started.
+- `openTables` : number of tables currently open.
+- `queriesPerSecondAvg` : average number of queries per second.
+
+### COM_PING
+
+The `COM_PING` command is used to check if the server is alive.
+
+In LDBC, you can check if the server is alive using the `isValid` method of `Connection`.
+It returns `true` if the server is alive, or `false` if not.
+
+```scala
+connection.use { conn =>
+  conn.isValid
+}
+```
+
+### COM_CHANGE_USER
+
+The `COM_CHANGE_USER` command is used to change the user of the current connection.
+It also resets the following connection states
+
+- User Variables
+- Temporary tables
+- Prepared statements
+- etc...
+
+LDBC allows changing the user using the `changeUser` method of `Connection`.
+
+```scala
+connection.use { conn =>
+  conn.changeUser("root", "password")
+}
+```
+
+### COM_RESET_CONNECTION
+
+`COM_RESET_CONNECTION` is a command to reset the session state.
+
+`COM_RESET_CONNECTION` is a more lightweight version of `COM_CHANGE_USER`, with almost the same functionality to clean up the session state, but with the following features
+
+- No re-authentication (no extra client/server exchange to do so).
+- Does not close connections.
+
+LDBC allows you to reset the session state using the `resetServerState` method of `Connection`.
+
+```scala
+connection.use { conn =>
+  conn.resetServerState
+}
+```
+
+### COM_SET_OPTION
+
+`COM_SET_OPTION` is a command to set options for the current connection.
+
+LDBC allows you to set options using the `enableMultiQueries` and `disableMultiQueries` methods of `Connection`.
+
+The `enableMultiQueries` method allows multiple queries to be executed at once.
+If you use the `disableMultiQueries` method, you will not be able to run multiple queries at once.
+
+It can only be used for batch processing with Insert, Update, and Delete statements; if used with a Select statement, only the results of the first query will be returned.
+
+```scala
+connection.use { conn =>
+  conn.enableMultiQueries *> conn.disableMultiQueries
+}
+```
 
 ## Unsupported Feature
 
