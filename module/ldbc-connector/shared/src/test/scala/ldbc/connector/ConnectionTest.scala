@@ -64,7 +64,6 @@ class ConnectionTest extends CatsEffectSuite:
     }
   }
 
-  /*
   test("A user using mysql_native_password can establish a connection with the MySQL server.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",
@@ -361,16 +360,15 @@ class ConnectionTest extends CatsEffectSuite:
       true
     )
   }
-   */
 
   test("Can change from mysql_native_password user to caching_sha2_password user.") {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      database                = Some("connector_test"),
-      ssl = SSL.Trusted
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_mysql_native_user",
+      password = Some("ldbc_mysql_native_password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(
@@ -381,12 +379,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("Can change from mysql_native_password user to sha256_password user.") {
     val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      database                = Some("connector_test"),
-      ssl = SSL.Trusted
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_mysql_native_user",
+      password = Some("ldbc_mysql_native_password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(
@@ -397,12 +395,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("Can change from sha256_password user to mysql_native_password user.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc_sha256_user",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(
@@ -413,12 +411,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("Can change from sha256_password user to caching_sha2_password user.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc_sha256_user",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(
@@ -429,12 +427,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("Can change from caching_sha2_password user to mysql_native_password user.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(
@@ -445,12 +443,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("Can change from caching_sha2_password user to sha256_password user.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(
