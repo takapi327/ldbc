@@ -58,6 +58,7 @@ object ComChangeUserPacket:
 
     Attempt.successful(
       BitVector(CommandId.COM_CHANGE_USER) |+|
+        nullTerminatedStringCodec.encode(comChangeUserPacket.user).require |+|
         authPluginData |+|
         database |+|
         characterSet |+|
