@@ -350,10 +350,13 @@ class ConnectionTest extends CatsEffectSuite:
       ssl      = SSL.Trusted
     )
 
-    assertIOBoolean(connection.use { conn =>
-      for
-        _ <- conn.enableMultiQueries
-        _ <- conn.statement("SELECT 1; SELECT 2").executeQuery()
-      yield true
-    }, true)
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          _ <- conn.enableMultiQueries
+          _ <- conn.statement("SELECT 1; SELECT 2").executeQuery()
+        yield true
+      },
+      true
+    )
   }
