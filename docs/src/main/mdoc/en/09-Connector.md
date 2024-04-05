@@ -512,7 +512,7 @@ for
   _ <- conn.commit()
 yield
 ```
-### Utility Commands
+## Utility Commands
 
 MySQL has several utility commands. ([reference](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase_utility.html))
 
@@ -529,13 +529,13 @@ LDBC provides an API for using these commands.
 | COM_RESET_CONNECTION | Resets the session state                                           | ✅       |
 | COM_SET_OPTION       | Sets options for the current connection                            | ✅       |
 
-#### COM_QUIT
-#### COM_INIT_DB
-#### COM_STATISTICS
-#### COM_PING
-#### COM_CHANGE_USER
-#### COM_RESET_CONNECTION
-#### COM_SET_OPTION
+### COM_QUIT
+### COM_INIT_DB
+### COM_STATISTICS
+### COM_PING
+### COM_CHANGE_USER
+### COM_RESET_CONNECTION
+### COM_SET_OPTION
 
 ## Unsupported Feature
 

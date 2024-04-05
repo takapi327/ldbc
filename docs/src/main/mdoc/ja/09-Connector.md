@@ -512,7 +512,7 @@ for
 yield
 ```
 
-### ユーティリティコマンド
+## ユーティリティコマンド
 
 MySQLにはいくつかのユーティリティコマンドがあります。([参照](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase_utility.html))
 
@@ -529,13 +529,13 @@ LDBCではこれらのコマンドを使用するためのAPIを提供してい�
 | COM_RESET_CONNECTION | セッションの状態をリセットする                    | ✅    |
 | COM_SET_OPTION       | 現在の接続のオプションを設定する                   | ✅    |
 
-#### COM_QUIT
-#### COM_INIT_DB
-#### COM_STATISTICS
-#### COM_PING
-#### COM_CHANGE_USER
-#### COM_RESET_CONNECTION
-#### COM_SET_OPTION
+### COM_QUIT
+### COM_INIT_DB
+### COM_STATISTICS
+### COM_PING
+### COM_CHANGE_USER
+### COM_RESET_CONNECTION
+### COM_SET_OPTION
 
 ## 未対応機能
 
