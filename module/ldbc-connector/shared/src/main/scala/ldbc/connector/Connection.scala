@@ -219,6 +219,8 @@ trait Connection[F[_]]:
 
   /**
    * Controls whether or not multiple SQL statements are allowed to be executed at once.
+   * 
+   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
    *
    * @param optionOperation
    *   [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON]] or [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF]]
@@ -227,11 +229,15 @@ trait Connection[F[_]]:
 
   /**
    * Enables multiple SQL statements to be executed at once.
+   * 
+   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
    */
   def enableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON)
 
   /**
    * Disables multiple SQL statements to be executed at once.
+   * 
+   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
    */
   def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
 
