@@ -53,7 +53,7 @@ trait MySQLProtocol[F[_]]:
    * @param password
    *   the password
    */
-  def authenticate(user:                    String, password:                String): F[Unit]
+  def authenticate(user: String, password: String): F[Unit]
 
   /**
    * Creates a statement with the given SQL.
@@ -133,21 +133,22 @@ trait MySQLProtocol[F[_]]:
 object MySQLProtocol:
 
   case class MySQLProtocolImpl[F[_]: Temporal: Console: Tracer](
-    initialPacket:    InitialPacket,
-    packetSocket:     PacketSocket[F],
+    initialPacket:           InitialPacket,
+    packetSocket:            PacketSocket[F],
     database:                Option[String],
     useSSL:                  Boolean,
     allowPublicKeyRetrieval: Boolean,
     capabilitiesFlags:       List[CapabilitiesFlags],
-    sequenceIdRef:    Ref[F, Byte],
-    initialPacketRef: Ref[F, Option[InitialPacket]]
+    sequenceIdRef:           Ref[F, Byte],
+    initialPacketRef:        Ref[F, Option[InitialPacket]]
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends MySQLProtocol[F]:
 
-    private val authenticate = Authentication[F](packetSocket, initialPacket, database, useSSL, allowPublicKeyRetrieval, capabilitiesFlags)
+    private val authenticate =
+      Authentication[F](packetSocket, initialPacket, database, useSSL, allowPublicKeyRetrieval, capabilitiesFlags)
     private val utilityCommands = UtilityCommands[F](packetSocket, initialPacket)
 
-    override def authenticate(user:     String, password: String): F[Unit] = authenticate.start(user, password)
+    override def authenticate(user: String, password: String): F[Unit] = authenticate.start(user, password)
 
     override def statement(sql: String): Statement[F] =
       Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
@@ -198,33 +199,53 @@ object MySQLProtocol:
       resetSequenceId *> authenticate.changeUser(user, password)
 
   def apply[F[_]: Temporal: Console: Tracer](
-    sockets:           Resource[F, Socket[F]],
-    database:          Option[String],
-    debug:             Boolean,
-    sslOptions:        Option[SSLNegotiation.Options[F]],
-    readTimeout:       Duration,
+    sockets:                 Resource[F, Socket[F]],
+    database:                Option[String],
+    debug:                   Boolean,
+    sslOptions:              Option[SSLNegotiation.Options[F]],
+    readTimeout:             Duration,
     allowPublicKeyRetrieval: Boolean,
-    capabilitiesFlags: List[CapabilitiesFlags],
+    capabilitiesFlags:       List[CapabilitiesFlags]
   ): Resource[F, MySQLProtocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
       initialPacketRef <- Resource.eval(Ref[F].of[Option[InitialPacket]](None))
       ps <- PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout, capabilitiesFlags)
-      protocol <- Resource.make(fromPacketSocket(ps, database, sslOptions, allowPublicKeyRetrieval, capabilitiesFlags, sequenceIdRef, initialPacketRef))(_.close())
+      protocol <- Resource.make(
+                    fromPacketSocket(
+                      ps,
+                      database,
+                      sslOptions,
+                      allowPublicKeyRetrieval,
+                      capabilitiesFlags,
+                      sequenceIdRef,
+                      initialPacketRef
+                    )
+                  )(_.close())
     yield protocol
 
   def fromPacketSocket[F[_]: Temporal: Console: Tracer](
-    packetSocket:     PacketSocket[F],
-    database:          Option[String],
-    sslOptions:       Option[SSLNegotiation.Options[F]],
+    packetSocket:            PacketSocket[F],
+    database:                Option[String],
+    sslOptions:              Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval: Boolean,
-    capabilitiesFlags: List[CapabilitiesFlags],
-    sequenceIdRef:    Ref[F, Byte],
-    initialPacketRef: Ref[F, Option[InitialPacket]]
+    capabilitiesFlags:       List[CapabilitiesFlags],
+    sequenceIdRef:           Ref[F, Byte],
+    initialPacketRef:        Ref[F, Option[InitialPacket]]
   )(using ev: MonadError[F, Throwable]): F[MySQLProtocol[F]] =
     for
       given Exchange[F] <- Exchange[F]
       initialPacketOpt  <- initialPacketRef.get
     yield initialPacketOpt match
-      case Some(initial) => MySQLProtocolImpl(initial, packetSocket, database, sslOptions.isDefined, allowPublicKeyRetrieval, capabilitiesFlags, sequenceIdRef, initialPacketRef)
-      case None          => throw new MySQLException("Initial packet is not set")
+      case Some(initial) =>
+        MySQLProtocolImpl(
+          initial,
+          packetSocket,
+          database,
+          sslOptions.isDefined,
+          allowPublicKeyRetrieval,
+          capabilitiesFlags,
+          sequenceIdRef,
+          initialPacketRef
+        )
+      case None => throw new MySQLException("Initial packet is not set")

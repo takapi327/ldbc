@@ -452,8 +452,9 @@ object Connection:
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
       (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
     for
-      protocol <- MySQLProtocol[F](sockets, database, debug, sslOptions, readTimeout, allowPublicKeyRetrieval, capabilityFlags)
-      _ <- Resource.eval(protocol.authenticate(user, password.getOrElse("")))
+      protocol <-
+        MySQLProtocol[F](sockets, database, debug, sslOptions, readTimeout, allowPublicKeyRetrieval, capabilityFlags)
+      _          <- Resource.eval(protocol.authenticate(user, password.getOrElse("")))
       readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
       connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, readOnly, autoCommit)))(_.close())
