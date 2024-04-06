@@ -150,13 +150,13 @@ object MySQLProtocol:
     override def authenticate(user: String, password: String): F[Unit] = authenticate.start(user, password)
 
     override def statement(): F[Statement[F]] =
-      Ref[F].of(Vector.empty[String]).map(batchedArgs =>
-        Statement[F](packetSocket, initialPacket, batchedArgs, resetSequenceId)
-      )
+      Ref[F]
+        .of(Vector.empty[String])
+        .map(batchedArgs => Statement[F](packetSocket, initialPacket, batchedArgs, resetSequenceId))
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       for
-        params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement.Client[F](packetSocket, initialPacket, sql, params, batchedArgs, resetSequenceId)
 
@@ -175,9 +175,9 @@ object MySQLProtocol:
                       case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                       case ok: ComStmtPrepareOkPacket => ev.pure(ok)
                     }
-        _      <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-        _      <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-        params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        _           <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+        _           <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement
         .Server[F](packetSocket, initialPacket, result.statementId, sql, params, batchedArgs, resetSequenceId)

@@ -344,7 +344,7 @@ object Connection:
     override def getTransactionIsolation: F[Connection.TransactionIsolationLevel] =
       for
         statement <- protocol.statement()
-        result <- statement.executeQuery("SELECT @@session.transaction_isolation")
+        result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
       yield result.rows.headOption.flatMap(_.values.headOption).flatten match
         case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
         case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
@@ -385,8 +385,8 @@ object Connection:
 
     override def getSchema: F[String] =
       for
-      statement <- protocol.statement()
-      result <- statement.executeQuery("SELECT DATABASE()")
+        statement <- protocol.statement()
+        result    <- statement.executeQuery("SELECT DATABASE()")
       yield result.decode(text).headOption.getOrElse("")
 
     override def getStatistics: F[StatisticsPacket] = protocol.getStatistics

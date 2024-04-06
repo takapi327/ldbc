@@ -85,8 +85,8 @@ object Statement:
   def apply[F[_]: Exchange: Tracer](
     socket:          PacketSocket[F],
     initialPacket:   InitialPacket,
-    batchedArgsRef: Ref[F, Vector[String]],
-    resetSequenceId: F[Unit],
+    batchedArgsRef:  Ref[F, Vector[String]],
+    resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
 

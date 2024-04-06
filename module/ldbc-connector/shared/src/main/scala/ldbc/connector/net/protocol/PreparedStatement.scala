@@ -513,7 +513,7 @@ object PreparedStatement:
     initialPacket:   InitialPacket,
     sql:             String,
     params:          Ref[F, ListMap[Int, Parameter]],
-    batchedArgs: Ref[F, Vector[String]],
+    batchedArgs:     Ref[F, Vector[String]],
     resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable])
     extends PreparedStatement[F]:
@@ -651,7 +651,7 @@ object PreparedStatement:
     statementId:     Long,
     sql:             String,
     params:          Ref[F, ListMap[Int, Parameter]],
-    batchedArgs: Ref[F, Vector[String]],
+    batchedArgs:     Ref[F, Vector[String]],
     resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable])
     extends PreparedStatement[F]:
