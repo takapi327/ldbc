@@ -24,16 +24,16 @@ class StatementBatchTest extends CatsEffectSuite:
     database = Some("connector_test"),
     ssl      = SSL.Trusted
   )
-  
+
   test("It will be the same as the list of updates specified as a result of executing the batch process.") {
     assertIO(
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _ <- statement.addBatch("CREATE TABLE `batch_test` (`c1` INT)")
-          _ <- statement.addBatch("INSERT INTO `batch_test` VALUES (1)")
-          _ <- statement.addBatch("DROP TABLE `batch_test`")
-          result <- statement.executeBatch()
+          _         <- statement.addBatch("CREATE TABLE `batch_test` (`c1` INT)")
+          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (1)")
+          _         <- statement.addBatch("DROP TABLE `batch_test`")
+          result    <- statement.executeBatch()
         yield result
       },
       List(0, 1, 0)
