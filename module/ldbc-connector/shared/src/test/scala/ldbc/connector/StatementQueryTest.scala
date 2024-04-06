@@ -36,7 +36,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT 1")
         yield resultSet.decode[Int](int)
       }
-      List(1)
+        List (1)
     )
   }
 
@@ -69,7 +69,9 @@ class StatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery("SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`")
+          resultSet <- statement.executeQuery(
+                         "SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
+                       )
         yield resultSet.decode[(Short, Option[Short])](utinyint *: utinyint.opt)
       },
       List((255.toShort, None))
@@ -93,7 +95,9 @@ class StatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery("SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`")
+          resultSet <- statement.executeQuery(
+                         "SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
+                       )
         yield resultSet.decode[(Int, Option[Int])](usmallint *: usmallint.opt)
       },
       List((65535, None))
@@ -129,7 +133,8 @@ class StatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery("SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`")
+          resultSet <-
+            statement.executeQuery("SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(Long, Option[Long])](uint *: uint.opt)
       },
       List((4294967295L, None))
@@ -153,7 +158,8 @@ class StatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery("SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`")
+          resultSet <-
+            statement.executeQuery("SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt)
       },
       List((BigInt("18446744073709551615"), None))
@@ -335,7 +341,8 @@ class StatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`")
+          resultSet <-
+            statement.executeQuery("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](mediumblob *: mediumblob.opt)
       },
       List(("mediumblob", None))
@@ -383,7 +390,8 @@ class StatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          resultSet <- statement.executeQuery("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`")
+          resultSet <-
+            statement.executeQuery("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](mediumtext *: mediumtext.opt)
       },
       List(("mediumtext", None))

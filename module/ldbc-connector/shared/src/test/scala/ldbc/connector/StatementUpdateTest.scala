@@ -30,9 +30,9 @@ class StatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _     <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
-          count <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')")
-          _     <- statement.executeUpdate("DROP TABLE `bit_table`")
+          _         <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
+          count     <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')")
+          _         <- statement.executeUpdate("DROP TABLE `bit_table`")
         yield count
       },
       1
@@ -44,9 +44,9 @@ class StatementUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.createStatement()
-          _     <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
-          count <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')")
-          _     <- statement.executeUpdate("DROP TABLE `bit_table`")
+          _         <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
+          count     <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')")
+          _         <- statement.executeUpdate("DROP TABLE `bit_table`")
         yield count
       },
       2
