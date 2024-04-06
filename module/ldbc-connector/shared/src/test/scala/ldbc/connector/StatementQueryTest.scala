@@ -35,8 +35,8 @@ class StatementQueryTest extends CatsEffectSuite:
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT 1")
         yield resultSet.decode[Int](int)
-      }
-        List (1)
+      },
+      List(1)
     )
   }
 

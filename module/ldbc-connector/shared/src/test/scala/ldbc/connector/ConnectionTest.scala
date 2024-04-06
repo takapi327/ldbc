@@ -337,7 +337,12 @@ class ConnectionTest extends CatsEffectSuite:
 
     interceptMessageIO[ERRPacketException](
       "message: Failed to execute query, sql: SELECT 1; SELECT2, detail: Error code: 1064, SQL state: 42000, Error message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1"
-    )(connection.use(_.createStatement().executeQuery("SELECT 1; SELECT2")))
+    )(connection.use { conn =>
+      for
+        statement <- conn.createStatement()
+        resultSet <- statement.executeQuery("SELECT 1; SELECT2")
+      yield resultSet
+    })
   }
 
   test("If multi-query is enabled, multi-queries can be performed.") {
@@ -353,8 +358,9 @@ class ConnectionTest extends CatsEffectSuite:
     assertIOBoolean(
       connection.use { conn =>
         for
-          _ <- conn.enableMultiQueries
-          _ <- conn.createStatement().executeQuery("SELECT 1; SELECT 2")
+          _         <- conn.enableMultiQueries
+          statement <- conn.createStatement()
+          _         <- statement.executeQuery("SELECT 1; SELECT 2")
         yield true
       },
       true
