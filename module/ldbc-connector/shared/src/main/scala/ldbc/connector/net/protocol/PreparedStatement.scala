@@ -625,6 +625,11 @@ object PreparedStatement:
         }
       }
 
+    override def executeBatch(): F[List[Int]] =
+      exchange[F, List[Int]]("statement") { (_: Span[F]) =>
+        ???
+      }
+
     override def close(): F[Unit] = ev.unit
 
   /**
@@ -742,6 +747,11 @@ object PreparedStatement:
               case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
             }
         }
+      }
+
+    override def executeBatch(): F[List[Int]] =
+      exchange[F, List[Int]]("statement") { (_: Span[F]) =>
+        ???
       }
 
     override def close(): F[Unit] =

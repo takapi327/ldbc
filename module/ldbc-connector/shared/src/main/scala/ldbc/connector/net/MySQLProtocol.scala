@@ -152,7 +152,7 @@ object MySQLProtocol:
     override def statement(): F[Statement[F]] =
       Ref[F]
         .of(Vector.empty[String])
-        .map(batchedArgs => Statement[F](packetSocket, initialPacket, batchedArgs, resetSequenceId))
+        .map(batchedArgs => Statement[F](packetSocket, initialPacket, utilityCommands, batchedArgs, resetSequenceId))
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       for

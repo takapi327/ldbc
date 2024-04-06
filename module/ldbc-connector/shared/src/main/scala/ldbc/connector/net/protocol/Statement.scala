@@ -17,6 +17,7 @@ import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.ResultSet
+import ldbc.connector.data.EnumMySQLSetOption
 import ldbc.connector.exception.MySQLException
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.ResponsePacket
@@ -70,6 +71,41 @@ trait Statement[F[_]]:
   def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)
 
   /**
+   * Submits a batch of commands to the database for execution and if all commands execute successfully, returns an array of update counts.
+   * The int elements of the array that is returned are ordered to correspond to the commands in the batch, which are ordered according to the order in which they were added to the batch.
+   * The elements in the array returned by the method executeBatch may be one of the following:
+   *
+   * <OL>
+   * <LI>A number greater than or equal to zero -- indicates that the
+   * command was processed successfully and is an update count giving the
+   * number of rows in the database that were affected by the command's
+   * execution
+   * <LI>A value of <code>SUCCESS_NO_INFO</code> -- indicates that the command was
+   * processed successfully but that the number of rows affected is
+   * unknown
+   * <P>
+   * If one of the commands in a batch update fails to execute properly,
+   * this method throws a <code>BatchUpdateException</code>, and a JDBC
+   * driver may or may not continue to process the remaining commands in
+   * the batch.  However, the driver's behavior must be consistent with a
+   * particular DBMS, either always continuing to process commands or never
+   * continuing to process commands.  If the driver continues processing
+   * after a failure, the array returned by the method
+   * <code>BatchUpdateException.getUpdateCounts</code>
+   * will contain as many elements as there are commands in the batch, and
+   * at least one of the elements will be the following:
+   *
+   * <LI>A value of <code>EXECUTE_FAILED</code> -- indicates that the command failed
+   * to execute successfully and occurs only if a driver continues to
+   * process commands after a command fails
+   * </OL>
+   *
+   * @return
+   *   an array of update counts containing one element for each command in the batch. The elements of the array are ordered according to the order in which commands were added to the batch.
+   */
+  def executeBatch(): F[List[Int]]
+
+  /**
    * Releases this Statement object's database and LDBC resources immediately instead of waiting for this to happen when
    * it is automatically closed. It is generally good practice to release resources as soon as you are finished with
    * them to avoid tying up database resources.
@@ -85,6 +121,7 @@ object Statement:
   def apply[F[_]: Exchange: Tracer](
     socket:          PacketSocket[F],
     initialPacket:   InitialPacket,
+    utilityCommands: UtilityCommands[F],
     batchedArgsRef:  Ref[F, Vector[String]],
     resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable]): Statement[F] =
@@ -160,5 +197,30 @@ object Statement:
               }
           )
         }
+
+      override def executeBatch(): F[List[Int]] =
+        resetSequenceId *>
+          utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
+          exchange[F, List[Int]]("statement") { (span: Span[F]) =>
+            span.addAttributes((attributes ++ List(Attribute("execute", "batch")))*) *> resetSequenceId *>
+              batchedArgs.get.flatMap { args =>
+                if args.isEmpty then ev.pure(List.empty)
+                else
+                  socket.send(ComQueryPacket(args.mkString(";"), initialPacket.capabilityFlags, ListMap.empty)) *>
+                    args
+                      .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
+                        for
+                          acc <- $acc
+                          result <-
+                            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+                              case result: OKPacket => ev.pure(acc :+ result.affectedRows)
+                              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch"))
+                              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                            }
+                        yield result
+                      }
+                      .map(_.toList)
+              }
+          } <* resetSequenceId <* utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
 
       override def close(): F[Unit] = ev.unit
