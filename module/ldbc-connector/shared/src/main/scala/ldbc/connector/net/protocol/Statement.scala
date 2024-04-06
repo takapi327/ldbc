@@ -202,11 +202,18 @@ object Statement:
         resetSequenceId *>
           utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
           exchange[F, List[Int]]("statement") { (span: Span[F]) =>
-            span.addAttributes((attributes ++ List(Attribute("execute", "batch")))*) *> resetSequenceId *>
-              batchedArgs.get.flatMap { args =>
+            batchedArgs.get.flatMap { args =>
+              span.addAttributes(
+                (attributes ++ List(
+                  Attribute("execute", "batch"),
+                  Attribute("size", args.length.toLong),
+                  Attribute("sql", args.toArray.toSeq)
+                ))*
+              ) *> (
                 if args.isEmpty then ev.pure(List.empty)
                 else
-                  socket.send(ComQueryPacket(args.mkString(";"), initialPacket.capabilityFlags, ListMap.empty)) *>
+                  resetSequenceId *>
+                    socket.send(ComQueryPacket(args.mkString(";"), initialPacket.capabilityFlags, ListMap.empty)) *>
                     args
                       .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
                         for
@@ -220,7 +227,8 @@ object Statement:
                         yield result
                       }
                       .map(_.toList)
-              }
+              )
+            }
           } <* resetSequenceId <* utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
 
       override def close(): F[Unit] = ev.unit
