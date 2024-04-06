@@ -56,12 +56,11 @@ trait MySQLProtocol[F[_]]:
   def authenticate(user: String, password: String): F[Unit]
 
   /**
-   * Creates a statement with the given SQL.
-   *
-   * @param sql
-   *   SQL queries based on text protocols
+   * Creates a Statement object for sending SQL statements to the database.
+   * SQL statements without parameters are normally executed using Statement objects.
+   * If the same SQL statement is executed many times, it may be more efficient to use a PreparedStatement object.
    */
-  def statement(sql: String): Statement[F]
+  def statement(): Statement[F]
 
   /**
    * Creates a client prepared statement with the given SQL.
@@ -150,8 +149,8 @@ object MySQLProtocol:
 
     override def authenticate(user: String, password: String): F[Unit] = authenticate.start(user, password)
 
-    override def statement(sql: String): Statement[F] =
-      Statement[F](packetSocket, initialPacket, sql, resetSequenceId)
+    override def statement(): Statement[F] =
+      Statement[F](packetSocket, initialPacket, resetSequenceId)
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       Ref[F]
