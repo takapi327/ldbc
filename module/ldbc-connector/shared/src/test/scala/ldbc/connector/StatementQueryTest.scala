@@ -259,7 +259,7 @@ class StatementQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use(conn =>
         for resultSet <-
-            conn.statement("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`").executeQuery()
+            conn.createStatement().executeQuery("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`")
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](binary(10) *: binary(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
@@ -272,7 +272,9 @@ class StatementQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use(conn =>
         for resultSet <-
-            conn.statement("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`").executeQuery()
+            conn
+              .createStatement()
+              .executeQuery("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](varbinary(10) *: varbinary(10).opt)
       ),
       List(("varbinary", None))
@@ -283,7 +285,7 @@ class StatementQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use(conn =>
         for resultSet <-
-            conn.statement("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`").executeQuery()
+            conn.createStatement().executeQuery("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](tinyblob *: tinyblob.opt)
       ),
       List(("tinyblob", None))
@@ -293,7 +295,8 @@ class StatementQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve BLOB type records.") {
     assertIO(
       connection.use(conn =>
-        for resultSet <- conn.statement("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`").executeQuery()
+        for resultSet <-
+            conn.createStatement().executeQuery("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](blob *: blob.opt)
       ),
       List(("blob", None))
@@ -304,7 +307,9 @@ class StatementQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use(conn =>
         for resultSet <-
-            conn.statement("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`").executeQuery()
+            conn
+              .createStatement()
+              .executeQuery("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](mediumblob *: mediumblob.opt)
       ),
       List(("mediumblob", None))
@@ -315,7 +320,7 @@ class StatementQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use(conn =>
         for resultSet <-
-            conn.statement("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`").executeQuery()
+            conn.createStatement().executeQuery("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](longblob *: longblob.opt)
       ),
       List(("longblob", None))

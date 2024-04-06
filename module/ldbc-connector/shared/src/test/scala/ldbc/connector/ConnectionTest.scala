@@ -337,7 +337,7 @@ class ConnectionTest extends CatsEffectSuite:
 
     interceptMessageIO[ERRPacketException](
       "message: Failed to execute query, sql: SELECT 1; SELECT2, detail: Error code: 1064, SQL state: 42000, Error message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1"
-    )(connection.use(_.statement("SELECT 1; SELECT2").executeQuery()))
+    )(connection.use(_.createStatement().executeQuery("SELECT 1; SELECT2")))
   }
 
   test("If multi-query is enabled, multi-queries can be performed.") {
