@@ -28,8 +28,8 @@ class StatementUpdateTest extends CatsEffectSuite:
   test("As a result of entering one case of data, there will be one affected row.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _     <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
           count <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')")
           _     <- statement.executeUpdate("DROP TABLE `bit_table`")
@@ -42,8 +42,8 @@ class StatementUpdateTest extends CatsEffectSuite:
   test("As a result of entering data for two cases, there will be two affected rows.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _     <- statement.executeUpdate("CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)")
           count <- statement.executeUpdate("INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')")
           _     <- statement.executeUpdate("DROP TABLE `bit_table`")
@@ -56,8 +56,8 @@ class StatementUpdateTest extends CatsEffectSuite:
   test("The value generated when adding a record of AUTO_INCREMENT is returned.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <-
             statement
               .executeUpdate(

@@ -30,343 +30,374 @@ class StatementQueryTest extends CatsEffectSuite:
 
   test("Statement should be able to execute a query") {
     assertIO(
-      connection.use(_.createStatement().executeQuery("SELECT 1").map(_.decode[Int](int))),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT 1")
+        yield resultSet.decode[Int](int)
+      }
       List(1)
     )
   }
 
   test("Statement should be able to retrieve BIT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Byte, Option[Byte])](bit *: bit.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Byte, Option[Byte])](bit *: bit.opt)
+      },
       List((1.toByte, None))
     )
   }
 
   test("Statement should be able to retrieve TINYINT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Byte, Option[Byte])](tinyint *: tinyint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Byte, Option[Byte])](tinyint *: tinyint.opt)
+      },
       List((127.toByte, None))
     )
   }
 
   test("Statement should be able to retrieve unsigned TINYINT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Short, Option[Short])](utinyint *: utinyint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Short, Option[Short])](utinyint *: utinyint.opt)
+      },
       List((255.toShort, None))
     )
   }
 
   test("Statement should be able to retrieve SMALLINT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Short, Option[Short])](smallint *: smallint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Short, Option[Short])](smallint *: smallint.opt)
+      },
       List((32767.toShort, None))
     )
   }
 
   test("Statement should be able to retrieve unsigned SMALLINT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Int, Option[Int])](usmallint *: usmallint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Int, Option[Int])](usmallint *: usmallint.opt)
+      },
       List((65535, None))
     )
   }
 
   test("Statement should be able to retrieve MEDIUMINT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Int, Option[Int])](mediumint *: mediumint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Int, Option[Int])](mediumint *: mediumint.opt)
+      },
       List((8388607, None))
     )
   }
 
   test("Statement should be able to retrieve INT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `int`, `int_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Int, Option[Int])](int *: int.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `int`, `int_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Int, Option[Int])](int *: int.opt)
+      },
       List((2147483647, None))
     )
   }
 
   test("Statement should be able to retrieve unsigned INT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Long, Option[Long])](uint *: uint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Long, Option[Long])](uint *: uint.opt)
+      },
       List((4294967295L, None))
     )
   }
 
   test("Statement should be able to retrieve BIGINT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Long, Option[Long])](bigint *: bigint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Long, Option[Long])](bigint *: bigint.opt)
+      },
       List((9223372036854775807L, None))
     )
   }
 
   test("Statement should be able to retrieve unsigned BIGINT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt)
+      },
       List((BigInt("18446744073709551615"), None))
     )
   }
 
   test("Statement should be able to retrieve FLOAT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `float`, `float_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Float, Option[Float])](float *: float.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `float`, `float_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Float, Option[Float])](float *: float.opt)
+      },
       List((3.40282e38f, None))
     )
   }
 
   test("Statement should be able to retrieve DOUBLE type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `double`, `double_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Double, Option[Double])](double *: double.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `double`, `double_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Double, Option[Double])](double *: double.opt)
+      },
       List((1.7976931348623157e308, None))
     )
   }
 
   test("Statement should be able to retrieve DECIMAL type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt)
+      },
       List((BigDecimal.decimal(9999999.99), None))
     )
   }
 
   test("Statement should be able to retrieve DATE type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `date`, `date_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(LocalDate, Option[LocalDate])](date *: date.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `date`, `date_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(LocalDate, Option[LocalDate])](date *: date.opt)
+      },
       List((LocalDate.of(2020, 1, 1), None))
     )
   }
 
   test("Statement should be able to retrieve TIME type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `time`, `time_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(LocalTime, Option[LocalTime])](time *: time.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `time`, `time_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(LocalTime, Option[LocalTime])](time *: time.opt)
+      },
       List((LocalTime.of(12, 34, 56), None))
     )
   }
 
   test("Statement should be able to retrieve DATETIME type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt)
+      },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
     )
   }
 
   test("Statement should be able to retrieve TIMESTAMP type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt)
+      },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
     )
   }
 
   test("Statement should be able to retrieve YEAR type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `year`, `year_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(Year, Option[Year])](year *: year.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `year`, `year_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(Year, Option[Year])](year *: year.opt)
+      },
       List((Year.of(2020), None))
     )
   }
 
   test("Statement should be able to retrieve CHAR type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `char`, `char_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](char(10) *: char(10).opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `char`, `char_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](char(10) *: char(10).opt)
+      },
       List(("char", None))
     )
   }
 
   test("Statement should be able to retrieve VARCHAR type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](varchar(10) *: varchar(10).opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](varchar(10) *: varchar(10).opt)
+      },
       List(("varchar", None))
     )
   }
 
   test("Statement should be able to retrieve BINARY type records.") {
     assertIO(
-      connection.use(conn =>
-        for resultSet <-
-            conn.createStatement().executeQuery("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`")
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`")
         yield
           val decoded = resultSet.decode[(Array[Byte], Option[Array[Byte]])](binary(10) *: binary(10).opt)
           decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
-      ),
+      },
       List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None))
     )
   }
 
   test("Statement should be able to retrieve VARBINARY type records.") {
     assertIO(
-      connection.use(conn =>
-        for resultSet <-
-            conn
-              .createStatement()
-              .executeQuery("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`")
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](varbinary(10) *: varbinary(10).opt)
-      ),
+      },
       List(("varbinary", None))
     )
   }
 
   test("Statement should be able to retrieve TINYBLOB type records.") {
     assertIO(
-      connection.use(conn =>
-        for resultSet <-
-            conn.createStatement().executeQuery("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`")
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](tinyblob *: tinyblob.opt)
-      ),
+      },
       List(("tinyblob", None))
     )
   }
 
   test("Statement should be able to retrieve BLOB type records.") {
     assertIO(
-      connection.use(conn =>
-        for resultSet <-
-            conn.createStatement().executeQuery("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`")
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](blob *: blob.opt)
-      ),
+      },
       List(("blob", None))
     )
   }
 
   test("Statement should be able to retrieve MEDIUMBLOB type records.") {
     assertIO(
-      connection.use(conn =>
-        for resultSet <-
-            conn
-              .createStatement()
-              .executeQuery("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`")
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](mediumblob *: mediumblob.opt)
-      ),
+      },
       List(("mediumblob", None))
     )
   }
 
   test("Statement should be able to retrieve LONGBLOB type records.") {
     assertIO(
-      connection.use(conn =>
-        for resultSet <-
-            conn.createStatement().executeQuery("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`")
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`")
         yield resultSet.decode[(String, Option[String])](longblob *: longblob.opt)
-      ),
+      },
       List(("longblob", None))
     )
   }
 
   test("Statement should be able to retrieve TINYTEXT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](tinytext *: tinytext.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](tinytext *: tinytext.opt)
+      },
       List(("tinytext", None))
     )
   }
 
   test("Statement should be able to retrieve TEXT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `text`, `text_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](text *: text.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `text`, `text_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](text *: text.opt)
+      },
       List(("text", None))
     )
   }
 
   test("Statement should be able to retrieve MEDIUMTEXT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](mediumtext *: mediumtext.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](mediumtext *: mediumtext.opt)
+      },
       List(("mediumtext", None))
     )
   }
 
   test("Statement should be able to retrieve LONGTEXT type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](longtext *: longtext.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](longtext *: longtext.opt)
+      },
       List(("longtext", None))
     )
   }
@@ -374,11 +405,12 @@ class StatementQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve ENUM type records.") {
     val t = `enum`("a", "b", "c")
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](t *: t.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](t *: t.opt)
+      },
       List(("a", None))
     )
   }
@@ -386,22 +418,24 @@ class StatementQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve SET type records.") {
     val s = set("a", "b", "c")
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `set`, `set_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(List[String], Option[List[String]])](s *: s.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `set`, `set_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(List[String], Option[List[String]])](s *: s.opt)
+      },
       List((List("a", "b"), None))
     )
   }
 
   test("Statement should be able to retrieve JSON type records.") {
     assertIO(
-      connection.use(
-        _.createStatement()
-          .executeQuery("SELECT `json`, `json_null` FROM `connector_test`.`all_types`")
-          .map(_.decode[(String, Option[String])](json *: json.opt))
-      ),
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.executeQuery("SELECT `json`, `json_null` FROM `connector_test`.`all_types`")
+        yield resultSet.decode[(String, Option[String])](json *: json.opt)
+      },
       List(("{\"a\": 1}", None))
     )
   }

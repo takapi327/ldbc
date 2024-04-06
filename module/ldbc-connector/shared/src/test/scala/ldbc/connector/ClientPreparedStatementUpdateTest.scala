@@ -30,8 +30,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Boolean values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_boolean_table`(`c1` BOOLEAN NOT NULL, `c2` BOOLEAN NULL)"
                )
@@ -49,8 +49,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Byte values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_byte_table`(`c1` BIT NOT NULL, `c2` BIT NULL)")
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `client_statement_byte_table`(`c1`, `c2`) VALUES (?, ?)")
@@ -66,8 +66,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Short values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_short_table`(`c1` TINYINT NOT NULL, `c2` TINYINT NULL)"
                )
@@ -85,8 +85,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Int values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_int_table`(`c1` SMALLINT NOT NULL, `c2` SMALLINT NULL)"
                )
@@ -104,8 +104,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Long values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_long_table`(`c1` BIGINT NOT NULL, `c2` BIGINT NULL)"
                )
@@ -124,8 +124,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("BigInt values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <-
             statement.executeUpdate(
               "CREATE TABLE `client_statement_bigint_table`(`c1` BIGINT unsigned NOT NULL, `c2` BIGINT unsigned NULL)"
@@ -145,8 +145,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Float values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <-
             statement.executeUpdate("CREATE TABLE `client_statement_float_table`(`c1` FLOAT NOT NULL, `c2` FLOAT NULL)")
           preparedStatement <-
@@ -163,8 +163,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Double values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_double_table`(`c1` DOUBLE NOT NULL, `c2` DOUBLE NULL)"
                )
@@ -182,8 +182,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("BigDecimal values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_bigdecimal_table`(`c1` DECIMAL NOT NULL, `c2` DECIMAL NULL)"
                )
@@ -202,8 +202,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("String values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_string_table`(`c1` VARCHAR(255) NOT NULL, `c2` VARCHAR(255) NULL)"
                )
@@ -221,8 +221,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("Array[Byte] values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_bytes_table`(`c1` BINARY(10) NOT NULL, `c2` BINARY NULL)"
                )
@@ -242,8 +242,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("java.time.LocalTime values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_time_table`(`c1` TIME NOT NULL, `c2` TIME NULL)")
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `client_statement_time_table`(`c1`, `c2`) VALUES (?, ?)")
@@ -262,8 +262,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("java.time.LocalDate values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_date_table`(`c1` DATE NOT NULL, `c2` DATE NULL)")
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `client_statement_date_table`(`c1`, `c2`) VALUES (?, ?)")
@@ -282,8 +282,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("java.time.LocalDateTime values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate(
                  "CREATE TABLE `client_statement_datetime_table`(`c1` TIMESTAMP NOT NULL, `c2` TIMESTAMP NULL)"
                )
@@ -304,8 +304,8 @@ class ClientPreparedStatementUpdateTest extends CatsEffectSuite:
   test("java.time.Year values can be set as parameters.") {
     assertIO(
       connection.use { conn =>
-        val statement = conn.createStatement()
         for
+          statement <- conn.createStatement()
           _ <- statement.executeUpdate("CREATE TABLE `client_statement_year_table`(`c1` YEAR NOT NULL, `c2` YEAR NULL)")
           preparedStatement <-
             conn.clientPreparedStatement("INSERT INTO `client_statement_year_table`(`c1`, `c2`) VALUES (?, ?)")
