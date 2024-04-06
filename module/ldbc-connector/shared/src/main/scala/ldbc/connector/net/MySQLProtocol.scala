@@ -60,7 +60,7 @@ trait MySQLProtocol[F[_]]:
    * SQL statements without parameters are normally executed using Statement objects.
    * If the same SQL statement is executed many times, it may be more efficient to use a PreparedStatement object.
    */
-  def statement(): Statement[F]
+  def statement(): F[Statement[F]]
 
   /**
    * Creates a client prepared statement with the given SQL.
@@ -149,13 +149,16 @@ object MySQLProtocol:
 
     override def authenticate(user: String, password: String): F[Unit] = authenticate.start(user, password)
 
-    override def statement(): Statement[F] =
-      Statement[F](packetSocket, initialPacket, resetSequenceId)
+    override def statement(): F[Statement[F]] =
+      Ref[F].of(Vector.empty[String]).map(batchedArgs =>
+        Statement[F](packetSocket, initialPacket, batchedArgs, resetSequenceId)
+      )
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
-      Ref[F]
-        .of(ListMap.empty[Int, Parameter])
-        .map(params => PreparedStatement.Client[F](packetSocket, initialPacket, sql, params, resetSequenceId))
+      for
+        params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs <- Ref[F].of(Vector.empty[String])
+      yield PreparedStatement.Client[F](packetSocket, initialPacket, sql, params, batchedArgs, resetSequenceId)
 
     private def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[List[P]] =
 
@@ -175,8 +178,9 @@ object MySQLProtocol:
         _      <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
         _      <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
         params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement
-        .Server[F](packetSocket, initialPacket, result.statementId, sql, params, resetSequenceId)
+        .Server[F](packetSocket, initialPacket, result.statementId, sql, params, batchedArgs, resetSequenceId)
 
     override def resetSequenceId: F[Unit] =
       sequenceIdRef.update(_ => 0.toByte)

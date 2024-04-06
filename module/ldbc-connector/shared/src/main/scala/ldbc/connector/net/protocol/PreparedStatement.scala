@@ -56,6 +56,10 @@ trait PreparedStatement[F[_]] extends Statement[F]:
     "This method cannot be called on a PreparedStatement."
   )
 
+  override def addBatch(sql: String): F[Unit] = throw new UnsupportedOperationException(
+    "This method cannot be called on a PreparedStatement."
+  )
+
   /**
    * Retrieves the current parameter values of this PreparedStatement object.
    */
@@ -509,6 +513,7 @@ object PreparedStatement:
     initialPacket:   InitialPacket,
     sql:             String,
     params:          Ref[F, ListMap[Int, Parameter]],
+    batchedArgs: Ref[F, Vector[String]],
     resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable])
     extends PreparedStatement[F]:
@@ -646,6 +651,7 @@ object PreparedStatement:
     statementId:     Long,
     sql:             String,
     params:          Ref[F, ListMap[Int, Parameter]],
+    batchedArgs: Ref[F, Vector[String]],
     resetSequenceId: F[Unit]
   )(using ev: MonadError[F, Throwable])
     extends PreparedStatement[F]:

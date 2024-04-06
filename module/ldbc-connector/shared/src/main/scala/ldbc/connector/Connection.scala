@@ -112,7 +112,7 @@ trait Connection[F[_]]:
    * SQL statements without parameters are normally executed using Statement objects.
    * If the same SQL statement is executed many times, it may be more efficient to use a PreparedStatement object.
    */
-  def createStatement(): Statement[F]
+  def createStatement(): F[Statement[F]]
 
   /**
    * Creates a client-side prepared statement with the given SQL.
@@ -314,7 +314,7 @@ object Connection:
       readOnly.update(_ => isReadOnly) *>
         protocol
           .statement()
-          .executeQuery("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE"))
+          .flatMap(_.executeQuery("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE")))
           .void
 
     override def isReadOnly: F[Boolean] = readOnly.get
@@ -323,36 +323,37 @@ object Connection:
       autoCommit.update(_ => isAutoCommit) *>
         protocol
           .statement()
-          .executeQuery("SET autocommit=" + (if isAutoCommit then "1" else "0"))
+          .flatMap(_.executeQuery("SET autocommit=" + (if isAutoCommit then "1" else "0")))
           .void
 
     override def getAutoCommit: F[Boolean] = autoCommit.get
 
     override def commit(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
-      if !autoCommit then protocol.statement().executeQuery("COMMIT").void
+      if !autoCommit then protocol.statement().flatMap(_.executeQuery("COMMIT")).void
       else ev.raiseError(new MySQLException("Can't call commit when autocommit=true"))
     }
 
     override def rollback(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
-      if !autoCommit then protocol.statement().executeQuery("ROLLBACK").void
+      if !autoCommit then protocol.statement().flatMap(_.executeQuery("ROLLBACK")).void
       else ev.raiseError(new MySQLException("Can't call rollback when autocommit=true"))
     }
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
-      protocol.statement().executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }").void
+      protocol.statement().flatMap(_.executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }")).void
 
     override def getTransactionIsolation: F[Connection.TransactionIsolationLevel] =
-      protocol.statement().executeQuery("SELECT @@session.transaction_isolation").map { result =>
-        result.rows.headOption.flatMap(_.values.headOption).flatten match
-          case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
-          case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
-          case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
-          case Some("SERIALIZABLE")     => Connection.TransactionIsolationLevel.SERIALIZABLE
-          case Some(unknown)            => throw new MySQLException(s"Unknown transaction isolation level $unknown")
-          case None                     => throw new MySQLException("Unknown transaction isolation level")
-      }
+      for
+        statement <- protocol.statement()
+        result <- statement.executeQuery("SELECT @@session.transaction_isolation")
+      yield result.rows.headOption.flatMap(_.values.headOption).flatten match
+        case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
+        case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
+        case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
+        case Some("SERIALIZABLE")     => Connection.TransactionIsolationLevel.SERIALIZABLE
+        case Some(unknown)            => throw new MySQLException(s"Unknown transaction isolation level $unknown")
+        case None                     => throw new MySQLException("Unknown transaction isolation level")
 
-    override def createStatement(): Statement[F] = protocol.statement()
+    override def createStatement(): F[Statement[F]] = protocol.statement()
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       protocol.clientPreparedStatement(sql)
@@ -363,42 +364,42 @@ object Connection:
     override def setSavepoint(): F[Savepoint] = setSavepoint(UUID.randomUUID().toString)
 
     override def setSavepoint(name: String): F[Savepoint] =
-      protocol
-        .statement()
-        .executeQuery(s"SAVEPOINT `$name`")
-        .map(_ =>
-          new Savepoint:
-            override def getSavepointName: String = name
-        )
+      for
+        statement <- protocol.statement()
+        _         <- statement.executeQuery(s"SAVEPOINT `$name`")
+      yield new Savepoint:
+        override def getSavepointName: String = name
 
     override def rollback(savepoint: Savepoint): F[Unit] =
-      protocol.statement().executeQuery(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName }`").void
+      protocol.statement().flatMap(_.executeQuery(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName }`")).void
 
     override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
-      protocol.statement().executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName }`").void
+      protocol.statement().flatMap(_.executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName }`")).void
 
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
-      if !autoCommit then protocol.statement().executeQuery("ROLLBACK").void
+      if !autoCommit then protocol.statement().flatMap(_.executeQuery("ROLLBACK")).void
       else ev.unit
     }
 
     override def setSchema(schema: String): F[Unit] = protocol.setSchema(schema)
 
-    override def getSchema: F[String] = protocol.statement().executeQuery("SELECT DATABASE()").map { result =>
-      result.decode(text).headOption.getOrElse("")
-    }
+    override def getSchema: F[String] =
+      for
+      statement <- protocol.statement()
+      result <- statement.executeQuery("SELECT DATABASE()")
+      yield result.decode(text).headOption.getOrElse("")
 
     override def getStatistics: F[StatisticsPacket] = protocol.getStatistics
 
     override def isValid: F[Boolean] = protocol.isValid
 
     override def resetServerState: F[Unit] =
-      val statement = protocol.statement()
-      protocol.resetConnection *>
+      protocol.resetConnection *> protocol.statement().flatMap { statement =>
         statement.executeQuery("SET NAMES utf8mb4") *>
-        statement.executeQuery("SET character_set_results = NULL") *>
-        statement.executeQuery("SET autocommit=1") *>
-        autoCommit.update(_ => true)
+          statement.executeQuery("SET character_set_results = NULL") *>
+          statement.executeQuery("SET autocommit=1") *>
+          autoCommit.update(_ => true)
+      }
 
     override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] = protocol.setOption(optionOperation)
 
