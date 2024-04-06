@@ -354,7 +354,7 @@ class ConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           _ <- conn.enableMultiQueries
-          _ <- conn.statement("SELECT 1; SELECT 2").executeQuery()
+          _ <- conn.createStatement().executeQuery("SELECT 1; SELECT 2")
         yield true
       },
       true
