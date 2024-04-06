@@ -39,3 +39,32 @@ class StatementBatchTest extends CatsEffectSuite:
       List(0, 1, 0)
     )
   }
+
+  test("If a batch query is cleared, only queries added after clearing will be executed.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.addBatch("CREATE TABLE `batch_test` (`c1` INT)")
+          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (1)")
+          _         <- statement.clearBatch()
+          _         <- statement.addBatch("CREATE TABLE `batch_test` (`c1` INT)")
+          _         <- statement.addBatch("DROP TABLE `batch_test`")
+          result    <- statement.executeBatch()
+        yield result
+      },
+      List(0, 0)
+    )
+  }
+
+  test("When you run an empty batch, you receive an empty result.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          result    <- statement.executeBatch()
+        yield result
+      },
+      List.empty
+    )
+  }
