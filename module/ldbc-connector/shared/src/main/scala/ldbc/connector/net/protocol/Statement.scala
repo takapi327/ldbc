@@ -229,6 +229,6 @@ object Statement:
                       .map(_.toList)
               )
             }
-          } <* resetSequenceId <* utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+          } <* resetSequenceId <* utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF) <* clearBatch()
 
       override def close(): F[Unit] = ev.unit
