@@ -516,7 +516,7 @@ object PreparedStatement:
             val index = query.indexOf('?', offset - 1)
             if index < 0 then query
             else
-              val (head, tail) = query.splitAt(index)
+              val (head, tail)         = query.splitAt(index)
               val (tailHead, tailTail) = tail.splitAt(1)
               head ++ param.sql ++ tailTail
         }
@@ -537,17 +537,18 @@ object PreparedStatement:
         val placeholderCount = sql.split("\\?", -1).length - 1
         require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
         val valuesPlaceholder = "(" + List.fill(placeholderCount)("?").mkString(", ") + ")"
-        val query = valuesPlaceholder.toCharArray
+        val query             = valuesPlaceholder.toCharArray
         val str = params
           .foldLeft(query) {
             case (query, (offset, param)) =>
               val index = query.indexOf('?', offset - 1)
               if index < 0 then query
               else
-                val (head, tail) = query.splitAt(index)
+                val (head, tail)         = query.splitAt(index)
                 val (tailHead, tailTail) = tail.splitAt(1)
                 head ++ param.sql ++ tailTail
-          }.mkString
+          }
+          .mkString
         batchedArgs.update(_ :+ str)
       } *> params.set(ListMap.empty)
 
@@ -664,18 +665,24 @@ object PreparedStatement:
                 Attribute("execute", "batch"),
                 Attribute("size", args.length.toLong),
                 Attribute("sql", args.toArray.toSeq)
-              )) *
+              ))*
             ) *> (
               if args.isEmpty then ev.pure(List.empty)
               else
                 resetSequenceId *>
-                  socket.send(ComQueryPacket(sql.replaceFirst("\\(.*?\\)", args.mkString(", ")), initialPacket.capabilityFlags, ListMap.empty)) *>
+                  socket.send(
+                    ComQueryPacket(
+                      sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
+                      initialPacket.capabilityFlags,
+                      ListMap.empty
+                    )
+                  ) *>
                   socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                    case _: OKPacket => ev.pure(List.fill(args.length)(-2))
+                    case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
                     case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                     case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
                   }
-              )
+            )
           }
       } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
 
@@ -791,18 +798,24 @@ object PreparedStatement:
                 Attribute("execute", "batch"),
                 Attribute("size", args.length.toLong),
                 Attribute("sql", args.toArray.toSeq)
-              )) *
+              ))*
             ) *> (
               if args.isEmpty then ev.pure(List.empty)
               else
                 resetSequenceId *>
-                  socket.send(ComQueryPacket(sql.replaceFirst("\\(.*?\\)", args.mkString(", ")), initialPacket.capabilityFlags, ListMap.empty)) *>
+                  socket.send(
+                    ComQueryPacket(
+                      sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
+                      initialPacket.capabilityFlags,
+                      ListMap.empty
+                    )
+                  ) *>
                   socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                    case _: OKPacket => ev.pure(List.fill(args.length)(-2))
+                    case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
                     case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                     case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
                   }
-              )
+            )
           }
       } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
 
