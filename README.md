@@ -25,7 +25,8 @@ ldbc is Created under the influence of [tapir](https://github.com/softwaremill/t
 
 ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.
 
-Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
+> [!NOTE]
+> **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
 
 Please drop a :star: if this project interests you. I need encouragement.
 
@@ -47,6 +48,67 @@ Please drop a :star: if this project interests you. I need encouragement.
 
 - [English](https://takapi327.github.io/ldbc/en/index.html)
 - [Japanese](https://takapi327.github.io/ldbc/ja/index.html)
+
+## Features/Roadmap
+
+Creating a MySQL connector project written in pure Scala3.
+
+JVM, JS and Native platforms are all supported.
+
+> [!IMPORTANT]
+> **ldbc** is currently focused on developing connectors written in pure Scala3 to work with JVM, JS and Native.
+> In the future, we also plan to rewrite existing functions based on a pure Scala3 connector.
+
+### Implementation of Authentication Function
+
+- [x] Support for mysql_native_password plugin
+- [x] Support for sha256_password plugin
+- [x] Support for caching_sha2_password plugin
+- [x] SSL/TLS support
+- [x] RSA authentication method support
+- [x] Establish connection specifying database
+
+### Execute query
+
+- [x] Statement
+- [x] PreparedStatement in Client
+- [x] PreparedStatement in Server
+- [ ] Batch commands
+
+### Transaction function implementation
+
+- [x] Read Only setting function
+- [x] Auto Commit setting function
+- [x] Transaction isolation level setting function
+- [x] Commit function
+- [x] Rollback function
+- [x] Savepoint function
+
+### Utility Commands
+
+- [x] [COM_QUIT](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_quit.html)
+- [x] [COM_INIT_DB](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_init_db.html)
+- [x] [COM_STATISTICS](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_statistics.html)
+- [x] [COM_PING](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_ping.html)
+- [x] [COM_CHANGE_USER](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_change_user.html)
+- [x] [COM_RESET_CONNECTION](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_reset_connection.html)
+- [x] [COM_SET_OPTION](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_set_option.html)
+
+### Connection pooling implementation
+
+- [ ] Failover Countermeasures
+
+### Performance Verification
+
+- [ ] Comparison with JDBC
+- [ ] Comparison with other MySQL Scala libraries
+- [ ] Verification of operation in AWS and other infrastructure environments
+
+### Other
+
+- [ ] Integration into existing functions
+- [ ] Additional streaming implementation
+- [ ] etc...
 
 ## Contributing
 
