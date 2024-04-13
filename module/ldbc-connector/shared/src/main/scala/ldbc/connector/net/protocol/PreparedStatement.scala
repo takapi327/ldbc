@@ -499,8 +499,6 @@ object PreparedStatement:
 
     def socket: PacketSocket[F]
 
-    def sql: String
-
     protected def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[Vector[P]] =
       def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
         if remaining <= 0 then ev.pure(acc)
@@ -508,8 +506,8 @@ object PreparedStatement:
 
       read(times, Vector.empty[P])
 
-    protected def buildQuery(params: ListMap[Int, Parameter]): String =
-      val query = sql.toCharArray
+    protected def buildQuery(original: String, params: ListMap[Int, Parameter]): String =
+      val query = original.toCharArray
       params
         .foldLeft(query) {
           case (query, (offset, param)) =>
@@ -532,25 +530,29 @@ object PreparedStatement:
         case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
       }
 
-    override def addBatch(): F[Unit] =
-      params.get.flatMap { params =>
-        val placeholderCount = sql.split("\\?", -1).length - 1
-        require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
-        val valuesPlaceholder = "(" + List.fill(placeholderCount)("?").mkString(", ") + ")"
-        val query             = valuesPlaceholder.toCharArray
-        val str = params
-          .foldLeft(query) {
-            case (query, (offset, param)) =>
-              val index = query.indexOf('?', offset - 1)
-              if index < 0 then query
-              else
-                val (head, tail)         = query.splitAt(index)
-                val (tailHead, tailTail) = tail.splitAt(1)
-                head ++ param.sql ++ tailTail
-          }
-          .mkString
-        batchedArgs.update(_ :+ str)
-      } *> params.set(ListMap.empty)
+    private def buildInsertBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
+      val placeholderCount = original.split("\\?", -1).length - 1
+      val valuesPlaceholder = "(" + List.fill(placeholderCount)("?").mkString(", ") + ")"
+      val query             = valuesPlaceholder.toCharArray
+      params
+        .foldLeft(query) {
+          case (query, (offset, param)) =>
+            val index = query.indexOf('?', offset - 1)
+            if index < 0 then query
+            else
+              val (head, tail)         = query.splitAt(index)
+              val (tailHead, tailTail) = tail.splitAt(1)
+              head ++ param.sql ++ tailTail
+        }
+        .mkString
+
+    protected def buildBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
+      val placeholderCount = original.split("\\?", -1).length - 1
+      require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
+      original.trim.toLowerCase match
+        case q if q.startsWith("insert") => buildInsertBatchQuery(original, params)
+        case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
+        case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
 
   /**
    * PreparedStatement for query construction at the client side.
@@ -574,6 +576,7 @@ object PreparedStatement:
     socket:          PacketSocket[F],
     initialPacket:   InitialPacket,
     sql:             String,
+    utilityCommands: UtilityCommands[F],
     params:          Ref[F, ListMap[Int, Parameter]],
     batchedArgs:     Ref[F, Vector[String]],
     resetSequenceId: F[Unit]
@@ -595,7 +598,7 @@ object PreparedStatement:
             ))*
           ) *>
             resetSequenceId *>
-            socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
+            socket.send(ComQueryPacket(buildQuery(sql, params), initialPacket.capabilityFlags, ListMap.empty)) *>
             socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
               case _: OKPacket      => ev.pure(ResultSet.empty)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
@@ -628,7 +631,7 @@ object PreparedStatement:
             ))*
           ) *>
             resetSequenceId *>
-            socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
+            socket.send(ComQueryPacket(buildQuery(sql, params), initialPacket.capabilityFlags, ListMap.empty)) *>
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => ev.pure(result.affectedRows)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
@@ -647,7 +650,7 @@ object PreparedStatement:
             ))*
           ) *>
             resetSequenceId *>
-            socket.send(ComQueryPacket(buildQuery(params), initialPacket.capabilityFlags, ListMap.empty)) *>
+            socket.send(ComQueryPacket(buildQuery(sql, params), initialPacket.capabilityFlags, ListMap.empty)) *>
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => ev.pure(result.lastInsertId)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
@@ -656,35 +659,86 @@ object PreparedStatement:
         } <* params.set(ListMap.empty)
       }
 
+    override def addBatch(): F[Unit] =
+      params.get.flatMap { params =>
+        batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+      } *> params.set(ListMap.empty)
+
     override def executeBatch(): F[List[Int]] =
-      exchange[F, List[Int]]("statement") { (span: Span[F]) =>
-        resetSequenceId *>
-          batchedArgs.get.flatMap { args =>
-            span.addAttributes(
-              (attributes ++ List(
-                Attribute("execute", "batch"),
-                Attribute("size", args.length.toLong),
-                Attribute("sql", args.toArray.toSeq)
-              ))*
-            ) *> (
-              if args.isEmpty then ev.pure(List.empty)
-              else
-                resetSequenceId *>
-                  socket.send(
-                    ComQueryPacket(
-                      sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
-                      initialPacket.capabilityFlags,
-                      ListMap.empty
+      sql.trim.toLowerCase match
+        case q if q.startsWith("insert") =>
+          exchange[F, List[Int]]("statement") { (span: Span[F]) =>
+            resetSequenceId *>
+              batchedArgs.get.flatMap { args =>
+                span.addAttributes(
+                  (attributes ++ List(
+                    Attribute("execute", "batch"),
+                    Attribute("size", args.length.toLong),
+                    Attribute("sql", args.toArray.toSeq)
+                  ))*
+                ) *> (
+                  if args.isEmpty then ev.pure(List.empty)
+                  else
+                    resetSequenceId *>
+                      socket.send(
+                        ComQueryPacket(
+                          sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
+                          initialPacket.capabilityFlags,
+                          ListMap.empty
+                        )
+                      ) *>
+                      socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+                        case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
+                        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                        case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                      }
+                )
+              }
+          } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
+        case q if q.startsWith("update") || q.startsWith("delete") =>
+          resetSequenceId *>
+            utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
+            exchange[F, List[Int]]("statement") { (span: Span[F]) =>
+              resetSequenceId *>
+                batchedArgs.get.flatMap { args =>
+                  span.addAttributes(
+                    (attributes ++ List(
+                      Attribute("execute", "batch"),
+                      Attribute("size", args.length.toLong),
+                      Attribute("sql", args.toArray.toSeq)
+                    ))*
+                  ) *> (
+                    if args.isEmpty then ev.pure(List.empty)
+                    else
+                      resetSequenceId *>
+                        socket.send(
+                          ComQueryPacket(
+                            args.mkString(";"),
+                            initialPacket.capabilityFlags,
+                            ListMap.empty
+                          )
+                        ) *>
+                        args
+                          .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
+                            for
+                              acc <- $acc
+                              result <-
+                                socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+                                  case result: OKPacket => ev.pure(acc :+ result.affectedRows)
+                                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch"))
+                                  case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                                }
+                            yield result
+                          }
+                          .map(_.toList)
                     )
-                  ) *>
-                  socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                    case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
-                    case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                    case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
-                  }
-            )
-          }
-      } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
+                }
+            } <*
+            resetSequenceId <*
+            utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF) <*
+            params.set(ListMap.empty) <*
+            batchedArgs.set(Vector.empty)
+        case _ => ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
 
     override def close(): F[Unit] = ev.unit
 
@@ -711,6 +765,7 @@ object PreparedStatement:
     initialPacket:   InitialPacket,
     statementId:     Long,
     sql:             String,
+    utilityCommands: UtilityCommands[F],
     params:          Ref[F, ListMap[Int, Parameter]],
     batchedArgs:     Ref[F, Vector[String]],
     resetSequenceId: F[Unit]
@@ -789,35 +844,86 @@ object PreparedStatement:
         } <* params.set(ListMap.empty)
       }
 
+    override def addBatch(): F[Unit] =
+      params.get.flatMap { params =>
+        batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+      } *> params.set(ListMap.empty)
+
     override def executeBatch(): F[List[Int]] =
-      exchange[F, List[Int]]("statement") { (span: Span[F]) =>
-        resetSequenceId *>
-          batchedArgs.get.flatMap { args =>
-            span.addAttributes(
-              (attributes ++ List(
-                Attribute("execute", "batch"),
-                Attribute("size", args.length.toLong),
-                Attribute("sql", args.toArray.toSeq)
-              ))*
-            ) *> (
-              if args.isEmpty then ev.pure(List.empty)
-              else
-                resetSequenceId *>
-                  socket.send(
-                    ComQueryPacket(
-                      sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
-                      initialPacket.capabilityFlags,
-                      ListMap.empty
+      sql.trim.toLowerCase match
+        case q if q.startsWith("insert") =>
+          exchange[F, List[Int]]("statement") { (span: Span[F]) =>
+            resetSequenceId *>
+              batchedArgs.get.flatMap { args =>
+                span.addAttributes(
+                  (attributes ++ List(
+                    Attribute("execute", "batch"),
+                    Attribute("size", args.length.toLong),
+                    Attribute("sql", args.toArray.toSeq)
+                  ))*
+                ) *> (
+                  if args.isEmpty then ev.pure(List.empty)
+                  else
+                    resetSequenceId *>
+                      socket.send(
+                        ComQueryPacket(
+                          sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
+                          initialPacket.capabilityFlags,
+                          ListMap.empty
+                        )
+                      ) *>
+                      socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+                        case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
+                        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                        case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                      }
+                  )
+              }
+          } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
+        case q if q.startsWith("update") || q.startsWith("delete") =>
+          resetSequenceId *>
+            utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
+            exchange[F, List[Int]]("statement") { (span: Span[F]) =>
+              resetSequenceId *>
+                batchedArgs.get.flatMap { args =>
+                  span.addAttributes(
+                    (attributes ++ List(
+                      Attribute("execute", "batch"),
+                      Attribute("size", args.length.toLong),
+                      Attribute("sql", args.toArray.toSeq)
+                    ))*
+                  ) *> (
+                    if args.isEmpty then ev.pure(List.empty)
+                    else
+                      resetSequenceId *>
+                        socket.send(
+                          ComQueryPacket(
+                            args.mkString(";"),
+                            initialPacket.capabilityFlags,
+                            ListMap.empty
+                          )
+                        ) *>
+                        args
+                          .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
+                            for
+                              acc <- $acc
+                              result <-
+                                socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+                                  case result: OKPacket => ev.pure(acc :+ result.affectedRows)
+                                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch"))
+                                  case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                                }
+                            yield result
+                          }
+                          .map(_.toList)
                     )
-                  ) *>
-                  socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                    case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
-                    case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                    case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
-                  }
-            )
-          }
-      } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
+                }
+            } <*
+            resetSequenceId <*
+            utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF) <*
+            params.set(ListMap.empty) <*
+            batchedArgs.set(Vector.empty)
+        case _ => ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
 
     override def close(): F[Unit] =
       exchange[F, Unit]("statement") { (span: Span[F]) =>
