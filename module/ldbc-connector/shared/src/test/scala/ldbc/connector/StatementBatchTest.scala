@@ -180,3 +180,38 @@ class StatementBatchTest extends CatsEffectSuite:
       List(1, 1, 1)
     )
   }
+
+  test(
+    "If the batch execution of Server PreparedStatement is successful, the result will be a -2 array of the number of queries that were batch executed."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        for
+          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `batch_test` VALUES (?, ?), (?, ?)")
+          _      <- preparedStatement.setInt(1, 4) *> preparedStatement.setInt(2, 4) *> preparedStatement.setInt(3, 5) *> preparedStatement.setInt(4, 5) *> preparedStatement.addBatch()
+          _      <- preparedStatement.setInt(1, 6) *> preparedStatement.setInt(2, 6) *> preparedStatement.setInt(3, 7) *> preparedStatement.setInt(4, 7) *> preparedStatement.addBatch()
+          _      <- preparedStatement.setInt(1, 8) *> preparedStatement.setInt(2, 8) *> preparedStatement.setInt(3, 9) *> preparedStatement.setInt(4, 9) *> preparedStatement.addBatch()
+          result            <- preparedStatement.executeBatch()
+        yield result
+      },
+      List(-2, -2, -2)
+    )
+  }
+
+  test(
+    "If the batch execution of Server PreparedStatement is successful, the result will be a -2 array of the number of queries that were batch executed."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        for
+          preparedStatement <- conn.clientPreparedStatement("INSERT INTO `batch_test` VALUES (?, ?)")
+          _      <- preparedStatement.setInt(1, 4) *> preparedStatement.setInt(2, 4) *> preparedStatement.addBatch()
+          _      <- preparedStatement.setInt(1, 5) *> preparedStatement.setInt(2, 6) *> preparedStatement.addBatch()
+          _      <- preparedStatement.setInt(1, 6) *> preparedStatement.setInt(2, 7) *> preparedStatement.addBatch()
+          result            <- preparedStatement.executeBatch()
+        yield result
+      },
+      List(-2, -2, -2)
+    )
+  }
+
