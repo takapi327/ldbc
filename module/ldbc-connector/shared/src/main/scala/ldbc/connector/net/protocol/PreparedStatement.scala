@@ -530,27 +530,13 @@ object PreparedStatement:
         case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
       }
 
-    private def buildInsertBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
-      val placeholderCount  = original.split("\\?", -1).length - 1
-      val valuesPlaceholder = "(" + List.fill(placeholderCount)("?").mkString(", ") + ")"
-      val query             = valuesPlaceholder.toCharArray
-      params
-        .foldLeft(query) {
-          case (query, (offset, param)) =>
-            val index = query.indexOf('?', offset - 1)
-            if index < 0 then query
-            else
-              val (head, tail)         = query.splitAt(index)
-              val (tailHead, tailTail) = tail.splitAt(1)
-              head ++ param.sql ++ tailTail
-        }
-        .mkString
-
     protected def buildBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
       val placeholderCount = original.split("\\?", -1).length - 1
       require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
       original.trim.toLowerCase match
-        case q if q.startsWith("insert")                           => buildInsertBatchQuery(original, params)
+        case q if q.startsWith("insert")                           =>
+          val bindQuery = buildQuery(original, params)
+          bindQuery.split("VALUES").last
         case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
         case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
 
@@ -682,7 +668,7 @@ object PreparedStatement:
                     resetSequenceId *>
                       socket.send(
                         ComQueryPacket(
-                          sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
+                          sql.split("VALUES").head + " VALUES" + args.mkString(","),
                           initialPacket.capabilityFlags,
                           ListMap.empty
                         )
