@@ -534,7 +534,7 @@ object PreparedStatement:
       val placeholderCount = original.split("\\?", -1).length - 1
       require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
       original.trim.toLowerCase match
-        case q if q.startsWith("insert")                           =>
+        case q if q.startsWith("insert") =>
           val bindQuery = buildQuery(original, params)
           bindQuery.split("VALUES").last
         case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
