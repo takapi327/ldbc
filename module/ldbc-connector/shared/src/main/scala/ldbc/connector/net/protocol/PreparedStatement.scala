@@ -531,7 +531,7 @@ object PreparedStatement:
       }
 
     private def buildInsertBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
-      val placeholderCount = original.split("\\?", -1).length - 1
+      val placeholderCount  = original.split("\\?", -1).length - 1
       val valuesPlaceholder = "(" + List.fill(placeholderCount)("?").mkString(", ") + ")"
       val query             = valuesPlaceholder.toCharArray
       params
@@ -550,7 +550,7 @@ object PreparedStatement:
       val placeholderCount = original.split("\\?", -1).length - 1
       require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
       original.trim.toLowerCase match
-        case q if q.startsWith("insert") => buildInsertBatchQuery(original, params)
+        case q if q.startsWith("insert")                           => buildInsertBatchQuery(original, params)
         case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
         case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
 
@@ -731,14 +731,15 @@ object PreparedStatement:
                             yield result
                           }
                           .map(_.toList)
-                    )
+                  )
                 }
             } <*
             resetSequenceId <*
             utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF) <*
             params.set(ListMap.empty) <*
             batchedArgs.set(Vector.empty)
-        case _ => ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
+        case _ =>
+          ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
 
     override def close(): F[Unit] = ev.unit
 
@@ -877,7 +878,7 @@ object PreparedStatement:
                         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                         case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
                       }
-                  )
+                )
               }
           } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
@@ -916,14 +917,15 @@ object PreparedStatement:
                             yield result
                           }
                           .map(_.toList)
-                    )
+                  )
                 }
             } <*
             resetSequenceId <*
             utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF) <*
             params.set(ListMap.empty) <*
             batchedArgs.set(Vector.empty)
-        case _ => ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
+        case _ =>
+          ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
 
     override def close(): F[Unit] =
       exchange[F, Unit]("statement") { (span: Span[F]) =>

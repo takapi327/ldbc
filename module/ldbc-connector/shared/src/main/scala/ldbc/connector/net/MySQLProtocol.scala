@@ -158,7 +158,8 @@ object MySQLProtocol:
       for
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
-      yield PreparedStatement.Client[F](packetSocket, initialPacket, sql, utilityCommands, params, batchedArgs, resetSequenceId)
+      yield PreparedStatement
+        .Client[F](packetSocket, initialPacket, sql, utilityCommands, params, batchedArgs, resetSequenceId)
 
     private def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[List[P]] =
 
@@ -180,7 +181,16 @@ object MySQLProtocol:
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement
-        .Server[F](packetSocket, initialPacket, result.statementId, sql, utilityCommands, params, batchedArgs, resetSequenceId)
+        .Server[F](
+          packetSocket,
+          initialPacket,
+          result.statementId,
+          sql,
+          utilityCommands,
+          params,
+          batchedArgs,
+          resetSequenceId
+        )
 
     override def resetSequenceId: F[Unit] =
       sequenceIdRef.update(_ => 0.toByte)
