@@ -68,12 +68,11 @@ JVM, JS and Native platforms are all supported.
 - [x] RSA authentication method support
 - [x] Establish connection specifying database
 
-### Execute query
+### Sending SQL statements to a database
 
 - [x] Statement
-- [x] PreparedStatement in Client
-- [x] PreparedStatement in Server
-- [ ] Batch commands
+- [x] PreparedStatement
+- [ ] CallableStatement
 
 ### Transaction function implementation
 
@@ -108,6 +107,8 @@ JVM, JS and Native platforms are all supported.
 
 - [ ] Integration into existing functions
 - [ ] Additional streaming implementation
+- [ ] Support for other effects systems
+- [ ] Integration with java.sql API
 - [ ] etc...
 
 ## Contributing
