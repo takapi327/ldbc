@@ -118,6 +118,16 @@ trait Statement[F[_]]:
 
 object Statement:
 
+  /**
+   * The constant indicating that a batch statement executed successfully but that no count of the number of rows it affected is available.
+   */
+  val SUCCESS_NO_INFO = -2
+
+  /**
+   * The constant indicating that an error occurred while executing a batch statement.
+   */
+  val EXECUTE_FAILED = -3
+
   def apply[F[_]: Exchange: Tracer](
     socket:          PacketSocket[F],
     initialPacket:   InitialPacket,

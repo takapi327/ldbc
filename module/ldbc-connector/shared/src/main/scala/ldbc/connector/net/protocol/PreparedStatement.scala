@@ -674,7 +674,7 @@ object PreparedStatement:
                         )
                       ) *>
                       socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                        case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
+                        case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
                         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                         case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
                       }
@@ -854,13 +854,13 @@ object PreparedStatement:
                     resetSequenceId *>
                       socket.send(
                         ComQueryPacket(
-                          sql.replaceFirst("\\(.*?\\)", args.mkString(", ")),
+                          sql.split("VALUES").head + " VALUES" + args.mkString(","),
                           initialPacket.capabilityFlags,
                           ListMap.empty
                         )
                       ) *>
                       socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
-                        case _: OKPacket      => ev.pure(List.fill(args.length)(-2))
+                        case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
                         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                         case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
                       }
