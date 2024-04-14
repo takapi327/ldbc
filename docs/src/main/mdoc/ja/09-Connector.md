@@ -650,12 +650,104 @@ connection.use { conn =>
 }
 ```
 
+## バッチコマンド
+
+LDBCではバッチコマンドを使用して複数のクエリを一度に実行することができます。
+バッチコマンドを使用することで、複数のクエリを一度に実行することができるため、ネットワークラウンドトリップの回数を減らすことができます。
+
+バッチコマンドを使用するには`Statement`または`PreparedStatement`の`addBatch`メソッドを使用してクエリを追加し、`executeBatch`メソッドを使用してクエリを実行します。
+
+```scala 3
+connection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Bob', 30)")
+    result <- statement.executeBatch()
+  yield result
+}
+```
+
+上記の例では、`Alice`と`Bob`のデータを一度に追加することができます。
+実行されるクエリは以下のようになります。
+
+```sql
+INSERT INTO users (name, age) VALUES ('Alice', 20);INSERT INTO users (name, age) VALUES ('Bob', 30);
+```
+
+バッチコマンド実行後の戻り値は、実行したクエリそれぞれの影響を受けた行数の配列となります。
+
+上記の例では、`Alice`のデータは1行追加され、`Bob`のデータも1行追加されるため、戻り値は`List(1, 1)`となります。
+
+バッチコマンドを実行した後は、今まで`addBatch`メソッドで追加したクエリがクリアされます。
+
+手動でクリアする場合は`clearBatch`メソッドを使用してクリアを行います。
+
+```scala
+connection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
+    _ <- statement.clearBatch()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Bob', 30)")
+    _ <- statement.executeBatch()
+  yield
+}
+```
+
+上記の例では、`Alice`のデータは追加されませんが、`Bob`のデータは追加されます。
+
+### StatementとPreparedStatementの違い
+
+`Statement`と`PreparedStatement`ではバッチコマンドで実行されるクエリが異なる場合があります。
+
+`Statement`を使用してINSERT文をバッチコマンドで実行した場合、複数のクエリが一度に実行されます。
+しかし、`PreparedStatement`を使用してINSERT文をバッチコマンドで実行した場合、1つのクエリが実行されます。
+
+例えば、以下のクエリをバッチコマンドで実行した場合、`Statement`を使用しているため、複数のクエリが一度に実行されます。
+
+```scala
+connection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Bob', 30)")
+    result <- statement.executeBatch()
+  yield result
+}
+
+// 実行されるクエリ
+// INSERT INTO users (name, age) VALUES ('Alice', 20);INSERT INTO users (name, age) VALUES ('Bob', 30);
+```
+
+しかし、以下のクエリをバッチコマンドで実行した場合、`PreparedStatement`を使用しているため、1つのクエリが実行されます。
+
+```scala
+connection.use { conn =>
+  for
+    statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+    _ <- statement.setString(1, "Alice")
+    _ <- statement.setInt(2, 20)
+    _ <- statement.addBatch()
+    _ <- statement.setString(1, "Bob")
+    _ <- statement.setInt(2, 30)
+    _ <- statement.addBatch()
+    result <- statement.executeBatch()
+  yield result
+}
+
+// 実行されるクエリ
+// INSERT INTO users (name, age) VALUES ('Alice', 20), ('Bob', 30);
+```
+
+これは、`PreparedStatement`を使用している場合、クエリのパラメーターを設定した後に`addBatch`メソッドを使用することで、1つのクエリに複数のパラメーターを設定することができるためです。
+
 ## 未対応機能
 
 LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。
 機能提供は順次行っていく予定です。
 
 - コネクションプーリング
-- バッチ処理
 - フェイルオーバー対策
+- SQL ストアドプロシージャの実行
 - etc...

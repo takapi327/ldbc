@@ -650,12 +650,108 @@ connection.use { conn =>
 }
 ```
 
+## Batch commands
+
+LDBC allows multiple queries to be executed at once using batch commands.
+Using batch commands allows multiple queries to be executed at once, reducing the number of network round trips.
+
+To use batch commands, add a query using the `addBatch` method of the `Statement` or `PreparedStatement` and execute the query using the `executeBatch` method.
+
+```scala 3
+connection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Bob', 30)")
+    result <- statement.executeBatch()
+  yield result
+}
+```
+
+In the above example, data for `Alice` and `Bob` can be added at once.
+The query to be executed would be as follows
+
+```sql
+INSERT INTO users (name, age) VALUES ('Alice', 20);INSERT INTO users (name, age) VALUES ('Bob', 30);
+```
+
+The return value after executing a batch command is an array of the number of rows affected by each query executed.
+
+In the above example, one row of data for `Alice` is added and one row of data for `Bob` is added, so the return value is `List(1, 1)`.
+
+After executing the batch command, the queries that have been added so far by the `addBatch` method will be cleared.
+
+If you want to clear them manually, use the `clearBatch` method to do so.
+
+Translated with www.DeepL.com/Translator (free version)
+
+```scala
+connection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
+    _ <- statement.clearBatch()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Bob', 30)")
+    _ <- statement.executeBatch()
+  yield
+}
+```
+
+In the above example, the data for `Alice` is not added, but the data for `Bob` is.
+
+### Difference between Statement and PreparedStatement
+
+The queries executed by the batch command may differ between a `Statement` and a `PreparedStatement`.
+
+When an INSERT statement is executed in a batch command using a `Statement`, multiple queries are executed at once.
+However, if you run an INSERT statement in a batch command using a `PreparedStatement`, a single query will be executed.
+
+For example, if you run the following query in a batch command, multiple queries will be executed at once because you are using a `Statement`.
+
+Translated with www.DeepL.com/Translator (free version)
+
+```scala
+connection.use { conn =>
+  for
+    statement <- conn.createStatement()
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
+    _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Bob', 30)")
+    result <- statement.executeBatch()
+  yield result
+}
+
+// Query to be executed
+// INSERT INTO users (name, age) VALUES ('Alice', 20);INSERT INTO users (name, age) VALUES ('Bob', 30);
+```
+
+However, if the following query is executed in a batch command, one query will be executed because of the use of `PreparedStatement`.
+
+```scala
+connection.use { conn =>
+  for
+    statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
+    _ <- statement.setString(1, "Alice")
+    _ <- statement.setInt(2, 20)
+    _ <- statement.addBatch()
+    _ <- statement.setString(1, "Bob")
+    _ <- statement.setInt(2, 30)
+    _ <- statement.addBatch()
+    result <- statement.executeBatch()
+  yield result
+}
+
+// Query to be executed
+// INSERT INTO users (name, age) VALUES ('Alice', 20), ('Bob', 30);
+```
+
+This is because if you are using `PreparedStatement`, you can set multiple parameters for a single query by using the `addBatch` method after setting the query parameters.
+
 ## Unsupported Feature
 
 The LDBC connector is currently an experimental feature. Therefore, the following features are not supported.
 We plan to provide the features as they become available.
 
 - Connection Pooling
-- Batch Processing
 - Failover measures
+- Execution of SQL Stored Procedures
 - etc...
