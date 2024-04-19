@@ -29,7 +29,6 @@ import org.typelevel.otel4s.Attribute
  *   <LI> the causal relationship, if any for this <code>SQLException</code>.
  * </UL>
  */
-@SerialVersionUID(2135244094396331484L)
 class SQLException(
   sqlState: String,
   vendorCode: Int,
