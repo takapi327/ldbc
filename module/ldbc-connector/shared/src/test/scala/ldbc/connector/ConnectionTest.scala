@@ -336,13 +336,13 @@ class ConnectionTest extends CatsEffectSuite:
     )
 
     interceptMessageIO[SQLSyntaxErrorException](
-      """
-        |Message: Failed to execute query
-        |SQLState: 42000
-        |Vendor Code: 1064
-        |SQL: SELECT 1; SELECT2
-        |Detail: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1
-        |""".stripMargin
+      List(
+        "Message: Failed to execute query",
+        "SQLState: 42000",
+        "Vendor Code: 1064",
+        "SQL: SELECT 1; SELECT2",
+        "Detail: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1"
+      ).mkString("\n")
     )(connection.use { conn =>
       for
         statement <- conn.createStatement()
