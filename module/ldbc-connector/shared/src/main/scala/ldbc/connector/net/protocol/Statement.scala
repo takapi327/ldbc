@@ -18,7 +18,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.ResultSet
 import ldbc.connector.data.EnumMySQLSetOption
-import ldbc.connector.exception.MySQLException
+import ldbc.connector.exception.SQLException
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.ResponsePacket
 import ldbc.connector.net.packet.response.*
@@ -189,7 +189,7 @@ object Statement:
               socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(result.affectedRows)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
               }
           )
         }
@@ -203,7 +203,7 @@ object Statement:
               socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(result.lastInsertId)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
               }
           )
         }
@@ -232,7 +232,7 @@ object Statement:
                             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                               case result: OKPacket => ev.pure(acc :+ result.affectedRows)
                               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch"))
-                              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                              case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                             }
                         yield result
                       }
