@@ -144,7 +144,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password")
     )
-    interceptIO[SQLException] {
+    interceptIO[SQLInvalidAuthorizationSpecException] {
       connection.use(_ => IO.unit)
     }
   }
