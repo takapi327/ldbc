@@ -109,7 +109,7 @@ class TransactionTest extends CatsEffectSuite:
       password = Some("password"),
       ssl      = SSL.Trusted
     )
-    interceptMessageIO[SQLNonTransientException]("message: Can't call commit when autocommit=true")(connection.use {
+    interceptMessageIO[SQLNonTransientException]("Message: Can't call commit when autocommit=true")(connection.use {
       conn =>
         for
           _ <- conn.setAutoCommit(true)
@@ -144,7 +144,7 @@ class TransactionTest extends CatsEffectSuite:
       password = Some("password"),
       ssl      = SSL.Trusted
     )
-    interceptMessageIO[SQLNonTransientException]("message: Can't call rollback when autocommit=true")(connection.use {
+    interceptMessageIO[SQLNonTransientException]("Message: Can't call rollback when autocommit=true")(connection.use {
       conn =>
         for
           _ <- conn.setAutoCommit(true)

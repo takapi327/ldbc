@@ -41,9 +41,9 @@ class SQLException(
 
   override def getMessage: String =
     s"""
-       |SQLState: $sqlState
-       |Error Code: $vendorCode
        |Message: $message
+       |${ sqlState.fold("")(s => s"\nSQLState: $s") }
+       |${ vendorCode.fold("")(c => s"\nVendor Code: $c") }
        |${ sql.fold("")(s => s"\nSQL: $s") }
        |${ detail.fold("")(d => s"\nDetail: $d") }
        |${ hint.fold("")(h => s"\nHint: $h") }
