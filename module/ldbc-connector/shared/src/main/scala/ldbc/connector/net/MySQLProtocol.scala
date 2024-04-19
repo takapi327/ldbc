@@ -22,7 +22,7 @@ import org.typelevel.otel4s.trace.Tracer
 import scodec.Decoder
 
 import ldbc.connector.data.*
-import ldbc.connector.exception.MySQLException
+import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.ResponsePacket
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
@@ -261,4 +261,4 @@ object MySQLProtocol:
           sequenceIdRef,
           initialPacketRef
         )
-      case None => throw new MySQLException("Initial packet is not set")
+      case None => throw new SQLException("Initial packet is not set")
