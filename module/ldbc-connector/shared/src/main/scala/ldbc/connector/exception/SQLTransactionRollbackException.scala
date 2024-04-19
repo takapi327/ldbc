@@ -13,11 +13,11 @@ package ldbc.connector.exception
  * of deadlock or other transaction serialization failures.
  */
 class SQLTransactionRollbackException(
-  sqlState:         String,
-  vendorCode:       Int,
   message:          String,
+  sqlState:         Option[String] = None,
+  vendorCode:       Option[Int]    = None,
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
   originatedPacket: Option[String] = None
-) extends SQLTransientException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
+) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)

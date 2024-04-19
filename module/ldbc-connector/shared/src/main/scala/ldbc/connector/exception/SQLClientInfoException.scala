@@ -13,7 +13,5 @@ package ldbc.connector.exception
  * properties that were not set.
  */
 class SQLClientInfoException(
-  sqlState:   String,
-  vendorCode: Int,
-  message:    String
-) extends SQLException(sqlState, vendorCode, message)
+  message: String
+) extends SQLException(message)

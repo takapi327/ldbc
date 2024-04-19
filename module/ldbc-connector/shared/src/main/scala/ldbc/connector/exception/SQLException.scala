@@ -30,9 +30,9 @@ import org.typelevel.otel4s.Attribute
  * </UL>
  */
 class SQLException(
-  sqlState:         String,
-  vendorCode:       Int,
   message:          String,
+  sqlState:         Option[String] = None,
+  vendorCode:       Option[Int]    = None,
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
@@ -51,30 +51,15 @@ class SQLException(
        |""".stripMargin
 
   /**
-   * Retrieves the SQLState for this <code>SQLException</code> object.
-   *
-   * @return the SQLState value
-   */
-  def getSQLState: String = sqlState
-
-  /**
-   * Retrieves the vendor-specific exception code
-   * for this <code>SQLException</code> object.
-   *
-   * @return the vendor's error code
-   */
-  def getErrorCode: Int = vendorCode
-
-  /**
    * Summarize error information into attributes.
    */
   def fields: List[Attribute[?]] =
     val builder = List.newBuilder[Attribute[?]]
 
     builder += Attribute("error.message", message)
-    builder += Attribute("error.sqlstate", sqlState)
-    builder += Attribute("error.code", vendorCode.toLong)
 
+    sqlState.foreach(a => builder += Attribute("error.sqlstate", a))
+    vendorCode.foreach(a => builder += Attribute("error.vendorCode", a.toLong))
     sql.foreach(a => builder += Attribute("error.sql", a))
     detail.foreach(a => builder += Attribute("error.detail", a))
     hint.foreach(a => builder += Attribute("error.hint", a))

@@ -12,11 +12,11 @@ package ldbc.connector.exception
  * in-progress query has violated SQL syntax rules.
  */
 class SQLSyntaxErrorException(
-  sqlState:         String,
-  vendorCode:       Int,
   message:          String,
+  sqlState:         Option[String] = None,
+  vendorCode:       Option[Int]    = None,
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
   originatedPacket: Option[String] = None
-) extends SQLNonTransientException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
+) extends SQLNonTransientException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)

@@ -12,11 +12,11 @@ package ldbc.connector.exception
  * retried without any intervention by application-level functionality.
  */
 class SQLTransientException(
-  sqlState:         String,
-  vendorCode:       Int,
   message:          String,
+  sqlState:         Option[String] = None,
+  vendorCode:       Option[Int]    = None,
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
   originatedPacket: Option[String] = None
-) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
+) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)

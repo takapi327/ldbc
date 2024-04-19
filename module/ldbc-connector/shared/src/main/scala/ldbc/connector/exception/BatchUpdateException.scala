@@ -31,15 +31,15 @@ import org.typelevel.otel4s.Attribute
  * that failed is <code>Statement.EXECUTE_FAILED</code>.
  */
 class BatchUpdateException(
-  sqlState:         String,
-  vendorCode:       Int,
   message:          String,
   updateCounts:     List[Int],
+  sqlState:         Option[String] = None,
+  vendorCode:       Option[Int]    = None,
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
   originatedPacket: Option[String] = None
-) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket):
+) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket):
 
   override def getMessage: String =
     s"""
@@ -60,10 +60,10 @@ class BatchUpdateException(
     val builder = List.newBuilder[Attribute[?]]
 
     builder += Attribute("error.message", message)
-    builder += Attribute("error.sqlstate", sqlState)
-    builder += Attribute("error.code", vendorCode.toLong)
     builder += Attribute("error.updateCounts", s"[${ updateCounts.mkString(",") }]")
 
+    sqlState.foreach(a => builder += Attribute("error.sqlstate", a))
+    vendorCode.foreach(a => builder += Attribute("error.vendorCode", a.toLong))
     sql.foreach(a => builder += Attribute("error.sql", a))
     detail.foreach(a => builder += Attribute("error.detail", a))
     hint.foreach(a => builder += Attribute("error.hint", a))
