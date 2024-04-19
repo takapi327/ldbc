@@ -15,4 +15,3 @@ class SQLInvalidAuthorizationSpecException(
                                             hint:             Option[String] = None,
                                             originatedPacket: Option[String] = None
                                           ) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
-
