@@ -51,7 +51,7 @@ trait Authentication[F[_]]:
       case "mysql_native_password" => Right(MysqlNativePasswordPlugin())
       case "sha256_password"       => Right(Sha256PasswordPlugin())
       case "caching_sha2_password" => Right(CachingSha2PasswordPlugin(version))
-      case _                       => Left(new SQLInvalidAuthorizationSpecException(s"Unknown authentication plugin: $pluginName"))
+      case _ => Left(new SQLInvalidAuthorizationSpecException(s"Unknown authentication plugin: $pluginName"))
 
   /**
    * Start the authentication process.
@@ -130,7 +130,7 @@ object Authentication:
           case _: OKPacket                     => ev.unit
           case error: ERRPacket                => ev.raiseError(error.toException("Connection error"))
           case unknown: UnknownPacket          => ev.raiseError(unknown.toException("Error during database operation"))
-          case _                               => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected packet"))
+          case _ => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected packet"))
         }
 
       /**
