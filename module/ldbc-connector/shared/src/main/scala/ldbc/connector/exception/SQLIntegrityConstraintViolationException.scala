@@ -17,4 +17,4 @@ class SQLIntegrityConstraintViolationException(
                                                 detail:           Option[String] = None,
                                                 hint:             Option[String] = None,
                                                 originatedPacket: Option[String] = None
-                                              ) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
+                                              ) extends SQLNonTransientException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
