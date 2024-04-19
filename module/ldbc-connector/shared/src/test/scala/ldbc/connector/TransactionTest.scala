@@ -13,7 +13,7 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.CatsEffectSuite
 
 import ldbc.connector.codec.all.*
-import ldbc.connector.exception.MySQLException
+import ldbc.connector.exception.*
 
 class TransactionTest extends CatsEffectSuite:
 

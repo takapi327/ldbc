@@ -8,8 +8,6 @@ package ldbc.connector.exception
 
 case class UnknownPacketException(
   message:          String,
-  sql:              Option[String] = None,
   detail:           Option[String] = None,
-  hint:             Option[String] = None,
   originatedPacket: Option[String] = None
-) extends MySQLException(message, sql, detail, hint, originatedPacket)
+) extends SQLException(message = message, detail = detail, originatedPacket = originatedPacket)
