@@ -20,7 +20,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.ResultSet
 import ldbc.connector.data.*
-import ldbc.connector.exception.MySQLException
+import ldbc.connector.exception.SQLException
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.ResponsePacket
 import ldbc.connector.net.packet.response.*
@@ -621,7 +621,7 @@ object PreparedStatement:
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => ev.pure(result.affectedRows)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+              case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
             }
         } <* params.set(ListMap.empty)
       }
@@ -640,7 +640,7 @@ object PreparedStatement:
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => ev.pure(result.lastInsertId)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+              case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
             }
         } <* params.set(ListMap.empty)
       }
@@ -676,7 +676,7 @@ object PreparedStatement:
                       socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                         case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
                         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                        case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                        case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                       }
                 )
               }
@@ -712,7 +712,7 @@ object PreparedStatement:
                                 socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                                   case result: OKPacket => ev.pure(acc :+ result.affectedRows)
                                   case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch"))
-                                  case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                                  case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                                 }
                             yield result
                           }
@@ -807,7 +807,7 @@ object PreparedStatement:
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => ev.pure(result.affectedRows)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+              case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
             }
         } <* params.set(ListMap.empty)
       }
@@ -826,7 +826,7 @@ object PreparedStatement:
             socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
               case result: OKPacket => ev.pure(result.lastInsertId)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-              case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+              case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
             }
         } <* params.set(ListMap.empty)
       }
@@ -862,7 +862,7 @@ object PreparedStatement:
                       socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                         case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
                         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                        case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                        case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                       }
                 )
               }
@@ -898,7 +898,7 @@ object PreparedStatement:
                                 socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                                   case result: OKPacket => ev.pure(acc :+ result.affectedRows)
                                   case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch"))
-                                  case _: EOFPacket     => ev.raiseError(new MySQLException("Unexpected EOF packet"))
+                                  case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                                 }
                             yield result
                           }
