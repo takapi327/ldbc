@@ -100,7 +100,7 @@ class TransactionTest extends CatsEffectSuite:
   }
 
   test(
-    "If a transaction initiated in a session is in autocommit mode, a manual commit will result in a MySQLException."
+    "If a transaction initiated in a session is in autocommit mode, a manual commit will result in a SQLNonTransientException."
   ) {
     val connection = Connection[IO](
       host     = "127.0.0.1",
@@ -109,7 +109,7 @@ class TransactionTest extends CatsEffectSuite:
       password = Some("password"),
       ssl      = SSL.Trusted
     )
-    interceptMessageIO[MySQLException]("message: Can't call commit when autocommit=true")(connection.use { conn =>
+    interceptMessageIO[SQLNonTransientException]("message: Can't call commit when autocommit=true")(connection.use { conn =>
       for
         _ <- conn.setAutoCommit(true)
         _ <- conn.commit()
@@ -134,7 +134,7 @@ class TransactionTest extends CatsEffectSuite:
   }
 
   test(
-    "If a transaction initiated in a session is in autocommit mode, a manual rollback will result in a MySQLException."
+    "If a transaction initiated in a session is in autocommit mode, a manual rollback will result in a SQLNonTransientException."
   ) {
     val connection = Connection[IO](
       host     = "127.0.0.1",
@@ -143,7 +143,7 @@ class TransactionTest extends CatsEffectSuite:
       password = Some("password"),
       ssl      = SSL.Trusted
     )
-    interceptMessageIO[MySQLException]("message: Can't call rollback when autocommit=true")(connection.use { conn =>
+    interceptMessageIO[SQLNonTransientException]("message: Can't call rollback when autocommit=true")(connection.use { conn =>
       for
         _ <- conn.setAutoCommit(true)
         _ <- conn.rollback()
