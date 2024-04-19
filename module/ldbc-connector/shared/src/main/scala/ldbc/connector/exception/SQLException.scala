@@ -30,23 +30,23 @@ import org.typelevel.otel4s.Attribute
  * </UL>
  */
 class SQLException(
-  sqlState: String,
-  vendorCode: Int,
+  sqlState:         String,
+  vendorCode:       Int,
   message:          String,
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
   originatedPacket: Option[String] = None
 ) extends Exception:
-  
+
   override def getMessage: String =
     s"""
        |SQLState: $sqlState
        |Error Code: $vendorCode
        |Message: $message
-       |${sql.fold("")(s => s"\nSQL: $s")}
+       |${ sql.fold("")(s => s"\nSQL: $s") }
        |${ detail.fold("")(d => s"\nDetail: $d") }
-       |${hint.fold("")(h => s"\nHint: $h")}
+       |${ hint.fold("")(h => s"\nHint: $h") }
        |${ originatedPacket.fold("")(p => s"\nPoint of Origin: $p") }
        |""".stripMargin
 

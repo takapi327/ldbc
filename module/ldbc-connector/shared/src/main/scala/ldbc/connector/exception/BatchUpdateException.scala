@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.connector.exception
 
 import org.typelevel.otel4s.Attribute
@@ -25,25 +31,25 @@ import org.typelevel.otel4s.Attribute
  * that failed is <code>Statement.EXECUTE_FAILED</code>.
  */
 class BatchUpdateException(
-                            sqlState: String,
-                            vendorCode: Int,
-                            message:          String,
-                            updateCounts:     List[Int],
-                            sql:              Option[String] = None,
-                            detail:           Option[String] = None,
-                            hint:             Option[String] = None,
-                            originatedPacket: Option[String] = None
-                          ) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket):
+  sqlState:         String,
+  vendorCode:       Int,
+  message:          String,
+  updateCounts:     List[Int],
+  sql:              Option[String] = None,
+  detail:           Option[String] = None,
+  hint:             Option[String] = None,
+  originatedPacket: Option[String] = None
+) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket):
 
   override def getMessage: String =
     s"""
        |SQLState: $sqlState
        |Error Code: $vendorCode
        |Message: $message
-       |Update Counts: [${updateCounts.mkString(",")}]
-       |${sql.fold("")(s => s"\nSQL: $s")}
+       |Update Counts: [${ updateCounts.mkString(",") }]
+       |${ sql.fold("")(s => s"\nSQL: $s") }
        |${ detail.fold("")(d => s"\nDetail: $d") }
-       |${hint.fold("")(h => s"\nHint: $h")}
+       |${ hint.fold("")(h => s"\nHint: $h") }
        |${ originatedPacket.fold("")(p => s"\nPoint of Origin: $p") }
        |""".stripMargin
 
@@ -56,7 +62,7 @@ class BatchUpdateException(
     builder += Attribute("error.message", message)
     builder += Attribute("error.sqlstate", sqlState)
     builder += Attribute("error.code", vendorCode.toLong)
-    builder += Attribute("error.updateCounts", s"[${updateCounts.mkString(",")}]")
+    builder += Attribute("error.updateCounts", s"[${ updateCounts.mkString(",") }]")
 
     sql.foreach(a => builder += Attribute("error.sql", a))
     detail.foreach(a => builder += Attribute("error.detail", a))

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.connector.exception
 
 /**
@@ -7,7 +13,7 @@ package ldbc.connector.exception
  * properties that were not set.
  */
 class SQLClientInfoException(
-  sqlState: String,
+  sqlState:   String,
   vendorCode: Int,
-  message:          String,
+  message:    String
 ) extends SQLException(sqlState, vendorCode, message)

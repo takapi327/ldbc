@@ -12,11 +12,11 @@ package ldbc.connector.exception
  * is corrected.
  */
 class SQLNonTransientException(
-                                sqlState: String,
-                                vendorCode: Int,
-                                message:          String,
-                                sql:              Option[String] = None,
-                                detail:           Option[String] = None,
-                                hint:             Option[String] = None,
-                                originatedPacket: Option[String] = None
-                              ) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
+  sqlState:         String,
+  vendorCode:       Int,
+  message:          String,
+  sql:              Option[String] = None,
+  detail:           Option[String] = None,
+  hint:             Option[String] = None,
+  originatedPacket: Option[String] = None
+) extends SQLException(sqlState, vendorCode, message, sql, detail, hint, originatedPacket)
