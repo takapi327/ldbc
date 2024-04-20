@@ -19,92 +19,81 @@ import ldbc.connector.util.Version
 object CharsetMapping:
 
   val MYSQL_CHARSET_NAME_armscii8 = "armscii8"
-  val MYSQL_CHARSET_NAME_ascii = "ascii"
-  val MYSQL_CHARSET_NAME_big5 = "big5"
-  val MYSQL_CHARSET_NAME_binary = "binary"
-  val MYSQL_CHARSET_NAME_cp1250 = "cp1250"
-  val MYSQL_CHARSET_NAME_cp1251 = "cp1251"
-  val MYSQL_CHARSET_NAME_cp1256 = "cp1256"
-  val MYSQL_CHARSET_NAME_cp1257 = "cp1257"
-  val MYSQL_CHARSET_NAME_cp850 = "cp850"
-  val MYSQL_CHARSET_NAME_cp852 = "cp852"
-  val MYSQL_CHARSET_NAME_cp866 = "cp866"
-  val MYSQL_CHARSET_NAME_cp932 = "cp932"
-  val MYSQL_CHARSET_NAME_dec8 = "dec8"
-  val MYSQL_CHARSET_NAME_eucjpms = "eucjpms"
-  val MYSQL_CHARSET_NAME_euckr = "euckr"
-  val MYSQL_CHARSET_NAME_gb18030 = "gb18030"
-  val MYSQL_CHARSET_NAME_gb2312 = "gb2312"
-  val MYSQL_CHARSET_NAME_gbk = "gbk"
-  val MYSQL_CHARSET_NAME_geostd8 = "geostd8"
-  val MYSQL_CHARSET_NAME_greek = "greek"
-  val MYSQL_CHARSET_NAME_hebrew = "hebrew"
-  val MYSQL_CHARSET_NAME_hp8 = "hp8"
-  val MYSQL_CHARSET_NAME_keybcs2 = "keybcs2"
-  val MYSQL_CHARSET_NAME_koi8r = "koi8r"
-  val MYSQL_CHARSET_NAME_koi8u = "koi8u"
-  val MYSQL_CHARSET_NAME_latin1 = "latin1"
-  val MYSQL_CHARSET_NAME_latin2 = "latin2"
-  val MYSQL_CHARSET_NAME_latin5 = "latin5"
-  val MYSQL_CHARSET_NAME_latin7 = "latin7"
-  val MYSQL_CHARSET_NAME_macce = "macce"
+  val MYSQL_CHARSET_NAME_ascii    = "ascii"
+  val MYSQL_CHARSET_NAME_big5     = "big5"
+  val MYSQL_CHARSET_NAME_binary   = "binary"
+  val MYSQL_CHARSET_NAME_cp1250   = "cp1250"
+  val MYSQL_CHARSET_NAME_cp1251   = "cp1251"
+  val MYSQL_CHARSET_NAME_cp1256   = "cp1256"
+  val MYSQL_CHARSET_NAME_cp1257   = "cp1257"
+  val MYSQL_CHARSET_NAME_cp850    = "cp850"
+  val MYSQL_CHARSET_NAME_cp852    = "cp852"
+  val MYSQL_CHARSET_NAME_cp866    = "cp866"
+  val MYSQL_CHARSET_NAME_cp932    = "cp932"
+  val MYSQL_CHARSET_NAME_dec8     = "dec8"
+  val MYSQL_CHARSET_NAME_eucjpms  = "eucjpms"
+  val MYSQL_CHARSET_NAME_euckr    = "euckr"
+  val MYSQL_CHARSET_NAME_gb18030  = "gb18030"
+  val MYSQL_CHARSET_NAME_gb2312   = "gb2312"
+  val MYSQL_CHARSET_NAME_gbk      = "gbk"
+  val MYSQL_CHARSET_NAME_geostd8  = "geostd8"
+  val MYSQL_CHARSET_NAME_greek    = "greek"
+  val MYSQL_CHARSET_NAME_hebrew   = "hebrew"
+  val MYSQL_CHARSET_NAME_hp8      = "hp8"
+  val MYSQL_CHARSET_NAME_keybcs2  = "keybcs2"
+  val MYSQL_CHARSET_NAME_koi8r    = "koi8r"
+  val MYSQL_CHARSET_NAME_koi8u    = "koi8u"
+  val MYSQL_CHARSET_NAME_latin1   = "latin1"
+  val MYSQL_CHARSET_NAME_latin2   = "latin2"
+  val MYSQL_CHARSET_NAME_latin5   = "latin5"
+  val MYSQL_CHARSET_NAME_latin7   = "latin7"
+  val MYSQL_CHARSET_NAME_macce    = "macce"
   val MYSQL_CHARSET_NAME_macroman = "macroman"
-  val MYSQL_CHARSET_NAME_sjis = "sjis"
-  val MYSQL_CHARSET_NAME_swe7 = "swe7"
-  val MYSQL_CHARSET_NAME_tis620 = "tis620"
-  val MYSQL_CHARSET_NAME_ucs2 = "ucs2"
-  val MYSQL_CHARSET_NAME_ujis = "ujis"
-  val MYSQL_CHARSET_NAME_utf16 = "utf16"
-  val MYSQL_CHARSET_NAME_utf16le = "utf16le"
-  val MYSQL_CHARSET_NAME_utf32 = "utf32"
-  val MYSQL_CHARSET_NAME_utf8 = "utf8"
-  val MYSQL_CHARSET_NAME_utf8mb3 = "utf8mb3"
-  val MYSQL_CHARSET_NAME_utf8mb4 = "utf8mb4"
+  val MYSQL_CHARSET_NAME_sjis     = "sjis"
+  val MYSQL_CHARSET_NAME_swe7     = "swe7"
+  val MYSQL_CHARSET_NAME_tis620   = "tis620"
+  val MYSQL_CHARSET_NAME_ucs2     = "ucs2"
+  val MYSQL_CHARSET_NAME_ujis     = "ujis"
+  val MYSQL_CHARSET_NAME_utf16    = "utf16"
+  val MYSQL_CHARSET_NAME_utf16le  = "utf16le"
+  val MYSQL_CHARSET_NAME_utf32    = "utf32"
+  val MYSQL_CHARSET_NAME_utf8     = "utf8"
+  val MYSQL_CHARSET_NAME_utf8mb3  = "utf8mb3"
+  val MYSQL_CHARSET_NAME_utf8mb4  = "utf8mb4"
 
   val MYSQL_COLLATION_INDEX_utf8mb4_general_ci = 45
   val MYSQL_COLLATION_INDEX_utf8mb4_0900_ai_ci = 255
-  val MYSQL_COLLATION_INDEX_binary = 63
+  val MYSQL_COLLATION_INDEX_binary             = 63
 
   val charsets: List[MysqlCharset] =
     List(
       MysqlCharset(MYSQL_CHARSET_NAME_ascii, 1, 0, List("US-ASCII", "ASCII")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_big5, 2, 0, List("Big5")),
       MysqlCharset(MYSQL_CHARSET_NAME_gbk, 2, 0, List("GBK")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_sjis, 2, 0, List("SHIFT_JIS", "Cp943", "WINDOWS-31J")),
       MysqlCharset(MYSQL_CHARSET_NAME_cp932, 2, 1, List("WINDOWS-31J")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_gb2312, 2, 0, List("GB2312")),
       MysqlCharset(MYSQL_CHARSET_NAME_ujis, 3, 0, List("EUC-JP")),
       MysqlCharset(MYSQL_CHARSET_NAME_eucjpms, 3, 0, List("EUC_JP_Solaris"), Version(5, 0, 3)),
-
       MysqlCharset(MYSQL_CHARSET_NAME_gb18030, 4, 0, List("GB18030"), Version(5, 7, 4)),
-
       MysqlCharset(MYSQL_CHARSET_NAME_euckr, 2, 0, List("EUC-KR")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_latin1, 1, 1, List("Cp1252", "ISO8859_1")),
       MysqlCharset(MYSQL_CHARSET_NAME_swe7, 1, 0, List("Cp1252")),
       MysqlCharset(MYSQL_CHARSET_NAME_hp8, 1, 0, List("Cp1252")),
       MysqlCharset(MYSQL_CHARSET_NAME_dec8, 1, 0, List("Cp1252")),
       MysqlCharset(MYSQL_CHARSET_NAME_armscii8, 1, 0, List("Cp1252")),
       MysqlCharset(MYSQL_CHARSET_NAME_geostd8, 1, 0, List("Cp1252")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_latin2, 1, 0, List("ISO8859_2")),
       MysqlCharset(MYSQL_CHARSET_NAME_greek, 1, 0, List("ISO8859_7", "greek")),
       MysqlCharset(MYSQL_CHARSET_NAME_latin7, 1, 0, List("ISO-8859-13")),
       MysqlCharset(MYSQL_CHARSET_NAME_hebrew, 1, 0, List("ISO8859_8")),
       MysqlCharset(MYSQL_CHARSET_NAME_latin5, 1, 0, List("ISO8859_9")),
       MysqlCharset(MYSQL_CHARSET_NAME_cp850, 2, 0, List("Cp850", "Cp437")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_cp852, 1, 0, List("Cp852")),
       MysqlCharset(MYSQL_CHARSET_NAME_keybcs2, 1, 0, List("Cp852")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_cp866, 1, 0, List("Cp866")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_koi8r, 1, 0, List("KOI8_R")),
       MysqlCharset(MYSQL_CHARSET_NAME_koi8u, 1, 0, List("KOI8_U")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_tis620, 1, 0, List("TIS620")),
       MysqlCharset(MYSQL_CHARSET_NAME_cp1250, 1, 0, List("Cp1250")),
       MysqlCharset(MYSQL_CHARSET_NAME_cp1251, 1, 0, List("Cp1251")),
@@ -112,16 +101,13 @@ object CharsetMapping:
       MysqlCharset(MYSQL_CHARSET_NAME_cp1257, 1, 0, List("Cp1257")),
       MysqlCharset(MYSQL_CHARSET_NAME_macroman, 1, 0, List("MacRoman")),
       MysqlCharset(MYSQL_CHARSET_NAME_macce, 1, 0, List("MacCentralEurope")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_utf8mb3, 3, 0, List("UTF-8"), List(MYSQL_CHARSET_NAME_utf8)),
       MysqlCharset(MYSQL_CHARSET_NAME_utf8mb4, 4, 1, List("UTF-8")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_binary, 1, 1, List("ISO8859_1")),
-
       MysqlCharset(MYSQL_CHARSET_NAME_ucs2, 2, 0, List("UnicodeBig")),
       MysqlCharset(MYSQL_CHARSET_NAME_utf16, 4, 0, List("UTF-16")),
       MysqlCharset(MYSQL_CHARSET_NAME_utf16le, 4, 0, List("UTF-16LE")),
-      MysqlCharset(MYSQL_CHARSET_NAME_utf32, 4, 0, List("UTF-32")),
+      MysqlCharset(MYSQL_CHARSET_NAME_utf32, 4, 0, List("UTF-32"))
     )
 
   val CHARSET_NAME_TO_CHARSET: Map[String, MysqlCharset] = charsets.map(charset => charset.charsetName -> charset).toMap
@@ -340,7 +326,6 @@ object CharsetMapping:
     Collation(232, "utf8mb4_swedish_ci", 0, MYSQL_CHARSET_NAME_utf8mb4),
     Collation(233, "utf8mb4_turkish_ci", 0, MYSQL_CHARSET_NAME_utf8mb4),
     Collation(234, "utf8mb4_czech_ci", 0, MYSQL_CHARSET_NAME_utf8mb4),
-      
     Collation(235, "utf8mb4_danish_ci", 0, MYSQL_CHARSET_NAME_utf8mb4),
     Collation(236, "utf8mb4_lithuanian_ci", 0, MYSQL_CHARSET_NAME_utf8mb4),
     Collation(237, "utf8mb4_slovak_ci", 0, MYSQL_CHARSET_NAME_utf8mb4),
@@ -429,55 +414,77 @@ object CharsetMapping:
   )
 
 case class MysqlCharset(
-  charsetName: String,
-  mblen: Int,
-  priority: Int,
+  charsetName:     String,
+  mblen:           Int,
+  priority:        Int,
   javaEncodingsUc: List[String],
-  aliases: List[String],
-  minimumVersion: Version,
+  aliases:         List[String],
+  minimumVersion:  Version
 ):
 
   override def toString: String = s"[charsetName=$charsetName,mblen=$mblen]"
 
 object MysqlCharset:
-  
+
   def apply(charsetName: String, mblen: Int, priority: Int, javaEncodings: List[String]): MysqlCharset =
     MysqlCharset(charsetName, mblen, priority, addEncodingMapping(javaEncodings, mblen), List.empty, Version(0, 0, 0))
 
-  def apply(charsetName: String, mblen: Int, priority: Int, javaEncodings: List[String], aliases: List[String]): MysqlCharset =
+  def apply(
+    charsetName:   String,
+    mblen:         Int,
+    priority:      Int,
+    javaEncodings: List[String],
+    aliases:       List[String]
+  ): MysqlCharset =
     MysqlCharset(charsetName, mblen, priority, addEncodingMapping(javaEncodings, mblen), aliases, Version(0, 0, 0))
 
-  def apply(charsetName: String, mblen: Int, priority: Int, javaEncodings: List[String], minimumVersion: Version): MysqlCharset =
+  def apply(
+    charsetName:    String,
+    mblen:          Int,
+    priority:       Int,
+    javaEncodings:  List[String],
+    minimumVersion: Version
+  ): MysqlCharset =
     MysqlCharset(charsetName, mblen, priority, addEncodingMapping(javaEncodings, mblen), List.empty, minimumVersion)
 
-  def apply(charsetName: String, mblen: Int, priority: Int, javaEncodings: List[String], aliases: List[String], minimumVersion: Version): MysqlCharset =
-    val encodings = if javaEncodings.isEmpty then
-      if mblen > 1 then List("UTF-8") else List("Cp1252")
-    else
-      addEncodingMapping(javaEncodings, mblen)
+  def apply(
+    charsetName:    String,
+    mblen:          Int,
+    priority:       Int,
+    javaEncodings:  List[String],
+    aliases:        List[String],
+    minimumVersion: Version
+  ): MysqlCharset =
+    val encodings =
+      if javaEncodings.isEmpty then if mblen > 1 then List("UTF-8") else List("Cp1252")
+      else addEncodingMapping(javaEncodings, mblen)
     new MysqlCharset(charsetName, mblen, priority, encodings, aliases, minimumVersion)
 
   private def addEncodingMapping(encodings: List[String], mblen: Int): List[String] =
     encodings.flatMap { encoding =>
       try
         val cs = Charset.forName(encoding)
-        List(cs.name().toUpperCase(Locale.ENGLISH)) ++ cs.aliases().toArray.toList.asInstanceOf[List[String]].map(_.toUpperCase(Locale.ENGLISH))
+        List(cs.name().toUpperCase(Locale.ENGLISH)) ++ cs
+          .aliases()
+          .toArray
+          .toList
+          .asInstanceOf[List[String]]
+          .map(_.toUpperCase(Locale.ENGLISH))
       catch
         case _: Exception =>
-          if mblen == 1 then
-            List(encoding.toUpperCase(Locale.ENGLISH))
-          else
-            List.empty
+          if mblen == 1 then List(encoding.toUpperCase(Locale.ENGLISH))
+          else List.empty
     }
 
 case class Collation(
-  index: Int,
+  index:          Int,
   collationNames: List[String],
-  priority: Int,
-  charset: MysqlCharset,
+  priority:       Int,
+  charset:        MysqlCharset
 ):
 
-  override def toString: String = s"[index=$index,collationNames=${collationNames.mkString(",")},charsetName=${charset.charsetName}]"
+  override def toString: String =
+    s"[index=$index,collationNames=${ collationNames.mkString(",") },charsetName=${ charset.charsetName }]"
 
 object Collation:
 
