@@ -342,7 +342,7 @@ class ConnectionTest extends CatsEffectSuite:
         "Vendor Code: 1064",
         "SQL: SELECT 1; SELECT2",
         "Detail: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1"
-      ).mkString("\n")
+      ).mkString(", ")
     )(connection.use { conn =>
       for
         statement <- conn.createStatement()

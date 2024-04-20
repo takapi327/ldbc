@@ -40,9 +40,9 @@ class SQLException(
 ) extends Exception:
 
   override def getMessage: String =
-    s"Message: $message${ sqlState.fold("")(s => s"\nSQLState: $s") }${ vendorCode.fold("")(c => s"\nVendor Code: $c") }${ sql
-        .fold("")(s => s"\nSQL: $s") }${ detail.fold("")(d => s"\nDetail: $d") }${ hint
-        .fold("")(h => s"\nHint: $h") }${ originatedPacket.fold("")(p => s"\nPoint of Origin: $p") }"
+    s"Message: $message${ sqlState.fold("")(s => s", SQLState: $s") }${ vendorCode.fold("")(c => s", Vendor Code: $c") }${ sql
+        .fold("")(s => s", SQL: $s") }${ detail.fold("")(d => s", Detail: $d") }${ hint
+        .fold("")(h => s", Hint: $h") }${ originatedPacket.fold("")(p => s", Point of Origin: $p") }"
 
   /**
    * Summarize error information into attributes.
