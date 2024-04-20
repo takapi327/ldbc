@@ -63,7 +63,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case Some(SQLState.DATA_EXCEPTION)                 =>
+      case Some(SQLState.DATA_EXCEPTION) =>
         SQLDataException(
           message    = message,
           sqlState   = sqlState,
@@ -95,7 +95,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case Some(SQLState.SYNTAX_ERROR_EXCEPTION)         =>
+      case Some(SQLState.SYNTAX_ERROR_EXCEPTION) =>
         SQLSyntaxErrorException(
           message    = message,
           sqlState   = sqlState,
@@ -119,12 +119,13 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case None => SQLException(
-        message    = message,
-        vendorCode = Some(errorCode),
-        sql        = sql,
-        detail     = Some(errorMessage)
-      )
+      case None =>
+        SQLException(
+          message    = message,
+          vendorCode = Some(errorCode),
+          sql        = sql,
+          detail     = Some(errorMessage)
+        )
 
   def toException(message: String): SQLException = toException(message, None)
 
