@@ -241,7 +241,9 @@ object ResultSetMetaData:
         case ColumnDataType.MYSQL_TYPE_STRING | ColumnDataType.MYSQL_TYPE_VARCHAR |
           ColumnDataType.MYSQL_TYPE_VAR_STRING | ColumnDataType.MYSQL_TYPE_JSON | ColumnDataType.MYSQL_TYPE_ENUM |
           ColumnDataType.MYSQL_TYPE_SET =>
-          CharsetMapping.getStaticCollationNameForCollationIndex(getMysqlCharsetForJavaEncoding("UTF-8")).fold(false)(_.endsWith("_ci")) // TODO: Get the actual character code from the server and use it.
+          CharsetMapping
+            .getStaticCollationNameForCollationIndex(getMysqlCharsetForJavaEncoding("UTF-8"))
+            .fold(false)(_.endsWith("_ci")) // TODO: Get the actual character code from the server and use it.
         case _ => true
 
       override def isSearchable(column: Int): Boolean = true
@@ -273,10 +275,14 @@ object ResultSetMetaData:
         val definition = unsafeFindByIndex(column)
         definition.columnType match
           case ColumnDataType.MYSQL_TYPE_TINY_BLOB | ColumnDataType.MYSQL_TYPE_BLOB |
-               ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB | ColumnDataType.MYSQL_TYPE_LONG_BLOB |
-               ColumnDataType.MYSQL_TYPE_DECIMAL =>
+            ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB | ColumnDataType.MYSQL_TYPE_LONG_BLOB |
+            ColumnDataType.MYSQL_TYPE_DECIMAL =>
             clampedGetLength(definition)
-          case _ => clampedGetLength(definition) / getMaxBytesPerChar(getMysqlCharsetForJavaEncoding("UTF-8"), "UTF-8") // TODO: Get the actual character code from the server and use it.
+          case _ =>
+            clampedGetLength(definition) / getMaxBytesPerChar(
+              getMysqlCharsetForJavaEncoding("UTF-8"),
+              "UTF-8"
+            ) // TODO: Get the actual character code from the server and use it.
 
       override def getScale(column: Int): Int = unsafeFindByIndex(column) match
         case definition: ColumnDefinition41Packet => definition.decimals
@@ -314,7 +320,9 @@ object ResultSetMetaData:
           case _: ColumnDefinition320Packet => Int.MaxValue
 
       private def getMysqlCharsetForJavaEncoding(javaEncoding: String): Int =
-        CharsetMapping.getStaticCollationIndexForMysqlCharsetName(CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaEncoding, Some(version)))
+        CharsetMapping.getStaticCollationIndexForMysqlCharsetName(
+          CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaEncoding, Some(version))
+        )
 
       private def getMaxBytesPerChar(charsetIndex: Int, javaCharsetName: String): Int =
         CharsetMapping.getStaticMysqlCharsetNameForCollationIndex(charsetIndex) match
@@ -322,7 +330,7 @@ object ResultSetMetaData:
           case None =>
             CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaCharsetName, Some(version)) match
               case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
-              case None => 1
+              case None              => 1
 
       private def unsafeFindByIndex(index: Int): ColumnDefinitionPacket =
         columns.lift(index) match

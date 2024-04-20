@@ -17,7 +17,7 @@ import ldbc.connector.util.Version
  * see: https://github.com/mysql/mysql-connector-j/blob/release/8.x/src/main/core-api/java/com/mysql/cj/CharsetMapping.java#L304
  */
 object CharsetMapping:
-  
+
   private val MAP_SIZE = 1024
 
   val MYSQL_CHARSET_NAME_armscii8 = "armscii8"
@@ -414,20 +414,26 @@ object CharsetMapping:
   )
 
   val COLLATION_INDEX_TO_COLLATION_NAME: List[String] = collations.map(_.charset.charsetName)
-  val COLLATION_INDEX_TO_CHARSET: Map[Int, MysqlCharset] = collations.map(collation => collation.index -> collation.charset).toMap
+  val COLLATION_INDEX_TO_CHARSET: Map[Int, MysqlCharset] =
+    collations.map(collation => collation.index -> collation.charset).toMap
 
   val CHARSET_NAME_TO_CHARSET: Map[String, MysqlCharset] = charsets.map(charset => charset.charsetName -> charset).toMap
   val JAVA_ENCODING_UC_TO_MYSQL_CHARSET: Map[String, List[MysqlCharset]] = ???
-  val CHARSET_NAME_TO_COLLATION_INDEX: Map[String, Int] = charsets.map(charset => charset.charsetName -> collations.find(_.charset.charsetName == charset.charsetName).fold(0)(_.index)).toMap
-  val COLLATION_NAME_TO_COLLATION_INDEX: Map[String, Int] = collations.map(collation => collation.collationNames.headOption.getOrElse("") -> collation.index).toMap
+  val CHARSET_NAME_TO_COLLATION_INDEX: Map[String, Int] = charsets
+    .map(charset =>
+      charset.charsetName -> collations.find(_.charset.charsetName == charset.charsetName).fold(0)(_.index)
+    )
+    .toMap
+  val COLLATION_NAME_TO_COLLATION_INDEX: Map[String, Int] =
+    collations.map(collation => collation.collationNames.headOption.getOrElse("") -> collation.index).toMap
 
-  def getStaticMysqlCharsetNameForCollationIndex(collationIndex: Int): Option[String] = COLLATION_INDEX_TO_CHARSET.get(collationIndex).map(_.charsetName)
+  def getStaticMysqlCharsetNameForCollationIndex(collationIndex: Int): Option[String] =
+    COLLATION_INDEX_TO_CHARSET.get(collationIndex).map(_.charsetName)
 
   def getStaticMysqlCharsetByName(charsetName: String): Option[MysqlCharset] = CHARSET_NAME_TO_CHARSET.get(charsetName)
-  
+
   def getStaticCollationNameForCollationIndex(collationIndex: Int): Option[String] =
-    if collationIndex > 0 && collationIndex < MAP_SIZE then
-      COLLATION_INDEX_TO_COLLATION_NAME.lift(collationIndex)
+    if collationIndex > 0 && collationIndex < MAP_SIZE then COLLATION_INDEX_TO_COLLATION_NAME.lift(collationIndex)
     else None
 
   def getStaticMblen(charsetName: String): Int = getStaticMysqlCharsetByName(charsetName).fold(0)(_.mblen)
@@ -436,16 +442,26 @@ object CharsetMapping:
     val mysqlCharsets = JAVA_ENCODING_UC_TO_MYSQL_CHARSET.get(javaEncoding.toUpperCase(Locale.ENGLISH))
     mysqlCharsets.flatMap { charsets =>
       version match
-        case Some(v) => charsets.foldLeft[Option[MysqlCharset]](None) { case (acc, charset) =>
-          if charset.isOkayForVersion(v) && (acc.isEmpty || acc.get.minimumVersion.compare(charset.minimumVersion) < 0 || acc.get.priority < charset.priority && acc.get.minimumVersion.compare(charset.minimumVersion) == 0) then Some(charset) else acc
-        }.map(_.charsetName)
+        case Some(v) =>
+          charsets
+            .foldLeft[Option[MysqlCharset]](None) {
+              case (acc, charset) =>
+                if charset.isOkayForVersion(v) && (acc.isEmpty || acc.get.minimumVersion.compare(
+                    charset.minimumVersion
+                  ) < 0 || acc.get.priority < charset.priority && acc.get.minimumVersion.compare(
+                    charset.minimumVersion
+                  ) == 0)
+                then Some(charset)
+                else acc
+            }
+            .map(_.charsetName)
         case None => charsets.headOption.map(_.charsetName)
     }
-    
+
   def getStaticCollationIndexForMysqlCharsetName(charsetName: Option[String]): Int =
     charsetName match
       case Some(name) => CHARSET_NAME_TO_COLLATION_INDEX.getOrElse(name, 0)
-      case None => 0
+      case None       => 0
 
 case class MysqlCharset(
   charsetName:     String,
@@ -455,11 +471,11 @@ case class MysqlCharset(
   aliases:         List[String],
   minimumVersion:  Version
 ):
-  
+
   def isOkayForVersion(version: Version): Boolean = minimumVersion.compare(version) match
     case -1 => false
-    case 0 => true
-    case 1 => true
+    case 0  => true
+    case 1  => true
 
   override def toString: String = s"[charsetName=$charsetName,mblen=$mblen]"
 
