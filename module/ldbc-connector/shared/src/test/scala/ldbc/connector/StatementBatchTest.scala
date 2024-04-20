@@ -12,6 +12,8 @@ import cats.effect.*
 
 import munit.{ AnyFixture, CatsEffectSuite }
 
+import ldbc.connector.exception.*
+
 class StatementBatchTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
@@ -94,6 +96,22 @@ class StatementBatchTest extends CatsEffectSuite:
         yield result
       },
       List.empty
+    )
+  }
+
+  test("Insert BatchUpdateException is raised if the batch command fails.") {
+    interceptMessageIO[BatchUpdateException](
+      "Message: Failed to execute batch, Update Counts: [1,1], SQLState: HY000, Vendor Code: 1366, Detail: Incorrect integer value: 'failed' for column 'c2' at row 1"
+    )(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (1, 1)")
+          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (2, 2)")
+          _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (3, 'failed')")
+          result <- statement.executeBatch()
+        yield result
+      }
     )
   }
 
@@ -208,6 +226,24 @@ class StatementBatchTest extends CatsEffectSuite:
   }
 
   test(
+    "Update BatchUpdateException is raised if the batch command fails."
+  ) {
+    interceptMessageIO[BatchUpdateException](
+      "Message: Failed to execute batch, Update Counts: [1,1], SQLState: HY000, Vendor Code: 1366, Detail: Incorrect integer value: 'failed' for column 'c2' at row 3"
+    )(
+      connection.use { conn =>
+        for
+          preparedStatement <- conn.clientPreparedStatement("UPDATE `batch_test` SET `c2` = ? WHERE `c1` = ?")
+          _      <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
+          _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
+          _      <- preparedStatement.setString(1, "failed") *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
+          result <- preparedStatement.executeBatch()
+        yield result
+      }
+    )
+  }
+
+  test(
     "If the Delete batch command is successful, it returns an array of the number of records affected for each query executed."
   ) {
     assertIO(
@@ -221,5 +257,23 @@ class StatementBatchTest extends CatsEffectSuite:
         yield result
       },
       List(1, 1, 1)
+    )
+  }
+
+  test(
+    "Delete BatchUpdateException is raised if the batch command fails."
+  ) {
+    interceptMessageIO[BatchUpdateException](
+      "Message: Failed to execute batch, Update Counts: [1,1], SQLState: 22007, Vendor Code: 1292, Detail: Truncated incorrect DOUBLE value: 'failed'"
+    )(
+      connection.use { conn =>
+        for
+          preparedStatement <- conn.clientPreparedStatement("DELETE from `batch_test` WHERE `c1` = ?")
+          _                 <- preparedStatement.setInt(1, 1) *> preparedStatement.addBatch()
+          _                 <- preparedStatement.setInt(1, 2) *> preparedStatement.addBatch()
+          _                 <- preparedStatement.setString(1, "failed") *> preparedStatement.addBatch()
+          result <- preparedStatement.executeBatch()
+        yield result
+      }
     )
   }
