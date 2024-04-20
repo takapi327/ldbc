@@ -54,15 +54,8 @@ case class ERRPacket(
   override def toString: String = "ERR_Packet"
 
   def toException(message: String, sql: Option[String]): SQLException =
-    sqlState.fold(
-      SQLException(
-        message    = message,
-        vendorCode = Some(errorCode),
-        sql        = sql,
-        detail     = Some(errorMessage)
-      )
-    ) {
-      case SQLState.TRANSIENT_CONNECTION_EXCEPTION =>
+    sqlState match
+      case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION) =>
         SQLTransientConnectionException(
           message    = message,
           sqlState   = sqlState,
@@ -70,7 +63,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case SQLState.DATA_EXCEPTION =>
+      case Some(SQLState.DATA_EXCEPTION)                 =>
         SQLDataException(
           message    = message,
           sqlState   = sqlState,
@@ -78,7 +71,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case SQLState.INVALID_AUTHORIZATION_SPEC_EXCEPTION =>
+      case Some(SQLState.INVALID_AUTHORIZATION_SPEC_EXCEPTION) =>
         SQLInvalidAuthorizationSpecException(
           message    = message,
           sqlState   = sqlState,
@@ -86,7 +79,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case SQLState.INTEGRITY_CONSTRAINT_VIOLATION_EXCEPTION =>
+      case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION_EXCEPTION) =>
         SQLIntegrityConstraintViolationException(
           message    = message,
           sqlState   = sqlState,
@@ -94,7 +87,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case SQLState.TRANSACTION_ROLLBACK_EXCEPTION =>
+      case Some(SQLState.TRANSACTION_ROLLBACK_EXCEPTION) =>
         SQLTransactionRollbackException(
           message    = message,
           sqlState   = sqlState,
@@ -102,7 +95,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case SQLState.SYNTAX_ERROR_EXCEPTION =>
+      case Some(SQLState.SYNTAX_ERROR_EXCEPTION)         =>
         SQLSyntaxErrorException(
           message    = message,
           sqlState   = sqlState,
@@ -110,7 +103,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case SQLState.FEATURE_NOT_SUPPORTED_EXCEPTION =>
+      case Some(SQLState.FEATURE_NOT_SUPPORTED_EXCEPTION) =>
         SQLFeatureNotSupportedException(
           message    = message,
           sqlState   = sqlState,
@@ -118,7 +111,7 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-      case unknown =>
+      case Some(_) =>
         SQLException(
           message    = message,
           sqlState   = sqlState,
@@ -126,7 +119,12 @@ case class ERRPacket(
           sql        = sql,
           detail     = Some(errorMessage)
         )
-    }
+      case None => SQLException(
+        message    = message,
+        vendorCode = Some(errorCode),
+        sql        = sql,
+        detail     = Some(errorMessage)
+      )
 
   def toException(message: String): SQLException = toException(message, None)
 
