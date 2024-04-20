@@ -6,6 +6,11 @@
 
 package ldbc.connector
 
+import ldbc.connector.data.*
+import ldbc.connector.util.Version
+import ldbc.connector.exception.SQLException
+import ldbc.connector.net.packet.response.*
+
 /**
  * An object that can be used to get information about the types
  * and properties of the columns in a <code>ResultSet</code> object.
@@ -48,6 +53,14 @@ trait ResultSetMetaData:
    * @return <code>true</code> if so; <code>false</code> otherwise
    */
   def isCaseSensitive(column: Int): Boolean
+
+  /**
+   * Indicates whether the designated column can be used in a where clause.
+   *
+   * @param column the first column is 1, the second is 2, ...
+   * @return <code>true</code> if so; <code>false</code> otherwise
+   */
+  def isSearchable(column: Int): Boolean
 
   /**
    * Indicates whether the designated column is a cash value.
@@ -210,3 +223,108 @@ object ResultSetMetaData:
      * nullability of a column's values is unknown.
     */
   val columnNullableUnknown = 2
+
+  def apply(columns: Vector[ColumnDefinitionPacket], version: Version): ResultSetMetaData =
+    new ResultSetMetaData:
+      override def getColumnCount(): Int = columns.size
+
+      override def isAutoIncrement(column: Int): Boolean =
+        unsafeFindByIndex(column).flags.contains(ColumnDefinitionFlags.AUTO_INCREMENT_FLAG)
+
+      override def isCaseSensitive(column: Int): Boolean = unsafeFindByIndex(column).columnType match
+        case ColumnDataType.MYSQL_TYPE_BIT | ColumnDataType.MYSQL_TYPE_TINY | ColumnDataType.MYSQL_TYPE_SHORT |
+          ColumnDataType.MYSQL_TYPE_LONG | ColumnDataType.MYSQL_TYPE_INT24 | ColumnDataType.MYSQL_TYPE_LONGLONG |
+          ColumnDataType.MYSQL_TYPE_FLOAT | ColumnDataType.MYSQL_TYPE_DOUBLE | ColumnDataType.MYSQL_TYPE_DATE |
+          ColumnDataType.MYSQL_TYPE_YEAR | ColumnDataType.MYSQL_TYPE_TIME | ColumnDataType.MYSQL_TYPE_TIMESTAMP |
+          ColumnDataType.MYSQL_TYPE_TIMESTAMP2 | ColumnDataType.MYSQL_TYPE_DATETIME =>
+          false
+        case ColumnDataType.MYSQL_TYPE_STRING | ColumnDataType.MYSQL_TYPE_VARCHAR |
+          ColumnDataType.MYSQL_TYPE_VAR_STRING | ColumnDataType.MYSQL_TYPE_JSON | ColumnDataType.MYSQL_TYPE_ENUM |
+          ColumnDataType.MYSQL_TYPE_SET =>
+          CharsetMapping.getStaticCollationNameForCollationIndex(getMysqlCharsetForJavaEncoding("UTF-8")).fold(false)(_.endsWith("_ci")) // TODO: Get the actual character code from the server and use it.
+        case _ => true
+
+      override def isSearchable(column: Int): Boolean = true
+
+      override def isCurrency(column: Int): Boolean = false
+
+      override def isNullable(column: Int): Int =
+        if unsafeFindByIndex(column).flags.contains(ColumnDefinitionFlags.NOT_NULL_FLAG) then columnNoNulls
+        else columnNullable
+
+      override def isSigned(column: Int): Boolean =
+        unsafeFindByIndex(column).flags.contains(ColumnDefinitionFlags.UNSIGNED_FLAG)
+
+      override def getColumnDisplaySize(column: Int): Int = clampedGetLength(unsafeFindByIndex(column))
+
+      override def getColumnLabel(column: Int): String = unsafeFindByIndex(column) match
+        case definition: ColumnDefinition41Packet  => definition.name
+        case definition: ColumnDefinition320Packet => definition.name
+
+      override def getColumnName(column: Int): String = unsafeFindByIndex(column) match
+        case definition: ColumnDefinition41Packet  => definition.orgName
+        case definition: ColumnDefinition320Packet => definition.name
+
+      override def getSchemaName(column: Int): String = unsafeFindByIndex(column) match
+        case definition: ColumnDefinition41Packet => definition.schema
+        case _: ColumnDefinition320Packet         => ""
+
+      override def getPrecision(column: Int): Int =
+        val definition = unsafeFindByIndex(column)
+        definition.columnType match
+          case ColumnDataType.MYSQL_TYPE_TINY_BLOB | ColumnDataType.MYSQL_TYPE_BLOB |
+               ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB | ColumnDataType.MYSQL_TYPE_LONG_BLOB |
+               ColumnDataType.MYSQL_TYPE_DECIMAL =>
+            clampedGetLength(definition)
+          case _ => clampedGetLength(definition) / getMaxBytesPerChar(getMysqlCharsetForJavaEncoding("UTF-8"), "UTF-8") // TODO: Get the actual character code from the server and use it.
+
+      override def getScale(column: Int): Int = unsafeFindByIndex(column) match
+        case definition: ColumnDefinition41Packet => definition.decimals
+        case _                                    => 0
+
+      override def getTableName(column: Int): String = unsafeFindByIndex(column) match
+        case definition: ColumnDefinition41Packet  => definition.orgTable
+        case definition: ColumnDefinition320Packet => definition.table
+
+      override def getCatalogName(column: Int): String = unsafeFindByIndex(column) match
+        case definition: ColumnDefinition41Packet => definition.catalog
+        case _: ColumnDefinition320Packet         => ""
+
+      override def getColumnType(column: Int): Int =
+        val dataType = unsafeFindByIndex(column).columnType
+        dataType match
+          case ColumnDataType.MYSQL_TYPE_YEAR => ColumnDataType.MYSQL_TYPE_SHORT.code.toInt
+          case _                              => dataType.code.toInt
+
+      override def getColumnTypeName(column: Int): String = unsafeFindByIndex(column).columnType.name
+
+      override def isReadOnly(column: Int): Boolean =
+        val definition = unsafeFindByIndex(column)
+        definition.name.isEmpty && definition.table.isEmpty
+
+      override def isWritable(column: Int): Boolean = !isReadOnly(column)
+
+      override def isDefinitelyWritable(column: Int): Boolean = isWritable(column)
+
+      private def clampedGetLength(definition: ColumnDefinitionPacket): Int =
+        definition match
+          case definition: ColumnDefinition41Packet =>
+            val length = definition.length
+            if length > Int.MaxValue then Int.MaxValue else length
+          case _: ColumnDefinition320Packet => Int.MaxValue
+
+      private def getMysqlCharsetForJavaEncoding(javaEncoding: String): Int =
+        CharsetMapping.getStaticCollationIndexForMysqlCharsetName(CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaEncoding, Some(version)))
+
+      private def getMaxBytesPerChar(charsetIndex: Int, javaCharsetName: String): Int =
+        CharsetMapping.getStaticMysqlCharsetNameForCollationIndex(charsetIndex) match
+          case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
+          case None =>
+            CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaCharsetName, Some(version)) match
+              case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
+              case None => 1
+
+      private def unsafeFindByIndex(index: Int): ColumnDefinitionPacket =
+        columns.lift(index) match
+          case Some(column) => column
+          case None         => throw new SQLException("Column index out of range.")
