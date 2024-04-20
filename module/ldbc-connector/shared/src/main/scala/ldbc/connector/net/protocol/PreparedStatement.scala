@@ -711,8 +711,9 @@ object PreparedStatement:
                               result <-
                                 socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                                   case result: OKPacket => ev.pure(acc :+ result.affectedRows)
-                                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch", acc))
-                                  case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                                  case error: ERRPacket =>
+                                    ev.raiseError(error.toException("Failed to execute batch", acc))
+                                  case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
                                 }
                             yield result
                           }
@@ -897,8 +898,9 @@ object PreparedStatement:
                               result <-
                                 socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
                                   case result: OKPacket => ev.pure(acc :+ result.affectedRows)
-                                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch", acc))
-                                  case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                                  case error: ERRPacket =>
+                                    ev.raiseError(error.toException("Failed to execute batch", acc))
+                                  case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
                                 }
                             yield result
                           }
