@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.connector
 
 /**
@@ -186,21 +192,21 @@ trait ResultSetMetaData:
   def isDefinitelyWritable(column: Int): Boolean
 
 object ResultSetMetaData:
-  
-    /**
+
+  /**
      * The constant indicating that a
      * column does not allow <code>NULL</code> values.
      */
-    val columnNoNulls = 0
-  
-    /**
+  val columnNoNulls = 0
+
+  /**
      * The constant indicating that a
      * column allows <code>NULL</code> values.
     */
-    val columnNullable = 1
-  
-    /**
+  val columnNullable = 1
+
+  /**
      * The constant indicating that the
      * nullability of a column's values is unknown.
     */
-    val columnNullableUnknown = 2
+  val columnNullableUnknown = 2
