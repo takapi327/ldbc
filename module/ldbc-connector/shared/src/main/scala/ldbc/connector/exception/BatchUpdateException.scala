@@ -17,18 +17,6 @@ import org.typelevel.otel4s.Attribute
  * batch update, that is, all commands that were executed before the error
  * occurred.  The order of elements in an array of update counts
  * corresponds to the order in which commands were added to the batch.
- * <P>
- * After a command in a batch update fails to execute properly
- * and a <code>BatchUpdateException</code> is thrown, the driver
- * may or may not continue to process the remaining commands in
- * the batch.  If the driver continues processing after a failure,
- * the array returned by the method
- * <code>BatchUpdateException.getUpdateCounts</code> will have
- * an element for every command in the batch rather than only
- * elements for the commands that executed successfully before
- * the error.  In the case where the driver continues processing
- * commands, the array element for any command
- * that failed is <code>Statement.EXECUTE_FAILED</code>.
  */
 class BatchUpdateException(
   message:          String,
