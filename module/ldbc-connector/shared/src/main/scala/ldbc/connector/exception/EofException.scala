@@ -9,8 +9,7 @@ package ldbc.connector.exception
 case class EofException(
   bytesRequested: Int,
   bytesRead:      Int
-) extends MySQLException(
-    sql     = None,
+) extends SQLException(
     message = "EOF was reached on the network socket.",
     detail = Some(
       s"Attempt to read $bytesRequested byte(s) failed after $bytesRead bytes(s) were read, because the connection had closed."

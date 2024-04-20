@@ -20,13 +20,13 @@ class ConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
-  test("Passing an empty string to host causes MySQLException") {
+  test("Passing an empty string to host causes SQLException") {
     val connection = Connection[IO](
       host = "",
       port = 13306,
       user = "root"
     )
-    interceptIO[MySQLException] {
+    interceptIO[SQLClientInfoException] {
       connection.use(_ => IO.unit)
     }
   }
@@ -42,24 +42,24 @@ class ConnectionTest extends CatsEffectSuite:
     }
   }
 
-  test("Passing a negative value to Port causes MySQLException") {
+  test("Passing a negative value to Port causes SQLException") {
     val connection = Connection[IO](
       host = "127.0.0.1",
       port = -1,
       user = "root"
     )
-    interceptIO[MySQLException] {
+    interceptIO[SQLClientInfoException] {
       connection.use(_ => IO.unit)
     }
   }
 
-  test("MySQLException occurs when passing more than 65535 values to Port") {
+  test("SQLException occurs when passing more than 65535 values to Port") {
     val connection = Connection[IO](
       host = "127.0.0.1",
       port = 65536,
       user = "root"
     )
-    interceptIO[MySQLException] {
+    interceptIO[SQLClientInfoException] {
       connection.use(_ => IO.unit)
     }
   }
@@ -144,7 +144,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc_sha256_user",
       password = Some("ldbc_sha256_password")
     )
-    interceptIO[MySQLException] {
+    interceptIO[SQLInvalidAuthorizationSpecException] {
       connection.use(_ => IO.unit)
     }
   }
@@ -335,8 +335,14 @@ class ConnectionTest extends CatsEffectSuite:
       ssl      = SSL.Trusted
     )
 
-    interceptMessageIO[ERRPacketException](
-      "message: Failed to execute query, sql: SELECT 1; SELECT2, detail: Error code: 1064, SQL state: 42000, Error message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1"
+    interceptMessageIO[SQLSyntaxErrorException](
+      List(
+        "Message: Failed to execute query",
+        "SQLState: 42000",
+        "Vendor Code: 1064",
+        "SQL: SELECT 1; SELECT2",
+        "Detail: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SELECT2' at line 1"
+      ).mkString(", ")
     )(connection.use { conn =>
       for
         statement <- conn.createStatement()

@@ -26,7 +26,7 @@ import ldbc.connector.data.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.response.StatisticsPacket
-import ldbc.connector.exception.MySQLException
+import ldbc.connector.exception.*
 import ldbc.connector.codec.text.text
 
 /**
@@ -330,12 +330,12 @@ object Connection:
 
     override def commit(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
       if !autoCommit then protocol.statement().flatMap(_.executeQuery("COMMIT")).void
-      else ev.raiseError(new MySQLException("Can't call commit when autocommit=true"))
+      else ev.raiseError(new SQLNonTransientException("Can't call commit when autocommit=true"))
     }
 
     override def rollback(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
       if !autoCommit then protocol.statement().flatMap(_.executeQuery("ROLLBACK")).void
-      else ev.raiseError(new MySQLException("Can't call rollback when autocommit=true"))
+      else ev.raiseError(new SQLNonTransientException("Can't call rollback when autocommit=true"))
     }
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
@@ -350,8 +350,8 @@ object Connection:
         case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
         case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
         case Some("SERIALIZABLE")     => Connection.TransactionIsolationLevel.SERIALIZABLE
-        case Some(unknown)            => throw new MySQLException(s"Unknown transaction isolation level $unknown")
-        case None                     => throw new MySQLException("Unknown transaction isolation level")
+        case Some(unknown) => throw new SQLFeatureNotSupportedException(s"Unknown transaction isolation level $unknown")
+        case None          => throw new SQLFeatureNotSupportedException("Unknown transaction isolation level")
 
     override def createStatement(): F[Statement[F]] = protocol.statement()
 
@@ -476,7 +476,7 @@ object Connection:
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
-      Resource.eval(ev.raiseError(new MySQLException(sql = None, message = msg)))
+      Resource.eval(ev.raiseError(new SQLClientInfoException(msg)))
 
     def sockets: Resource[F, Socket[F]] =
       (Hostname.fromString(host), Port.fromInt(port)) match

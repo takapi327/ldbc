@@ -17,7 +17,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 import ldbc.connector.authenticator.*
 import ldbc.connector.util.Version
 import ldbc.connector.data.CapabilitiesFlags
-import ldbc.connector.exception.MySQLException
+import ldbc.connector.exception.*
 import ldbc.connector.net.PacketSocket
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
@@ -46,12 +46,12 @@ trait Authentication[F[_]]:
    * @param version
    *   MySQL Server version
    */
-  protected def determinatePlugin(pluginName: String, version: Version): Either[MySQLException, AuthenticationPlugin] =
+  protected def determinatePlugin(pluginName: String, version: Version): Either[SQLException, AuthenticationPlugin] =
     pluginName match
       case "mysql_native_password" => Right(MysqlNativePasswordPlugin())
       case "sha256_password"       => Right(Sha256PasswordPlugin())
       case "caching_sha2_password" => Right(CachingSha2PasswordPlugin(version))
-      case _                       => Left(new MySQLException(s"Unknown authentication plugin: $pluginName"))
+      case _ => Left(new SQLInvalidAuthorizationSpecException(s"Unknown authentication plugin: $pluginName"))
 
   /**
    * Start the authentication process.
@@ -124,13 +124,13 @@ object Authentication:
                   password,
                   scrambleBuff.getOrElse(initialPacket.scrambleBuff)
                 ) *> readUntilOk(plugin, password)
-              case _ => ev.raiseError(new MySQLException("Unexpected authentication method"))
+              case _ => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected authentication method"))
           case more: AuthMoreDataPacket        => readUntilOk(plugin, password)
           case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password)
           case _: OKPacket                     => ev.unit
           case error: ERRPacket                => ev.raiseError(error.toException("Connection error"))
           case unknown: UnknownPacket          => ev.raiseError(unknown.toException("Error during database operation"))
-          case _                               => ev.raiseError(new MySQLException("Unexpected packet"))
+          case _ => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected packet"))
         }
 
       /**
