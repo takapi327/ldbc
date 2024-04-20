@@ -109,7 +109,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (1, 1)")
           _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (2, 2)")
           _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (3, 'failed')")
-          result <- statement.executeBatch()
+          result    <- statement.executeBatch()
         yield result
       }
     )
@@ -234,9 +234,10 @@ class StatementBatchTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           preparedStatement <- conn.clientPreparedStatement("UPDATE `batch_test` SET `c2` = ? WHERE `c1` = ?")
-          _      <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
-          _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
-          _      <- preparedStatement.setString(1, "failed") *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
+          _ <- preparedStatement.setInt(1, 1) *> preparedStatement.setInt(2, 1) *> preparedStatement.addBatch()
+          _ <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
+          _ <-
+            preparedStatement.setString(1, "failed") *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
         yield result
       }
@@ -272,7 +273,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _                 <- preparedStatement.setInt(1, 1) *> preparedStatement.addBatch()
           _                 <- preparedStatement.setInt(1, 2) *> preparedStatement.addBatch()
           _                 <- preparedStatement.setString(1, "failed") *> preparedStatement.addBatch()
-          result <- preparedStatement.executeBatch()
+          result            <- preparedStatement.executeBatch()
         yield result
       }
     )

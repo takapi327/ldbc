@@ -30,9 +30,10 @@ class BatchUpdateException(
 ) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket):
 
   override def getMessage: String =
-    s"Message: $message, Update Counts: [${ updateCounts.mkString(",") }]${ sqlState.fold("")(s => s", SQLState: $s") }${ vendorCode.fold("")(c => s", Vendor Code: $c") }${ sql
-      .fold("")(s => s", SQL: $s") }${ detail.fold("")(d => s", Detail: $d") }${ hint
-      .fold("")(h => s", Hint: $h") }${ originatedPacket.fold("")(p => s", Point of Origin: $p") }"
+    s"Message: $message, Update Counts: [${ updateCounts.mkString(",") }]${ sqlState
+        .fold("")(s => s", SQLState: $s") }${ vendorCode.fold("")(c => s", Vendor Code: $c") }${ sql
+        .fold("")(s => s", SQL: $s") }${ detail.fold("")(d => s", Detail: $d") }${ hint
+        .fold("")(h => s", Hint: $h") }${ originatedPacket.fold("")(p => s", Point of Origin: $p") }"
 
   /**
    * Summarize error information into attributes.
