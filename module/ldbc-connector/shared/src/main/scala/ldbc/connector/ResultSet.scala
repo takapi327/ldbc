@@ -378,50 +378,50 @@ object ResultSet:
   ) extends ResultSet:
 
     private var currentCursor: Int                        = 0
-    private var currentRow:    Option[ResultSetRowPacket] = rows.headOption
+    private var currentRow:    Option[ResultSetRowPacket] = rows.lift(currentCursor)
 
     def next(): Boolean =
-      if currentCursor >= rows.size then
+      if currentCursor <= rows.size then
         currentRow = rows.lift(currentCursor)
         currentCursor += 1
         currentRow.isDefined
       else false
 
     override def getString(columnIndex: Int): Option[String] =
-      currentRow.flatMap(row => text.decode(columnIndex, row.values).toOption)
+      currentRow.flatMap(row => text.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
 
     override def getBoolean(columnIndex: Int): Boolean =
-      currentRow.flatMap(row => boolean.decode(columnIndex, row.values).toOption).getOrElse(false)
+      currentRow.flatMap(row => boolean.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(false)
 
     override def getByte(columnIndex: Int): Byte =
-      currentRow.flatMap(row => bit.decode(columnIndex, row.values).toOption).getOrElse(0)
+      currentRow.flatMap(row => tinyint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
 
     override def getShort(columnIndex: Int): Short =
-      currentRow.flatMap(row => smallint.decode(columnIndex, row.values).toOption).getOrElse(0)
+      currentRow.flatMap(row => smallint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
 
     override def getInt(columnIndex: Int): Int =
-      currentRow.flatMap(row => int.decode(columnIndex, row.values).toOption).getOrElse(0)
+      currentRow.flatMap(row => int.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
 
     override def getLong(columnIndex: Int): Long =
-      currentRow.flatMap(row => bigint.decode(columnIndex, row.values).toOption).getOrElse(0L)
+      currentRow.flatMap(row => bigint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0L)
 
     override def getFloat(columnIndex: Int): Float =
-      currentRow.flatMap(row => float.decode(columnIndex, row.values).toOption).getOrElse(0f)
+      currentRow.flatMap(row => float.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0f)
 
     override def getDouble(columnIndex: Int): Double =
-      currentRow.flatMap(row => double.decode(columnIndex, row.values).toOption).getOrElse(0.toDouble)
+      currentRow.flatMap(row => double.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0.toDouble)
 
     override def getBytes(columnIndex: Int): Option[Array[Byte]] =
-      currentRow.flatMap(row => binary(255).decode(columnIndex, row.values).toOption)
+      currentRow.flatMap(row => binary(255).decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
 
     override def getDate(columnIndex: Int): Option[LocalDate] =
-      currentRow.flatMap(row => date.decode(columnIndex, row.values).toOption)
+      currentRow.flatMap(row => date.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
 
     override def getTime(columnIndex: Int): Option[LocalTime] =
-      currentRow.flatMap(row => time.decode(columnIndex, row.values).toOption)
+      currentRow.flatMap(row => time.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
 
     override def getTimestamp(columnIndex: Int): Option[LocalDateTime] =
-      currentRow.flatMap(row => timestamp.decode(columnIndex, row.values).toOption)
+      currentRow.flatMap(row => timestamp.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
 
     override def getString(columnLabel: String): Option[String] =
       columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
@@ -516,7 +516,7 @@ object ResultSet:
     override def getMetaData(): ResultSetMetaData = ResultSetMetaData(columns, version)
 
     override def getBigDecimal(columnIndex: Int): Option[BigDecimal] =
-      currentRow.flatMap(row => decimal().decode(columnIndex, row.values).toOption)
+      currentRow.flatMap(row => decimal().decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
 
     override def getBigDecimal(columnLabel: String): Option[BigDecimal] =
       columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
