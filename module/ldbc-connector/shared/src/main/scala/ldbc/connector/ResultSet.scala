@@ -391,7 +391,9 @@ object ResultSet:
       currentRow.flatMap(row => text.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
 
     override def getBoolean(columnIndex: Int): Boolean =
-      currentRow.flatMap(row => boolean.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(false)
+      currentRow
+        .flatMap(row => boolean.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+        .getOrElse(false)
 
     override def getByte(columnIndex: Int): Byte =
       currentRow.flatMap(row => tinyint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
@@ -409,7 +411,9 @@ object ResultSet:
       currentRow.flatMap(row => float.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0f)
 
     override def getDouble(columnIndex: Int): Double =
-      currentRow.flatMap(row => double.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0.toDouble)
+      currentRow
+        .flatMap(row => double.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+        .getOrElse(0.toDouble)
 
     override def getBytes(columnIndex: Int): Option[Array[Byte]] =
       currentRow.flatMap(row => binary(255).decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
