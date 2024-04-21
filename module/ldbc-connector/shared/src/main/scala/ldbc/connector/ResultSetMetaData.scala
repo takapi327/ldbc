@@ -333,6 +333,6 @@ object ResultSetMetaData:
               case None              => 1
 
       private def unsafeFindByIndex(index: Int): ColumnDefinitionPacket =
-        columns.lift(index) match
+        columns.lift(index - 1) match
           case Some(column) => column
           case None         => throw new SQLException("Column index out of range.")
