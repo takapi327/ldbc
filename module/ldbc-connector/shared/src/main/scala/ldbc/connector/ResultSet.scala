@@ -371,7 +371,7 @@ trait ResultSet:
 
 object ResultSet:
 
-  case class Impl(
+  private[ldbc] case class Impl(
     columns: Vector[ColumnDefinitionPacket],
     rows:    Vector[ResultSetRowPacket],
     version: Version

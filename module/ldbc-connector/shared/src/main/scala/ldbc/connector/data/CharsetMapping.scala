@@ -417,13 +417,15 @@ object CharsetMapping:
   lazy val COLLATION_INDEX_TO_CHARSET: Map[Int, MysqlCharset] =
     collations.map(collation => collation.index -> collation.charset).toMap
 
-  lazy val CHARSET_NAME_TO_CHARSET: Map[String, MysqlCharset] = charsets.map(charset => charset.charsetName -> charset).toMap
+  lazy val CHARSET_NAME_TO_CHARSET: Map[String, MysqlCharset] =
+    charsets.map(charset => charset.charsetName -> charset).toMap
   lazy val JAVA_ENCODING_UC_TO_MYSQL_CHARSET: Map[String, List[MysqlCharset]] =
-    charsets.flatMap { charset =>
-      charset.javaEncodingsUc.map { uc =>
-        uc -> charset
+    charsets
+      .flatMap { charset =>
+        charset.javaEncodingsUc.map { uc =>
+          uc -> charset
+        }
       }
-    }
       .groupBy(_._1)
       .map { case (k, v) => k -> v.map(_._2) }
 
