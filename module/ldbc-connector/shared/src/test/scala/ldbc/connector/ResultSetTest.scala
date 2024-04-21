@@ -307,9 +307,301 @@ class ResultSetTest extends CatsEffectSuite:
     assertEquals(records.result(), List((1, 2, 0), (3, 4, 0), (5, 6, 0), (7, 8, 0)))
   }
 
-  private def column(columnName: String, `type`: ColumnDataType): ColumnDefinitionPacket =
-    new ColumnDefinitionPacket:
-      override def table:      String                     = "table"
-      override def name:       String                     = columnName
-      override def columnType: ColumnDataType             = `type`
-      override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+  test("The total number of columns obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c3", ColumnDataType.MYSQL_TYPE_LONG)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getColumnCount(), 3)
+  }
+
+  test("The column name obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c3", ColumnDataType.MYSQL_TYPE_LONG)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getColumnName(1), "c1")
+    assertEquals(resultSetMetaData.getColumnName(2), "c2")
+    assertEquals(resultSetMetaData.getColumnName(3), "c3")
+  }
+
+  test("The column type obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getColumnType(1), ColumnDataType.MYSQL_TYPE_LONG.code.toInt)
+    assertEquals(resultSetMetaData.getColumnType(2), ColumnDataType.MYSQL_TYPE_DOUBLE.code.toInt)
+    assertEquals(resultSetMetaData.getColumnType(3), ColumnDataType.MYSQL_TYPE_STRING.code.toInt)
+  }
+
+  test("The column type name obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getColumnTypeName(1), "INT")
+    assertEquals(resultSetMetaData.getColumnTypeName(2), "DOUBLE")
+    assertEquals(resultSetMetaData.getColumnTypeName(3), "CHAR")
+  }
+
+  test("The column label obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG, Some("label1")),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE, Some("label2")),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING, Some("label3"))
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getColumnLabel(1), "label1")
+    assertEquals(resultSetMetaData.getColumnLabel(2), "label2")
+    assertEquals(resultSetMetaData.getColumnLabel(3), "label3")
+  }
+
+  test("The column display size obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getColumnDisplaySize(1), 0)
+    assertEquals(resultSetMetaData.getColumnDisplaySize(2), 0)
+    assertEquals(resultSetMetaData.getColumnDisplaySize(3), 0)
+  }
+
+  test("The column precision obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getPrecision(1), 0)
+    assertEquals(resultSetMetaData.getPrecision(2), 0)
+    assertEquals(resultSetMetaData.getPrecision(3), 0)
+  }
+
+  test("The column scale obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE , useScale = true),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.getScale(1), 0)
+    assertEquals(resultSetMetaData.getScale(2), 2)
+    assertEquals(resultSetMetaData.getScale(3), 0)
+  }
+
+  test("The column is signed obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG, isSigned = true),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isSigned(1), true)
+    assertEquals(resultSetMetaData.isSigned(2), false)
+    assertEquals(resultSetMetaData.isSigned(3), false)
+  }
+  
+  test("The column is nullable obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG, isNullable = false),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isNullable(1), ResultSetMetaData.columnNoNulls)
+    assertEquals(resultSetMetaData.isNullable(2), ResultSetMetaData.columnNullable)
+    assertEquals(resultSetMetaData.isNullable(3), ResultSetMetaData.columnNullable)
+  }
+  
+  test("The column is case sensitive obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isCaseSensitive(1), false)
+    assertEquals(resultSetMetaData.isCaseSensitive(2), false)
+    assertEquals(resultSetMetaData.isCaseSensitive(3), false)
+  }
+  
+  test("The column is searchable obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isSearchable(1), true)
+    assertEquals(resultSetMetaData.isSearchable(2), true)
+    assertEquals(resultSetMetaData.isSearchable(3), true)
+  }
+  
+  test("The column is writable obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isWritable(1), true)
+    assertEquals(resultSetMetaData.isWritable(2), true)
+    assertEquals(resultSetMetaData.isWritable(3), true)
+  }
+  
+  test("The column is definitely writable obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isDefinitelyWritable(1), true)
+    assertEquals(resultSetMetaData.isDefinitelyWritable(2), true)
+    assertEquals(resultSetMetaData.isDefinitelyWritable(3), true)
+  }
+  
+  test("The column is read only obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isReadOnly(1), false)
+    assertEquals(resultSetMetaData.isReadOnly(2), false)
+    assertEquals(resultSetMetaData.isReadOnly(3), false)
+  }
+  
+  test("The column is auto increment obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG, isAutoInc = true),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isAutoIncrement(1), true)
+    assertEquals(resultSetMetaData.isAutoIncrement(2), false)
+    assertEquals(resultSetMetaData.isAutoIncrement(3), false)
+  }
+  
+  test("The column is currency obtained from the meta-information of ResultSet matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_NEWDECIMAL),
+        column("c2", ColumnDataType.MYSQL_TYPE_NEWDECIMAL),
+        column("c3", ColumnDataType.MYSQL_TYPE_NEWDECIMAL)
+      ),
+      Vector.empty,
+      Version(0, 0, 0)
+    )
+    val resultSetMetaData = resultSet.getMetaData()
+    assertEquals(resultSetMetaData.isCurrency(1), false)
+    assertEquals(resultSetMetaData.isCurrency(2), false)
+    assertEquals(resultSetMetaData.isCurrency(3), false)
+  }
+
+  private def column(
+    columnName: String,
+    `type`: ColumnDataType,
+    alias: Option[String] = None,
+    useScale: Boolean = false,
+    isSigned: Boolean = false,
+    isNullable: Boolean = true,
+    isAutoInc: Boolean = false
+  ): ColumnDefinitionPacket =
+    val flags = Seq(
+      if isSigned then Some(ColumnDefinitionFlags.UNSIGNED_FLAG) else None,
+      if isNullable then None else Some(ColumnDefinitionFlags.NOT_NULL_FLAG),
+      if isAutoInc then Some(ColumnDefinitionFlags.AUTO_INCREMENT_FLAG) else None
+    ).flatten
+    ColumnDefinition41Packet(
+      catalog = "def",
+      schema = "test_database",
+      table = "test_table",
+      orgTable = "test",
+      name = alias.getOrElse(columnName),
+      orgName = columnName,
+      length = 0,
+      characterSet = 33,
+      columnLength = 11,
+      columnType = `type`,
+      flags = flags,
+      decimals = if useScale then 2 else 0
+    )
