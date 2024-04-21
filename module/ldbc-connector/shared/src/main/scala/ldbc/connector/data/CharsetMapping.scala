@@ -67,7 +67,7 @@ object CharsetMapping:
   val MYSQL_COLLATION_INDEX_utf8mb4_0900_ai_ci = 255
   val MYSQL_COLLATION_INDEX_binary             = 63
 
-  val charsets: List[MysqlCharset] =
+  private val charsets: List[MysqlCharset] =
     List(
       MysqlCharset(MYSQL_CHARSET_NAME_ascii, 1, 0, List("US-ASCII", "ASCII")),
       MysqlCharset(MYSQL_CHARSET_NAME_big5, 2, 0, List("Big5")),
@@ -413,18 +413,26 @@ object CharsetMapping:
     Collation(323, "utf8mb4_mn_cyrl_0900_as_cs", 0, MYSQL_CHARSET_NAME_utf8mb4)
   )
 
-  val COLLATION_INDEX_TO_COLLATION_NAME: List[String] = collations.map(_.charset.charsetName)
-  val COLLATION_INDEX_TO_CHARSET: Map[Int, MysqlCharset] =
+  lazy val COLLATION_INDEX_TO_COLLATION_NAME: List[String] = collations.map(_.charset.charsetName)
+  lazy val COLLATION_INDEX_TO_CHARSET: Map[Int, MysqlCharset] =
     collations.map(collation => collation.index -> collation.charset).toMap
 
-  val CHARSET_NAME_TO_CHARSET: Map[String, MysqlCharset] = charsets.map(charset => charset.charsetName -> charset).toMap
-  val JAVA_ENCODING_UC_TO_MYSQL_CHARSET: Map[String, List[MysqlCharset]] = ???
-  val CHARSET_NAME_TO_COLLATION_INDEX: Map[String, Int] = charsets
+  lazy val CHARSET_NAME_TO_CHARSET: Map[String, MysqlCharset] = charsets.map(charset => charset.charsetName -> charset).toMap
+  lazy val JAVA_ENCODING_UC_TO_MYSQL_CHARSET: Map[String, List[MysqlCharset]] =
+    charsets.flatMap { charset =>
+      charset.javaEncodingsUc.map { uc =>
+        uc -> charset
+      }
+    }
+      .groupBy(_._1)
+      .map { case (k, v) => k -> v.map(_._2) }
+
+  lazy val CHARSET_NAME_TO_COLLATION_INDEX: Map[String, Int] = charsets
     .map(charset =>
       charset.charsetName -> collations.find(_.charset.charsetName == charset.charsetName).fold(0)(_.index)
     )
     .toMap
-  val COLLATION_NAME_TO_COLLATION_INDEX: Map[String, Int] =
+  lazy val COLLATION_NAME_TO_COLLATION_INDEX: Map[String, Int] =
     collations.map(collation => collation.collationNames.headOption.getOrElse("") -> collation.index).toMap
 
   def getStaticMysqlCharsetNameForCollationIndex(collationIndex: Int): Option[String] =
@@ -547,4 +555,6 @@ object Collation:
     this.apply(index, List(collationName), priority, charsetName)
 
   def apply(index: Int, collationNames: List[String], priority: Int, charsetName: String): Collation =
-    new Collation(index, collationNames, priority, CharsetMapping.CHARSET_NAME_TO_CHARSET(charsetName))
+    CharsetMapping.CHARSET_NAME_TO_CHARSET.get(charsetName) match
+      case Some(charset) => new Collation(index, collationNames, priority, charset)
+      case None          => throw new IllegalArgumentException(s"Unknown charset: $charsetName")
