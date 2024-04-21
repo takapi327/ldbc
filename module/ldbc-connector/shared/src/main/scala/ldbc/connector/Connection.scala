@@ -345,7 +345,7 @@ object Connection:
       for
         statement <- protocol.statement()
         result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
-      yield result.rows.headOption.flatMap(_.values.headOption).flatten match
+      yield result.getString(1) match
         case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
         case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
         case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ

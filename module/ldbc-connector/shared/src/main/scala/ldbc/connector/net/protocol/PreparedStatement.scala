@@ -586,7 +586,7 @@ object PreparedStatement:
             resetSequenceId *>
             socket.send(ComQueryPacket(buildQuery(sql, params), initialPacket.capabilityFlags, ListMap.empty)) *>
             socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-              case _: OKPacket      => ev.pure(ResultSet.empty)
+              case _: OKPacket      => ev.pure(ResultSet.empty(initialPacket.serverVersion))
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case result: ColumnsNumberPacket =>
                 for
@@ -600,9 +600,7 @@ object PreparedStatement:
                       ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                       Vector.empty
                     )
-                yield new ResultSet:
-                  override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-                  override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+                yield ResultSet(columnDefinitions, resultSetRow, initialPacket.serverVersion)
             }
         } <* params.set(ListMap.empty)
       }
@@ -789,9 +787,7 @@ object PreparedStatement:
                             Vector.empty
                           )
           _ <- params.set(ListMap.empty)
-        yield new ResultSet:
-          override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-          override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+        yield ResultSet(columnDefinitions, resultSetRow, initialPacket.serverVersion)
       }
 
     override def executeUpdate(): F[Int] =
