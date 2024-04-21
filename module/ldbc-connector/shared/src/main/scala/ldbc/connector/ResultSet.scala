@@ -377,8 +377,8 @@ object ResultSet:
     version: Version
   ) extends ResultSet:
 
-    private var currentCursor: Int = 0
-    private var currentRow: Option[ResultSetRowPacket] = rows.headOption
+    private var currentCursor: Int                        = 0
+    private var currentRow:    Option[ResultSetRowPacket] = rows.headOption
 
     def next(): Boolean =
       if currentCursor >= rows.size then
@@ -424,63 +424,93 @@ object ResultSet:
       currentRow.flatMap(row => timestamp.decode(columnIndex, row.values).toOption)
 
     override def getString(columnLabel: String): Option[String] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap { case (_, index) =>
-        getString(index + 1)
+      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+        case (_, index) =>
+          getString(index + 1)
       }
 
     override def getBoolean(columnLabel: String): Boolean =
-      columns.zipWithIndex.find(_._1.name == columnLabel).exists { case (_, index) =>
-        getBoolean(index + 1)
+      columns.zipWithIndex.find(_._1.name == columnLabel).exists {
+        case (_, index) =>
+          getBoolean(index + 1)
       }
 
     override def getByte(columnLabel: String): Byte =
-      columns.zipWithIndex.find(_._1.name == columnLabel).map { case (_, index) =>
-        getByte(index + 1)
-      }.getOrElse(0)
+      columns.zipWithIndex
+        .find(_._1.name == columnLabel)
+        .map {
+          case (_, index) =>
+            getByte(index + 1)
+        }
+        .getOrElse(0)
 
     override def getShort(columnLabel: String): Short =
-      columns.zipWithIndex.find(_._1.name == columnLabel).map { case (_, index) =>
-        getShort(index + 1)
-      }.getOrElse(0)
+      columns.zipWithIndex
+        .find(_._1.name == columnLabel)
+        .map {
+          case (_, index) =>
+            getShort(index + 1)
+        }
+        .getOrElse(0)
 
     override def getInt(columnLabel: String): Int =
-      columns.zipWithIndex.find(_._1.name == columnLabel).map { case (_, index) =>
-        getInt(index + 1)
-      }.getOrElse(0)
+      columns.zipWithIndex
+        .find(_._1.name == columnLabel)
+        .map {
+          case (_, index) =>
+            getInt(index + 1)
+        }
+        .getOrElse(0)
 
     override def getLong(columnLabel: String): Long =
-      columns.zipWithIndex.find(_._1.name == columnLabel).map { case (_, index) =>
-        getLong(index + 1)
-      }.getOrElse(0L)
+      columns.zipWithIndex
+        .find(_._1.name == columnLabel)
+        .map {
+          case (_, index) =>
+            getLong(index + 1)
+        }
+        .getOrElse(0L)
 
     override def getFloat(columnLabel: String): Float =
-      columns.zipWithIndex.find(_._1.name == columnLabel).map { case (_, index) =>
-        getFloat(index + 1)
-      }.getOrElse(0f)
+      columns.zipWithIndex
+        .find(_._1.name == columnLabel)
+        .map {
+          case (_, index) =>
+            getFloat(index + 1)
+        }
+        .getOrElse(0f)
 
     override def getDouble(columnLabel: String): Double =
-      columns.zipWithIndex.find(_._1.name == columnLabel).map { case (_, index) =>
-        getDouble(index + 1)
-      }.getOrElse(0.toDouble)
+      columns.zipWithIndex
+        .find(_._1.name == columnLabel)
+        .map {
+          case (_, index) =>
+            getDouble(index + 1)
+        }
+        .getOrElse(0.toDouble)
 
     override def getBytes(columnLabel: String): Option[Array[Byte]] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap { case (_, index) =>
-        getBytes(index + 1)
+      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+        case (_, index) =>
+          getBytes(index + 1)
       }
 
     override def getDate(columnLabel: String): Option[LocalDate] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap { case (_, index) =>
-        getDate(index + 1)
+      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+        case (_, index) =>
+          getDate(index + 1)
       }
 
     override def getTime(columnLabel: String): Option[LocalTime] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap { case (_, index) =>
-        getTime(index + 1)
+      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+        case (_, index) =>
+          getTime(index + 1)
       }
 
     override def getTimestamp(columnLabel: String): Option[LocalDateTime] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap { case (_, index) =>
-        getTimestamp(index + 1)
+      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+        case (_, index) =>
+          getTimestamp(index + 1)
       }
 
     override def getMetaData(): ResultSetMetaData = ResultSetMetaData(columns, version)
@@ -489,8 +519,9 @@ object ResultSet:
       currentRow.flatMap(row => decimal().decode(columnIndex, row.values).toOption)
 
     override def getBigDecimal(columnLabel: String): Option[BigDecimal] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap { case (_, index) =>
-        getBigDecimal(index + 1)
+      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+        case (_, index) =>
+          getBigDecimal(index + 1)
       }
 
     override def decode[T](codec: Codec[T]): List[T] =
