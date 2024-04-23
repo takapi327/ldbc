@@ -409,160 +409,221 @@ object ResultSet:
     private var currentRow:    Option[ResultSetRowPacket] = rows.lift(currentCursor)
 
     def next(): Boolean =
-      if isClosed then
-        throw new SQLException("Operation not allowed after ResultSet closed")
-      else
+      checkClose {
         if currentCursor <= rows.size then
           currentRow = rows.lift(currentCursor)
           currentCursor += 1
           currentRow.isDefined
         else false
+      }
 
     override def close(): Unit = isClosed = true
 
     override def getString(columnIndex: Int): Option[String] =
-      currentRow.flatMap(row => text.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      checkClose {
+        currentRow.flatMap(row => text.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      }
 
     override def getBoolean(columnIndex: Int): Boolean =
-      currentRow
-        .flatMap(row => boolean.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
-        .getOrElse(false)
+      checkClose {
+        currentRow
+          .flatMap(row => boolean.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+          .getOrElse(false)
+      }
 
     override def getByte(columnIndex: Int): Byte =
-      currentRow.flatMap(row => tinyint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
+      checkClose {
+        currentRow.flatMap(row => tinyint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
+      }
 
     override def getShort(columnIndex: Int): Short =
-      currentRow.flatMap(row => smallint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
+      checkClose {
+        currentRow.flatMap(row => smallint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
+      }
 
     override def getInt(columnIndex: Int): Int =
-      currentRow.flatMap(row => int.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
+      checkClose {
+        currentRow.flatMap(row => int.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0)
+      }
 
     override def getLong(columnIndex: Int): Long =
-      currentRow.flatMap(row => bigint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0L)
+      checkClose {
+        currentRow.flatMap(row => bigint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0L)
+      }
 
     override def getFloat(columnIndex: Int): Float =
-      currentRow.flatMap(row => float.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0f)
+      checkClose {
+        currentRow.flatMap(row => float.decode(columnIndex, List(row.values(columnIndex - 1))).toOption).getOrElse(0f)
+      }
 
     override def getDouble(columnIndex: Int): Double =
-      currentRow
-        .flatMap(row => double.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
-        .getOrElse(0.toDouble)
+      checkClose {
+        currentRow
+          .flatMap(row => double.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+          .getOrElse(0.toDouble)
+      }
 
     override def getBytes(columnIndex: Int): Option[Array[Byte]] =
-      currentRow.flatMap(row => binary(255).decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      checkClose {
+        currentRow.flatMap(row => binary(255).decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      }
 
     override def getDate(columnIndex: Int): Option[LocalDate] =
-      currentRow.flatMap(row => date.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      checkClose {
+        currentRow.flatMap(row => date.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      }
 
     override def getTime(columnIndex: Int): Option[LocalTime] =
-      currentRow.flatMap(row => time.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      checkClose {
+        currentRow.flatMap(row => time.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      }
 
     override def getTimestamp(columnIndex: Int): Option[LocalDateTime] =
-      currentRow.flatMap(row => timestamp.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      checkClose {
+        currentRow.flatMap(row => timestamp.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      }
 
     override def getString(columnLabel: String): Option[String] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
-        case (_, index) =>
-          getString(index + 1)
+      checkClose {
+        columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+          case (_, index) =>
+            getString(index + 1)
+        }
       }
 
     override def getBoolean(columnLabel: String): Boolean =
-      columns.zipWithIndex.find(_._1.name == columnLabel).exists {
-        case (_, index) =>
-          getBoolean(index + 1)
+      checkClose {
+        columns.zipWithIndex.find(_._1.name == columnLabel).exists {
+          case (_, index) =>
+            getBoolean(index + 1)
+        }
       }
 
     override def getByte(columnLabel: String): Byte =
-      columns.zipWithIndex
-        .find(_._1.name == columnLabel)
-        .map {
-          case (_, index) =>
-            getByte(index + 1)
-        }
-        .getOrElse(0)
+      checkClose {
+        columns.zipWithIndex
+          .find(_._1.name == columnLabel)
+          .map {
+            case (_, index) =>
+              getByte(index + 1)
+          }
+          .getOrElse(0)
+      }
 
     override def getShort(columnLabel: String): Short =
-      columns.zipWithIndex
-        .find(_._1.name == columnLabel)
-        .map {
-          case (_, index) =>
-            getShort(index + 1)
-        }
-        .getOrElse(0)
+      checkClose {
+        columns.zipWithIndex
+          .find(_._1.name == columnLabel)
+          .map {
+            case (_, index) =>
+              getShort(index + 1)
+          }
+          .getOrElse(0)
+      }
 
     override def getInt(columnLabel: String): Int =
-      columns.zipWithIndex
-        .find(_._1.name == columnLabel)
-        .map {
-          case (_, index) =>
-            getInt(index + 1)
-        }
-        .getOrElse(0)
+      checkClose {
+        columns.zipWithIndex
+          .find(_._1.name == columnLabel)
+          .map {
+            case (_, index) =>
+              getInt(index + 1)
+          }
+          .getOrElse(0)
+      }
 
     override def getLong(columnLabel: String): Long =
-      columns.zipWithIndex
-        .find(_._1.name == columnLabel)
-        .map {
-          case (_, index) =>
-            getLong(index + 1)
-        }
-        .getOrElse(0L)
+      checkClose {
+        columns.zipWithIndex
+          .find(_._1.name == columnLabel)
+          .map {
+            case (_, index) =>
+              getLong(index + 1)
+          }
+          .getOrElse(0L)
+      }
 
     override def getFloat(columnLabel: String): Float =
-      columns.zipWithIndex
-        .find(_._1.name == columnLabel)
-        .map {
-          case (_, index) =>
-            getFloat(index + 1)
-        }
-        .getOrElse(0f)
+      checkClose {
+        columns.zipWithIndex
+          .find(_._1.name == columnLabel)
+          .map {
+            case (_, index) =>
+              getFloat(index + 1)
+          }
+          .getOrElse(0f)
+      }
 
     override def getDouble(columnLabel: String): Double =
-      columns.zipWithIndex
-        .find(_._1.name == columnLabel)
-        .map {
-          case (_, index) =>
-            getDouble(index + 1)
-        }
-        .getOrElse(0.toDouble)
+      checkClose {
+        columns.zipWithIndex
+          .find(_._1.name == columnLabel)
+          .map {
+            case (_, index) =>
+              getDouble(index + 1)
+          }
+          .getOrElse(0.toDouble)
+      }
 
     override def getBytes(columnLabel: String): Option[Array[Byte]] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
-        case (_, index) =>
-          getBytes(index + 1)
+      checkClose {
+        columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+          case (_, index) =>
+            getBytes(index + 1)
+        }
       }
 
     override def getDate(columnLabel: String): Option[LocalDate] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
-        case (_, index) =>
-          getDate(index + 1)
+      checkClose {
+        columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+          case (_, index) =>
+            getDate(index + 1)
+        }
       }
 
     override def getTime(columnLabel: String): Option[LocalTime] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
-        case (_, index) =>
-          getTime(index + 1)
+      checkClose {
+        columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+          case (_, index) =>
+            getTime(index + 1)
+        }
       }
 
     override def getTimestamp(columnLabel: String): Option[LocalDateTime] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
-        case (_, index) =>
-          getTimestamp(index + 1)
+      checkClose {
+        columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+          case (_, index) =>
+            getTimestamp(index + 1)
+        }
       }
 
-    override def getMetaData(): ResultSetMetaData = ResultSetMetaData(columns, version)
+    override def getMetaData(): ResultSetMetaData =
+      checkClose {
+        ResultSetMetaData(columns, version)
+      }
 
     override def getBigDecimal(columnIndex: Int): Option[BigDecimal] =
-      currentRow.flatMap(row => decimal().decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      checkClose {
+        currentRow.flatMap(row => decimal().decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      }
 
     override def getBigDecimal(columnLabel: String): Option[BigDecimal] =
-      columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
-        case (_, index) =>
-          getBigDecimal(index + 1)
+      checkClose {
+        columns.zipWithIndex.find(_._1.name == columnLabel).flatMap {
+          case (_, index) =>
+            getBigDecimal(index + 1)
+        }
       }
 
     override def decode[T](codec: Codec[T]): List[T] =
-      rows.flatMap(row => codec.decode(0, row.values).toOption).toList
+      checkClose {
+        rows.flatMap(row => codec.decode(0, row.values).toOption).toList
+      }
+
+    private def checkClose[T](f: => T): T =
+      if isClosed then
+        throw new SQLException("Operation not allowed after ResultSet closed")
+      else f
 
   def apply(columns: Vector[ColumnDefinitionPacket], rows: Vector[ResultSetRowPacket], version: Version): ResultSet =
     Impl(columns, rows, version)
