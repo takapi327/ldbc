@@ -404,7 +404,7 @@ object ResultSet:
     version: Version
   ) extends ResultSet:
 
-    private var isClosed: Boolean                         = false
+    private var isClosed:      Boolean                    = false
     private var currentCursor: Int                        = 0
     private var currentRow:    Option[ResultSetRowPacket] = rows.lift(currentCursor)
 
@@ -621,8 +621,7 @@ object ResultSet:
       }
 
     private def checkClose[T](f: => T): T =
-      if isClosed then
-        throw new SQLException("Operation not allowed after ResultSet closed")
+      if isClosed then throw new SQLException("Operation not allowed after ResultSet closed")
       else f
 
   def apply(columns: Vector[ColumnDefinitionPacket], rows: Vector[ResultSetRowPacket], version: Version): ResultSet =
