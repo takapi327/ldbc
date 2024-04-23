@@ -426,6 +426,22 @@ trait ResultSet:
   def isAfterLast(): Boolean
 
   /**
+   * Retrieves whether the cursor is on the last row of
+   * this <code>ResultSet</code> object.
+   *  <strong>Note:</strong> Calling the method <code>isLast</code> may be expensive
+   * because the LDBC
+   * might need to fetch ahead one row in order to determine
+   * whether the current row is the last row in the result set.
+   * <p>
+   * <strong>Note:</strong> Support for the <code>isLast</code> method
+   * is optional for <code>ResultSet</code>s with a result
+   * set type of <code>TYPE_FORWARD_ONLY</code>
+   * @return <code>true</code> if the cursor is on the last row;
+   * <code>false</code> otherwise
+   */
+  def isLast(): Boolean
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -658,9 +674,11 @@ object ResultSet:
 
     override def isBeforeFirst(): Boolean = currentCursor <= 0 && rows.nonEmpty
 
-    override def isAfterLast(): Boolean = currentCursor == rows.size && rows.nonEmpty
+    override def isAfterLast(): Boolean = currentCursor > (rows.size - 1) && rows.nonEmpty
 
     override def isFirst(): Boolean = currentCursor > 0
+
+    override def isLast(): Boolean = currentCursor == rows.size
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
