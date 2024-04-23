@@ -399,6 +399,20 @@ trait ResultSet:
   def isBeforeFirst(): Boolean
 
   /**
+   * Retrieves whether the cursor is after the last row in
+   * this <code>ResultSet</code> object.
+   * <p>
+   * <strong>Note:</strong>Support for the <code>isAfterLast</code> method
+   * is optional for <code>ResultSet</code>s with a result
+   * set type of <code>TYPE_FORWARD_ONLY</code>
+   *
+   * @return <code>true</code> if the cursor is after the last row;
+   * <code>false</code> if the cursor is at any other position or the
+   * result set contains no rows
+   */
+  def isAfterLast(): Boolean
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -629,7 +643,9 @@ object ResultSet:
         }
       }
 
-    override def isBeforeFirst(): Boolean = currentCursor == 0
+    override def isBeforeFirst(): Boolean = currentCursor == 0 && rows.nonEmpty
+
+    override def isAfterLast(): Boolean = currentCursor == rows.size && rows.nonEmpty
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
