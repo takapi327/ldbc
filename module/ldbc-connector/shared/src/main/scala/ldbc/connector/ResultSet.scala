@@ -522,6 +522,26 @@ trait ResultSet:
   def absolute(row: Int): Boolean
 
   /**
+   * Moves the cursor a relative number of rows, either positive or negative.
+   * Attempting to move beyond the first/last row in the
+   * result set positions the cursor before/after the
+   * the first/last row. Calling <code>relative(0)</code> is valid, but does
+   * not change the cursor position.
+   *
+   * <p>Note: Calling the method <code>relative(1)</code>
+   * is identical to calling the method <code>next()</code> and
+   * calling the method <code>relative(-1)</code> is identical
+   * to calling the method <code>previous()</code>.
+   *
+   * @param rows an <code>int</code> specifying the number of rows to
+   *        move from the current row; a positive number moves the cursor
+   *        forward; a negative number moves the cursor backward
+   * @return <code>true</code> if the cursor is on a row;
+   *         <code>false</code> otherwise
+   */
+  def relative(rows: Int): Boolean
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -557,19 +577,19 @@ object ResultSet:
 
   private[ldbc] case class Impl(
     columns: Vector[ColumnDefinitionPacket],
-    rows:    Vector[ResultSetRowPacket],
+    records: Vector[ResultSetRowPacket],
     version: Version,
     resultSetType: Int = TYPE_FORWARD_ONLY
   ) extends ResultSet:
 
     private var isClosed:      Boolean                    = false
     private var currentCursor: Int                        = 0
-    private var currentRow:    Option[ResultSetRowPacket] = rows.headOption
+    private var currentRow:    Option[ResultSetRowPacket] = records.headOption
 
     def next(): Boolean =
       checkClose {
-        if currentCursor <= rows.size then
-          currentRow = rows.lift(currentCursor)
+        if currentCursor <= records.size then
+          currentRow = records.lift(currentCursor)
           currentCursor += 1
           currentRow.isDefined
         else
@@ -775,13 +795,13 @@ object ResultSet:
         }
       }
 
-    override def isBeforeFirst(): Boolean = currentCursor <= 0 && rows.nonEmpty
+    override def isBeforeFirst(): Boolean = currentCursor <= 0 && records.nonEmpty
 
-    override def isAfterLast(): Boolean = currentCursor > rows.size && rows.nonEmpty
+    override def isAfterLast(): Boolean = currentCursor > records.size && records.nonEmpty
 
     override def isFirst(): Boolean = currentCursor > 0
 
-    override def isLast(): Boolean = currentCursor == rows.size
+    override def isLast(): Boolean = currentCursor == records.size
 
     override def beforeFirst(): Unit =
       if resultSetType == TYPE_FORWARD_ONLY then
@@ -791,26 +811,26 @@ object ResultSet:
     override def afterLast(): Unit =
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
-      else currentCursor = rows.size + 1
+      else currentCursor = records.size + 1
 
     override def first(): Boolean =
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
       else
         currentCursor = 1
-        currentRow = rows.headOption
-        currentRow.isDefined && rows.nonEmpty
+        currentRow = records.headOption
+        currentRow.isDefined && records.nonEmpty
 
     override def last(): Boolean =
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
       else
-        currentCursor = rows.size
-        currentRow = rows.lastOption
-        currentRow.isDefined && rows.nonEmpty
+        currentCursor = records.size
+        currentRow = records.lastOption
+        currentRow.isDefined && records.nonEmpty
 
     override def getRow(): Int =
-      if currentCursor > rows.size then 0
+      if currentCursor > records.size then 0
       else currentCursor
 
     override def absolute(row: Int): Boolean =
@@ -819,31 +839,45 @@ object ResultSet:
       else
         if row > 0 then
           currentCursor = row
-          currentRow = rows.lift(row - 1)
-          row >= 1 && row <= rows.size
+          currentRow = records.lift(row - 1)
+          row >= 1 && row <= records.size
         else if row < 0 then
-          val position = rows.size + row + 1
+          val position = records.size + row + 1
           currentCursor = position
-          currentRow = rows.lift(rows.size + row)
-          position >= 1 && position <= rows.size
+          currentRow = records.lift(records.size + row)
+          position >= 1 && position <= records.size
         else
           currentCursor = 0
           currentRow = None
           false
 
+    override def relative(rows: Int): Boolean =
+      if resultSetType == TYPE_FORWARD_ONLY then
+        throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
+      else
+        val position = currentCursor + rows
+        if position >= 1 && position <= records.size then
+          currentCursor = position
+          currentRow = records.lift(position - 1)
+          true
+        else
+          currentCursor = 0
+          currentRow = records.lift(currentCursor)
+          false
+
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
-        rows.flatMap(row => codec.decode(0, row.values).toOption).toList
+        records.flatMap(row => codec.decode(0, row.values).toOption).toList
       }
 
     private def checkClose[T](f: => T): T =
       if isClosed then throw new SQLException("Operation not allowed after ResultSet closed")
       else f
 
-  def apply(columns: Vector[ColumnDefinitionPacket], rows: Vector[ResultSetRowPacket], version: Version): ResultSet =
-    Impl(columns, rows, version, ResultSet.TYPE_FORWARD_ONLY)
+  def apply(columns: Vector[ColumnDefinitionPacket], records: Vector[ResultSetRowPacket], version: Version): ResultSet =
+    Impl(columns, records, version, ResultSet.TYPE_FORWARD_ONLY)
 
-  def apply(columns: Vector[ColumnDefinitionPacket], rows: Vector[ResultSetRowPacket], version: Version, resultSetType: Int): ResultSet =
-    Impl(columns, rows, version, resultSetType)
+  def apply(columns: Vector[ColumnDefinitionPacket], records: Vector[ResultSetRowPacket], version: Version, resultSetType: Int): ResultSet =
+    Impl(columns, records, version, resultSetType)
 
   def empty(version: Version): ResultSet = this.apply(Vector.empty, Vector.empty, version)
