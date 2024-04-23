@@ -456,6 +456,18 @@ trait ResultSet:
   def afterLast(): Unit
 
   /**
+   * Retrieves the current row number.  The first row is number 1, the
+   * second number 2, and so on.
+   * <p>
+   * <strong>Note:</strong>Support for the <code>getRow</code> method
+   * is optional for <code>ResultSet</code>s with a result
+   * set type of <code>TYPE_FORWARD_ONLY</code>
+   *
+   * @return the current row number; <code>0</code> if there is no current row
+   */
+  def getRow(): Int
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -726,6 +738,8 @@ object ResultSet:
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
       else currentCursor = rows.size + 1
+
+    override def getRow(): Int = currentCursor
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
