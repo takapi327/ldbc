@@ -465,6 +465,15 @@ trait ResultSet:
   def first(): Boolean
 
   /**
+   * Moves the cursor to the last row in
+   * this <code>ResultSet</code> object.
+   *
+   * @return <code>true</code> if the cursor is on a valid row;
+   * <code>false</code> if there are no rows in the result set
+   */
+  def last(): Boolean
+
+  /**
    * Retrieves the current row number.  The first row is number 1, the
    * second number 2, and so on.
    * <p>
@@ -755,8 +764,18 @@ object ResultSet:
         currentCursor = 1
         currentRow = rows.headOption
         currentRow.isDefined && rows.nonEmpty
+        
+    override def last(): Boolean =
+      if resultSetType == TYPE_FORWARD_ONLY then
+        throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
+      else
+        currentCursor = rows.size
+        currentRow = rows.lastOption
+        currentRow.isDefined && rows.nonEmpty
 
-    override def getRow(): Int = currentCursor
+    override def getRow(): Int =
+      if currentCursor > rows.size then 0
+      else currentCursor
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
