@@ -631,6 +631,32 @@ class ResultSetTest extends CatsEffectSuite:
     assertEquals(resultSet.isLast(), true)
   }
 
+  test("If the cursor in the ResultSet is before the start position, the result at the cursor position matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
+      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Version(0, 0, 0),
+      ResultSet.TYPE_SCROLL_INSENSITIVE
+    )
+    assertEquals(resultSet.isBeforeFirst(), true)
+    assertEquals(resultSet.isFirst(), false)
+    resultSet.next()
+    assertEquals(resultSet.isBeforeFirst(), false)
+    assertEquals(resultSet.isFirst(), true)
+    resultSet.beforeFirst()
+    assertEquals(resultSet.isBeforeFirst(), true)
+    assertEquals(resultSet.isFirst(), false)
+  }
+
+  test("When the type of ResultSet is TYPE_FORWARD_ONLY, the cursor position operation by beforeFirst throws SQLException.") {
+    val resultSet = ResultSet(
+      Vector.empty,
+      Vector.empty,
+      Version(0, 0, 0),
+    )
+    interceptMessage[SQLException]("Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")(resultSet.beforeFirst())
+  }
+
   private def column(
     columnName: String,
     `type`:     ColumnDataType,
