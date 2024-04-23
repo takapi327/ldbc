@@ -625,10 +625,10 @@ object ResultSet:
   val CONCUR_UPDATABLE: Int = 1008
 
   private[ldbc] case class Impl(
-    columns:       Vector[ColumnDefinitionPacket],
-    records:       Vector[ResultSetRowPacket],
-    version:       Version,
-    resultSetType: Int = TYPE_FORWARD_ONLY,
+    columns:              Vector[ColumnDefinitionPacket],
+    records:              Vector[ResultSetRowPacket],
+    version:              Version,
+    resultSetType:        Int = TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   ) extends ResultSet:
 
@@ -927,7 +927,7 @@ object ResultSet:
         false
 
     override def getType(): Int = resultSetType
-    
+
     override def getConcurrency(): Int = resultSetConcurrency
 
     override def decode[T](codec: Codec[T]): List[T] =
