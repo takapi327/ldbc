@@ -615,3 +615,10 @@ class ResultSetTest extends CatsEffectSuite:
       flags        = flags,
       decimals     = if useScale then 2 else 0
     )
+
+  test("The determination of whether the cursor position for a row in the ResultSet is before the start position matches the specified value.") {
+    val resultSet = ResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
+    assertEquals(resultSet.isBeforeFirst(), true)
+    resultSet.next()
+    assertEquals(resultSet.isBeforeFirst(), false)
+  }
