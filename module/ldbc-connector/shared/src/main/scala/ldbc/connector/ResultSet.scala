@@ -486,6 +486,42 @@ trait ResultSet:
   def getRow(): Int
 
   /**
+   * Moves the cursor to the given row number in
+   * this <code>ResultSet</code> object.
+   *
+   * <p>If the row number is positive, the cursor moves to
+   * the given row number with respect to the
+   * beginning of the result set.  The first row is row 1, the second
+   * is row 2, and so on.
+   *
+   * <p>If the given row number is negative, the cursor moves to
+   * an absolute row position with respect to
+   * the end of the result set.  For example, calling the method
+   * <code>absolute(-1)</code> positions the
+   * cursor on the last row; calling the method <code>absolute(-2)</code>
+   * moves the cursor to the next-to-last row, and so on.
+   *
+   * <p>If the row number specified is zero, the cursor is moved to
+   * before the first row.
+   *
+   * <p>An attempt to position the cursor beyond the first/last row in
+   * the result set leaves the cursor before the first row or after
+   * the last row.
+   *
+   * <p><B>Note:</B> Calling <code>absolute(1)</code> is the same
+   * as calling <code>first()</code>. Calling <code>absolute(-1)</code>
+   * is the same as calling <code>last()</code>.
+   *
+   * @param row the number of the row to which the cursor should move.
+   *        A value of zero indicates that the cursor will be positioned
+   *        before the first row; a positive number indicates the row number
+   *        counting from the beginning of the result set; a negative number
+   *        indicates the row number counting from the end of the result set
+   * @return <code>true</code> if the cursor is moved to a position in this
+   */
+  def absolute(row: Int): Boolean
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -756,7 +792,7 @@ object ResultSet:
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
       else currentCursor = rows.size + 1
-      
+
     override def first(): Boolean =
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
@@ -764,7 +800,7 @@ object ResultSet:
         currentCursor = 1
         currentRow = rows.headOption
         currentRow.isDefined && rows.nonEmpty
-        
+
     override def last(): Boolean =
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
@@ -776,6 +812,24 @@ object ResultSet:
     override def getRow(): Int =
       if currentCursor > rows.size then 0
       else currentCursor
+
+    override def absolute(row: Int): Boolean =
+      if resultSetType == TYPE_FORWARD_ONLY then
+        throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
+      else
+        if row > 0 then
+          currentCursor = row
+          currentRow = rows.lift(row - 1)
+          row >= 1 && row <= rows.size
+        else if row < 0 then
+          val position = rows.size + row + 1
+          currentCursor = position
+          currentRow = rows.lift(rows.size + row)
+          position >= 1 && position <= rows.size
+        else
+          currentCursor = 0
+          currentRow = None
+          false
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
