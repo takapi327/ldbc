@@ -557,6 +557,17 @@ trait ResultSet:
   def previous(): Boolean
 
   /**
+   * Retrieves the type of this <code>ResultSet</code> object.
+   * The type is determined by the <code>Statement</code> object
+   * that created the result set.
+   *
+   * @return <code>ResultSet.TYPE_FORWARD_ONLY</code>,
+   *         <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>,
+   *         or <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
+   */
+  def getType(): Int
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -890,6 +901,8 @@ object ResultSet:
         currentCursor = 0
         currentRow    = None
         false
+
+    override def getType(): Int = resultSetType
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
