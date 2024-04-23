@@ -442,6 +442,13 @@ trait ResultSet:
   def isLast(): Boolean
 
   /**
+   * Moves the cursor to the front of
+   * this <code>ResultSet</code> object, just before the
+   * first row. This method has no effect if the result set contains no rows.
+   */
+  def beforeFirst(): Unit
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -455,10 +462,31 @@ trait ResultSet:
 
 object ResultSet:
 
+  /**
+   * The constant indicating the type for a <code>ResultSet</code> object
+   * whose cursor may move only forward.
+   */
+  val TYPE_FORWARD_ONLY: Int = 1003
+
+  /**
+   * The constant indicating the type for a <code>ResultSet</code> object
+   * that is scrollable but generally not sensitive to changes to the data
+   * that underlies the <code>ResultSet</code>.
+   */
+  val TYPE_SCROLL_INSENSITIVE: Int = 1004
+
+  /**
+   * The constant indicating the type for a <code>ResultSet</code> object
+   * that is scrollable and generally sensitive to changes to the data
+   * that underlies the <code>ResultSet</code>.
+   */
+  val TYPE_SCROLL_SENSITIVE: Int = 1005
+
   private[ldbc] case class Impl(
     columns: Vector[ColumnDefinitionPacket],
     rows:    Vector[ResultSetRowPacket],
-    version: Version
+    version: Version,
+    resultSetType: Int = TYPE_FORWARD_ONLY
   ) extends ResultSet:
 
     private var isClosed:      Boolean                    = false
@@ -680,6 +708,11 @@ object ResultSet:
 
     override def isLast(): Boolean = currentCursor == rows.size
 
+    override def beforeFirst(): Unit =
+      if resultSetType == TYPE_FORWARD_ONLY then
+        throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
+      else currentCursor = 0
+
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
         rows.flatMap(row => codec.decode(0, row.values).toOption).toList
@@ -690,6 +723,9 @@ object ResultSet:
       else f
 
   def apply(columns: Vector[ColumnDefinitionPacket], rows: Vector[ResultSetRowPacket], version: Version): ResultSet =
-    Impl(columns, rows, version)
+    Impl(columns, rows, version, ResultSet.TYPE_FORWARD_ONLY)
+
+  def apply(columns: Vector[ColumnDefinitionPacket], rows: Vector[ResultSetRowPacket], version: Version, resultSetType: Int): ResultSet =
+    Impl(columns, rows, version, resultSetType)
 
   def empty(version: Version): ResultSet = this.apply(Vector.empty, Vector.empty, version)

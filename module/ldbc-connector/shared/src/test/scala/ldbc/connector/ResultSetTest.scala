@@ -587,35 +587,6 @@ class ResultSetTest extends CatsEffectSuite:
     assertEquals(resultSetMetaData.isCurrency(3), false)
   }
 
-  private def column(
-    columnName: String,
-    `type`:     ColumnDataType,
-    alias:      Option[String] = None,
-    useScale:   Boolean = false,
-    isSigned:   Boolean = false,
-    isNullable: Boolean = true,
-    isAutoInc:  Boolean = false
-  ): ColumnDefinitionPacket =
-    val flags = Seq(
-      if isSigned then Some(ColumnDefinitionFlags.UNSIGNED_FLAG) else None,
-      if isNullable then None else Some(ColumnDefinitionFlags.NOT_NULL_FLAG),
-      if isAutoInc then Some(ColumnDefinitionFlags.AUTO_INCREMENT_FLAG) else None
-    ).flatten
-    ColumnDefinition41Packet(
-      catalog      = "def",
-      schema       = "test_database",
-      table        = "test_table",
-      orgTable     = "test",
-      name         = alias.getOrElse(columnName),
-      orgName      = columnName,
-      length       = 0,
-      characterSet = 33,
-      columnLength = 11,
-      columnType   = `type`,
-      flags        = flags,
-      decimals     = if useScale then 2 else 0
-    )
-
   test("The determination of whether the cursor position for a row in the ResultSet is before the start position matches the specified value.") {
     val resultSet = ResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
@@ -659,3 +630,32 @@ class ResultSetTest extends CatsEffectSuite:
     resultSet.next()
     assertEquals(resultSet.isLast(), true)
   }
+
+  private def column(
+    columnName: String,
+    `type`:     ColumnDataType,
+    alias:      Option[String] = None,
+    useScale:   Boolean = false,
+    isSigned:   Boolean = false,
+    isNullable: Boolean = true,
+    isAutoInc:  Boolean = false
+  ): ColumnDefinitionPacket =
+    val flags = Seq(
+      if isSigned then Some(ColumnDefinitionFlags.UNSIGNED_FLAG) else None,
+      if isNullable then None else Some(ColumnDefinitionFlags.NOT_NULL_FLAG),
+      if isAutoInc then Some(ColumnDefinitionFlags.AUTO_INCREMENT_FLAG) else None
+    ).flatten
+    ColumnDefinition41Packet(
+      catalog      = "def",
+      schema       = "test_database",
+      table        = "test_table",
+      orgTable     = "test",
+      name         = alias.getOrElse(columnName),
+      orgName      = columnName,
+      length       = 0,
+      characterSet = 33,
+      columnLength = 11,
+      columnType   = `type`,
+      flags        = flags,
+      decimals     = if useScale then 2 else 0
+    )
