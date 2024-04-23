@@ -605,7 +605,7 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     assertEquals(resultSet.isAfterLast(), false)
-    resultSet.next()
+    while resultSet.next() do ()
     assertEquals(resultSet.isAfterLast(), true)
   }
 
@@ -655,6 +655,34 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0),
     )
     interceptMessage[SQLException]("Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")(resultSet.beforeFirst())
+  }
+
+  test("If the cursor in the ResultSet is after the end position, the result at the cursor position matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
+      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Version(0, 0, 0),
+      ResultSet.TYPE_SCROLL_INSENSITIVE
+    )
+    assertEquals(resultSet.isAfterLast(), false)
+    assertEquals(resultSet.isLast(), false)
+    while resultSet.next() do
+      assertEquals(resultSet.isAfterLast(), false)
+      assertEquals(resultSet.isLast(), true)
+    assertEquals(resultSet.isAfterLast(), true)
+    assertEquals(resultSet.isLast(), false)
+    resultSet.afterLast()
+    assertEquals(resultSet.isAfterLast(), true)
+    assertEquals(resultSet.isLast(), false)
+  }
+
+  test("When the type of ResultSet is TYPE_FORWARD_ONLY, the cursor position operation by afterLast throws SQLException.") {
+    val resultSet = ResultSet(
+      Vector.empty,
+      Vector.empty,
+      Version(0, 0, 0),
+    )
+    interceptMessage[SQLException]("Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")(resultSet.afterLast())
   }
 
   private def column(
