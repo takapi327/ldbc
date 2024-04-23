@@ -568,6 +568,17 @@ trait ResultSet:
   def getType(): Int
 
   /**
+   * Retrieves the concurrency mode of this <code>ResultSet</code> object.
+   * The concurrency used is determined by the
+   * <code>Statement</code> object that created the result set.
+   *
+   * @return the concurrency type, either
+   *         <code>ResultSet.CONCUR_READ_ONLY</code>
+   *         or <code>ResultSet.CONCUR_UPDATABLE</code>
+   */
+  def getConcurrency(): Int
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -601,11 +612,24 @@ object ResultSet:
    */
   val TYPE_SCROLL_SENSITIVE: Int = 1005
 
+  /**
+   * The constant indicating the concurrency mode for a
+   * <code>ResultSet</code> object that may NOT be updated.
+   */
+  val CONCUR_READ_ONLY: Int = 1007
+
+  /**
+   * The constant indicating the concurrency mode for a
+   * <code>ResultSet</code> object that may be updated.
+   */
+  val CONCUR_UPDATABLE: Int = 1008
+
   private[ldbc] case class Impl(
     columns:       Vector[ColumnDefinitionPacket],
     records:       Vector[ResultSetRowPacket],
     version:       Version,
-    resultSetType: Int = TYPE_FORWARD_ONLY
+    resultSetType: Int = TYPE_FORWARD_ONLY,
+    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   ) extends ResultSet:
 
     private var isClosed:      Boolean                    = false
@@ -903,6 +927,8 @@ object ResultSet:
         false
 
     override def getType(): Int = resultSetType
+    
+    override def getConcurrency(): Int = resultSetConcurrency
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
