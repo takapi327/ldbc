@@ -752,6 +752,35 @@ class ResultSetTest extends CatsEffectSuite:
     interceptMessage[SQLException]("Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")(resultSet.last())
   }
 
+  test("If the cursor in the ResultSet is absolute position, the result at the cursor position matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
+      Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
+      Version(0, 0, 0),
+      ResultSet.TYPE_SCROLL_INSENSITIVE
+    )
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.absolute(1), true)
+    assertEquals(resultSet.getRow(), 1)
+    assertEquals(resultSet.getInt(1), 1)
+    assertEquals(resultSet.absolute(0), false)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.absolute(3), false)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.absolute(-1), true)
+    assertEquals(resultSet.getRow(), 2)
+    assertEquals(resultSet.getInt(1), 2)
+  }
+
+  test("When the type of ResultSet is TYPE_FORWARD_ONLY, the cursor position operation by absolute throws SQLException.") {
+    val resultSet = ResultSet(
+      Vector.empty,
+      Vector.empty,
+      Version(0, 0, 0),
+    )
+    interceptMessage[SQLException]("Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")(resultSet.absolute(0))
+  }
+
   private def column(
     columnName: String,
     `type`:     ColumnDataType,
