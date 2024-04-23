@@ -129,13 +129,13 @@ object Statement:
   val EXECUTE_FAILED = -3
 
   def apply[F[_]: Exchange: Tracer](
-    socket:          PacketSocket[F],
-    initialPacket:   InitialPacket,
-    utilityCommands: UtilityCommands[F],
-    batchedArgsRef:  Ref[F, Vector[String]],
-    resetSequenceId: F[Unit],
-    resultSetType: Int = ResultSet.TYPE_FORWARD_ONLY,
-    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+    socket:               PacketSocket[F],
+    initialPacket:        InitialPacket,
+    utilityCommands:      UtilityCommands[F],
+    batchedArgsRef:       Ref[F, Vector[String]],
+    resetSequenceId:      F[Unit],
+    resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
+    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
 
@@ -176,7 +176,13 @@ object Statement:
                                     ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                                     Vector.empty
                                   )
-                yield ResultSet(columnDefinitions, resultSetRow, initialPacket.serverVersion, resultSetType, resultSetConcurrency)
+                yield ResultSet(
+                  columnDefinitions,
+                  resultSetRow,
+                  initialPacket.serverVersion,
+                  resultSetType,
+                  resultSetConcurrency
+                )
             }
         }
 

@@ -107,7 +107,11 @@ trait MySQLProtocol[F[_]]:
    * resultSetConcurrency
    * @return prepared statement
    */
-  def clientPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Client[F]]
+  def clientPreparedStatement(
+    sql:                  String,
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[PreparedStatement.Client[F]]
 
   /**
    * Creates a server prepared statement with the given SQL.
@@ -131,7 +135,11 @@ trait MySQLProtocol[F[_]]:
    * resultSetConcurrency
    * @return prepared statement
    */
-  def serverPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Server[F]]
+  def serverPreparedStatement(
+    sql:                  String,
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[PreparedStatement.Server[F]]
 
   /**
    * Resets the sequence id.
@@ -209,18 +217,42 @@ object MySQLProtocol:
 
     override def statement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
       Ref[F]
-      .of(Vector.empty[String])
-      .map(batchedArgs => Statement[F](packetSocket, initialPacket, utilityCommands, batchedArgs, resetSequenceId, resultSetType, resultSetConcurrency))
+        .of(Vector.empty[String])
+        .map(batchedArgs =>
+          Statement[F](
+            packetSocket,
+            initialPacket,
+            utilityCommands,
+            batchedArgs,
+            resetSequenceId,
+            resultSetType,
+            resultSetConcurrency
+          )
+        )
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       clientPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
-    override def clientPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Client[F]] =
+    override def clientPreparedStatement(
+      sql:                  String,
+      resultSetType:        Int,
+      resultSetConcurrency: Int
+    ): F[PreparedStatement.Client[F]] =
       for
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement
-        .Client[F](packetSocket, initialPacket, sql, utilityCommands, params, batchedArgs, resetSequenceId, resultSetType, resultSetConcurrency)
+        .Client[F](
+          packetSocket,
+          initialPacket,
+          sql,
+          utilityCommands,
+          params,
+          batchedArgs,
+          resetSequenceId,
+          resultSetType,
+          resultSetConcurrency
+        )
 
     private def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[List[P]] =
 
@@ -233,13 +265,17 @@ object MySQLProtocol:
     override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
       serverPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
-    override def serverPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Server[F]] =
+    override def serverPreparedStatement(
+      sql:                  String,
+      resultSetType:        Int,
+      resultSetConcurrency: Int
+    ): F[PreparedStatement.Server[F]] =
       for
         result <- resetSequenceId *> packetSocket.send(ComStmtPreparePacket(sql)) *>
-          packetSocket.receive(ComStmtPrepareOkPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-            case ok: ComStmtPrepareOkPacket => ev.pure(ok)
-          }
+                    packetSocket.receive(ComStmtPrepareOkPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+                      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                      case ok: ComStmtPrepareOkPacket => ev.pure(ok)
+                    }
         _           <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
         _           <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])

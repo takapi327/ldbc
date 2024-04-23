@@ -158,7 +158,11 @@ trait Connection[F[_]]:
    *   resultSetConcurrency
    * @return prepared statement
    */
-  def clientPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Client[F]]
+  def clientPreparedStatement(
+    sql:                  String,
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[PreparedStatement.Client[F]]
 
   /**
    * Creates a server prepared statement with the given SQL.
@@ -182,7 +186,11 @@ trait Connection[F[_]]:
    *   resultSetConcurrency
    * @return prepared statement
    */
-  def serverPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Server[F]]
+  def serverPreparedStatement(
+    sql:                  String,
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[PreparedStatement.Server[F]]
 
   /**
    * Creates an unnamed savepoint in the current transaction and returns the new Savepoint object that represents it.
@@ -413,12 +421,20 @@ object Connection:
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       protocol.clientPreparedStatement(sql)
-    override def clientPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Client[F]] =
+    override def clientPreparedStatement(
+      sql:                  String,
+      resultSetType:        Int,
+      resultSetConcurrency: Int
+    ): F[PreparedStatement.Client[F]] =
       protocol.clientPreparedStatement(sql, resultSetType, resultSetConcurrency)
 
     override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
       protocol.serverPreparedStatement(sql)
-    override def serverPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Server[F]] =
+    override def serverPreparedStatement(
+      sql:                  String,
+      resultSetType:        Int,
+      resultSetConcurrency: Int
+    ): F[PreparedStatement.Server[F]] =
       protocol.serverPreparedStatement(sql, resultSetType, resultSetConcurrency)
 
     override def setSavepoint(): F[Savepoint] = setSavepoint(UUID.randomUUID().toString)

@@ -559,15 +559,15 @@ object PreparedStatement:
    *   the effect type
    */
   case class Client[F[_]: Exchange: Tracer](
-    socket:          PacketSocket[F],
-    initialPacket:   InitialPacket,
-    sql:             String,
-    utilityCommands: UtilityCommands[F],
-    params:          Ref[F, ListMap[Int, Parameter]],
-    batchedArgs:     Ref[F, Vector[String]],
-    resetSequenceId: F[Unit],
-    resultSetType: Int = ResultSet.TYPE_FORWARD_ONLY,
-    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+    socket:               PacketSocket[F],
+    initialPacket:        InitialPacket,
+    sql:                  String,
+    utilityCommands:      UtilityCommands[F],
+    params:               Ref[F, ListMap[Int, Parameter]],
+    batchedArgs:          Ref[F, Vector[String]],
+    resetSequenceId:      F[Unit],
+    resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
+    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
     extends SharedPreparedStatement[F]:
 
@@ -602,7 +602,13 @@ object PreparedStatement:
                       ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                       Vector.empty
                     )
-                yield ResultSet(columnDefinitions, resultSetRow, initialPacket.serverVersion, resultSetType, resultSetConcurrency)
+                yield ResultSet(
+                  columnDefinitions,
+                  resultSetRow,
+                  initialPacket.serverVersion,
+                  resultSetType,
+                  resultSetConcurrency
+                )
             }
         } <* params.set(ListMap.empty)
       }
@@ -749,16 +755,16 @@ object PreparedStatement:
    *   The effect type
    */
   case class Server[F[_]: Exchange: Tracer](
-    socket:          PacketSocket[F],
-    initialPacket:   InitialPacket,
-    statementId:     Long,
-    sql:             String,
-    utilityCommands: UtilityCommands[F],
-    params:          Ref[F, ListMap[Int, Parameter]],
-    batchedArgs:     Ref[F, Vector[String]],
-    resetSequenceId: F[Unit],
-    resultSetType: Int = ResultSet.TYPE_FORWARD_ONLY,
-    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+    socket:               PacketSocket[F],
+    initialPacket:        InitialPacket,
+    statementId:          Long,
+    sql:                  String,
+    utilityCommands:      UtilityCommands[F],
+    params:               Ref[F, ListMap[Int, Parameter]],
+    batchedArgs:          Ref[F, Vector[String]],
+    resetSequenceId:      F[Unit],
+    resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
+    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
     extends SharedPreparedStatement[F]:
 
@@ -791,7 +797,13 @@ object PreparedStatement:
                             Vector.empty
                           )
           _ <- params.set(ListMap.empty)
-        yield ResultSet(columnDefinitions, resultSetRow, initialPacket.serverVersion, resultSetType, resultSetConcurrency)
+        yield ResultSet(
+          columnDefinitions,
+          resultSetRow,
+          initialPacket.serverVersion,
+          resultSetType,
+          resultSetConcurrency
+        )
       }
 
     override def executeUpdate(): F[Int] =

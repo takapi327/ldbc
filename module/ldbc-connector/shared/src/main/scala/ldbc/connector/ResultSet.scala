@@ -943,10 +943,10 @@ object ResultSet:
     Impl(columns, records, version, ResultSet.TYPE_FORWARD_ONLY)
 
   def apply(
-    columns:       Vector[ColumnDefinitionPacket],
-    records:       Vector[ResultSetRowPacket],
-    version:       Version,
-    resultSetType: Int,
+    columns:              Vector[ColumnDefinitionPacket],
+    records:              Vector[ResultSetRowPacket],
+    version:              Version,
+    resultSetType:        Int,
     resultSetConcurrency: Int
   ): ResultSet =
     Impl(columns, records, version, resultSetType, resultSetConcurrency)
