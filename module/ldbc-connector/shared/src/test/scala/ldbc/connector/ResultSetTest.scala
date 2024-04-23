@@ -617,8 +617,23 @@ class ResultSetTest extends CatsEffectSuite:
     )
 
   test("The determination of whether the cursor position for a row in the ResultSet is before the start position matches the specified value.") {
-    val resultSet = ResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
+    val resultSet = ResultSet(
+      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
+      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Version(0, 0, 0)
+    )
     assertEquals(resultSet.isBeforeFirst(), true)
     resultSet.next()
     assertEquals(resultSet.isBeforeFirst(), false)
+  }
+
+  test("The determination of whether the cursor position in the row of the ResultSet is after the end position matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
+      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Version(0, 0, 0)
+    )
+    assertEquals(resultSet.isAfterLast(), false)
+    resultSet.next()
+    assertEquals(resultSet.isAfterLast(), true)
   }
