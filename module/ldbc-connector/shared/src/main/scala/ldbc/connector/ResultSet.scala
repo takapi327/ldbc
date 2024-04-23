@@ -542,6 +542,21 @@ trait ResultSet:
   def relative(rows: Int): Boolean
 
   /**
+   * Moves the cursor to the previous row in this
+   * <code>ResultSet</code> object.
+   *<p>
+   * When a call to the <code>previous</code> method returns <code>false</code>,
+   * the cursor is positioned before the first row.  Any invocation of a
+   * <code>ResultSet</code> method which requires a current row will result in a
+   * <code>SQLException</code> being thrown.
+   *<p>
+   *
+   * @return <code>true</code> if the cursor is now positioned on a valid row;
+   * <code>false</code> if the cursor is positioned before the first row
+   */
+  def previous(): Boolean
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -863,6 +878,19 @@ object ResultSet:
         else
           currentCursor = 0
           currentRow = records.lift(currentCursor)
+          false
+          
+    override def previous(): Boolean =
+      if resultSetType == TYPE_FORWARD_ONLY then
+        throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
+      else
+        if currentCursor > 0 then
+          currentCursor -= 1
+          currentRow = records.lift(currentCursor - 1)
+          currentRow.isDefined
+        else
+          currentCursor = 0
+          currentRow = None
           false
 
     override def decode[T](codec: Codec[T]): List[T] =
