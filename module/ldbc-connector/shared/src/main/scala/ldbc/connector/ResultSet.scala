@@ -385,6 +385,20 @@ trait ResultSet:
   def getBigDecimal(columnLabel: String): Option[BigDecimal]
 
   /**
+   * Retrieves whether the cursor is before the first row in
+   * this <code>ResultSet</code> object.
+   * <p>
+   * <strong>Note:</strong>Support for the <code>isBeforeFirst</code> method
+   * is optional for <code>ResultSet</code>s with a result
+   * set type of <code>TYPE_FORWARD_ONLY</code>
+   *
+   * @return <code>true</code> if the cursor is before the first row;
+   * <code>false</code> if the cursor is at any other position or the
+   * result set contains no rows
+   */
+  def isBeforeFirst(): Boolean
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -614,6 +628,8 @@ object ResultSet:
             getBigDecimal(index + 1)
         }
       }
+
+    override def isBeforeFirst(): Boolean = currentCursor == 0
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
