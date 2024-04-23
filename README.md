@@ -73,6 +73,7 @@ JVM, JS and Native platforms are all supported.
 - [x] Statement
 - [x] PreparedStatement
 - [ ] CallableStatement
+- [ ] ResultSet Insert/Update/Delete
 
 ### Transaction function implementation
 
