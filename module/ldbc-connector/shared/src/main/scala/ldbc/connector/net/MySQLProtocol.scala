@@ -21,6 +21,7 @@ import org.typelevel.otel4s.trace.Tracer
 
 import scodec.Decoder
 
+import ldbc.connector.ResultSet
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.ResponsePacket
@@ -63,6 +64,28 @@ trait MySQLProtocol[F[_]]:
   def statement(): F[Statement[F]]
 
   /**
+   * Creates a <code>Statement</code> object that will generate
+   * <code>ResultSet</code> objects with the given type and concurrency.
+   * This method is the same as the <code>createStatement</code> method
+   * above, but it allows the default result set
+   * type and concurrency to be overridden.
+   * The holdability of the created result sets can be determined by
+   * calling {@link # getHoldability}.
+   *
+   * @param resultSetType        a result set type; one of
+   *                             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
+   *                             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
+   *                             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
+   * @param resultSetConcurrency a concurrency type; one of
+   *                             <code>ResultSet.CONCUR_READ_ONLY</code> or
+   *                             <code>ResultSet.CONCUR_UPDATABLE</code>
+   * @return a new <code>Statement</code> object that will generate
+   *         <code>ResultSet</code> objects with the given type and
+   *         concurrency
+   */
+  def statement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]]
+
+  /**
    * Creates a client prepared statement with the given SQL.
    *
    * @param sql
@@ -71,12 +94,44 @@ trait MySQLProtocol[F[_]]:
   def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]]
 
   /**
+   * Prepares a statement on the client, using client-side emulation
+   * (irregardless of the configuration property 'useServerPrepStmts')
+   * with the same semantics as the java.sql.Connection.prepareStatement()
+   * method with the same argument types.
+   *
+   * @param sql
+   * statement
+   * @param resultSetType
+   * resultSetType
+   * @param resultSetConcurrency
+   * resultSetConcurrency
+   * @return prepared statement
+   */
+  def clientPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Client[F]]
+
+  /**
    * Creates a server prepared statement with the given SQL.
    *
    * @param sql
    *   SQL queries based on text protocols
    */
   def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]]
+
+  /**
+   * Prepares a statement on the server (irregardless of the
+   * configuration property 'useServerPrepStmts') with the same semantics
+   * as the java.sql.Connection.prepareStatement() method with the
+   * same argument types.
+   *
+   * @param sql
+   * statement
+   * @param resultSetType
+   * resultSetType
+   * @param resultSetConcurrency
+   * resultSetConcurrency
+   * @return prepared statement
+   */
+  def serverPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Server[F]]
 
   /**
    * Resets the sequence id.
@@ -150,16 +205,22 @@ object MySQLProtocol:
     override def authenticate(user: String, password: String): F[Unit] = authenticate.start(user, password)
 
     override def statement(): F[Statement[F]] =
+      statement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+
+    override def statement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
       Ref[F]
-        .of(Vector.empty[String])
-        .map(batchedArgs => Statement[F](packetSocket, initialPacket, utilityCommands, batchedArgs, resetSequenceId))
+      .of(Vector.empty[String])
+      .map(batchedArgs => Statement[F](packetSocket, initialPacket, utilityCommands, batchedArgs, resetSequenceId, resultSetType, resultSetConcurrency))
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
+      clientPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+
+    override def clientPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Client[F]] =
       for
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement
-        .Client[F](packetSocket, initialPacket, sql, utilityCommands, params, batchedArgs, resetSequenceId)
+        .Client[F](packetSocket, initialPacket, sql, utilityCommands, params, batchedArgs, resetSequenceId, resultSetType, resultSetConcurrency)
 
     private def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[List[P]] =
 
@@ -170,12 +231,15 @@ object MySQLProtocol:
       read(times, List.empty[P])
 
     override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
+      serverPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+
+    override def serverPreparedStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement.Server[F]] =
       for
         result <- resetSequenceId *> packetSocket.send(ComStmtPreparePacket(sql)) *>
-                    packetSocket.receive(ComStmtPrepareOkPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-                      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                      case ok: ComStmtPrepareOkPacket => ev.pure(ok)
-                    }
+          packetSocket.receive(ComStmtPrepareOkPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+            case ok: ComStmtPrepareOkPacket => ev.pure(ok)
+          }
         _           <- repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
         _           <- repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
@@ -189,7 +253,9 @@ object MySQLProtocol:
           utilityCommands,
           params,
           batchedArgs,
-          resetSequenceId
+          resetSequenceId,
+          resultSetType,
+          resultSetConcurrency
         )
 
     override def resetSequenceId: F[Unit] =

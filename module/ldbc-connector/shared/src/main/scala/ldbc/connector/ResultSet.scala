@@ -946,8 +946,9 @@ object ResultSet:
     columns:       Vector[ColumnDefinitionPacket],
     records:       Vector[ResultSetRowPacket],
     version:       Version,
-    resultSetType: Int
+    resultSetType: Int,
+    resultSetConcurrency: Int
   ): ResultSet =
-    Impl(columns, records, version, resultSetType)
+    Impl(columns, records, version, resultSetType, resultSetConcurrency)
 
   def empty(version: Version): ResultSet = this.apply(Vector.empty, Vector.empty, version)
