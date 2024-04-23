@@ -12,9 +12,17 @@ import munit.CatsEffectSuite
 
 import ldbc.connector.util.Version
 import ldbc.connector.data.*
+import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 
 class ResultSetTest extends CatsEffectSuite:
+
+  test("SQLException occurs when accessing the ResultSet after closing it.") {
+    val resultSet = ResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
+    resultSet.close()
+    interceptMessage[SQLException]("Message: Operation not allowed after ResultSet closed")(resultSet.next())
+    interceptMessage[SQLException]("Message: Operation not allowed after ResultSet closed")(resultSet.getLong(1))
+  }
 
   test("ResultSet should return the correct value for getInt") {
     val resultSet = ResultSet(
