@@ -646,7 +646,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.isBeforeFirst(), true)
     assertEquals(resultSet.isFirst(), false)
@@ -678,7 +679,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.isAfterLast(), false)
     assertEquals(resultSet.isLast(), false)
@@ -712,7 +714,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.first(), true)
     assertEquals(resultSet.getRow(), 1)
@@ -726,7 +729,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Vector.empty,
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.first(), false)
   }
@@ -752,7 +756,8 @@ class ResultSetTest extends CatsEffectSuite:
         ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))
       ),
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.last(), true)
     assertEquals(resultSet.getRow(), 2)
@@ -766,7 +771,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Vector.empty,
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.last(), false)
   }
@@ -789,7 +795,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.getRow(), 0)
     assertEquals(resultSet.absolute(1), true)
@@ -824,7 +831,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.getRow(), 0)
     assertEquals(resultSet.relative(0), false)
@@ -860,7 +868,8 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
       Version(0, 0, 0),
-      ResultSet.TYPE_SCROLL_INSENSITIVE
+      ResultSet.TYPE_SCROLL_INSENSITIVE,
+      ResultSet.CONCUR_READ_ONLY
     )
     assertEquals(resultSet.getRow(), 0)
     assertEquals(resultSet.absolute(2), true)
