@@ -449,6 +449,13 @@ trait ResultSet:
   def beforeFirst(): Unit
 
   /**
+   * Moves the cursor to the end of
+   * this <code>ResultSet</code> object, just after the
+   * last row. This method has no effect if the result set contains no rows.
+   */
+  def afterLast(): Unit
+
+  /**
    * Function to decode all lines with the specified type.
    *
    * @param codec
@@ -499,7 +506,9 @@ object ResultSet:
           currentRow = rows.lift(currentCursor)
           currentCursor += 1
           currentRow.isDefined
-        else false
+        else
+          currentCursor += 1
+          false
       }
 
     override def close(): Unit = isClosed = true
@@ -702,7 +711,7 @@ object ResultSet:
 
     override def isBeforeFirst(): Boolean = currentCursor <= 0 && rows.nonEmpty
 
-    override def isAfterLast(): Boolean = currentCursor > (rows.size - 1) && rows.nonEmpty
+    override def isAfterLast(): Boolean = currentCursor > rows.size && rows.nonEmpty
 
     override def isFirst(): Boolean = currentCursor > 0
 
@@ -712,6 +721,11 @@ object ResultSet:
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
       else currentCursor = 0
+
+    override def afterLast(): Unit =
+      if resultSetType == TYPE_FORWARD_ONLY then
+        throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
+      else currentCursor = rows.size + 1
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
