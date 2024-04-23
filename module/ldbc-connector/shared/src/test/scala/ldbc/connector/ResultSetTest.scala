@@ -811,6 +811,31 @@ class ResultSetTest extends CatsEffectSuite:
     interceptMessage[SQLException]("Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")(resultSet.relative(0))
   }
 
+  test("If the cursor in the ResultSet is previous position, the result at the cursor position matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
+      Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
+      Version(0, 0, 0),
+      ResultSet.TYPE_SCROLL_INSENSITIVE
+    )
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.absolute(2), true)
+    assertEquals(resultSet.getRow(), 2)
+    assertEquals(resultSet.getInt(1), 2)
+    assertEquals(resultSet.previous(), true)
+    assertEquals(resultSet.getRow(), 1)
+    assertEquals(resultSet.getInt(1), 1)
+  }
+
+  test("When the type of ResultSet is TYPE_FORWARD_ONLY, the cursor position operation by previous throws SQLException.") {
+    val resultSet = ResultSet(
+      Vector.empty,
+      Vector.empty,
+      Version(0, 0, 0),
+    )
+    interceptMessage[SQLException]("Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")(resultSet.previous())
+  }
+
   private def column(
     columnName: String,
     `type`:     ColumnDataType,
