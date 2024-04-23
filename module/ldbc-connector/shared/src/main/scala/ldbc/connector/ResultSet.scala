@@ -399,6 +399,19 @@ trait ResultSet:
   def isBeforeFirst(): Boolean
 
   /**
+   * Retrieves whether the cursor is on the first row of
+   * this <code>ResultSet</code> object.
+   * <p>
+   * <strong>Note:</strong>Support for the <code>isFirst</code> method
+   * is optional for <code>ResultSet</code>s with a result
+   * set type of <code>TYPE_FORWARD_ONLY</code>
+   *
+   * @return <code>true</code> if the cursor is on the first row;
+   * <code>false</code> otherwise
+   */
+  def isFirst(): Boolean
+
+  /**
    * Retrieves whether the cursor is after the last row in
    * this <code>ResultSet</code> object.
    * <p>
@@ -434,7 +447,7 @@ object ResultSet:
 
     private var isClosed:      Boolean                    = false
     private var currentCursor: Int                        = 0
-    private var currentRow:    Option[ResultSetRowPacket] = rows.lift(currentCursor)
+    private var currentRow:    Option[ResultSetRowPacket] = rows.headOption
 
     def next(): Boolean =
       checkClose {
@@ -643,9 +656,11 @@ object ResultSet:
         }
       }
 
-    override def isBeforeFirst(): Boolean = currentCursor == 0 && rows.nonEmpty
+    override def isBeforeFirst(): Boolean = currentCursor <= 0 && rows.nonEmpty
 
     override def isAfterLast(): Boolean = currentCursor == rows.size && rows.nonEmpty
+
+    override def isFirst(): Boolean = currentCursor > 0
 
     override def decode[T](codec: Codec[T]): List[T] =
       checkClose {
