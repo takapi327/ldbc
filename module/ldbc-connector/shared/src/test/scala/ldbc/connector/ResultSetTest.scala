@@ -637,3 +637,14 @@ class ResultSetTest extends CatsEffectSuite:
     resultSet.next()
     assertEquals(resultSet.isAfterLast(), true)
   }
+
+  test("The determination of whether the cursor position in the row of the ResultSet is at the start position matches the specified value.") {
+    val resultSet = ResultSet(
+      Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
+      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Version(0, 0, 0)
+    )
+    assertEquals(resultSet.isFirst(), false)
+    resultSet.next()
+    assertEquals(resultSet.isFirst(), true)
+  }
