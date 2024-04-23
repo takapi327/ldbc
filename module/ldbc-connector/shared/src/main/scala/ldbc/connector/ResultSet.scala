@@ -456,6 +456,15 @@ trait ResultSet:
   def afterLast(): Unit
 
   /**
+   * Moves the cursor to the first row in
+   * this <code>ResultSet</code> object.
+   *
+   * @return <code>true</code> if the cursor is on a valid row;
+   * <code>false</code> if there are no rows in the result set
+   */
+  def first(): Boolean
+
+  /**
    * Retrieves the current row number.  The first row is number 1, the
    * second number 2, and so on.
    * <p>
@@ -738,6 +747,14 @@ object ResultSet:
       if resultSetType == TYPE_FORWARD_ONLY then
         throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
       else currentCursor = rows.size + 1
+      
+    override def first(): Boolean =
+      if resultSetType == TYPE_FORWARD_ONLY then
+        throw new SQLException("Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY.")
+      else
+        currentCursor = 1
+        currentRow = rows.headOption
+        currentRow.isDefined && rows.nonEmpty
 
     override def getRow(): Int = currentCursor
 
