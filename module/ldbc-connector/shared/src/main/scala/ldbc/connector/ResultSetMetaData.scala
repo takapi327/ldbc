@@ -22,6 +22,7 @@ import ldbc.connector.net.packet.response.*
  *
  *   for
  *     rs <- stmt.executeQuery("SELECT a, b, c FROM TABLE2")
+ *     rsmd <- rs.getMetaData()
  *   yield
  *     val rsmd = rs.getMetaData()
  *     val numberOfColumns = rsmd.getColumnCount()
