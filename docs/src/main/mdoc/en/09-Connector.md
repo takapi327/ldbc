@@ -324,19 +324,18 @@ The `getXXX` method can be used either by specifying the index of the column to 
 
 ```scala
 connection.use { conn =>
-  for 
+  for
     statement <- conn.clientPreparedStatement("SELECT `id`, `name`, `age` FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
     result <- statement.executeQuery()
-  yield
-    val records = List.newBuilder[(Long, String, Int)]
-    while result.next() do {
-      val id = result.getLong(1)
-      val name = result.getString("name")
-      val age = result.getInt(3)
-      records += ((id, name, age))
+    records <- Monad[IO].whileM(result.next()) {
+      for
+        id <- result.getLong(1)
+      name <- result.getString("name")
+      age <- result.getInt(3)
+      yield (id, name, age)
     }
-    records.result()
+  yield records
 }
 ```
 
@@ -361,13 +360,12 @@ The sequence of events from query execution to record retrieval is as follows
 
 ```scala
 connection.use { conn =>
-  for 
+  for
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
     result <- statement.executeQuery()
-  yield 
-    val decodes: List[(Long, String, Option[Int])] = result.decode(bigint *: varchar *: int.opt)
-    ...
+    decodes <- result.decode(bigint *: varchar *: int.opt)
+  yield decodes
 }
 ```
 
