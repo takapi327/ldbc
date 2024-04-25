@@ -236,7 +236,8 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 1L)
         resultSet <- query.executeQuery()
-      yield resultSet.decode(bigint).contains(1L)
+        decoded <- resultSet.decode(bigint)
+      yield decoded.contains(1L)
     })
   }
 
@@ -259,6 +260,7 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 2L)
         resultSet <- query.executeQuery()
-      yield resultSet.decode(bigint).isEmpty
+        decoded <- resultSet.decode(bigint)
+      yield decoded.isEmpty
     })
   }
