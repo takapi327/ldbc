@@ -405,9 +405,10 @@ object Connection:
 
     override def getTransactionIsolation: F[Connection.TransactionIsolationLevel] =
       for
-        statement <- protocol.statement()
-        result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
-      yield result.getString(1) match
+        statement            <- protocol.statement()
+        result               <- statement.executeQuery("SELECT @@session.transaction_isolation")
+        transactionIsolation <- result.getString(1)
+      yield transactionIsolation match
         case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
         case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
         case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
