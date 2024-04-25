@@ -331,8 +331,8 @@ connection.use { conn =>
     records <- Monad[IO].whileM(result.next()) {
       for
         id <- result.getLong(1)
-      name <- result.getString("name")
-      age <- result.getInt(3)
+        name <- result.getString("name")
+        age <- result.getInt(3)
       yield (id, name, age)
     }
   yield records
