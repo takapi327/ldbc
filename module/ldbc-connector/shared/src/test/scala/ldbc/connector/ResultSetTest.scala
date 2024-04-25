@@ -23,8 +23,12 @@ class ResultSetTest extends CatsEffectSuite:
 
   test("SQLException occurs when accessing the ResultSet after closing it.") {
     val resultSet = buildResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
-    interceptMessageIO[SQLException]("Message: Operation not allowed after ResultSet closed")(resultSet.close() *> resultSet.next())
-    interceptMessageIO[SQLException]("Message: Operation not allowed after ResultSet closed")(resultSet.close() *> resultSet.getLong(1))
+    interceptMessageIO[SQLException]("Message: Operation not allowed after ResultSet closed")(
+      resultSet.close() *> resultSet.next()
+    )
+    interceptMessageIO[SQLException]("Message: Operation not allowed after ResultSet closed")(
+      resultSet.close() *> resultSet.getLong(1)
+    )
   }
 
   test("ResultSet should return the correct value for getInt") {
@@ -197,13 +201,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(List(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Option[BigDecimal], Option[BigDecimal], Option[BigDecimal])](resultSet.next()) {
-      for
-        c1 <- resultSet.getBigDecimal(1)
-        c2 <- resultSet.getBigDecimal("c2")
-        c3 <- resultSet.getBigDecimal(3)
-      yield (c1, c2, c3)
-    }
+    val records =
+      Monad[IO].whileM[List, (Option[BigDecimal], Option[BigDecimal], Option[BigDecimal])](resultSet.next()) {
+        for
+          c1 <- resultSet.getBigDecimal(1)
+          c2 <- resultSet.getBigDecimal("c2")
+          c3 <- resultSet.getBigDecimal(3)
+        yield (c1, c2, c3)
+      }
     assertIO(records, List((Some(BigDecimal("1.1")), Some(BigDecimal("2.2")), None)))
   }
 
@@ -257,13 +262,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])](resultSet.next()) {
-      for
-        c1 <- resultSet.getTimestamp(1)
-        c2 <- resultSet.getTimestamp("c2")
-        c3 <- resultSet.getTimestamp(3)
-      yield (c1, c2, c3)
-    }
+    val records =
+      Monad[IO].whileM[List, (Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])](resultSet.next()) {
+        for
+          c1 <- resultSet.getTimestamp(1)
+          c2 <- resultSet.getTimestamp("c2")
+          c3 <- resultSet.getTimestamp(3)
+        yield (c1, c2, c3)
+      }
     assertIO(
       records,
       List((Some(LocalDateTime.of(2023, 1, 1, 12, 34, 56)), Some(LocalDateTime.of(2023, 1, 2, 12, 34, 57)), None))
@@ -280,13 +286,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])](resultSet.next()) {
-      for
-        c1 <- resultSet.getTimestamp(1)
-        c2 <- resultSet.getTimestamp("c2")
-        c3 <- resultSet.getTimestamp(3)
-      yield (c1, c2, c3)
-    }
+    val records =
+      Monad[IO].whileM[List, (Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])](resultSet.next()) {
+        for
+          c1 <- resultSet.getTimestamp(1)
+          c2 <- resultSet.getTimestamp("c2")
+          c3 <- resultSet.getTimestamp(3)
+        yield (c1, c2, c3)
+      }
     assertIO(
       records,
       List((Some(LocalDateTime.of(2023, 1, 1, 12, 34, 56)), Some(LocalDateTime.of(2023, 1, 2, 12, 34, 57)), None))
@@ -886,13 +893,22 @@ class ResultSetTest extends CatsEffectSuite:
   }
 
   private def buildResultSet(
-                         columns: Vector[ColumnDefinitionPacket],
-                         records: Vector[ResultSetRowPacket],
-                         version: Version,
-                         resultSetType: Int = ResultSet.TYPE_FORWARD_ONLY,
-                         resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-                       ): ResultSet[IO] =
-    ResultSet[IO](columns, records, version, Ref.unsafe[IO, Boolean](false), Ref.unsafe[IO, Int](0), Ref.unsafe[IO, Option[ResultSetRowPacket]](None), resultSetType, resultSetConcurrency)
+    columns:              Vector[ColumnDefinitionPacket],
+    records:              Vector[ResultSetRowPacket],
+    version:              Version,
+    resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
+    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
+  ): ResultSet[IO] =
+    ResultSet[IO](
+      columns,
+      records,
+      version,
+      Ref.unsafe[IO, Boolean](false),
+      Ref.unsafe[IO, Int](0),
+      Ref.unsafe[IO, Option[ResultSetRowPacket]](None),
+      resultSetType,
+      resultSetConcurrency
+    )
 
   private def column(
     columnName: String,

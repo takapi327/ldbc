@@ -246,7 +246,7 @@ class ClientPreparedStatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.clientPreparedStatement("SELECT `time`, `time_null` FROM `all_types` WHERE `time` = ?")
           resultSet <- statement.setTime(1, LocalTime.of(12, 34, 56)) *> statement.executeQuery()
-          decoded  <- resultSet.decode[(LocalTime, Option[LocalTime])](time *: time.opt)
+          decoded   <- resultSet.decode[(LocalTime, Option[LocalTime])](time *: time.opt)
         yield decoded
       },
       List((LocalTime.of(12, 34, 56), None))

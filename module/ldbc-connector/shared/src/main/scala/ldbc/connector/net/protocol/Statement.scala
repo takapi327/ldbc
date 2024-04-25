@@ -166,12 +166,13 @@ object Statement:
             resetSequenceId *>
             socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
             socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-              case _: OKPacket      => 
+              case _: OKPacket =>
                 for
-                  isResultSetClosed <- Ref[F].of(false)
+                  isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                yield ResultSet.empty(initialPacket.serverVersion, isResultSetClosed, resultSetCurrentCursor, resultSetCurrentRow)
+                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                yield ResultSet
+                  .empty(initialPacket.serverVersion, isResultSetClosed, resultSetCurrentCursor, resultSetCurrentRow)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case result: ColumnsNumberPacket =>
                 for
@@ -181,9 +182,9 @@ object Statement:
                                     ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                                     Vector.empty
                                   )
-                  isResultSetClosed <- Ref[F].of(false)
+                  isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow <- Ref[F].of(resultSetRow.headOption)
+                  resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
                 yield ResultSet(
                   columnDefinitions,
                   resultSetRow,

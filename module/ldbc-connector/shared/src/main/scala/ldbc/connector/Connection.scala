@@ -463,7 +463,7 @@ object Connection:
       for
         statement <- protocol.statement()
         result    <- statement.executeQuery("SELECT DATABASE()")
-        decoded <- result.decode(text)
+        decoded   <- result.decode(text)
       yield decoded.headOption.getOrElse("")
 
     override def getStatistics: F[StatisticsPacket] = protocol.getStatistics

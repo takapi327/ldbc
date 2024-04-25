@@ -638,7 +638,8 @@ object ResultSet:
     currentRow:           Ref[F, Option[ResultSetRowPacket]],
     resultSetType:        Int = TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  )(using ev: MonadError[F, Throwable]) extends ResultSet[F]:
+  )(using ev: MonadError[F, Throwable])
+    extends ResultSet[F]:
 
     def next(): F[Boolean] =
       checkClose {
@@ -647,8 +648,7 @@ object ResultSet:
             currentRow.set(records.lift(cursor)) *>
               currentCursor.update(_ + 1) *>
               currentRow.get.map(_.isDefined)
-          else
-            currentCursor.update(_ + 1).as(false)
+          else currentCursor.update(_ + 1).as(false)
         }
       }
 
@@ -668,7 +668,7 @@ object ResultSet:
     override def getByte(columnIndex: Int): F[Byte] =
       checkClose {
         rowDecode(row => tinyint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
-        .map(_.getOrElse(0))
+          .map(_.getOrElse(0))
       }
 
     override def getShort(columnIndex: Int): F[Short] =
@@ -725,84 +725,84 @@ object ResultSet:
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getString(index + 1)
-          case None => ev.pure(None)
+          case None             => ev.pure(None)
       }
 
     override def getBoolean(columnLabel: String): F[Boolean] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getBoolean(index + 1)
-          case None => ev.pure(false)
+          case None             => ev.pure(false)
       }
 
     override def getByte(columnLabel: String): F[Byte] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getByte(index + 1)
-          case None => ev.pure(0)
+          case None             => ev.pure(0)
       }
 
     override def getShort(columnLabel: String): F[Short] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getShort(index + 1)
-          case None => ev.pure(0)
+          case None             => ev.pure(0)
       }
 
     override def getInt(columnLabel: String): F[Int] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getInt(index + 1)
-          case None => ev.pure(0)
+          case None             => ev.pure(0)
       }
 
     override def getLong(columnLabel: String): F[Long] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getLong(index + 1)
-          case None => ev.pure(0L)
+          case None             => ev.pure(0L)
       }
 
     override def getFloat(columnLabel: String): F[Float] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getFloat(index + 1)
-          case None => ev.pure(0f)
+          case None             => ev.pure(0f)
       }
 
     override def getDouble(columnLabel: String): F[Double] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getDouble(index + 1)
-          case None => ev.pure(0.toDouble)
+          case None             => ev.pure(0.toDouble)
       }
 
     override def getBytes(columnLabel: String): F[Option[Array[Byte]]] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getBytes(index + 1)
-          case None => ev.pure(None)
+          case None             => ev.pure(None)
       }
 
     override def getDate(columnLabel: String): F[Option[LocalDate]] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getDate(index + 1)
-          case None => ev.pure(None)
+          case None             => ev.pure(None)
       }
 
     override def getTime(columnLabel: String): F[Option[LocalTime]] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getTime(index + 1)
-          case None => ev.pure(None)
+          case None             => ev.pure(None)
       }
 
     override def getTimestamp(columnLabel: String): F[Option[LocalDateTime]] =
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getTimestamp(index + 1)
-          case None => ev.pure(None)
+          case None             => ev.pure(None)
       }
 
     override def getMetaData(): F[ResultSetMetaData] =
@@ -819,7 +819,7 @@ object ResultSet:
       checkClose {
         columns.zipWithIndex.find(_._1.name == columnLabel) match
           case Some((_, index)) => getBigDecimal(index + 1)
-          case None => ev.pure(None)
+          case None             => ev.pure(None)
       }
 
     override def isBeforeFirst(): F[Boolean] =
@@ -946,13 +946,13 @@ object ResultSet:
       ev.raiseError(new SQLException(message))
 
   def apply[F[_]](
-                         columns: Vector[ColumnDefinitionPacket],
-                         records: Vector[ResultSetRowPacket],
-                         version: Version,
-                         isClosed:             Ref[F, Boolean],
-                         currentCursor:        Ref[F, Int],
-                         currentRow:           Ref[F, Option[ResultSetRowPacket]],
-                       )(using MonadError[F, Throwable]): ResultSet[F] =
+    columns:       Vector[ColumnDefinitionPacket],
+    records:       Vector[ResultSetRowPacket],
+    version:       Version,
+    isClosed:      Ref[F, Boolean],
+    currentCursor: Ref[F, Int],
+    currentRow:    Ref[F, Option[ResultSetRowPacket]]
+  )(using MonadError[F, Throwable]): ResultSet[F] =
     Impl[F](columns, records, version, isClosed, currentCursor, currentRow, ResultSet.TYPE_FORWARD_ONLY)
 
   def apply[F[_]](
@@ -968,11 +968,11 @@ object ResultSet:
     Impl[F](columns, records, version, isClosed, currentCursor, currentRow, resultSetType, resultSetConcurrency)
 
   def empty[F[_]](
-                   version: Version,
-                   isClosed:             Ref[F, Boolean],
-                   currentCursor:        Ref[F, Int],
-                   currentRow:           Ref[F, Option[ResultSetRowPacket]],
-                 )(using MonadError[F, Throwable]): ResultSet[F] =
+    version:       Version,
+    isClosed:      Ref[F, Boolean],
+    currentCursor: Ref[F, Int],
+    currentRow:    Ref[F, Option[ResultSetRowPacket]]
+  )(using MonadError[F, Throwable]): ResultSet[F] =
     this.apply(
       Vector.empty,
       Vector.empty,
