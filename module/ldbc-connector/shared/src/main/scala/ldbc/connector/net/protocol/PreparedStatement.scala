@@ -13,7 +13,7 @@ import scala.collection.immutable.ListMap
 import cats.*
 import cats.syntax.all.*
 
-import cats.effect.Ref
+import cats.effect.*
 
 import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
@@ -42,7 +42,7 @@ import ldbc.connector.net.packet.request.*
 trait PreparedStatement[F[_]] extends Statement[F]:
 
   @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
-  override def executeQuery(sql: String): F[ResultSet] = throw new UnsupportedOperationException(
+  override def executeQuery(sql: String): F[ResultSet[F]] = throw new UnsupportedOperationException(
     "This method cannot be called on a PreparedStatement."
   )
 
@@ -475,7 +475,7 @@ trait PreparedStatement[F[_]] extends Statement[F]:
   /**
    * Executes the specified SQL statement and returns one or more ResultSet objects.
    */
-  def executeQuery(): F[ResultSet]
+  def executeQuery(): F[ResultSet[F]]
 
   /**
    * Executes the given SQL statement, which may be an INSERT, UPDATE, or DELETE statement or an SQL statement that
@@ -558,7 +558,7 @@ object PreparedStatement:
    * @tparam F
    *   the effect type
    */
-  case class Client[F[_]: Exchange: Tracer](
+  case class Client[F[_]: Temporal: Exchange: Tracer](
     socket:               PacketSocket[F],
     initialPacket:        InitialPacket,
     sql:                  String,
@@ -576,8 +576,8 @@ object PreparedStatement:
       Attribute("sql", sql)
     )
 
-    override def executeQuery(): F[ResultSet] =
-      exchange[F, ResultSet]("statement") { (span: Span[F]) =>
+    override def executeQuery(): F[ResultSet[F]] =
+      exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
         params.get.flatMap { params =>
           span.addAttributes(
             (attributes ++ List(
@@ -588,7 +588,12 @@ object PreparedStatement:
             resetSequenceId *>
             socket.send(ComQueryPacket(buildQuery(sql, params), initialPacket.capabilityFlags, ListMap.empty)) *>
             socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-              case _: OKPacket      => ev.pure(ResultSet.empty(initialPacket.serverVersion))
+              case _: OKPacket      =>
+                for
+                  isResultSetClosed <- Ref[F].of(false)
+                  resultSetCurrentCursor <- Ref[F].of(0)
+                  resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                yield ResultSet.empty(initialPacket.serverVersion, isResultSetClosed, resultSetCurrentCursor, resultSetCurrentRow)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case result: ColumnsNumberPacket =>
                 for
@@ -602,10 +607,16 @@ object PreparedStatement:
                       ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                       Vector.empty
                     )
+                  isResultSetClosed <- Ref[F].of(false)
+                  resultSetCurrentCursor <- Ref[F].of(0)
+                  resultSetCurrentRow <- Ref[F].of(resultSetRow.headOption)
                 yield ResultSet(
                   columnDefinitions,
                   resultSetRow,
                   initialPacket.serverVersion,
+                  isResultSetClosed,
+                  resultSetCurrentCursor,
+                  resultSetCurrentRow,
                   resultSetType,
                   resultSetConcurrency
                 )
@@ -754,7 +765,7 @@ object PreparedStatement:
    * @tparam F
    *   The effect type
    */
-  case class Server[F[_]: Exchange: Tracer](
+  case class Server[F[_]: Temporal: Exchange: Tracer](
     socket:               PacketSocket[F],
     initialPacket:        InitialPacket,
     statementId:          Long,
@@ -773,8 +784,8 @@ object PreparedStatement:
       Attribute("sql", sql)
     )
 
-    override def executeQuery(): F[ResultSet] =
-      exchange[F, ResultSet]("statement") { (span: Span[F]) =>
+    override def executeQuery(): F[ResultSet[F]] =
+      exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
         for
           parameter <- params.get
           columnCount <- span.addAttributes(
@@ -797,10 +808,16 @@ object PreparedStatement:
                             Vector.empty
                           )
           _ <- params.set(ListMap.empty)
+          isResultSetClosed <- Ref[F].of(false)
+          resultSetCurrentCursor <- Ref[F].of(0)
+          resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
         yield ResultSet(
           columnDefinitions,
           resultSetRow,
           initialPacket.serverVersion,
+          isResultSetClosed,
+          resultSetCurrentCursor,
+          resultSetCurrentRow,
           resultSetType,
           resultSetConcurrency
         )
