@@ -344,11 +344,11 @@ object Connection:
      */
     case SERIALIZABLE extends TransactionIsolationLevel("SERIALIZABLE")
 
-  private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
+  private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
     protocol:   Protocol[F],
     readOnly:   Ref[F, Boolean],
     autoCommit: Ref[F, Boolean]
-  )(using ev: MonadError[F, Throwable], ex: Exchange[F])
+  )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
       readOnly.update(_ => isReadOnly) *>

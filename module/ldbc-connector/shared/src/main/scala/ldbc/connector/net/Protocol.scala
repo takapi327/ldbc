@@ -36,7 +36,7 @@ import ldbc.connector.net.protocol.*
  * It provides a way to authenticate, reset sequence id, and close the connection.
  *
  * @tparam F
- * the effect type
+ *   the effect type
  */
 trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
 
