@@ -351,28 +351,6 @@ class ConnectionTest extends CatsEffectSuite:
     })
   }
 
-  test("If multi-query is enabled, multi-queries can be performed.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use { conn =>
-        for
-          _         <- conn.enableMultiQueries
-          statement <- conn.createStatement()
-          _         <- statement.executeQuery("SELECT 1; SELECT 2")
-        yield true
-      },
-      true
-    )
-  }
-
   test("Can change from mysql_native_password user to caching_sha2_password user.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",

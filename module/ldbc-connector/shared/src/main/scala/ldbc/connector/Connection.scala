@@ -281,30 +281,6 @@ trait Connection[F[_]]:
   def resetServerState: F[Unit]
 
   /**
-   * Controls whether or not multiple SQL statements are allowed to be executed at once.
-   * 
-   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
-   *
-   * @param optionOperation
-   *   [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON]] or [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF]]
-   */
-  def setOption(optionOperation: EnumMySQLSetOption): F[Unit]
-
-  /**
-   * Enables multiple SQL statements to be executed at once.
-   * 
-   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
-   */
-  def enableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON)
-
-  /**
-   * Disables multiple SQL statements to be executed at once.
-   * 
-   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
-   */
-  def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
-
-  /**
    * Changes the user and password for this connection.
    *
    * @param user
@@ -524,9 +500,6 @@ object Connection:
           statement.executeQuery("SET autocommit=1") *>
           autoCommit.update(_ => true)
       }
-
-    override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] =
-      protocol.resetSequenceId *> protocol.setOption(optionOperation)
 
     override def changeUser(user: String, password: String): F[Unit] =
       protocol.resetSequenceId *> protocol.changeUser(user, password)
