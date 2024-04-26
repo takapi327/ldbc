@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha5
+0.3.0-alpha6
 </div>
 </div>
 <div class="nav-toc">
@@ -77,7 +77,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha5
+0.3.0-alpha6
 </div>
 </div>
 <div class="nav-toc">
@@ -127,10 +127,10 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>The LDBC connector is the lowest layer API. We plan to use this connector to provide higher-layer APIs in the future. We also plan to make it compatible with existing higher-layer APIs.</p>
 <p>The following dependencies must be set up in your project in order to use it.</p>
 <p><strong>JVM</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha5&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha6&quot;
 </code></pre>
 <p><strong>JS/Native</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha5&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha6&quot;
 </code></pre>
 <p><strong>Supported Versions</strong></p>
 <p>The current version supports the following versions of MySQL</p>
@@ -439,6 +439,27 @@ val connection = Connection[IO](
 </code></pre>
 <h3><a href="#resultset" name="resultset" class="anchor"><span class="anchor-link"></span></a>ResultSet</h3>
 <p>The <code>ResultSet</code> is an API for storing values returned by the MySQL server after query execution.</p>
+<p>There are two ways to retrieve records retrieved by executing SQL from a <code>ResultSet</code>: using the <code>next</code> and <code>getXXX</code> methods as in JDBC, or using LDBC&rsquo;s own <code>decode</code> method.</p>
+<h4><a href="#next-getxxx" name="next-getxxx" class="anchor"><span class="anchor-link"></span></a>next/getXXX</h4>
+<p>The <code>next</code> method returns <code>true</code> if the next record exists, or <code>false</code> if the next record does not exist.</p>
+<p>The <code>getXXX</code> method is an API for retrieving values from a record.</p>
+<p>The <code>getXXX</code> method can be used either by specifying the index of the column to be retrieved or by specifying the column name.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for
+    statement &lt;- conn.clientPreparedStatement(&quot;SELECT `id`, `name`, `age` FROM users WHERE id = ?&quot;)
+    _ &lt;- statement.setLong(1, 1)
+    result &lt;- statement.executeQuery()
+    records &lt;- Monad[IO].whileM(result.next()) {
+      for
+        id &lt;- result.getLong(1)
+        name &lt;- result.getString(&quot;name&quot;)
+        age &lt;- result.getInt(3)
+      yield (id, name, age)
+    }
+  yield records
+}
+</code></pre>
+<h4><a href="#decode" name="decode" class="anchor"><span class="anchor-link"></span></a>decode</h4>
 <p>The <code>decode</code> method is used to retrieve records from the <code>ResultSet</code> after they have been retrieved by executing SQL.</p>
 <p>The <code>decode</code> method is an API for converting values retrieved from <code>ResultSet</code> to Scala types.</p>
 <p>The type to be converted is specified using the <code>*:</code> operator depending on the number of columns to be retrieved.</p>
@@ -448,13 +469,12 @@ val connection = Connection[IO](
 <p>If you want to get a NULL-allowed column, use the <code>opt</code> method to convert it to the <code>Option</code> type. If the record is NULL, it can be retrieved as None.</p>
 <p>The sequence of events from query execution to record retrieval is as follows</p>
 <pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
-  for 
+  for
     statement &lt;- conn.clientPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;) // or conn.serverPreparedStatement(&quot;SELECT * FROM users WHERE id = ?&quot;)
     _ &lt;- statement.setLong(1, 1)
     result &lt;- statement.executeQuery()
-  yield 
-    val decodes: List[(Long, String, Option[Int])] = result.decode(bigint *: varchar *: int.opt)
-    ...
+    decodes &lt;- result.decode(bigint *: varchar *: int.opt)
+  yield decodes
 }
 </code></pre>
 <p>The records retrieved from a <code>ResultSet</code> will always be an array. This is because a query in MySQL may always return multiple records.</p>
@@ -936,7 +956,7 @@ yield
   <li>etc&hellip;</li>
 </ul>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha5/docs/target/mdoc/en/09-Connector.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha6/docs/target/mdoc/en/09-Connector.md">here</a>.
 </div>
 
 </div>
@@ -1021,7 +1041,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha5', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha6', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
