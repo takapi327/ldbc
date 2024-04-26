@@ -151,16 +151,25 @@ object Statement:
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 yield ResultSet
-                  .empty(protocol.initialPacket.serverVersion, isResultSetClosed, resultSetCurrentCursor, resultSetCurrentRow)
+                  .empty(
+                    protocol.initialPacket.serverVersion,
+                    isResultSetClosed,
+                    resultSetCurrentCursor,
+                    resultSetCurrentRow
+                  )
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case result: ColumnsNumberPacket =>
                 for
                   columnDefinitions <-
-                    protocol.repeatProcess(result.size, ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags))
-                  resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
-                                    ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-                                    Vector.empty
-                                  )
+                    protocol.repeatProcess(
+                      result.size,
+                      ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+                    )
+                  resultSetRow <-
+                    protocol.readUntilEOF[ResultSetRowPacket](
+                      ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
+                      Vector.empty
+                    )
                   isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
@@ -220,17 +229,22 @@ object Statement:
                 if args.isEmpty then ev.pure(List.empty)
                 else
                   protocol.resetSequenceId *>
-                    protocol.send(ComQueryPacket(args.mkString(";"), protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+                    protocol.send(
+                      ComQueryPacket(args.mkString(";"), protocol.initialPacket.capabilityFlags, ListMap.empty)
+                    ) *>
                     args
                       .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
                         for
                           acc <- $acc
                           result <-
-                            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                              case result: OKPacket => ev.pure(acc :+ result.affectedRows)
-                              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch", acc))
-                              case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
-                            }
+                            protocol
+                              .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                              .flatMap {
+                                case result: OKPacket => ev.pure(acc :+ result.affectedRows)
+                                case error: ERRPacket =>
+                                  ev.raiseError(error.toException("Failed to execute batch", acc))
+                                case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                              }
                         yield result
                       }
                       .map(_.toList)

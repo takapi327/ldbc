@@ -416,7 +416,8 @@ object Connection:
         case Some(unknown) => throw new SQLFeatureNotSupportedException(s"Unknown transaction isolation level $unknown")
         case None          => throw new SQLFeatureNotSupportedException("Unknown transaction isolation level")
 
-    override def createStatement(): F[Statement[F]] = createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+    override def createStatement(): F[Statement[F]] =
+      createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
     override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
       Ref[F]
         .of(Vector.empty[String])
@@ -449,7 +450,8 @@ object Connection:
           resultSetConcurrency
         )
 
-    override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] = serverPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+    override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
+      serverPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
     override def serverPreparedStatement(
       sql:                  String,
       resultSetType:        Int,
@@ -457,12 +459,18 @@ object Connection:
     ): F[PreparedStatement.Server[F]] =
       for
         result <- protocol.resetSequenceId *> protocol.send(ComStmtPreparePacket(sql)) *>
-          protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-            case ok: ComStmtPrepareOkPacket => ev.pure(ok)
-          }
-        _           <- protocol.repeatProcess(result.numParams, ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags))
-        _           <- protocol.repeatProcess(result.numColumns, ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags))
+                    protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+                      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                      case ok: ComStmtPrepareOkPacket => ev.pure(ok)
+                    }
+        _ <- protocol.repeatProcess(
+               result.numParams,
+               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+             )
+        _ <- protocol.repeatProcess(
+               result.numColumns,
+               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+             )
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement
@@ -517,9 +525,11 @@ object Connection:
           autoCommit.update(_ => true)
       }
 
-    override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] = protocol.resetSequenceId *> protocol.setOption(optionOperation)
+    override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] =
+      protocol.resetSequenceId *> protocol.setOption(optionOperation)
 
-    override def changeUser(user: String, password: String): F[Unit] = protocol.resetSequenceId *> protocol.changeUser(user, password)
+    override def changeUser(user: String, password: String): F[Unit] =
+      protocol.resetSequenceId *> protocol.changeUser(user, password)
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
@@ -570,7 +580,8 @@ object Connection:
       (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
     for
       given Exchange[F] <- Resource.eval(Exchange[F])
-      protocol <- Protocol[F](sockets, debug, sslOptions, database, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
+      protocol <-
+        Protocol[F](sockets, debug, sslOptions, database, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
       _          <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit <- Resource.eval(Ref[F].of[Boolean](true))

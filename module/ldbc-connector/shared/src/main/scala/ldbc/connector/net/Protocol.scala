@@ -21,7 +21,7 @@ import fs2.io.net.Socket
 import scodec.Decoder
 
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{Tracer, Span}
+import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.data.*
 import ldbc.connector.authenticator.*
@@ -91,21 +91,51 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    */
   def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
 
+  /**
+   * Closes the connection.
+   */
+  def close(): F[Unit]
+
+  /**
+   * Repeats the process `times` times.
+   *
+   * @param times
+   *   the number of times to repeat the process
+   * @param decoder
+   *   the decoder to decode the response packet
+   * @tparam P
+   *   the type of the response packet
+   * @return
+   *   a vector of the response packets
+   */
   def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]]
 
+  /**
+   * Reads until EOF is reached.
+   *
+   * @param decoder
+   *   the decoder to decode the response packet
+   * @param acc
+   *   the accumulator
+   * @tparam P
+   *   the type of the response packet
+   * @return
+   *   a vector of the response packets
+   */
   def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket], acc: Vector[P]): F[Vector[P]]
 
 object Protocol:
-  
+
   private[ldbc] case class Impl[F[_]: Temporal: Tracer](
-                                                                  initialPacket:           InitialPacket,
-                                                                  socket:            PacketSocket[F],
-                                                                  database:                Option[String],
-                                                                  useSSL:                  Boolean = false,
-                                                                  allowPublicKeyRetrieval: Boolean = false,
-                                                                  capabilityFlags:         List[CapabilitiesFlags],
-                                                                  sequenceIdRef:           Ref[F, Byte],
-  )(using ev: MonadError[F, Throwable], ex: Exchange[F]) extends Protocol[F]:
+    initialPacket:           InitialPacket,
+    socket:                  PacketSocket[F],
+    database:                Option[String],
+    useSSL:                  Boolean = false,
+    allowPublicKeyRetrieval: Boolean = false,
+    capabilityFlags:         List[CapabilitiesFlags],
+    sequenceIdRef:           Ref[F, Byte]
+  )(using ev: MonadError[F, Throwable], ex: Exchange[F])
+    extends Protocol[F]:
 
     private val attributes = initialPacket.attributes ++ List(
       database.map(db => Attribute("database", db))
@@ -117,56 +147,56 @@ object Protocol:
 
     override def comQuit(): F[Unit] =
       exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_QUIT")) *) *> socket.send(ComQuitPacket())
+        span.addAttributes((attributes :+ Attribute("command", "COM_QUIT"))*) *> socket.send(ComQuitPacket())
       }
 
     override def comInitDB(schema: String): F[Unit] =
       exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes ++ List(Attribute("command", "COM_INIT_DB"), Attribute("schema", schema))) *) *>
+        span.addAttributes((attributes ++ List(Attribute("command", "COM_INIT_DB"), Attribute("schema", schema)))*) *>
           socket.send(ComInitDBPacket(schema)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute change schema"))
-            case ok: OKPacket => ev.unit
+            case ok: OKPacket     => ev.unit
           }
       }
 
     override def comStatistics(): F[StatisticsPacket] =
       exchange[F, StatisticsPacket]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_STATISTICS")) *) *>
+        span.addAttributes((attributes :+ Attribute("command", "COM_STATISTICS"))*) *>
           socket.send(ComStatisticsPacket()) *>
           socket.receive(StatisticsPacket.decoder)
       }
 
     override def comPing(): F[Boolean] =
       exchange[F, Boolean]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_PING")) *) *>
+        span.addAttributes((attributes :+ Attribute("command", "COM_PING"))*) *>
           socket.send(ComPingPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.pure(false)
-            case ok: OKPacket => ev.pure(true)
+            case ok: OKPacket     => ev.pure(true)
           }
       }
 
     override def comResetConnection(): F[Unit] =
       exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
-        span.addAttributes((attributes :+ Attribute("command", "COM_RESET_CONNECTION")) *) *>
+        span.addAttributes((attributes :+ Attribute("command", "COM_RESET_CONNECTION"))*) *>
           socket.send(ComResetConnectionPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute reset connection"))
-            case ok: OKPacket => ev.unit
+            case ok: OKPacket     => ev.unit
           }
       }
 
     override def comSetOption(optionOperation: EnumMySQLSetOption): F[Unit] =
       exchange[F, Unit]("utility_commands") { (span: Span[F]) =>
         span.addAttributes(
-          (attributes ++ List(Attribute("command", "COM_SET_OPTION"), Attribute("option", optionOperation.toString))) *
+          (attributes ++ List(Attribute("command", "COM_SET_OPTION"), Attribute("option", optionOperation.toString)))*
         ) *>
           socket.send(ComSetOptionPacket(optionOperation)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute set option"))
-            case eof: EOFPacket => ev.unit
-            case ok: OKPacket => ev.unit
+            case eof: EOFPacket   => ev.unit
+            case ok: OKPacket     => ev.unit
           }
       }
 
@@ -178,6 +208,8 @@ object Protocol:
     override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] =
       resetSequenceId *> comSetOption(optionOperation)
 
+    override def close(): F[Unit] = resetSequenceId *> comQuit()
+
     override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]] =
       def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
         if remaining <= 0 then ev.pure(acc)
@@ -185,11 +217,14 @@ object Protocol:
 
       read(times, Vector.empty[P])
 
-    override def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket], acc: Vector[P]): F[Vector[P]] =
+    override def readUntilEOF[P <: ResponsePacket](
+      decoder: Decoder[P | EOFPacket | ERRPacket],
+      acc:     Vector[P]
+    ): F[Vector[P]] =
       socket.receive(decoder).flatMap {
-        case _: EOFPacket => ev.pure(acc)
+        case _: EOFPacket     => ev.pure(acc)
         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-        case row => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
+        case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
       }
 
     /**
@@ -200,13 +235,14 @@ object Protocol:
      * Authentication plugin
      */
     private def readUntilOk(
-                             plugin: AuthenticationPlugin,
-                             password: String,
-                             scrambleBuff: Option[Array[Byte]] = None
-                           ): F[Unit] =
+      plugin:       AuthenticationPlugin,
+      password:     String,
+      scrambleBuff: Option[Array[Byte]] = None
+    ): F[Unit] =
       socket.receive(AuthenticationPacket.decoder(initialPacket.capabilityFlags)).flatMap {
         case more: AuthMoreDataPacket
-          if (allowPublicKeyRetrieval || useSSL) && more.authenticationMethodData.mkString("") == Authentication.FULL_AUTH =>
+          if (allowPublicKeyRetrieval || useSSL) && more.authenticationMethodData
+            .mkString("") == Authentication.FULL_AUTH =>
           plugin match
             case plugin: CachingSha2PasswordPlugin =>
               cachingSha2Authentication(
@@ -224,11 +260,11 @@ object Protocol:
                 scrambleBuff.getOrElse(initialPacket.scrambleBuff)
               ) *> readUntilOk(plugin, password)
             case _ => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected authentication method"))
-        case more: AuthMoreDataPacket => readUntilOk(plugin, password)
+        case more: AuthMoreDataPacket        => readUntilOk(plugin, password)
         case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password)
-        case _: OKPacket => ev.unit
-        case error: ERRPacket => ev.raiseError(error.toException("Connection error"))
-        case unknown: UnknownPacket => ev.raiseError(unknown.toException("Error during database operation"))
+        case _: OKPacket                     => ev.unit
+        case error: ERRPacket                => ev.raiseError(error.toException("Connection error"))
+        case unknown: UnknownPacket          => ev.raiseError(unknown.toException("Error during database operation"))
         case _ => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected packet"))
       }
 
@@ -272,10 +308,10 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def plainTextHandshake(
-                                    plugin: AuthenticationPlugin,
-                                    password: String,
-                                    scrambleBuff: Array[Byte]
-                                  ): F[Unit] =
+      plugin:       AuthenticationPlugin,
+      password:     String,
+      scrambleBuff: Array[Byte]
+    ): F[Unit] =
       val hashedPassword = plugin.hashPassword(password, scrambleBuff)
       socket.send(AuthSwitchResponsePacket(hashedPassword))
 
@@ -296,10 +332,10 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def allowPublicKeyRetrievalRequest(
-                                                plugin: Sha256PasswordPlugin,
-                                                password: String,
-                                                scrambleBuff: Array[Byte]
-                                              ): F[Unit] =
+      plugin:       Sha256PasswordPlugin,
+      password:     String,
+      scrambleBuff: Array[Byte]
+    ): F[Unit] =
       socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
         // TODO: When converted to Array[Byte], it contains an extra 1 for some reason. This causes an error in public key parsing when executing Scala JS. Therefore, the first 1Byte is excluded.
         val publicKeyString = moreData.authenticationMethodData
@@ -321,10 +357,10 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def sha256Authentication(
-                                      plugin: Sha256PasswordPlugin,
-                                      password: String,
-                                      scrambleBuff: Array[Byte]
-                                    ): F[Unit] =
+      plugin:       Sha256PasswordPlugin,
+      password:     String,
+      scrambleBuff: Array[Byte]
+    ): F[Unit] =
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _) => sslHandshake(password)
         case (false, true) =>
@@ -340,10 +376,10 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def cachingSha2Authentication(
-                                           plugin: CachingSha2PasswordPlugin,
-                                           password: String,
-                                           scrambleBuff: Array[Byte]
-                                         ): F[Unit] =
+      plugin:       CachingSha2PasswordPlugin,
+      password:     String,
+      scrambleBuff: Array[Byte]
+    ): F[Unit] =
       (useSSL, allowPublicKeyRetrieval) match
         case (true, _) => sslHandshake(password)
         case (false, true) =>
@@ -370,11 +406,11 @@ object Protocol:
 
     override def startAuthentication(username: String, password: String): F[Unit] =
       exchange[F, Unit]("database.authentication") { (span: Span[F]) =>
-        span.addAttributes((attributes ++ List(Attribute("username", username))) *) *> (
+        span.addAttributes((attributes ++ List(Attribute("username", username)))*) *> (
           determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
-            case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
+            case Left(error)   => ev.raiseError(error) *> socket.send(ComQuitPacket())
             case Right(plugin) => handshake(plugin, username, password) *> readUntilOk(plugin, password)
-          )
+        )
       }
 
     override def changeUser(user: String, password: String): F[Unit] =
@@ -384,7 +420,7 @@ object Protocol:
             attributes ++
               List(Attribute("type", "Utility Commands")) ++
               List(Attribute("command", "COM_CHANGE_USER"), Attribute("user", user))
-            ) *
+          )*
         ) *> (
           determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
             case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
@@ -400,36 +436,55 @@ object Protocol:
                 )
               ) *>
                 readUntilOk(plugin, password)
-          )
+        )
       }
 
   def apply[F[_]: Temporal: Console: Tracer: Exchange](
-                                     sockets:                 Resource[F, Socket[F]],
-                                     debug:                   Boolean,
-                                     sslOptions:              Option[SSLNegotiation.Options[F]],
-                                     database:                Option[String],
-                                     allowPublicKeyRetrieval: Boolean = false,
-                                     readTimeout:             Duration,
-                                     capabilitiesFlags:       List[CapabilitiesFlags]
-                                   ): Resource[F, Protocol[F]] =
+    sockets:                 Resource[F, Socket[F]],
+    debug:                   Boolean,
+    sslOptions:              Option[SSLNegotiation.Options[F]],
+    database:                Option[String],
+    allowPublicKeyRetrieval: Boolean = false,
+    readTimeout:             Duration,
+    capabilitiesFlags:       List[CapabilitiesFlags]
+  ): Resource[F, Protocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
       initialPacketRef <- Resource.eval(Ref[F].of[Option[InitialPacket]](None))
-      packetSocket <- PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout, capabilitiesFlags)
-      protocol <- Resource.eval(fromPacketSocket(packetSocket, sslOptions, database, allowPublicKeyRetrieval, capabilitiesFlags, sequenceIdRef, initialPacketRef))
+      packetSocket <-
+        PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout, capabilitiesFlags)
+      protocol <- Resource.make(
+                    fromPacketSocket(
+                      packetSocket,
+                      sslOptions,
+                      database,
+                      allowPublicKeyRetrieval,
+                      capabilitiesFlags,
+                      sequenceIdRef,
+                      initialPacketRef
+                    )
+                  )(_.close())
     yield protocol
 
   def fromPacketSocket[F[_]: Temporal: Tracer: Exchange](
-                                                packetSocket:            PacketSocket[F],
-                                                sslOptions:              Option[SSLNegotiation.Options[F]],
-                                                database:                Option[String],
-                                                allowPublicKeyRetrieval: Boolean = false,
-                                                capabilitiesFlags:       List[CapabilitiesFlags],
-                                                sequenceIdRef:           Ref[F, Byte],
-                                                initialPacketRef:        Ref[F, Option[InitialPacket]]
-                                              )(using ev: MonadError[F, Throwable]): F[Protocol[F]] =
-    for
-      initialPacketOpt  <- initialPacketRef.get
+    packetSocket:            PacketSocket[F],
+    sslOptions:              Option[SSLNegotiation.Options[F]],
+    database:                Option[String],
+    allowPublicKeyRetrieval: Boolean = false,
+    capabilitiesFlags:       List[CapabilitiesFlags],
+    sequenceIdRef:           Ref[F, Byte],
+    initialPacketRef:        Ref[F, Option[InitialPacket]]
+  )(using ev: MonadError[F, Throwable]): F[Protocol[F]] =
+    for initialPacketOpt <- initialPacketRef.get
     yield initialPacketOpt match
-      case Some(initialPacket) => Impl(initialPacket, packetSocket, database, sslOptions.isDefined, allowPublicKeyRetrieval, capabilitiesFlags, sequenceIdRef)
+      case Some(initialPacket) =>
+        Impl(
+          initialPacket,
+          packetSocket,
+          database,
+          sslOptions.isDefined,
+          allowPublicKeyRetrieval,
+          capabilitiesFlags,
+          sequenceIdRef
+        )
       case None => throw new SQLException("Initial packet is not set")
