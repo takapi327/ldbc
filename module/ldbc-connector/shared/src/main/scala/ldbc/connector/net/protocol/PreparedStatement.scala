@@ -494,31 +494,29 @@ trait PreparedStatement[F[_]] extends Statement[F]:
 
 object PreparedStatement:
 
-  sealed trait SharedPreparedStatement[F[_]] extends PreparedStatement[F]:
+  private def buildQuery(original: String, params: ListMap[Int, Parameter]): String =
+    val query = original.toCharArray
+    params
+      .foldLeft(query) {
+        case (query, (offset, param)) =>
+          val index = query.indexOf('?', offset - 1)
+          if index < 0 then query
+          else
+            val (head, tail)         = query.splitAt(index)
+            val (tailHead, tailTail) = tail.splitAt(1)
+            head ++ param.sql ++ tailTail
+      }
+      .mkString
 
-    protected def buildQuery(original: String, params: ListMap[Int, Parameter]): String =
-      val query = original.toCharArray
-      params
-        .foldLeft(query) {
-          case (query, (offset, param)) =>
-            val index = query.indexOf('?', offset - 1)
-            if index < 0 then query
-            else
-              val (head, tail)         = query.splitAt(index)
-              val (tailHead, tailTail) = tail.splitAt(1)
-              head ++ param.sql ++ tailTail
-        }
-        .mkString
-
-    protected def buildBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
-      val placeholderCount = original.split("\\?", -1).length - 1
-      require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
-      original.trim.toLowerCase match
-        case q if q.startsWith("insert") =>
-          val bindQuery = buildQuery(original, params)
-          bindQuery.split("VALUES").last
-        case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
-        case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
+  private def buildBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
+    val placeholderCount = original.split("\\?", -1).length - 1
+    require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
+    original.trim.toLowerCase match
+      case q if q.startsWith("insert") =>
+        val bindQuery = buildQuery(original, params)
+        bindQuery.split("VALUES").last
+      case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
+      case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
 
   /**
    * PreparedStatement for query construction at the client side.
@@ -542,7 +540,7 @@ object PreparedStatement:
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
-    extends SharedPreparedStatement[F]:
+    extends PreparedStatement[F]:
 
     private val attributes = protocol.initialPacket.attributes ++ List(
       Attribute("type", "Client PreparedStatement"),
@@ -757,7 +755,7 @@ object PreparedStatement:
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
-    extends SharedPreparedStatement[F]:
+    extends PreparedStatement[F]:
 
     private val attributes = List(
       Attribute("type", "Server PreparedStatement"),
