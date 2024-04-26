@@ -11,7 +11,7 @@ import scala.collection.immutable.ListMap
 import cats.*
 import cats.syntax.all.*
 
-import cats.effect.Ref
+import cats.effect.*
 
 import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
@@ -43,7 +43,7 @@ trait Statement[F[_]]:
    * @param sql
    *   an SQL statement to be sent to the database, typically a static SQL SELECT statement
    */
-  def executeQuery(sql: String): F[ResultSet]
+  def executeQuery(sql: String): F[ResultSet[F]]
 
   /**
    * Executes the given SQL statement, which may be an INSERT, UPDATE, or DELETE statement or an SQL statement that
@@ -128,12 +128,14 @@ object Statement:
    */
   val EXECUTE_FAILED = -3
 
-  def apply[F[_]: Exchange: Tracer](
-    socket:          PacketSocket[F],
-    initialPacket:   InitialPacket,
-    utilityCommands: UtilityCommands[F],
-    batchedArgsRef:  Ref[F, Vector[String]],
-    resetSequenceId: F[Unit]
+  def apply[F[_]: Temporal: Exchange: Tracer](
+    socket:               PacketSocket[F],
+    initialPacket:        InitialPacket,
+    utilityCommands:      UtilityCommands[F],
+    batchedArgsRef:       Ref[F, Vector[String]],
+    resetSequenceId:      F[Unit],
+    resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
+    resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
 
@@ -158,13 +160,19 @@ object Statement:
           case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
         }
 
-      override def executeQuery(sql: String): F[ResultSet] =
-        exchange[F, ResultSet]("statement") { (span: Span[F]) =>
+      override def executeQuery(sql: String): F[ResultSet[F]] =
+        exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
           span.addAttributes((attributes ++ List(Attribute("execute", "query"), Attribute("sql", sql)))*) *>
             resetSequenceId *>
             socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
             socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
-              case _: OKPacket      => ev.pure(ResultSet.empty)
+              case _: OKPacket =>
+                for
+                  isResultSetClosed      <- Ref[F].of(false)
+                  resultSetCurrentCursor <- Ref[F].of(0)
+                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                yield ResultSet
+                  .empty(initialPacket.serverVersion, isResultSetClosed, resultSetCurrentCursor, resultSetCurrentRow)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case result: ColumnsNumberPacket =>
                 for
@@ -174,9 +182,19 @@ object Statement:
                                     ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                                     Vector.empty
                                   )
-                yield new ResultSet:
-                  override def columns: Vector[ColumnDefinitionPacket] = columnDefinitions
-                  override def rows:    Vector[ResultSetRowPacket]     = resultSetRow
+                  isResultSetClosed      <- Ref[F].of(false)
+                  resultSetCurrentCursor <- Ref[F].of(0)
+                  resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
+                yield ResultSet(
+                  columnDefinitions,
+                  resultSetRow,
+                  initialPacket.serverVersion,
+                  isResultSetClosed,
+                  resultSetCurrentCursor,
+                  resultSetCurrentRow,
+                  resultSetType,
+                  resultSetConcurrency
+                )
             }
         }
 

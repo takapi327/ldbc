@@ -312,7 +312,34 @@ connection.use { conn =>
 
 `ResultSet`はクエリ実行後にMySQLサーバーから返された値を格納するためのAPIです。
 
-SQLを実行して取得したレコードを`ResultSet`から取得するには`decode`メソッドを使用します。
+SQLを実行して取得したレコードを`ResultSet`から取得するにはJDBCと同じように`next`メソッドと`getXXX`メソッドを使用して取得する方法と、LDBC独自の`decode`メソッドを使用する方法があります。
+
+#### next/getXXX
+
+`next`メソッドは次のレコードが存在する場合は`true`を返却し、次のレコードが存在しない場合は`false`を返却します。
+
+`getXXX`メソッドはレコードから値を取得するためのAPIです。
+
+`getXXX`メソッドは取得するカラムのインデックスを指定する方法とカラム名を指定する方法があります。
+
+```scala
+connection.use { conn =>
+  for 
+    statement <- conn.clientPreparedStatement("SELECT `id`, `name`, `age` FROM users WHERE id = ?")
+    _ <- statement.setLong(1, 1)
+    result <- statement.executeQuery()
+    records <- Monad[IO].whileM(result.next()) {
+      for
+        id <- result.getLong(1)
+        name <- result.getString("name")
+        age <- result.getInt(3)  
+      yield (id, name, age)
+  }
+  yield records
+}
+```
+
+#### decode
 
 `decode`メソッドは`ResultSet`から取得した値をScalaの型に変換して取得するためのAPIです。
 
@@ -335,9 +362,8 @@ connection.use { conn =>
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
     result <- statement.executeQuery()
-  yield 
-    val decodes: List[(Long, String, Option[Int])] = result.decode(bigint *: varchar *: int.opt)
-    ...
+    decodes <- result.decode(bigint *: varchar *: int.opt)
+  yield decodes
 }
 ```
 

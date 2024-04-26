@@ -115,6 +115,28 @@ trait Connection[F[_]]:
   def createStatement(): F[Statement[F]]
 
   /**
+   * Creates a <code>Statement</code> object that will generate
+   * <code>ResultSet</code> objects with the given type and concurrency.
+   * This method is the same as the <code>createStatement</code> method
+   * above, but it allows the default result set
+   * type and concurrency to be overridden.
+   * The holdability of the created result sets can be determined by
+   * calling {@link #getHoldability}.
+   *
+   * @param resultSetType a result set type; one of
+   *        <code>ResultSet.TYPE_FORWARD_ONLY</code>,
+   *        <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
+   *        <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
+   * @param resultSetConcurrency a concurrency type; one of
+   *        <code>ResultSet.CONCUR_READ_ONLY</code> or
+   *        <code>ResultSet.CONCUR_UPDATABLE</code>
+   * @return a new <code>Statement</code> object that will generate
+   *         <code>ResultSet</code> objects with the given type and
+   *         concurrency
+   */
+  def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]]
+
+  /**
    * Creates a client-side prepared statement with the given SQL.
    *
    * @param sql
@@ -123,12 +145,52 @@ trait Connection[F[_]]:
   def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]]
 
   /**
+   * Prepares a statement on the client, using client-side emulation
+   * (irregardless of the configuration property 'useServerPrepStmts')
+   * with the same semantics as the java.sql.Connection.prepareStatement()
+   * method with the same argument types.
+   *
+   * @param sql
+   *   statement
+   * @param resultSetType
+   *   resultSetType
+   * @param resultSetConcurrency
+   *   resultSetConcurrency
+   * @return prepared statement
+   */
+  def clientPreparedStatement(
+    sql:                  String,
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[PreparedStatement.Client[F]]
+
+  /**
    * Creates a server prepared statement with the given SQL.
    *
    * @param sql
    *   SQL queries based on text protocols
    */
   def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]]
+
+  /**
+   * Prepares a statement on the server (irregardless of the
+   * configuration property 'useServerPrepStmts') with the same semantics
+   * as the java.sql.Connection.prepareStatement() method with the
+   * same argument types.
+   *
+   * @param sql
+   *   statement
+   * @param resultSetType
+   *   resultSetType
+   * @param resultSetConcurrency
+   *   resultSetConcurrency
+   * @return prepared statement
+   */
+  def serverPreparedStatement(
+    sql:                  String,
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[PreparedStatement.Server[F]]
 
   /**
    * Creates an unnamed savepoint in the current transaction and returns the new Savepoint object that represents it.
@@ -343,9 +405,10 @@ object Connection:
 
     override def getTransactionIsolation: F[Connection.TransactionIsolationLevel] =
       for
-        statement <- protocol.statement()
-        result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
-      yield result.rows.headOption.flatMap(_.values.headOption).flatten match
+        statement            <- protocol.statement()
+        result               <- statement.executeQuery("SELECT @@session.transaction_isolation")
+        transactionIsolation <- result.getString(1)
+      yield transactionIsolation match
         case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
         case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
         case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
@@ -354,12 +417,26 @@ object Connection:
         case None          => throw new SQLFeatureNotSupportedException("Unknown transaction isolation level")
 
     override def createStatement(): F[Statement[F]] = protocol.statement()
+    override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
+      protocol.statement(resultSetType, resultSetConcurrency)
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       protocol.clientPreparedStatement(sql)
+    override def clientPreparedStatement(
+      sql:                  String,
+      resultSetType:        Int,
+      resultSetConcurrency: Int
+    ): F[PreparedStatement.Client[F]] =
+      protocol.clientPreparedStatement(sql, resultSetType, resultSetConcurrency)
 
     override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
       protocol.serverPreparedStatement(sql)
+    override def serverPreparedStatement(
+      sql:                  String,
+      resultSetType:        Int,
+      resultSetConcurrency: Int
+    ): F[PreparedStatement.Server[F]] =
+      protocol.serverPreparedStatement(sql, resultSetType, resultSetConcurrency)
 
     override def setSavepoint(): F[Savepoint] = setSavepoint(UUID.randomUUID().toString)
 
@@ -387,7 +464,8 @@ object Connection:
       for
         statement <- protocol.statement()
         result    <- statement.executeQuery("SELECT DATABASE()")
-      yield result.decode(text).headOption.getOrElse("")
+        decoded   <- result.decode(text)
+      yield decoded.headOption.getOrElse("")
 
     override def getStatistics: F[StatisticsPacket] = protocol.getStatistics
 

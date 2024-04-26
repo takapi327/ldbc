@@ -312,6 +312,35 @@ connection.use { conn =>
 
 The `ResultSet` is an API for storing values returned by the MySQL server after query execution.
 
+There are two ways to retrieve records retrieved by executing SQL from a `ResultSet`: using the `next` and `getXXX` methods as in JDBC, or using LDBC's own `decode` method.
+
+#### next/getXXX
+
+The `next` method returns `true` if the next record exists, or `false` if the next record does not exist.
+
+The `getXXX` method is an API for retrieving values from a record.
+
+The `getXXX` method can be used either by specifying the index of the column to be retrieved or by specifying the column name.
+
+```scala
+connection.use { conn =>
+  for
+    statement <- conn.clientPreparedStatement("SELECT `id`, `name`, `age` FROM users WHERE id = ?")
+    _ <- statement.setLong(1, 1)
+    result <- statement.executeQuery()
+    records <- Monad[IO].whileM(result.next()) {
+      for
+        id <- result.getLong(1)
+        name <- result.getString("name")
+        age <- result.getInt(3)
+      yield (id, name, age)
+    }
+  yield records
+}
+```
+
+#### decode
+
 The `decode` method is used to retrieve records from the `ResultSet` after they have been retrieved by executing SQL.
 
 The `decode` method is an API for converting values retrieved from `ResultSet` to Scala types.
@@ -331,13 +360,12 @@ The sequence of events from query execution to record retrieval is as follows
 
 ```scala
 connection.use { conn =>
-  for 
+  for
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
     result <- statement.executeQuery()
-  yield 
-    val decodes: List[(Long, String, Option[Int])] = result.decode(bigint *: varchar *: int.opt)
-    ...
+    decodes <- result.decode(bigint *: varchar *: int.opt)
+  yield decodes
 }
 ```
 
