@@ -19,8 +19,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 import ldbc.connector.ResultSet
 import ldbc.connector.data.EnumMySQLSetOption
 import ldbc.connector.exception.SQLException
-import ldbc.connector.net.PacketSocket
-import ldbc.connector.net.packet.ResponsePacket
+import ldbc.connector.net.Protocol
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 
@@ -129,57 +128,37 @@ object Statement:
   val EXECUTE_FAILED = -3
 
   def apply[F[_]: Temporal: Exchange: Tracer](
-    socket:               PacketSocket[F],
-    initialPacket:        InitialPacket,
-    utilityCommands:      UtilityCommands[F],
+    protocol:             Protocol[F],
     batchedArgsRef:       Ref[F, Vector[String]],
-    resetSequenceId:      F[Unit],
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable]): Statement[F] =
     new Statement[F]:
 
-      private val attributes = initialPacket.attributes ++ List(Attribute("type", "Statement"))
+      private val attributes = protocol.initialPacket.attributes ++ List(Attribute("type", "Statement"))
 
       override val batchedArgs: Ref[F, Vector[String]] = batchedArgsRef
-
-      private def repeatProcess[P <: ResponsePacket](times: Int, decoder: scodec.Decoder[P]): F[Vector[P]] =
-        def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
-          if remaining <= 0 then ev.pure(acc)
-          else socket.receive(decoder).flatMap(result => read(remaining - 1, acc :+ result))
-
-        read(times, Vector.empty[P])
-
-      private def readUntilEOF[P <: ResponsePacket](
-        decoder: scodec.Decoder[P | EOFPacket | ERRPacket],
-        acc:     Vector[P]
-      ): F[Vector[P]] =
-        socket.receive(decoder).flatMap {
-          case _: EOFPacket     => ev.pure(acc)
-          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
-          case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
-        }
 
       override def executeQuery(sql: String): F[ResultSet[F]] =
         exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
           span.addAttributes((attributes ++ List(Attribute("execute", "query"), Attribute("sql", sql)))*) *>
-            resetSequenceId *>
-            socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-            socket.receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+            protocol.resetSequenceId *>
+            protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+            protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case _: OKPacket =>
                 for
                   isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 yield ResultSet
-                  .empty(initialPacket.serverVersion, isResultSetClosed, resultSetCurrentCursor, resultSetCurrentRow)
+                  .empty(protocol.initialPacket.serverVersion, isResultSetClosed, resultSetCurrentCursor, resultSetCurrentRow)
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case result: ColumnsNumberPacket =>
                 for
                   columnDefinitions <-
-                    repeatProcess(result.size, ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags))
-                  resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                                    ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                    protocol.repeatProcess(result.size, ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags))
+                  resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
+                                    ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                                     Vector.empty
                                   )
                   isResultSetClosed      <- Ref[F].of(false)
@@ -188,7 +167,7 @@ object Statement:
                 yield ResultSet(
                   columnDefinitions,
                   resultSetRow,
-                  initialPacket.serverVersion,
+                  protocol.initialPacket.serverVersion,
                   isResultSetClosed,
                   resultSetCurrentCursor,
                   resultSetCurrentRow,
@@ -202,9 +181,9 @@ object Statement:
         exchange[F, Int]("statement") { (span: Span[F]) =>
           span.addAttributes(
             (attributes ++ List(Attribute("execute", "update"), Attribute("sql", sql)))*
-          ) *> resetSequenceId *> (
-            socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-              socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+          ) *> protocol.resetSequenceId *> (
+            protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+              protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(result.affectedRows)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                 case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
@@ -216,9 +195,9 @@ object Statement:
         exchange[F, Int]("statement") { (span: Span[F]) =>
           span.addAttributes(
             (attributes ++ List(Attribute("execute", "returning update"), Attribute("sql", sql)))*
-          ) *> resetSequenceId *> (
-            socket.send(ComQueryPacket(sql, initialPacket.capabilityFlags, ListMap.empty)) *>
-              socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+          ) *> protocol.resetSequenceId *> (
+            protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+              protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(result.lastInsertId)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                 case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
@@ -227,8 +206,8 @@ object Statement:
         }
 
       override def executeBatch(): F[List[Int]] =
-        resetSequenceId *>
-          utilityCommands.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
+        protocol.resetSequenceId *>
+          protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
           exchange[F, List[Int]]("statement") { (span: Span[F]) =>
             batchedArgs.get.flatMap { args =>
               span.addAttributes(
@@ -240,14 +219,14 @@ object Statement:
               ) *> (
                 if args.isEmpty then ev.pure(List.empty)
                 else
-                  resetSequenceId *>
-                    socket.send(ComQueryPacket(args.mkString(";"), initialPacket.capabilityFlags, ListMap.empty)) *>
+                  protocol.resetSequenceId *>
+                    protocol.send(ComQueryPacket(args.mkString(";"), protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
                     args
                       .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
                         for
                           acc <- $acc
                           result <-
-                            socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
+                            protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
                               case result: OKPacket => ev.pure(acc :+ result.affectedRows)
                               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute batch", acc))
                               case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
@@ -257,7 +236,7 @@ object Statement:
                       .map(_.toList)
               )
             }
-          } <* resetSequenceId <* utilityCommands.comSetOption(
+          } <* protocol.resetSequenceId <* protocol.comSetOption(
             EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF
           ) <* clearBatch()
 
