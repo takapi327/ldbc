@@ -9,6 +9,7 @@ package ldbc.connector
 import java.util.UUID
 
 import scala.concurrent.duration.Duration
+import scala.collection.immutable.ListMap
 
 import com.comcast.ip4s.*
 
@@ -23,10 +24,11 @@ import fs2.io.net.*
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.data.*
+import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
-import ldbc.connector.net.packet.response.StatisticsPacket
-import ldbc.connector.exception.*
+import ldbc.connector.net.packet.request.*
+import ldbc.connector.net.packet.response.*
 import ldbc.connector.codec.text.text
 
 /**
@@ -279,30 +281,6 @@ trait Connection[F[_]]:
   def resetServerState: F[Unit]
 
   /**
-   * Controls whether or not multiple SQL statements are allowed to be executed at once.
-   * 
-   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
-   *
-   * @param optionOperation
-   *   [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON]] or [[EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF]]
-   */
-  def setOption(optionOperation: EnumMySQLSetOption): F[Unit]
-
-  /**
-   * Enables multiple SQL statements to be executed at once.
-   * 
-   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
-   */
-  def enableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON)
-
-  /**
-   * Disables multiple SQL statements to be executed at once.
-   * 
-   * NOTE: It can only be used for batch processing with Insert, Update, and Delete statements.
-   */
-  def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
-
-  /**
    * Changes the user and password for this connection.
    *
    * @param user
@@ -366,16 +344,15 @@ object Connection:
      */
     case SERIALIZABLE extends TransactionIsolationLevel("SERIALIZABLE")
 
-  case class ConnectionImpl[F[_]: Temporal: Tracer: Console](
-    protocol:   MySQLProtocol[F],
+  private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
+    protocol:   Protocol[F],
     readOnly:   Ref[F, Boolean],
     autoCommit: Ref[F, Boolean]
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
       readOnly.update(_ => isReadOnly) *>
-        protocol
-          .statement()
+        createStatement()
           .flatMap(_.executeQuery("SET SESSION TRANSACTION READ " + (if isReadOnly then "ONLY" else "WRITE")))
           .void
 
@@ -383,29 +360,28 @@ object Connection:
 
     override def setAutoCommit(isAutoCommit: Boolean): F[Unit] =
       autoCommit.update(_ => isAutoCommit) *>
-        protocol
-          .statement()
+        createStatement()
           .flatMap(_.executeQuery("SET autocommit=" + (if isAutoCommit then "1" else "0")))
           .void
 
     override def getAutoCommit: F[Boolean] = autoCommit.get
 
     override def commit(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
-      if !autoCommit then protocol.statement().flatMap(_.executeQuery("COMMIT")).void
+      if !autoCommit then createStatement().flatMap(_.executeQuery("COMMIT")).void
       else ev.raiseError(new SQLNonTransientException("Can't call commit when autocommit=true"))
     }
 
     override def rollback(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
-      if !autoCommit then protocol.statement().flatMap(_.executeQuery("ROLLBACK")).void
+      if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
       else ev.raiseError(new SQLNonTransientException("Can't call rollback when autocommit=true"))
     }
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
-      protocol.statement().flatMap(_.executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }")).void
+      createStatement().flatMap(_.executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }")).void
 
     override def getTransactionIsolation: F[Connection.TransactionIsolationLevel] =
       for
-        statement            <- protocol.statement()
+        statement            <- createStatement()
         result               <- statement.executeQuery("SELECT @@session.transaction_isolation")
         transactionIsolation <- result.getString(1)
       yield transactionIsolation match
@@ -416,72 +392,117 @@ object Connection:
         case Some(unknown) => throw new SQLFeatureNotSupportedException(s"Unknown transaction isolation level $unknown")
         case None          => throw new SQLFeatureNotSupportedException("Unknown transaction isolation level")
 
-    override def createStatement(): F[Statement[F]] = protocol.statement()
+    override def createStatement(): F[Statement[F]] =
+      createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
     override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
-      protocol.statement(resultSetType, resultSetConcurrency)
+      Ref[F]
+        .of(Vector.empty[String])
+        .map(batchedArgs =>
+          Statement[F](
+            protocol,
+            batchedArgs,
+            resultSetType,
+            resultSetConcurrency
+          )
+        )
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
-      protocol.clientPreparedStatement(sql)
+      clientPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
     override def clientPreparedStatement(
       sql:                  String,
       resultSetType:        Int,
       resultSetConcurrency: Int
     ): F[PreparedStatement.Client[F]] =
-      protocol.clientPreparedStatement(sql, resultSetType, resultSetConcurrency)
+      for
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs <- Ref[F].of(Vector.empty[String])
+      yield PreparedStatement
+        .Client[F](
+          protocol,
+          sql,
+          params,
+          batchedArgs,
+          resultSetType,
+          resultSetConcurrency
+        )
 
     override def serverPreparedStatement(sql: String): F[PreparedStatement.Server[F]] =
-      protocol.serverPreparedStatement(sql)
+      serverPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
     override def serverPreparedStatement(
       sql:                  String,
       resultSetType:        Int,
       resultSetConcurrency: Int
     ): F[PreparedStatement.Server[F]] =
-      protocol.serverPreparedStatement(sql, resultSetType, resultSetConcurrency)
+      for
+        result <- protocol.resetSequenceId *> protocol.send(ComStmtPreparePacket(sql)) *>
+                    protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+                      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                      case ok: ComStmtPrepareOkPacket => ev.pure(ok)
+                    }
+        _ <- protocol.repeatProcess(
+               result.numParams,
+               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+             )
+        _ <- protocol.repeatProcess(
+               result.numColumns,
+               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+             )
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs <- Ref[F].of(Vector.empty[String])
+      yield PreparedStatement
+        .Server[F](
+          protocol,
+          result.statementId,
+          sql,
+          params,
+          batchedArgs,
+          resultSetType,
+          resultSetConcurrency
+        )
 
     override def setSavepoint(): F[Savepoint] = setSavepoint(UUID.randomUUID().toString)
 
     override def setSavepoint(name: String): F[Savepoint] =
       for
-        statement <- protocol.statement()
+        statement <- createStatement()
         _         <- statement.executeQuery(s"SAVEPOINT `$name`")
       yield new Savepoint:
         override def getSavepointName: String = name
 
     override def rollback(savepoint: Savepoint): F[Unit] =
-      protocol.statement().flatMap(_.executeQuery(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName }`")).void
+      createStatement().flatMap(_.executeQuery(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName }`")).void
 
     override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
-      protocol.statement().flatMap(_.executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName }`")).void
+      createStatement().flatMap(_.executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName }`")).void
 
     override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
-      if !autoCommit then protocol.statement().flatMap(_.executeQuery("ROLLBACK")).void
+      if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
       else ev.unit
     }
 
-    override def setSchema(schema: String): F[Unit] = protocol.setSchema(schema)
+    override def setSchema(schema: String): F[Unit] = protocol.resetSequenceId *> protocol.comInitDB(schema)
 
     override def getSchema: F[String] =
       for
-        statement <- protocol.statement()
+        statement <- createStatement()
         result    <- statement.executeQuery("SELECT DATABASE()")
         decoded   <- result.decode(text)
       yield decoded.headOption.getOrElse("")
 
-    override def getStatistics: F[StatisticsPacket] = protocol.getStatistics
+    override def getStatistics: F[StatisticsPacket] = protocol.resetSequenceId *> protocol.comStatistics()
 
-    override def isValid: F[Boolean] = protocol.isValid
+    override def isValid: F[Boolean] = protocol.resetSequenceId *> protocol.comPing()
 
     override def resetServerState: F[Unit] =
-      protocol.resetConnection *> protocol.statement().flatMap { statement =>
+      protocol.resetSequenceId *> protocol.resetConnection *> createStatement().flatMap { statement =>
         statement.executeQuery("SET NAMES utf8mb4") *>
           statement.executeQuery("SET character_set_results = NULL") *>
           statement.executeQuery("SET autocommit=1") *>
           autoCommit.update(_ => true)
       }
 
-    override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] = protocol.setOption(optionOperation)
-
-    override def changeUser(user: String, password: String): F[Unit] = protocol.changeUser(user, password)
+    override def changeUser(user: String, password: String): F[Unit] =
+      protocol.resetSequenceId *> protocol.changeUser(user, password)
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
@@ -531,9 +552,10 @@ object Connection:
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
       (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
     for
+      given Exchange[F] <- Resource.eval(Exchange[F])
       protocol <-
-        MySQLProtocol[F](sockets, database, debug, sslOptions, readTimeout, allowPublicKeyRetrieval, capabilityFlags)
-      _          <- Resource.eval(protocol.authenticate(user, password.getOrElse("")))
+        Protocol[F](sockets, debug, sslOptions, database, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
+      _          <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
       connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, readOnly, autoCommit)))(_.close())
