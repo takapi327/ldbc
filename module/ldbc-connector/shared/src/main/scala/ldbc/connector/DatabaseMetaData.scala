@@ -15,10 +15,10 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
+import ldbc.connector.util.Version
 import ldbc.connector.data.*
 import ldbc.connector.data.Types.*
 import ldbc.connector.data.Constants.*
-import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
@@ -1223,7 +1223,14 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        String,
     procedureNamePattern: String,
     columnNamePattern:    String
-  ): ResultSet[F]
+  ): F[ResultSet[F]] = getProcedureColumns(Some(catalog), Some(schemaPattern), Some(procedureNamePattern), Some(columnNamePattern))
+
+  def getProcedureColumns(
+    catalog: Option[String],
+    schemaPattern: Option[String],
+    procedureNamePattern: Option[String],
+    columnNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the tables available in the given catalog.
@@ -3696,17 +3703,177 @@ object DatabaseMetaData:
    */
   val functionReturnsTable: Int = 2
 
+  private[ldbc] trait StaticDatabaseMetaData[F[_]] extends DatabaseMetaData[F]:
+    override def allProceduresAreCallable(): Boolean = false
+    override def allTablesAreSelectable(): Boolean = false
+    override def isReadOnly(): Boolean = false
+    override def nullsAreSortedHigh(): Boolean = false
+    override def nullsAreSortedLow(): Boolean = !nullsAreSortedHigh()
+    override def nullsAreSortedAtStart(): Boolean = false
+    override def nullsAreSortedAtEnd(): Boolean = false
+    override def getDatabaseProductName(): String = "MySQL"
+    override def getDriverName(): String = DRIVER_NAME
+    override def getDriverVersion(): String = s"ldbc-connector-${DRIVER_VERSION}"
+    override def getDriverMajorVersion(): Int = DRIVER_VERSION.major
+    override def getDriverMinorVersion(): Int = DRIVER_VERSION.minor
+    override def usesLocalFiles(): Boolean = false
+    override def usesLocalFilePerTable(): Boolean = false
+
+    override def getNumericFunctions(): String =
+      "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
+
+    override def getStringFunctions(): String =
+      "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
+        + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
+        + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
+        + "SUBSTRING_INDEX,TRIM,UCASE,UPPER"
+
+    override def getSystemFunctions(): String =
+      "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION"
+
+    override def getTimeDateFunctions(): String =
+      "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
+        + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
+        + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC"
+
+    override def getSearchStringEscape(): String = "\\"
+
+    override def getExtraNameCharacters(): String = "#@"
+
+    override def supportsAlterTableWithAddColumn(): Boolean = true
+
+    override def supportsAlterTableWithDropColumn(): Boolean = true
+
+    override def supportsColumnAliasing(): Boolean = true
+
+    override def nullPlusNonNullIsNull(): Boolean = true
+
+    override def supportsConvert(): Boolean = false
+
+    override def supportsConvert(fromType: Int, toType: Int): Boolean =
+      fromType match
+        case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY =>
+          toType match
+            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
+                 BINARY | VARBINARY | LONGVARBINARY | OTHER | DATE | TIME | TIMESTAMP =>
+              true
+            case _ => false
+        case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE =>
+          toType match
+            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
+                 BINARY | VARBINARY | LONGVARBINARY =>
+              true
+            case _ => false
+        case OTHER =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
+            case _ => false
+        case DATE =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
+            case _ => false
+        case TIME =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
+            case _ => false
+        case TIMESTAMP =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY | TIME | DATE => true
+            case _ => false
+        case _ => false
+
+    override def supportsTableCorrelationNames(): Boolean = true
+    override def supportsDifferentTableCorrelationNames(): Boolean = true
+    override def supportsExpressionsInOrderBy(): Boolean = true
+    override def supportsOrderByUnrelated(): Boolean = false
+    override def supportsGroupBy(): Boolean = true
+    override def supportsGroupByUnrelated(): Boolean = true
+    override def supportsGroupByBeyondSelect(): Boolean = true
+    override def supportsLikeEscapeClause(): Boolean = true
+    override def supportsMultipleResultSets(): Boolean = true
+    override def supportsMultipleTransactions(): Boolean = true
+    override def supportsNonNullableColumns(): Boolean = true
+    override def supportsMinimumSQLGrammar(): Boolean = true
+    override def supportsCoreSQLGrammar(): Boolean = true
+    override def supportsExtendedSQLGrammar(): Boolean = false
+    override def supportsANSI92EntryLevelSQL(): Boolean = true
+    override def supportsANSI92IntermediateSQL(): Boolean = false
+    override def supportsANSI92FullSQL(): Boolean = false
+    override def supportsIntegrityEnhancementFacility(): Boolean = false
+    override def supportsOuterJoins(): Boolean = true
+    override def supportsFullOuterJoins(): Boolean = false
+    override def supportsLimitedOuterJoins(): Boolean = true
+    override def storesUpperCaseIdentifiers(): Boolean = false
+    override def storesMixedCaseIdentifiers(): Boolean = !storesLowerCaseIdentifiers()
+    override def supportsMixedCaseQuotedIdentifiers(): Boolean = supportsMixedCaseIdentifiers()
+    override def storesUpperCaseQuotedIdentifiers(): Boolean = true
+    override def storesLowerCaseQuotedIdentifiers(): Boolean = storesLowerCaseIdentifiers()
+    override def storesMixedCaseQuotedIdentifiers(): Boolean = !storesLowerCaseIdentifiers()
+    override def isCatalogAtStart(): Boolean = true
+    override def getCatalogSeparator(): String = "."
+    override def supportsPositionedDelete(): Boolean = false
+    override def supportsPositionedUpdate(): Boolean = false
+    override def supportsSelectForUpdate(): Boolean = true
+    override def supportsStoredProcedures(): Boolean = true
+    override def supportsSubqueriesInComparisons(): Boolean = true
+    override def supportsSubqueriesInExists(): Boolean = true
+    override def supportsSubqueriesInIns(): Boolean = true
+    override def supportsSubqueriesInQuantifieds(): Boolean = true
+    override def supportsCorrelatedSubqueries(): Boolean = true
+    override def supportsUnion(): Boolean = true
+    override def supportsUnionAll(): Boolean = true
+    override def supportsOpenCursorsAcrossCommit(): Boolean = false
+    override def supportsOpenCursorsAcrossRollback(): Boolean = false
+    override def supportsOpenStatementsAcrossCommit(): Boolean = false
+    override def supportsOpenStatementsAcrossRollback(): Boolean = false
+    override def getMaxBinaryLiteralLength(): Int = 16777208
+    override def getMaxCharLiteralLength(): Int = 16777208
+    override def getMaxColumnNameLength(): Int = 64
+    override def getMaxColumnsInGroupBy(): Int = 64
+    override def getMaxColumnsInIndex(): Int = 16
+    override def getMaxColumnsInOrderBy(): Int = 64
+    override def getMaxColumnsInSelect(): Int = 256
+    override def getMaxColumnsInTable(): Int = 512
+    override def getMaxConnections(): Int = 0
+    override def getMaxCursorNameLength(): Int = 64
+    override def getMaxIndexLength(): Int = 256
+    override def getMaxSchemaNameLength(): Int = 0
+    override def getMaxProcedureNameLength(): Int = 0
+    override def getMaxCatalogNameLength(): Int = 32
+    override def getMaxRowSize(): Int = Int.MaxValue - 8
+    override def doesMaxRowSizeIncludeBlobs(): Boolean = true
+    override def getMaxStatementLength(): Int = maxBufferSize - 4
+    override def getMaxStatements(): Int = 0
+    override def getMaxTableNameLength(): Int = 64
+    override def getMaxTablesInSelect(): Int = 256
+    override def getMaxUserNameLength(): Int = 16
+    override def getDefaultTransactionIsolation(): Int = Connection.TRANSACTION_REPEATABLE_READ
+    override def supportsTransactions(): Boolean = true
+    override def supportsTransactionIsolationLevel(level: Int): Boolean = level match
+      case Connection.TRANSACTION_READ_COMMITTED | Connection.TRANSACTION_READ_UNCOMMITTED |
+           Connection.TRANSACTION_REPEATABLE_READ | Connection.TRANSACTION_SERIALIZABLE =>
+        true
+      case _ => false
+    override def supportsDataDefinitionAndDataManipulationTransactions(): Boolean = false
+    override def supportsDataManipulationTransactionsOnly(): Boolean = false
+    override def dataDefinitionCausesTransactionCommit(): Boolean = true
+    override def dataDefinitionIgnoredInTransactions(): Boolean = false
+  end StaticDatabaseMetaData
+
   private[ldbc] open class Impl[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
     database:                      Option[String]       = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
-    getProceduresReturnsFunctions: Boolean              = true
+    getProceduresReturnsFunctions: Boolean              = true,
+    tinyInt1isBit: Boolean = true,
+    transformedBitIsBoolean: Boolean = false,
+    yearIsDateType: Boolean = true
   )(using ev: MonadError[F, Throwable])
-    extends DatabaseMetaData[F]:
-    override def allProceduresAreCallable(): Boolean = false
+    extends StaticDatabaseMetaData[F]:
 
-    override def allTablesAreSelectable(): Boolean = false
+    private enum FunctionConstant:
+      case FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT, FUNCTION_COLUMN_RETURN, FUNCTION_COLUMN_RESULT, FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN
 
     override def getURL(): String = protocol.hostInfo.url
 
@@ -3731,31 +3898,7 @@ object DatabaseMetaData:
             yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.getOrElse("")
         }
 
-    override def isReadOnly(): Boolean = false
-
-    override def nullsAreSortedHigh(): Boolean = false
-
-    override def nullsAreSortedLow(): Boolean = !nullsAreSortedHigh()
-
-    override def nullsAreSortedAtStart(): Boolean = false
-
-    override def nullsAreSortedAtEnd(): Boolean = false
-
-    override def getDatabaseProductName(): String = "MySQL"
-
     override def getDatabaseProductVersion(): String = protocol.initialPacket.serverVersion.toString
-
-    override def getDriverName(): String = DRIVER_NAME
-
-    override def getDriverVersion(): String = s"ldbc-connector-${ DRIVER_VERSION }"
-
-    override def getDriverMajorVersion(): Int = DRIVER_VERSION.major
-
-    override def getDriverMinorVersion(): Int = DRIVER_VERSION.minor
-
-    override def usesLocalFiles(): Boolean = false
-
-    override def usesLocalFilePerTable(): Boolean = false
 
     override def supportsMixedCaseIdentifiers(): Boolean =
       serverVariables.get("lower_case_table_names") match
@@ -3765,22 +3908,10 @@ object DatabaseMetaData:
           ))
         case None => false
 
-    override def storesUpperCaseIdentifiers(): Boolean = false
-
     override def storesLowerCaseIdentifiers(): Boolean =
       serverVariables.get("lower_case_table_names") match
         case Some(lowerCaseTables) => "on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables)
         case None                  => false
-
-    override def storesMixedCaseIdentifiers(): Boolean = !storesLowerCaseIdentifiers()
-
-    override def supportsMixedCaseQuotedIdentifiers(): Boolean = supportsMixedCaseIdentifiers()
-
-    override def storesUpperCaseQuotedIdentifiers(): Boolean = true
-
-    override def storesLowerCaseQuotedIdentifiers(): Boolean = storesLowerCaseIdentifiers()
-
-    override def storesMixedCaseQuotedIdentifiers(): Boolean = !storesLowerCaseIdentifiers()
 
     override def getIdentifierQuoteString(): String =
       val sqlModeAsString = serverVariables.get("sql_mode")
@@ -3823,111 +3954,6 @@ object DatabaseMetaData:
             yield resultSetRow.flatMap(_.values.flatten).filterNot(SQL2003_KEYWORDS.contains).mkString(",")
         }
 
-    override def getNumericFunctions(): String =
-      "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
-
-    override def getStringFunctions(): String =
-      "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
-        + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
-        + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
-        + "SUBSTRING_INDEX,TRIM,UCASE,UPPER"
-
-    override def getSystemFunctions(): String =
-      "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION"
-
-    override def getTimeDateFunctions(): String =
-      "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
-        + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
-        + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC"
-
-    override def getSearchStringEscape(): String = "\\"
-
-    override def getExtraNameCharacters(): String = "#@"
-
-    override def supportsAlterTableWithAddColumn(): Boolean = true
-
-    override def supportsAlterTableWithDropColumn(): Boolean = true
-
-    override def supportsColumnAliasing(): Boolean = true
-
-    override def nullPlusNonNullIsNull(): Boolean = true
-
-    override def supportsConvert(): Boolean = false
-
-    override def supportsConvert(fromType: Int, toType: Int): Boolean =
-      fromType match
-        case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY =>
-          toType match
-            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
-              BINARY | VARBINARY | LONGVARBINARY | OTHER | DATE | TIME | TIMESTAMP =>
-              true
-            case _ => false
-        case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE =>
-          toType match
-            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
-              BINARY | VARBINARY | LONGVARBINARY =>
-              true
-            case _ => false
-        case OTHER =>
-          toType match
-            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-            case _                                                                 => false
-        case DATE =>
-          toType match
-            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-            case _                                                                 => false
-        case TIME =>
-          toType match
-            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-            case _                                                                 => false
-        case TIMESTAMP =>
-          toType match
-            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY | TIME | DATE => true
-            case _                                                                               => false
-        case _ => false
-
-    override def supportsTableCorrelationNames(): Boolean = true
-
-    override def supportsDifferentTableCorrelationNames(): Boolean = true
-
-    override def supportsExpressionsInOrderBy(): Boolean = true
-
-    override def supportsOrderByUnrelated(): Boolean = false
-
-    override def supportsGroupBy(): Boolean = true
-
-    override def supportsGroupByUnrelated(): Boolean = true
-
-    override def supportsGroupByBeyondSelect(): Boolean = true
-
-    override def supportsLikeEscapeClause(): Boolean = true
-
-    override def supportsMultipleResultSets(): Boolean = true
-
-    override def supportsMultipleTransactions(): Boolean = true
-
-    override def supportsNonNullableColumns(): Boolean = true
-
-    override def supportsMinimumSQLGrammar(): Boolean = true
-
-    override def supportsCoreSQLGrammar(): Boolean = true
-
-    override def supportsExtendedSQLGrammar(): Boolean = false
-
-    override def supportsANSI92EntryLevelSQL(): Boolean = true
-
-    override def supportsANSI92IntermediateSQL(): Boolean = false
-
-    override def supportsANSI92FullSQL(): Boolean = false
-
-    override def supportsIntegrityEnhancementFacility(): Boolean = false
-
-    override def supportsOuterJoins(): Boolean = true
-
-    override def supportsFullOuterJoins(): Boolean = false
-
-    override def supportsLimitedOuterJoins(): Boolean = true
-
     override def getSchemaTerm(): String = databaseTerm.fold("") {
       case DatabaseTerm.SCHEMA  => "SCHEMA"
       case DatabaseTerm.CATALOG => ""
@@ -3939,10 +3965,6 @@ object DatabaseMetaData:
       case DatabaseTerm.SCHEMA  => ""
       case DatabaseTerm.CATALOG => "CATALOG"
     }
-
-    override def isCatalogAtStart(): Boolean = true
-
-    override def getCatalogSeparator(): String = "."
 
     override def supportsSchemasInDataManipulation(): Boolean = databaseTerm.fold(false) {
       case DatabaseTerm.SCHEMA  => true
@@ -3994,200 +4016,241 @@ object DatabaseMetaData:
       case DatabaseTerm.CATALOG => true
     }
 
-    override def supportsPositionedDelete(): Boolean = false
-
-    override def supportsPositionedUpdate(): Boolean = false
-
-    override def supportsSelectForUpdate(): Boolean = true
-
-    override def supportsStoredProcedures(): Boolean = true
-
-    override def supportsSubqueriesInComparisons(): Boolean = true
-
-    override def supportsSubqueriesInExists(): Boolean = true
-
-    override def supportsSubqueriesInIns(): Boolean = true
-
-    override def supportsSubqueriesInQuantifieds(): Boolean = true
-
-    override def supportsCorrelatedSubqueries(): Boolean = true
-
-    override def supportsUnion(): Boolean = true
-
-    override def supportsUnionAll(): Boolean = true
-
-    override def supportsOpenCursorsAcrossCommit(): Boolean = false
-
-    override def supportsOpenCursorsAcrossRollback(): Boolean = false
-
-    override def supportsOpenStatementsAcrossCommit(): Boolean = false
-
-    override def supportsOpenStatementsAcrossRollback(): Boolean = false
-
-    override def getMaxBinaryLiteralLength(): Int = 16777208
-
-    override def getMaxCharLiteralLength(): Int = 16777208
-
-    override def getMaxColumnNameLength(): Int = 64
-
-    override def getMaxColumnsInGroupBy(): Int = 64
-
-    override def getMaxColumnsInIndex(): Int = 16
-
-    override def getMaxColumnsInOrderBy(): Int = 64
-
-    override def getMaxColumnsInSelect(): Int = 256
-
-    override def getMaxColumnsInTable(): Int = 512
-
-    override def getMaxConnections(): Int = 0
-
-    override def getMaxCursorNameLength(): Int = 64
-
-    override def getMaxIndexLength(): Int = 256
-
-    override def getMaxSchemaNameLength(): Int = 0
-
-    override def getMaxProcedureNameLength(): Int = 0
-
-    override def getMaxCatalogNameLength(): Int = 32
-
-    override def getMaxRowSize(): Int = Int.MaxValue - 8
-
-    override def doesMaxRowSizeIncludeBlobs(): Boolean = true
-
-    override def getMaxStatementLength(): Int = maxBufferSize - 4
-
-    override def getMaxStatements(): Int = 0
-
-    override def getMaxTableNameLength(): Int = 64
-
-    override def getMaxTablesInSelect(): Int = 256
-
-    override def getMaxUserNameLength(): Int = 16
-
-    override def getDefaultTransactionIsolation(): Int = Connection.TRANSACTION_REPEATABLE_READ
-
-    override def supportsTransactions(): Boolean = true
-
-    override def supportsTransactionIsolationLevel(level: Int): Boolean = level match
-      case Connection.TRANSACTION_READ_COMMITTED | Connection.TRANSACTION_READ_UNCOMMITTED |
-        Connection.TRANSACTION_REPEATABLE_READ | Connection.TRANSACTION_SERIALIZABLE =>
-        true
-      case _ => false
-
-    override def supportsDataDefinitionAndDataManipulationTransactions(): Boolean = false
-
-    override def supportsDataManipulationTransactionsOnly(): Boolean = false
-
-    override def dataDefinitionCausesTransactionCommit(): Boolean = true
-
-    override def dataDefinitionIgnoredInTransactions(): Boolean = false
-
     override def getProcedures(
-      catalog:              Option[String],
-      schemaPattern:        Option[String],
-      procedureNamePattern: Option[String]
-    ): F[ResultSet[F]] =
-      getProceduresAndOrFunctions(catalog, schemaPattern, procedureNamePattern, true, getProceduresReturnsFunctions)
+                                catalog:              Option[String],
+                                schemaPattern:        Option[String],
+                                procedureNamePattern: Option[String]
+                              ): F[ResultSet[F]] =
 
-    /**
-     * Retrieves a description of the given catalog's stored procedure parameter
-     * and result columns.
-     *
-     * <P>Only descriptions matching the schema, procedure and
-     * parameter name criteria are returned.  They are ordered by
-     * PROCEDURE_CAT, PROCEDURE_SCHEM, PROCEDURE_NAME and SPECIFIC_NAME. Within this, the return value,
-     * if any, is first. Next are the parameter descriptions in call
-     * order. The column descriptions follow in column number order.
-     *
-     * <P>Each row in the <code>ResultSet</code> is a parameter description or
-     * column description with the following fields:
-     * <OL>
-     * <LI><B>PROCEDURE_CAT</B> String {@code =>} procedure catalog (may be <code>null</code>)
-     * <LI><B>PROCEDURE_SCHEM</B> String {@code =>} procedure schema (may be <code>null</code>)
-     * <LI><B>PROCEDURE_NAME</B> String {@code =>} procedure name
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column/parameter name
-     * <LI><B>COLUMN_TYPE</B> Short {@code =>} kind of column/parameter:
-     * <UL>
-     * <LI> procedureColumnUnknown - nobody knows
-     * <LI> procedureColumnIn - IN parameter
-     * <LI> procedureColumnInOut - INOUT parameter
-     * <LI> procedureColumnOut - OUT parameter
-     * <LI> procedureColumnReturn - procedure return value
-     * <LI> procedureColumnResult - result column in <code>ResultSet</code>
-     * </UL>
-     * <LI><B>DATA_TYPE</B> int {@code =>} SQL type from java.sql.Types
-     * <LI><B>TYPE_NAME</B> String {@code =>} SQL type name, for a UDT type the
-     * type name is fully qualified
-     * <LI><B>PRECISION</B> int {@code =>} precision
-     * <LI><B>LENGTH</B> int {@code =>} length in bytes of data
-     * <LI><B>SCALE</B> short {@code =>} scale -  null is returned for data types where
-     * SCALE is not applicable.
-     * <LI><B>RADIX</B> short {@code =>} radix
-     * <LI><B>NULLABLE</B> short {@code =>} can it contain NULL.
-     * <UL>
-     * <LI> procedureNoNulls - does not allow NULL values
-     * <LI> procedureNullable - allows NULL values
-     * <LI> procedureNullableUnknown - nullability unknown
-     * </UL>
-     * <LI><B>REMARKS</B> String {@code =>} comment describing parameter/column
-     * <LI><B>COLUMN_DEF</B> String {@code =>} default value for the column, which should be interpreted as a string when the value is enclosed in single quotes (may be <code>null</code>)
-     * <UL>
-     * <LI> The string NULL (not enclosed in quotes) - if NULL was specified as the default value
-     * <LI> TRUNCATE (not enclosed in quotes)        - if the specified default value cannot be represented without truncation
-     * <LI> NULL                                     - if a default value was not specified
-     * </UL>
-     * <LI><B>SQL_DATA_TYPE</B> int  {@code =>} reserved for future use
-     * <LI><B>SQL_DATETIME_SUB</B> int  {@code =>} reserved for future use
-     * <LI><B>CHAR_OCTET_LENGTH</B> int  {@code =>} the maximum length of binary and character based columns.  For any other datatype the returned value is a
-     * NULL
-     * <LI><B>ORDINAL_POSITION</B> int  {@code =>} the ordinal position, starting from 1, for the input and output parameters for a procedure. A value of 0
-     * is returned if this row describes the procedure's return value.  For result set columns, it is the
-     * ordinal position of the column in the result set starting from 1.  If there are
-     * multiple result sets, the column ordinal positions are implementation
-     * defined.
-     * <LI><B>IS_NULLABLE</B> String  {@code =>} ISO rules are used to determine the nullability for a column.
-     * <UL>
-     * <LI> YES           --- if the column can include NULLs
-     * <LI> NO            --- if the column cannot include NULLs
-     * <LI> empty string  --- if the nullability for the
-     * column is unknown
-     * </UL>
-     * <LI><B>SPECIFIC_NAME</B> String  {@code =>} the name which uniquely identifies this procedure within its schema.
-     * </OL>
-     *
-     * <P><B>Note:</B> Some databases may not return the column
-     * descriptions for a procedure.
-     *
-     * <p>The PRECISION column represents the specified column size for the given column.
-     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.
-     * For datetime datatypes, this is the length in characters of the String representation (assuming the
-     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,
-     * this is the length in bytes. Null is returned for data types where the
-     * column size is not applicable.
-     *
-     * @param catalog              a catalog name; must match the catalog name as it
-     *                             is stored in the database; "" retrieves those without a catalog;
-     *                             <code>null</code> means that the catalog name should not be used to narrow
-     *                             the search
-     * @param schemaPattern        a schema name pattern; must match the schema name
-     *                             as it is stored in the database; "" retrieves those without a schema;
-     *                             <code>null</code> means that the schema name should not be used to narrow
-     *                             the search
-     * @param procedureNamePattern a procedure name pattern; must match the
-     *                             procedure name as it is stored in the database
-     * @param columnNamePattern    a column name pattern; must match the column name
-     *                             as it is stored in the database
-     * @return <code>ResultSet</code> - each row describes a stored procedure parameter or
-     *         column
-     */
-    def getProcedureColumns(
-      catalog:              String,
-      schemaPattern:        String,
-      procedureNamePattern: String,
-      columnNamePattern:    String
-    ): ResultSet[F] = ???
+      val db = getDatabase(catalog, schemaPattern)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM,"
+        else "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM,"
+      )
+      sqlBuf.append(
+        " ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVED_2, NULL AS RESERVED_3, ROUTINE_COMMENT AS REMARKS, CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN "
+      )
+      sqlBuf.append(procedureNoResult)
+      sqlBuf.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ")
+      sqlBuf.append(procedureReturnsResult)
+      sqlBuf.append(" ELSE ")
+      sqlBuf.append(procedureResultUnknown)
+      sqlBuf.append(" END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES")
+
+      val conditionBuf = new StringBuilder()
+
+      if getProceduresReturnsFunctions then conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
+      end if
+
+      if db.nonEmpty then
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+        end if
+
+        conditionBuf.append(
+          if databaseTerm.contains(DatabaseTerm.SCHEMA) then " ROUTINE_SCHEMA LIKE ?"
+          else " ROUTINE_SCHEMA = ?"
+        )
+      end if
+
+      if procedureNamePattern.nonEmpty then
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+        end if
+
+        conditionBuf.append(" ROUTINE_NAME LIKE ?")
+      end if
+
+      if conditionBuf.nonEmpty then
+        sqlBuf.append(" WHERE")
+        sqlBuf.append(conditionBuf)
+      end if
+
+      sqlBuf.append(" ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, procedureNamePattern) match
+          case (Some(dbValue), Some(procedureName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
+          case (Some(dbValue), None)       => preparedStatement.setString(1, dbValue)
+          case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
+          case _                           => ev.unit
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
+
+    override def getProcedureColumns(
+                                      catalog: Option[String],
+                                      schemaPattern: Option[String],
+                                      procedureNamePattern: Option[String],
+                                      columnNamePattern: Option[String]
+                                    ): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schemaPattern)
+
+      val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT SPECIFIC_CATALOG AS PROCEDURE_CAT, SPECIFIC_SCHEMA AS `PROCEDURE_SCHEM`,"
+        else "SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`,"
+      )
+
+      sqlBuf.append(" SPECIFIC_NAME AS `PROCEDURE_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`,")
+      sqlBuf.append(" CASE WHEN PARAMETER_MODE = 'IN' THEN ")
+      sqlBuf.append(procedureColumnIn)
+      sqlBuf.append(" WHEN PARAMETER_MODE = 'OUT' THEN ")
+      sqlBuf.append(procedureColumnOut)
+      sqlBuf.append(" WHEN PARAMETER_MODE = 'INOUT' THEN ")
+      sqlBuf.append(procedureColumnInOut)
+      sqlBuf.append(" WHEN ORDINAL_POSITION = 0 THEN ")
+      sqlBuf.append(procedureColumnReturn)
+      sqlBuf.append(" ELSE ")
+      sqlBuf.append(procedureColumnUnknown)
+      sqlBuf.append(" END AS `COLUMN_TYPE`, ")
+      appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "DTD_IDENTIFIER")
+      sqlBuf.append(" AS `DATA_TYPE`, ")
+
+      sqlBuf.append("UPPER(CASE")
+
+      if tinyInt1isBit then
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE")
+        sqlBuf.append(
+          " WHEN LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN ")
+        sqlBuf.append(if transformedBitIsBoolean then "'BOOLEAN'" else "'BIT'")
+        sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'")
+        sqlBuf.append(" ELSE DATA_TYPE END ")
+      end if
+
+      sqlBuf.append(
+        " WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')"
+      )
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 'GEOMETRY'")
+
+      sqlBuf.append(" ELSE UPPER(DATA_TYPE) END) AS TYPE_NAME,")
+
+      sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 0")
+
+      if supportsFractSeconds then
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN DATETIME_PRECISION")
+      else
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0")
+
+      if tinyInt1isBit && !transformedBitIsBoolean then
+        sqlBuf.append(
+          " WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
+        )
+      end if
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824")
+      sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,")
+
+      sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10")
+
+      if supportsFractSeconds then
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'")
+        sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+      else
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8")
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19")
+
+      if tinyInt1isBit && !transformedBitIsBoolean then
+        sqlBuf.append(
+          " WHEN (UPPER(DATA_TYPE)='TINYINT' OR UPPER(DATA_TYPE)='TINYINT UNSIGNED') AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
+        )
+      end if
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824")
+      sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION")
+      sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" THEN ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH,")
+
+      sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ")
+      sqlBuf.append("10 AS RADIX,")
+      sqlBuf.append(procedureNullable)
+      sqlBuf.append(" AS `NULLABLE`, NULL AS `REMARKS`, NULL AS `COLUMN_DEF`, NULL AS `SQL_DATA_TYPE`, NULL AS `SQL_DATETIME_SUB`,")
+
+      sqlBuf.append(" CASE WHEN CHARACTER_OCTET_LENGTH > ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" THEN ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" ELSE CHARACTER_OCTET_LENGTH END AS `CHAR_OCTET_LENGTH`,")
+
+      sqlBuf.append(" ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`, SPECIFIC_NAME")
+      sqlBuf.append(" FROM INFORMATION_SCHEMA.PARAMETERS")
+
+      val conditionBuf = new StringBuilder()
+
+      if getProceduresReturnsFunctions then
+        conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
+      end if
+
+      if db.nonEmpty then
+        if conditionBuf.nonEmpty then
+          conditionBuf.append(" AND")
+        end if
+
+        conditionBuf.append(
+          if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+            " SPECIFIC_SCHEMA LIKE ?"
+          else
+            " SPECIFIC_SCHEMA = ?"
+        )
+      end if
+
+      if procedureNamePattern.nonEmpty then
+        if conditionBuf.nonEmpty then
+          conditionBuf.append(" AND")
+        end if
+
+        conditionBuf.append(" SPECIFIC_NAME LIKE ?")
+      end if
+
+      if columnNamePattern.nonEmpty then
+        if conditionBuf.nonEmpty then
+          conditionBuf.append(" AND")
+        end if
+
+        conditionBuf.append(" (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL)")
+      end if
+
+      if conditionBuf.nonEmpty then
+        sqlBuf.append(" WHERE")
+        sqlBuf.append(conditionBuf)
+      end if
+
+      sqlBuf.append(" ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_TYPE, ORDINAL_POSITION")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, procedureNamePattern, columnNamePattern) match
+          case (Some(dbValue), Some(procedureName), Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName) *> preparedStatement.setString(3, columnName)
+          case (Some(dbValue), Some(procedureName), None) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
+          case (Some(dbValue), None, Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, columnName)
+          case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(procedureName), Some(columnName)) => preparedStatement.setString(1, procedureName) *> preparedStatement.setString(2, columnName)
+          case (None, Some(procedureName), None) => preparedStatement.setString(1, procedureName)
+          case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
+          case (None, None, None) => ev.unit
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the tables available in the given catalog.
@@ -5746,83 +5809,56 @@ object DatabaseMetaData:
         ResultSet.CONCUR_READ_ONLY
       )
 
-    protected def getProceduresAndOrFunctions(
-      catalog:              Option[String],
-      schemaPattern:        Option[String],
-      procedureNamePattern: Option[String],
-      returnProcedures:     Boolean,
-      returnFunctions:      Boolean
-    ): F[ResultSet[F]] =
+    private def appendJdbcTypeMappingQuery(buf: StringBuilder, mysqlTypeColumnName: String, fullMysqlTypeColumnName: String): Unit =
+      buf.append("CASE ")
 
-      val db             = getDatabase(catalog, schemaPattern)
-      val dbMapsToSchema = databaseTerm.contains(DatabaseTerm.SCHEMA)
+      MysqlType.values.foreach { mysqlType =>
+        buf.append(" WHEN UPPER(")
+        buf.append(mysqlTypeColumnName)
+        buf.append(")='")
+        buf.append(mysqlType.getName())
+        buf.append("' THEN ")
 
-      val selectFromMySQLProcSQL = new StringBuilder()
-
-      selectFromMySQLProcSQL.append("SELECT db, name, type, comment FROM mysql.proc WHERE")
-
-      if returnProcedures && !returnFunctions then selectFromMySQLProcSQL.append(" type = 'PROCEDURE' AND ")
-      else if !returnProcedures && returnFunctions then selectFromMySQLProcSQL.append(" type = 'FUNCTION' AND ")
-      end if
-
-      selectFromMySQLProcSQL.append(if dbMapsToSchema then " db LIKE ?" else " db = ?")
-
-      if procedureNamePattern.nonEmpty then selectFromMySQLProcSQL.append(" AND name LIKE ?")
-      end if
-
-      selectFromMySQLProcSQL.append(" ORDER BY name, type")
-
-      prepareMetaDataSafeStatement(selectFromMySQLProcSQL.toString()).flatMap { preparedStatement =>
-        val setting = (db, procedureNamePattern) match
-          case (Some(db), Some(procedureNamePattern)) =>
-            preparedStatement.setString(1, db) *> preparedStatement.setString(2, procedureNamePattern)
-          case (Some(db), None) => preparedStatement.setString(1, db)
-          case _                => ev.unit
-
-        (setting *> preparedStatement.executeQuery() <* preparedStatement.close()).recoverWith {
-          case ex: SQLException =>
-            (returnProcedures, returnFunctions) match
-              case (false, true) =>
-                val sql = "SHOW FUNCTION STATUS WHERE "
-                  + (if dbMapsToSchema then "Db LIKE ?" else "Db = ?")
-                  + (if procedureNamePattern.nonEmpty then " AND Name LIKE ?" else "")
-
-                prepareMetaDataSafeStatement(sql).flatMap { preparedStatement =>
-                  preparedStatement.setString(1, db) *>
-                    (if procedureNamePattern.nonEmpty then preparedStatement.setString(2, procedureNamePattern)
-                     else ev.unit) *>
-                    preparedStatement.executeQuery() <* preparedStatement.close()
-                }
-              case (true, _) =>
-                val sql = "SHOW PROCEDURE STATUS WHERE "
-                  + (if dbMapsToSchema then "Db LIKE ?" else "Db = ?")
-                  + (if procedureNamePattern.nonEmpty then " AND Name LIKE ?" else "")
-                prepareMetaDataSafeStatement(sql).flatMap { preparedStatement =>
-                  preparedStatement.setString(1, db) *>
-                    (if procedureNamePattern.nonEmpty then preparedStatement.setString(2, procedureNamePattern)
-                     else ev.unit) *>
-                    preparedStatement.executeQuery() <* preparedStatement.close()
-                }
-              case _ =>
-                for
-                  isResultSetClosed      <- Ref[F].of(false)
-                  resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                yield ResultSet
-                  .empty(
-                    protocol.initialPacket.serverVersion,
-                    isResultSetClosed,
-                    resultSetCurrentCursor,
-                    resultSetCurrentRow
-                  )
-        }
+        mysqlType match
+          case MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
+            if tinyInt1isBit then
+              buf.append("CASE")
+              buf.append(" WHEN LOCATE('ZEROFILL', UPPER(")
+              buf.append(fullMysqlTypeColumnName)
+              buf.append(")) = 0 AND LOCATE('UNSIGNED', UPPER(")
+              buf.append(fullMysqlTypeColumnName)
+              buf.append(")) = 0 AND LOCATE('(1)', ")
+              buf.append(fullMysqlTypeColumnName)
+              buf.append(") != 0 THEN ")
+              buf.append(if transformedBitIsBoolean then "16" else "-7")
+              buf.append(" ELSE -6 END ")
+            else
+              buf.append(mysqlType.jdbcType)
+          case MysqlType.YEAR => buf.append(if yearIsDateType then mysqlType.jdbcType else Types.SMALLINT)
+          case _ => buf.append(mysqlType.jdbcType)
       }
+
+      buf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN -2")
+
+      buf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN -2")
+      buf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN -2")
+      buf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN -2")
+      buf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN -2")
+      buf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN -2")
+      buf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN -2")
+      buf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN -2")
+
+      buf.append(" ELSE 1111")
+      buf.append(" END ")
 
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
     database:                      Option[String] = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
-    getProceduresReturnsFunctions: Boolean = true
+    getProceduresReturnsFunctions: Boolean = true,
+    tinyInt1isBit: Boolean = true,
+    transformedBitIsBoolean: Boolean = false,
+    yearIsDateType: Boolean = true
   )(using ev: MonadError[F, Throwable]): DatabaseMetaData[F] =
-    new Impl[F](protocol, serverVariables, database, databaseTerm, getProceduresReturnsFunctions)
+    new Impl[F](protocol, serverVariables, database, databaseTerm, getProceduresReturnsFunctions, tinyInt1isBit, transformedBitIsBoolean, yearIsDateType)
