@@ -10,6 +10,8 @@ import org.typelevel.otel4s.trace.Tracer
 
 import com.comcast.ip4s.UnknownHostException
 
+import cats.Monad
+
 import cats.effect.*
 
 import munit.CatsEffectSuite
@@ -444,5 +446,516 @@ class ConnectionTest extends CatsEffectSuite:
     assertIOBoolean(
       connection.use(_.changeUser("ldbc_sha256_user", "ldbc_sha256_password")) *> IO.pure(true),
       true
+    )
+  }
+
+  test("The allProceduresAreCallable method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.allProceduresAreCallable())))
+  }
+
+  test("The allTablesAreSelectable method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.allTablesAreSelectable())))
+  }
+
+  test("The URL retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getURL())),
+      "jdbc:mysql://127.0.0.1:13306/connector_test"
+    )
+  }
+
+  test("The User name retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().flatMap(_.getUserName())),
+      "ldbc@192.168.0.1"
+    )
+  }
+
+  test("The isReadOnly method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.isReadOnly())))
+  }
+
+  test("The nullsAreSortedHigh method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedHigh())))
+  }
+
+  test("The nullsAreSortedLow method of DatabaseMetaData is always true.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => meta.nullsAreSortedLow())))
+  }
+
+  test("The nullsAreSortedAtStart method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtStart())))
+  }
+
+  test("The nullsAreSortedAtEnd method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtEnd())))
+  }
+
+  test("The getDatabaseProductName method of DatabaseMetaData is always MySQL.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getDatabaseProductName())),
+      "MySQL"
+    )
+  }
+
+  test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
+      "8.0.33"
+    )
+  }
+
+  test("The getDriverName method of DatabaseMetaData is always MySQL Connector/L.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getDriverName())),
+      "MySQL Connector/L"
+    )
+  }
+
+  test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getDriverVersion())),
+      "ldbc-connector-0.3.0"
+    )
+  }
+
+  test("The usesLocalFiles method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.usesLocalFiles())))
+  }
+
+  test("The usesLocalFilePerTable method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.usesLocalFilePerTable())))
+  }
+
+  test("The supports Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(_.supportsMixedCaseIdentifiers())))
+  }
+
+  test("The storesUpperCaseIdentifiers method of DatabaseMetaData is always false.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers())))
+  }
+
+  test("The stores Lower Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers())))
+  }
+
+  test("The stores Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(_.storesMixedCaseIdentifiers())))
+  }
+
+  test("The supports Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(_.supportsMixedCaseQuotedIdentifiers())))
+  }
+
+  test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
+  }
+
+  test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers())))
+  }
+
+  test("The stores Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIOBoolean(connection.use(_.getMetaData().map(_.storesMixedCaseQuotedIdentifiers())))
+  }
+
+  test("The Identifier Quote String retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getIdentifierQuoteString())),
+      "`"
+    )
+  }
+
+  test("The SQL Keywords retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().flatMap(_.getSQLKeywords())),
+      "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MASTER_BIND,MASTER_SSL_VERIFY_SERVER_CERT,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
+    )
+  }
+
+  test("The Numeric Functions retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getNumericFunctions())),
+      "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
+    )
+  }
+
+  test("The String Functions retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getStringFunctions())),
+      "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
+        + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
+        + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
+        + "SUBSTRING_INDEX,TRIM,UCASE,UPPER"
+    )
+  }
+
+  test("The System Functions retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getSystemFunctions())),
+      "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION"
+    )
+  }
+
+  test("The Time Date Functions retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getTimeDateFunctions())),
+      "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
+        + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
+        + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC"
+    )
+  }
+
+  test("The Search String Escape retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getSearchStringEscape())),
+      "\\"
+    )
+  }
+
+  test("The Extra Name Characters retrieved from DatabaseMetaData matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use(_.getMetaData().map(_.getExtraNameCharacters())),
+      "#@"
+    )
+  }
+
+  test("The result of retrieving procedure information matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData <- conn.getMetaData()
+          resultSet <- metaData.getProcedures("def", "connector_test", "demoSp")
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              procedureCat <- resultSet.getString("PROCEDURE_CAT")
+              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+              procedureName <- resultSet.getString("PROCEDURE_NAME")
+              remarks <- resultSet.getString("REMARKS")
+              procedureType <- resultSet.getString("PROCEDURE_TYPE")
+            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
+          }
+        yield values
+      },
+      Vector("Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(1)")
+    )
+  }
+
+  test("The result of retrieving procedure information without InformationSchema matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted,
+      useInformationSchema = false
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData <- conn.getMetaData()
+          resultSet <- metaData.getProcedures("def", "connector_test", "demoSp")
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              procedureCat <- resultSet.getString("Db")
+              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+              procedureName <- resultSet.getString("Name")
+              remarks <- resultSet.getString("Comment")
+              procedureType <- resultSet.getString("Type")
+            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
+          }
+        yield values
+      },
+      Vector("Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(PROCEDURE)")
     )
   }
