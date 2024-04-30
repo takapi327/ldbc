@@ -9,11 +9,11 @@ package ldbc.connector.data
 import ldbc.connector.sql.SQLType
 
 enum MysqlType(
-  val name: String,
-  val jdbcType: Int,
+  val name:         String,
+  val jdbcType:     Int,
   val allowedFlags: Int,
-  val isDec: Boolean,
-  val precision: Long,
+  val isDec:        Boolean,
+  val precision:    Long,
   val createParams: String
 ) extends SQLType:
 
@@ -32,12 +32,28 @@ enum MysqlType(
    * NUMERIC[(M[,D])] [UNSIGNED] [ZEROFILL],
    * FIXED[(M[,D])] [UNSIGNED] [ZEROFILL]
    */
-  case DECIMAL extends MysqlType("DECIMAL", Types.DECIMAL, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 65L, "[(M[,D])] [UNSIGNED] [ZEROFILL]")
+  case DECIMAL
+    extends MysqlType(
+      "DECIMAL",
+      Types.DECIMAL,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      65L,
+      "[(M[,D])] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * DECIMAL[(M[,D])] UNSIGNED [ZEROFILL]
    */
-  case DECIMAL_UNSIGNED extends MysqlType("DECIMAL UNSIGNED", Types.DECIMAL, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 65L, "[(M[,D])] [UNSIGNED] [ZEROFILL]")
+  case DECIMAL_UNSIGNED
+    extends MysqlType(
+      "DECIMAL UNSIGNED",
+      Types.DECIMAL,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      65L,
+      "[(M[,D])] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * TINYINT[(M)] [UNSIGNED] [ZEROFILL]
@@ -45,12 +61,28 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_TINY = 1
    */
-  case TINYINT extends MysqlType("TINYINT", Types.TINYINT, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 3L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case TINYINT
+    extends MysqlType(
+      "TINYINT",
+      Types.TINYINT,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      3L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * TINYINT[(M)] UNSIGNED [ZEROFILL]
    */
-  case TINYINT_UNSIGNED extends MysqlType("TINYINT UNSIGNED", Types.TINYINT, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 3L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case TINYINT_UNSIGNED
+    extends MysqlType(
+      "TINYINT UNSIGNED",
+      Types.TINYINT,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      3L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * BOOL, BOOLEAN
@@ -69,14 +101,30 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_SHORT = 2
    */
-  case SMALLINT extends MysqlType("SMALLINT", Types.SMALLINT, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 5L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case SMALLINT
+    extends MysqlType(
+      "SMALLINT",
+      Types.SMALLINT,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      5L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * SMALLINT[(M)] UNSIGNED [ZEROFILL]
    *
    * @see MysqlType#SMALLINT
    */
-  case SMALLINT_UNSIGNED extends MysqlType("SMALLINT UNSIGNED", Types.SMALLINT, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 5L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case SMALLINT_UNSIGNED
+    extends MysqlType(
+      "SMALLINT UNSIGNED",
+      Types.SMALLINT,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      5L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * INT[(M)] [UNSIGNED] [ZEROFILL]
@@ -86,12 +134,28 @@ enum MysqlType(
    *
    * INTEGER[(M)] [UNSIGNED] [ZEROFILL] is a synonym for INT.
    */
-  case INT extends MysqlType("INT", Types.INTEGER, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 10L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case INT
+    extends MysqlType(
+      "INT",
+      Types.INTEGER,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      10L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * INT[(M)] UNSIGNED [ZEROFILL]
    */
-  case INT_UNSIGNED extends MysqlType("INT UNSIGNED", Types.INTEGER, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 10L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case INT_UNSIGNED
+    extends MysqlType(
+      "INT UNSIGNED",
+      Types.INTEGER,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      10L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * FLOAT[(M,D)] [UNSIGNED] [ZEROFILL]
@@ -112,12 +176,28 @@ enum MysqlType(
    * If p is from 25 to 53, the data type becomes DOUBLE with no M or D values. The range of the resulting column is the same as
    * for the single-precision FLOAT or double-precision DOUBLE data types.
    */
-  case FLOAT extends MysqlType("FLOAT", Types.REAL, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 12L, "[(M,D)] [UNSIGNED] [ZEROFILL]")
+  case FLOAT
+    extends MysqlType(
+      "FLOAT",
+      Types.REAL,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      12L,
+      "[(M,D)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * FLOAT[(M,D)] UNSIGNED [ZEROFILL]
    */
-  case FLOAT_UNSIGNED extends MysqlType("FLOAT UNSIGNED", Types.REAL, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 12L, "[(M,D)] [UNSIGNED] [ZEROFILL]")
+  case FLOAT_UNSIGNED
+    extends MysqlType(
+      "FLOAT UNSIGNED",
+      Types.REAL,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      12L,
+      "[(M,D)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * DOUBLE[(M,D)] [UNSIGNED] [ZEROFILL]
@@ -135,12 +215,28 @@ enum MysqlType(
    * DOUBLE PRECISION[(M,D)] [UNSIGNED] [ZEROFILL],
    * REAL[(M,D)] [UNSIGNED] [ZEROFILL]. Exception: If the REAL_AS_FLOAT SQL mode is enabled, REAL is a synonym for FLOAT rather than DOUBLE.
    */
-  case DOUBLE extends MysqlType("DOUBLE", Types.DOUBLE, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 22L, "[(M,D)] [UNSIGNED] [ZEROFILL]")
+  case DOUBLE
+    extends MysqlType(
+      "DOUBLE",
+      Types.DOUBLE,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      22L,
+      "[(M,D)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * DOUBLE[(M,D)] UNSIGNED [ZEROFILL]
    */
-  case DOUBLE_UNSIGNED extends MysqlType("DOUBLE UNSIGNED", Types.DOUBLE, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 22L, "[(M,D)] [UNSIGNED] [ZEROFILL]")
+  case DOUBLE_UNSIGNED
+    extends MysqlType(
+      "DOUBLE UNSIGNED",
+      Types.DOUBLE,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      22L,
+      "[(M,D)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * FIELD_TYPE_NULL = 6
@@ -168,12 +264,28 @@ enum MysqlType(
    *
    * SERIAL is an alias for BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE.
    */
-  case BIGINT extends MysqlType("BIGINT", Types.BIGINT, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 19L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case BIGINT
+    extends MysqlType(
+      "BIGINT",
+      Types.BIGINT,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      19L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * BIGINT[(M)] UNSIGNED [ZEROFILL]
    */
-  case BIGINT_UNSIGNED extends MysqlType("BIGINT UNSIGNED", Types.BIGINT, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 20L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case BIGINT_UNSIGNED
+    extends MysqlType(
+      "BIGINT UNSIGNED",
+      Types.BIGINT,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      20L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * MEDIUMINT[(M)] [UNSIGNED] [ZEROFILL]
@@ -181,12 +293,28 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_INT24 = 9
    */
-  case MEDIUMINT extends MysqlType("MEDIUMINT", Types.INTEGER, MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 7L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case MEDIUMINT
+    extends MysqlType(
+      "MEDIUMINT",
+      Types.INTEGER,
+      MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      7L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * MEDIUMINT[(M)] UNSIGNED [ZEROFILL]
    */
-  case MEDIUMINT_UNSIGNED extends MysqlType("MEDIUMINT UNSIGNED", Types.INTEGER, MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL, MysqlType.IS_DECIMAL, 8L, "[(M)] [UNSIGNED] [ZEROFILL]")
+  case MEDIUMINT_UNSIGNED
+    extends MysqlType(
+      "MEDIUMINT UNSIGNED",
+      Types.INTEGER,
+      MysqlType.FIELD_FLAG_UNSIGNED | MysqlType.FIELD_FLAG_ZEROFILL,
+      MysqlType.IS_DECIMAL,
+      8L,
+      "[(M)] [UNSIGNED] [ZEROFILL]"
+    )
 
   /**
    * DATE
@@ -249,7 +377,15 @@ enum MysqlType(
    * Protocol: FIELD_TYPE_VARCHAR = 15
    * Protocol: FIELD_TYPE_VAR_STRING = 253
    */
-  case VARCHAR extends MysqlType("VARCHAR", Types.VARCHAR, 0, MysqlType.IS_NOT_DECIMAL, 65535L, "(M) [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case VARCHAR
+    extends MysqlType(
+      "VARCHAR",
+      Types.VARCHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      65535L,
+      "(M) [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * VARBINARY(M)
@@ -285,7 +421,15 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_ENUM = 247
    */
-  case ENUM extends MysqlType("ENUM", Types.CHAR, 0, MysqlType.IS_NOT_DECIMAL, 65535L, "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case ENUM
+    extends MysqlType(
+      "ENUM",
+      Types.CHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      65535L,
+      "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * SET('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]
@@ -296,7 +440,15 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_SET = 248
    */
-  case SET extends MysqlType("SET", Types.CHAR, 0, MysqlType.IS_NOT_DECIMAL, 64L, "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case SET
+    extends MysqlType(
+      "SET",
+      Types.CHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      64L,
+      "('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * TINYBLOB
@@ -315,7 +467,15 @@ enum MysqlType(
    *
    * Protocol:FIELD_TYPE_TINY_BLOB = 249
    */
-  case TINYTEXT extends MysqlType("TINYTEXT", Types.VARCHAR, 0, MysqlType.IS_NOT_DECIMAL, 255L, " [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case TINYTEXT
+    extends MysqlType(
+      "TINYTEXT",
+      Types.VARCHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      255L,
+      " [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * MEDIUMBLOB
@@ -334,7 +494,15 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_MEDIUM_BLOB = 250
    */
-  case MEDIUMTEXT extends MysqlType("MEDIUMTEXT", Types.LONGVARCHAR, 0, MysqlType.IS_NOT_DECIMAL, 16777215L, " [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case MEDIUMTEXT
+    extends MysqlType(
+      "MEDIUMTEXT",
+      Types.LONGVARCHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      16777215L,
+      " [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * LONGBLOB
@@ -356,7 +524,15 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_LONG_BLOB = 251
    */
-  case LONGTEXT extends MysqlType("LONGTEXT", Types.LONGVARCHAR, 0, MysqlType.IS_NOT_DECIMAL, 4294967295L, " [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case LONGTEXT
+    extends MysqlType(
+      "LONGTEXT",
+      Types.LONGVARCHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      4294967295L,
+      " [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * BLOB[(M)]
@@ -379,7 +555,15 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_BLOB = 252
    */
-  case TEXT extends MysqlType("TEXT", Types.LONGVARCHAR, 0, MysqlType.IS_NOT_DECIMAL, 65535L, "[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case TEXT
+    extends MysqlType(
+      "TEXT",
+      Types.LONGVARCHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      65535L,
+      "[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * [NATIONAL] CHAR[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]
@@ -398,7 +582,15 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_STRING = 254
    */
-  case CHAR extends MysqlType("CHAR", Types.CHAR, 0, MysqlType.IS_NOT_DECIMAL, 255L, "[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]")
+  case CHAR
+    extends MysqlType(
+      "CHAR",
+      Types.CHAR,
+      0,
+      MysqlType.IS_NOT_DECIMAL,
+      255L,
+      "[(M)] [CHARACTER SET charset_name] [COLLATE collation_name]"
+    )
 
   /**
    * BINARY(M)
@@ -424,50 +616,50 @@ enum MysqlType(
    */
   case UNKNOWN extends MysqlType("UNKNOWN", Types.OTHER, 0, MysqlType.IS_NOT_DECIMAL, 65535L, "")
 
-  override def getName(): String = name
-  override def getVendor(): String = "ldbc"
-  override def getVendorTypeNumber(): Int = jdbcType
+  override def getName():             String = name
+  override def getVendor():           String = "ldbc"
+  override def getVendorTypeNumber(): Int    = jdbcType
 
 object MysqlType:
 
   val FIELD_FLAG_NOT_NULL = 1
-  val FIELD_FLAG_PRIMARY_KEY: Int = 2
-  val FIELD_FLAG_UNIQUE_KEY: Int = 4
-  val FIELD_FLAG_MULTIPLE_KEY: Int = 8
-  val FIELD_FLAG_BLOB: Int = 16
-  val FIELD_FLAG_UNSIGNED: Int = 32
-  val FIELD_FLAG_ZEROFILL: Int = 64
-  val FIELD_FLAG_BINARY: Int = 128
+  val FIELD_FLAG_PRIMARY_KEY:    Int = 2
+  val FIELD_FLAG_UNIQUE_KEY:     Int = 4
+  val FIELD_FLAG_MULTIPLE_KEY:   Int = 8
+  val FIELD_FLAG_BLOB:           Int = 16
+  val FIELD_FLAG_UNSIGNED:       Int = 32
+  val FIELD_FLAG_ZEROFILL:       Int = 64
+  val FIELD_FLAG_BINARY:         Int = 128
   val FIELD_FLAG_AUTO_INCREMENT: Int = 512
 
-  private val IS_DECIMAL: Boolean = true
+  private val IS_DECIMAL:     Boolean = true
   private val IS_NOT_DECIMAL: Boolean = false
 
   // Protocol field type numbers
-  val FIELD_TYPE_DECIMAL = 0
-  val FIELD_TYPE_TINY = 1
-  val FIELD_TYPE_SHORT = 2
-  val FIELD_TYPE_LONG = 3
-  val FIELD_TYPE_FLOAT = 4
-  val FIELD_TYPE_DOUBLE = 5
-  val FIELD_TYPE_NULL = 6
-  val FIELD_TYPE_TIMESTAMP = 7
-  val FIELD_TYPE_LONGLONG = 8
-  val FIELD_TYPE_INT24 = 9
-  val FIELD_TYPE_DATE = 10
-  val FIELD_TYPE_TIME = 11
-  val FIELD_TYPE_DATETIME = 12
-  val FIELD_TYPE_YEAR = 13
-  val FIELD_TYPE_VARCHAR = 15
-  val FIELD_TYPE_BIT = 16
-  val FIELD_TYPE_JSON = 245
-  val FIELD_TYPE_NEWDECIMAL = 246
-  val FIELD_TYPE_ENUM = 247
-  val FIELD_TYPE_SET = 248
-  val FIELD_TYPE_TINY_BLOB = 249
+  val FIELD_TYPE_DECIMAL     = 0
+  val FIELD_TYPE_TINY        = 1
+  val FIELD_TYPE_SHORT       = 2
+  val FIELD_TYPE_LONG        = 3
+  val FIELD_TYPE_FLOAT       = 4
+  val FIELD_TYPE_DOUBLE      = 5
+  val FIELD_TYPE_NULL        = 6
+  val FIELD_TYPE_TIMESTAMP   = 7
+  val FIELD_TYPE_LONGLONG    = 8
+  val FIELD_TYPE_INT24       = 9
+  val FIELD_TYPE_DATE        = 10
+  val FIELD_TYPE_TIME        = 11
+  val FIELD_TYPE_DATETIME    = 12
+  val FIELD_TYPE_YEAR        = 13
+  val FIELD_TYPE_VARCHAR     = 15
+  val FIELD_TYPE_BIT         = 16
+  val FIELD_TYPE_JSON        = 245
+  val FIELD_TYPE_NEWDECIMAL  = 246
+  val FIELD_TYPE_ENUM        = 247
+  val FIELD_TYPE_SET         = 248
+  val FIELD_TYPE_TINY_BLOB   = 249
   val FIELD_TYPE_MEDIUM_BLOB = 250
-  val FIELD_TYPE_LONG_BLOB = 251
-  val FIELD_TYPE_BLOB = 252
-  val FIELD_TYPE_VAR_STRING = 253
-  val FIELD_TYPE_STRING = 254
-  val FIELD_TYPE_GEOMETRY = 255
+  val FIELD_TYPE_LONG_BLOB   = 251
+  val FIELD_TYPE_BLOB        = 252
+  val FIELD_TYPE_VAR_STRING  = 253
+  val FIELD_TYPE_STRING      = 254
+  val FIELD_TYPE_GEOMETRY    = 255

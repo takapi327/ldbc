@@ -947,14 +947,14 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedureColumns(Some("def"), Some("connector_test"), Some("demoSp"), None)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              procedureCat   <- resultSet.getString("PROCEDURE_CAT")
-              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-              procedureName  <- resultSet.getString("PROCEDURE_NAME")
-              columnName        <- resultSet.getString("COLUMN_NAME")
-              columnType  <- resultSet.getString("COLUMN_TYPE")
-            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Column Name: $columnName, Column Type: $columnType"
-          }
+                      for
+                        procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                        procedureName  <- resultSet.getString("PROCEDURE_NAME")
+                        columnName     <- resultSet.getString("COLUMN_NAME")
+                        columnType     <- resultSet.getString("COLUMN_TYPE")
+                      yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Column Name: $columnName, Column Type: $columnType"
+                    }
         yield values
       },
       Vector(

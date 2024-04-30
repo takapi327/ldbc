@@ -511,11 +511,11 @@ object Connection:
   val TRANSACTION_SERIALIZABLE: Int = 8
 
   private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
-    protocol:             Protocol[F],
-    serverVariables:      Map[String, String],
-    database:             Option[String],
-    readOnly:             Ref[F, Boolean],
-    isAutoCommit:         Ref[F, Boolean]
+    protocol:        Protocol[F],
+    serverVariables: Map[String, String],
+    database:        Option[String],
+    readOnly:        Ref[F, Boolean],
+    isAutoCommit:    Ref[F, Boolean]
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
 
@@ -564,7 +564,7 @@ object Connection:
 
     override def getMetaData(): F[DatabaseMetaData[F]] =
       isClosed().map {
-        case true => throw new SQLException("Connection is closed")
+        case true  => throw new SQLException("Connection is closed")
         case false => DatabaseMetaData[F](protocol, serverVariables, database)
       }
 
@@ -707,7 +707,7 @@ object Connection:
     ssl:                     SSL = SSL.None,
     socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
+    allowPublicKeyRetrieval: Boolean = false
   ): Tracer[F] ?=> Resource[F, Connection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -725,7 +725,7 @@ object Connection:
                       socketOptions,
                       sslOp,
                       readTimeout,
-                      allowPublicKeyRetrieval,
+                      allowPublicKeyRetrieval
                     )
     yield connection
 
@@ -739,7 +739,7 @@ object Connection:
     debug:                   Boolean = false,
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
+    allowPublicKeyRetrieval: Boolean = false
   ): Resource[F, Connection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
@@ -772,7 +772,7 @@ object Connection:
     socketOptions:           List[SocketOption],
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false,
+    allowPublicKeyRetrieval: Boolean = false
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
@@ -795,5 +795,5 @@ object Connection:
       debug,
       sslOptions,
       readTimeout,
-      allowPublicKeyRetrieval,
+      allowPublicKeyRetrieval
     )

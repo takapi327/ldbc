@@ -1223,13 +1223,14 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        String,
     procedureNamePattern: String,
     columnNamePattern:    String
-  ): F[ResultSet[F]] = getProcedureColumns(Some(catalog), Some(schemaPattern), Some(procedureNamePattern), Some(columnNamePattern))
+  ): F[ResultSet[F]] =
+    getProcedureColumns(Some(catalog), Some(schemaPattern), Some(procedureNamePattern), Some(columnNamePattern))
 
   def getProcedureColumns(
-    catalog: Option[String],
-    schemaPattern: Option[String],
+    catalog:              Option[String],
+    schemaPattern:        Option[String],
     procedureNamePattern: Option[String],
-    columnNamePattern: Option[String]
+    columnNamePattern:    Option[String]
   ): F[ResultSet[F]]
 
   /**
@@ -3705,19 +3706,19 @@ object DatabaseMetaData:
 
   private[ldbc] trait StaticDatabaseMetaData[F[_]] extends DatabaseMetaData[F]:
     override def allProceduresAreCallable(): Boolean = false
-    override def allTablesAreSelectable(): Boolean = false
-    override def isReadOnly(): Boolean = false
-    override def nullsAreSortedHigh(): Boolean = false
-    override def nullsAreSortedLow(): Boolean = !nullsAreSortedHigh()
-    override def nullsAreSortedAtStart(): Boolean = false
-    override def nullsAreSortedAtEnd(): Boolean = false
-    override def getDatabaseProductName(): String = "MySQL"
-    override def getDriverName(): String = DRIVER_NAME
-    override def getDriverVersion(): String = s"ldbc-connector-${DRIVER_VERSION}"
-    override def getDriverMajorVersion(): Int = DRIVER_VERSION.major
-    override def getDriverMinorVersion(): Int = DRIVER_VERSION.minor
-    override def usesLocalFiles(): Boolean = false
-    override def usesLocalFilePerTable(): Boolean = false
+    override def allTablesAreSelectable():   Boolean = false
+    override def isReadOnly():               Boolean = false
+    override def nullsAreSortedHigh():       Boolean = false
+    override def nullsAreSortedLow():        Boolean = !nullsAreSortedHigh()
+    override def nullsAreSortedAtStart():    Boolean = false
+    override def nullsAreSortedAtEnd():      Boolean = false
+    override def getDatabaseProductName():   String  = "MySQL"
+    override def getDriverName():            String  = DRIVER_NAME
+    override def getDriverVersion():         String  = s"ldbc-connector-${ DRIVER_VERSION }"
+    override def getDriverMajorVersion():    Int     = DRIVER_VERSION.major
+    override def getDriverMinorVersion():    Int     = DRIVER_VERSION.minor
+    override def usesLocalFiles():           Boolean = false
+    override def usesLocalFilePerTable():    Boolean = false
 
     override def getNumericFunctions(): String =
       "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
@@ -3755,109 +3756,109 @@ object DatabaseMetaData:
         case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY =>
           toType match
             case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
-                 BINARY | VARBINARY | LONGVARBINARY | OTHER | DATE | TIME | TIMESTAMP =>
+              BINARY | VARBINARY | LONGVARBINARY | OTHER | DATE | TIME | TIMESTAMP =>
               true
             case _ => false
         case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE =>
           toType match
             case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
-                 BINARY | VARBINARY | LONGVARBINARY =>
+              BINARY | VARBINARY | LONGVARBINARY =>
               true
             case _ => false
         case OTHER =>
           toType match
             case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-            case _ => false
+            case _                                                                 => false
         case DATE =>
           toType match
             case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-            case _ => false
+            case _                                                                 => false
         case TIME =>
           toType match
             case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-            case _ => false
+            case _                                                                 => false
         case TIMESTAMP =>
           toType match
             case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY | TIME | DATE => true
-            case _ => false
+            case _                                                                               => false
         case _ => false
 
-    override def supportsTableCorrelationNames(): Boolean = true
+    override def supportsTableCorrelationNames():          Boolean = true
     override def supportsDifferentTableCorrelationNames(): Boolean = true
-    override def supportsExpressionsInOrderBy(): Boolean = true
-    override def supportsOrderByUnrelated(): Boolean = false
-    override def supportsGroupBy(): Boolean = true
-    override def supportsGroupByUnrelated(): Boolean = true
-    override def supportsGroupByBeyondSelect(): Boolean = true
-    override def supportsLikeEscapeClause(): Boolean = true
-    override def supportsMultipleResultSets(): Boolean = true
-    override def supportsMultipleTransactions(): Boolean = true
-    override def supportsNonNullableColumns(): Boolean = true
-    override def supportsMinimumSQLGrammar(): Boolean = true
-    override def supportsCoreSQLGrammar(): Boolean = true
-    override def supportsExtendedSQLGrammar(): Boolean = false
-    override def supportsANSI92EntryLevelSQL(): Boolean = true
-    override def supportsANSI92IntermediateSQL(): Boolean = false
-    override def supportsANSI92FullSQL(): Boolean = false
-    override def supportsIntegrityEnhancementFacility(): Boolean = false
-    override def supportsOuterJoins(): Boolean = true
-    override def supportsFullOuterJoins(): Boolean = false
-    override def supportsLimitedOuterJoins(): Boolean = true
-    override def storesUpperCaseIdentifiers(): Boolean = false
-    override def storesMixedCaseIdentifiers(): Boolean = !storesLowerCaseIdentifiers()
-    override def supportsMixedCaseQuotedIdentifiers(): Boolean = supportsMixedCaseIdentifiers()
-    override def storesUpperCaseQuotedIdentifiers(): Boolean = true
-    override def storesLowerCaseQuotedIdentifiers(): Boolean = storesLowerCaseIdentifiers()
-    override def storesMixedCaseQuotedIdentifiers(): Boolean = !storesLowerCaseIdentifiers()
-    override def isCatalogAtStart(): Boolean = true
-    override def getCatalogSeparator(): String = "."
-    override def supportsPositionedDelete(): Boolean = false
-    override def supportsPositionedUpdate(): Boolean = false
-    override def supportsSelectForUpdate(): Boolean = true
-    override def supportsStoredProcedures(): Boolean = true
-    override def supportsSubqueriesInComparisons(): Boolean = true
-    override def supportsSubqueriesInExists(): Boolean = true
-    override def supportsSubqueriesInIns(): Boolean = true
-    override def supportsSubqueriesInQuantifieds(): Boolean = true
-    override def supportsCorrelatedSubqueries(): Boolean = true
-    override def supportsUnion(): Boolean = true
-    override def supportsUnionAll(): Boolean = true
-    override def supportsOpenCursorsAcrossCommit(): Boolean = false
-    override def supportsOpenCursorsAcrossRollback(): Boolean = false
-    override def supportsOpenStatementsAcrossCommit(): Boolean = false
-    override def supportsOpenStatementsAcrossRollback(): Boolean = false
-    override def getMaxBinaryLiteralLength(): Int = 16777208
-    override def getMaxCharLiteralLength(): Int = 16777208
-    override def getMaxColumnNameLength(): Int = 64
-    override def getMaxColumnsInGroupBy(): Int = 64
-    override def getMaxColumnsInIndex(): Int = 16
-    override def getMaxColumnsInOrderBy(): Int = 64
-    override def getMaxColumnsInSelect(): Int = 256
-    override def getMaxColumnsInTable(): Int = 512
-    override def getMaxConnections(): Int = 0
-    override def getMaxCursorNameLength(): Int = 64
-    override def getMaxIndexLength(): Int = 256
-    override def getMaxSchemaNameLength(): Int = 0
-    override def getMaxProcedureNameLength(): Int = 0
-    override def getMaxCatalogNameLength(): Int = 32
-    override def getMaxRowSize(): Int = Int.MaxValue - 8
-    override def doesMaxRowSizeIncludeBlobs(): Boolean = true
-    override def getMaxStatementLength(): Int = maxBufferSize - 4
-    override def getMaxStatements(): Int = 0
-    override def getMaxTableNameLength(): Int = 64
-    override def getMaxTablesInSelect(): Int = 256
-    override def getMaxUserNameLength(): Int = 16
-    override def getDefaultTransactionIsolation(): Int = Connection.TRANSACTION_REPEATABLE_READ
-    override def supportsTransactions(): Boolean = true
+    override def supportsExpressionsInOrderBy():           Boolean = true
+    override def supportsOrderByUnrelated():               Boolean = false
+    override def supportsGroupBy():                        Boolean = true
+    override def supportsGroupByUnrelated():               Boolean = true
+    override def supportsGroupByBeyondSelect():            Boolean = true
+    override def supportsLikeEscapeClause():               Boolean = true
+    override def supportsMultipleResultSets():             Boolean = true
+    override def supportsMultipleTransactions():           Boolean = true
+    override def supportsNonNullableColumns():             Boolean = true
+    override def supportsMinimumSQLGrammar():              Boolean = true
+    override def supportsCoreSQLGrammar():                 Boolean = true
+    override def supportsExtendedSQLGrammar():             Boolean = false
+    override def supportsANSI92EntryLevelSQL():            Boolean = true
+    override def supportsANSI92IntermediateSQL():          Boolean = false
+    override def supportsANSI92FullSQL():                  Boolean = false
+    override def supportsIntegrityEnhancementFacility():   Boolean = false
+    override def supportsOuterJoins():                     Boolean = true
+    override def supportsFullOuterJoins():                 Boolean = false
+    override def supportsLimitedOuterJoins():              Boolean = true
+    override def storesUpperCaseIdentifiers():             Boolean = false
+    override def storesMixedCaseIdentifiers():             Boolean = !storesLowerCaseIdentifiers()
+    override def supportsMixedCaseQuotedIdentifiers():     Boolean = supportsMixedCaseIdentifiers()
+    override def storesUpperCaseQuotedIdentifiers():       Boolean = true
+    override def storesLowerCaseQuotedIdentifiers():       Boolean = storesLowerCaseIdentifiers()
+    override def storesMixedCaseQuotedIdentifiers():       Boolean = !storesLowerCaseIdentifiers()
+    override def isCatalogAtStart():                       Boolean = true
+    override def getCatalogSeparator():                    String  = "."
+    override def supportsPositionedDelete():               Boolean = false
+    override def supportsPositionedUpdate():               Boolean = false
+    override def supportsSelectForUpdate():                Boolean = true
+    override def supportsStoredProcedures():               Boolean = true
+    override def supportsSubqueriesInComparisons():        Boolean = true
+    override def supportsSubqueriesInExists():             Boolean = true
+    override def supportsSubqueriesInIns():                Boolean = true
+    override def supportsSubqueriesInQuantifieds():        Boolean = true
+    override def supportsCorrelatedSubqueries():           Boolean = true
+    override def supportsUnion():                          Boolean = true
+    override def supportsUnionAll():                       Boolean = true
+    override def supportsOpenCursorsAcrossCommit():        Boolean = false
+    override def supportsOpenCursorsAcrossRollback():      Boolean = false
+    override def supportsOpenStatementsAcrossCommit():     Boolean = false
+    override def supportsOpenStatementsAcrossRollback():   Boolean = false
+    override def getMaxBinaryLiteralLength():              Int     = 16777208
+    override def getMaxCharLiteralLength():                Int     = 16777208
+    override def getMaxColumnNameLength():                 Int     = 64
+    override def getMaxColumnsInGroupBy():                 Int     = 64
+    override def getMaxColumnsInIndex():                   Int     = 16
+    override def getMaxColumnsInOrderBy():                 Int     = 64
+    override def getMaxColumnsInSelect():                  Int     = 256
+    override def getMaxColumnsInTable():                   Int     = 512
+    override def getMaxConnections():                      Int     = 0
+    override def getMaxCursorNameLength():                 Int     = 64
+    override def getMaxIndexLength():                      Int     = 256
+    override def getMaxSchemaNameLength():                 Int     = 0
+    override def getMaxProcedureNameLength():              Int     = 0
+    override def getMaxCatalogNameLength():                Int     = 32
+    override def getMaxRowSize():                          Int     = Int.MaxValue - 8
+    override def doesMaxRowSizeIncludeBlobs():             Boolean = true
+    override def getMaxStatementLength():                  Int     = maxBufferSize - 4
+    override def getMaxStatements():                       Int     = 0
+    override def getMaxTableNameLength():                  Int     = 64
+    override def getMaxTablesInSelect():                   Int     = 256
+    override def getMaxUserNameLength():                   Int     = 16
+    override def getDefaultTransactionIsolation():         Int     = Connection.TRANSACTION_REPEATABLE_READ
+    override def supportsTransactions():                   Boolean = true
     override def supportsTransactionIsolationLevel(level: Int): Boolean = level match
       case Connection.TRANSACTION_READ_COMMITTED | Connection.TRANSACTION_READ_UNCOMMITTED |
-           Connection.TRANSACTION_REPEATABLE_READ | Connection.TRANSACTION_SERIALIZABLE =>
+        Connection.TRANSACTION_REPEATABLE_READ | Connection.TRANSACTION_SERIALIZABLE =>
         true
       case _ => false
     override def supportsDataDefinitionAndDataManipulationTransactions(): Boolean = false
-    override def supportsDataManipulationTransactionsOnly(): Boolean = false
-    override def dataDefinitionCausesTransactionCommit(): Boolean = true
-    override def dataDefinitionIgnoredInTransactions(): Boolean = false
+    override def supportsDataManipulationTransactionsOnly():              Boolean = false
+    override def dataDefinitionCausesTransactionCommit():                 Boolean = true
+    override def dataDefinitionIgnoredInTransactions():                   Boolean = false
   end StaticDatabaseMetaData
 
   private[ldbc] open class Impl[F[_]: Temporal: Exchange: Tracer](
@@ -3866,14 +3867,15 @@ object DatabaseMetaData:
     database:                      Option[String]       = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean              = true,
-    tinyInt1isBit: Boolean = true,
-    transformedBitIsBoolean: Boolean = false,
-    yearIsDateType: Boolean = true
+    tinyInt1isBit:                 Boolean              = true,
+    transformedBitIsBoolean:       Boolean              = false,
+    yearIsDateType:                Boolean              = true
   )(using ev: MonadError[F, Throwable])
     extends StaticDatabaseMetaData[F]:
 
     private enum FunctionConstant:
-      case FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT, FUNCTION_COLUMN_RETURN, FUNCTION_COLUMN_RESULT, FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN
+      case FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT,
+        FUNCTION_COLUMN_RETURN, FUNCTION_COLUMN_RESULT, FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN
 
     override def getURL(): String = protocol.hostInfo.url
 
@@ -4017,10 +4019,10 @@ object DatabaseMetaData:
     }
 
     override def getProcedures(
-                                catalog:              Option[String],
-                                schemaPattern:        Option[String],
-                                procedureNamePattern: Option[String]
-                              ): F[ResultSet[F]] =
+      catalog:              Option[String],
+      schemaPattern:        Option[String],
+      procedureNamePattern: Option[String]
+    ): F[ResultSet[F]] =
 
       val db = getDatabase(catalog, schemaPattern)
 
@@ -4080,11 +4082,11 @@ object DatabaseMetaData:
       }
 
     override def getProcedureColumns(
-                                      catalog: Option[String],
-                                      schemaPattern: Option[String],
-                                      procedureNamePattern: Option[String],
-                                      columnNamePattern: Option[String]
-                                    ): F[ResultSet[F]] =
+      catalog:              Option[String],
+      schemaPattern:        Option[String],
+      procedureNamePattern: Option[String],
+      columnNamePattern:    Option[String]
+    ): F[ResultSet[F]] =
 
       val db = getDatabase(catalog, schemaPattern)
 
@@ -4116,9 +4118,12 @@ object DatabaseMetaData:
       if tinyInt1isBit then
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE")
         sqlBuf.append(
-          " WHEN LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN ")
+          " WHEN LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN "
+        )
         sqlBuf.append(if transformedBitIsBoolean then "'BOOLEAN'" else "'BIT'")
-        sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'")
+        sqlBuf.append(
+          " WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'"
+        )
         sqlBuf.append(" ELSE DATA_TYPE END ")
       end if
 
@@ -4140,9 +4145,13 @@ object DatabaseMetaData:
       sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 0")
 
       if supportsFractSeconds then
-        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN DATETIME_PRECISION")
+        sqlBuf.append(
+          " WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN DATETIME_PRECISION"
+        )
       else
-        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0")
+        sqlBuf.append(
+          " WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0"
+        )
 
       if tinyInt1isBit && !transformedBitIsBoolean then
         sqlBuf.append(
@@ -4157,9 +4166,13 @@ object DatabaseMetaData:
       sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10")
 
       if supportsFractSeconds then
-        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(
+          " WHEN LCASE(DATA_TYPE)='time' THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)"
+        )
         sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'")
-        sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(
+          "  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)"
+        )
       else
         sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8")
         sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19")
@@ -4182,7 +4195,9 @@ object DatabaseMetaData:
       sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ")
       sqlBuf.append("10 AS RADIX,")
       sqlBuf.append(procedureNullable)
-      sqlBuf.append(" AS `NULLABLE`, NULL AS `REMARKS`, NULL AS `COLUMN_DEF`, NULL AS `SQL_DATA_TYPE`, NULL AS `SQL_DATETIME_SUB`,")
+      sqlBuf.append(
+        " AS `NULLABLE`, NULL AS `REMARKS`, NULL AS `COLUMN_DEF`, NULL AS `SQL_DATA_TYPE`, NULL AS `SQL_DATETIME_SUB`,"
+      )
 
       sqlBuf.append(" CASE WHEN CHARACTER_OCTET_LENGTH > ")
       sqlBuf.append(Int.MaxValue)
@@ -4195,34 +4210,28 @@ object DatabaseMetaData:
 
       val conditionBuf = new StringBuilder()
 
-      if getProceduresReturnsFunctions then
-        conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
+      if getProceduresReturnsFunctions then conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
       end if
 
       if db.nonEmpty then
-        if conditionBuf.nonEmpty then
-          conditionBuf.append(" AND")
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
         end if
 
         conditionBuf.append(
-          if databaseTerm.contains(DatabaseTerm.SCHEMA) then
-            " SPECIFIC_SCHEMA LIKE ?"
-          else
-            " SPECIFIC_SCHEMA = ?"
+          if databaseTerm.contains(DatabaseTerm.SCHEMA) then " SPECIFIC_SCHEMA LIKE ?"
+          else " SPECIFIC_SCHEMA = ?"
         )
       end if
 
       if procedureNamePattern.nonEmpty then
-        if conditionBuf.nonEmpty then
-          conditionBuf.append(" AND")
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
         end if
 
         conditionBuf.append(" SPECIFIC_NAME LIKE ?")
       end if
 
       if columnNamePattern.nonEmpty then
-        if conditionBuf.nonEmpty then
-          conditionBuf.append(" AND")
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
         end if
 
         conditionBuf.append(" (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL)")
@@ -4238,16 +4247,20 @@ object DatabaseMetaData:
       prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
         val setting = (db, procedureNamePattern, columnNamePattern) match
           case (Some(dbValue), Some(procedureName), Some(columnName)) =>
-            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName) *> preparedStatement.setString(3, columnName)
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(
+              2,
+              procedureName
+            ) *> preparedStatement.setString(3, columnName)
           case (Some(dbValue), Some(procedureName), None) =>
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
           case (Some(dbValue), None, Some(columnName)) =>
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, columnName)
           case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
-          case (None, Some(procedureName), Some(columnName)) => preparedStatement.setString(1, procedureName) *> preparedStatement.setString(2, columnName)
+          case (None, Some(procedureName), Some(columnName)) =>
+            preparedStatement.setString(1, procedureName) *> preparedStatement.setString(2, columnName)
           case (None, Some(procedureName), None) => preparedStatement.setString(1, procedureName)
-          case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
-          case (None, None, None) => ev.unit
+          case (None, None, Some(columnName))    => preparedStatement.setString(1, columnName)
+          case (None, None, None)                => ev.unit
 
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
@@ -5809,7 +5822,11 @@ object DatabaseMetaData:
         ResultSet.CONCUR_READ_ONLY
       )
 
-    private def appendJdbcTypeMappingQuery(buf: StringBuilder, mysqlTypeColumnName: String, fullMysqlTypeColumnName: String): Unit =
+    private def appendJdbcTypeMappingQuery(
+      buf:                     StringBuilder,
+      mysqlTypeColumnName:     String,
+      fullMysqlTypeColumnName: String
+    ): Unit =
       buf.append("CASE ")
 
       MysqlType.values.foreach { mysqlType =>
@@ -5832,10 +5849,9 @@ object DatabaseMetaData:
               buf.append(") != 0 THEN ")
               buf.append(if transformedBitIsBoolean then "16" else "-7")
               buf.append(" ELSE -6 END ")
-            else
-              buf.append(mysqlType.jdbcType)
+            else buf.append(mysqlType.jdbcType)
           case MysqlType.YEAR => buf.append(if yearIsDateType then mysqlType.jdbcType else Types.SMALLINT)
-          case _ => buf.append(mysqlType.jdbcType)
+          case _              => buf.append(mysqlType.jdbcType)
       }
 
       buf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN -2")
@@ -5857,8 +5873,17 @@ object DatabaseMetaData:
     database:                      Option[String] = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean = true,
-    tinyInt1isBit: Boolean = true,
-    transformedBitIsBoolean: Boolean = false,
-    yearIsDateType: Boolean = true
+    tinyInt1isBit:                 Boolean = true,
+    transformedBitIsBoolean:       Boolean = false,
+    yearIsDateType:                Boolean = true
   )(using ev: MonadError[F, Throwable]): DatabaseMetaData[F] =
-    new Impl[F](protocol, serverVariables, database, databaseTerm, getProceduresReturnsFunctions, tinyInt1isBit, transformedBitIsBoolean, yearIsDateType)
+    new Impl[F](
+      protocol,
+      serverVariables,
+      database,
+      databaseTerm,
+      getProceduresReturnsFunctions,
+      tinyInt1isBit,
+      transformedBitIsBoolean,
+      yearIsDateType
+    )
