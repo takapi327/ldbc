@@ -1277,10 +1277,20 @@ trait DatabaseMetaData[F[_]]:
    * all types
    * @return <code>ResultSet</code> - each row is a table description
    */
-  def getTables(catalog: String, schemaPattern: String, tableNamePattern: String, types: Array[String]): F[ResultSet[F]] =
+  def getTables(
+    catalog:          String,
+    schemaPattern:    String,
+    tableNamePattern: String,
+    types:            Array[String]
+  ): F[ResultSet[F]] =
     getTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern), types)
 
-  def getTables(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String], types: Array[String]): F[ResultSet[F]]
+  def getTables(
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String],
+    types:            Array[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves the schema names available in this database.  The results
@@ -4285,19 +4295,26 @@ object DatabaseMetaData:
       sqlBuf.append(
         " TABLE_NAME, CASE WHEN TABLE_TYPE='BASE TABLE' THEN CASE WHEN TABLE_SCHEMA = 'mysql' OR TABLE_SCHEMA = 'performance_schema' THEN 'SYSTEM TABLE' "
       )
-      sqlBuf.append("ELSE 'TABLE' END WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, ")
-      sqlBuf.append("TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, ")
+      sqlBuf.append(
+        "ELSE 'TABLE' END WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
+      )
+      sqlBuf.append(
+        "TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, "
+      )
       sqlBuf.append("NULL AS REF_GENERATION FROM INFORMATION_SCHEMA.TABLES")
 
-      if db.nonEmpty || tableNamePattern.nonEmpty then
-        sqlBuf.append(" WHERE")
+      if db.nonEmpty || tableNamePattern.nonEmpty then sqlBuf.append(" WHERE")
       end if
 
       db match
         case Some(dbValue) =>
           sqlBuf.append(
-            if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(dbValue) || !dbValue.contains("%")
-              || databaseTerm.contains(DatabaseTerm.CATALOG) then " TABLE_SCHEMA = ?" else " TABLE_SCHEMA LIKE ?"
+            if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(
+                dbValue
+              ) || !dbValue.contains("%")
+              || databaseTerm.contains(DatabaseTerm.CATALOG)
+            then " TABLE_SCHEMA = ?"
+            else " TABLE_SCHEMA LIKE ?"
           )
         case None => ()
 
@@ -4305,14 +4322,11 @@ object DatabaseMetaData:
         case Some(tableName) =>
           if db.nonEmpty then sqlBuf.append(" AND")
           end if
-          if tableName.contains("%") then
-            sqlBuf.append(" TABLE_NAME LIKE ?")
-          else
-            sqlBuf.append(" TABLE_NAME = ?")
+          if tableName.contains("%") then sqlBuf.append(" TABLE_NAME LIKE ?")
+          else sqlBuf.append(" TABLE_NAME = ?")
         case None => ()
 
-      if types.nonEmpty then
-        sqlBuf.append(" HAVING TABLE_TYPE IN (?,?,?,?,?)")
+      if types.nonEmpty then sqlBuf.append(" HAVING TABLE_TYPE IN (?,?,?,?,?)")
       end if
 
       sqlBuf.append(" ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME")
@@ -4321,11 +4335,11 @@ object DatabaseMetaData:
         (
           db match
             case Some(dbName) => preparedStatement.setString(1, dbName)
-            case None => preparedStatement.setString(1, "%")
+            case None         => preparedStatement.setString(1, "%")
         ) *> (
           tableNamePattern match
             case Some(tableName) => preparedStatement.setString(2, tableName)
-            case None => ev.unit
+            case None            => ev.unit
         ) *> (
           if types.nonEmpty then
             List.fill(5)("").zipWithIndex.foldLeft(ev.unit) {

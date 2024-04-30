@@ -971,7 +971,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      //ssl      = SSL.Trusted
+      // ssl      = SSL.Trusted
       allowPublicKeyRetrieval = true
     )
 
@@ -981,23 +981,23 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(None, Some("connector_test"), Some("all_types"), Array.empty[String])
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat <- resultSet.getString("TABLE_CAT")
-              tableSchem <- resultSet.getString("TABLE_SCHEM")
-              tableName <- resultSet.getString("TABLE_NAME")
-              tableType <- resultSet.getString("TABLE_TYPE")
-              remarks <- resultSet.getString("REMARKS")
-              typeCat <- resultSet.getString("TYPE_CAT")
-              typeSchem <- resultSet.getString("TYPE_SCHEM")
-              typeName <- resultSet.getString("TYPE_NAME")
-              selfReferencingColName <- resultSet.getString("SELF_REFERENCING_COL_NAME")
-              refGeneration <- resultSet.getString("REF_GENERATION")
-            yield s"Table Catalog: $tableCat, Table Schema: $tableSchem, Table Name: $tableName, Table Type: $tableType, Remarks: $remarks, Type Catalog: $typeCat, Type Schema: $typeSchem, Type Name: $typeName, Self Referencing Column Name: $selfReferencingColName, Reference Generation: $refGeneration"
-          }
+                      for
+                        tableCat               <- resultSet.getString("TABLE_CAT")
+                        tableSchem             <- resultSet.getString("TABLE_SCHEM")
+                        tableName              <- resultSet.getString("TABLE_NAME")
+                        tableType              <- resultSet.getString("TABLE_TYPE")
+                        remarks                <- resultSet.getString("REMARKS")
+                        typeCat                <- resultSet.getString("TYPE_CAT")
+                        typeSchem              <- resultSet.getString("TYPE_SCHEM")
+                        typeName               <- resultSet.getString("TYPE_NAME")
+                        selfReferencingColName <- resultSet.getString("SELF_REFERENCING_COL_NAME")
+                        refGeneration          <- resultSet.getString("REF_GENERATION")
+                      yield s"Table Catalog: $tableCat, Table Schema: $tableSchem, Table Name: $tableName, Table Type: $tableType, Remarks: $remarks, Type Catalog: $typeCat, Type Schema: $typeSchem, Type Name: $typeName, Self Referencing Column Name: $selfReferencingColName, Reference Generation: $refGeneration"
+                    }
         yield values
       },
       Vector(
-        "Table Catalog: Some(connector_test), Table Schema: None, Table Name: Some(all_types), Table Type: Some(TABLE), Remarks: Some(), Type Catalog: None, Type Schema: None, Type Name: None, Self Referencing Column Name: None, Reference Generation: None",
+        "Table Catalog: Some(connector_test), Table Schema: None, Table Name: Some(all_types), Table Type: Some(TABLE), Remarks: Some(), Type Catalog: None, Type Schema: None, Type Name: None, Self Referencing Column Name: None, Reference Generation: None"
       )
     )
   }
