@@ -1277,7 +1277,10 @@ trait DatabaseMetaData[F[_]]:
    * all types
    * @return <code>ResultSet</code> - each row is a table description
    */
-  def getTables(catalog: String, schemaPattern: String, tableNamePattern: String, types: Array[String]): ResultSet[F]
+  def getTables(catalog: String, schemaPattern: String, tableNamePattern: String, types: Array[String]): F[ResultSet[F]] =
+    getTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern), types)
+
+  def getTables(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String], types: Array[String]): F[ResultSet[F]]
 
   /**
    * Retrieves the schema names available in this database.  The results
@@ -4265,56 +4268,77 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the tables available in the given catalog.
-     * Only table descriptions matching the catalog, schema, table
-     * name and type criteria are returned.  They are ordered by
-     * <code>TABLE_TYPE</code>, <code>TABLE_CAT</code>,
-     * <code>TABLE_SCHEM</code> and <code>TABLE_NAME</code>.
-     * <P>
-     * Each table description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} table catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} table schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} table name
-     * <LI><B>TABLE_TYPE</B> String {@code =>} table type.  Typical types are "TABLE",
-     * "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY",
-     * "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-     * <LI><B>REMARKS</B> String {@code =>} explanatory comment on the table (may be {@code null})
-     * <LI><B>TYPE_CAT</B> String {@code =>} the types catalog (may be <code>null</code>)
-     * <LI><B>TYPE_SCHEM</B> String {@code =>} the types schema (may be <code>null</code>)
-     * <LI><B>TYPE_NAME</B> String {@code =>} type name (may be <code>null</code>)
-     * <LI><B>SELF_REFERENCING_COL_NAME</B> String {@code =>} name of the designated
-     * "identifier" column of a typed table (may be <code>null</code>)
-     * <LI><B>REF_GENERATION</B> String {@code =>} specifies how values in
-     * SELF_REFERENCING_COL_NAME are created. Values are
-     * "SYSTEM", "USER", "DERIVED". (may be <code>null</code>)
-     * </OL>
-     *
-     * <P><B>Note:</B> Some databases may not return information for
-     * all tables.
-     *
-     * @param catalog          a catalog name; must match the catalog name as it
-     *                         is stored in the database; "" retrieves those without a catalog;
-     *                         <code>null</code> means that the catalog name should not be used to narrow
-     *                         the search
-     * @param schemaPattern    a schema name pattern; must match the schema name
-     *                         as it is stored in the database; "" retrieves those without a schema;
-     *                         <code>null</code> means that the schema name should not be used to narrow
-     *                         the search
-     * @param tableNamePattern a table name pattern; must match the
-     *                         table name as it is stored in the database
-     * @param types            a list of table types, which must be from the list of table types
-     *                         returned from {@link # getTableTypes},to include; <code>null</code> returns
-     *                         all types
-     * @return <code>ResultSet</code> - each row is a table description
-     */
     def getTables(
-      catalog:          String,
-      schemaPattern:    String,
-      tableNamePattern: String,
+      catalog:          Option[String],
+      schemaPattern:    Option[String],
+      tableNamePattern: Option[String],
       types:            Array[String]
-    ): ResultSet[F] = ???
+    ): F[ResultSet[F]] =
+      val db = getDatabase(catalog, schemaPattern)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      )
+
+      sqlBuf.append(
+        " TABLE_NAME, CASE WHEN TABLE_TYPE='BASE TABLE' THEN CASE WHEN TABLE_SCHEMA = 'mysql' OR TABLE_SCHEMA = 'performance_schema' THEN 'SYSTEM TABLE' "
+      )
+      sqlBuf.append("ELSE 'TABLE' END WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, ")
+      sqlBuf.append("TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, ")
+      sqlBuf.append("NULL AS REF_GENERATION FROM INFORMATION_SCHEMA.TABLES")
+
+      if db.nonEmpty || tableNamePattern.nonEmpty then
+        sqlBuf.append(" WHERE")
+      end if
+
+      db match
+        case Some(dbValue) =>
+          sqlBuf.append(
+            if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(dbValue) || !dbValue.contains("%")
+              || databaseTerm.contains(DatabaseTerm.CATALOG) then " TABLE_SCHEMA = ?" else " TABLE_SCHEMA LIKE ?"
+          )
+        case None => ()
+
+      tableNamePattern match
+        case Some(tableName) =>
+          if db.nonEmpty then sqlBuf.append(" AND")
+          end if
+          if tableName.contains("%") then
+            sqlBuf.append(" TABLE_NAME LIKE ?")
+          else
+            sqlBuf.append(" TABLE_NAME = ?")
+        case None => ()
+
+      if types.nonEmpty then
+        sqlBuf.append(" HAVING TABLE_TYPE IN (?,?,?,?,?)")
+      end if
+
+      sqlBuf.append(" ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        (
+          db match
+            case Some(dbName) => preparedStatement.setString(1, dbName)
+            case None => preparedStatement.setString(1, "%")
+        ) *> (
+          tableNamePattern match
+            case Some(tableName) => preparedStatement.setString(2, tableName)
+            case None => ev.unit
+        ) *> (
+          if types.nonEmpty then
+            List.fill(5)("").zipWithIndex.foldLeft(ev.unit) {
+              case (acc, (_, index)) =>
+                acc *> preparedStatement.setNull(index + 3)
+            } *>
+              types.zipWithIndex.foldLeft(ev.unit) {
+                case (acc, (tableType, index)) =>
+                  preparedStatement.setString(index + 3, tableType)
+              }
+          else ev.unit
+        ) *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves the schema names available in this database.  The results
