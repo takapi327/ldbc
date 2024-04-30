@@ -514,7 +514,6 @@ object Connection:
     protocol:             Protocol[F],
     serverVariables:      Map[String, String],
     database:             Option[String],
-    useInformationSchema: Boolean,
     readOnly:             Ref[F, Boolean],
     isAutoCommit:         Ref[F, Boolean]
   )(using ev: MonadError[F, Throwable])
@@ -566,9 +565,7 @@ object Connection:
     override def getMetaData(): F[DatabaseMetaData[F]] =
       isClosed().map {
         case true => throw new SQLException("Connection is closed")
-        case false =>
-          if useInformationSchema then DatabaseMetaDataUsingInfoSchema[F](protocol, serverVariables, database)
-          else DatabaseMetaData[F](protocol, serverVariables, database)
+        case false => DatabaseMetaData[F](protocol, serverVariables, database)
       }
 
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
@@ -711,7 +708,6 @@ object Connection:
     socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    useInformationSchema:    Boolean = true
   ): Tracer[F] ?=> Resource[F, Connection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -730,7 +726,6 @@ object Connection:
                       sslOp,
                       readTimeout,
                       allowPublicKeyRetrieval,
-                      useInformationSchema
                     )
     yield connection
 
@@ -745,7 +740,6 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    useInformationSchema:    Boolean = false
   ): Resource[F, Connection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
@@ -762,7 +756,7 @@ object Connection:
       connection <-
         Resource.make(
           Temporal[F].pure(
-            ConnectionImpl[F](protocol, serverVariables, database, useInformationSchema, readOnly, autoCommit)
+            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit)
           )
         )(_.close())
     yield connection
@@ -779,7 +773,6 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    useInformationSchema:    Boolean = false
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
@@ -803,5 +796,4 @@ object Connection:
       sslOptions,
       readTimeout,
       allowPublicKeyRetrieval,
-      useInformationSchema
     )
