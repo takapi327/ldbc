@@ -451,12 +451,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The allProceduresAreCallable method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.allProceduresAreCallable())))
@@ -464,12 +464,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The allTablesAreSelectable method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.allTablesAreSelectable())))
@@ -477,12 +477,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The URL retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -493,12 +493,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The User name retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -509,12 +509,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The isReadOnly method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.isReadOnly())))
@@ -522,12 +522,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The nullsAreSortedHigh method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedHigh())))
@@ -535,12 +535,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The nullsAreSortedLow method of DatabaseMetaData is always true.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => meta.nullsAreSortedLow())))
@@ -548,12 +548,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The nullsAreSortedAtStart method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtStart())))
@@ -561,12 +561,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The nullsAreSortedAtEnd method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtEnd())))
@@ -574,12 +574,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The getDatabaseProductName method of DatabaseMetaData is always MySQL.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -590,12 +590,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -606,12 +606,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The getDriverName method of DatabaseMetaData is always MySQL Connector/L.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -622,12 +622,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -638,12 +638,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The usesLocalFiles method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.usesLocalFiles())))
@@ -651,12 +651,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The usesLocalFilePerTable method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.usesLocalFilePerTable())))
@@ -664,12 +664,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The supports Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(_.supportsMixedCaseIdentifiers())))
@@ -677,12 +677,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The storesUpperCaseIdentifiers method of DatabaseMetaData is always false.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers())))
@@ -690,12 +690,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The stores Lower Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers())))
@@ -703,12 +703,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The stores Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(_.storesMixedCaseIdentifiers())))
@@ -716,12 +716,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The supports Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(_.supportsMixedCaseQuotedIdentifiers())))
@@ -729,12 +729,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
@@ -742,12 +742,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers())))
@@ -755,12 +755,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The stores Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIOBoolean(connection.use(_.getMetaData().map(_.storesMixedCaseQuotedIdentifiers())))
@@ -768,12 +768,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The Identifier Quote String retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -784,12 +784,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The SQL Keywords retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -800,12 +800,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The Numeric Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -816,12 +816,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The String Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -835,12 +835,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The System Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -851,12 +851,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The Time Date Functions retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -869,12 +869,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The Search String Escape retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -885,12 +885,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The Extra Name Characters retrieved from DatabaseMetaData matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -901,61 +901,65 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving procedure information matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures("def", "connector_test", "demoSp")
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              procedureCat <- resultSet.getString("PROCEDURE_CAT")
-              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-              procedureName <- resultSet.getString("PROCEDURE_NAME")
-              remarks <- resultSet.getString("REMARKS")
-              procedureType <- resultSet.getString("PROCEDURE_TYPE")
-            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
-          }
+                      for
+                        procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                        procedureName  <- resultSet.getString("PROCEDURE_NAME")
+                        remarks        <- resultSet.getString("REMARKS")
+                        procedureType  <- resultSet.getString("PROCEDURE_TYPE")
+                      yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
+                    }
         yield values
       },
-      Vector("Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(1)")
+      Vector(
+        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(1)"
+      )
     )
   }
 
   test("The result of retrieving procedure information without InformationSchema matches the specified value.") {
     val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl = SSL.Trusted,
+      host                 = "127.0.0.1",
+      port                 = 13306,
+      user                 = "ldbc",
+      password             = Some("password"),
+      database             = Some("connector_test"),
+      ssl                  = SSL.Trusted,
       useInformationSchema = false
     )
 
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures("def", "connector_test", "demoSp")
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              procedureCat <- resultSet.getString("Db")
-              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-              procedureName <- resultSet.getString("Name")
-              remarks <- resultSet.getString("Comment")
-              procedureType <- resultSet.getString("Type")
-            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
-          }
+                      for
+                        procedureCat   <- resultSet.getString("Db")
+                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+                        procedureName  <- resultSet.getString("Name")
+                        remarks        <- resultSet.getString("Comment")
+                        procedureType  <- resultSet.getString("Type")
+                      yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
+                    }
         yield values
       },
-      Vector("Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(PROCEDURE)")
+      Vector(
+        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(PROCEDURE)"
+      )
     )
   }

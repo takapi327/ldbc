@@ -511,12 +511,12 @@ object Connection:
   val TRANSACTION_SERIALIZABLE: Int = 8
 
   private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
-    protocol:   Protocol[F],
-    serverVariables: Map[String, String],
-    database:   Option[String],
+    protocol:             Protocol[F],
+    serverVariables:      Map[String, String],
+    database:             Option[String],
     useInformationSchema: Boolean,
-    readOnly:   Ref[F, Boolean],
-    isAutoCommit: Ref[F, Boolean]
+    readOnly:             Ref[F, Boolean],
+    isAutoCommit:         Ref[F, Boolean]
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
 
@@ -525,7 +525,7 @@ object Connection:
 
     override def prepareStatement(sql: String): F[PreparedStatement[F]] =
       for
-        params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement.Client[F](
         protocol,
@@ -565,7 +565,7 @@ object Connection:
 
     override def getMetaData(): F[DatabaseMetaData[F]] =
       isClosed().map {
-        case true  => throw new SQLException("Connection is closed")
+        case true => throw new SQLException("Connection is closed")
         case false =>
           if useInformationSchema then DatabaseMetaDataUsingInfoSchema[F](protocol, serverVariables, database)
           else DatabaseMetaData[F](protocol, serverVariables, database)
@@ -711,7 +711,7 @@ object Connection:
     socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    useInformationSchema: Boolean = true,
+    useInformationSchema:    Boolean = true
   ): Tracer[F] ?=> Resource[F, Connection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -730,7 +730,7 @@ object Connection:
                       sslOp,
                       readTimeout,
                       allowPublicKeyRetrieval,
-        useInformationSchema
+                      useInformationSchema
                     )
     yield connection
 
@@ -745,7 +745,7 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    useInformationSchema: Boolean = false,
+    useInformationSchema:    Boolean = false
   ): Resource[F, Connection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
@@ -755,11 +755,16 @@ object Connection:
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol <-
         Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
-      _          <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
+      _               <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
       serverVariables <- Resource.eval(protocol.serverVariables())
-      readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
-      autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
-      connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, serverVariables, database, useInformationSchema, readOnly, autoCommit)))(_.close())
+      readOnly        <- Resource.eval(Ref[F].of[Boolean](false))
+      autoCommit      <- Resource.eval(Ref[F].of[Boolean](true))
+      connection <-
+        Resource.make(
+          Temporal[F].pure(
+            ConnectionImpl[F](protocol, serverVariables, database, useInformationSchema, readOnly, autoCommit)
+          )
+        )(_.close())
     yield connection
 
   def fromSocketGroup[F[_]: Tracer: Console](
@@ -774,7 +779,7 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    useInformationSchema: Boolean = false,
+    useInformationSchema:    Boolean = false
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
@@ -787,4 +792,16 @@ object Connection:
         case (None, _) => fail(s"""Hostname: "$host" is not syntactically valid.""")
         case (_, None) => fail(s"Port: $port falls out of the allowed range.")
 
-    fromSockets(sockets, host, port, user, password, database, debug, sslOptions, readTimeout, allowPublicKeyRetrieval, useInformationSchema)
+    fromSockets(
+      sockets,
+      host,
+      port,
+      user,
+      password,
+      database,
+      debug,
+      sslOptions,
+      readTimeout,
+      allowPublicKeyRetrieval,
+      useInformationSchema
+    )

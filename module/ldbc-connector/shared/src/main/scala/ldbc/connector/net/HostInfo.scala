@@ -7,11 +7,11 @@
 package ldbc.connector.net
 
 case class HostInfo(
-  host: String,
-  port: Int,
-  user: String,
+  host:     String,
+  port:     Int,
+  user:     String,
   password: Option[String],
-  database: Option[String],
+  database: Option[String]
 ):
-  
+
   val url: String = s"jdbc:mysql://$host:$port" + database.map("/" + _).getOrElse("")

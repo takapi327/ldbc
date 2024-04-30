@@ -346,7 +346,7 @@ trait DatabaseMetaData[F[_]]:
    */
   def getExtraNameCharacters(): String
 
-  //--------------------------------------------------------------------
+  // --------------------------------------------------------------------
   // Functions describing which features are supported.
 
   /**
@@ -803,7 +803,7 @@ trait DatabaseMetaData[F[_]]:
    */
   def supportsOpenStatementsAcrossRollback(): Boolean
 
-  //----------------------------------------------------------------------
+  // ----------------------------------------------------------------------
   // The following group of methods exposes various limitations
   // based on the target database with the current driver.
   // Unless otherwise specified, a result of zero means there is no
@@ -1119,9 +1119,14 @@ trait DatabaseMetaData[F[_]]:
    *        procedure name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a procedure description
    */
-  def getProcedures(catalog: String, schemaPattern: String, procedureNamePattern: String): F[ResultSet[F]] = getProcedures(Some(catalog), Some(schemaPattern), Some(procedureNamePattern))
+  def getProcedures(catalog: String, schemaPattern: String, procedureNamePattern: String): F[ResultSet[F]] =
+    getProcedures(Some(catalog), Some(schemaPattern), Some(procedureNamePattern))
 
-  def getProcedures(catalog: Option[String], schemaPattern: Option[String], procedureNamePattern: Option[String]): F[ResultSet[F]]
+  def getProcedures(
+    catalog:              Option[String],
+    schemaPattern:        Option[String],
+    procedureNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given catalog's stored procedure parameter
@@ -1213,7 +1218,12 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row describes a stored procedure parameter or
    *      column
    */
-  def getProcedureColumns(catalog: String, schemaPattern: String, procedureNamePattern: String, columnNamePattern: String): ResultSet[F]
+  def getProcedureColumns(
+    catalog:              String,
+    schemaPattern:        String,
+    procedureNamePattern: String,
+    columnNamePattern:    String
+  ): ResultSet[F]
 
   /**
    * Retrieves a description of the tables available in the given catalog.
@@ -1395,7 +1405,12 @@ trait DatabaseMetaData[F[_]]:
    *        name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a column description
    */
-  def getColumns(catalog: String, schemaPattern: String, tableNamePattern: String, columnNamePattern: String): ResultSet[F]
+  def getColumns(
+    catalog:           String,
+    schemaPattern:     String,
+    tableNamePattern:  String,
+    columnNamePattern: String
+  ): ResultSet[F]
 
   /**
    * Retrieves a description of the access rights for a table's columns.
@@ -1832,7 +1847,14 @@ trait DatabaseMetaData[F[_]]:
    * the table name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a foreign key column description
    */
-  def getCrossReference(parentCatalog: String, parentSchema: String, parentTable: String, foreignCatalog: String, foreignSchema: String, foreignTable: String): ResultSet[F]
+  def getCrossReference(
+    parentCatalog:  String,
+    parentSchema:   String,
+    parentTable:    String,
+    foreignCatalog: String,
+    foreignSchema:  String,
+    foreignTable:   String
+  ): ResultSet[F]
 
   /**
    * Retrieves a description of all the data types supported by
@@ -2340,7 +2362,12 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is an
    *         attribute description
    */
-  def getAttributes(catalog: String, schemaPattern: String, typeNamePattern: String, attributeNamePattern: String): ResultSet[F]
+  def getAttributes(
+    catalog:              String,
+    schemaPattern:        String,
+    typeNamePattern:      String,
+    attributeNamePattern: String
+  ): ResultSet[F]
 
   /**
    * Retrieves whether this database supports the given result set holdability.
@@ -2623,7 +2650,12 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row describes a
    * user function parameter, column  or return type
    */
-  def getFunctionColumns(catalog: String, schemaPattern: String, functionNamePattern: String, columnNamePattern: String): ResultSet[F]
+  def getFunctionColumns(
+    catalog:             String,
+    schemaPattern:       String,
+    functionNamePattern: String,
+    columnNamePattern:   String
+  ): ResultSet[F]
 
   /**
    * Retrieves a description of the pseudo or hidden columns available
@@ -2684,7 +2716,12 @@ trait DatabaseMetaData[F[_]]:
    *        name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a column description
    */
-  def getPseudoColumns(catalog: String, schemaPattern: String, tableNamePattern: String, columnNamePattern: String): ResultSet[F]
+  def getPseudoColumns(
+    catalog:           String,
+    schemaPattern:     String,
+    tableNamePattern:  String,
+    columnNamePattern: String
+  ): ResultSet[F]
 
   /**
    * Retrieves whether a generated key will always be returned if the column
@@ -2728,35 +2765,300 @@ trait DatabaseMetaData[F[_]]:
   def supportsSharding(): Boolean = false
 
 object DatabaseMetaData:
-  
+
   private val SQL2003_KEYWORDS = List(
-    "ABS", "ALL", "ALLOCATE", "ALTER", "AND", "ANY", "ARE", "ARRAY", "AS",
-    "ASENSITIVE", "ASYMMETRIC", "AT", "ATOMIC", "AUTHORIZATION", "AVG", "BEGIN", "BETWEEN", "BIGINT", "BINARY", "BLOB", "BOOLEAN", "BOTH", "BY", "CALL",
-    "CALLED", "CARDINALITY", "CASCADED", "CASE", "CAST", "CEIL", "CEILING", "CHAR", "CHARACTER", "CHARACTER_LENGTH", "CHAR_LENGTH", "CHECK", "CLOB",
-    "CLOSE", "COALESCE", "COLLATE", "COLLECT", "COLUMN", "COMMIT", "CONDITION", "CONNECT", "CONSTRAINT", "CONVERT", "CORR", "CORRESPONDING", "COUNT",
-    "COVAR_POP", "COVAR_SAMP", "CREATE", "CROSS", "CUBE", "CUME_DIST", "CURRENT", "CURRENT_DATE", "CURRENT_DEFAULT_TRANSFORM_GROUP", "CURRENT_PATH",
-    "CURRENT_ROLE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_TRANSFORM_GROUP_FOR_TYPE", "CURRENT_USER", "CURSOR", "CYCLE", "DATE", "DAY",
-    "DEALLOCATE", "DEC", "DECIMAL", "DECLARE", "DEFAULT", "DELETE", "DENSE_RANK", "DEREF", "DESCRIBE", "DETERMINISTIC", "DISCONNECT", "DISTINCT",
-    "DOUBLE", "DROP", "DYNAMIC", "EACH", "ELEMENT", "ELSE", "END", "END-EXEC", "ESCAPE", "EVERY", "EXCEPT", "EXEC", "EXECUTE", "EXISTS", "EXP",
-    "EXTERNAL", "EXTRACT", "FALSE", "FETCH", "FILTER", "FLOAT", "FLOOR", "FOR", "FOREIGN", "FREE", "FROM", "FULL", "FUNCTION", "FUSION", "GET",
-    "GLOBAL", "GRANT", "GROUP", "GROUPING", "HAVING", "HOLD", "HOUR", "IDENTITY", "IN", "INDICATOR", "INNER", "INOUT", "INSENSITIVE", "INSERT", "INT",
-    "INTEGER", "INTERSECT", "INTERSECTION", "INTERVAL", "INTO", "IS", "JOIN", "LANGUAGE", "LARGE", "LATERAL", "LEADING", "LEFT", "LIKE", "LN", "LOCAL",
-    "LOCALTIME", "LOCALTIMESTAMP", "LOWER", "MATCH", "MAX", "MEMBER", "MERGE", "METHOD", "MIN", "MINUTE", "MOD", "MODIFIES", "MODULE", "MONTH",
-    "MULTISET", "NATIONAL", "NATURAL", "NCHAR", "NCLOB", "NEW", "NO", "NONE", "NORMALIZE", "NOT", "NULL", "NULLIF", "NUMERIC", "OCTET_LENGTH", "OF",
-    "OLD", "ON", "ONLY", "OPEN", "OR", "ORDER", "OUT", "OUTER", "OVER", "OVERLAPS", "OVERLAY", "PARAMETER", "PARTITION", "PERCENTILE_CONT",
-    "PERCENTILE_DISC", "PERCENT_RANK", "POSITION", "POWER", "PRECISION", "PREPARE", "PRIMARY", "PROCEDURE", "RANGE", "RANK", "READS", "REAL",
-    "RECURSIVE", "REF", "REFERENCES", "REFERENCING", "REGR_AVGX", "REGR_AVGY", "REGR_COUNT", "REGR_INTERCEPT", "REGR_R2", "REGR_SLOPE", "REGR_SXX",
-    "REGR_SXY", "REGR_SYY", "RELEASE", "RESULT", "RETURN", "RETURNS", "REVOKE", "RIGHT", "ROLLBACK", "ROLLUP", "ROW", "ROWS", "ROW_NUMBER", "SAVEPOINT",
-    "SCOPE", "SCROLL", "SEARCH", "SECOND", "SELECT", "SENSITIVE", "SESSION_USER", "SET", "SIMILAR", "SMALLINT", "SOME", "SPECIFIC", "SPECIFICTYPE",
-    "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQRT", "START", "STATIC", "STDDEV_POP", "STDDEV_SAMP", "SUBMULTISET", "SUBSTRING", "SUM",
-    "SYMMETRIC", "SYSTEM", "SYSTEM_USER", "TABLE", "TABLESAMPLE", "THEN", "TIME", "TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TO", "TRAILING",
-    "TRANSLATE", "TRANSLATION", "TREAT", "TRIGGER", "TRIM", "TRUE", "UESCAPE", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE", "UPPER", "USER",
-    "USING", "VALUE", "VALUES", "VARCHAR", "VARYING", "VAR_POP", "VAR_SAMP", "WHEN", "WHENEVER", "WHERE", "WIDTH_BUCKET", "WINDOW", "WITH", "WITHIN",
-    "WITHOUT", "YEAR"
+    "ABS",
+    "ALL",
+    "ALLOCATE",
+    "ALTER",
+    "AND",
+    "ANY",
+    "ARE",
+    "ARRAY",
+    "AS",
+    "ASENSITIVE",
+    "ASYMMETRIC",
+    "AT",
+    "ATOMIC",
+    "AUTHORIZATION",
+    "AVG",
+    "BEGIN",
+    "BETWEEN",
+    "BIGINT",
+    "BINARY",
+    "BLOB",
+    "BOOLEAN",
+    "BOTH",
+    "BY",
+    "CALL",
+    "CALLED",
+    "CARDINALITY",
+    "CASCADED",
+    "CASE",
+    "CAST",
+    "CEIL",
+    "CEILING",
+    "CHAR",
+    "CHARACTER",
+    "CHARACTER_LENGTH",
+    "CHAR_LENGTH",
+    "CHECK",
+    "CLOB",
+    "CLOSE",
+    "COALESCE",
+    "COLLATE",
+    "COLLECT",
+    "COLUMN",
+    "COMMIT",
+    "CONDITION",
+    "CONNECT",
+    "CONSTRAINT",
+    "CONVERT",
+    "CORR",
+    "CORRESPONDING",
+    "COUNT",
+    "COVAR_POP",
+    "COVAR_SAMP",
+    "CREATE",
+    "CROSS",
+    "CUBE",
+    "CUME_DIST",
+    "CURRENT",
+    "CURRENT_DATE",
+    "CURRENT_DEFAULT_TRANSFORM_GROUP",
+    "CURRENT_PATH",
+    "CURRENT_ROLE",
+    "CURRENT_TIME",
+    "CURRENT_TIMESTAMP",
+    "CURRENT_TRANSFORM_GROUP_FOR_TYPE",
+    "CURRENT_USER",
+    "CURSOR",
+    "CYCLE",
+    "DATE",
+    "DAY",
+    "DEALLOCATE",
+    "DEC",
+    "DECIMAL",
+    "DECLARE",
+    "DEFAULT",
+    "DELETE",
+    "DENSE_RANK",
+    "DEREF",
+    "DESCRIBE",
+    "DETERMINISTIC",
+    "DISCONNECT",
+    "DISTINCT",
+    "DOUBLE",
+    "DROP",
+    "DYNAMIC",
+    "EACH",
+    "ELEMENT",
+    "ELSE",
+    "END",
+    "END-EXEC",
+    "ESCAPE",
+    "EVERY",
+    "EXCEPT",
+    "EXEC",
+    "EXECUTE",
+    "EXISTS",
+    "EXP",
+    "EXTERNAL",
+    "EXTRACT",
+    "FALSE",
+    "FETCH",
+    "FILTER",
+    "FLOAT",
+    "FLOOR",
+    "FOR",
+    "FOREIGN",
+    "FREE",
+    "FROM",
+    "FULL",
+    "FUNCTION",
+    "FUSION",
+    "GET",
+    "GLOBAL",
+    "GRANT",
+    "GROUP",
+    "GROUPING",
+    "HAVING",
+    "HOLD",
+    "HOUR",
+    "IDENTITY",
+    "IN",
+    "INDICATOR",
+    "INNER",
+    "INOUT",
+    "INSENSITIVE",
+    "INSERT",
+    "INT",
+    "INTEGER",
+    "INTERSECT",
+    "INTERSECTION",
+    "INTERVAL",
+    "INTO",
+    "IS",
+    "JOIN",
+    "LANGUAGE",
+    "LARGE",
+    "LATERAL",
+    "LEADING",
+    "LEFT",
+    "LIKE",
+    "LN",
+    "LOCAL",
+    "LOCALTIME",
+    "LOCALTIMESTAMP",
+    "LOWER",
+    "MATCH",
+    "MAX",
+    "MEMBER",
+    "MERGE",
+    "METHOD",
+    "MIN",
+    "MINUTE",
+    "MOD",
+    "MODIFIES",
+    "MODULE",
+    "MONTH",
+    "MULTISET",
+    "NATIONAL",
+    "NATURAL",
+    "NCHAR",
+    "NCLOB",
+    "NEW",
+    "NO",
+    "NONE",
+    "NORMALIZE",
+    "NOT",
+    "NULL",
+    "NULLIF",
+    "NUMERIC",
+    "OCTET_LENGTH",
+    "OF",
+    "OLD",
+    "ON",
+    "ONLY",
+    "OPEN",
+    "OR",
+    "ORDER",
+    "OUT",
+    "OUTER",
+    "OVER",
+    "OVERLAPS",
+    "OVERLAY",
+    "PARAMETER",
+    "PARTITION",
+    "PERCENTILE_CONT",
+    "PERCENTILE_DISC",
+    "PERCENT_RANK",
+    "POSITION",
+    "POWER",
+    "PRECISION",
+    "PREPARE",
+    "PRIMARY",
+    "PROCEDURE",
+    "RANGE",
+    "RANK",
+    "READS",
+    "REAL",
+    "RECURSIVE",
+    "REF",
+    "REFERENCES",
+    "REFERENCING",
+    "REGR_AVGX",
+    "REGR_AVGY",
+    "REGR_COUNT",
+    "REGR_INTERCEPT",
+    "REGR_R2",
+    "REGR_SLOPE",
+    "REGR_SXX",
+    "REGR_SXY",
+    "REGR_SYY",
+    "RELEASE",
+    "RESULT",
+    "RETURN",
+    "RETURNS",
+    "REVOKE",
+    "RIGHT",
+    "ROLLBACK",
+    "ROLLUP",
+    "ROW",
+    "ROWS",
+    "ROW_NUMBER",
+    "SAVEPOINT",
+    "SCOPE",
+    "SCROLL",
+    "SEARCH",
+    "SECOND",
+    "SELECT",
+    "SENSITIVE",
+    "SESSION_USER",
+    "SET",
+    "SIMILAR",
+    "SMALLINT",
+    "SOME",
+    "SPECIFIC",
+    "SPECIFICTYPE",
+    "SQL",
+    "SQLEXCEPTION",
+    "SQLSTATE",
+    "SQLWARNING",
+    "SQRT",
+    "START",
+    "STATIC",
+    "STDDEV_POP",
+    "STDDEV_SAMP",
+    "SUBMULTISET",
+    "SUBSTRING",
+    "SUM",
+    "SYMMETRIC",
+    "SYSTEM",
+    "SYSTEM_USER",
+    "TABLE",
+    "TABLESAMPLE",
+    "THEN",
+    "TIME",
+    "TIMESTAMP",
+    "TIMEZONE_HOUR",
+    "TIMEZONE_MINUTE",
+    "TO",
+    "TRAILING",
+    "TRANSLATE",
+    "TRANSLATION",
+    "TREAT",
+    "TRIGGER",
+    "TRIM",
+    "TRUE",
+    "UESCAPE",
+    "UNION",
+    "UNIQUE",
+    "UNKNOWN",
+    "UNNEST",
+    "UPDATE",
+    "UPPER",
+    "USER",
+    "USING",
+    "VALUE",
+    "VALUES",
+    "VARCHAR",
+    "VARYING",
+    "VAR_POP",
+    "VAR_SAMP",
+    "WHEN",
+    "WHENEVER",
+    "WHERE",
+    "WIDTH_BUCKET",
+    "WINDOW",
+    "WITH",
+    "WITHIN",
+    "WITHOUT",
+    "YEAR"
   )
 
   private val maxBufferSize = 65535
-  
+
   enum DatabaseTerm:
     case SCHEMA, CATALOG
 
@@ -3395,12 +3697,13 @@ object DatabaseMetaData:
   val functionReturnsTable: Int = 2
 
   private[ldbc] open class Impl[F[_]: Temporal: Exchange: Tracer](
-    protocol:   Protocol[F],
-    serverVariables: Map[String, String],
-    database:   Option[String] = None,
-    databaseTerm: Option[DatabaseTerm] = None,
-    getProceduresReturnsFunctions: Boolean = true
-  )(using ev: MonadError[F, Throwable]) extends DatabaseMetaData[F]:
+    protocol:                      Protocol[F],
+    serverVariables:               Map[String, String],
+    database:                      Option[String]       = None,
+    databaseTerm:                  Option[DatabaseTerm] = None,
+    getProceduresReturnsFunctions: Boolean              = true
+  )(using ev: MonadError[F, Throwable])
+    extends DatabaseMetaData[F]:
     override def allProceduresAreCallable(): Boolean = false
 
     override def allTablesAreSelectable(): Boolean = false
@@ -3411,7 +3714,7 @@ object DatabaseMetaData:
       protocol.resetSequenceId *>
         protocol.send(ComQueryPacket("SELECT USER()", protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
         protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-          case _: OKPacket => ev.pure("")
+          case _: OKPacket      => ev.pure("")
           case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", "SELECT USER()"))
           case result: ColumnsNumberPacket =>
             for
@@ -3444,7 +3747,7 @@ object DatabaseMetaData:
 
     override def getDriverName(): String = DRIVER_NAME
 
-    override def getDriverVersion(): String = s"ldbc-connector-${DRIVER_VERSION}"
+    override def getDriverVersion(): String = s"ldbc-connector-${ DRIVER_VERSION }"
 
     override def getDriverMajorVersion(): Int = DRIVER_VERSION.major
 
@@ -3456,7 +3759,10 @@ object DatabaseMetaData:
 
     override def supportsMixedCaseIdentifiers(): Boolean =
       serverVariables.get("lower_case_table_names") match
-        case Some(lowerCaseTables) => !("on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables) || "2".equalsIgnoreCase(lowerCaseTables))
+        case Some(lowerCaseTables) =>
+          !("on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables) || "2".equalsIgnoreCase(
+            lowerCaseTables
+          ))
         case None => false
 
     override def storesUpperCaseIdentifiers(): Boolean = false
@@ -3464,7 +3770,7 @@ object DatabaseMetaData:
     override def storesLowerCaseIdentifiers(): Boolean =
       serverVariables.get("lower_case_table_names") match
         case Some(lowerCaseTables) => "on".equalsIgnoreCase(lowerCaseTables) || "1".equalsIgnoreCase(lowerCaseTables)
-        case None => false
+        case None                  => false
 
     override def storesMixedCaseIdentifiers(): Boolean = !storesLowerCaseIdentifiers()
 
@@ -3486,10 +3792,22 @@ object DatabaseMetaData:
 
     override def getSQLKeywords(): F[String] =
       protocol.resetSequenceId *>
-        protocol.send(ComQueryPacket("SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD", protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
+        protocol.send(
+          ComQueryPacket(
+            "SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD",
+            protocol.initialPacket.capabilityFlags,
+            ListMap.empty
+          )
+        ) *>
         protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
           case _: OKPacket => ev.pure("")
-          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", "SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD"))
+          case error: ERRPacket =>
+            ev.raiseError(
+              error.toException(
+                "Failed to execute query",
+                "SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD"
+              )
+            )
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -3505,18 +3823,22 @@ object DatabaseMetaData:
             yield resultSetRow.flatMap(_.values.flatten).filterNot(SQL2003_KEYWORDS.contains).mkString(",")
         }
 
-    override def getNumericFunctions(): String = "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
+    override def getNumericFunctions(): String =
+      "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
 
-    override def getStringFunctions(): String = "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
-      + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
-      + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
-      + "SUBSTRING_INDEX,TRIM,UCASE,UPPER"
+    override def getStringFunctions(): String =
+      "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
+        + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
+        + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
+        + "SUBSTRING_INDEX,TRIM,UCASE,UPPER"
 
-    override def getSystemFunctions(): String = "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION"
+    override def getSystemFunctions(): String =
+      "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION"
 
-    override def getTimeDateFunctions(): String = "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
-      + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
-      + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC"
+    override def getTimeDateFunctions(): String =
+      "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
+        + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
+        + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC"
 
     override def getSearchStringEscape(): String = "\\"
 
@@ -3536,24 +3858,32 @@ object DatabaseMetaData:
       fromType match
         case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY =>
           toType match
-            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR | BINARY | VARBINARY | LONGVARBINARY | OTHER | DATE | TIME | TIMESTAMP => true
+            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
+              BINARY | VARBINARY | LONGVARBINARY | OTHER | DATE | TIME | TIMESTAMP =>
+              true
             case _ => false
         case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE =>
           toType match
-            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
+            case DECIMAL | NUMERIC | REAL | TINYINT | SMALLINT | INTEGER | BIGINT | FLOAT | DOUBLE | CHAR | VARCHAR |
+              BINARY | VARBINARY | LONGVARBINARY =>
+              true
             case _ => false
-        case OTHER => toType match
-          case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-          case _ => false
-        case DATE => toType match
-          case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-          case _ => false
-        case TIME => toType match
-          case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
-          case _ => false
-        case TIMESTAMP => toType match
-          case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY | TIME | DATE => true
-          case _ => false
+        case OTHER =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
+            case _                                                                 => false
+        case DATE =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
+            case _                                                                 => false
+        case TIME =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY => true
+            case _                                                                 => false
+        case TIMESTAMP =>
+          toType match
+            case CHAR | VARCHAR | LONGVARCHAR | BINARY | VARBINARY | LONGVARBINARY | TIME | DATE => true
+            case _                                                                               => false
         case _ => false
 
     override def supportsTableCorrelationNames(): Boolean = true
@@ -3599,14 +3929,14 @@ object DatabaseMetaData:
     override def supportsLimitedOuterJoins(): Boolean = true
 
     override def getSchemaTerm(): String = databaseTerm.fold("") {
-      case DatabaseTerm.SCHEMA => "SCHEMA"
+      case DatabaseTerm.SCHEMA  => "SCHEMA"
       case DatabaseTerm.CATALOG => ""
     }
 
     override def getProcedureTerm(): String = "PROCEDURE"
 
     override def getCatalogTerm(): String = databaseTerm.fold("") {
-      case DatabaseTerm.SCHEMA => ""
+      case DatabaseTerm.SCHEMA  => ""
       case DatabaseTerm.CATALOG => "CATALOG"
     }
 
@@ -3615,52 +3945,52 @@ object DatabaseMetaData:
     override def getCatalogSeparator(): String = "."
 
     override def supportsSchemasInDataManipulation(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => true
+      case DatabaseTerm.SCHEMA  => true
       case DatabaseTerm.CATALOG => false
     }
 
     override def supportsSchemasInProcedureCalls(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => true
+      case DatabaseTerm.SCHEMA  => true
       case DatabaseTerm.CATALOG => false
     }
 
     override def supportsSchemasInTableDefinitions(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => true
+      case DatabaseTerm.SCHEMA  => true
       case DatabaseTerm.CATALOG => false
     }
 
     override def supportsSchemasInIndexDefinitions(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => true
+      case DatabaseTerm.SCHEMA  => true
       case DatabaseTerm.CATALOG => false
     }
 
     override def supportsSchemasInPrivilegeDefinitions(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => true
+      case DatabaseTerm.SCHEMA  => true
       case DatabaseTerm.CATALOG => false
     }
 
     override def supportsCatalogsInDataManipulation(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => false
+      case DatabaseTerm.SCHEMA  => false
       case DatabaseTerm.CATALOG => true
     }
 
     override def supportsCatalogsInProcedureCalls(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => false
+      case DatabaseTerm.SCHEMA  => false
       case DatabaseTerm.CATALOG => true
     }
 
     override def supportsCatalogsInTableDefinitions(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => false
+      case DatabaseTerm.SCHEMA  => false
       case DatabaseTerm.CATALOG => true
     }
 
     override def supportsCatalogsInIndexDefinitions(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => false
+      case DatabaseTerm.SCHEMA  => false
       case DatabaseTerm.CATALOG => true
     }
 
     override def supportsCatalogsInPrivilegeDefinitions(): Boolean = databaseTerm.fold(false) {
-      case DatabaseTerm.SCHEMA => false
+      case DatabaseTerm.SCHEMA  => false
       case DatabaseTerm.CATALOG => true
     }
 
@@ -3741,7 +4071,9 @@ object DatabaseMetaData:
     override def supportsTransactions(): Boolean = true
 
     override def supportsTransactionIsolationLevel(level: Int): Boolean = level match
-      case Connection.TRANSACTION_READ_COMMITTED | Connection.TRANSACTION_READ_UNCOMMITTED | Connection.TRANSACTION_REPEATABLE_READ | Connection.TRANSACTION_SERIALIZABLE => true
+      case Connection.TRANSACTION_READ_COMMITTED | Connection.TRANSACTION_READ_UNCOMMITTED |
+        Connection.TRANSACTION_REPEATABLE_READ | Connection.TRANSACTION_SERIALIZABLE =>
+        true
       case _ => false
 
     override def supportsDataDefinitionAndDataManipulationTransactions(): Boolean = false
@@ -3752,7 +4084,11 @@ object DatabaseMetaData:
 
     override def dataDefinitionIgnoredInTransactions(): Boolean = false
 
-    override def getProcedures(catalog: Option[String], schemaPattern: Option[String], procedureNamePattern: Option[String]): F[ResultSet[F]] =
+    override def getProcedures(
+      catalog:              Option[String],
+      schemaPattern:        Option[String],
+      procedureNamePattern: Option[String]
+    ): F[ResultSet[F]] =
       getProceduresAndOrFunctions(catalog, schemaPattern, procedureNamePattern, true, getProceduresReturnsFunctions)
 
     /**
@@ -3846,7 +4182,12 @@ object DatabaseMetaData:
      * @return <code>ResultSet</code> - each row describes a stored procedure parameter or
      *         column
      */
-    def getProcedureColumns(catalog: String, schemaPattern: String, procedureNamePattern: String, columnNamePattern: String): ResultSet[F] = ???
+    def getProcedureColumns(
+      catalog:              String,
+      schemaPattern:        String,
+      procedureNamePattern: String,
+      columnNamePattern:    String
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves a description of the tables available in the given catalog.
@@ -3892,7 +4233,12 @@ object DatabaseMetaData:
      *                         all types
      * @return <code>ResultSet</code> - each row is a table description
      */
-    def getTables(catalog: String, schemaPattern: String, tableNamePattern: String, types: Array[String]): ResultSet[F] = ???
+    def getTables(
+      catalog:          String,
+      schemaPattern:    String,
+      tableNamePattern: String,
+      types:            Array[String]
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves the schema names available in this database.  The results
@@ -4028,7 +4374,12 @@ object DatabaseMetaData:
      *                          name as it is stored in the database
      * @return <code>ResultSet</code> - each row is a column description
      */
-    def getColumns(catalog: String, schemaPattern: String, tableNamePattern: String, columnNamePattern: String): ResultSet[F] = ???
+    def getColumns(
+      catalog:           String,
+      schemaPattern:     String,
+      tableNamePattern:  String,
+      columnNamePattern: String
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves a description of the access rights for a table's columns.
@@ -4064,7 +4415,8 @@ object DatabaseMetaData:
      *                          name as it is stored in the database
      * @return <code>ResultSet</code> - each row is a column privilege description
      */
-    def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): ResultSet[F] = ???
+    def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): ResultSet[F] =
+      ???
 
     /**
      * Retrieves a description of the access rights for each table available
@@ -4156,7 +4508,13 @@ object DatabaseMetaData:
      * @param nullable include columns that are nullable.
      * @return <code>ResultSet</code> - each row is a column description
      */
-    def getBestRowIdentifier(catalog: String, schema: String, table: String, scope: Int, nullable: Boolean): ResultSet[F] = ???
+    def getBestRowIdentifier(
+      catalog:  String,
+      schema:   String,
+      table:    String,
+      scope:    Int,
+      nullable: Boolean
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves a description of a table's columns that are automatically
@@ -4466,7 +4824,14 @@ object DatabaseMetaData:
      *                       the table name as it is stored in the database
      * @return <code>ResultSet</code> - each row is a foreign key column description
      */
-    def getCrossReference(parentCatalog: String, parentSchema: String, parentTable: String, foreignCatalog: String, foreignSchema: String, foreignTable: String): ResultSet[F] = ???
+    def getCrossReference(
+      parentCatalog:  String,
+      parentSchema:   String,
+      parentTable:    String,
+      foreignCatalog: String,
+      foreignSchema:  String,
+      foreignTable:   String
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves a description of all the data types supported by
@@ -4589,7 +4954,13 @@ object DatabaseMetaData:
      *                    accurate
      * @return <code>ResultSet</code> - each row is an index column description
      */
-    def getIndexInfo(catalog: String, schema: String, table: String, unique: Boolean, approximate: Boolean): ResultSet[F] = ???
+    def getIndexInfo(
+      catalog:     String,
+      schema:      String,
+      table:       String,
+      unique:      Boolean,
+      approximate: Boolean
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves whether this database supports the given result set type.
@@ -4975,7 +5346,12 @@ object DatabaseMetaData:
      * @return a <code>ResultSet</code> object in which each row is an
      *         attribute description
      */
-    def getAttributes(catalog: String, schemaPattern: String, typeNamePattern: String, attributeNamePattern: String): ResultSet[F] = ???
+    def getAttributes(
+      catalog:              String,
+      schemaPattern:        String,
+      typeNamePattern:      String,
+      attributeNamePattern: String
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves whether this database supports the given result set holdability.
@@ -5260,7 +5636,12 @@ object DatabaseMetaData:
      * @return <code>ResultSet</code> - each row describes a
      *         user function parameter, column  or return type
      */
-    def getFunctionColumns(catalog: String, schemaPattern: String, functionNamePattern: String, columnNamePattern: String): ResultSet[F] = ???
+    def getFunctionColumns(
+      catalog:             String,
+      schemaPattern:       String,
+      functionNamePattern: String,
+      columnNamePattern:   String
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves a description of the pseudo or hidden columns available
@@ -5321,7 +5702,12 @@ object DatabaseMetaData:
      *                          name as it is stored in the database
      * @return <code>ResultSet</code> - each row is a column description
      */
-    def getPseudoColumns(catalog: String, schemaPattern: String, tableNamePattern: String, columnNamePattern: String): ResultSet[F] = ???
+    def getPseudoColumns(
+      catalog:           String,
+      schemaPattern:     String,
+      tableNamePattern:  String,
+      columnNamePattern: String
+    ): ResultSet[F] = ???
 
     /**
      * Retrieves whether a generated key will always be returned if the column
@@ -5336,9 +5722,9 @@ object DatabaseMetaData:
 
     protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
       (databaseTerm, catalog, schema) match
-        case (Some(DatabaseTerm.SCHEMA), None, Some(value)) => Some(value)
+        case (Some(DatabaseTerm.SCHEMA), None, Some(value))  => Some(value)
         case (Some(DatabaseTerm.CATALOG), Some(value), None) => Some(value)
-        case _ => database
+        case _                                               => database
 
     /**
      * Get a prepared statement to query information_schema tables.
@@ -5349,7 +5735,7 @@ object DatabaseMetaData:
      */
     protected def prepareMetaDataSafeStatement(sql: String): F[PreparedStatement[F]] =
       for
-        params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement.Client[F](
         protocol,
@@ -5361,51 +5747,50 @@ object DatabaseMetaData:
       )
 
     protected def getProceduresAndOrFunctions(
-                                               catalog: Option[String],
-                                               schemaPattern: Option[String],
-                                               procedureNamePattern: Option[String],
-                                               returnProcedures: Boolean,
-                                               returnFunctions: Boolean
-                                             ): F[ResultSet[F]] =
+      catalog:              Option[String],
+      schemaPattern:        Option[String],
+      procedureNamePattern: Option[String],
+      returnProcedures:     Boolean,
+      returnFunctions:      Boolean
+    ): F[ResultSet[F]] =
 
-      val db = getDatabase(catalog, schemaPattern)
+      val db             = getDatabase(catalog, schemaPattern)
       val dbMapsToSchema = databaseTerm.contains(DatabaseTerm.SCHEMA)
 
       val selectFromMySQLProcSQL = new StringBuilder()
 
       selectFromMySQLProcSQL.append("SELECT db, name, type, comment FROM mysql.proc WHERE")
 
-      if returnProcedures && !returnFunctions then
-        selectFromMySQLProcSQL.append(" type = 'PROCEDURE' AND ")
-      else if !returnProcedures && returnFunctions then
-        selectFromMySQLProcSQL.append(" type = 'FUNCTION' AND ")
+      if returnProcedures && !returnFunctions then selectFromMySQLProcSQL.append(" type = 'PROCEDURE' AND ")
+      else if !returnProcedures && returnFunctions then selectFromMySQLProcSQL.append(" type = 'FUNCTION' AND ")
       end if
 
       selectFromMySQLProcSQL.append(if dbMapsToSchema then " db LIKE ?" else " db = ?")
 
-      if procedureNamePattern.nonEmpty then
-        selectFromMySQLProcSQL.append(" AND name LIKE ?")
+      if procedureNamePattern.nonEmpty then selectFromMySQLProcSQL.append(" AND name LIKE ?")
       end if
 
       selectFromMySQLProcSQL.append(" ORDER BY name, type")
 
       prepareMetaDataSafeStatement(selectFromMySQLProcSQL.toString()).flatMap { preparedStatement =>
         val setting = (db, procedureNamePattern) match
-          case (Some(db), Some(procedureNamePattern)) => preparedStatement.setString(1, db) *> preparedStatement.setString(2, procedureNamePattern)
+          case (Some(db), Some(procedureNamePattern)) =>
+            preparedStatement.setString(1, db) *> preparedStatement.setString(2, procedureNamePattern)
           case (Some(db), None) => preparedStatement.setString(1, db)
-          case _ => ev.unit
+          case _                => ev.unit
 
         (setting *> preparedStatement.executeQuery() <* preparedStatement.close()).recoverWith {
           case ex: SQLException =>
             (returnProcedures, returnFunctions) match
               case (false, true) =>
                 val sql = "SHOW FUNCTION STATUS WHERE "
-                    + (if dbMapsToSchema then "Db LIKE ?" else "Db = ?")
-                    + (if procedureNamePattern.nonEmpty then " AND Name LIKE ?" else "")
+                  + (if dbMapsToSchema then "Db LIKE ?" else "Db = ?")
+                  + (if procedureNamePattern.nonEmpty then " AND Name LIKE ?" else "")
 
                 prepareMetaDataSafeStatement(sql).flatMap { preparedStatement =>
                   preparedStatement.setString(1, db) *>
-                    (if procedureNamePattern.nonEmpty then preparedStatement.setString(2, procedureNamePattern) else ev.unit) *>
+                    (if procedureNamePattern.nonEmpty then preparedStatement.setString(2, procedureNamePattern)
+                     else ev.unit) *>
                     preparedStatement.executeQuery() <* preparedStatement.close()
                 }
               case (true, _) =>
@@ -5414,29 +5799,30 @@ object DatabaseMetaData:
                   + (if procedureNamePattern.nonEmpty then " AND Name LIKE ?" else "")
                 prepareMetaDataSafeStatement(sql).flatMap { preparedStatement =>
                   preparedStatement.setString(1, db) *>
-                    (if procedureNamePattern.nonEmpty then preparedStatement.setString(2, procedureNamePattern) else ev.unit) *>
+                    (if procedureNamePattern.nonEmpty then preparedStatement.setString(2, procedureNamePattern)
+                     else ev.unit) *>
                     preparedStatement.executeQuery() <* preparedStatement.close()
                 }
               case _ =>
                 for
-                  isResultSetClosed <- Ref[F].of(false)
+                  isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 yield ResultSet
                   .empty(
-                      protocol.initialPacket.serverVersion,
-                      isResultSetClosed,
-                      resultSetCurrentCursor,
-                      resultSetCurrentRow
-                    )
+                    protocol.initialPacket.serverVersion,
+                    isResultSetClosed,
+                    resultSetCurrentCursor,
+                    resultSetCurrentRow
+                  )
         }
       }
 
   def apply[F[_]: Temporal: Exchange: Tracer](
-                   protocol:   Protocol[F],
-                   serverVariables: Map[String, String],
-                   database: Option[String] = None,
-                   databaseTerm: Option[DatabaseTerm] = None,
-                   getProceduresReturnsFunctions: Boolean = true
-                 )(using ev: MonadError[F, Throwable]): DatabaseMetaData[F] =
+    protocol:                      Protocol[F],
+    serverVariables:               Map[String, String],
+    database:                      Option[String] = None,
+    databaseTerm:                  Option[DatabaseTerm] = None,
+    getProceduresReturnsFunctions: Boolean = true
+  )(using ev: MonadError[F, Throwable]): DatabaseMetaData[F] =
     new Impl[F](protocol, serverVariables, database, databaseTerm, getProceduresReturnsFunctions)

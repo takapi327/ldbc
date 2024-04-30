@@ -140,7 +140,8 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
 
 object Protocol:
 
-  private val SELECT_SERVER_VARIABLES_QUERY = "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
+  private val SELECT_SERVER_VARIABLES_QUERY =
+    "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
 
   private[ldbc] case class Impl[F[_]: Temporal: Tracer](
     initialPacket:           InitialPacket,
@@ -248,7 +249,8 @@ object Protocol:
         send(ComQueryPacket(SELECT_SERVER_VARIABLES_QUERY, initialPacket.capabilityFlags, ListMap.empty)) *>
         receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
           case _: OKPacket => ev.pure(Map.empty)
-          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", SELECT_SERVER_VARIABLES_QUERY))
+          case error: ERRPacket =>
+            ev.raiseError(error.toException("Failed to execute query", SELECT_SERVER_VARIABLES_QUERY))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -261,9 +263,12 @@ object Protocol:
                   ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
                   Vector.empty
                 )
-            yield columnDefinitions.zip(resultSetRow.flatMap(_.values)).map {
-              case (columnDefinition, resultSetRow) => columnDefinition.name -> resultSetRow.getOrElse("")
-            }.toMap
+            yield columnDefinitions
+              .zip(resultSetRow.flatMap(_.values))
+              .map {
+                case (columnDefinition, resultSetRow) => columnDefinition.name -> resultSetRow.getOrElse("")
+              }
+              .toMap
         }
 
     /**
@@ -507,7 +512,7 @@ object Protocol:
 
   def fromPacketSocket[F[_]: Temporal: Tracer: Exchange](
     packetSocket:            PacketSocket[F],
-    hostInfo: HostInfo,
+    hostInfo:                HostInfo,
     sslOptions:              Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval: Boolean = false,
     capabilitiesFlags:       List[CapabilitiesFlags],
