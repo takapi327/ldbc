@@ -931,35 +931,35 @@ class ConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The result of retrieving procedure information without InformationSchema matches the specified value.") {
+  test("The result of retrieving procedure columns information matches the specified value.") {
     val connection = Connection[IO](
-      host                 = "127.0.0.1",
-      port                 = 13306,
-      user                 = "ldbc",
-      password             = Some("password"),
-      database             = Some("connector_test"),
-      ssl                  = SSL.Trusted,
-      useInformationSchema = false
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
     )
 
     assertIO(
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getProcedures("def", "connector_test", "demoSp")
+          resultSet <- metaData.getProcedureColumns(Some("def"), Some("connector_test"), Some("demoSp"), None)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-                      for
-                        procedureCat   <- resultSet.getString("Db")
-                        procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
-                        procedureName  <- resultSet.getString("Name")
-                        remarks        <- resultSet.getString("Comment")
-                        procedureType  <- resultSet.getString("Type")
-                      yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Remarks: $remarks, Procedure Type: $procedureType"
-                    }
+            for
+              procedureCat   <- resultSet.getString("PROCEDURE_CAT")
+              procedureSchem <- resultSet.getString("PROCEDURE_SCHEM")
+              procedureName  <- resultSet.getString("PROCEDURE_NAME")
+              columnName        <- resultSet.getString("COLUMN_NAME")
+              columnType  <- resultSet.getString("COLUMN_TYPE")
+            yield s"Procedure Catalog: $procedureCat, Procedure Schema: $procedureSchem, Procedure Name: $procedureName, Column Name: $columnName, Column Type: $columnType"
+          }
         yield values
       },
       Vector(
-        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(PROCEDURE)"
+        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Column Name: Some(inputParam), Column Type: Some(1)",
+        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Column Name: Some(inOutParam), Column Type: Some(2)"
       )
     )
   }
