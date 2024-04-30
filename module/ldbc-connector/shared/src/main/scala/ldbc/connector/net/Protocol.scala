@@ -9,6 +9,7 @@ package ldbc.connector.net
 import java.nio.charset.StandardCharsets
 
 import scala.concurrent.duration.*
+import scala.collection.immutable.ListMap
 
 import cats.*
 import cats.syntax.all.*
@@ -47,6 +48,14 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    *   the initial packet
    */
   def initialPacket: InitialPacket
+
+  /**
+   * Class that holds MySQL host information.
+   *
+   * @return
+   *   the host information
+   */
+  def hostInfo: HostInfo
 
   /**
    * Receive the next `ResponsePacket`, or raise an exception if EOF is reached before a complete
@@ -124,12 +133,19 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    */
   def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket], acc: Vector[P]): F[Vector[P]]
 
+  /**
+   * Returns the server variables.
+   */
+  def serverVariables(): F[Map[String, String]]
+
 object Protocol:
+
+  private val SELECT_SERVER_VARIABLES_QUERY = "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
 
   private[ldbc] case class Impl[F[_]: Temporal: Tracer](
     initialPacket:           InitialPacket,
+    hostInfo:                HostInfo,
     socket:                  PacketSocket[F],
-    database:                Option[String],
     useSSL:                  Boolean = false,
     allowPublicKeyRetrieval: Boolean = false,
     capabilityFlags:         List[CapabilitiesFlags],
@@ -138,7 +154,7 @@ object Protocol:
     extends Protocol[F]:
 
     private val attributes = initialPacket.attributes ++ List(
-      database.map(db => Attribute("database", db))
+      hostInfo.database.map(db => Attribute("database", db))
     ).flatten
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] = socket.receive(decoder)
@@ -226,6 +242,29 @@ object Protocol:
         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
         case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
       }
+
+    override def serverVariables(): F[Map[String, String]] =
+      resetSequenceId *>
+        send(ComQueryPacket(SELECT_SERVER_VARIABLES_QUERY, initialPacket.capabilityFlags, ListMap.empty)) *>
+        receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
+          case _: OKPacket => ev.pure(Map.empty)
+          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", SELECT_SERVER_VARIABLES_QUERY))
+          case result: ColumnsNumberPacket =>
+            for
+              columnDefinitions <-
+                repeatProcess(
+                  result.size,
+                  ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
+                )
+              resultSetRow <-
+                readUntilEOF[ResultSetRowPacket](
+                  ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
+                  Vector.empty
+                )
+            yield columnDefinitions.zip(resultSetRow.flatMap(_.values)).map {
+              case (columnDefinition, resultSetRow) => columnDefinition.name -> resultSetRow.getOrElse("")
+            }.toMap
+        }
 
     /**
      * Read until the authentication is OK.
@@ -400,7 +439,7 @@ object Protocol:
         Array(hashedPassword.length.toByte) ++ hashedPassword,
         plugin.name,
         initialPacket.characterSet,
-        database
+        hostInfo.database
       )
       socket.send(handshakeResponse)
 
@@ -429,7 +468,7 @@ object Protocol:
                 ComChangeUserPacket(
                   capabilityFlags,
                   user,
-                  database,
+                  hostInfo.database,
                   initialPacket.characterSet,
                   initialPacket.authPlugin,
                   plugin.hashPassword(password, initialPacket.scrambleBuff)
@@ -441,9 +480,9 @@ object Protocol:
 
   def apply[F[_]: Temporal: Console: Tracer: Exchange](
     sockets:                 Resource[F, Socket[F]],
+    hostInfo:                HostInfo,
     debug:                   Boolean,
     sslOptions:              Option[SSLNegotiation.Options[F]],
-    database:                Option[String],
     allowPublicKeyRetrieval: Boolean = false,
     readTimeout:             Duration,
     capabilitiesFlags:       List[CapabilitiesFlags]
@@ -456,8 +495,8 @@ object Protocol:
       protocol <- Resource.make(
                     fromPacketSocket(
                       packetSocket,
+                      hostInfo,
                       sslOptions,
-                      database,
                       allowPublicKeyRetrieval,
                       capabilitiesFlags,
                       sequenceIdRef,
@@ -468,8 +507,8 @@ object Protocol:
 
   def fromPacketSocket[F[_]: Temporal: Tracer: Exchange](
     packetSocket:            PacketSocket[F],
+    hostInfo: HostInfo,
     sslOptions:              Option[SSLNegotiation.Options[F]],
-    database:                Option[String],
     allowPublicKeyRetrieval: Boolean = false,
     capabilitiesFlags:       List[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte],
@@ -480,8 +519,8 @@ object Protocol:
       case Some(initialPacket) =>
         Impl(
           initialPacket,
+          hostInfo,
           packetSocket,
-          database,
           sslOptions.isDefined,
           allowPublicKeyRetrieval,
           capabilitiesFlags,
