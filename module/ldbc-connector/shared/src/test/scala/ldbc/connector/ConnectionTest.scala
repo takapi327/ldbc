@@ -503,7 +503,7 @@ class ConnectionTest extends CatsEffectSuite:
 
     assertIO(
       connection.use(_.getMetaData().flatMap(_.getUserName())),
-      "ldbc@192.168.0.1"
+      "ldbc@172.18.0.1"
     )
   }
 
