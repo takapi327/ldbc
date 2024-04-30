@@ -174,3 +174,17 @@ INSERT INTO `all_types` VALUES (
 );
 
 CREATE TABLE `transaction_test`(`c1` BIGINT NOT NULL);
+
+delimiter //
+CREATE PROCEDURE demoSp(IN inputParam VARCHAR(255), INOUT inOutParam INT)
+BEGIN
+    DECLARE z INT;
+    SET z = inOutParam + 1;
+    SET inOutParam = z;
+
+SELECT inputParam;
+
+SELECT CONCAT('zyxw', inputParam);
+END
+//
+delimiter ;
