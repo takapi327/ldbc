@@ -1676,7 +1676,10 @@ trait DatabaseMetaData[F[_]]:
    *        in the database
    * @return <code>ResultSet</code> - each row is a primary key column description
    */
-  def getPrimaryKeys(catalog: String, schema: String, table: String): ResultSet[F]
+  def getPrimaryKeys(catalog: String, schema: String, table: String): F[ResultSet[F]] =
+    getPrimaryKeys(Some(catalog), Some(schema), table)
+
+  def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the primary key columns that are
@@ -4895,35 +4898,31 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the given table's primary key columns.  They
-     * are ordered by COLUMN_NAME.
-     *
-     * <P>Each primary key column description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} table catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} table schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} table name
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column name
-     * <LI><B>KEY_SEQ</B> short {@code =>} sequence number within primary key( a value
-     * of 1 represents the first column of the primary key, a value of 2 would
-     * represent the second column within the primary key).
-     * <LI><B>PK_NAME</B> String {@code =>} primary key name (may be <code>null</code>)
-     * </OL>
-     *
-     * @param catalog a catalog name; must match the catalog name as it
-     *                is stored in the database; "" retrieves those without a catalog;
-     *                <code>null</code> means that the catalog name should not be used to narrow
-     *                the search
-     * @param schema  a schema name; must match the schema name
-     *                as it is stored in the database; "" retrieves those without a schema;
-     *                <code>null</code> means that the schema name should not be used to narrow
-     *                the search
-     * @param table   a table name; must match the table name as it is stored
-     *                in the database
-     * @return <code>ResultSet</code> - each row is a primary key column description
-     */
-    def getPrimaryKeys(catalog: String, schema: String, table: String): ResultSet[F] = ???
+    override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schema)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      )
+      sqlBuf.append(" TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE")
+
+      if db.nonEmpty then
+        sqlBuf.append(" TABLE_SCHEMA = ? AND")
+
+      sqlBuf.append(" TABLE_NAME = ?")
+      sqlBuf.append(" AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = db match
+          case Some(dbValue) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, table)
+          case None =>
+            preparedStatement.setString(1, table)
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the primary key columns that are
