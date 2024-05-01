@@ -1549,3 +1549,45 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving index information matches the specified value.") {
+    val connection = Connection[IO](
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
+      ssl          = SSL.Trusted,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData <- conn.getMetaData()
+          resultSet <-
+            metaData.getIndexInfo(None, Some("world"), Some("city"), true, true)
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              tableCat <- resultSet.getString("TABLE_CAT")
+              tableSchem <- resultSet.getString("TABLE_SCHEM")
+              tableName <- resultSet.getString("TABLE_NAME")
+              nonUnique <- resultSet.getBoolean("NON_UNIQUE")
+              indexQualifier <- resultSet.getString("INDEX_QUALIFIER")
+              INDEXNAME <- resultSet.getString("INDEX_NAME")
+              `type` <- resultSet.getShort("TYPE")
+              ordinalPosition <- resultSet.getShort("ORDINAL_POSITION")
+              columnName <- resultSet.getString("COLUMN_NAME")
+              ascOrDesc <- resultSet.getString("ASC_OR_DESC")
+              cardinality <- resultSet.getLong("CARDINALITY")
+              pages <- resultSet.getLong("PAGES")
+              filterCondition <- resultSet.getString("FILTER_CONDITION")
+            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Non Unique: $nonUnique, Index Qualifier: $indexQualifier, Index Name: $INDEXNAME, Type: ${`type`}, Ordinal Position: $ordinalPosition, Column Name: $columnName, Asc Or Desc: $ascOrDesc, Cardinality: $cardinality, Pages: $pages, Filter Condition: $filterCondition"
+          }
+        yield values
+      },
+      Vector(
+        "Table Cat: Some(def), Table Schem: Some(world), Table Name: Some(city), Non Unique: false, Index Qualifier: None, Index Name: Some(PRIMARY), Type: 3, Ordinal Position: 1, Column Name: Some(ID), Asc Or Desc: Some(A), Cardinality: 3, Pages: 0, Filter Condition: None"
+      )
+    )
+  }
