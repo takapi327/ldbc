@@ -4980,12 +4980,14 @@ object DatabaseMetaData:
       val db = getDatabase(catalog, schema)
 
       val sqlBuf = new StringBuilder(
-        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
         else "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
       )
       sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
       sqlBuf.append(
-        if databaseTerm.contains(DatabaseTerm.SCHEMA) then " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
         else " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
       )
       sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
@@ -4997,14 +4999,16 @@ object DatabaseMetaData:
       sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A")
       sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) ")
       sqlBuf.append(generateOptionalRefContraintsJoin())
-      sqlBuf.append(" LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC ON (A.REFERENCED_TABLE_SCHEMA = TC.TABLE_SCHEMA")
+      sqlBuf.append(
+        " LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC ON (A.REFERENCED_TABLE_SCHEMA = TC.TABLE_SCHEMA"
+      )
       sqlBuf.append("  AND A.REFERENCED_TABLE_NAME = TC.TABLE_NAME")
       sqlBuf.append("  AND TC.CONSTRAINT_TYPE IN ('UNIQUE', 'PRIMARY KEY'))")
       sqlBuf.append(" WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'")
       if db.nonEmpty then sqlBuf.append(" AND A.REFERENCED_TABLE_SCHEMA = ?")
       sqlBuf.append(" AND A.REFERENCED_TABLE_NAME=?")
       sqlBuf.append(" ORDER BY FKTABLE_NAME, FKTABLE_NAME, KEY_SEQ")
-      
+
       prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
         val setting = db match
           case Some(dbValue) =>
