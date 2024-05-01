@@ -8,7 +8,7 @@ package ldbc.connector
 
 import org.typelevel.otel4s.trace.Tracer
 
-//import com.comcast.ip4s.UnknownHostException
+import com.comcast.ip4s.UnknownHostException
 
 import cats.Monad
 
@@ -16,13 +16,12 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
-//import ldbc.connector.exception.*
+import ldbc.connector.exception.*
 
 class ConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
-  /*
   test("Passing an empty string to host causes SQLException") {
     val connection = Connection[IO](
       host = "",
@@ -1421,13 +1420,13 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving cross reference information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
       ssl          = SSL.Trusted,
-      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
     assertIO(
@@ -1461,17 +1460,16 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
-  */
 
   test("The result of retrieving type information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
       ssl          = SSL.Trusted,
-      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
     assertIO(
@@ -1481,27 +1479,27 @@ class ConnectionTest extends CatsEffectSuite:
           resultSet <-
             metaData.getTypeInfo()
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              typeName <- resultSet.getString("TYPE_NAME")
-              dataType <- resultSet.getInt("DATA_TYPE")
-              precision <- resultSet.getInt("PRECISION")
-              literalPrefix <- resultSet.getString("LITERAL_PREFIX")
-              literalSuffix <- resultSet.getString("LITERAL_SUFFIX")
-              createParams <- resultSet.getString("CREATE_PARAMS")
-              nullable <- resultSet.getShort("NULLABLE")
-              caseSensitive <- resultSet.getBoolean("CASE_SENSITIVE")
-              searchable <- resultSet.getShort("SEARCHABLE")
-              unsignedAttribute <- resultSet.getBoolean("UNSIGNED_ATTRIBUTE")
-              fixedPrecScale <- resultSet.getBoolean("FIXED_PREC_SCALE")
-              autoIncrement <- resultSet.getBoolean("AUTO_INCREMENT")
-              localTypeName <- resultSet.getString("LOCAL_TYPE_NAME")
-              minimumScale <- resultSet.getShort("MINIMUM_SCALE")
-              maximumScale <- resultSet.getShort("MAXIMUM_SCALE")
-              sqlDataType <- resultSet.getShort("SQL_DATA_TYPE")
-              sqlDatetimeSub <- resultSet.getShort("SQL_DATETIME_SUB")
-              numPrecRadix <- resultSet.getShort("NUM_PREC_RADIX")
-            yield s"Type Name: $typeName, Data Type: $dataType, Precision: $precision, Literal Prefix: $literalPrefix, Literal Suffix: $literalSuffix, Create Params: $createParams, Nullable: $nullable, Case Sensitive: $caseSensitive, Searchable: $searchable, Unsigned Attribute: $unsignedAttribute, Fixed Prec Scale: $fixedPrecScale, Auto Increment: $autoIncrement, Local Type Name: $localTypeName, Minimum Scale: $minimumScale, Maximum Scale: $maximumScale, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Num Prec Radix: $numPrecRadix"
-          }
+                      for
+                        typeName          <- resultSet.getString("TYPE_NAME")
+                        dataType          <- resultSet.getInt("DATA_TYPE")
+                        precision         <- resultSet.getInt("PRECISION")
+                        literalPrefix     <- resultSet.getString("LITERAL_PREFIX")
+                        literalSuffix     <- resultSet.getString("LITERAL_SUFFIX")
+                        createParams      <- resultSet.getString("CREATE_PARAMS")
+                        nullable          <- resultSet.getShort("NULLABLE")
+                        caseSensitive     <- resultSet.getBoolean("CASE_SENSITIVE")
+                        searchable        <- resultSet.getShort("SEARCHABLE")
+                        unsignedAttribute <- resultSet.getBoolean("UNSIGNED_ATTRIBUTE")
+                        fixedPrecScale    <- resultSet.getBoolean("FIXED_PREC_SCALE")
+                        autoIncrement     <- resultSet.getBoolean("AUTO_INCREMENT")
+                        localTypeName     <- resultSet.getString("LOCAL_TYPE_NAME")
+                        minimumScale      <- resultSet.getShort("MINIMUM_SCALE")
+                        maximumScale      <- resultSet.getShort("MAXIMUM_SCALE")
+                        sqlDataType       <- resultSet.getShort("SQL_DATA_TYPE")
+                        sqlDatetimeSub    <- resultSet.getShort("SQL_DATETIME_SUB")
+                        numPrecRadix      <- resultSet.getShort("NUM_PREC_RADIX")
+                      yield s"Type Name: $typeName, Data Type: $dataType, Precision: $precision, Literal Prefix: $literalPrefix, Literal Suffix: $literalSuffix, Create Params: $createParams, Nullable: $nullable, Case Sensitive: $caseSensitive, Searchable: $searchable, Unsigned Attribute: $unsignedAttribute, Fixed Prec Scale: $fixedPrecScale, Auto Increment: $autoIncrement, Local Type Name: $localTypeName, Minimum Scale: $minimumScale, Maximum Scale: $maximumScale, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Num Prec Radix: $numPrecRadix"
+                    }
         yield values
       },
       Vector(

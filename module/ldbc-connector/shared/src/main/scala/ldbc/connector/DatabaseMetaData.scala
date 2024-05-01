@@ -5167,15 +5167,34 @@ object DatabaseMetaData:
           ResultSetRowPacket(getTypeInfo("DATE")),
           ResultSetRowPacket(getTypeInfo("TIME")),
           ResultSetRowPacket(getTypeInfo("DATETIME")),
-          ResultSetRowPacket(getTypeInfo("TIMESTAMP")),
+          ResultSetRowPacket(getTypeInfo("TIMESTAMP"))
         )
         ResultSet(
-          Vector("TYPE_NAME", "DATA_TYPE", "PRECISION", "LITERAL_PREFIX", "LITERAL_SUFFIX", "CREATE_PARAMS", "NULLABLE", "CASE_SENSITIVE", "SEARCHABLE", "UNSIGNED_ATTRIBUTE", "FIXED_PREC_SCALE", "AUTO_INCREMENT", "LOCAL_TYPE_NAME", "MINIMUM_SCALE", "MAXIMUM_SCALE", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "NUM_PREC_RADIX").map { value =>
+          Vector(
+            "TYPE_NAME",
+            "DATA_TYPE",
+            "PRECISION",
+            "LITERAL_PREFIX",
+            "LITERAL_SUFFIX",
+            "CREATE_PARAMS",
+            "NULLABLE",
+            "CASE_SENSITIVE",
+            "SEARCHABLE",
+            "UNSIGNED_ATTRIBUTE",
+            "FIXED_PREC_SCALE",
+            "AUTO_INCREMENT",
+            "LOCAL_TYPE_NAME",
+            "MINIMUM_SCALE",
+            "MAXIMUM_SCALE",
+            "SQL_DATA_TYPE",
+            "SQL_DATETIME_SUB",
+            "NUM_PREC_RADIX"
+          ).map { value =>
             new ColumnDefinitionPacket:
-              override def table: String = ""
-              override def name: String = value
-              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+              override def table:      String                     = ""
+              override def name:       String                     = value
+              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
           },
           types,
           protocol.initialPacket.serverVersion,
@@ -5879,27 +5898,36 @@ object DatabaseMetaData:
 
       List(
         Some(mysqlTypeName), // TYPE_NAME
-        if mysqlType == MysqlType.YEAR && !yearIsDateType then Some(Types.SMALLINT.toString) else Some(mysqlType.jdbcType.toString), // DATA_TYPE
-        if mysqlType.precision > Int.MaxValue then Some(Int.MaxValue.toString) else Some(mysqlType.precision.toString), // PRECISION
+        if mysqlType == MysqlType.YEAR && !yearIsDateType then Some(Types.SMALLINT.toString)
+        else Some(mysqlType.jdbcType.toString), // DATA_TYPE
+        if mysqlType.precision > Int.MaxValue then Some(Int.MaxValue.toString)
+        else Some(mysqlType.precision.toString) // PRECISION
       ) ++ (
         // LITERAL_PREFIX, LITERAL_SUFFIX
         mysqlType match
-          case MysqlType.TINYBLOB | MysqlType.BLOB | MysqlType.MEDIUMBLOB | MysqlType.LONGBLOB | MysqlType.TINYTEXT | MysqlType.TEXT | MysqlType.MEDIUMTEXT | MysqlType.LONGTEXT | MysqlType.JSON | MysqlType.BINARY | MysqlType.VARBINARY | MysqlType.CHAR | MysqlType.VARCHAR | MysqlType.ENUM | MysqlType.SET | MysqlType.DATE | MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.UNKNOWN =>
+          case MysqlType.TINYBLOB | MysqlType.BLOB | MysqlType.MEDIUMBLOB | MysqlType.LONGBLOB | MysqlType.TINYTEXT |
+            MysqlType.TEXT | MysqlType.MEDIUMTEXT | MysqlType.LONGTEXT | MysqlType.JSON | MysqlType.BINARY |
+            MysqlType.VARBINARY | MysqlType.CHAR | MysqlType.VARCHAR | MysqlType.ENUM | MysqlType.SET | MysqlType.DATE |
+            MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.UNKNOWN =>
             List(Some("'"), Some("'"))
           case _ => List(Some(""), Some(""))
       ) ++ List(
-        Some(mysqlType.createParams), // CREATE_PARAMS
-        Some(typeNullable.toString), // NULLABLE
-        Some("true"), // CASE_SENSITIVE
+        Some(mysqlType.createParams),  // CREATE_PARAMS
+        Some(typeNullable.toString),   // NULLABLE
+        Some("true"),                  // CASE_SENSITIVE
         Some(typeSearchable.toString), // SEARCHABLE
-        if (mysqlType.allowedFlags & MysqlTypeVariables.FIELD_FLAG_UNSIGNED) > 0 then Some("true") else Some("false"), // UNSIGNED_ATTRIBUTE
-        Some("false"), // FIXED_PREC_SCALE
+        if (mysqlType.allowedFlags & MysqlTypeVariables.FIELD_FLAG_UNSIGNED) > 0 then Some("true")
+        else Some("false"), // UNSIGNED_ATTRIBUTE
+        Some("false"),      // FIXED_PREC_SCALE
         (
           mysqlType match
-            case MysqlType.BIGINT | MysqlType.BIGINT_UNSIGNED | MysqlType.BOOLEAN | MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED | MysqlType.INT | MysqlType.INT_UNSIGNED | MysqlType.MEDIUMINT | MysqlType.MEDIUMINT_UNSIGNED | MysqlType.SMALLINT | MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
+            case MysqlType.BIGINT | MysqlType.BIGINT_UNSIGNED | MysqlType.BOOLEAN | MysqlType.DOUBLE |
+              MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED | MysqlType.INT |
+              MysqlType.INT_UNSIGNED | MysqlType.MEDIUMINT | MysqlType.MEDIUMINT_UNSIGNED | MysqlType.SMALLINT |
+              MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
               Some("true")
             case _ => Some("false")
-        ), // AUTO_INCREMENT
+        ),                   // AUTO_INCREMENT
         Some(mysqlType.name) // LOCAL_TYPE_NAME
       ) ++ (
         // MINIMUM_SCALE, MAXIMUM_SCALE

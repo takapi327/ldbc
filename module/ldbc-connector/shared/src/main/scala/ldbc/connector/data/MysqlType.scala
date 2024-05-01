@@ -484,7 +484,8 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_MEDIUM_BLOB = 250
    */
-  case MEDIUMBLOB extends MysqlType("MEDIUMBLOB", Types.LONGVARBINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 16777215L, "")
+  case MEDIUMBLOB
+    extends MysqlType("MEDIUMBLOB", Types.LONGVARBINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 16777215L, "")
 
   /**
    * MEDIUMTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
@@ -512,7 +513,8 @@ enum MysqlType(
    *
    * Protocol: FIELD_TYPE_LONG_BLOB = 251
    */
-  case LONGBLOB extends MysqlType("LONGBLOB", Types.LONGVARBINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 4294967295L, "")
+  case LONGBLOB
+    extends MysqlType("LONGBLOB", Types.LONGVARBINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 4294967295L, "")
 
   /**
    * LONGTEXT [CHARACTER SET charset_name] [COLLATE collation_name]
@@ -699,7 +701,7 @@ object MysqlType:
  */
 object MysqlTypeVariables:
 
-  val FIELD_FLAG_NOT_NULL: Int = 1
+  val FIELD_FLAG_NOT_NULL:       Int = 1
   val FIELD_FLAG_PRIMARY_KEY:    Int = 2
   val FIELD_FLAG_UNIQUE_KEY:     Int = 4
   val FIELD_FLAG_MULTIPLE_KEY:   Int = 8
