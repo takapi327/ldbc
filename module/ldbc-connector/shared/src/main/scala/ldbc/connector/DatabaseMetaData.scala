@@ -3925,11 +3925,11 @@ object DatabaseMetaData:
 
     private enum TableType(val name: String):
       case LOCAL_TEMPORARY extends TableType("LOCAL TEMPORARY")
-      case SYSTEM_TABLE extends TableType("SYSTEM TABLE")
-      case SYSTEM_VIEW extends TableType("SYSTEM VIEW")
-      case TABLE extends TableType("TABLE")
-      case VIEW extends TableType("VIEW")
-      case UNKNOWN extends TableType("UNKNOWN")
+      case SYSTEM_TABLE    extends TableType("SYSTEM TABLE")
+      case SYSTEM_VIEW     extends TableType("SYSTEM VIEW")
+      case TABLE           extends TableType("TABLE")
+      case VIEW            extends TableType("VIEW")
+      case UNKNOWN         extends TableType("UNKNOWN")
 
       override def toString: String = name
 
@@ -4422,18 +4422,21 @@ object DatabaseMetaData:
 
     override def getTableTypes(): F[ResultSet[F]] =
       for
-        isResultSetClosed <- Ref[F].of(false)
+        isResultSetClosed      <- Ref[F].of(false)
         resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
       yield ResultSet(
         Vector(
           new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = "TABLE_TYPE"
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+            override def table:      String                     = ""
+            override def name:       String                     = "TABLE_TYPE"
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         ),
-        TableType.values.filterNot(_ == TableType.UNKNOWN).map(tableType => ResultSetRowPacket(List(Some(tableType.name)))).toVector,
+        TableType.values
+          .filterNot(_ == TableType.UNKNOWN)
+          .map(tableType => ResultSetRowPacket(List(Some(tableType.name))))
+          .toVector,
         protocol.initialPacket.serverVersion,
         isResultSetClosed,
         resultSetCurrentCursor,

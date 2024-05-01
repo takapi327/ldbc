@@ -1087,9 +1087,9 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTableTypes()
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for tableType <- resultSet.getString("TABLE_TYPE")
-              yield s"Table Type: $tableType"
-          }
+                      for tableType <- resultSet.getString("TABLE_TYPE")
+                      yield s"Table Type: $tableType"
+                    }
         yield values
       },
       Vector(
@@ -1097,7 +1097,7 @@ class ConnectionTest extends CatsEffectSuite:
         "Table Type: Some(SYSTEM TABLE)",
         "Table Type: Some(SYSTEM VIEW)",
         "Table Type: Some(TABLE)",
-        "Table Type: Some(VIEW)",
+        "Table Type: Some(VIEW)"
       )
     )
   }
