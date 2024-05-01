@@ -1583,7 +1583,16 @@ trait DatabaseMetaData[F[_]]:
    * @param nullable include columns that are nullable.
    * @return <code>ResultSet</code> - each row is a column description
    */
-  def getBestRowIdentifier(catalog: String, schema: String, table: String, scope: Int, nullable: Boolean): ResultSet[F]
+  def getBestRowIdentifier(catalog: String, schema: String, table: String, scope: Int, nullable: Boolean): F[ResultSet[F]] =
+    getBestRowIdentifier(Some(catalog), Some(schema), table, Some(scope), Some(nullable))
+
+  def getBestRowIdentifier(
+                            catalog: Option[String],
+                            schema: Option[String],
+                            table: String,
+                            scope: Option[Int],
+                            nullable: Option[Boolean]
+                          ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of a table's columns that are automatically
@@ -4738,63 +4747,84 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of a table's optimal set of columns that
-     * uniquely identifies a row. They are ordered by SCOPE.
-     *
-     * <P>Each column description has the following columns:
-     * <OL>
-     * <LI><B>SCOPE</B> short {@code =>} actual scope of result
-     * <UL>
-     * <LI> bestRowTemporary - very temporary, while using row
-     * <LI> bestRowTransaction - valid for remainder of current transaction
-     * <LI> bestRowSession - valid for remainder of current session
-     * </UL>
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column name
-     * <LI><B>DATA_TYPE</B> int {@code =>} SQL data type from java.sql.Types
-     * <LI><B>TYPE_NAME</B> String {@code =>} Data source dependent type name,
-     * for a UDT the type name is fully qualified
-     * <LI><B>COLUMN_SIZE</B> int {@code =>} precision
-     * <LI><B>BUFFER_LENGTH</B> int {@code =>} not used
-     * <LI><B>DECIMAL_DIGITS</B> short  {@code =>} scale - Null is returned for data types where
-     * DECIMAL_DIGITS is not applicable.
-     * <LI><B>PSEUDO_COLUMN</B> short {@code =>} is this a pseudo column
-     * like an Oracle ROWID
-     * <UL>
-     * <LI> bestRowUnknown - may or may not be pseudo column
-     * <LI> bestRowNotPseudo - is NOT a pseudo column
-     * <LI> bestRowPseudo - is a pseudo column
-     * </UL>
-     * </OL>
-     *
-     * <p>The COLUMN_SIZE column represents the specified column size for the given column.
-     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.
-     * For datetime datatypes, this is the length in characters of the String representation (assuming the
-     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,
-     * this is the length in bytes. Null is returned for data types where the
-     * column size is not applicable.
-     *
-     * @param catalog  a catalog name; must match the catalog name as it
-     *                 is stored in the database; "" retrieves those without a catalog;
-     *                 <code>null</code> means that the catalog name should not be used to narrow
-     *                 the search
-     * @param schema   a schema name; must match the schema name
-     *                 as it is stored in the database; "" retrieves those without a schema;
-     *                 <code>null</code> means that the schema name should not be used to narrow
-     *                 the search
-     * @param table    a table name; must match the table name as it is stored
-     *                 in the database
-     * @param scope    the scope of interest; use same values as SCOPE
-     * @param nullable include columns that are nullable.
-     * @return <code>ResultSet</code> - each row is a column description
-     */
-    def getBestRowIdentifier(
-      catalog:  String,
-      schema:   String,
+    override def getBestRowIdentifier(
+      catalog:  Option[String],
+      schema:   Option[String],
       table:    String,
-      scope:    Int,
-      nullable: Boolean
-    ): ResultSet[F] = ???
+      scope:    Option[Int],
+      nullable: Option[Boolean]
+    ): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schema)
+
+      val sqlBuf = new StringBuilder("SHOW COLUMNS FROM ")
+      sqlBuf.append(table)
+
+      db match
+        case Some(dbValue) =>
+          sqlBuf.append(" FROM ")
+          sqlBuf.append(dbValue)
+        case None => ()
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+
+        for
+          resultSet <- preparedStatement.executeQuery()
+          decoded <- Monad[F].whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]](resultSet.next()) {
+            resultSet.getString("Key").flatMap {
+              case Some(key) if key.startsWith("PRI") =>
+                for
+                  field <- resultSet.getString("Field")
+                  `type` <- resultSet.getString("Type")
+                yield (field, `type`) match
+                  case (Some(columnName), Some(value)) =>
+                    val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
+                    val mysqlType = MysqlType.getByName(typeName.toUpperCase)
+                    val dataType = if mysqlType == MysqlType.YEAR && !yearIsDateType then Types.SMALLINT else mysqlType.jdbcType
+                    val columnSize = if hasLength then size + decimals else mysqlType.precision.toInt
+                    Some((bestRowSession, columnName, dataType, typeName, columnSize, maxBufferSize, decimals, bestRowNotPseudo))
+                  case _ => None
+              case _ => ev.pure(None)
+            }
+          }
+          isResultSetClosed      <- Ref[F].of(false)
+          resultSetCurrentCursor <- Ref[F].of(0)
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          _ <- preparedStatement.close()
+        yield
+          println("===================")
+          println(decoded)
+          println("===================")
+
+          ResultSet(
+          Vector("SCOPE", "COLUMN_NAME", "DATA_TYPE", "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH", "DECIMAL_DIGITS", "PSEUDO_COLUMN").map { value =>
+            new ColumnDefinitionPacket:
+              override def table: String = ""
+              override def name: String = value
+              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          decoded.flatten.map {
+            case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
+              ResultSetRowPacket(
+                List(
+                  Some(scope.toString),
+                  Some(columnName),
+                  Some(dataType.toString),
+                  Some(typeName),
+                  Some(columnSize.toString),
+                  Some(bufferLength.toString),
+                  Some(decimalDigits.toString),
+                  Some(pseudoColumn.toString)
+                )
+              )
+          },
+          protocol.initialPacket.serverVersion,
+          isResultSetClosed,
+          resultSetCurrentCursor,
+          resultSetCurrentRow
+        )
+      }
 
     /**
      * Retrieves a description of a table's columns that are automatically
@@ -5833,6 +5863,24 @@ object DatabaseMetaData:
         resultSet        <- prepareStatement.executeQuery()
         decoded          <- resultSet.decode[String](varchar(255))
       yield decoded
+
+    private def parseTypeColumn(`type`: String): (Int, Int, String, Boolean) =
+      if `type`.indexOf("enum") != -1 then
+        val temp = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(")"))
+        val maxLength = temp.split(",").map(_.length - 2).max
+
+        (maxLength, 0, "enum", false)
+      else if `type`.indexOf("(") != -1 then
+        val name = `type`.substring(0, `type`.indexOf("("))
+        if `type`.indexOf(",") != -1 then
+          val size = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(",")).toInt
+          val decimals = `type`.substring(`type`.indexOf(",") + 1, `type`.indexOf(")")).toInt
+          (size, decimals, name, true)
+        else
+          val size = `type`.substring(`type`.indexOf("(") + 1, `type`.indexOf(",")).toInt
+          (size, 0, name, true)
+      else
+        (10, 0, `type`, false)
 
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
