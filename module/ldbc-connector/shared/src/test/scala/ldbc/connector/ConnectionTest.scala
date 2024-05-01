@@ -1037,3 +1037,37 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving catalogs information matches the specified value.") {
+    val connection = Connection[IO](
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
+      ssl          = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getCatalogs()
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              tableCatalog <- resultSet.getString("TABLE_CAT")
+            yield s"Table Catalog: $tableCatalog"
+          }
+        yield values
+      },
+      Vector(
+        "Table Catalog: Some(connector_test)",
+        "Table Catalog: Some(information_schema)",
+        "Table Catalog: Some(mysql)",
+        "Table Catalog: Some(performance_schema)",
+        "Table Catalog: Some(sys)",
+        "Table Catalog: Some(world)",
+        "Table Catalog: Some(world2)"
+      )
+    )
+  }
