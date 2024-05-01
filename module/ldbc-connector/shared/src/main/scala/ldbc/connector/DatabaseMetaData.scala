@@ -4389,7 +4389,7 @@ object DatabaseMetaData:
 
     override def getCatalogs(): F[ResultSet[F]] =
       (if databaseTerm.contains(DatabaseTerm.SCHEMA) then ev.pure(List.empty[String])
-      else getDatabases(None)).flatMap { dbList =>
+       else getDatabases(None)).flatMap { dbList =>
         for
           isResultSetClosed      <- Ref[F].of(false)
           resultSetCurrentCursor <- Ref[F].of(0)
