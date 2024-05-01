@@ -1430,17 +1430,17 @@ trait DatabaseMetaData[F[_]]:
   def getColumns(
     catalog:           String,
     schemaPattern:     String,
-    tableName:  String,
+    tableName:         String,
     columnNamePattern: String
   ): F[ResultSet[F]] =
     getColumns(Some(catalog), Some(schemaPattern), Some(tableName), Some(columnNamePattern))
 
   def getColumns(
-                  catalog: Option[String],
-                  schemaPattern: Option[String],
-                  tableName: Option[String],
-                  columnNamePattern: Option[String]
-                ): F[ResultSet[F]]
+    catalog:           Option[String],
+    schemaPattern:     Option[String],
+    tableName:         Option[String],
+    columnNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for a table's columns.
@@ -4454,7 +4454,7 @@ object DatabaseMetaData:
     override def getColumns(
       catalog:           Option[String],
       schemaPattern:     Option[String],
-      tableName:  Option[String],
+      tableName:         Option[String],
       columnNamePattern: Option[String]
     ): F[ResultSet[F]] =
       val db = getDatabase(catalog, schemaPattern)
@@ -4477,7 +4477,9 @@ object DatabaseMetaData:
           " WHEN LOCATE('ZEROFILL', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN "
         )
         sqlBuf.append(if transformedBitIsBoolean then "'BOOLEAN'" else "'BIT'")
-        sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'")
+        sqlBuf.append(
+          " WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'"
+        )
         sqlBuf.append(" ELSE DATA_TYPE END ")
       end if
 
@@ -4504,7 +4506,9 @@ object DatabaseMetaData:
         sqlBuf.append("  THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' OR")
         sqlBuf.append("  UPPER(DATA_TYPE)='TIMESTAMP'")
-        sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(
+          "  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)"
+        )
       else
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIME' THEN 8")
         sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' OR")
@@ -4571,7 +4575,9 @@ object DatabaseMetaData:
       sqlBuf.append(Int.MaxValue)
       sqlBuf.append(" ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,")
 
-      sqlBuf.append("ORDINAL_POSITION, IS_NULLABLE, NULL AS SCOPE_CATALOG, NULL AS SCOPE_SCHEMA, NULL AS SCOPE_TABLE, NULL AS SOURCE_DATA_TYPE,")
+      sqlBuf.append(
+        "ORDINAL_POSITION, IS_NULLABLE, NULL AS SCOPE_CATALOG, NULL AS SCOPE_SCHEMA, NULL AS SCOPE_TABLE, NULL AS SOURCE_DATA_TYPE,"
+      )
       sqlBuf.append("IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT, ")
       sqlBuf.append("IF (EXTRA LIKE '%GENERATED%','YES','NO') AS IS_GENERATEDCOLUMN ")
 
@@ -4582,8 +4588,12 @@ object DatabaseMetaData:
       db match
         case Some(dbValue) =>
           conditionBuf.append(
-            if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(dbValue) || !dbValue.contains("%")
-              || databaseTerm.contains(DatabaseTerm.SCHEMA) then " TABLE_SCHEMA = ?" else " TABLE_SCHEMA LIKE ?"
+            if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(
+                dbValue
+              ) || !dbValue.contains("%")
+              || databaseTerm.contains(DatabaseTerm.SCHEMA)
+            then " TABLE_SCHEMA = ?"
+            else " TABLE_SCHEMA LIKE ?"
           )
         case None => ()
 
@@ -4601,8 +4611,7 @@ object DatabaseMetaData:
           conditionBuf.append(if columnName.contains("%") then " COLUMN_NAME LIKE ?" else " COLUMN_NAME = ?")
         case None => ()
 
-      if conditionBuf.nonEmpty then
-        sqlBuf.append(" WHERE")
+      if conditionBuf.nonEmpty then sqlBuf.append(" WHERE")
       end if
 
       sqlBuf.append(conditionBuf)
@@ -4623,8 +4632,8 @@ object DatabaseMetaData:
           case (None, Some(tableNameValue), Some(columnName)) =>
             preparedStatement.setString(1, tableNameValue) *> preparedStatement.setString(2, columnName)
           case (None, Some(tableNameValue), None) => preparedStatement.setString(1, tableNameValue)
-          case (None, None, Some(columnName))    => preparedStatement.setString(1, columnName)
-          case (None, None, None)                => ev.unit
+          case (None, None, Some(columnName))     => preparedStatement.setString(1, columnName)
+          case (None, None, None)                 => ev.unit
 
         settings *> preparedStatement.executeQuery() <* preparedStatement.close()
       }

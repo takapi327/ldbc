@@ -1104,12 +1104,12 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving columns information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted,
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
+      ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
@@ -1119,33 +1119,33 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumns(None, None, Some("category"), None)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat <- resultSet.getString("TABLE_CAT")
-              tableSchem <- resultSet.getString("TABLE_SCHEM")
-              tableName <- resultSet.getString("TABLE_NAME")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              dataType <- resultSet.getInt("DATA_TYPE")
-              typeName <- resultSet.getString("TYPE_NAME")
-              columnSize <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits <- resultSet.getInt("DECIMAL_DIGITS")
-              numPrecRadix <- resultSet.getInt("NUM_PREC_RADIX")
-              nullable <- resultSet.getInt("NULLABLE")
-              remarks <- resultSet.getString("REMARKS")
-              columnDef <- resultSet.getString("COLUMN_DEF")
-              sqlDataType <- resultSet.getInt("SQL_DATA_TYPE")
-              sqlDatetimeSub <- resultSet.getInt("SQL_DATETIME_SUB")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable <- resultSet.getString("IS_NULLABLE")
-              scopeCatalog <- resultSet.getString("SCOPE_CATALOG")
-              scopeSchema <- resultSet.getString("SCOPE_SCHEMA")
-              scopeTable <- resultSet.getString("SCOPE_TABLE")
-              sourceDataType <- resultSet.getShort("SOURCE_DATA_TYPE")
-              isAutoincrement <- resultSet.getString("IS_AUTOINCREMENT")
-              isGeneratedcolumn <- resultSet.getString("IS_GENERATEDCOLUMN")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
-          }
+                      for
+                        tableCat          <- resultSet.getString("TABLE_CAT")
+                        tableSchem        <- resultSet.getString("TABLE_SCHEM")
+                        tableName         <- resultSet.getString("TABLE_NAME")
+                        columnName        <- resultSet.getString("COLUMN_NAME")
+                        dataType          <- resultSet.getInt("DATA_TYPE")
+                        typeName          <- resultSet.getString("TYPE_NAME")
+                        columnSize        <- resultSet.getInt("COLUMN_SIZE")
+                        bufferLength      <- resultSet.getInt("BUFFER_LENGTH")
+                        decimalDigits     <- resultSet.getInt("DECIMAL_DIGITS")
+                        numPrecRadix      <- resultSet.getInt("NUM_PREC_RADIX")
+                        nullable          <- resultSet.getInt("NULLABLE")
+                        remarks           <- resultSet.getString("REMARKS")
+                        columnDef         <- resultSet.getString("COLUMN_DEF")
+                        sqlDataType       <- resultSet.getInt("SQL_DATA_TYPE")
+                        sqlDatetimeSub    <- resultSet.getInt("SQL_DATETIME_SUB")
+                        charOctetLength   <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                        ordinalPosition   <- resultSet.getInt("ORDINAL_POSITION")
+                        isNullable        <- resultSet.getString("IS_NULLABLE")
+                        scopeCatalog      <- resultSet.getString("SCOPE_CATALOG")
+                        scopeSchema       <- resultSet.getString("SCOPE_SCHEMA")
+                        scopeTable        <- resultSet.getString("SCOPE_TABLE")
+                        sourceDataType    <- resultSet.getShort("SOURCE_DATA_TYPE")
+                        isAutoincrement   <- resultSet.getString("IS_AUTOINCREMENT")
+                        isGeneratedcolumn <- resultSet.getString("IS_GENERATEDCOLUMN")
+                      yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
+                    }
         yield values
       },
       Vector(
