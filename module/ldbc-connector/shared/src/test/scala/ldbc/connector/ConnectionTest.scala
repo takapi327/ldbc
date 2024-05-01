@@ -1568,22 +1568,22 @@ class ConnectionTest extends CatsEffectSuite:
           resultSet <-
             metaData.getIndexInfo(None, Some("world"), Some("city"), true, true)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat <- resultSet.getString("TABLE_CAT")
-              tableSchem <- resultSet.getString("TABLE_SCHEM")
-              tableName <- resultSet.getString("TABLE_NAME")
-              nonUnique <- resultSet.getBoolean("NON_UNIQUE")
-              indexQualifier <- resultSet.getString("INDEX_QUALIFIER")
-              INDEXNAME <- resultSet.getString("INDEX_NAME")
-              `type` <- resultSet.getShort("TYPE")
-              ordinalPosition <- resultSet.getShort("ORDINAL_POSITION")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              ascOrDesc <- resultSet.getString("ASC_OR_DESC")
-              cardinality <- resultSet.getLong("CARDINALITY")
-              pages <- resultSet.getLong("PAGES")
-              filterCondition <- resultSet.getString("FILTER_CONDITION")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Non Unique: $nonUnique, Index Qualifier: $indexQualifier, Index Name: $INDEXNAME, Type: ${`type`}, Ordinal Position: $ordinalPosition, Column Name: $columnName, Asc Or Desc: $ascOrDesc, Cardinality: $cardinality, Pages: $pages, Filter Condition: $filterCondition"
-          }
+                      for
+                        tableCat        <- resultSet.getString("TABLE_CAT")
+                        tableSchem      <- resultSet.getString("TABLE_SCHEM")
+                        tableName       <- resultSet.getString("TABLE_NAME")
+                        nonUnique       <- resultSet.getBoolean("NON_UNIQUE")
+                        indexQualifier  <- resultSet.getString("INDEX_QUALIFIER")
+                        INDEXNAME       <- resultSet.getString("INDEX_NAME")
+                        `type`          <- resultSet.getShort("TYPE")
+                        ordinalPosition <- resultSet.getShort("ORDINAL_POSITION")
+                        columnName      <- resultSet.getString("COLUMN_NAME")
+                        ascOrDesc       <- resultSet.getString("ASC_OR_DESC")
+                        cardinality     <- resultSet.getLong("CARDINALITY")
+                        pages           <- resultSet.getLong("PAGES")
+                        filterCondition <- resultSet.getString("FILTER_CONDITION")
+                      yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Non Unique: $nonUnique, Index Qualifier: $indexQualifier, Index Name: $INDEXNAME, Type: ${ `type` }, Ordinal Position: $ordinalPosition, Column Name: $columnName, Asc Or Desc: $ascOrDesc, Cardinality: $cardinality, Pages: $pages, Filter Condition: $filterCondition"
+                    }
         yield values
       },
       Vector(

@@ -2067,16 +2067,22 @@ trait DatabaseMetaData[F[_]]:
    *     accurate
    * @return <code>ResultSet</code> - each row is an index column description
    */
-  def getIndexInfo(catalog: String, schema: String, table: String, unique: Boolean, approximate: Boolean): F[ResultSet[F]] =
+  def getIndexInfo(
+    catalog:     String,
+    schema:      String,
+    table:       String,
+    unique:      Boolean,
+    approximate: Boolean
+  ): F[ResultSet[F]] =
     getIndexInfo(Some(catalog), Some(schema), Some(table), unique, approximate)
 
   def getIndexInfo(
-                    catalog: Option[String],
-                    schema: Option[String],
-                    table: Option[String],
-                    unique: Boolean,
-                    approximate: Boolean
-                  ): F[ResultSet[F]]
+    catalog:     Option[String],
+    schema:      Option[String],
+    table:       Option[String],
+    unique:      Boolean,
+    approximate: Boolean
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set type.
@@ -5236,13 +5242,16 @@ object DatabaseMetaData:
       val db = getDatabase(catalog, schema)
 
       val sqlBuf = new StringBuilder(
-        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
         else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
       )
       sqlBuf.append(" TABLE_NAME, NON_UNIQUE, NULL AS INDEX_QUALIFIER, INDEX_NAME,")
       sqlBuf.append(tableIndexOther)
       sqlBuf.append(" AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME,")
-      sqlBuf.append("COLLATION AS ASC_OR_DESC, CARDINALITY, 0 AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE")
+      sqlBuf.append(
+        "COLLATION AS ASC_OR_DESC, CARDINALITY, 0 AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE"
+      )
       if db.nonEmpty then sqlBuf.append(" TABLE_SCHEMA = ? AND")
       sqlBuf.append(" TABLE_NAME = ?")
 
@@ -5253,9 +5262,9 @@ object DatabaseMetaData:
         val setting = (db, table) match
           case (Some(dbValue), Some(tableName)) =>
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
-          case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
+          case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
           case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
-          case (None, None) => ev.unit
+          case (None, None)            => ev.unit
 
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
