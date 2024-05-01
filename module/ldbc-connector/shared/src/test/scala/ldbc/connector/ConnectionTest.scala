@@ -1232,13 +1232,13 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving best row identifier information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
       ssl          = SSL.Trusted,
-      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
     assertIO(
@@ -1273,7 +1273,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl          = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -1282,17 +1282,17 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getVersionColumns(None, Some("connector_test"), "privileges_table")
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              scope         <- resultSet.getShort("SCOPE")
-              columnName    <- resultSet.getString("COLUMN_NAME")
-              dataType      <- resultSet.getInt("DATA_TYPE")
-              typeName      <- resultSet.getString("TYPE_NAME")
-              columnSize    <- resultSet.getInt("COLUMN_SIZE")
-              bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
-              decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
-              pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
-            yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
-          }
+                      for
+                        scope         <- resultSet.getShort("SCOPE")
+                        columnName    <- resultSet.getString("COLUMN_NAME")
+                        dataType      <- resultSet.getInt("DATA_TYPE")
+                        typeName      <- resultSet.getString("TYPE_NAME")
+                        columnSize    <- resultSet.getInt("COLUMN_SIZE")
+                        bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+                        decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+                        pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+                      yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
+                    }
         yield values
       },
       Vector(

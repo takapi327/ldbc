@@ -4813,42 +4813,42 @@ object DatabaseMetaData:
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
           _                      <- preparedStatement.close()
         yield ResultSet(
-            Vector(
-              "SCOPE",
-              "COLUMN_NAME",
-              "DATA_TYPE",
-              "TYPE_NAME",
-              "COLUMN_SIZE",
-              "BUFFER_LENGTH",
-              "DECIMAL_DIGITS",
-              "PSEUDO_COLUMN"
-            ).map { value =>
-              new ColumnDefinitionPacket:
-                override def table:      String                     = ""
-                override def name:       String                     = value
-                override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-                override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-            },
-            decoded.flatten.map {
-              case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
-                ResultSetRowPacket(
-                  List(
-                    Some(scope.toString),
-                    Some(columnName),
-                    Some(dataType.toString),
-                    Some(typeName),
-                    Some(columnSize.toString),
-                    Some(bufferLength.toString),
-                    Some(decimalDigits.toString),
-                    Some(pseudoColumn.toString)
-                  )
+          Vector(
+            "SCOPE",
+            "COLUMN_NAME",
+            "DATA_TYPE",
+            "TYPE_NAME",
+            "COLUMN_SIZE",
+            "BUFFER_LENGTH",
+            "DECIMAL_DIGITS",
+            "PSEUDO_COLUMN"
+          ).map { value =>
+            new ColumnDefinitionPacket:
+              override def table:      String                     = ""
+              override def name:       String                     = value
+              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          decoded.flatten.map {
+            case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
+              ResultSetRowPacket(
+                List(
+                  Some(scope.toString),
+                  Some(columnName),
+                  Some(dataType.toString),
+                  Some(typeName),
+                  Some(columnSize.toString),
+                  Some(bufferLength.toString),
+                  Some(decimalDigits.toString),
+                  Some(pseudoColumn.toString)
                 )
-            },
-            protocol.initialPacket.serverVersion,
-            isResultSetClosed,
-            resultSetCurrentCursor,
-            resultSetCurrentRow
-          )
+              )
+          },
+          protocol.initialPacket.serverVersion,
+          isResultSetClosed,
+          resultSetCurrentCursor,
+          resultSetCurrentRow
+        )
       }
 
     override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -4863,7 +4863,9 @@ object DatabaseMetaData:
         sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time'")
         sqlBuf.append("  THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
         sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'")
-        sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(
+          "  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)"
+        )
       else
         sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8")
         sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19")
@@ -4878,8 +4880,7 @@ object DatabaseMetaData:
       sqlBuf.append(versionColumnNotPseudo)
       sqlBuf.append(" AS PSEUDO_COLUMN FROM INFORMATION_SCHEMA.COLUMNS WHERE")
 
-      if db.nonEmpty then
-        sqlBuf.append(" TABLE_SCHEMA = ? AND")
+      if db.nonEmpty then sqlBuf.append(" TABLE_SCHEMA = ? AND")
 
       sqlBuf.append(" TABLE_NAME = ?")
       sqlBuf.append(" AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'")
