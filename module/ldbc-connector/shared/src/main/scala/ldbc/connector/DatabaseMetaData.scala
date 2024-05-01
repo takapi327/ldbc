@@ -4903,13 +4903,15 @@ object DatabaseMetaData:
       val db = getDatabase(catalog, schema)
 
       val sqlBuf = new StringBuilder(
-        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
         else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
       )
-      sqlBuf.append(" TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE")
+      sqlBuf.append(
+        " TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE"
+      )
 
-      if db.nonEmpty then
-        sqlBuf.append(" TABLE_SCHEMA = ? AND")
+      if db.nonEmpty then sqlBuf.append(" TABLE_SCHEMA = ? AND")
 
       sqlBuf.append(" TABLE_NAME = ?")
       sqlBuf.append(" AND INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX")

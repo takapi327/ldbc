@@ -1317,15 +1317,15 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getPrimaryKeys(None, Some("connector_test"), "privileges_table")
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat <- resultSet.getString("TABLE_CAT")
-              tableSchem <- resultSet.getString("TABLE_SCHEM")
-              tableName <- resultSet.getString("TABLE_NAME")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              keySeq <- resultSet.getShort("KEY_SEQ")
-              pkName <- resultSet.getString("PK_NAME")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Key Seq: $keySeq, PK Name: $pkName"
-          }
+                      for
+                        tableCat   <- resultSet.getString("TABLE_CAT")
+                        tableSchem <- resultSet.getString("TABLE_SCHEM")
+                        tableName  <- resultSet.getString("TABLE_NAME")
+                        columnName <- resultSet.getString("COLUMN_NAME")
+                        keySeq     <- resultSet.getShort("KEY_SEQ")
+                        pkName     <- resultSet.getString("PK_NAME")
+                      yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Key Seq: $keySeq, PK Name: $pkName"
+                    }
         yield values
       },
       Vector(
