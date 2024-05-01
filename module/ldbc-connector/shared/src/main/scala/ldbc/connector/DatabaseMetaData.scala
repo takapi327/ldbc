@@ -1321,7 +1321,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row has a
    *         single <code>String</code> column that is a catalog name
    */
-  def getCatalogs(): ResultSet[F]
+  def getCatalogs(): F[ResultSet[F]]
 
   /**
    * Retrieves the table types available in this database.  The results
@@ -4311,7 +4311,7 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    def getTables(
+    override def getTables(
       catalog:          Option[String],
       schemaPattern:    Option[String],
       tableNamePattern: Option[String],
@@ -4387,19 +4387,28 @@ object DatabaseMetaData:
         ) *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves the catalog names available in this database.  The results
-     * are ordered by catalog name.
-     *
-     * <P>The catalog column is:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} catalog name
-     * </OL>
-     *
-     * @return a <code>ResultSet</code> object in which each row has a
-     *         single <code>String</code> column that is a catalog name
-     */
-    def getCatalogs(): ResultSet[F] = ???
+    override def getCatalogs(): F[ResultSet[F]] =
+      (if databaseTerm.contains(DatabaseTerm.SCHEMA) then ev.pure(List.empty[String])
+      else getDatabases(None)).flatMap { dbList =>
+        for
+          isResultSetClosed      <- Ref[F].of(false)
+          resultSetCurrentCursor <- Ref[F].of(0)
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+        yield ResultSet(
+          Vector("TABLE_CAT").map { value =>
+            new ColumnDefinitionPacket:
+              override def table:      String                     = ""
+              override def name:       String                     = value
+              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          dbList.map(name => ResultSetRowPacket(List(Some(name)))).toVector,
+          protocol.initialPacket.serverVersion,
+          isResultSetClosed,
+          resultSetCurrentCursor,
+          resultSetCurrentRow
+        )
+      }
 
     /**
      * Retrieves the table types available in this database.  The results
