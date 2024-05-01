@@ -23,6 +23,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.net.protocol.*
+import ldbc.connector.codec.all.*
 
 /**
  * Comprehensive information about the database as a whole.
@@ -5541,7 +5542,24 @@ object DatabaseMetaData:
     def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
       (if databaseTerm.contains(DatabaseTerm.SCHEMA) then getDatabases(schemaPattern)
        else ev.pure(List.empty[String])).flatMap { dbList =>
-        ???
+        for
+          isResultSetClosed <- Ref[F].of(false)
+          resultSetCurrentCursor <- Ref[F].of(0)
+          resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+        yield ResultSet(
+          Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
+            new ColumnDefinitionPacket:
+              override def table: String = ""
+              override def name: String = value
+              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          dbList.map(name => ResultSetRowPacket(List(Some("def"), Some(name)))).toVector,
+          protocol.initialPacket.serverVersion,
+          isResultSetClosed,
+          resultSetCurrentCursor,
+          resultSetCurrentRow
+        )
       }
 
     /**
@@ -5876,7 +5894,21 @@ object DatabaseMetaData:
       buf.append(" ELSE 1111")
       buf.append(" END ")
 
-    private def getDatabases(dbPattern: Option[String]): F[List[String]] = ???
+    private def getDatabases(dbPattern: Option[String]): F[List[String]] =
+
+      val sqlBuf = new StringBuilder("SHOW DATABASES")
+
+      dbPattern.foreach { pattern =>
+        sqlBuf.append(" LIKE '")
+        sqlBuf.append(pattern)
+        sqlBuf.append("'")
+      }
+
+      for
+        prepareStatement <- prepareMetaDataSafeStatement(sqlBuf.toString)
+        resultSet   <- prepareStatement.executeQuery()
+        decoded <- resultSet.decode[String](varchar(255))
+      yield decoded
 
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
