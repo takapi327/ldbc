@@ -1306,7 +1306,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         schema description
    */
-  def getSchemas(): ResultSet[F]
+  def getSchemas(): F[ResultSet[F]] = getSchemas(None, None)
 
   /**
    * Retrieves the catalog names available in this database.  The results
@@ -2493,7 +2493,9 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         schema description
    */
-  def getSchemas(catalog: String, schemaPattern: String): ResultSet[F]
+  def getSchemas(catalog: String, schemaPattern: String): F[ResultSet[F]] = getSchemas(Some(catalog), Some(schemaPattern))
+
+  def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports invoking user-defined or vendor functions
@@ -4355,22 +4357,6 @@ object DatabaseMetaData:
       }
 
     /**
-     * Retrieves the schema names available in this database.  The results
-     * are ordered by <code>TABLE_CATALOG</code> and
-     * <code>TABLE_SCHEM</code>.
-     *
-     * <P>The schema columns are:
-     * <OL>
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} schema name
-     * <LI><B>TABLE_CATALOG</B> String {@code =>} catalog name (may be <code>null</code>)
-     * </OL>
-     *
-     * @return a <code>ResultSet</code> object in which each row is a
-     *         schema description
-     */
-    def getSchemas(): ResultSet[F] = ???
-
-    /**
      * Retrieves the catalog names available in this database.  The results
      * are ordered by catalog name.
      *
@@ -5551,27 +5537,12 @@ object DatabaseMetaData:
      */
     def getRowIdLifetime(): RowIdLifetime = ???
 
-    /**
-     * Retrieves the schema names available in this database.  The results
-     * are ordered by <code>TABLE_CATALOG</code> and
-     * <code>TABLE_SCHEM</code>.
-     *
-     * <P>The schema columns are:
-     * <OL>
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} schema name
-     * <LI><B>TABLE_CATALOG</B> String {@code =>} catalog name (may be <code>null</code>)
-     * </OL>
-     *
-     * @param catalog       a catalog name; must match the catalog name as it is stored
-     *                      in the database;"" retrieves those without a catalog; null means catalog
-     *                      name should not be used to narrow down the search.
-     * @param schemaPattern a schema name; must match the schema name as it is
-     *                      stored in the database; null means
-     *                      schema name should not be used to narrow down the search.
-     * @return a <code>ResultSet</code> object in which each row is a
-     *         schema description
-     */
-    def getSchemas(catalog: String, schemaPattern: String): ResultSet[F] = ???
+    def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
+      (if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+        getDatabases(schemaPattern)
+      else ev.pure(List.empty[String])).flatMap { dbList =>
+        ???
+      }
 
     /**
      * Retrieves whether this database supports invoking user-defined or vendor functions
@@ -5904,6 +5875,8 @@ object DatabaseMetaData:
 
       buf.append(" ELSE 1111")
       buf.append(" END ")
+
+    private def getDatabases(dbPattern: Option[String]): F[List[String]] = ???
 
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
