@@ -1430,9 +1430,17 @@ trait DatabaseMetaData[F[_]]:
   def getColumns(
     catalog:           String,
     schemaPattern:     String,
-    tableNamePattern:  String,
+    tableName:  String,
     columnNamePattern: String
-  ): ResultSet[F]
+  ): F[ResultSet[F]] =
+    getColumns(Some(catalog), Some(schemaPattern), Some(tableName), Some(columnNamePattern))
+
+  def getColumns(
+                  catalog: Option[String],
+                  schemaPattern: Option[String],
+                  tableName: Option[String],
+                  columnNamePattern: Option[String]
+                ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for a table's columns.
@@ -4443,100 +4451,183 @@ object DatabaseMetaData:
         resultSetCurrentRow
       )
 
-    /**
-     * Retrieves a description of table columns available in
-     * the specified catalog.
-     *
-     * <P>Only column descriptions matching the catalog, schema, table
-     * and column name criteria are returned.  They are ordered by
-     * <code>TABLE_CAT</code>,<code>TABLE_SCHEM</code>,
-     * <code>TABLE_NAME</code>, and <code>ORDINAL_POSITION</code>.
-     *
-     * <P>Each column description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} table catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} table schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} table name
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column name
-     * <LI><B>DATA_TYPE</B> int {@code =>} SQL type from java.sql.Types
-     * <LI><B>TYPE_NAME</B> String {@code =>} Data source dependent type name,
-     * for a UDT the type name is fully qualified
-     * <LI><B>COLUMN_SIZE</B> int {@code =>} column size.
-     * <LI><B>BUFFER_LENGTH</B> is not used.
-     * <LI><B>DECIMAL_DIGITS</B> int {@code =>} the number of fractional digits. Null is returned for data types where
-     * DECIMAL_DIGITS is not applicable.
-     * <LI><B>NUM_PREC_RADIX</B> int {@code =>} Radix (typically either 10 or 2)
-     * <LI><B>NULLABLE</B> int {@code =>} is NULL allowed.
-     * <UL>
-     * <LI> columnNoNulls - might not allow <code>NULL</code> values
-     * <LI> columnNullable - definitely allows <code>NULL</code> values
-     * <LI> columnNullableUnknown - nullability unknown
-     * </UL>
-     * <LI><B>REMARKS</B> String {@code =>} comment describing column (may be <code>null</code>)
-     * <LI><B>COLUMN_DEF</B> String {@code =>} default value for the column, which should be interpreted as a string when the value is enclosed in single quotes (may be <code>null</code>)
-     * <LI><B>SQL_DATA_TYPE</B> int {@code =>} unused
-     * <LI><B>SQL_DATETIME_SUB</B> int {@code =>} unused
-     * <LI><B>CHAR_OCTET_LENGTH</B> int {@code =>} for char types the
-     * maximum number of bytes in the column
-     * <LI><B>ORDINAL_POSITION</B> int {@code =>} index of column in table
-     * (starting at 1)
-     * <LI><B>IS_NULLABLE</B> String  {@code =>} ISO rules are used to determine the nullability for a column.
-     * <UL>
-     * <LI> YES           --- if the column can include NULLs
-     * <LI> NO            --- if the column cannot include NULLs
-     * <LI> empty string  --- if the nullability for the
-     * column is unknown
-     * </UL>
-     * <LI><B>SCOPE_CATALOG</B> String {@code =>} catalog of table that is the scope
-     * of a reference attribute (<code>null</code> if DATA_TYPE isn't REF)
-     * <LI><B>SCOPE_SCHEMA</B> String {@code =>} schema of table that is the scope
-     * of a reference attribute (<code>null</code> if the DATA_TYPE isn't REF)
-     * <LI><B>SCOPE_TABLE</B> String {@code =>} table name that this the scope
-     * of a reference attribute (<code>null</code> if the DATA_TYPE isn't REF)
-     * <LI><B>SOURCE_DATA_TYPE</B> short {@code =>} source type of a distinct type or user-generated
-     * Ref type, SQL type from java.sql.Types (<code>null</code> if DATA_TYPE
-     * isn't DISTINCT or user-generated REF)
-     * <LI><B>IS_AUTOINCREMENT</B> String  {@code =>} Indicates whether this column is auto incremented
-     * <UL>
-     * <LI> YES           --- if the column is auto incremented
-     * <LI> NO            --- if the column is not auto incremented
-     * <LI> empty string  --- if it cannot be determined whether the column is auto incremented
-     * </UL>
-     * <LI><B>IS_GENERATEDCOLUMN</B> String  {@code =>} Indicates whether this is a generated column
-     * <UL>
-     * <LI> YES           --- if this a generated column
-     * <LI> NO            --- if this not a generated column
-     * <LI> empty string  --- if it cannot be determined whether this is a generated column
-     * </UL>
-     * </OL>
-     *
-     * <p>The COLUMN_SIZE column specifies the column size for the given column.
-     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.
-     * For datetime datatypes, this is the length in characters of the String representation (assuming the
-     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,
-     * this is the length in bytes. Null is returned for data types where the
-     * column size is not applicable.
-     *
-     * @param catalog           a catalog name; must match the catalog name as it
-     *                          is stored in the database; "" retrieves those without a catalog;
-     *                          <code>null</code> means that the catalog name should not be used to narrow
-     *                          the search
-     * @param schemaPattern     a schema name pattern; must match the schema name
-     *                          as it is stored in the database; "" retrieves those without a schema;
-     *                          <code>null</code> means that the schema name should not be used to narrow
-     *                          the search
-     * @param tableNamePattern  a table name pattern; must match the
-     *                          table name as it is stored in the database
-     * @param columnNamePattern a column name pattern; must match the column
-     *                          name as it is stored in the database
-     * @return <code>ResultSet</code> - each row is a column description
-     */
-    def getColumns(
-      catalog:           String,
-      schemaPattern:     String,
-      tableNamePattern:  String,
-      columnNamePattern: String
-    ): ResultSet[F] = ???
+    override def getColumns(
+      catalog:           Option[String],
+      schemaPattern:     Option[String],
+      tableName:  Option[String],
+      columnNamePattern: Option[String]
+    ): F[ResultSet[F]] =
+      val db = getDatabase(catalog, schemaPattern)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        else "SELECT TABLE_SCHEMA AS TABLE_SCHEM, NULL,"
+      )
+
+      sqlBuf.append(" TABLE_NAME, COLUMN_NAME,")
+
+      appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE")
+      sqlBuf.append(" AS DATA_TYPE, ")
+
+      sqlBuf.append("UPPER(CASE")
+      if tinyInt1isBit then
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE")
+        sqlBuf.append(
+          " WHEN LOCATE('ZEROFILL', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN "
+        )
+        sqlBuf.append(if transformedBitIsBoolean then "'BOOLEAN'" else "'BIT'")
+        sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'")
+        sqlBuf.append(" ELSE DATA_TYPE END ")
+      end if
+
+      sqlBuf.append(
+        " WHEN LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')"
+      )
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 'GEOMETRY'")
+
+      sqlBuf.append(" ELSE UPPER(DATA_TYPE) END) AS TYPE_NAME,")
+
+      sqlBuf.append("UPPER(CASE")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATE' THEN 10")
+
+      if protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0 then
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIME'")
+        sqlBuf.append("  THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' OR")
+        sqlBuf.append("  UPPER(DATA_TYPE)='TIMESTAMP'")
+        sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+      else
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TIME' THEN 8")
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DATETIME' OR")
+        sqlBuf.append("  UPPER(DATA_TYPE)='TIMESTAMP'")
+        sqlBuf.append("  THEN 19")
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='YEAR' THEN 4")
+      if tinyInt1isBit && !transformedBitIsBoolean then
+        sqlBuf.append(
+          " WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) = 0 AND LOCATE('(1)', COLUMN_TYPE) != 0 THEN 1"
+        )
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(COLUMN_TYPE)) != 0 THEN 8")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824")
+
+      // spatial data types
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRY' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 65535")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 65535")
+
+      sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION")
+      sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" THEN ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH")
+      sqlBuf.append(" END) AS COLUMN_SIZE,")
+
+      sqlBuf.append(maxBufferSize)
+      sqlBuf.append(" AS BUFFER_LENGTH,")
+
+      sqlBuf.append("UPPER(CASE")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='DECIMAL' THEN NUMERIC_SCALE")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='FLOAT' OR UPPER(DATA_TYPE)='DOUBLE' THEN")
+      sqlBuf.append(" CASE WHEN NUMERIC_SCALE IS NULL THEN 0")
+      sqlBuf.append(" ELSE NUMERIC_SCALE END")
+      sqlBuf.append(" ELSE NULL END) AS DECIMAL_DIGITS,")
+
+      sqlBuf.append("10 AS NUM_PREC_RADIX,")
+
+      sqlBuf.append("CASE")
+      sqlBuf.append(" WHEN IS_NULLABLE='NO' THEN ")
+      sqlBuf.append(columnNoNulls)
+      sqlBuf.append(" ELSE CASE WHEN IS_NULLABLE='YES' THEN ")
+      sqlBuf.append(columnNullable)
+      sqlBuf.append(" ELSE ")
+      sqlBuf.append(columnNullableUnknown)
+      sqlBuf.append(" END END AS NULLABLE,")
+
+      sqlBuf.append("COLUMN_COMMENT AS REMARKS,")
+      sqlBuf.append("COLUMN_DEFAULT AS COLUMN_DEF,")
+      sqlBuf.append("0 AS SQL_DATA_TYPE,")
+      sqlBuf.append("0 AS SQL_DATETIME_SUB,")
+
+      sqlBuf.append("CASE WHEN CHARACTER_OCTET_LENGTH > ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" THEN ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,")
+
+      sqlBuf.append("ORDINAL_POSITION, IS_NULLABLE, NULL AS SCOPE_CATALOG, NULL AS SCOPE_SCHEMA, NULL AS SCOPE_TABLE, NULL AS SOURCE_DATA_TYPE,")
+      sqlBuf.append("IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT, ")
+      sqlBuf.append("IF (EXTRA LIKE '%GENERATED%','YES','NO') AS IS_GENERATEDCOLUMN ")
+
+      sqlBuf.append("FROM INFORMATION_SCHEMA.COLUMNS")
+
+      val conditionBuf = new StringBuilder()
+
+      db match
+        case Some(dbValue) =>
+          conditionBuf.append(
+            if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(dbValue) || !dbValue.contains("%")
+              || databaseTerm.contains(DatabaseTerm.SCHEMA) then " TABLE_SCHEMA = ?" else " TABLE_SCHEMA LIKE ?"
+          )
+        case None => ()
+
+      tableName match
+        case Some(tableNameValue) =>
+          if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+          end if
+          conditionBuf.append(if tableNameValue.contains("%") then " TABLE_NAME LIKE ?" else " TABLE_NAME = ?")
+        case None => ()
+
+      columnNamePattern match
+        case Some(columnName) =>
+          if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+          end if
+          conditionBuf.append(if columnName.contains("%") then " COLUMN_NAME LIKE ?" else " COLUMN_NAME = ?")
+        case None => ()
+
+      if conditionBuf.nonEmpty then
+        sqlBuf.append(" WHERE")
+      end if
+
+      sqlBuf.append(conditionBuf)
+
+      sqlBuf.append(" ORDER BY TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION")
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val settings = (db, tableName, columnNamePattern) match
+          case (Some(dbValue), Some(tableNameValue), Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(
+              2,
+              tableNameValue
+            ) *> preparedStatement.setString(3, columnName)
+          case (Some(dbValue), Some(tableNameValue), None) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableNameValue)
+          case (Some(dbValue), None, Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, columnName)
+          case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableNameValue), Some(columnName)) =>
+            preparedStatement.setString(1, tableNameValue) *> preparedStatement.setString(2, columnName)
+          case (None, Some(tableNameValue), None) => preparedStatement.setString(1, tableNameValue)
+          case (None, None, Some(columnName))    => preparedStatement.setString(1, columnName)
+          case (None, None, None)                => ev.unit
+
+        settings *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the access rights for a table's columns.
