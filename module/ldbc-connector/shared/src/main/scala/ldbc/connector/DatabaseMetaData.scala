@@ -1643,7 +1643,10 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         column description
    */
-  def getVersionColumns(catalog: String, schema: String, table: String): ResultSet[F]
+  def getVersionColumns(catalog: String, schema: String, table: String): F[ResultSet[F]] =
+    getVersionColumns(Some(catalog), Some(schema), table)
+
+  def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given table's primary key columns.  They
@@ -4809,12 +4812,7 @@ object DatabaseMetaData:
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
           _                      <- preparedStatement.close()
-        yield
-          println("===================")
-          println(decoded)
-          println("===================")
-
-          ResultSet(
+        yield ResultSet(
             Vector(
               "SCOPE",
               "COLUMN_NAME",
@@ -4853,51 +4851,48 @@ object DatabaseMetaData:
           )
       }
 
-    /**
-     * Retrieves a description of a table's columns that are automatically
-     * updated when any value in a row is updated.  They are
-     * unordered.
-     *
-     * <P>Each column description has the following columns:
-     * <OL>
-     * <LI><B>SCOPE</B> short {@code =>} is not used
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column name
-     * <LI><B>DATA_TYPE</B> int {@code =>} SQL data type from <code>java.sql.Types</code>
-     * <LI><B>TYPE_NAME</B> String {@code =>} Data source-dependent type name
-     * <LI><B>COLUMN_SIZE</B> int {@code =>} precision
-     * <LI><B>BUFFER_LENGTH</B> int {@code =>} length of column value in bytes
-     * <LI><B>DECIMAL_DIGITS</B> short  {@code =>} scale - Null is returned for data types where
-     * DECIMAL_DIGITS is not applicable.
-     * <LI><B>PSEUDO_COLUMN</B> short {@code =>} whether this is pseudo column
-     * like an Oracle ROWID
-     * <UL>
-     * <LI> versionColumnUnknown - may or may not be pseudo column
-     * <LI> versionColumnNotPseudo - is NOT a pseudo column
-     * <LI> versionColumnPseudo - is a pseudo column
-     * </UL>
-     * </OL>
-     *
-     * <p>The COLUMN_SIZE column represents the specified column size for the given column.
-     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.
-     * For datetime datatypes, this is the length in characters of the String representation (assuming the
-     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,
-     * this is the length in bytes. Null is returned for data types where the
-     * column size is not applicable.
-     *
-     * @param catalog a catalog name; must match the catalog name as it
-     *                is stored in the database; "" retrieves those without a catalog;
-     *                <code>null</code> means that the catalog name should not be used to narrow
-     *                the search
-     * @param schema  a schema name; must match the schema name
-     *                as it is stored in the database; "" retrieves those without a schema;
-     *                <code>null</code> means that the schema name should not be used to narrow
-     *                the search
-     * @param table   a table name; must match the table name as it is stored
-     *                in the database
-     * @return a <code>ResultSet</code> object in which each row is a
-     *         column description
-     */
-    def getVersionColumns(catalog: String, schema: String, table: String): ResultSet[F] = ???
+    override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schema)
+
+      val sqlBuf = new StringBuilder("SELECT NULL AS SCOPE, COLUMN_NAME, ")
+      appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "COLUMN_TYPE")
+      sqlBuf.append(" AS DATA_TYPE, UPPER(COLUMN_TYPE) AS TYPE_NAME,")
+      sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10")
+      if protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0 then
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time'")
+        sqlBuf.append("  THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'")
+        sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+      else
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8")
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19")
+
+      sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" THEN ")
+      sqlBuf.append(Int.MaxValue)
+      sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ")
+      sqlBuf.append(maxBufferSize)
+      sqlBuf.append(" AS BUFFER_LENGTH,NUMERIC_SCALE AS DECIMAL_DIGITS, ")
+      sqlBuf.append(versionColumnNotPseudo)
+      sqlBuf.append(" AS PSEUDO_COLUMN FROM INFORMATION_SCHEMA.COLUMNS WHERE")
+
+      if db.nonEmpty then
+        sqlBuf.append(" TABLE_SCHEMA = ? AND")
+
+      sqlBuf.append(" TABLE_NAME = ?")
+      sqlBuf.append(" AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = db match
+          case Some(dbValue) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, table)
+          case None =>
+            preparedStatement.setString(1, table)
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the given table's primary key columns.  They
