@@ -5543,16 +5543,16 @@ object DatabaseMetaData:
       (if databaseTerm.contains(DatabaseTerm.SCHEMA) then getDatabases(schemaPattern)
        else ev.pure(List.empty[String])).flatMap { dbList =>
         for
-          isResultSetClosed <- Ref[F].of(false)
+          isResultSetClosed      <- Ref[F].of(false)
           resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
         yield ResultSet(
           Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
             new ColumnDefinitionPacket:
-              override def table: String = ""
-              override def name: String = value
-              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+              override def table:      String                     = ""
+              override def name:       String                     = value
+              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
           },
           dbList.map(name => ResultSetRowPacket(List(Some("def"), Some(name)))).toVector,
           protocol.initialPacket.serverVersion,
@@ -5906,8 +5906,8 @@ object DatabaseMetaData:
 
       for
         prepareStatement <- prepareMetaDataSafeStatement(sqlBuf.toString)
-        resultSet   <- prepareStatement.executeQuery()
-        decoded <- resultSet.decode[String](varchar(255))
+        resultSet        <- prepareStatement.executeQuery()
+        decoded          <- resultSet.decode[String](varchar(255))
       yield decoded
 
   def apply[F[_]: Temporal: Exchange: Tracer](
