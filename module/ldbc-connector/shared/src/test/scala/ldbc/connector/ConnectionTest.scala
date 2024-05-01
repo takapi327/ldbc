@@ -1101,3 +1101,60 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving columns information matches the specified value.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getColumns(None, None, Some("category"), None)
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              tableCat <- resultSet.getString("TABLE_CAT")
+              tableSchem <- resultSet.getString("TABLE_SCHEM")
+              tableName <- resultSet.getString("TABLE_NAME")
+              columnName <- resultSet.getString("COLUMN_NAME")
+              dataType <- resultSet.getInt("DATA_TYPE")
+              typeName <- resultSet.getString("TYPE_NAME")
+              columnSize <- resultSet.getInt("COLUMN_SIZE")
+              bufferLength <- resultSet.getInt("BUFFER_LENGTH")
+              decimalDigits <- resultSet.getInt("DECIMAL_DIGITS")
+              numPrecRadix <- resultSet.getInt("NUM_PREC_RADIX")
+              nullable <- resultSet.getInt("NULLABLE")
+              remarks <- resultSet.getString("REMARKS")
+              columnDef <- resultSet.getString("COLUMN_DEF")
+              sqlDataType <- resultSet.getInt("SQL_DATA_TYPE")
+              sqlDatetimeSub <- resultSet.getInt("SQL_DATETIME_SUB")
+              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+              isNullable <- resultSet.getString("IS_NULLABLE")
+              scopeCatalog <- resultSet.getString("SCOPE_CATALOG")
+              scopeSchema <- resultSet.getString("SCOPE_SCHEMA")
+              scopeTable <- resultSet.getString("SCOPE_TABLE")
+              sourceDataType <- resultSet.getShort("SOURCE_DATA_TYPE")
+              isAutoincrement <- resultSet.getString("IS_AUTOINCREMENT")
+              isGeneratedcolumn <- resultSet.getString("IS_GENERATEDCOLUMN")
+            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
+          }
+        yield values
+      },
+      Vector(
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(id), Data Type: -5, Type Name: Some(BIGINT), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(name), Data Type: 12, Type Name: Some(VARCHAR), Column Size: 255, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 1020, Ordinal Position: 2, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(slug), Data Type: 12, Type Name: Some(VARCHAR), Column Size: 255, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 1020, Ordinal Position: 3, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(color), Data Type: -6, Type Name: Some(TINYINT), Column Size: 3, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 4, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(updated_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 5, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(created_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 6, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)"
+      )
+    )
+  }
