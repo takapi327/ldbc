@@ -1150,7 +1150,8 @@ class ConnectionTest extends CatsEffectSuite:
       },
       Vector(
         "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c1), Data Type: 4, Type Name: Some(INT), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Data Type: 4, Type Name: Some(INT), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 2, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)"
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Data Type: 4, Type Name: Some(INT), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 2, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(updated_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: Some(CURRENT_TIMESTAMP), SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 3, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(YES)"
       )
     )
   }
@@ -1229,15 +1230,14 @@ class ConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The result of retrieving best row identifier privileges information matches the specified value.") {
+  test("The result of retrieving best row identifier information matches the specified value.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      // ssl          = SSL.Trusted
-      allowPublicKeyRetrieval = true,
+      ssl          = SSL.Trusted,
       databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
@@ -1262,6 +1262,41 @@ class ConnectionTest extends CatsEffectSuite:
       },
       Vector(
         "Scope: 2, Column Name: Some(c1), Data Type: 4, Type Name: Some(int), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+      )
+    )
+  }
+
+  test("The result of retrieving version columns information matches the specified value.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl          = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getVersionColumns(None, Some("connector_test"), "privileges_table")
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              scope         <- resultSet.getShort("SCOPE")
+              columnName    <- resultSet.getString("COLUMN_NAME")
+              dataType      <- resultSet.getInt("DATA_TYPE")
+              typeName      <- resultSet.getString("TYPE_NAME")
+              columnSize    <- resultSet.getInt("COLUMN_SIZE")
+              bufferLength  <- resultSet.getInt("BUFFER_LENGTH")
+              decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+              pseudoColumn  <- resultSet.getShort("PSEUDO_COLUMN")
+            yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
+          }
+        yield values
+      },
+      Vector(
+        "Scope: 0, Column Name: Some(updated_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }
