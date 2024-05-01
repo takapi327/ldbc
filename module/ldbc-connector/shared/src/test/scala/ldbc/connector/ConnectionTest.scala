@@ -1070,3 +1070,34 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving tableTypes information matches the specified value.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getTableTypes()
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for tableType <- resultSet.getString("TABLE_TYPE")
+              yield s"Table Type: $tableType"
+          }
+        yield values
+      },
+      Vector(
+        "Table Type: Some(LOCAL TEMPORARY)",
+        "Table Type: Some(SYSTEM TABLE)",
+        "Table Type: Some(SYSTEM VIEW)",
+        "Table Type: Some(TABLE)",
+        "Table Type: Some(VIEW)",
+      )
+    )
+  }
