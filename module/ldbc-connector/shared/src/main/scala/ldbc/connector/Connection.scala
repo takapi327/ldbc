@@ -29,6 +29,7 @@ import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.DatabaseMetaData.DatabaseTerm
 import ldbc.connector.codec.text.text
 
 /**
@@ -515,7 +516,8 @@ object Connection:
     serverVariables: Map[String, String],
     database:        Option[String],
     readOnly:        Ref[F, Boolean],
-    isAutoCommit:    Ref[F, Boolean]
+    isAutoCommit:    Ref[F, Boolean],
+    databaseTerm:                  Option[DatabaseTerm] = None
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
 
@@ -565,7 +567,8 @@ object Connection:
     override def getMetaData(): F[DatabaseMetaData[F]] =
       isClosed().map {
         case true  => throw new SQLException("Connection is closed")
-        case false => DatabaseMetaData[F](protocol, serverVariables, database)
+        case false => 
+          DatabaseMetaData[F](protocol, serverVariables, database, databaseTerm)
       }
 
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
@@ -707,7 +710,8 @@ object Connection:
     ssl:                     SSL = SSL.None,
     socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:                  Option[DatabaseTerm] = None
   ): Tracer[F] ?=> Resource[F, Connection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -725,7 +729,8 @@ object Connection:
                       socketOptions,
                       sslOp,
                       readTimeout,
-                      allowPublicKeyRetrieval
+                      allowPublicKeyRetrieval,
+        databaseTerm
                     )
     yield connection
 
@@ -739,7 +744,8 @@ object Connection:
     debug:                   Boolean = false,
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:                  Option[DatabaseTerm] = None
   ): Resource[F, Connection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
@@ -756,7 +762,7 @@ object Connection:
       connection <-
         Resource.make(
           Temporal[F].pure(
-            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit)
+            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit, databaseTerm)
           )
         )(_.close())
     yield connection
@@ -772,7 +778,8 @@ object Connection:
     socketOptions:           List[SocketOption],
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:                  Option[DatabaseTerm] = None
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
@@ -795,5 +802,6 @@ object Connection:
       debug,
       sslOptions,
       readTimeout,
-      allowPublicKeyRetrieval
+      allowPublicKeyRetrieval,
+      databaseTerm
     )
