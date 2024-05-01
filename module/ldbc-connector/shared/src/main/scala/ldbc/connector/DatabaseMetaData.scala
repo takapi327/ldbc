@@ -19,6 +19,7 @@ import ldbc.connector.util.Version
 import ldbc.connector.data.*
 import ldbc.connector.data.Types.*
 import ldbc.connector.data.Constants.*
+import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
@@ -3972,6 +3973,18 @@ object DatabaseMetaData:
     override def supportsStoredFunctionsUsingCallSyntax(): Boolean       = true
     override def autoCommitFailureClosesAllResultSets():   Boolean       = false
     override def generatedKeyAlwaysReturned():             Boolean       = true
+    override def supportsResultSetType(`type`: Int): Boolean =
+      `type` == ResultSet.TYPE_FORWARD_ONLY || `type` == ResultSet.TYPE_SCROLL_INSENSITIVE
+
+    override def supportsResultSetConcurrency(`type`: Int, concurrency: Int): Boolean =
+      if (`type` == ResultSet.TYPE_FORWARD_ONLY || `type` == ResultSet.TYPE_SCROLL_INSENSITIVE) && (concurrency == ResultSet.CONCUR_READ_ONLY || concurrency == ResultSet.CONCUR_UPDATABLE)
+      then true
+      else if `type` == ResultSet.TYPE_SCROLL_SENSITIVE then false
+      else throw new SQLException("Illegal arguments to supportsResultSetConcurrency()")
+
+    override def supportsResultSetHoldability(holdability: Int): Boolean =
+      holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT
+    override def locatorsUpdateCopy(): Boolean = false
   end StaticDatabaseMetaData
 
   private[ldbc] case class Impl[F[_]: Temporal: Exchange: Tracer](
@@ -5269,24 +5282,6 @@ object DatabaseMetaData:
     ): ResultSet[F] = ???
 
     /**
-     * Retrieves whether this database supports the given result set type.
-     *
-     * @param `type` defined in <code>java.sql.ResultSet</code>
-     * @return <code>true</code> if so; <code>false</code> otherwise
-     */
-    def supportsResultSetType(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether this database supports the given concurrency type
-     * in combination with the given result set type.
-     *
-     * @param `type`      defined in <code>java.sql.ResultSet</code>
-     * @param concurrency type defined in <code>java.sql.ResultSet</code>
-     * @return <code>true</code> if so; <code>false</code> otherwise
-     */
-    def supportsResultSetConcurrency(`type`: Int, concurrency: Int): Boolean = ???
-
-    /**
      * Retrieves a description of the user-defined types (UDTs) defined
      * in a particular schema.  Schema-specific UDTs may have type
      * <code>JAVA_OBJECT</code>, <code>STRUCT</code>,
@@ -5497,27 +5492,8 @@ object DatabaseMetaData:
       attributeNamePattern: String
     ): ResultSet[F] = ???
 
-    /**
-     * Retrieves whether this database supports the given result set holdability.
-     *
-     * @param holdability one of the following constants:
-     *                    <code>ResultSet.HOLD_CURSORS_OVER_COMMIT</code> or
-     *                    <code>ResultSet.CLOSE_CURSORS_AT_COMMIT</code>
-     * @return <code>true</code> if so; <code>false</code> otherwise
-     */
-    def supportsResultSetHoldability(holdability: Int): Boolean = ???
-
     override def getDatabaseMajorVersion(): Int = protocol.initialPacket.serverVersion.major
     override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
-
-    /**
-     * Indicates whether updates made to a LOB are made on a copy or directly
-     * to the LOB.
-     *
-     * @return <code>true</code> if updates are made to a copy of the LOB;
-     *         <code>false</code> if updates are made directly to the LOB
-     */
-    def locatorsUpdateCopy(): Boolean = ???
 
     def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
       (if databaseTerm.contains(DatabaseTerm.SCHEMA) then getDatabases(schemaPattern)
