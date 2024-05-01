@@ -1117,7 +1117,7 @@ class ConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getColumns(None, None, Some("category"), None)
+          resultSet <- metaData.getColumns(None, None, Some("privileges_table"), None)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
                       for
                         tableCat          <- resultSet.getString("TABLE_CAT")
@@ -1149,12 +1149,8 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(id), Data Type: -5, Type Name: Some(BIGINT), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(name), Data Type: 12, Type Name: Some(VARCHAR), Column Size: 255, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 1020, Ordinal Position: 2, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(slug), Data Type: 12, Type Name: Some(VARCHAR), Column Size: 255, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 1020, Ordinal Position: 3, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(color), Data Type: -6, Type Name: Some(TINYINT), Column Size: 3, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 4, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(updated_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 5, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(category), Column Name: Some(created_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 1, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 6, Is Nullable: Some(YES), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)"
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c1), Data Type: 4, Type Name: Some(INT), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Data Type: 4, Type Name: Some(INT), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 2, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)"
       )
     )
   }
@@ -1176,17 +1172,17 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumnPrivileges(None, Some("connector_test"), Some("privileges_table"), None)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              tableCat          <- resultSet.getString("TABLE_CAT")
-              tableSchem        <- resultSet.getString("TABLE_SCHEM")
-              tableName         <- resultSet.getString("TABLE_NAME")
-              columnName        <- resultSet.getString("COLUMN_NAME")
-              grantor <- resultSet.getString("GRANTOR")
-              grantee <- resultSet.getString("GRANTEE")
-              privilege <- resultSet.getString("PRIVILEGE")
-              isGrantable <- resultSet.getString("IS_GRANTABLE")
-            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
-          }
+                      for
+                        tableCat    <- resultSet.getString("TABLE_CAT")
+                        tableSchem  <- resultSet.getString("TABLE_SCHEM")
+                        tableName   <- resultSet.getString("TABLE_NAME")
+                        columnName  <- resultSet.getString("COLUMN_NAME")
+                        grantor     <- resultSet.getString("GRANTOR")
+                        grantee     <- resultSet.getString("GRANTEE")
+                        privilege   <- resultSet.getString("PRIVILEGE")
+                        isGrantable <- resultSet.getString("IS_GRANTABLE")
+                      yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
+                    }
         yield values
       },
       Vector(

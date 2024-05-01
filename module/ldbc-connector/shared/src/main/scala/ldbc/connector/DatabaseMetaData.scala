@@ -1479,7 +1479,12 @@ trait DatabaseMetaData[F[_]]:
   def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): F[ResultSet[F]] =
     getColumnPrivileges(Some(catalog), Some(schema), Some(table), Some(columnNamePattern))
 
-  def getColumnPrivileges(catalog: Option[String], schema: Option[String], table: Option[String], columnNamePattern: Option[String]): F[ResultSet[F]]
+  def getColumnPrivileges(
+    catalog:           Option[String],
+    schema:            Option[String],
+    table:             Option[String],
+    columnNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for each table available
@@ -4641,7 +4646,12 @@ object DatabaseMetaData:
         settings *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    override def getColumnPrivileges(catalog: Option[String], schema: Option[String], table: Option[String], columnNamePattern: Option[String]): F[ResultSet[F]] =
+    override def getColumnPrivileges(
+      catalog:           Option[String],
+      schema:            Option[String],
+      table:             Option[String],
+      columnNamePattern: Option[String]
+    ): F[ResultSet[F]] =
       val db = getDatabase(catalog, schema)
 
       val sqlBuf = new StringBuilder(
@@ -4654,20 +4664,19 @@ object DatabaseMetaData:
         " TABLE_NAME, COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE"
       )
 
-      if db.nonEmpty then
-        sqlBuf.append(" TABLE_SCHEMA=? AND")
+      if db.nonEmpty then sqlBuf.append(" TABLE_SCHEMA=? AND")
       end if
 
       sqlBuf.append(" TABLE_NAME =?")
-      if columnNamePattern.nonEmpty then
-        sqlBuf.append(" AND COLUMN_NAME LIKE ?")
+      if columnNamePattern.nonEmpty then sqlBuf.append(" AND COLUMN_NAME LIKE ?")
       end if
       sqlBuf.append(" ORDER BY COLUMN_NAME, PRIVILEGE_TYPE")
 
       prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
         val setting = (db, table, columnNamePattern) match
           case (Some(dbValue), Some(tableName), Some(columnName)) =>
-            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName) *> preparedStatement.setString(3, columnName)
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName) *> preparedStatement
+              .setString(3, columnName)
           case (Some(dbValue), Some(tableName), None) =>
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
           case (Some(dbValue), None, Some(columnName)) =>
@@ -4675,9 +4684,9 @@ object DatabaseMetaData:
           case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
           case (None, Some(tableName), Some(columnName)) =>
             preparedStatement.setString(1, tableName) *> preparedStatement.setString(2, columnName)
-          case (None, Some(tableName), None) => preparedStatement.setString(1, tableName)
+          case (None, Some(tableName), None)  => preparedStatement.setString(1, tableName)
           case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
-          case (None, None, None) => ev.unit
+          case (None, None, None)             => ev.unit
 
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
@@ -5733,9 +5742,9 @@ object DatabaseMetaData:
 
     protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
       (databaseTerm, catalog, schema) match
-        case (Some(DatabaseTerm.SCHEMA), None, Some(value))  => Some(value)
-        case (Some(DatabaseTerm.CATALOG), Some(value), None) => Some(value)
-        case _                                               => database
+        case (Some(DatabaseTerm.SCHEMA), None, value)  => value
+        case (Some(DatabaseTerm.CATALOG), value, None) => value
+        case _                                         => database
 
     /**
      * Get a prepared statement to query information_schema tables.
