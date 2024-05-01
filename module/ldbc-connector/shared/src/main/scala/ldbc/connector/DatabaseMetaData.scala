@@ -1476,7 +1476,10 @@ trait DatabaseMetaData[F[_]]:
    *        name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a column privilege description
    */
-  def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): ResultSet[F]
+  def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): F[ResultSet[F]] =
+    getColumnPrivileges(Some(catalog), Some(schema), Some(table), Some(columnNamePattern))
+
+  def getColumnPrivileges(catalog: Option[String], schema: Option[String], table: Option[String], columnNamePattern: Option[String]): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for each table available
@@ -4462,7 +4465,7 @@ object DatabaseMetaData:
       val sqlBuf = new StringBuilder(
         if databaseTerm.contains(DatabaseTerm.SCHEMA) then
           "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-        else "SELECT TABLE_SCHEMA AS TABLE_SCHEM, NULL,"
+        else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
       )
 
       sqlBuf.append(" TABLE_NAME, COLUMN_NAME,")
@@ -4638,42 +4641,46 @@ object DatabaseMetaData:
         settings *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the access rights for a table's columns.
-     *
-     * <P>Only privileges matching the column name criteria are
-     * returned.  They are ordered by COLUMN_NAME and PRIVILEGE.
-     *
-     * <P>Each privilege description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} table catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} table schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} table name
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column name
-     * <LI><B>GRANTOR</B> String {@code =>} grantor of access (may be <code>null</code>)
-     * <LI><B>GRANTEE</B> String {@code =>} grantee of access
-     * <LI><B>PRIVILEGE</B> String {@code =>} name of access (SELECT,
-     * INSERT, UPDATE, REFERENCES, ...)
-     * <LI><B>IS_GRANTABLE</B> String {@code =>} "YES" if grantee is permitted
-     * to grant to others; "NO" if not; <code>null</code> if unknown
-     * </OL>
-     *
-     * @param catalog           a catalog name; must match the catalog name as it
-     *                          is stored in the database; "" retrieves those without a catalog;
-     *                          <code>null</code> means that the catalog name should not be used to narrow
-     *                          the search
-     * @param schema            a schema name; must match the schema name as it is
-     *                          stored in the database; "" retrieves those without a schema;
-     *                          <code>null</code> means that the schema name should not be used to narrow
-     *                          the search
-     * @param table             a table name; must match the table name as it is
-     *                          stored in the database
-     * @param columnNamePattern a column name pattern; must match the column
-     *                          name as it is stored in the database
-     * @return <code>ResultSet</code> - each row is a column privilege description
-     */
-    def getColumnPrivileges(catalog: String, schema: String, table: String, columnNamePattern: String): ResultSet[F] =
-      ???
+    override def getColumnPrivileges(catalog: Option[String], schema: Option[String], table: Option[String], columnNamePattern: Option[String]): F[ResultSet[F]] =
+      val db = getDatabase(catalog, schema)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      )
+
+      sqlBuf.append(
+        " TABLE_NAME, COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE"
+      )
+
+      if db.nonEmpty then
+        sqlBuf.append(" TABLE_SCHEMA=? AND")
+      end if
+
+      sqlBuf.append(" TABLE_NAME =?")
+      if columnNamePattern.nonEmpty then
+        sqlBuf.append(" AND COLUMN_NAME LIKE ?")
+      end if
+      sqlBuf.append(" ORDER BY COLUMN_NAME, PRIVILEGE_TYPE")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, table, columnNamePattern) match
+          case (Some(dbValue), Some(tableName), Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName) *> preparedStatement.setString(3, columnName)
+          case (Some(dbValue), Some(tableName), None) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
+          case (Some(dbValue), None, Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, columnName)
+          case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableName), Some(columnName)) =>
+            preparedStatement.setString(1, tableName) *> preparedStatement.setString(2, columnName)
+          case (None, Some(tableName), None) => preparedStatement.setString(1, tableName)
+          case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
+          case (None, None, None) => ev.unit
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the access rights for each table available
