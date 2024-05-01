@@ -1300,3 +1300,36 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving primary key information matches the specified value.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getPrimaryKeys(None, Some("connector_test"), "privileges_table")
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              tableCat <- resultSet.getString("TABLE_CAT")
+              tableSchem <- resultSet.getString("TABLE_SCHEM")
+              tableName <- resultSet.getString("TABLE_NAME")
+              columnName <- resultSet.getString("COLUMN_NAME")
+              keySeq <- resultSet.getShort("KEY_SEQ")
+              pkName <- resultSet.getString("PK_NAME")
+            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Key Seq: $keySeq, PK Name: $pkName"
+          }
+        yield values
+      },
+      Vector(
+        "Table Cat: Some(connector_test), Table Schem: None, Table Name: Some(privileges_table), Column Name: Some(c1), Key Seq: 1, PK Name: Some(PRIMARY)"
+      )
+    )
+  }
