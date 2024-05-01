@@ -1833,7 +1833,10 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         foreign key column description
    */
-  def getExportedKeys(catalog: String, schema: String, table: String): ResultSet[F]
+  def getExportedKeys(catalog: String, schema: String, table: String): F[ResultSet[F]] =
+    getExportedKeys(Some(catalog), Some(schema), table)
+
+  def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the foreign key columns in the given foreign key
@@ -4972,81 +4975,45 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the foreign key columns that reference the
-     * given table's primary key columns (the foreign keys exported by a
-     * table).  They are ordered by FKTABLE_CAT, FKTABLE_SCHEM,
-     * FKTABLE_NAME, and KEY_SEQ.
-     *
-     * <P>Each foreign key column description has the following columns:
-     * <OL>
-     * <LI><B>PKTABLE_CAT</B> String {@code =>} primary key table catalog (may be <code>null</code>)
-     * <LI><B>PKTABLE_SCHEM</B> String {@code =>} primary key table schema (may be <code>null</code>)
-     * <LI><B>PKTABLE_NAME</B> String {@code =>} primary key table name
-     * <LI><B>PKCOLUMN_NAME</B> String {@code =>} primary key column name
-     * <LI><B>FKTABLE_CAT</B> String {@code =>} foreign key table catalog (may be <code>null</code>)
-     * being exported (may be <code>null</code>)
-     * <LI><B>FKTABLE_SCHEM</B> String {@code =>} foreign key table schema (may be <code>null</code>)
-     * being exported (may be <code>null</code>)
-     * <LI><B>FKTABLE_NAME</B> String {@code =>} foreign key table name
-     * being exported
-     * <LI><B>FKCOLUMN_NAME</B> String {@code =>} foreign key column name
-     * being exported
-     * <LI><B>KEY_SEQ</B> short {@code =>} sequence number within foreign key( a value
-     * of 1 represents the first column of the foreign key, a value of 2 would
-     * represent the second column within the foreign key).
-     * <LI><B>UPDATE_RULE</B> short {@code =>} What happens to
-     * foreign key when primary is updated:
-     * <UL>
-     * <LI> importedNoAction - do not allow update of primary
-     * key if it has been imported
-     * <LI> importedKeyCascade - change imported key to agree
-     * with primary key update
-     * <LI> importedKeySetNull - change imported key to <code>NULL</code> if
-     * its primary key has been updated
-     * <LI> importedKeySetDefault - change imported key to default values
-     * if its primary key has been updated
-     * <LI> importedKeyRestrict - same as importedKeyNoAction
-     * (for ODBC 2.x compatibility)
-     * </UL>
-     * <LI><B>DELETE_RULE</B> short {@code =>} What happens to
-     * the foreign key when primary is deleted.
-     * <UL>
-     * <LI> importedKeyNoAction - do not allow delete of primary
-     * key if it has been imported
-     * <LI> importedKeyCascade - delete rows that import a deleted key
-     * <LI> importedKeySetNull - change imported key to <code>NULL</code> if
-     * its primary key has been deleted
-     * <LI> importedKeyRestrict - same as importedKeyNoAction
-     * (for ODBC 2.x compatibility)
-     * <LI> importedKeySetDefault - change imported key to default if
-     * its primary key has been deleted
-     * </UL>
-     * <LI><B>FK_NAME</B> String {@code =>} foreign key name (may be <code>null</code>)
-     * <LI><B>PK_NAME</B> String {@code =>} primary key name (may be <code>null</code>)
-     * <LI><B>DEFERRABILITY</B> short {@code =>} can the evaluation of foreign key
-     * constraints be deferred until commit
-     * <UL>
-     * <LI> importedKeyInitiallyDeferred - see SQL92 for definition
-     * <LI> importedKeyInitiallyImmediate - see SQL92 for definition
-     * <LI> importedKeyNotDeferrable - see SQL92 for definition
-     * </UL>
-     * </OL>
-     *
-     * @param catalog a catalog name; must match the catalog name as it
-     *                is stored in this database; "" retrieves those without a catalog;
-     *                <code>null</code> means that the catalog name should not be used to narrow
-     *                the search
-     * @param schema  a schema name; must match the schema name
-     *                as it is stored in the database; "" retrieves those without a schema;
-     *                <code>null</code> means that the schema name should not be used to narrow
-     *                the search
-     * @param table   a table name; must match the table name as it is stored
-     *                in this database
-     * @return a <code>ResultSet</code> object in which each row is a
-     *         foreign key column description
-     */
-    def getExportedKeys(catalog: String, schema: String, table: String): ResultSet[F] = ???
+    override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schema)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        else "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+      )
+      sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
+      sqlBuf.append(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+        else " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+      )
+      sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
+      sqlBuf.append(generateUpdateRuleClause())
+      sqlBuf.append(" AS UPDATE_RULE,")
+      sqlBuf.append(generateDeleteRuleClause())
+      sqlBuf.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME, TC.CONSTRAINT_NAME AS PK_NAME,")
+      sqlBuf.append(importedKeyNotDeferrable)
+      sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A")
+      sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) ")
+      sqlBuf.append(generateOptionalRefContraintsJoin())
+      sqlBuf.append(" LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC ON (A.REFERENCED_TABLE_SCHEMA = TC.TABLE_SCHEMA")
+      sqlBuf.append("  AND A.REFERENCED_TABLE_NAME = TC.TABLE_NAME")
+      sqlBuf.append("  AND TC.CONSTRAINT_TYPE IN ('UNIQUE', 'PRIMARY KEY'))")
+      sqlBuf.append(" WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'")
+      if db.nonEmpty then sqlBuf.append(" AND A.REFERENCED_TABLE_SCHEMA = ?")
+      sqlBuf.append(" AND A.REFERENCED_TABLE_NAME=?")
+      sqlBuf.append(" ORDER BY FKTABLE_NAME, FKTABLE_NAME, KEY_SEQ")
+      
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = db match
+          case Some(dbValue) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, table)
+          case None =>
+            preparedStatement.setString(1, table)
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the foreign key columns in the given foreign key
