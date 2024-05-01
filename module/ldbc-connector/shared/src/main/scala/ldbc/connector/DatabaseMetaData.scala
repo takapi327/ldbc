@@ -1926,7 +1926,17 @@ trait DatabaseMetaData[F[_]]:
     foreignCatalog: String,
     foreignSchema:  String,
     foreignTable:   String
-  ): ResultSet[F]
+  ): F[ResultSet[F]] =
+    getCrossReference(Some(parentCatalog), Some(parentSchema), parentTable, Some(foreignCatalog), Some(foreignSchema), Some(foreignTable))
+
+  def getCrossReference(
+                         parentCatalog: Option[String],
+                         parentSchema: Option[String],
+                         parentTable: String,
+                         foreignCatalog: Option[String],
+                         foreignSchema: Option[String],
+                         foreignTable: Option[String]
+                       ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of all the data types supported by
@@ -5019,95 +5029,71 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the foreign key columns in the given foreign key
-     * table that reference the primary key or the columns representing a unique constraint of the  parent table (could be the same or a different table).
-     * The number of columns returned from the parent table must match the number of
-     * columns that make up the foreign key.  They
-     * are ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and
-     * KEY_SEQ.
-     *
-     * <P>Each foreign key column description has the following columns:
-     * <OL>
-     * <LI><B>PKTABLE_CAT</B> String {@code =>} parent key table catalog (may be <code>null</code>)
-     * <LI><B>PKTABLE_SCHEM</B> String {@code =>} parent key table schema (may be <code>null</code>)
-     * <LI><B>PKTABLE_NAME</B> String {@code =>} parent key table name
-     * <LI><B>PKCOLUMN_NAME</B> String {@code =>} parent key column name
-     * <LI><B>FKTABLE_CAT</B> String {@code =>} foreign key table catalog (may be <code>null</code>)
-     * being exported (may be <code>null</code>)
-     * <LI><B>FKTABLE_SCHEM</B> String {@code =>} foreign key table schema (may be <code>null</code>)
-     * being exported (may be <code>null</code>)
-     * <LI><B>FKTABLE_NAME</B> String {@code =>} foreign key table name
-     * being exported
-     * <LI><B>FKCOLUMN_NAME</B> String {@code =>} foreign key column name
-     * being exported
-     * <LI><B>KEY_SEQ</B> short {@code =>} sequence number within foreign key( a value
-     * of 1 represents the first column of the foreign key, a value of 2 would
-     * represent the second column within the foreign key).
-     * <LI><B>UPDATE_RULE</B> short {@code =>} What happens to
-     * foreign key when parent key is updated:
-     * <UL>
-     * <LI> importedNoAction - do not allow update of parent
-     * key if it has been imported
-     * <LI> importedKeyCascade - change imported key to agree
-     * with parent key update
-     * <LI> importedKeySetNull - change imported key to <code>NULL</code> if
-     * its parent key has been updated
-     * <LI> importedKeySetDefault - change imported key to default values
-     * if its parent key has been updated
-     * <LI> importedKeyRestrict - same as importedKeyNoAction
-     * (for ODBC 2.x compatibility)
-     * </UL>
-     * <LI><B>DELETE_RULE</B> short {@code =>} What happens to
-     * the foreign key when parent key is deleted.
-     * <UL>
-     * <LI> importedKeyNoAction - do not allow delete of parent
-     * key if it has been imported
-     * <LI> importedKeyCascade - delete rows that import a deleted key
-     * <LI> importedKeySetNull - change imported key to <code>NULL</code> if
-     * its primary key has been deleted
-     * <LI> importedKeyRestrict - same as importedKeyNoAction
-     * (for ODBC 2.x compatibility)
-     * <LI> importedKeySetDefault - change imported key to default if
-     * its parent key has been deleted
-     * </UL>
-     * <LI><B>FK_NAME</B> String {@code =>} foreign key name (may be <code>null</code>)
-     * <LI><B>PK_NAME</B> String {@code =>} parent key name (may be <code>null</code>)
-     * <LI><B>DEFERRABILITY</B> short {@code =>} can the evaluation of foreign key
-     * constraints be deferred until commit
-     * <UL>
-     * <LI> importedKeyInitiallyDeferred - see SQL92 for definition
-     * <LI> importedKeyInitiallyImmediate - see SQL92 for definition
-     * <LI> importedKeyNotDeferrable - see SQL92 for definition
-     * </UL>
-     * </OL>
-     *
-     * @param parentCatalog  a catalog name; must match the catalog name
-     *                       as it is stored in the database; "" retrieves those without a
-     *                       catalog; <code>null</code> means drop catalog name from the selection criteria
-     * @param parentSchema   a schema name; must match the schema name as
-     *                       it is stored in the database; "" retrieves those without a schema;
-     *                       <code>null</code> means drop schema name from the selection criteria
-     * @param parentTable    the name of the table that exports the key; must match
-     *                       the table name as it is stored in the database
-     * @param foreignCatalog a catalog name; must match the catalog name as
-     *                       it is stored in the database; "" retrieves those without a
-     *                       catalog; <code>null</code> means drop catalog name from the selection criteria
-     * @param foreignSchema  a schema name; must match the schema name as it
-     *                       is stored in the database; "" retrieves those without a schema;
-     *                       <code>null</code> means drop schema name from the selection criteria
-     * @param foreignTable   the name of the table that imports the key; must match
-     *                       the table name as it is stored in the database
-     * @return <code>ResultSet</code> - each row is a foreign key column description
-     */
-    def getCrossReference(
-      parentCatalog:  String,
-      parentSchema:   String,
+    override def getCrossReference(
+      parentCatalog:  Option[String],
+      parentSchema:   Option[String],
       parentTable:    String,
-      foreignCatalog: String,
-      foreignSchema:  String,
-      foreignTable:   String
-    ): ResultSet[F] = ???
+      foreignCatalog: Option[String],
+      foreignSchema:  Option[String],
+      foreignTable:   Option[String]
+    ): F[ResultSet[F]] =
+
+      val primaryDb = getDatabase(parentCatalog, parentSchema)
+      val foreignDb = getDatabase(foreignCatalog, foreignSchema)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        else "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+      )
+      sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
+      sqlBuf.append(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+        else " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+      )
+      sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
+      sqlBuf.append(generateUpdateRuleClause())
+      sqlBuf.append(" AS UPDATE_RULE,")
+      sqlBuf.append(generateDeleteRuleClause())
+      sqlBuf.append(" AS DELETE_RULE, A.CONSTRAINT_NAME AS FK_NAME, TC.CONSTRAINT_NAME AS PK_NAME,")
+      sqlBuf.append(importedKeyNotDeferrable)
+      sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A")
+      sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) ")
+      sqlBuf.append(generateOptionalRefContraintsJoin())
+      sqlBuf.append(" LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC ON (A.REFERENCED_TABLE_SCHEMA = TC.TABLE_SCHEMA")
+      sqlBuf.append("  AND A.REFERENCED_TABLE_NAME = TC.TABLE_NAME")
+      sqlBuf.append("  AND TC.CONSTRAINT_TYPE IN ('UNIQUE', 'PRIMARY KEY'))")
+      sqlBuf.append("WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'")
+
+      if primaryDb.nonEmpty then sqlBuf.append(" AND A.REFERENCED_TABLE_SCHEMA=?")
+      sqlBuf.append(" AND A.REFERENCED_TABLE_NAME=?")
+      if foreignDb.nonEmpty then sqlBuf.append(" AND A.TABLE_SCHEMA = ?")
+      sqlBuf.append(" AND A.TABLE_NAME=?")
+      sqlBuf.append(" ORDER BY FKTABLE_NAME, FKTABLE_NAME, KEY_SEQ")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (primaryDb, foreignDb, foreignTable) match
+          case (Some(primaryDbValue), Some(foreignDbValue), Some(foreignTableValue)) =>
+            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable) *> preparedStatement.setString(3, foreignDbValue) *> preparedStatement.setString(
+              4,
+              foreignTableValue
+            )
+          case (Some(primaryDbValue), None, Some(foreignTableValue)) =>
+            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable) *> preparedStatement.setString(3, foreignTableValue)
+          case (None, Some(foreignDbValue), Some(foreignTableValue)) =>
+            preparedStatement.setString(1, parentTable) *> preparedStatement.setString(2, foreignDbValue) *> preparedStatement.setString(3, foreignTableValue)
+          case (None, None, Some(foreignTableValue)) =>
+            preparedStatement.setString(1, parentTable) *> preparedStatement.setString(2, foreignTableValue)
+          case (Some(primaryDbValue), Some(foreignDbValue), None) =>
+            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable) *> preparedStatement.setString(3, foreignDbValue)
+          case (Some(primaryDbValue), None, None) =>
+            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable)
+          case (None, Some(foreignDbValue), None) =>
+            preparedStatement.setString(1, parentTable) *> preparedStatement.setString(2, foreignDbValue)
+          case (None, None, None) =>
+            preparedStatement.setString(1, parentTable)
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of all the data types supported by
