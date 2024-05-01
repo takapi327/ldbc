@@ -1927,16 +1927,23 @@ trait DatabaseMetaData[F[_]]:
     foreignSchema:  String,
     foreignTable:   String
   ): F[ResultSet[F]] =
-    getCrossReference(Some(parentCatalog), Some(parentSchema), parentTable, Some(foreignCatalog), Some(foreignSchema), Some(foreignTable))
+    getCrossReference(
+      Some(parentCatalog),
+      Some(parentSchema),
+      parentTable,
+      Some(foreignCatalog),
+      Some(foreignSchema),
+      Some(foreignTable)
+    )
 
   def getCrossReference(
-                         parentCatalog: Option[String],
-                         parentSchema: Option[String],
-                         parentTable: String,
-                         foreignCatalog: Option[String],
-                         foreignSchema: Option[String],
-                         foreignTable: Option[String]
-                       ): F[ResultSet[F]]
+    parentCatalog:  Option[String],
+    parentSchema:   Option[String],
+    parentTable:    String,
+    foreignCatalog: Option[String],
+    foreignSchema:  Option[String],
+    foreignTable:   Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of all the data types supported by
@@ -5042,12 +5049,14 @@ object DatabaseMetaData:
       val foreignDb = getDatabase(foreignCatalog, foreignSchema)
 
       val sqlBuf = new StringBuilder(
-        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
         else "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
       )
       sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
       sqlBuf.append(
-        if databaseTerm.contains(DatabaseTerm.SCHEMA) then " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
         else " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
       )
       sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
@@ -5059,7 +5068,9 @@ object DatabaseMetaData:
       sqlBuf.append(" AS DEFERRABILITY FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A")
       sqlBuf.append(" JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) ")
       sqlBuf.append(generateOptionalRefContraintsJoin())
-      sqlBuf.append(" LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC ON (A.REFERENCED_TABLE_SCHEMA = TC.TABLE_SCHEMA")
+      sqlBuf.append(
+        " LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC ON (A.REFERENCED_TABLE_SCHEMA = TC.TABLE_SCHEMA"
+      )
       sqlBuf.append("  AND A.REFERENCED_TABLE_NAME = TC.TABLE_NAME")
       sqlBuf.append("  AND TC.CONSTRAINT_TYPE IN ('UNIQUE', 'PRIMARY KEY'))")
       sqlBuf.append("WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY'")
@@ -5073,18 +5084,30 @@ object DatabaseMetaData:
       prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
         val setting = (primaryDb, foreignDb, foreignTable) match
           case (Some(primaryDbValue), Some(foreignDbValue), Some(foreignTableValue)) =>
-            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable) *> preparedStatement.setString(3, foreignDbValue) *> preparedStatement.setString(
+            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(
+              2,
+              parentTable
+            ) *> preparedStatement.setString(3, foreignDbValue) *> preparedStatement.setString(
               4,
               foreignTableValue
             )
           case (Some(primaryDbValue), None, Some(foreignTableValue)) =>
-            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable) *> preparedStatement.setString(3, foreignTableValue)
+            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(
+              2,
+              parentTable
+            ) *> preparedStatement.setString(3, foreignTableValue)
           case (None, Some(foreignDbValue), Some(foreignTableValue)) =>
-            preparedStatement.setString(1, parentTable) *> preparedStatement.setString(2, foreignDbValue) *> preparedStatement.setString(3, foreignTableValue)
+            preparedStatement.setString(1, parentTable) *> preparedStatement.setString(
+              2,
+              foreignDbValue
+            ) *> preparedStatement.setString(3, foreignTableValue)
           case (None, None, Some(foreignTableValue)) =>
             preparedStatement.setString(1, parentTable) *> preparedStatement.setString(2, foreignTableValue)
           case (Some(primaryDbValue), Some(foreignDbValue), None) =>
-            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable) *> preparedStatement.setString(3, foreignDbValue)
+            preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(
+              2,
+              parentTable
+            ) *> preparedStatement.setString(3, foreignDbValue)
           case (Some(primaryDbValue), None, None) =>
             preparedStatement.setString(1, primaryDbValue) *> preparedStatement.setString(2, parentTable)
           case (None, Some(foreignDbValue), None) =>
