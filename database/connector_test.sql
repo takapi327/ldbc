@@ -190,7 +190,7 @@ END
 delimiter ;
 
 CREATE TABLE `privileges_table` (
-  `c1` INT NOT NULL,
+  `c1` INT NOT NULL PRIMARY KEY,
   `c2` INT NOT NULL
 );
 
