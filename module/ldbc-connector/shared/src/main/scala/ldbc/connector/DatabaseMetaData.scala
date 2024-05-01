@@ -3721,6 +3721,12 @@ object DatabaseMetaData:
    */
   val functionReturnsTable: Int = 2
 
+  /**
+   * Trait that defines the value determined at the time MySQL is used.
+   *
+   * @tparam F
+   *   the effect type
+   */
   private[ldbc] trait StaticDatabaseMetaData[F[_]] extends DatabaseMetaData[F]:
     override def allProceduresAreCallable(): Boolean = false
     override def allTablesAreSelectable():   Boolean = false
@@ -3876,9 +3882,32 @@ object DatabaseMetaData:
     override def supportsDataManipulationTransactionsOnly():              Boolean = false
     override def dataDefinitionCausesTransactionCommit():                 Boolean = true
     override def dataDefinitionIgnoredInTransactions():                   Boolean = false
+    override def ownUpdatesAreVisible(`type`: Int): Boolean = false
+    override def ownDeletesAreVisible(`type`: Int): Boolean = false
+    override def ownInsertsAreVisible(`type`: Int): Boolean = false
+    override def othersUpdatesAreVisible(`type`: Int): Boolean = false
+    override def othersDeletesAreVisible(`type`: Int): Boolean = false
+    override def othersInsertsAreVisible(`type`: Int): Boolean = false
+    override def updatesAreDetected(`type`: Int): Boolean = false
+    override def deletesAreDetected(`type`: Int): Boolean = false
+    override def insertsAreDetected(`type`: Int): Boolean = false
+    override def supportsBatchUpdates(): Boolean = true
+    override def supportsSavepoints(): Boolean = true
+    override def supportsNamedParameters(): Boolean = false
+    override def supportsMultipleOpenResults(): Boolean = true
+    override def supportsGetGeneratedKeys(): Boolean = true
+    override def getResultSetHoldability(): Int = ResultSet.HOLD_CURSORS_OVER_COMMIT
+    override def getJDBCMajorVersion(): Int = Constants.DRIVER_VERSION.major
+    override def getJDBCMinorVersion(): Int = Constants.DRIVER_VERSION.minor
+    override def getSQLStateType(): Int = sqlStateSQL99
+    override def supportsStatementPooling(): Boolean = false
+    override def getRowIdLifetime(): RowIdLifetime = RowIdLifetime.ROWID_UNSUPPORTED
+    override def supportsStoredFunctionsUsingCallSyntax(): Boolean = true
+    override def autoCommitFailureClosesAllResultSets(): Boolean = false
+    override def generatedKeyAlwaysReturned(): Boolean = true
   end StaticDatabaseMetaData
 
-  private[ldbc] open class Impl[F[_]: Temporal: Exchange: Tracer](
+  private[ldbc] case class Impl[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
     database:                      Option[String]       = None,
@@ -5083,129 +5112,6 @@ object DatabaseMetaData:
     def supportsResultSetConcurrency(`type`: Int, concurrency: Int): Boolean = ???
 
     /**
-     * Retrieves whether for the given type of <code>ResultSet</code> object,
-     * the result set's own updates are visible.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     */
-    def ownUpdatesAreVisible(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether a result set's own deletes are visible.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if deletes are visible for the given result set type;
-     *         <code>false</code> otherwise
-     */
-    def ownDeletesAreVisible(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether a result set's own inserts are visible.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if inserts are visible for the given result set type;
-     *         <code>false</code> otherwise
-     */
-    def ownInsertsAreVisible(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether updates made by others are visible.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if updates made by others
-     *         are visible for the given result set type;
-     *         <code>false</code> otherwise
-     */
-    def othersUpdatesAreVisible(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether deletes made by others are visible.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if deletes made by others
-     *         are visible for the given result set type;
-     *         <code>false</code> otherwise
-     */
-    def othersDeletesAreVisible(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether inserts made by others are visible.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if inserts made by others
-     *         are visible for the given result set type;
-     *         <code>false</code> otherwise
-     */
-    def othersInsertsAreVisible(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether or not a visible row update can be detected by
-     * calling the method <code>ResultSet.rowUpdated</code>.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if changes are detected by the result set type;
-     *         <code>false</code> otherwise
-     */
-    def updatesAreDetected(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether or not a visible row delete can be detected by
-     * calling the method <code>ResultSet.rowDeleted</code>.  If the method
-     * <code>deletesAreDetected</code> returns <code>false</code>, it means that
-     * deleted rows are removed from the result set.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if deletes are detected by the given result set type;
-     *         <code>false</code> otherwise
-     */
-    def deletesAreDetected(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether or not a visible row insert can be detected
-     * by calling the method <code>ResultSet.rowInserted</code>.
-     *
-     * @param type the <code>ResultSet</code> type; one of
-     *             <code>ResultSet.TYPE_FORWARD_ONLY</code>,
-     *             <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
-     *             <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
-     * @return <code>true</code> if changes are detected by the specified result
-     *         set type; <code>false</code> otherwise
-     */
-    def insertsAreDetected(`type`: Int): Boolean = ???
-
-    /**
-     * Retrieves whether this database supports batch updates.
-     *
-     * @return <code>true</code> if this database supports batch updates;
-     *         <code>false</code> otherwise
-     */
-    def supportsBatchUpdates(): Boolean = ???
-
-    /**
      * Retrieves a description of the user-defined types (UDTs) defined
      * in a particular schema.  Schema-specific UDTs may have type
      * <code>JAVA_OBJECT</code>, <code>STRUCT</code>,
@@ -5259,45 +5165,6 @@ object DatabaseMetaData:
      * @return the connection that produced this metadata object
      */
     def getConnection(): Connection[F] = ???
-
-    /**
-     * Retrieves whether this database supports savepoints.
-     *
-     * @return <code>true</code> if savepoints are supported;
-     *         <code>false</code> otherwise
-     */
-    def supportsSavepoints(): Boolean = ???
-
-    /**
-     * Retrieves whether this database supports named parameters to callable
-     * statements.
-     *
-     * @return <code>true</code> if named parameters are supported;
-     *         <code>false</code> otherwise
-     */
-    def supportsNamedParameters(): Boolean = ???
-
-    /**
-     * Retrieves whether it is possible to have multiple <code>ResultSet</code> objects
-     * returned from a <code>CallableStatement</code> object
-     * simultaneously.
-     *
-     * @return <code>true</code> if a <code>CallableStatement</code> object
-     *         can return multiple <code>ResultSet</code> objects
-     *         simultaneously; <code>false</code> otherwise
-     */
-    def supportsMultipleOpenResults(): Boolean = ???
-
-    /**
-     * Retrieves whether auto-generated keys can be retrieved after
-     * a statement has been executed
-     *
-     * @return <code>true</code> if auto-generated keys can be retrieved
-     *         after a statement has executed; <code>false</code> otherwise
-     *         <p>If <code>true</code> is returned, the JDBC driver must support the
-     *         returning of auto-generated keys for at least SQL INSERT statements
-     */
-    def supportsGetGeneratedKeys(): Boolean = ???
 
     /**
      * Retrieves a description of the user-defined type (UDT) hierarchies defined in a
@@ -5465,55 +5332,8 @@ object DatabaseMetaData:
      */
     def supportsResultSetHoldability(holdability: Int): Boolean = ???
 
-    /**
-     * Retrieves this database's default holdability for <code>ResultSet</code>
-     * objects.
-     *
-     * @return the default holdability; either
-     *         <code>ResultSet.HOLD_CURSORS_OVER_COMMIT</code> or
-     *         <code>ResultSet.CLOSE_CURSORS_AT_COMMIT</code>
-     */
-    def getResultSetHoldability(): Int = ???
-
-    /**
-     * Retrieves the major version number of the underlying database.
-     *
-     * @return the underlying database's major version
-     */
-    def getDatabaseMajorVersion(): Int = ???
-
-    /**
-     * Retrieves the minor version number of the underlying database.
-     *
-     * @return underlying database's minor version
-     */
-    def getDatabaseMinorVersion(): Int = ???
-
-    /**
-     * Retrieves the major JDBC version number for this
-     * driver.
-     *
-     * @return JDBC version major number
-     */
-    def getJDBCMajorVersion(): Int = ???
-
-    /**
-     * Retrieves the minor JDBC version number for this
-     * driver.
-     *
-     * @return JDBC version minor number
-     */
-    def getJDBCMinorVersion(): Int = ???
-
-    /**
-     * Indicates whether the SQLSTATE returned by <code>SQLException.getSQLState</code>
-     * is X/Open (now known as Open Group) SQL CLI or SQL:2003.
-     *
-     * @return the type of SQLSTATE; one of:
-     *         sqlStateXOpen or
-     *         sqlStateSQL
-     */
-    def getSQLStateType(): Int = ???
+    override def getDatabaseMajorVersion(): Int = protocol.initialPacket.serverVersion.major
+    override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
 
     /**
      * Indicates whether updates made to a LOB are made on a copy or directly
@@ -5523,21 +5343,6 @@ object DatabaseMetaData:
      *         <code>false</code> if updates are made directly to the LOB
      */
     def locatorsUpdateCopy(): Boolean = ???
-
-    /**
-     * Retrieves whether this database supports statement pooling.
-     *
-     * @return <code>true</code> if so; <code>false</code> otherwise
-     */
-    def supportsStatementPooling(): Boolean = ???
-
-    /**
-     * Indicates whether this data source supports the SQL {@code ROWID} type,
-     * and the lifetime for which a {@link RowId} object remains valid.
-     *
-     * @return the status indicating the lifetime of a {@code RowId}
-     */
-    def getRowIdLifetime(): RowIdLifetime = ???
 
     def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
       (if databaseTerm.contains(DatabaseTerm.SCHEMA) then getDatabases(schemaPattern)
@@ -5561,25 +5366,6 @@ object DatabaseMetaData:
           resultSetCurrentRow
         )
       }
-
-    /**
-     * Retrieves whether this database supports invoking user-defined or vendor functions
-     * using the stored procedure escape syntax.
-     *
-     * @return <code>true</code> if so; <code>false</code> otherwise
-     */
-    def supportsStoredFunctionsUsingCallSyntax(): Boolean = ???
-
-    /**
-     * Retrieves whether a <code>SQLException</code> while autoCommit is <code>true</code> indicates
-     * that all open ResultSets are closed, even ones that are holdable.  When a <code>SQLException</code> occurs while
-     * autocommit is <code>true</code>, it is vendor specific whether the JDBC driver responds with a commit operation, a
-     * rollback operation, or by doing neither a commit nor a rollback.  A potential result of this difference
-     * is in whether or not holdable ResultSets are closed.
-     *
-     * @return <code>true</code> if so; <code>false</code> otherwise
-     */
-    def autoCommitFailureClosesAllResultSets(): Boolean = ???
 
     /**
      * Retrieves a list of the client info properties
@@ -5811,17 +5597,6 @@ object DatabaseMetaData:
       tableNamePattern:  String,
       columnNamePattern: String
     ): ResultSet[F] = ???
-
-    /**
-     * Retrieves whether a generated key will always be returned if the column
-     * name(s) or index(es) specified for the auto generated key column(s)
-     * are valid and the statement succeeds.  The key that is returned may or
-     * may not be based on the column(s) for the auto generated key.
-     * Consult your JDBC driver documentation for additional details.
-     *
-     * @return <code>true</code> if so; <code>false</code> otherwise
-     */
-    def generatedKeyAlwaysReturned(): Boolean = ???
 
     protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
       (databaseTerm, catalog, schema) match
