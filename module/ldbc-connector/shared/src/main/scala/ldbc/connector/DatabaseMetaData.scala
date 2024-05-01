@@ -2007,7 +2007,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is an SQL
    *         type description
    */
-  def getTypeInfo(): ResultSet[F]
+  def getTypeInfo(): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given table's indices and statistics. They are
@@ -5118,69 +5118,71 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of all the data types supported by
-     * this database. They are ordered by DATA_TYPE and then by how
-     * closely the data type maps to the corresponding JDBC SQL type.
-     *
-     * <P>If the database supports SQL distinct types, then getTypeInfo() will return
-     * a single row with a TYPE_NAME of DISTINCT and a DATA_TYPE of Types.DISTINCT.
-     * If the database supports SQL structured types, then getTypeInfo() will return
-     * a single row with a TYPE_NAME of STRUCT and a DATA_TYPE of Types.STRUCT.
-     *
-     * <P>If SQL distinct or structured types are supported, then information on the
-     * individual types may be obtained from the getUDTs() method.
-     *
-     *
-     * <P>Each type description has the following columns:
-     * <OL>
-     * <LI><B>TYPE_NAME</B> String {@code =>} Type name
-     * <LI><B>DATA_TYPE</B> int {@code =>} SQL data type from java.sql.Types
-     * <LI><B>PRECISION</B> int {@code =>} maximum precision
-     * <LI><B>LITERAL_PREFIX</B> String {@code =>} prefix used to quote a literal
-     * (may be <code>null</code>)
-     * <LI><B>LITERAL_SUFFIX</B> String {@code =>} suffix used to quote a literal
-     * (may be <code>null</code>)
-     * <LI><B>CREATE_PARAMS</B> String {@code =>} parameters used in creating
-     * the type (may be <code>null</code>)
-     * <LI><B>NULLABLE</B> short {@code =>} can you use NULL for this type.
-     * <UL>
-     * <LI> typeNoNulls - does not allow NULL values
-     * <LI> typeNullable - allows NULL values
-     * <LI> typeNullableUnknown - nullability unknown
-     * </UL>
-     * <LI><B>CASE_SENSITIVE</B> boolean{@code =>} is it case sensitive.
-     * <LI><B>SEARCHABLE</B> short {@code =>} can you use "WHERE" based on this type:
-     * <UL>
-     * <LI> typePredNone - No support
-     * <LI> typePredChar - Only supported with WHERE .. LIKE
-     * <LI> typePredBasic - Supported except for WHERE .. LIKE
-     * <LI> typeSearchable - Supported for all WHERE ..
-     * </UL>
-     * <LI><B>UNSIGNED_ATTRIBUTE</B> boolean {@code =>} is it unsigned.
-     * <LI><B>FIXED_PREC_SCALE</B> boolean {@code =>} can it be a money value.
-     * <LI><B>AUTO_INCREMENT</B> boolean {@code =>} can it be used for an
-     * auto-increment value.
-     * <LI><B>LOCAL_TYPE_NAME</B> String {@code =>} localized version of type name
-     * (may be <code>null</code>)
-     * <LI><B>MINIMUM_SCALE</B> short {@code =>} minimum scale supported
-     * <LI><B>MAXIMUM_SCALE</B> short {@code =>} maximum scale supported
-     * <LI><B>SQL_DATA_TYPE</B> int {@code =>} unused
-     * <LI><B>SQL_DATETIME_SUB</B> int {@code =>} unused
-     * <LI><B>NUM_PREC_RADIX</B> int {@code =>} usually 2 or 10
-     * </OL>
-     *
-     * <p>The PRECISION column represents the maximum column size that the server supports for the given datatype.
-     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.
-     * For datetime datatypes, this is the length in characters of the String representation (assuming the
-     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,
-     * this is the length in bytes. Null is returned for data types where the
-     * column size is not applicable.
-     *
-     * @return a <code>ResultSet</code> object in which each row is an SQL
-     *         type description
-     */
-    def getTypeInfo(): ResultSet[F] = ???
+    override def getTypeInfo(): F[ResultSet[F]] =
+      for
+        isResultSetClosed      <- Ref[F].of(false)
+        resultSetCurrentCursor <- Ref[F].of(0)
+        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+      yield
+        val types = Vector(
+          ResultSetRowPacket(getTypeInfo("BIT")),
+          ResultSetRowPacket(getTypeInfo("TINYINT")),
+          ResultSetRowPacket(getTypeInfo("TINYINT UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("BIGINT")),
+          ResultSetRowPacket(getTypeInfo("BIGINT UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("LONG VARBINARY")),
+          ResultSetRowPacket(getTypeInfo("MEDIUMBLOB")),
+          ResultSetRowPacket(getTypeInfo("LONGBLOB")),
+          ResultSetRowPacket(getTypeInfo("BLOB")),
+          ResultSetRowPacket(getTypeInfo("VARBINARY")),
+          ResultSetRowPacket(getTypeInfo("TINYBLOB")),
+          ResultSetRowPacket(getTypeInfo("BINARY")),
+          ResultSetRowPacket(getTypeInfo("LONG VARCHAR")),
+          ResultSetRowPacket(getTypeInfo("MEDIUMTEXT")),
+          ResultSetRowPacket(getTypeInfo("LONGTEXT")),
+          ResultSetRowPacket(getTypeInfo("TEXT")),
+          ResultSetRowPacket(getTypeInfo("CHAR")),
+          ResultSetRowPacket(getTypeInfo("ENUM")),
+          ResultSetRowPacket(getTypeInfo("SET")),
+          ResultSetRowPacket(getTypeInfo("DECIMAL")),
+          ResultSetRowPacket(getTypeInfo("NUMERIC")),
+          ResultSetRowPacket(getTypeInfo("INTEGER")),
+          ResultSetRowPacket(getTypeInfo("INT")),
+          ResultSetRowPacket(getTypeInfo("MEDIUMINT")),
+          ResultSetRowPacket(getTypeInfo("INTEGER UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("INT UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("MEDIUMINT UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("SMALLINT")),
+          ResultSetRowPacket(getTypeInfo("SMALLINT UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("YEAR")),
+          ResultSetRowPacket(getTypeInfo("FLOAT")),
+          ResultSetRowPacket(getTypeInfo("DOUBLE")),
+          ResultSetRowPacket(getTypeInfo("DOUBLE PRECISION")),
+          ResultSetRowPacket(getTypeInfo("REAL")),
+          ResultSetRowPacket(getTypeInfo("DOUBLE UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("DOUBLE PRECISION UNSIGNED")),
+          ResultSetRowPacket(getTypeInfo("VARCHAR")),
+          ResultSetRowPacket(getTypeInfo("TINYTEXT")),
+          ResultSetRowPacket(getTypeInfo("BOOL")),
+          ResultSetRowPacket(getTypeInfo("DATE")),
+          ResultSetRowPacket(getTypeInfo("TIME")),
+          ResultSetRowPacket(getTypeInfo("DATETIME")),
+          ResultSetRowPacket(getTypeInfo("TIMESTAMP")),
+        )
+        ResultSet(
+          Vector("TYPE_NAME", "DATA_TYPE", "PRECISION", "LITERAL_PREFIX", "LITERAL_SUFFIX", "CREATE_PARAMS", "NULLABLE", "CASE_SENSITIVE", "SEARCHABLE", "UNSIGNED_ATTRIBUTE", "FIXED_PREC_SCALE", "AUTO_INCREMENT", "LOCAL_TYPE_NAME", "MINIMUM_SCALE", "MAXIMUM_SCALE", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "NUM_PREC_RADIX").map { value =>
+            new ColumnDefinitionPacket:
+              override def table: String = ""
+              override def name: String = value
+              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          types,
+          protocol.initialPacket.serverVersion,
+          isResultSetClosed,
+          resultSetCurrentCursor,
+          resultSetCurrentRow
+        )
 
     /**
      * Retrieves a description of the given table's indices and statistics. They are
@@ -5871,6 +5873,47 @@ object DatabaseMetaData:
     private def generateOptionalRefContraintsJoin(): String =
       "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
         + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) "
+
+    private def getTypeInfo(mysqlTypeName: String): List[Option[String]] =
+      val mysqlType = MysqlType.getByName(mysqlTypeName)
+
+      List(
+        Some(mysqlTypeName), // TYPE_NAME
+        if mysqlType == MysqlType.YEAR && !yearIsDateType then Some(Types.SMALLINT.toString) else Some(mysqlType.jdbcType.toString), // DATA_TYPE
+        if mysqlType.precision > Int.MaxValue then Some(Int.MaxValue.toString) else Some(mysqlType.precision.toString), // PRECISION
+      ) ++ (
+        // LITERAL_PREFIX, LITERAL_SUFFIX
+        mysqlType match
+          case MysqlType.TINYBLOB | MysqlType.BLOB | MysqlType.MEDIUMBLOB | MysqlType.LONGBLOB | MysqlType.TINYTEXT | MysqlType.TEXT | MysqlType.MEDIUMTEXT | MysqlType.LONGTEXT | MysqlType.JSON | MysqlType.BINARY | MysqlType.VARBINARY | MysqlType.CHAR | MysqlType.VARCHAR | MysqlType.ENUM | MysqlType.SET | MysqlType.DATE | MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.UNKNOWN =>
+            List(Some("'"), Some("'"))
+          case _ => List(Some(""), Some(""))
+      ) ++ List(
+        Some(mysqlType.createParams), // CREATE_PARAMS
+        Some(typeNullable.toString), // NULLABLE
+        Some("true"), // CASE_SENSITIVE
+        Some(typeSearchable.toString), // SEARCHABLE
+        if (mysqlType.allowedFlags & MysqlTypeVariables.FIELD_FLAG_UNSIGNED) > 0 then Some("true") else Some("false"), // UNSIGNED_ATTRIBUTE
+        Some("false"), // FIXED_PREC_SCALE
+        (
+          mysqlType match
+            case MysqlType.BIGINT | MysqlType.BIGINT_UNSIGNED | MysqlType.BOOLEAN | MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED | MysqlType.INT | MysqlType.INT_UNSIGNED | MysqlType.MEDIUMINT | MysqlType.MEDIUMINT_UNSIGNED | MysqlType.SMALLINT | MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
+              Some("true")
+            case _ => Some("false")
+        ), // AUTO_INCREMENT
+        Some(mysqlType.name) // LOCAL_TYPE_NAME
+      ) ++ (
+        // MINIMUM_SCALE, MAXIMUM_SCALE
+        mysqlType match
+          case MysqlType.DECIMAL | MysqlType.DECIMAL_UNSIGNED | MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED =>
+            List(Some("-308"), Some("308"))
+          case MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED =>
+            List(Some("-38"), Some("38"))
+          case _ => List(Some("0"), Some("0"))
+      ) ++ List(
+        Some("0"), // SQL_DATA_TYPE
+        Some("0"), // SQL_DATETIME_SUB
+        Some("10") // NUM_PREC_RADIX
+      )
 
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
