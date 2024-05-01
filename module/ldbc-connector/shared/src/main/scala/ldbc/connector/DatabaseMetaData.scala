@@ -1524,7 +1524,10 @@ trait DatabaseMetaData[F[_]]:
    *        table name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a table privilege description
    */
-  def getTablePrivileges(catalog: String, schemaPattern: String, tableNamePattern: String): ResultSet[F]
+  def getTablePrivileges(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet[F]] =
+    getTablePrivileges(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
+
+  def getTablePrivileges(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]]
 
   /**
    * Retrieves a description of a table's optimal set of columns that
@@ -4691,45 +4694,39 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the access rights for each table available
-     * in a catalog. Note that a table privilege applies to one or
-     * more columns in the table. It would be wrong to assume that
-     * this privilege applies to all columns (this may be true for
-     * some systems but is not true for all.)
-     *
-     * <P>Only privileges matching the schema and table name
-     * criteria are returned.  They are ordered by
-     * <code>TABLE_CAT</code>,
-     * <code>TABLE_SCHEM</code>, <code>TABLE_NAME</code>,
-     * and <code>PRIVILEGE</code>.
-     *
-     * <P>Each privilege description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} table catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} table schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} table name
-     * <LI><B>GRANTOR</B> String {@code =>} grantor of access (may be <code>null</code>)
-     * <LI><B>GRANTEE</B> String {@code =>} grantee of access
-     * <LI><B>PRIVILEGE</B> String {@code =>} name of access (SELECT,
-     * INSERT, UPDATE, REFERENCES, ...)
-     * <LI><B>IS_GRANTABLE</B> String {@code =>} "YES" if grantee is permitted
-     * to grant to others; "NO" if not; <code>null</code> if unknown
-     * </OL>
-     *
-     * @param catalog          a catalog name; must match the catalog name as it
-     *                         is stored in the database; "" retrieves those without a catalog;
-     *                         <code>null</code> means that the catalog name should not be used to narrow
-     *                         the search
-     * @param schemaPattern    a schema name pattern; must match the schema name
-     *                         as it is stored in the database; "" retrieves those without a schema;
-     *                         <code>null</code> means that the schema name should not be used to narrow
-     *                         the search
-     * @param tableNamePattern a table name pattern; must match the
-     *                         table name as it is stored in the database
-     * @return <code>ResultSet</code> - each row is a table privilege description
-     */
-    def getTablePrivileges(catalog: String, schemaPattern: String, tableNamePattern: String): ResultSet[F] = ???
+    override def getTablePrivileges(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schemaPattern)
+
+      val sqlBuf = new StringBuilder("SELECT db AS TABLE_SCHEM, table_name AS TABLE_NAME, grantor AS GRANTOR, CONCAT(user, '@', host) AS GRANTEE, table_priv AS PRIVILEGE FROM mysql.tables_priv")
+
+      val conditionBuf = new StringBuilder()
+
+      if db.nonEmpty then
+        conditionBuf.append(if databaseTerm.contains(DatabaseTerm.SCHEMA) then " db LIKE ?" else " db = ?")
+      end if
+
+      if tableNamePattern.nonEmpty then
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+        end if
+        conditionBuf.append(" table_name LIKE ?")
+      end if
+
+      if conditionBuf.nonEmpty then
+        sqlBuf.append(" WHERE")
+        sqlBuf.append(conditionBuf)
+      end if
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, tableNamePattern) match
+          case (Some(dbValue), Some(tableName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
+          case (Some(dbValue), None)       => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableName))      => preparedStatement.setString(1, tableName)
+          case _                           => ev.unit
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of a table's optimal set of columns that
