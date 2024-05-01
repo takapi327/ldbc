@@ -629,6 +629,18 @@ object ResultSet:
    */
   val CONCUR_UPDATABLE: Int = 1008
 
+  /**
+   * The constant indicating that open <code>ResultSet</code> objects with this
+   * holdability will remain open when the current transaction is committed.
+   */
+  val HOLD_CURSORS_OVER_COMMIT: Int = 1
+
+  /**
+   * The constant indicating that open <code>ResultSet</code> objects with this
+   * holdability will be closed when the current transaction is committed.
+   */
+  val CLOSE_CURSORS_AT_COMMIT: Int = 2
+
   private[ldbc] case class Impl[F[_]](
     columns:              Vector[ColumnDefinitionPacket],
     records:              Vector[ResultSetRowPacket],
