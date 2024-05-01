@@ -2271,7 +2271,10 @@ trait DatabaseMetaData[F[_]]:
    *        STRUCT, or DISTINCT) to include; <code>null</code> returns all types
    * @return <code>ResultSet</code> object in which each row describes a UDT
    */
-  def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): ResultSet[F]
+  def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): F[ResultSet[F]] =
+    getUDTs(Some(catalog), Some(schemaPattern), Some(typeNamePattern), types)
+
+  def getUDTs(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String], types: Array[Int]): F[ResultSet[F]]
 
   /**
    * Retrieves the connection that produced this metadata object.
@@ -5269,53 +5272,33 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the user-defined types (UDTs) defined
-     * in a particular schema.  Schema-specific UDTs may have type
-     * <code>JAVA_OBJECT</code>, <code>STRUCT</code>,
-     * or <code>DISTINCT</code>.
-     *
-     * <P>Only types matching the catalog, schema, type name and type
-     * criteria are returned.  They are ordered by <code>DATA_TYPE</code>,
-     * <code>TYPE_CAT</code>, <code>TYPE_SCHEM</code>  and
-     * <code>TYPE_NAME</code>.  The type name parameter may be a fully-qualified
-     * name.  In this case, the catalog and schemaPattern parameters are
-     * ignored.
-     *
-     * <P>Each type description has the following columns:
-     * <OL>
-     * <LI><B>TYPE_CAT</B> String {@code =>} the type's catalog (may be <code>null</code>)
-     * <LI><B>TYPE_SCHEM</B> String {@code =>} type's schema (may be <code>null</code>)
-     * <LI><B>TYPE_NAME</B> String {@code =>} type name
-     * <LI><B>CLASS_NAME</B> String {@code =>} Java class name
-     * <LI><B>DATA_TYPE</B> int {@code =>} type value defined in java.sql.Types.
-     * One of JAVA_OBJECT, STRUCT, or DISTINCT
-     * <LI><B>REMARKS</B> String {@code =>} explanatory comment on the type
-     * <LI><B>BASE_TYPE</B> short {@code =>} type code of the source type of a
-     * DISTINCT type or the type that implements the user-generated
-     * reference type of the SELF_REFERENCING_COLUMN of a structured
-     * type as defined in java.sql.Types (<code>null</code> if DATA_TYPE is not
-     * DISTINCT or not STRUCT with REFERENCE_GENERATION = USER_DEFINED)
-     * </OL>
-     *
-     * <P><B>Note:</B> If the driver does not support UDTs, an empty
-     * result set is returned.
-     *
-     * @param catalog         a catalog name; must match the catalog name as it
-     *                        is stored in the database; "" retrieves those without a catalog;
-     *                        <code>null</code> means that the catalog name should not be used to narrow
-     *                        the search
-     * @param schemaPattern   a schema pattern name; must match the schema name
-     *                        as it is stored in the database; "" retrieves those without a schema;
-     *                        <code>null</code> means that the schema name should not be used to narrow
-     *                        the search
-     * @param typeNamePattern a type name pattern; must match the type name
-     *                        as it is stored in the database; may be a fully qualified name
-     * @param types           a list of user-defined types (JAVA_OBJECT,
-     *                        STRUCT, or DISTINCT) to include; <code>null</code> returns all types
-     * @return <code>ResultSet</code> object in which each row describes a UDT
-     */
-    def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): ResultSet[F] = ???
+    override def getUDTs(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String], types: Array[Int]): F[ResultSet[F]] =
+      for
+        isResultSetClosed      <- Ref[F].of(false)
+        resultSetCurrentCursor <- Ref[F].of(0)
+        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+      yield ResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "CLASS_NAME",
+          "DATA_TYPE",
+          "REMARKS",
+          "BASE_TYPE"
+        ).map { value =>
+          new ColumnDefinitionPacket:
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+        },
+        Vector.empty,
+        protocol.initialPacket.serverVersion,
+        isResultSetClosed,
+        resultSetCurrentCursor,
+        resultSetCurrentRow
+      )
 
     /**
      * Retrieves the connection that produced this metadata object.
