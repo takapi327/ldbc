@@ -2493,7 +2493,8 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is a
    *         schema description
    */
-  def getSchemas(catalog: String, schemaPattern: String): F[ResultSet[F]] = getSchemas(Some(catalog), Some(schemaPattern))
+  def getSchemas(catalog: String, schemaPattern: String): F[ResultSet[F]] =
+    getSchemas(Some(catalog), Some(schemaPattern))
 
   def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]]
 
@@ -5538,9 +5539,8 @@ object DatabaseMetaData:
     def getRowIdLifetime(): RowIdLifetime = ???
 
     def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
-      (if databaseTerm.contains(DatabaseTerm.SCHEMA) then
-        getDatabases(schemaPattern)
-      else ev.pure(List.empty[String])).flatMap { dbList =>
+      (if databaseTerm.contains(DatabaseTerm.SCHEMA) then getDatabases(schemaPattern)
+       else ev.pure(List.empty[String])).flatMap { dbList =>
         ???
       }
 
