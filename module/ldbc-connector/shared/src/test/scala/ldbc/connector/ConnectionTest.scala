@@ -1201,8 +1201,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      // ssl          = SSL.Trusted
-      allowPublicKeyRetrieval = true,
+      ssl          = SSL.Trusted,
       databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
@@ -1226,6 +1225,43 @@ class ConnectionTest extends CatsEffectSuite:
       },
       Vector(
         "Table Cat: None, Table Schem: Some(connector_test), Table Name: Some(privileges_table), Grantor: Some(root@localhost), Grantee: Some(ldbc@%), Privilege: Some(Select,Insert), Is Grantable: None"
+      )
+    )
+  }
+
+  test("The result of retrieving best row identifier privileges information matches the specified value.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      // ssl          = SSL.Trusted
+      allowPublicKeyRetrieval = true,
+      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getBestRowIdentifier(None, Some("connector_test"), "privileges_table", None, None)
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              scope <- resultSet.getShort("SCOPE")
+              columnName <- resultSet.getString("COLUMN_NAME")
+              dataType <- resultSet.getInt("DATA_TYPE")
+              typeName <- resultSet.getString("TYPE_NAME")
+              columnSize <- resultSet.getInt("COLUMN_SIZE")
+              bufferLength <- resultSet.getInt("BUFFER_LENGTH")
+              decimalDigits <- resultSet.getShort("DECIMAL_DIGITS")
+              pseudoColumn <- resultSet.getShort("PSEUDO_COLUMN")
+            yield s"Scope: $scope, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Pseudo Column: $pseudoColumn"
+          }
+        yield values
+      },
+      Vector(
+        "Scope: 2, Column Name: Some(c1), Data Type: 4, Type Name: Some(int), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }
