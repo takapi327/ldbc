@@ -1527,7 +1527,11 @@ trait DatabaseMetaData[F[_]]:
   def getTablePrivileges(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet[F]] =
     getTablePrivileges(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
 
-  def getTablePrivileges(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]]
+  def getTablePrivileges(
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of a table's optimal set of columns that
@@ -4694,11 +4698,17 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    override def getTablePrivileges(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]] =
+    override def getTablePrivileges(
+      catalog:          Option[String],
+      schemaPattern:    Option[String],
+      tableNamePattern: Option[String]
+    ): F[ResultSet[F]] =
 
       val db = getDatabase(catalog, schemaPattern)
 
-      val sqlBuf = new StringBuilder("SELECT db AS TABLE_SCHEM, table_name AS TABLE_NAME, grantor AS GRANTOR, CONCAT(user, '@', host) AS GRANTEE, table_priv AS PRIVILEGE FROM mysql.tables_priv")
+      val sqlBuf = new StringBuilder(
+        "SELECT db AS TABLE_SCHEM, table_name AS TABLE_NAME, grantor AS GRANTOR, CONCAT(user, '@', host) AS GRANTEE, table_priv AS PRIVILEGE FROM mysql.tables_priv"
+      )
 
       val conditionBuf = new StringBuilder()
 
@@ -4721,9 +4731,9 @@ object DatabaseMetaData:
         val setting = (db, tableNamePattern) match
           case (Some(dbValue), Some(tableName)) =>
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
-          case (Some(dbValue), None)       => preparedStatement.setString(1, dbValue)
-          case (None, Some(tableName))      => preparedStatement.setString(1, tableName)
-          case _                           => ev.unit
+          case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
+          case _                       => ev.unit
 
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
