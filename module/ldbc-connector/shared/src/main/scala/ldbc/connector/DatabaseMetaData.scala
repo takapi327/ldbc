@@ -2274,7 +2274,12 @@ trait DatabaseMetaData[F[_]]:
   def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): F[ResultSet[F]] =
     getUDTs(Some(catalog), Some(schemaPattern), Some(typeNamePattern), types)
 
-  def getUDTs(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String], types: Array[Int]): F[ResultSet[F]]
+  def getUDTs(
+    catalog:         Option[String],
+    schemaPattern:   Option[String],
+    typeNamePattern: Option[String],
+    types:           Array[Int]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves the connection that produced this metadata object.
@@ -5272,7 +5277,12 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    override def getUDTs(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String], types: Array[Int]): F[ResultSet[F]] =
+    override def getUDTs(
+      catalog:         Option[String],
+      schemaPattern:   Option[String],
+      typeNamePattern: Option[String],
+      types:           Array[Int]
+    ): F[ResultSet[F]] =
       for
         isResultSetClosed      <- Ref[F].of(false)
         resultSetCurrentCursor <- Ref[F].of(0)
