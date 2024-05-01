@@ -1341,7 +1341,8 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      ssl      = SSL.Trusted databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+      ssl      = SSL.Trusted,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
     assertIO(
@@ -1371,6 +1372,48 @@ class ConnectionTest extends CatsEffectSuite:
       },
       Vector(
         "PK Table Cat: Some(def), PK Table Schem: Some(world), PK Table Name: Some(country), PK Column Name: Some(Code), FK Table Cat: Some(def), FK Table Schem: Some(world), FK Table Name: Some(city), FK Column Name: Some(CountryCode), Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: Some(city_ibfk_1), PK Name: Some(PRIMARY), Deferrability: 7"
+      )
+    )
+  }
+
+  test("The result of retrieving exported key information matches the specified value.") {
+    val connection = Connection[IO](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl = SSL.Trusted,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData <- conn.getMetaData()
+          resultSet <- metaData.getExportedKeys(None, Some("world"), "city")
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              pktableCat <- resultSet.getString("PKTABLE_CAT")
+              pktableSchem <- resultSet.getString("PKTABLE_SCHEM")
+              pktableName <- resultSet.getString("PKTABLE_NAME")
+              pkcolumnName <- resultSet.getString("PKCOLUMN_NAME")
+              fktableCat <- resultSet.getString("FKTABLE_CAT")
+              fktableSchem <- resultSet.getString("FKTABLE_SCHEM")
+              fktableName <- resultSet.getString("FKTABLE_NAME")
+              fkcolumnName <- resultSet.getString("FKCOLUMN_NAME")
+              keySeq <- resultSet.getShort("KEY_SEQ")
+              updateRule <- resultSet.getShort("UPDATE_RULE")
+              deleteRule <- resultSet.getShort("DELETE_RULE")
+              fkName <- resultSet.getString("FK_NAME")
+              pkName <- resultSet.getString("PK_NAME")
+              deferrability <- resultSet.getShort("DEFERRABILITY")
+            yield s"PK Table Cat: $pktableCat, PK Table Schem: $pktableSchem, PK Table Name: $pktableName, PK Column Name: $pkcolumnName, FK Table Cat: $fktableCat, FK Table Schem: $fktableSchem, FK Table Name: $fktableName, FK Column Name: $fkcolumnName, Key Seq: $keySeq, Update Rule: $updateRule, Delete Rule: $deleteRule, FK Name: $fkName, PK Name: $pkName, Deferrability: $deferrability"
+          }
+        yield values
+      },
+      Vector(
+        "PK Table Cat: Some(def), PK Table Schem: Some(world), PK Table Name: Some(city), PK Column Name: Some(ID), FK Table Cat: Some(def), FK Table Schem: Some(world), FK Table Name: Some(government_office), FK Column Name: Some(CityID), Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: Some(government_office_ibfk_1), PK Name: Some(PRIMARY), Deferrability: 7"
       )
     )
   }
