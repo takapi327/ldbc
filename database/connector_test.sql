@@ -191,7 +191,8 @@ delimiter ;
 
 CREATE TABLE `privileges_table` (
   `c1` INT NOT NULL PRIMARY KEY,
-  `c2` INT NOT NULL
+  `c2` INT NOT NULL,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 GRANT SELECT, INSERT ON `connector_test`.`privileges_table` TO 'ldbc'@'%';
