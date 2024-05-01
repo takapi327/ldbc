@@ -1337,7 +1337,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row has a
    *         single <code>String</code> column that is a table type
    */
-  def getTableTypes(): ResultSet[F]
+  def getTableTypes(): F[ResultSet[F]]
 
   /**
    * Retrieves a description of table columns available in
@@ -3923,6 +3923,16 @@ object DatabaseMetaData:
       case FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT,
         FUNCTION_COLUMN_RETURN, FUNCTION_COLUMN_RESULT, FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN
 
+    private enum TableType(val name: String):
+      case LOCAL_TEMPORARY extends TableType("LOCAL TEMPORARY")
+      case SYSTEM_TABLE extends TableType("SYSTEM TABLE")
+      case SYSTEM_VIEW extends TableType("SYSTEM VIEW")
+      case TABLE extends TableType("TABLE")
+      case VIEW extends TableType("VIEW")
+      case UNKNOWN extends TableType("UNKNOWN")
+
+      override def toString: String = name
+
     override def getURL(): String = protocol.hostInfo.url
 
     override def getUserName(): F[String] =
@@ -4410,21 +4420,25 @@ object DatabaseMetaData:
         )
       }
 
-    /**
-     * Retrieves the table types available in this database.  The results
-     * are ordered by table type.
-     *
-     * <P>The table type is:
-     * <OL>
-     * <LI><B>TABLE_TYPE</B> String {@code =>} table type.  Typical types are "TABLE",
-     * "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY",
-     * "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-     * </OL>
-     *
-     * @return a <code>ResultSet</code> object in which each row has a
-     *         single <code>String</code> column that is a table type
-     */
-    def getTableTypes(): ResultSet[F] = ???
+    override def getTableTypes(): F[ResultSet[F]] =
+      for
+        isResultSetClosed <- Ref[F].of(false)
+        resultSetCurrentCursor <- Ref[F].of(0)
+        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+      yield ResultSet(
+        Vector(
+          new ColumnDefinitionPacket:
+            override def table: String = ""
+            override def name: String = "TABLE_TYPE"
+            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+        ),
+        TableType.values.filterNot(_ == TableType.UNKNOWN).map(tableType => ResultSetRowPacket(List(Some(tableType.name)))).toVector,
+        protocol.initialPacket.serverVersion,
+        isResultSetClosed,
+        resultSetCurrentCursor,
+        resultSetCurrentRow
+      )
 
     /**
      * Retrieves a description of table columns available in
