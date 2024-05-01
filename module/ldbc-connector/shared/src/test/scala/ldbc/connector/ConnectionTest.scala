@@ -1158,3 +1158,42 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving column privileges information matches the specified value.") {
+    val connection = Connection[IO](
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
+      ssl          = SSL.Trusted,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getColumnPrivileges(None, Some("connector_test"), Some("privileges_table"), None)
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              tableCat          <- resultSet.getString("TABLE_CAT")
+              tableSchem        <- resultSet.getString("TABLE_SCHEM")
+              tableName         <- resultSet.getString("TABLE_NAME")
+              columnName        <- resultSet.getString("COLUMN_NAME")
+              grantor <- resultSet.getString("GRANTOR")
+              grantee <- resultSet.getString("GRANTEE")
+              privilege <- resultSet.getString("PRIVILEGE")
+              isGrantable <- resultSet.getString("IS_GRANTABLE")
+            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
+          }
+        yield values
+      },
+      Vector(
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c1), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(INSERT), Is Grantable: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c1), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(SELECT), Is Grantable: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(INSERT), Is Grantable: Some(NO)",
+        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(SELECT), Is Grantable: Some(NO)"
+      )
+    )
+  }
