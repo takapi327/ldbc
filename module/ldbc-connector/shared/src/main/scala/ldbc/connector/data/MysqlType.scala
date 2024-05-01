@@ -663,3 +663,62 @@ object MysqlType:
   val FIELD_TYPE_VAR_STRING  = 253
   val FIELD_TYPE_STRING      = 254
   val FIELD_TYPE_GEOMETRY    = 255
+
+  /**
+   * Get MysqlType matching the full MySQL type name, for example "DECIMAL(5,3) UNSIGNED ZEROFILL".
+   * Distinct *_UNSIGNED type will be returned if "UNSIGNED" is present in fullMysqlTypeName.
+   *
+   * @param fullMysqlTypeName
+   *   full MySQL type name
+   * @return MysqlType
+   */
+  def getByName(fullMysqlTypeName: String): MysqlType =
+    val typeName = if fullMysqlTypeName.indexOf("(") != -1 then
+      fullMysqlTypeName.substring(0, fullMysqlTypeName.indexOf("(")).trim
+    else
+      fullMysqlTypeName
+
+    typeName match
+      case name if name.contains("DECIMAL") | name.contains("DEC") | name.contains("NUMERIC") | name.contains("FIXED") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.DECIMAL_UNSIGNED else MysqlType.DECIMAL
+      case name if name.contains("TINYBLOB") => MysqlType.TINYBLOB
+      case name if name.contains("TINYTEXT") => MysqlType.TINYTEXT
+      case name if name.contains("TINYINT") | name.contains("TINY") | name.contains("INT1") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.TINYINT_UNSIGNED else MysqlType.TINYINT
+      case name if name.contains("MEDIUMINT") | name.contains("INT24") | name.contains("INT3") | name.contains("MIDDLEINT") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.MEDIUMINT_UNSIGNED else MysqlType.MEDIUMINT
+      case name if name.contains("SMALLINT") | name.contains("INT2") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.SMALLINT_UNSIGNED else MysqlType.SMALLINT
+      case name if name.contains("BIGINT") | name.contains("SERIAL") | name.contains("INT8") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.BIGINT_UNSIGNED else MysqlType.BIGINT
+      case name if name.contains("POINT") => MysqlType.GEOMETRY
+      case name if name.contains("INT") | name.contains("INTEGER") | name.contains("INT4") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.INT_UNSIGNED else MysqlType.INT
+      case name if name.contains("DOUBLE") | name.contains("REAL") | name.contains("FLOAT8") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.DOUBLE_UNSIGNED else MysqlType.DOUBLE
+      case name if name.contains("FLOAT") =>
+        if fullMysqlTypeName.contains("UNSIGNED") then MysqlType.FLOAT_UNSIGNED else MysqlType.FLOAT
+      case name if name.contains("NULL") => MysqlType.NULL
+      case name if name.contains("TIMESTAMP") => MysqlType.TIMESTAMP
+      case name if name.contains("DATETIME") => MysqlType.DATETIME
+      case name if name.contains("DATE") => MysqlType.DATE
+      case name if name.contains("TIME") => MysqlType.TIME
+      case name if name.contains("YEAR") => MysqlType.YEAR
+      case name if name.contains("LONGBLOB") => MysqlType.LONGBLOB
+      case name if name.contains("LONGTEXT") => MysqlType.LONGTEXT
+      case name if name.contains("MEDIUMBLOB") | name.contains("LONG VARBINARY") => MysqlType.MEDIUMBLOB
+      case name if name.contains("MEDIUMTEXT") | name.contains("LONG VARCHAR") | name.contains("LONG") => MysqlType.MEDIUMTEXT
+      case name if name.contains("VARCHAR") | name.contains("NVARCHAR") | name.contains("NATIONAL VARCHAR") | name.contains("CHARACTER VARYING") => MysqlType.VARCHAR
+      case name if name.contains("VARBINARY") => MysqlType.VARBINARY
+      case name if name.contains("BINARY") | name.contains("CHAR BYTE") => MysqlType.BINARY
+      case name if name.contains("LINESTRING") => MysqlType.GEOMETRY
+      case name if name.contains("STRING") | name.contains("CHAR") | name.contains("NCHAR") | name.contains("NATIONAL CHAR") | name.contains("CHARACTER") => MysqlType.CHAR
+      case name if name.contains("BOOLEAN") | name.contains("BOOL") => MysqlType.BOOLEAN
+      case name if name.contains("BIT") => MysqlType.BIT
+      case name if name.contains("JSON") => MysqlType.JSON
+      case name if name.contains("ENUM") => MysqlType.ENUM
+      case name if name.contains("SET") => MysqlType.SET
+      case name if name.contains("BLOB") => MysqlType.BLOB
+      case name if name.contains("TEXT") => MysqlType.TEXT
+      case name if name.contains("GEOM") | name.contains("POINT") | name.contains("POLYGON") => MysqlType.GEOMETRY
+      case _ => MysqlType.UNKNOWN
