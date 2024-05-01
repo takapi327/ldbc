@@ -2067,7 +2067,16 @@ trait DatabaseMetaData[F[_]]:
    *     accurate
    * @return <code>ResultSet</code> - each row is an index column description
    */
-  def getIndexInfo(catalog: String, schema: String, table: String, unique: Boolean, approximate: Boolean): ResultSet[F]
+  def getIndexInfo(catalog: String, schema: String, table: String, unique: Boolean, approximate: Boolean): F[ResultSet[F]] =
+    getIndexInfo(Some(catalog), Some(schema), Some(table), unique, approximate)
+
+  def getIndexInfo(
+                    catalog: Option[String],
+                    schema: Option[String],
+                    table: Option[String],
+                    unique: Boolean,
+                    approximate: Boolean
+                  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set type.
@@ -5216,70 +5225,40 @@ object DatabaseMetaData:
           resultSetCurrentRow
         )
 
-    /**
-     * Retrieves a description of the given table's indices and statistics. They are
-     * ordered by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
-     *
-     * <P>Each index column description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} table catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} table schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} table name
-     * <LI><B>NON_UNIQUE</B> boolean {@code =>} Can index values be non-unique.
-     * false when TYPE is tableIndexStatistic
-     * <LI><B>INDEX_QUALIFIER</B> String {@code =>} index catalog (may be <code>null</code>);
-     * <code>null</code> when TYPE is tableIndexStatistic
-     * <LI><B>INDEX_NAME</B> String {@code =>} index name; <code>null</code> when TYPE is
-     * tableIndexStatistic
-     * <LI><B>TYPE</B> short {@code =>} index type:
-     * <UL>
-     * <LI> tableIndexStatistic - this identifies table statistics that are
-     * returned in conjunction with a table's index descriptions
-     * <LI> tableIndexClustered - this is a clustered index
-     * <LI> tableIndexHashed - this is a hashed index
-     * <LI> tableIndexOther - this is some other style of index
-     * </UL>
-     * <LI><B>ORDINAL_POSITION</B> short {@code =>} column sequence number
-     * within index; zero when TYPE is tableIndexStatistic
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column name; <code>null</code> when TYPE is
-     * tableIndexStatistic
-     * <LI><B>ASC_OR_DESC</B> String {@code =>} column sort sequence, "A" {@code =>} ascending,
-     * "D" {@code =>} descending, may be <code>null</code> if sort sequence is not supported;
-     * <code>null</code> when TYPE is tableIndexStatistic
-     * <LI><B>CARDINALITY</B> long {@code =>} When TYPE is tableIndexStatistic, then
-     * this is the number of rows in the table; otherwise, it is the
-     * number of unique values in the index.
-     * <LI><B>PAGES</B> long {@code =>} When TYPE is  tableIndexStatistic then
-     * this is the number of pages used for the table, otherwise it
-     * is the number of pages used for the current index.
-     * <LI><B>FILTER_CONDITION</B> String {@code =>} Filter condition, if any.
-     * (may be <code>null</code>)
-     * </OL>
-     *
-     * @param catalog     a catalog name; must match the catalog name as it
-     *                    is stored in this database; "" retrieves those without a catalog;
-     *                    <code>null</code> means that the catalog name should not be used to narrow
-     *                    the search
-     * @param schema      a schema name; must match the schema name
-     *                    as it is stored in this database; "" retrieves those without a schema;
-     *                    <code>null</code> means that the schema name should not be used to narrow
-     *                    the search
-     * @param table       a table name; must match the table name as it is stored
-     *                    in this database
-     * @param unique      when true, return only indices for unique values;
-     *                    when false, return indices regardless of whether unique or not
-     * @param approximate when true, result is allowed to reflect approximate
-     *                    or out of data values; when false, results are requested to be
-     *                    accurate
-     * @return <code>ResultSet</code> - each row is an index column description
-     */
-    def getIndexInfo(
-      catalog:     String,
-      schema:      String,
-      table:       String,
+    override def getIndexInfo(
+      catalog:     Option[String],
+      schema:      Option[String],
+      table:       Option[String],
       unique:      Boolean,
       approximate: Boolean
-    ): ResultSet[F] = ???
+    ): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schema)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      )
+      sqlBuf.append(" TABLE_NAME, NON_UNIQUE, NULL AS INDEX_QUALIFIER, INDEX_NAME,")
+      sqlBuf.append(tableIndexOther)
+      sqlBuf.append(" AS TYPE, SEQ_IN_INDEX AS ORDINAL_POSITION, COLUMN_NAME,")
+      sqlBuf.append("COLLATION AS ASC_OR_DESC, CARDINALITY, 0 AS PAGES, NULL AS FILTER_CONDITION FROM INFORMATION_SCHEMA.STATISTICS WHERE")
+      if db.nonEmpty then sqlBuf.append(" TABLE_SCHEMA = ? AND")
+      sqlBuf.append(" TABLE_NAME = ?")
+
+      if unique then sqlBuf.append(" AND NON_UNIQUE=0 ")
+      sqlBuf.append(" ORDER BY NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, table) match
+          case (Some(dbValue), Some(tableName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
+          case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
+          case (None, None) => ev.unit
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the user-defined types (UDTs) defined
