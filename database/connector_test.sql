@@ -188,3 +188,10 @@ SELECT CONCAT('zyxw', inputParam);
 END
 //
 delimiter ;
+
+CREATE TABLE `privileges_table` (
+  `c1` INT NOT NULL,
+  `c2` INT NOT NULL
+);
+
+GRANT SELECT(`c1`, `c2`), INSERT(`c1`, `c2`) ON `connector_test`.`privileges_table` TO 'ldbc'@'%';
