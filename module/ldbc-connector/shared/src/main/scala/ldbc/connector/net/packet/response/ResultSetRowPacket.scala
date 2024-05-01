@@ -59,7 +59,7 @@ object ResultSetRowPacket:
             case (acc, (column, index)) =>
               acc.flatMap { buffer =>
                 val valueDecoder = length match
-                  case NULL            => Decoder.pure(None)
+                  case NULL if index == 0 => Decoder.pure(None)
                   case _ if index == 0 => decodeValue(length)
                   case _ =>
                     uint8.flatMap {
