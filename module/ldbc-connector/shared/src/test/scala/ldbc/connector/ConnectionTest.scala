@@ -1193,3 +1193,39 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving table privileges information matches the specified value.") {
+    val connection = Connection[IO](
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
+      //ssl          = SSL.Trusted
+      allowPublicKeyRetrieval = true,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getTablePrivileges(None, None, Some("privileges_table"))
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              tableCat    <- resultSet.getString("TABLE_CAT")
+              tableSchem  <- resultSet.getString("TABLE_SCHEM")
+              tableName   <- resultSet.getString("TABLE_NAME")
+              grantor     <- resultSet.getString("GRANTOR")
+              grantee     <- resultSet.getString("GRANTEE")
+              privilege   <- resultSet.getString("PRIVILEGE")
+              isGrantable <- resultSet.getString("IS_GRANTABLE")
+            yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Grantor: $grantor, Grantee: $grantee, Privilege: $privilege, Is Grantable: $isGrantable"
+          }
+        yield values
+      },
+      Vector(
+        "Table Cat: None, Table Schem: Some(connector_test), Table Name: Some(privileges_table), Grantor: Some(root@localhost), Grantee: Some(ldbc@%), Privilege: Some(Select,Insert), Is Grantable: None",
+      )
+    )
+  }
