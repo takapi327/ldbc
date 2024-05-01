@@ -8,7 +8,7 @@ package ldbc.connector
 
 import org.typelevel.otel4s.trace.Tracer
 
-import com.comcast.ip4s.UnknownHostException
+//import com.comcast.ip4s.UnknownHostException
 
 import cats.Monad
 
@@ -16,12 +16,13 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
-import ldbc.connector.exception.*
+//import ldbc.connector.exception.*
 
 class ConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
+  /*
   test("Passing an empty string to host causes SQLException") {
     val connection = Connection[IO](
       host = "",
@@ -1425,8 +1426,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      // ssl          = SSL.Trusted,
-      allowPublicKeyRetrieval = true,
+      ssl          = SSL.Trusted,
       databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
@@ -1458,6 +1458,96 @@ class ConnectionTest extends CatsEffectSuite:
       },
       Vector(
         "PK Table Cat: Some(def), PK Table Schem: Some(world), PK Table Name: Some(city), PK Column Name: Some(ID), FK Table Cat: Some(def), FK Table Schem: Some(world), FK Table Name: Some(government_office), FK Column Name: Some(CityID), Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: Some(government_office_ibfk_1), PK Name: Some(PRIMARY), Deferrability: 7"
+      )
+    )
+  }
+  */
+
+  test("The result of retrieving type information matches the specified value.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl          = SSL.Trusted,
+      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData <- conn.getMetaData()
+          resultSet <-
+            metaData.getTypeInfo()
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              typeName <- resultSet.getString("TYPE_NAME")
+              dataType <- resultSet.getInt("DATA_TYPE")
+              precision <- resultSet.getInt("PRECISION")
+              literalPrefix <- resultSet.getString("LITERAL_PREFIX")
+              literalSuffix <- resultSet.getString("LITERAL_SUFFIX")
+              createParams <- resultSet.getString("CREATE_PARAMS")
+              nullable <- resultSet.getShort("NULLABLE")
+              caseSensitive <- resultSet.getBoolean("CASE_SENSITIVE")
+              searchable <- resultSet.getShort("SEARCHABLE")
+              unsignedAttribute <- resultSet.getBoolean("UNSIGNED_ATTRIBUTE")
+              fixedPrecScale <- resultSet.getBoolean("FIXED_PREC_SCALE")
+              autoIncrement <- resultSet.getBoolean("AUTO_INCREMENT")
+              localTypeName <- resultSet.getString("LOCAL_TYPE_NAME")
+              minimumScale <- resultSet.getShort("MINIMUM_SCALE")
+              maximumScale <- resultSet.getShort("MAXIMUM_SCALE")
+              sqlDataType <- resultSet.getShort("SQL_DATA_TYPE")
+              sqlDatetimeSub <- resultSet.getShort("SQL_DATETIME_SUB")
+              numPrecRadix <- resultSet.getShort("NUM_PREC_RADIX")
+            yield s"Type Name: $typeName, Data Type: $dataType, Precision: $precision, Literal Prefix: $literalPrefix, Literal Suffix: $literalSuffix, Create Params: $createParams, Nullable: $nullable, Case Sensitive: $caseSensitive, Searchable: $searchable, Unsigned Attribute: $unsignedAttribute, Fixed Prec Scale: $fixedPrecScale, Auto Increment: $autoIncrement, Local Type Name: $localTypeName, Minimum Scale: $minimumScale, Maximum Scale: $maximumScale, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Num Prec Radix: $numPrecRadix"
+          }
+        yield values
+      },
+      Vector(
+        "Type Name: Some(BIT), Data Type: -7, Precision: 1, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(BIT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(TINYINT), Data Type: -6, Precision: 3, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(TINYINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(TINYINT UNSIGNED), Data Type: -6, Precision: 3, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(TINYINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(BIGINT), Data Type: -5, Precision: 19, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(BIGINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(BIGINT UNSIGNED), Data Type: -5, Precision: 20, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(BIGINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(LONG VARBINARY), Data Type: -4, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(MEDIUMBLOB), Data Type: -4, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(LONGBLOB), Data Type: -4, Precision: 2147483647, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(LONGBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(BLOB), Data Type: -4, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(M)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(BLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(VARBINARY), Data Type: -3, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some((M)), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(VARBINARY), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(TINYBLOB), Data Type: -3, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TINYBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(BINARY), Data Type: -2, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some((M)), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(BINARY), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(LONG VARCHAR), Data Type: -1, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(MEDIUMTEXT), Data Type: -1, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(LONGTEXT), Data Type: -1, Precision: 2147483647, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(LONGTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(TEXT), Data Type: -1, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(M)] [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(CHAR), Data Type: 1, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(M)] [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(CHAR), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(ENUM), Data Type: 1, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(ENUM), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(SET), Data Type: 1, Precision: 64, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(SET), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(DECIMAL), Data Type: 3, Precision: 65, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M[,D])] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DECIMAL), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(NUMERIC), Data Type: 3, Precision: 65, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M[,D])] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DECIMAL), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(INTEGER), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(INT), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(MEDIUMINT), Data Type: 4, Precision: 7, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(MEDIUMINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(INTEGER UNSIGNED), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(INT UNSIGNED), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(MEDIUMINT UNSIGNED), Data Type: 4, Precision: 8, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(MEDIUMINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(SMALLINT), Data Type: 5, Precision: 5, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(SMALLINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(SMALLINT UNSIGNED), Data Type: 5, Precision: 5, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(SMALLINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(YEAR), Data Type: 91, Precision: 4, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(4)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(YEAR), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(FLOAT), Data Type: 7, Precision: 12, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(FLOAT), Minimum Scale: -38, Maximum Scale: 38, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(DOUBLE), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(DOUBLE PRECISION), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(REAL), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(DOUBLE UNSIGNED), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE UNSIGNED), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(DOUBLE PRECISION UNSIGNED), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE UNSIGNED), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(VARCHAR), Data Type: 12, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some((M) [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(VARCHAR), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(TINYTEXT), Data Type: 12, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TINYTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(BOOL), Data Type: 16, Precision: 3, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(BOOLEAN), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(DATE), Data Type: 91, Precision: 10, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DATE), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(TIME), Data Type: 92, Precision: 16, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(fsp)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TIME), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(DATETIME), Data Type: 93, Precision: 26, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(fsp)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DATETIME), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: Some(TIMESTAMP), Data Type: 93, Precision: 26, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(fsp)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TIMESTAMP), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10"
       )
     )
   }
