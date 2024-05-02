@@ -2401,7 +2401,10 @@ trait DatabaseMetaData[F[_]]:
    *        name
    * @return a <code>ResultSet</code> object in which each row is a type description
    */
-  def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): ResultSet[F]
+  def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet[F]] =
+    getSuperTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
+
+  def getSuperTables(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given attribute of the given type
@@ -5342,38 +5345,30 @@ object DatabaseMetaData:
         resultSetCurrentRow
       )
 
-    /**
-     * Retrieves a description of the table hierarchies defined in a particular
-     * schema in this database.
-     *
-     * <P>Only supertable information for tables matching the catalog, schema
-     * and table name are returned. The table name parameter may be a fully-
-     * qualified name, in which case, the catalog and schemaPattern parameters
-     * are ignored. If a table does not have a super table, it is not listed here.
-     * Supertables have to be defined in the same catalog and schema as the
-     * sub tables. Therefore, the type description does not need to include
-     * this information for the supertable.
-     *
-     * <P>Each type description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} the type's catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} type's schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} type name
-     * <LI><B>SUPERTABLE_NAME</B> String {@code =>} the direct super type's name
-     * </OL>
-     *
-     * <P><B>Note:</B> If the driver does not support type hierarchies, an
-     * empty result set is returned.
-     *
-     * @param catalog          a catalog name; "" retrieves those without a catalog;
-     *                         <code>null</code> means drop catalog name from the selection criteria
-     * @param schemaPattern    a schema name pattern; "" retrieves those
-     *                         without a schema
-     * @param tableNamePattern a table name pattern; may be a fully-qualified
-     *                         name
-     * @return a <code>ResultSet</code> object in which each row is a type description
-     */
-    def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): ResultSet[F] = ???
+    override def getSuperTables(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]] =
+      for
+        isResultSetClosed <- Ref[F].of(false)
+        resultSetCurrentCursor <- Ref[F].of(0)
+        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+      yield ResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "SUPERTABLE_NAME"
+        ).map { value =>
+          new ColumnDefinitionPacket:
+            override def table: String = ""
+            override def name: String = value
+            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+        },
+        Vector.empty,
+        protocol.initialPacket.serverVersion,
+        isResultSetClosed,
+        resultSetCurrentCursor,
+        resultSetCurrentRow
+      )
 
     /**
      * Retrieves a description of the given attribute of the given type
