@@ -1591,3 +1591,59 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
+
+  test("The result of retrieving function information matches the specified value.") {
+    val connection = Connection[IO](
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
+      //ssl          = SSL.Trusted,
+      allowPublicKeyRetrieval = true,
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData <- conn.getMetaData()
+          resultSet <- metaData.getFunctions(None, None, None)
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              functionCat <- resultSet.getString("FUNCTION_CAT")
+              functionSchem <- resultSet.getString("FUNCTION_SCHEM")
+              functionName <- resultSet.getString("FUNCTION_NAME")
+              functionType <- resultSet.getShort("FUNCTION_TYPE")
+              specificName <- resultSet.getString("SPECIFIC_NAME")
+            yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Function Type: $functionType, Specific Name: $specificName"
+          }
+        yield values
+      },
+      Vector(
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_schema_from_file_name), Function Type: 1, Specific Name: Some(extract_schema_from_file_name)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_table_from_file_name), Function Type: 1, Specific Name: Some(extract_table_from_file_name)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_bytes), Function Type: 1, Specific Name: Some(format_bytes)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_path), Function Type: 1, Specific Name: Some(format_path)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_statement), Function Type: 1, Specific Name: Some(format_statement)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_time), Function Type: 1, Specific Name: Some(format_time)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_add), Function Type: 1, Specific Name: Some(list_add)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_drop), Function Type: 1, Specific Name: Some(list_drop)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_account_enabled), Function Type: 1, Specific Name: Some(ps_is_account_enabled)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_consumer_enabled), Function Type: 1, Specific Name: Some(ps_is_consumer_enabled)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_enabled), Function Type: 1, Specific Name: Some(ps_is_instrument_default_enabled)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_timed), Function Type: 1, Specific Name: Some(ps_is_instrument_default_timed)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_thread_instrumented), Function Type: 1, Specific Name: Some(ps_is_thread_instrumented)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_account), Function Type: 1, Specific Name: Some(ps_thread_account)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_id), Function Type: 1, Specific Name: Some(ps_thread_id)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_stack), Function Type: 1, Specific Name: Some(ps_thread_stack)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_trx_info), Function Type: 1, Specific Name: Some(ps_thread_trx_info)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(quote_identifier), Function Type: 1, Specific Name: Some(quote_identifier)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(sys_get_config), Function Type: 1, Specific Name: Some(sys_get_config)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_major), Function Type: 1, Specific Name: Some(version_major)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_minor), Function Type: 1, Specific Name: Some(version_minor)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_patch), Function Type: 1, Specific Name: Some(version_patch)"
+      )
+    )
+  }
+
