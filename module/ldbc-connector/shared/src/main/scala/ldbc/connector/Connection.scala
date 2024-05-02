@@ -224,6 +224,26 @@ trait Connection[F[_]]:
   def isReadOnly: F[Boolean]
 
   /**
+   * Sets the given catalog name in order to select
+   * a subspace of this <code>Connection</code> object's database
+   * in which to work.
+   * <P>
+   * If the driver does not support catalogs, it will
+   * silently ignore this request.
+   * <p>
+   * Calling {@code setCatalog} has no effect on previously created or prepared
+   * {@code Statement} objects. It is implementation defined whether a DBMS
+   * prepare operation takes place immediately when the {@code Connection}
+   * method {@code prepareStatement} or {@code prepareCall} is invoked.
+   * For maximum portability, {@code setCatalog} should be called before a
+   * {@code Statement} is created or prepared.
+   *
+   * @param catalog the name of a catalog (subspace in this
+   *        <code>Connection</code> object's database) in which to work
+   */
+  def setCatalog(catalog: String): F[Unit]
+
+  /**
    * Attempts to change the transaction isolation level for this Connection object to the one given. The constants defined in the interface Connection are the possible transaction isolation levels.
    *
    * @param level
@@ -579,6 +599,11 @@ object Connection:
           .void
 
     override def isReadOnly: F[Boolean] = readOnly.get
+    
+    override def setCatalog(catalog: String): F[Unit] =
+      if databaseTerm.contains(DatabaseTerm.CATALOG) then
+        createStatement().flatMap(_.executeQuery(s"USE `$catalog`")).void
+      else ev.unit
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
       createStatement().flatMap(_.executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }")).void
