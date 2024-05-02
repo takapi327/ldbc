@@ -517,7 +517,7 @@ object Connection:
     database:        Option[String],
     readOnly:        Ref[F, Boolean],
     isAutoCommit:    Ref[F, Boolean],
-    closed:         Ref[F, Boolean],
+    closed:          Ref[F, Boolean],
     databaseTerm:    Option[DatabaseTerm] = None
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
