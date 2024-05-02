@@ -248,7 +248,7 @@ trait Connection[F[_]]:
    *
    * @return the current catalog name or <code>None</code> if there is none
    */
-  def getCatalog(): F[Option[String]]
+  def getCatalog(): F[String]
 
   /**
    * Attempts to change the transaction isolation level for this Connection object to the one given. The constants defined in the interface Connection are the possible transaction isolation levels.
@@ -431,7 +431,7 @@ trait Connection[F[_]]:
    * @return
    *   the current schema name or null if there is none
    */
-  def getSchema: F[String]
+  def getSchema(): F[String]
 
   /**
    * Retrieves the statistics of this Connection object.
@@ -623,18 +623,12 @@ object Connection:
     override def isReadOnly: F[Boolean] = readOnly.get
 
     override def setCatalog(catalog: String): F[Unit] =
-      if databaseTerm.contains(DatabaseTerm.CATALOG) then
-        createStatement().flatMap(_.executeUpdate(s"USE `$catalog`")).void
+      if databaseTerm.contains(DatabaseTerm.CATALOG) then setSchema(catalog)
       else ev.unit
 
-    override def getCatalog(): F[Option[String]] =
-      if databaseTerm.contains(DatabaseTerm.CATALOG) then
-        for
-          statement <- createStatement()
-          result    <- statement.executeQuery("SELECT DATABASE()")
-          decoded   <- result.getString(1)
-        yield decoded
-      else ev.pure(None)
+    override def getCatalog(): F[String] =
+      if databaseTerm.contains(DatabaseTerm.CATALOG) then getSchema()
+      else ev.pure("")
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
       createStatement().flatMap(_.executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }")).void
@@ -748,7 +742,7 @@ object Connection:
 
     override def setSchema(schema: String): F[Unit] = protocol.resetSequenceId *> protocol.comInitDB(schema)
 
-    override def getSchema: F[String] =
+    override def getSchema(): F[String] =
       for
         statement <- createStatement()
         result    <- statement.executeQuery("SELECT DATABASE()")
