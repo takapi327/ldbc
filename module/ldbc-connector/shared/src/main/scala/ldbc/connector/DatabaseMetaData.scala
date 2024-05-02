@@ -2368,7 +2368,11 @@ trait DatabaseMetaData[F[_]]:
   def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): F[ResultSet[F]] =
     getSuperTypes(Some(catalog), Some(schemaPattern), Some(typeNamePattern))
 
-  def getSuperTypes(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String]): F[ResultSet[F]]
+  def getSuperTypes(
+    catalog:         Option[String],
+    schemaPattern:   Option[String],
+    typeNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the table hierarchies defined in a particular
@@ -2404,7 +2408,11 @@ trait DatabaseMetaData[F[_]]:
   def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet[F]] =
     getSuperTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
 
-  def getSuperTables(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]]
+  def getSuperTables(
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given attribute of the given type
@@ -2490,11 +2498,11 @@ trait DatabaseMetaData[F[_]]:
     getAttributes(Some(catalog), Some(schemaPattern), Some(typeNamePattern), Some(attributeNamePattern))
 
   def getAttributes(
-                     catalog: Option[String],
-                     schemaPattern: Option[String],
-                     typeNamePattern: Option[String],
-                     attributeNamePattern: Option[String]
-                   ): F[ResultSet[F]]
+    catalog:              Option[String],
+    schemaPattern:        Option[String],
+    typeNamePattern:      Option[String],
+    attributeNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set holdability.
@@ -2691,7 +2699,11 @@ trait DatabaseMetaData[F[_]]:
   def getFunctions(catalog: String, schemaPattern: String, functionNamePattern: String): F[ResultSet[F]] =
     getFunctions(Some(catalog), Some(schemaPattern), Some(functionNamePattern))
 
-  def getFunctions(catalog: Option[String], schemaPattern: Option[String], functionNamePattern: Option[String]): F[ResultSet[F]]
+  def getFunctions(
+    catalog:             Option[String],
+    schemaPattern:       Option[String],
+    functionNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given catalog's system or user
@@ -5300,35 +5312,51 @@ object DatabaseMetaData:
       typeNamePattern: Option[String],
       types:           Array[Int]
     ): F[ResultSet[F]] =
-      emptyResultSet(Vector(
-        "TYPE_CAT",
-        "TYPE_SCHEM",
-        "TYPE_NAME",
-        "CLASS_NAME",
-        "DATA_TYPE",
-        "REMARKS",
-        "BASE_TYPE"
-      ))
+      emptyResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "CLASS_NAME",
+          "DATA_TYPE",
+          "REMARKS",
+          "BASE_TYPE"
+        )
+      )
 
-    override def getConnection(): Connection[F] = throw new SQLFeatureNotSupportedException("Connections should be available that generate this DatabaseMetaData.")
+    override def getConnection(): Connection[F] = throw new SQLFeatureNotSupportedException(
+      "Connections should be available that generate this DatabaseMetaData."
+    )
 
-    override def getSuperTypes(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String]): F[ResultSet[F]] =
-      emptyResultSet(Vector(
-        "TYPE_CAT",
-        "TYPE_SCHEM",
-        "TYPE_NAME",
-        "SUPERTYPE_CAT",
-        "SUPERTYPE_SCHEM",
-        "SUPERTYPE_NAME"
-      ))
+    override def getSuperTypes(
+      catalog:         Option[String],
+      schemaPattern:   Option[String],
+      typeNamePattern: Option[String]
+    ): F[ResultSet[F]] =
+      emptyResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "SUPERTYPE_CAT",
+          "SUPERTYPE_SCHEM",
+          "SUPERTYPE_NAME"
+        )
+      )
 
-    override def getSuperTables(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]] =
-      emptyResultSet(Vector(
-        "TYPE_CAT",
-        "TYPE_SCHEM",
-        "TYPE_NAME",
-        "SUPERTABLE_NAME"
-      ))
+    override def getSuperTables(
+      catalog:          Option[String],
+      schemaPattern:    Option[String],
+      tableNamePattern: Option[String]
+    ): F[ResultSet[F]] =
+      emptyResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "SUPERTABLE_NAME"
+        )
+      )
 
     override def getAttributes(
       catalog:              Option[String],
@@ -5336,29 +5364,31 @@ object DatabaseMetaData:
       typeNamePattern:      Option[String],
       attributeNamePattern: Option[String]
     ): F[ResultSet[F]] =
-      emptyResultSet(Vector(
-        "TYPE_CAT",
-        "TYPE_SCHEM",
-        "TYPE_NAME",
-        "ATTR_NAME",
-        "DATA_TYPE",
-        "ATTR_TYPE_NAME",
-        "ATTR_SIZE",
-        "DECIMAL_DIGITS",
-        "NUM_PREC_RADIX",
-        "NULLABLE",
-        "REMARKS",
-        "ATTR_DEF",
-        "SQL_DATA_TYPE",
-        "SQL_DATETIME_SUB",
-        "CHAR_OCTET_LENGTH",
-        "ORDINAL_POSITION",
-        "IS_NULLABLE",
-        "SCOPE_CATALOG",
-        "SCOPE_SCHEMA",
-        "SCOPE_TABLE",
-        "SOURCE_DATA_TYPE"
-      ))
+      emptyResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "ATTR_NAME",
+          "DATA_TYPE",
+          "ATTR_TYPE_NAME",
+          "ATTR_SIZE",
+          "DECIMAL_DIGITS",
+          "NUM_PREC_RADIX",
+          "NULLABLE",
+          "REMARKS",
+          "ATTR_DEF",
+          "SQL_DATA_TYPE",
+          "SQL_DATETIME_SUB",
+          "CHAR_OCTET_LENGTH",
+          "ORDINAL_POSITION",
+          "IS_NULLABLE",
+          "SCOPE_CATALOG",
+          "SCOPE_SCHEMA",
+          "SCOPE_TABLE",
+          "SOURCE_DATA_TYPE"
+        )
+      )
 
     override def getDatabaseMajorVersion(): Int = protocol.initialPacket.serverVersion.major
     override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
@@ -5387,19 +5417,26 @@ object DatabaseMetaData:
       }
 
     override def getClientInfoProperties(): F[ResultSet[F]] =
-      emptyResultSet(Vector(
-        "NAME",
-        "MAX_LEN",
-        "DEFAULT_VALUE",
-        "DESCRIPTION"
-      ))
+      emptyResultSet(
+        Vector(
+          "NAME",
+          "MAX_LEN",
+          "DEFAULT_VALUE",
+          "DESCRIPTION"
+        )
+      )
 
-    override def getFunctions(catalog: Option[String], schemaPattern: Option[String], functionNamePattern: Option[String]): F[ResultSet[F]] =
+    override def getFunctions(
+      catalog:             Option[String],
+      schemaPattern:       Option[String],
+      functionNamePattern: Option[String]
+    ): F[ResultSet[F]] =
 
       val db = getDatabase(catalog, schemaPattern)
 
       val sqlBuf = new StringBuilder(
-        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT ROUTINE_CATALOG AS FUNCTION_CAT, ROUTINE_SCHEMA AS FUNCTION_SCHEM,"
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then
+          "SELECT ROUTINE_CATALOG AS FUNCTION_CAT, ROUTINE_SCHEMA AS FUNCTION_SCHEM,"
         else "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM,"
       )
       sqlBuf.append(" ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, ")
@@ -5407,7 +5444,9 @@ object DatabaseMetaData:
       sqlBuf.append(" AS FUNCTION_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES")
       sqlBuf.append(" WHERE ROUTINE_TYPE LIKE 'FUNCTION'")
       if db.nonEmpty then
-        sqlBuf.append(if databaseTerm.contains(DatabaseTerm.SCHEMA) then " AND ROUTINE_SCHEMA LIKE ?" else " AND ROUTINE_SCHEMA = ?")
+        sqlBuf.append(
+          if databaseTerm.contains(DatabaseTerm.SCHEMA) then " AND ROUTINE_SCHEMA LIKE ?" else " AND ROUTINE_SCHEMA = ?"
+        )
 
       if functionNamePattern.nonEmpty then sqlBuf.append(" AND ROUTINE_NAME LIKE ?")
 
@@ -5417,9 +5456,9 @@ object DatabaseMetaData:
         val setting = (db, functionNamePattern) match
           case (Some(dbValue), Some(functionName)) =>
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, functionName)
-          case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
+          case (Some(dbValue), None)      => preparedStatement.setString(1, dbValue)
           case (None, Some(functionName)) => preparedStatement.setString(1, functionName)
-          case (None, None) => ev.unit
+          case (None, None)               => ev.unit
 
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
@@ -5760,16 +5799,16 @@ object DatabaseMetaData:
 
     private def emptyResultSet(fields: Vector[String]): F[ResultSet[F]] =
       for
-        isResultSetClosed <- Ref[F].of(false)
+        isResultSetClosed      <- Ref[F].of(false)
         resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
       yield ResultSet(
         fields.map { value =>
           new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = value
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
         Vector.empty,
         protocol.initialPacket.serverVersion,

@@ -1594,30 +1594,30 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving function information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      //ssl          = SSL.Trusted,
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      // ssl          = SSL.Trusted,
       allowPublicKeyRetrieval = true,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
     assertIO(
       connection.use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctions(None, None, None)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              functionCat <- resultSet.getString("FUNCTION_CAT")
-              functionSchem <- resultSet.getString("FUNCTION_SCHEM")
-              functionName <- resultSet.getString("FUNCTION_NAME")
-              functionType <- resultSet.getShort("FUNCTION_TYPE")
-              specificName <- resultSet.getString("SPECIFIC_NAME")
-            yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Function Type: $functionType, Specific Name: $specificName"
-          }
+                      for
+                        functionCat   <- resultSet.getString("FUNCTION_CAT")
+                        functionSchem <- resultSet.getString("FUNCTION_SCHEM")
+                        functionName  <- resultSet.getString("FUNCTION_NAME")
+                        functionType  <- resultSet.getShort("FUNCTION_TYPE")
+                        specificName  <- resultSet.getString("SPECIFIC_NAME")
+                      yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Function Type: $functionType, Specific Name: $specificName"
+                    }
         yield values
       },
       Vector(
@@ -1646,4 +1646,3 @@ class ConnectionTest extends CatsEffectSuite:
       )
     )
   }
-
