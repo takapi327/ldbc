@@ -2874,7 +2874,15 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:     String,
     tableNamePattern:  String,
     columnNamePattern: String
-  ): ResultSet[F]
+  ): F[ResultSet[F]] =
+    getPseudoColumns(Some(catalog), Some(schemaPattern), Some(tableNamePattern), Some(columnNamePattern))
+
+  def getPseudoColumns(
+                        catalog: Option[String],
+                        schemaPattern: Option[String],
+                        tableNamePattern: Option[String],
+                        columnNamePattern: Option[String]
+                      ): F[ResultSet[F]]
 
   /**
    * Retrieves whether a generated key will always be returned if the column
@@ -5631,71 +5639,26 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the pseudo or hidden columns available
-     * in a given table within the specified catalog and schema.
-     * Pseudo or hidden columns may not always be stored within
-     * a table and are not visible in a ResultSet unless they are
-     * specified in the query's outermost SELECT list. Pseudo or hidden
-     * columns may not necessarily be able to be modified. If there are
-     * no pseudo or hidden columns, an empty ResultSet is returned.
-     *
-     * <P>Only column descriptions matching the catalog, schema, table
-     * and column name criteria are returned.  They are ordered by
-     * <code>TABLE_CAT</code>,<code>TABLE_SCHEM</code>, <code>TABLE_NAME</code>
-     * and <code>COLUMN_NAME</code>.
-     *
-     * <P>Each column description has the following columns:
-     * <OL>
-     * <LI><B>TABLE_CAT</B> String {@code =>} table catalog (may be <code>null</code>)
-     * <LI><B>TABLE_SCHEM</B> String {@code =>} table schema (may be <code>null</code>)
-     * <LI><B>TABLE_NAME</B> String {@code =>} table name
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column name
-     * <LI><B>DATA_TYPE</B> int {@code =>} SQL type from java.sql.Types
-     * <LI><B>COLUMN_SIZE</B> int {@code =>} column size.
-     * <LI><B>DECIMAL_DIGITS</B> int {@code =>} the number of fractional digits. Null is returned for data types where
-     * DECIMAL_DIGITS is not applicable.
-     * <LI><B>NUM_PREC_RADIX</B> int {@code =>} Radix (typically either 10 or 2)
-     * <LI><B>COLUMN_USAGE</B> String {@code =>} The allowed usage for the column.  The
-     * value returned will correspond to the enum name returned by {@link PseudoColumnUsage# name PseudoColumnUsage.name()}
-     * <LI><B>REMARKS</B> String {@code =>} comment describing column (may be <code>null</code>)
-     * <LI><B>CHAR_OCTET_LENGTH</B> int {@code =>} for char types the
-     * maximum number of bytes in the column
-     * <LI><B>IS_NULLABLE</B> String  {@code =>} ISO rules are used to determine the nullability for a column.
-     * <UL>
-     * <LI> YES           --- if the column can include NULLs
-     * <LI> NO            --- if the column cannot include NULLs
-     * <LI> empty string  --- if the nullability for the column is unknown
-     * </UL>
-     * </OL>
-     *
-     * <p>The COLUMN_SIZE column specifies the column size for the given column.
-     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.
-     * For datetime datatypes, this is the length in characters of the String representation (assuming the
-     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,
-     * this is the length in bytes. Null is returned for data types where the
-     * column size is not applicable.
-     *
-     * @param catalog           a catalog name; must match the catalog name as it
-     *                          is stored in the database; "" retrieves those without a catalog;
-     *                          <code>null</code> means that the catalog name should not be used to narrow
-     *                          the search
-     * @param schemaPattern     a schema name pattern; must match the schema name
-     *                          as it is stored in the database; "" retrieves those without a schema;
-     *                          <code>null</code> means that the schema name should not be used to narrow
-     *                          the search
-     * @param tableNamePattern  a table name pattern; must match the
-     *                          table name as it is stored in the database
-     * @param columnNamePattern a column name pattern; must match the column
-     *                          name as it is stored in the database
-     * @return <code>ResultSet</code> - each row is a column description
-     */
-    def getPseudoColumns(
-      catalog:           String,
-      schemaPattern:     String,
-      tableNamePattern:  String,
-      columnNamePattern: String
-    ): ResultSet[F] = ???
+    override def getPseudoColumns(
+      catalog:           Option[String],
+      schemaPattern:     Option[String],
+      tableNamePattern:  Option[String],
+      columnNamePattern: Option[String]
+    ): F[ResultSet[F]] =
+      emptyResultSet(Vector(
+        "TABLE_CAT",
+        "TABLE_SCHEM",
+        "TABLE_NAME",
+        "COLUMN_NAME",
+        "DATA_TYPE",
+        "COLUMN_SIZE",
+        "DECIMAL_DIGITS",
+        "NUM_PREC_RADIX",
+        "COLUMN_USAGE",
+        "REMARKS",
+        "CHAR_OCTET_LENGTH",
+        "IS_NULLABLE"
+      ))
 
     protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
       (databaseTerm, catalog, schema) match
