@@ -2641,7 +2641,7 @@ trait DatabaseMetaData[F[_]]:
    * @return      A <code>ResultSet</code> object; each row is a supported client info
    * property
    */
-  def getClientInfoProperties(): ResultSet[F]
+  def getClientInfoProperties(): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the  system and user functions available
@@ -2688,7 +2688,10 @@ trait DatabaseMetaData[F[_]]:
    *        function name as it is stored in the database
    * @return <code>ResultSet</code> - each row is a function description
    */
-  def getFunctions(catalog: String, schemaPattern: String, functionNamePattern: String): ResultSet[F]
+  def getFunctions(catalog: String, schemaPattern: String, functionNamePattern: String): F[ResultSet[F]] =
+    getFunctions(Some(catalog), Some(schemaPattern), Some(functionNamePattern))
+
+  def getFunctions(catalog: Option[String], schemaPattern: Option[String], functionNamePattern: Option[String]): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given catalog's system or user
@@ -5297,86 +5300,35 @@ object DatabaseMetaData:
       typeNamePattern: Option[String],
       types:           Array[Int]
     ): F[ResultSet[F]] =
-      for
-        isResultSetClosed      <- Ref[F].of(false)
-        resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield ResultSet(
-        Vector(
-          "TYPE_CAT",
-          "TYPE_SCHEM",
-          "TYPE_NAME",
-          "CLASS_NAME",
-          "DATA_TYPE",
-          "REMARKS",
-          "BASE_TYPE"
-        ).map { value =>
-          new ColumnDefinitionPacket:
-            override def table:      String                     = ""
-            override def name:       String                     = value
-            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-        },
-        Vector.empty,
-        protocol.initialPacket.serverVersion,
-        isResultSetClosed,
-        resultSetCurrentCursor,
-        resultSetCurrentRow
-      )
+      emptyResultSet(Vector(
+        "TYPE_CAT",
+        "TYPE_SCHEM",
+        "TYPE_NAME",
+        "CLASS_NAME",
+        "DATA_TYPE",
+        "REMARKS",
+        "BASE_TYPE"
+      ))
 
     override def getConnection(): Connection[F] = throw new SQLFeatureNotSupportedException("Connections should be available that generate this DatabaseMetaData.")
 
     override def getSuperTypes(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String]): F[ResultSet[F]] =
-      for
-        isResultSetClosed      <- Ref[F].of(false)
-        resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield ResultSet(
-        Vector(
-          "TYPE_CAT",
-          "TYPE_SCHEM",
-          "TYPE_NAME",
-          "SUPERTYPE_CAT",
-          "SUPERTYPE_SCHEM",
-          "SUPERTYPE_NAME"
-        ).map { value =>
-          new ColumnDefinitionPacket:
-            override def table:      String                     = ""
-            override def name:       String                     = value
-            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-        },
-        Vector.empty,
-        protocol.initialPacket.serverVersion,
-        isResultSetClosed,
-        resultSetCurrentCursor,
-        resultSetCurrentRow
-      )
+      emptyResultSet(Vector(
+        "TYPE_CAT",
+        "TYPE_SCHEM",
+        "TYPE_NAME",
+        "SUPERTYPE_CAT",
+        "SUPERTYPE_SCHEM",
+        "SUPERTYPE_NAME"
+      ))
 
     override def getSuperTables(catalog: Option[String], schemaPattern: Option[String], tableNamePattern: Option[String]): F[ResultSet[F]] =
-      for
-        isResultSetClosed <- Ref[F].of(false)
-        resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield ResultSet(
-        Vector(
-          "TYPE_CAT",
-          "TYPE_SCHEM",
-          "TYPE_NAME",
-          "SUPERTABLE_NAME"
-        ).map { value =>
-          new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = value
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-        },
-        Vector.empty,
-        protocol.initialPacket.serverVersion,
-        isResultSetClosed,
-        resultSetCurrentCursor,
-        resultSetCurrentRow
-      )
+      emptyResultSet(Vector(
+        "TYPE_CAT",
+        "TYPE_SCHEM",
+        "TYPE_NAME",
+        "SUPERTABLE_NAME"
+      ))
 
     override def getAttributes(
       catalog:              Option[String],
@@ -5384,51 +5336,34 @@ object DatabaseMetaData:
       typeNamePattern:      Option[String],
       attributeNamePattern: Option[String]
     ): F[ResultSet[F]] =
-      for
-        isResultSetClosed <- Ref[F].of(false)
-        resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield ResultSet(
-        Vector(
-          "TYPE_CAT",
-          "TYPE_SCHEM",
-          "TYPE_NAME",
-          "ATTR_NAME",
-          "DATA_TYPE",
-          "ATTR_TYPE_NAME",
-          "ATTR_SIZE",
-          "DECIMAL_DIGITS",
-          "NUM_PREC_RADIX",
-          "NULLABLE",
-          "REMARKS",
-          "ATTR_DEF",
-          "SQL_DATA_TYPE",
-          "SQL_DATETIME_SUB",
-          "CHAR_OCTET_LENGTH",
-          "ORDINAL_POSITION",
-          "IS_NULLABLE",
-          "SCOPE_CATALOG",
-          "SCOPE_SCHEMA",
-          "SCOPE_TABLE",
-          "SOURCE_DATA_TYPE"
-        ).map { value =>
-          new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = value
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-        },
-        Vector.empty,
-        protocol.initialPacket.serverVersion,
-        isResultSetClosed,
-        resultSetCurrentCursor,
-        resultSetCurrentRow
-      )
+      emptyResultSet(Vector(
+        "TYPE_CAT",
+        "TYPE_SCHEM",
+        "TYPE_NAME",
+        "ATTR_NAME",
+        "DATA_TYPE",
+        "ATTR_TYPE_NAME",
+        "ATTR_SIZE",
+        "DECIMAL_DIGITS",
+        "NUM_PREC_RADIX",
+        "NULLABLE",
+        "REMARKS",
+        "ATTR_DEF",
+        "SQL_DATA_TYPE",
+        "SQL_DATETIME_SUB",
+        "CHAR_OCTET_LENGTH",
+        "ORDINAL_POSITION",
+        "IS_NULLABLE",
+        "SCOPE_CATALOG",
+        "SCOPE_SCHEMA",
+        "SCOPE_TABLE",
+        "SOURCE_DATA_TYPE"
+      ))
 
     override def getDatabaseMajorVersion(): Int = protocol.initialPacket.serverVersion.major
     override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
 
-    def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
+    override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
       (if databaseTerm.contains(DatabaseTerm.SCHEMA) then getDatabases(schemaPattern)
        else ev.pure(List.empty[String])).flatMap { dbList =>
         for
@@ -5451,72 +5386,43 @@ object DatabaseMetaData:
         )
       }
 
-    /**
-     * Retrieves a list of the client info properties
-     * that the driver supports.  The result set contains the following columns
-     *
-     * <ol>
-     * <li><b>NAME</b> String{@code =>} The name of the client info property<br>
-     * <li><b>MAX_LEN</b> int{@code =>} The maximum length of the value for the property<br>
-     * <li><b>DEFAULT_VALUE</b> String{@code =>} The default value of the property<br>
-     * <li><b>DESCRIPTION</b> String{@code =>} A description of the property.  This will typically
-     * contain information as to where this property is
-     * stored in the database.
-     * </ol>
-     * <p>
-     * The <code>ResultSet</code> is sorted by the NAME column
-     *
-     * @return A <code>ResultSet</code> object; each row is a supported client info
-     *         property
-     */
-    def getClientInfoProperties(): ResultSet[F] = ???
+    override def getClientInfoProperties(): F[ResultSet[F]] =
+      emptyResultSet(Vector(
+        "NAME",
+        "MAX_LEN",
+        "DEFAULT_VALUE",
+        "DESCRIPTION"
+      ))
 
-    /**
-     * Retrieves a description of the  system and user functions available
-     * in the given catalog.
-     * <P>
-     * Only system and user function descriptions matching the schema and
-     * function name criteria are returned.  They are ordered by
-     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
-     * <code>FUNCTION_NAME</code> and
-     * <code>SPECIFIC_ NAME</code>.
-     *
-     * <P>Each function description has the following columns:
-     * <OL>
-     * <LI><B>FUNCTION_CAT</B> String {@code =>} function catalog (may be <code>null</code>)
-     * <LI><B>FUNCTION_SCHEM</B> String {@code =>} function schema (may be <code>null</code>)
-     * <LI><B>FUNCTION_NAME</B> String {@code =>} function name.  This is the name
-     * used to invoke the function
-     * <LI><B>REMARKS</B> String {@code =>} explanatory comment on the function
-     * <LI><B>FUNCTION_TYPE</B> short {@code =>} kind of function:
-     * <UL>
-     * <LI>functionResultUnknown - Cannot determine if a return value
-     * or table will be returned
-     * <LI> functionNoTable- Does not return a table
-     * <LI> functionReturnsTable - Returns a table
-     * </UL>
-     * <LI><B>SPECIFIC_NAME</B> String  {@code =>} the name which uniquely identifies
-     * this function within its schema.  This is a user specified, or DBMS
-     * generated, name that may be different then the <code>FUNCTION_NAME</code>
-     * for example with overload functions
-     * </OL>
-     * <p>
-     * A user may not have permission to execute any of the functions that are
-     * returned by <code>getFunctions</code>
-     *
-     * @param catalog             a catalog name; must match the catalog name as it
-     *                            is stored in the database; "" retrieves those without a catalog;
-     *                            <code>null</code> means that the catalog name should not be used to narrow
-     *                            the search
-     * @param schemaPattern       a schema name pattern; must match the schema name
-     *                            as it is stored in the database; "" retrieves those without a schema;
-     *                            <code>null</code> means that the schema name should not be used to narrow
-     *                            the search
-     * @param functionNamePattern a function name pattern; must match the
-     *                            function name as it is stored in the database
-     * @return <code>ResultSet</code> - each row is a function description
-     */
-    def getFunctions(catalog: String, schemaPattern: String, functionNamePattern: String): ResultSet[F] = ???
+    override def getFunctions(catalog: Option[String], schemaPattern: Option[String], functionNamePattern: Option[String]): F[ResultSet[F]] =
+
+      val db = getDatabase(catalog, schemaPattern)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT ROUTINE_CATALOG AS FUNCTION_CAT, ROUTINE_SCHEMA AS FUNCTION_SCHEM,"
+        else "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM,"
+      )
+      sqlBuf.append(" ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, ")
+      sqlBuf.append(functionNoTable)
+      sqlBuf.append(" AS FUNCTION_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES")
+      sqlBuf.append(" WHERE ROUTINE_TYPE LIKE 'FUNCTION'")
+      if db.nonEmpty then
+        sqlBuf.append(if databaseTerm.contains(DatabaseTerm.SCHEMA) then " AND ROUTINE_SCHEMA LIKE ?" else " AND ROUTINE_SCHEMA = ?")
+
+      if functionNamePattern.nonEmpty then sqlBuf.append(" AND ROUTINE_NAME LIKE ?")
+
+      sqlBuf.append(" ORDER BY FUNCTION_CAT, FUNCTION_SCHEM, FUNCTION_NAME, SPECIFIC_NAME")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, functionNamePattern) match
+          case (Some(dbValue), Some(functionName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, functionName)
+          case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(functionName)) => preparedStatement.setString(1, functionName)
+          case (None, None) => ev.unit
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the given catalog's system or user
@@ -5850,6 +5756,26 @@ object DatabaseMetaData:
         Some("0"), // SQL_DATA_TYPE
         Some("0"), // SQL_DATETIME_SUB
         Some("10") // NUM_PREC_RADIX
+      )
+
+    private def emptyResultSet(fields: Vector[String]): F[ResultSet[F]] =
+      for
+        isResultSetClosed <- Ref[F].of(false)
+        resultSetCurrentCursor <- Ref[F].of(0)
+        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+      yield ResultSet(
+        fields.map { value =>
+          new ColumnDefinitionPacket:
+            override def table: String = ""
+            override def name: String = value
+            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+        },
+        Vector.empty,
+        protocol.initialPacket.serverVersion,
+        isResultSetClosed,
+        resultSetCurrentCursor,
+        resultSetCurrentRow
       )
 
   def apply[F[_]: Temporal: Exchange: Tracer](
