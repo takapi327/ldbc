@@ -666,7 +666,7 @@ object Connection:
 
     override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
       for
-        params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement.Client[F](
         protocol,
