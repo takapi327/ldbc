@@ -101,11 +101,6 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
   def disableMultiQueries: F[Unit] = setOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
 
   /**
-   * Closes the connection.
-   */
-  def close(): F[Unit]
-
-  /**
    * Repeats the process `times` times.
    *
    * @param times
@@ -224,8 +219,6 @@ object Protocol:
 
     override def setOption(optionOperation: EnumMySQLSetOption): F[Unit] =
       resetSequenceId *> comSetOption(optionOperation)
-
-    override def close(): F[Unit] = resetSequenceId *> comQuit()
 
     override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]] =
       def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
@@ -497,7 +490,7 @@ object Protocol:
       initialPacketRef <- Resource.eval(Ref[F].of[Option[InitialPacket]](None))
       packetSocket <-
         PacketSocket[F](debug, sockets, sslOptions, sequenceIdRef, initialPacketRef, readTimeout, capabilitiesFlags)
-      protocol <- Resource.make(
+      protocol <- Resource.eval(
                     fromPacketSocket(
                       packetSocket,
                       hostInfo,
@@ -507,7 +500,7 @@ object Protocol:
                       sequenceIdRef,
                       initialPacketRef
                     )
-                  )(_.close())
+                  )
     yield protocol
 
   def fromPacketSocket[F[_]: Temporal: Tracer: Exchange](
