@@ -244,6 +244,13 @@ trait Connection[F[_]]:
   def setCatalog(catalog: String): F[Unit]
 
   /**
+   * Retrieves this <code>Connection</code> object's current catalog name.
+   *
+   * @return the current catalog name or <code>None</code> if there is none
+   */
+  def getCatalog(): F[Option[String]]
+
+  /**
    * Attempts to change the transaction isolation level for this Connection object to the one given. The constants defined in the interface Connection are the possible transaction isolation levels.
    *
    * @param level
@@ -286,6 +293,31 @@ trait Connection[F[_]]:
    *         concurrency
    */
   def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]]
+
+  /**
+   * Creates a <code>PreparedStatement</code> object that will generate
+   * <code>ResultSet</code> objects with the given type and concurrency.
+   * This method is the same as the <code>prepareStatement</code> method
+   * above, but it allows the default result set
+   * type and concurrency to be overridden.
+   * The holdability of the created result sets can be determined by
+   * calling {@link #getHoldability}.
+   *
+   * @param sql a <code>String</code> object that is the SQL statement to
+   *            be sent to the database; may contain one or more '?' IN
+   *            parameters
+   * @param resultSetType a result set type; one of
+   *         <code>ResultSet.TYPE_FORWARD_ONLY</code>,
+   *         <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
+   *         <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
+   * @param resultSetConcurrency a concurrency type; one of
+   *         <code>ResultSet.CONCUR_READ_ONLY</code> or
+   *         <code>ResultSet.CONCUR_UPDATABLE</code>
+   * @return a new PreparedStatement object containing the
+   * pre-compiled SQL statement that will produce <code>ResultSet</code>
+   * objects with the given type and concurrency
+   */
+  def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]]
 
   /**
    * Creates a client-side prepared statement with the given SQL.
@@ -546,17 +578,7 @@ object Connection:
       createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
     override def prepareStatement(sql: String): F[PreparedStatement[F]] =
-      for
-        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
-        batchedArgs <- Ref[F].of(Vector.empty[String])
-      yield PreparedStatement.Client[F](
-        protocol,
-        sql,
-        params,
-        batchedArgs,
-        ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY
-      )
+      prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
 
     override def nativeSQL(sql: String): F[String] = ev.pure(sql)
 
@@ -599,11 +621,20 @@ object Connection:
           .void
 
     override def isReadOnly: F[Boolean] = readOnly.get
-    
+
     override def setCatalog(catalog: String): F[Unit] =
       if databaseTerm.contains(DatabaseTerm.CATALOG) then
-        createStatement().flatMap(_.executeQuery(s"USE `$catalog`")).void
+        createStatement().flatMap(_.executeUpdate(s"USE `$catalog`")).void
       else ev.unit
+
+    override def getCatalog(): F[Option[String]] =
+      if databaseTerm.contains(DatabaseTerm.CATALOG) then
+        for
+          statement <- createStatement()
+          result    <- statement.executeQuery("SELECT DATABASE()")
+          decoded   <- result.getString(1)
+        yield decoded
+      else ev.pure(None)
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
       createStatement().flatMap(_.executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }")).void
@@ -632,6 +663,19 @@ object Connection:
             resultSetConcurrency
           )
         )
+
+    override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
+      for
+        params <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs <- Ref[F].of(Vector.empty[String])
+      yield PreparedStatement.Client[F](
+        protocol,
+        sql,
+        params,
+        batchedArgs,
+        resultSetType,
+        resultSetConcurrency
+      )
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       clientPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
