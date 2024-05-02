@@ -33,6 +33,27 @@ package object packet:
       val remainder = bits.drop((bytes.size + 1) * 8) // +1 is a null character, so *8 is a byte to bit
       Attempt.successful(DecodeResult(string, remainder))
 
+  /**
+   * A length encoded string is a string that is prefixed with length encoded integer describing the length of the string.
+   * 
+   * @see https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_dt_strings.html#sect_protocol_basic_dt_string_var
+   * @return
+   *   A codec for a length encoded string.
+   */
+  def lengthEncodedIntDecoder: Decoder[Long] =
+    uint8.flatMap {
+      case len if len < 251 =>
+        Decoder.pure(len)
+      case 252 =>
+        uint16L.map(_.toLong)
+      case 253 =>
+        uint24L.map(_.toLong)
+      case 254 =>
+        uint32L.xmap(_.toLong, _.toInt)
+      case _ =>
+        fail(Err("Invalid length encoded integer"))
+    }
+
   val spaceDelimitedStringDecoder: Decoder[String] = (bits: BitVector) => {
     @tailrec
     def readUntilSpace(acc: Vector[Byte], remaining: BitVector): (Vector[Byte], BitVector) =
