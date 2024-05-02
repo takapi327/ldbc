@@ -19,7 +19,7 @@ import ldbc.connector.util.Version
 import ldbc.connector.data.*
 import ldbc.connector.data.Types.*
 import ldbc.connector.data.Constants.*
-import ldbc.connector.exception.SQLException
+import ldbc.connector.exception.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
@@ -2365,7 +2365,10 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which a row gives information
    *         about the designated UDT
    */
-  def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): ResultSet[F]
+  def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): F[ResultSet[F]] =
+    getSuperTypes(Some(catalog), Some(schemaPattern), Some(typeNamePattern))
+
+  def getSuperTypes(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String]): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the table hierarchies defined in a particular
@@ -5310,52 +5313,34 @@ object DatabaseMetaData:
         resultSetCurrentRow
       )
 
-    /**
-     * Retrieves the connection that produced this metadata object.
-     *
-     * @return the connection that produced this metadata object
-     */
-    def getConnection(): Connection[F] = ???
+    override def getConnection(): Connection[F] = throw new SQLFeatureNotSupportedException("Connections should be available that generate this DatabaseMetaData.")
 
-    /**
-     * Retrieves a description of the user-defined type (UDT) hierarchies defined in a
-     * particular schema in this database. Only the immediate super type/
-     * sub type relationship is modeled.
-     * <P>
-     * Only supertype information for UDTs matching the catalog,
-     * schema, and type name is returned. The type name parameter
-     * may be a fully-qualified name. When the UDT name supplied is a
-     * fully-qualified name, the catalog and schemaPattern parameters are
-     * ignored.
-     * <P>
-     * If a UDT does not have a direct super type, it is not listed here.
-     * A row of the <code>ResultSet</code> object returned by this method
-     * describes the designated UDT and a direct supertype. A row has the following
-     * columns:
-     * <OL>
-     * <LI><B>TYPE_CAT</B> String {@code =>} the UDT's catalog (may be <code>null</code>)
-     * <LI><B>TYPE_SCHEM</B> String {@code =>} UDT's schema (may be <code>null</code>)
-     * <LI><B>TYPE_NAME</B> String {@code =>} type name of the UDT
-     * <LI><B>SUPERTYPE_CAT</B> String {@code =>} the direct super type's catalog
-     * (may be <code>null</code>)
-     * <LI><B>SUPERTYPE_SCHEM</B> String {@code =>} the direct super type's schema
-     * (may be <code>null</code>)
-     * <LI><B>SUPERTYPE_NAME</B> String {@code =>} the direct super type's name
-     * </OL>
-     *
-     * <P><B>Note:</B> If the driver does not support type hierarchies, an
-     * empty result set is returned.
-     *
-     * @param catalog         a catalog name; "" retrieves those without a catalog;
-     *                        <code>null</code> means drop catalog name from the selection criteria
-     * @param schemaPattern   a schema name pattern; "" retrieves those
-     *                        without a schema
-     * @param typeNamePattern a UDT name pattern; may be a fully-qualified
-     *                        name
-     * @return a <code>ResultSet</code> object in which a row gives information
-     *         about the designated UDT
-     */
-    def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): ResultSet[F] = ???
+    override def getSuperTypes(catalog: Option[String], schemaPattern: Option[String], typeNamePattern: Option[String]): F[ResultSet[F]] =
+      for
+        isResultSetClosed      <- Ref[F].of(false)
+        resultSetCurrentCursor <- Ref[F].of(0)
+        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+      yield ResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "SUPERTYPE_CAT",
+          "SUPERTYPE_SCHEM",
+          "SUPERTYPE_NAME"
+        ).map { value =>
+          new ColumnDefinitionPacket:
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+        },
+        Vector.empty,
+        protocol.initialPacket.serverVersion,
+        isResultSetClosed,
+        resultSetCurrentCursor,
+        resultSetCurrentRow
+      )
 
     /**
      * Retrieves a description of the table hierarchies defined in a particular
