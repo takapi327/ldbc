@@ -2486,7 +2486,15 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        String,
     typeNamePattern:      String,
     attributeNamePattern: String
-  ): ResultSet[F]
+  ): F[ResultSet[F]] =
+    getAttributes(Some(catalog), Some(schemaPattern), Some(typeNamePattern), Some(attributeNamePattern))
+
+  def getAttributes(
+                     catalog: Option[String],
+                     schemaPattern: Option[String],
+                     typeNamePattern: Option[String],
+                     attributeNamePattern: Option[String]
+                   ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set holdability.
@@ -5370,88 +5378,52 @@ object DatabaseMetaData:
         resultSetCurrentRow
       )
 
-    /**
-     * Retrieves a description of the given attribute of the given type
-     * for a user-defined type (UDT) that is available in the given schema
-     * and catalog.
-     * <P>
-     * Descriptions are returned only for attributes of UDTs matching the
-     * catalog, schema, type, and attribute name criteria. They are ordered by
-     * <code>TYPE_CAT</code>, <code>TYPE_SCHEM</code>,
-     * <code>TYPE_NAME</code> and <code>ORDINAL_POSITION</code>. This description
-     * does not contain inherited attributes.
-     * <P>
-     * The <code>ResultSet</code> object that is returned has the following
-     * columns:
-     * <OL>
-     * <LI><B>TYPE_CAT</B> String {@code =>} type catalog (may be <code>null</code>)
-     * <LI><B>TYPE_SCHEM</B> String {@code =>} type schema (may be <code>null</code>)
-     * <LI><B>TYPE_NAME</B> String {@code =>} type name
-     * <LI><B>ATTR_NAME</B> String {@code =>} attribute name
-     * <LI><B>DATA_TYPE</B> int {@code =>} attribute type SQL type from java.sql.Types
-     * <LI><B>ATTR_TYPE_NAME</B> String {@code =>} Data source dependent type name.
-     * For a UDT, the type name is fully qualified. For a REF, the type name is
-     * fully qualified and represents the target type of the reference type.
-     * <LI><B>ATTR_SIZE</B> int {@code =>} column size.  For char or date
-     * types this is the maximum number of characters; for numeric or
-     * decimal types this is precision.
-     * <LI><B>DECIMAL_DIGITS</B> int {@code =>} the number of fractional digits. Null is returned for data types where
-     * DECIMAL_DIGITS is not applicable.
-     * <LI><B>NUM_PREC_RADIX</B> int {@code =>} Radix (typically either 10 or 2)
-     * <LI><B>NULLABLE</B> int {@code =>} whether NULL is allowed
-     * <UL>
-     * <LI> attributeNoNulls - might not allow NULL values
-     * <LI> attributeNullable - definitely allows NULL values
-     * <LI> attributeNullableUnknown - nullability unknown
-     * </UL>
-     * <LI><B>REMARKS</B> String {@code =>} comment describing column (may be <code>null</code>)
-     * <LI><B>ATTR_DEF</B> String {@code =>} default value (may be <code>null</code>)
-     * <LI><B>SQL_DATA_TYPE</B> int {@code =>} unused
-     * <LI><B>SQL_DATETIME_SUB</B> int {@code =>} unused
-     * <LI><B>CHAR_OCTET_LENGTH</B> int {@code =>} for char types the
-     * maximum number of bytes in the column
-     * <LI><B>ORDINAL_POSITION</B> int {@code =>} index of the attribute in the UDT
-     * (starting at 1)
-     * <LI><B>IS_NULLABLE</B> String  {@code =>} ISO rules are used to determine
-     * the nullability for a attribute.
-     * <UL>
-     * <LI> YES           --- if the attribute can include NULLs
-     * <LI> NO            --- if the attribute cannot include NULLs
-     * <LI> empty string  --- if the nullability for the
-     * attribute is unknown
-     * </UL>
-     * <LI><B>SCOPE_CATALOG</B> String {@code =>} catalog of table that is the
-     * scope of a reference attribute (<code>null</code> if DATA_TYPE isn't REF)
-     * <LI><B>SCOPE_SCHEMA</B> String {@code =>} schema of table that is the
-     * scope of a reference attribute (<code>null</code> if DATA_TYPE isn't REF)
-     * <LI><B>SCOPE_TABLE</B> String {@code =>} table name that is the scope of a
-     * reference attribute (<code>null</code> if the DATA_TYPE isn't REF)
-     * <LI><B>SOURCE_DATA_TYPE</B> short {@code =>} source type of a distinct type or user-generated
-     * Ref type,SQL type from java.sql.Types (<code>null</code> if DATA_TYPE
-     * isn't DISTINCT or user-generated REF)
-     * </OL>
-     *
-     * @param catalog              a catalog name; must match the catalog name as it
-     *                             is stored in the database; "" retrieves those without a catalog;
-     *                             <code>null</code> means that the catalog name should not be used to narrow
-     *                             the search
-     * @param schemaPattern        a schema name pattern; must match the schema name
-     *                             as it is stored in the database; "" retrieves those without a schema;
-     *                             <code>null</code> means that the schema name should not be used to narrow
-     *                             the search
-     * @param typeNamePattern      a type name pattern; must match the
-     *                             type name as it is stored in the database
-     * @param attributeNamePattern an attribute name pattern; must match the attribute
-     *                             name as it is declared in the database
-     * @return a <code>ResultSet</code> object in which each row is an
-     *         attribute description
-     */
-    def getAttributes(
-      catalog:              String,
-      schemaPattern:        String,
-      typeNamePattern:      String,
-      attributeNamePattern: String
-    ): ResultSet[F] = ???
+    override def getAttributes(
+      catalog:              Option[String],
+      schemaPattern:        Option[String],
+      typeNamePattern:      Option[String],
+      attributeNamePattern: Option[String]
+    ): F[ResultSet[F]] =
+      for
+        isResultSetClosed <- Ref[F].of(false)
+        resultSetCurrentCursor <- Ref[F].of(0)
+        resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+      yield ResultSet(
+        Vector(
+          "TYPE_CAT",
+          "TYPE_SCHEM",
+          "TYPE_NAME",
+          "ATTR_NAME",
+          "DATA_TYPE",
+          "ATTR_TYPE_NAME",
+          "ATTR_SIZE",
+          "DECIMAL_DIGITS",
+          "NUM_PREC_RADIX",
+          "NULLABLE",
+          "REMARKS",
+          "ATTR_DEF",
+          "SQL_DATA_TYPE",
+          "SQL_DATETIME_SUB",
+          "CHAR_OCTET_LENGTH",
+          "ORDINAL_POSITION",
+          "IS_NULLABLE",
+          "SCOPE_CATALOG",
+          "SCOPE_SCHEMA",
+          "SCOPE_TABLE",
+          "SOURCE_DATA_TYPE"
+        ).map { value =>
+          new ColumnDefinitionPacket:
+            override def table: String = ""
+            override def name: String = value
+            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+        },
+        Vector.empty,
+        protocol.initialPacket.serverVersion,
+        isResultSetClosed,
+        resultSetCurrentCursor,
+        resultSetCurrentRow
+      )
 
     override def getDatabaseMajorVersion(): Int = protocol.initialPacket.serverVersion.major
     override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
