@@ -279,7 +279,7 @@ class ConnectionTest extends CatsEffectSuite:
 
     assertIO(
       connection.use { conn =>
-        conn.setSchema("world") *> conn.getSchema
+        conn.setSchema("world") *> conn.getSchema()
       },
       "world"
     )
