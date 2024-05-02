@@ -42,7 +42,7 @@ package object packet:
    */
   def lengthEncodedIntDecoder: Decoder[Long] =
     uint8.flatMap {
-      case len if len < 251 =>
+      case len if len <= 251 =>
         Decoder.pure(len)
       case 252 =>
         uint16L.map(_.toLong)
@@ -50,8 +50,8 @@ package object packet:
         uint24L.map(_.toLong)
       case 254 =>
         uint32L.xmap(_.toLong, _.toInt)
-      case _ =>
-        fail(Err("Invalid length encoded integer"))
+      case int =>
+        fail(Err("Invalid length encoded integer: " + int))
     }
 
   val spaceDelimitedStringDecoder: Decoder[String] = (bits: BitVector) => {
