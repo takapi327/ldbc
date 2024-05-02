@@ -559,7 +559,7 @@ object Connection:
 
     override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
       (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-      else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit()
+       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit()
     }
 
     override def isClosed(): F[Boolean] = ev.pure(false)
