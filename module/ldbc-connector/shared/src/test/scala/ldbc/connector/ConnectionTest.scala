@@ -1599,8 +1599,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      // ssl          = SSL.Trusted,
-      allowPublicKeyRetrieval = true,
+      ssl          = SSL.Trusted,
       databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
@@ -1643,6 +1642,73 @@ class ConnectionTest extends CatsEffectSuite:
         "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_major), Function Type: 1, Specific Name: Some(version_major)",
         "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_minor), Function Type: 1, Specific Name: Some(version_minor)",
         "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_patch), Function Type: 1, Specific Name: Some(version_patch)"
+      )
+    )
+  }
+
+  test("The result of retrieving function column information matches the specified value.") {
+    val connection = Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl          = SSL.Trusted,
+      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getFunctionColumns(None, None, None, Some("in_host"))
+          values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
+            for
+              functionCat <- resultSet.getString("FUNCTION_CAT")
+              functionSchem <- resultSet.getString("FUNCTION_SCHEM")
+              functionName <- resultSet.getString("FUNCTION_NAME")
+              columnName <- resultSet.getString("COLUMN_NAME")
+              columnType <- resultSet.getShort("COLUMN_TYPE")
+              dataType <- resultSet.getInt("DATA_TYPE")
+              typeName <- resultSet.getString("TYPE_NAME")
+              precision <- resultSet.getInt("PRECISION")
+              length <- resultSet.getInt("LENGTH")
+              scale <- resultSet.getShort("SCALE")
+              radix <- resultSet.getShort("RADIX")
+              nullable <- resultSet.getShort("NULLABLE")
+              remarks <- resultSet.getString("REMARKS")
+              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+              isNullable <- resultSet.getString("IS_NULLABLE")
+              specificName <- resultSet.getString("SPECIFIC_NAME")
+            yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Column Name: $columnName, Column Type: $columnType, Data Type: $dataType, Type Name: $typeName, Precision: $precision, Length: $length, Scale: $scale, Radix: $radix, Nullable: $nullable, Remarks: $remarks, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Specific Name: $specificName"
+          }
+        yield values
+      },
+      Vector(
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_schema_from_file_name), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(extract_schema_from_file_name)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_table_from_file_name), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(extract_table_from_file_name)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_bytes), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_bytes)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_path), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 512, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2048, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_path)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_statement), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(LONGTEXT), Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_statement)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_time), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_time)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_add), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(list_add)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_drop), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(list_drop)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_account_enabled), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_account_enabled)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_account_enabled), Column Name: Some(in_host), Column Type: 1, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 255, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 1020, Ordinal Position: 1, Is Nullable: Some(YES), Specific Name: Some(ps_is_account_enabled)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_consumer_enabled), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_consumer_enabled)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_enabled), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_instrument_default_enabled)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_timed), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_instrument_default_timed)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_thread_instrumented), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 7, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 28, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_thread_instrumented)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_account), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_account)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_id), Column Name: Some(), Column Type: 4, Data Type: -5, Type Name: Some(BIGINT UNSIGNED), Precision: 20, Length: 20, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_id)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_stack), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(LONGTEXT), Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_stack)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_trx_info), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(LONGTEXT), Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_trx_info)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(quote_identifier), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(quote_identifier)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(sys_get_config), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 128, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 512, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(sys_get_config)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_major), Column Name: Some(), Column Type: 4, Data Type: -6, Type Name: Some(TINYINT UNSIGNED), Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(version_major)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_minor), Column Name: Some(), Column Type: 4, Data Type: -6, Type Name: Some(TINYINT UNSIGNED), Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(version_minor)",
+        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_patch), Column Name: Some(), Column Type: 4, Data Type: -6, Type Name: Some(TINYINT UNSIGNED), Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(version_patch)"
       )
     )
   }
