@@ -2878,11 +2878,11 @@ trait DatabaseMetaData[F[_]]:
     getPseudoColumns(Some(catalog), Some(schemaPattern), Some(tableNamePattern), Some(columnNamePattern))
 
   def getPseudoColumns(
-                        catalog: Option[String],
-                        schemaPattern: Option[String],
-                        tableNamePattern: Option[String],
-                        columnNamePattern: Option[String]
-                      ): F[ResultSet[F]]
+    catalog:           Option[String],
+    schemaPattern:     Option[String],
+    tableNamePattern:  Option[String],
+    columnNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether a generated key will always be returned if the column
@@ -5645,20 +5645,22 @@ object DatabaseMetaData:
       tableNamePattern:  Option[String],
       columnNamePattern: Option[String]
     ): F[ResultSet[F]] =
-      emptyResultSet(Vector(
-        "TABLE_CAT",
-        "TABLE_SCHEM",
-        "TABLE_NAME",
-        "COLUMN_NAME",
-        "DATA_TYPE",
-        "COLUMN_SIZE",
-        "DECIMAL_DIGITS",
-        "NUM_PREC_RADIX",
-        "COLUMN_USAGE",
-        "REMARKS",
-        "CHAR_OCTET_LENGTH",
-        "IS_NULLABLE"
-      ))
+      emptyResultSet(
+        Vector(
+          "TABLE_CAT",
+          "TABLE_SCHEM",
+          "TABLE_NAME",
+          "COLUMN_NAME",
+          "DATA_TYPE",
+          "COLUMN_SIZE",
+          "DECIMAL_DIGITS",
+          "NUM_PREC_RADIX",
+          "COLUMN_USAGE",
+          "REMARKS",
+          "CHAR_OCTET_LENGTH",
+          "IS_NULLABLE"
+        )
+      )
 
     protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
       (databaseTerm, catalog, schema) match
