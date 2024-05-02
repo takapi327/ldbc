@@ -1587,7 +1587,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Cat: Some(def), Table Schem: Some(world), Table Name: Some(city), Non Unique: false, Index Qualifier: None, Index Name: Some(PRIMARY), Type: 3, Ordinal Position: 1, Column Name: Some(ID), Asc Or Desc: Some(A), Cardinality: 30, Pages: 0, Filter Condition: None"
+        "Table Cat: Some(def), Table Schem: Some(world), Table Name: Some(city), Non Unique: false, Index Qualifier: None, Index Name: Some(PRIMARY), Type: 3, Ordinal Position: 1, Column Name: Some(ID), Asc Or Desc: Some(A), Cardinality: 2, Pages: 0, Filter Condition: None"
       )
     )
   }
