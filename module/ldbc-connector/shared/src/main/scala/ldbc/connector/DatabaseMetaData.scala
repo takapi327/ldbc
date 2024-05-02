@@ -2800,7 +2800,15 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:       String,
     functionNamePattern: String,
     columnNamePattern:   String
-  ): ResultSet[F]
+  ): F[ResultSet[F]] =
+    getFunctionColumns(Some(catalog), Some(schemaPattern), Some(functionNamePattern), Some(columnNamePattern))
+
+  def getFunctionColumns(
+                          catalog: Option[String],
+                          schemaPattern: Option[String],
+                          functionNamePattern: Option[String],
+                          columnNamePattern: Option[String]
+                        ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the pseudo or hidden columns available
@@ -5463,103 +5471,147 @@ object DatabaseMetaData:
         setting *> preparedStatement.executeQuery() <* preparedStatement.close()
       }
 
-    /**
-     * Retrieves a description of the given catalog's system or user
-     * function parameters and return type.
-     *
-     * <P>Only descriptions matching the schema,  function and
-     * parameter name criteria are returned. They are ordered by
-     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
-     * <code>FUNCTION_NAME</code> and
-     * <code>SPECIFIC_ NAME</code>. Within this, the return value,
-     * if any, is first. Next are the parameter descriptions in call
-     * order. The column descriptions follow in column number order.
-     *
-     * <P>Each row in the <code>ResultSet</code>
-     * is a parameter description, column description or
-     * return type description with the following fields:
-     * <OL>
-     * <LI><B>FUNCTION_CAT</B> String {@code =>} function catalog (may be <code>null</code>)
-     * <LI><B>FUNCTION_SCHEM</B> String {@code =>} function schema (may be <code>null</code>)
-     * <LI><B>FUNCTION_NAME</B> String {@code =>} function name.  This is the name
-     * used to invoke the function
-     * <LI><B>COLUMN_NAME</B> String {@code =>} column/parameter name
-     * <LI><B>COLUMN_TYPE</B> Short {@code =>} kind of column/parameter:
-     * <UL>
-     * <LI> functionColumnUnknown - nobody knows
-     * <LI> functionColumnIn - IN parameter
-     * <LI> functionColumnInOut - INOUT parameter
-     * <LI> functionColumnOut - OUT parameter
-     * <LI> functionColumnReturn - function return value
-     * <LI> functionColumnResult - Indicates that the parameter or column
-     * is a column in the <code>ResultSet</code>
-     * </UL>
-     * <LI><B>DATA_TYPE</B> int {@code =>} SQL type from java.sql.Types
-     * <LI><B>TYPE_NAME</B> String {@code =>} SQL type name, for a UDT type the
-     * type name is fully qualified
-     * <LI><B>PRECISION</B> int {@code =>} precision
-     * <LI><B>LENGTH</B> int {@code =>} length in bytes of data
-     * <LI><B>SCALE</B> short {@code =>} scale -  null is returned for data types where
-     * SCALE is not applicable.
-     * <LI><B>RADIX</B> short {@code =>} radix
-     * <LI><B>NULLABLE</B> short {@code =>} can it contain NULL.
-     * <UL>
-     * <LI> functionNoNulls - does not allow NULL values
-     * <LI> functionNullable - allows NULL values
-     * <LI> functionNullableUnknown - nullability unknown
-     * </UL>
-     * <LI><B>REMARKS</B> String {@code =>} comment describing column/parameter
-     * <LI><B>CHAR_OCTET_LENGTH</B> int  {@code =>} the maximum length of binary
-     * and character based parameters or columns.  For any other datatype the returned value
-     * is a NULL
-     * <LI><B>ORDINAL_POSITION</B> int  {@code =>} the ordinal position, starting
-     * from 1, for the input and output parameters. A value of 0
-     * is returned if this row describes the function's return value.
-     * For result set columns, it is the
-     * ordinal position of the column in the result set starting from 1.
-     * <LI><B>IS_NULLABLE</B> String  {@code =>} ISO rules are used to determine
-     * the nullability for a parameter or column.
-     * <UL>
-     * <LI> YES           --- if the parameter or column can include NULLs
-     * <LI> NO            --- if the parameter or column  cannot include NULLs
-     * <LI> empty string  --- if the nullability for the
-     * parameter  or column is unknown
-     * </UL>
-     * <LI><B>SPECIFIC_NAME</B> String  {@code =>} the name which uniquely identifies
-     * this function within its schema.  This is a user specified, or DBMS
-     * generated, name that may be different then the <code>FUNCTION_NAME</code>
-     * for example with overload functions
-     * </OL>
-     *
-     * <p>The PRECISION column represents the specified column size for the given
-     * parameter or column.
-     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.
-     * For datetime datatypes, this is the length in characters of the String representation (assuming the
-     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,
-     * this is the length in bytes. Null is returned for data types where the
-     * column size is not applicable.
-     *
-     * @param catalog             a catalog name; must match the catalog name as it
-     *                            is stored in the database; "" retrieves those without a catalog;
-     *                            <code>null</code> means that the catalog name should not be used to narrow
-     *                            the search
-     * @param schemaPattern       a schema name pattern; must match the schema name
-     *                            as it is stored in the database; "" retrieves those without a schema;
-     *                            <code>null</code> means that the schema name should not be used to narrow
-     *                            the search
-     * @param functionNamePattern a procedure name pattern; must match the
-     *                            function name as it is stored in the database
-     * @param columnNamePattern   a parameter name pattern; must match the
-     *                            parameter or column name as it is stored in the database
-     * @return <code>ResultSet</code> - each row describes a
-     *         user function parameter, column  or return type
-     */
-    def getFunctionColumns(
-      catalog:             String,
-      schemaPattern:       String,
-      functionNamePattern: String,
-      columnNamePattern:   String
-    ): ResultSet[F] = ???
+    override def getFunctionColumns(
+      catalog:             Option[String],
+      schemaPattern:       Option[String],
+      functionNamePattern: Option[String],
+      columnNamePattern:   Option[String]
+    ): F[ResultSet[F]] =
+
+      val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
+
+      val db = getDatabase(catalog, schemaPattern)
+
+      val sqlBuf = new StringBuilder(
+        if databaseTerm.contains(DatabaseTerm.SCHEMA) then "SELECT SPECIFIC_CATALOG AS FUNCTION_CAT, SPECIFIC_SCHEMA AS `FUNCTION_SCHEM`,"
+        else "SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`,"
+      )
+      sqlBuf.append(" SPECIFIC_NAME AS `FUNCTION_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN ")
+      sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_IN))
+      sqlBuf.append(" WHEN PARAMETER_MODE = 'OUT' THEN ")
+      sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_OUT))
+      sqlBuf.append(" WHEN PARAMETER_MODE = 'INOUT' THEN ")
+      sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_INOUT))
+      sqlBuf.append(" WHEN ORDINAL_POSITION = 0 THEN ")
+      sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_RETURN))
+      sqlBuf.append(" ELSE ")
+      sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_COLUMN_UNKNOWN))
+      sqlBuf.append(" END AS `COLUMN_TYPE`, ")
+      appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE", "DTD_IDENTIFIER")
+      sqlBuf.append(" AS `DATA_TYPE`, ")
+      sqlBuf.append("UPPER(CASE")
+
+      if tinyInt1isBit then
+        sqlBuf.append(" WHEN UPPER(DATA_TYPE)='TINYINT' THEN CASE")
+        sqlBuf.append(
+          " WHEN LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN "
+        )
+        sqlBuf.append(if transformedBitIsBoolean then "'BOOLEAN'" else "'BIT'")
+        sqlBuf.append(" WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 THEN 'TINYINT UNSIGNED'")
+        sqlBuf.append(" ELSE DATA_TYPE END ")
+
+      sqlBuf.append(
+        " WHEN LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 AND LOCATE('UNSIGNED', UPPER(DATA_TYPE)) = 0 AND LOCATE('SET', UPPER(DATA_TYPE)) <> 1 AND LOCATE('ENUM', UPPER(DATA_TYPE)) <> 1 THEN CONCAT(DATA_TYPE, ' UNSIGNED')"
+      )
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POINT' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='LINESTRING' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='POLYGON' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOINT' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTILINESTRING' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MULTIPOLYGON' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMETRYCOLLECTION' THEN 'GEOMETRY'")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='GEOMCOLLECTION' THEN 'GEOMETRY'")
+
+      sqlBuf.append(" ELSE UPPER(DATA_TYPE) END) AS TYPE_NAME,")
+
+      sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 0")
+
+      if supportsFractSeconds then sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN DATETIME_PRECISION")
+      else sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' OR LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 0")
+
+      if tinyInt1isBit && !transformedBitIsBoolean then
+        sqlBuf.append(
+          " WHEN (UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0) AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
+        )
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824")
+      sqlBuf.append(" ELSE NUMERIC_PRECISION END AS `PRECISION`,")
+
+      sqlBuf.append(" CASE WHEN LCASE(DATA_TYPE)='date' THEN 10")
+
+      if supportsFractSeconds then
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp'")
+        sqlBuf.append("  THEN 19+(CASE WHEN DATETIME_PRECISION>0 THEN DATETIME_PRECISION+1 ELSE DATETIME_PRECISION END)")
+      else
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='time' THEN 8")
+        sqlBuf.append(" WHEN LCASE(DATA_TYPE)='datetime' OR LCASE(DATA_TYPE)='timestamp' THEN 19")
+
+      if tinyInt1isBit && !transformedBitIsBoolean then
+        sqlBuf.append(
+          " WHEN (UPPER(DATA_TYPE)='TINYINT' OR UPPER(DATA_TYPE)='TINYINT UNSIGNED') AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
+        )
+
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8")
+      sqlBuf.append(" WHEN UPPER(DATA_TYPE)='JSON' THEN 1073741824")
+      sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION")
+      sqlBuf.append(" WHEN CHARACTER_MAXIMUM_LENGTH > " + Int.MaxValue + " THEN " + Int.MaxValue)
+      sqlBuf.append(" ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ")
+
+      sqlBuf.append("NUMERIC_SCALE AS `SCALE`, 10 AS RADIX, ")
+      sqlBuf.append(getFunctionConstant(FunctionConstant.FUNCTION_NULLABLE))
+      sqlBuf.append(" AS `NULLABLE`,  NULL AS `REMARKS`,")
+
+      sqlBuf.append(" CASE WHEN CHARACTER_OCTET_LENGTH > ")
+      sqlBuf.append(Integer.MAX_VALUE)
+      sqlBuf.append(" THEN ")
+      sqlBuf.append(Integer.MAX_VALUE)
+      sqlBuf.append(" ELSE CHARACTER_OCTET_LENGTH END AS `CHAR_OCTET_LENGTH`,")
+
+      sqlBuf.append(" ORDINAL_POSITION, 'YES' AS `IS_NULLABLE`,")
+      sqlBuf.append(" SPECIFIC_NAME FROM INFORMATION_SCHEMA.PARAMETERS WHERE")
+
+      val conditionBuf = new StringBuilder()
+
+      if db.nonEmpty then
+        conditionBuf.append(if databaseTerm.contains(DatabaseTerm.SCHEMA) then " SPECIFIC_SCHEMA LIKE ?" else " SPECIFIC_SCHEMA = ?")
+
+      if functionNamePattern.nonEmpty then
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+        conditionBuf.append(" SPECIFIC_NAME LIKE ?")
+
+      if columnNamePattern.nonEmpty then
+        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+        conditionBuf.append(" (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL)")
+
+      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+      conditionBuf.append(" ROUTINE_TYPE='FUNCTION'")
+
+      sqlBuf.append(conditionBuf)
+      sqlBuf.append(" ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION")
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, functionNamePattern, columnNamePattern) match
+          case (Some(dbValue), Some(functionName), Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, functionName) *> preparedStatement.setString(
+              3,
+              columnName
+            )
+          case (Some(dbValue), Some(functionName), None) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, functionName)
+          case (Some(dbValue), None, Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, columnName)
+          case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(functionName), Some(columnName)) =>
+            preparedStatement.setString(1, functionName) *> preparedStatement.setString(2, columnName)
+          case (None, Some(functionName), None) => preparedStatement.setString(1, functionName)
+          case (None, None, Some(columnName))   => preparedStatement.setString(1, columnName)
+          case (None, None, None)               => ev.unit
+
+        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+      }
 
     /**
      * Retrieves a description of the pseudo or hidden columns available
@@ -5816,6 +5868,18 @@ object DatabaseMetaData:
         resultSetCurrentCursor,
         resultSetCurrentRow
       )
+
+    private def getFunctionConstant(constant: FunctionConstant): Int =
+      constant match
+        case FunctionConstant.FUNCTION_COLUMN_IN      => functionColumnIn
+        case FunctionConstant.FUNCTION_COLUMN_OUT     => functionColumnOut
+        case FunctionConstant.FUNCTION_COLUMN_INOUT    => functionColumnInOut
+        case FunctionConstant.FUNCTION_COLUMN_RETURN   => functionReturn
+        case FunctionConstant.FUNCTION_COLUMN_RESULT   => functionColumnResult
+        case FunctionConstant.FUNCTION_COLUMN_UNKNOWN  => functionColumnUnknown
+        case FunctionConstant.FUNCTION_NO_NULLS  => functionNoNulls
+        case FunctionConstant.FUNCTION_NULLABLE => functionNullable
+        case FunctionConstant.FUNCTION_NULLABLE_UNKNOWN => functionNullableUnknown
 
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
