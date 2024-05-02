@@ -517,6 +517,7 @@ object Connection:
     database:        Option[String],
     readOnly:        Ref[F, Boolean],
     isAutoCommit:    Ref[F, Boolean],
+    closed:         Ref[F, Boolean],
     databaseTerm:    Option[DatabaseTerm] = None
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
@@ -559,10 +560,10 @@ object Connection:
 
     override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
       (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit()
+       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> closed.update(_ => true)
     }
 
-    override def isClosed(): F[Boolean] = ev.pure(false)
+    override def isClosed(): F[Boolean] = closed.get
 
     override def getMetaData(): F[DatabaseMetaData[F]] =
       isClosed().map {
@@ -759,10 +760,11 @@ object Connection:
       serverVariables <- Resource.eval(protocol.serverVariables())
       readOnly        <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit      <- Resource.eval(Ref[F].of[Boolean](true))
+      closed          <- Resource.eval(Ref[F].of[Boolean](false))
       connection <-
         Resource.make(
           Temporal[F].pure(
-            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit, databaseTerm)
+            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit, closed, databaseTerm)
           )
         )(_.close())
     yield connection
