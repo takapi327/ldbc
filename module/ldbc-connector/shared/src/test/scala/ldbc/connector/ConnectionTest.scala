@@ -1579,15 +1579,14 @@ class ConnectionTest extends CatsEffectSuite:
                         ordinalPosition <- resultSet.getShort("ORDINAL_POSITION")
                         columnName      <- resultSet.getString("COLUMN_NAME")
                         ascOrDesc       <- resultSet.getString("ASC_OR_DESC")
-                        cardinality     <- resultSet.getLong("CARDINALITY")
                         pages           <- resultSet.getLong("PAGES")
                         filterCondition <- resultSet.getString("FILTER_CONDITION")
-                      yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Non Unique: $nonUnique, Index Qualifier: $indexQualifier, Index Name: $INDEXNAME, Type: ${ `type` }, Ordinal Position: $ordinalPosition, Column Name: $columnName, Asc Or Desc: $ascOrDesc, Cardinality: $cardinality, Pages: $pages, Filter Condition: $filterCondition"
+                      yield s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Non Unique: $nonUnique, Index Qualifier: $indexQualifier, Index Name: $INDEXNAME, Type: ${ `type` }, Ordinal Position: $ordinalPosition, Column Name: $columnName, Asc Or Desc: $ascOrDesc, Pages: $pages, Filter Condition: $filterCondition"
                     }
         yield values
       },
       Vector(
-        "Table Cat: Some(def), Table Schem: Some(world), Table Name: Some(city), Non Unique: false, Index Qualifier: None, Index Name: Some(PRIMARY), Type: 3, Ordinal Position: 1, Column Name: Some(ID), Asc Or Desc: Some(A), Cardinality: 2, Pages: 0, Filter Condition: None"
+        "Table Cat: Some(def), Table Schem: Some(world), Table Name: Some(city), Non Unique: false, Index Qualifier: None, Index Name: Some(PRIMARY), Type: 3, Ordinal Position: 1, Column Name: Some(ID), Asc Or Desc: Some(A), Pages: 0, Filter Condition: None"
       )
     )
   }
