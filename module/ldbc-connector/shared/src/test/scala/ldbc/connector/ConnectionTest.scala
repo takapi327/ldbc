@@ -1594,13 +1594,13 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving function information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
       ssl          = SSL.Trusted,
-      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
     assertIO(
@@ -1648,13 +1648,13 @@ class ConnectionTest extends CatsEffectSuite:
 
   test("The result of retrieving function column information matches the specified value.") {
     val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
+      host         = "127.0.0.1",
+      port         = 13306,
+      user         = "ldbc",
+      password     = Some("password"),
+      database     = Some("connector_test"),
       ssl          = SSL.Trusted,
-      databaseTerm            = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
+      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
 
     assertIO(
@@ -1663,26 +1663,26 @@ class ConnectionTest extends CatsEffectSuite:
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getFunctionColumns(None, None, None, Some("in_host"))
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
-            for
-              functionCat <- resultSet.getString("FUNCTION_CAT")
-              functionSchem <- resultSet.getString("FUNCTION_SCHEM")
-              functionName <- resultSet.getString("FUNCTION_NAME")
-              columnName <- resultSet.getString("COLUMN_NAME")
-              columnType <- resultSet.getShort("COLUMN_TYPE")
-              dataType <- resultSet.getInt("DATA_TYPE")
-              typeName <- resultSet.getString("TYPE_NAME")
-              precision <- resultSet.getInt("PRECISION")
-              length <- resultSet.getInt("LENGTH")
-              scale <- resultSet.getShort("SCALE")
-              radix <- resultSet.getShort("RADIX")
-              nullable <- resultSet.getShort("NULLABLE")
-              remarks <- resultSet.getString("REMARKS")
-              charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
-              ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
-              isNullable <- resultSet.getString("IS_NULLABLE")
-              specificName <- resultSet.getString("SPECIFIC_NAME")
-            yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Column Name: $columnName, Column Type: $columnType, Data Type: $dataType, Type Name: $typeName, Precision: $precision, Length: $length, Scale: $scale, Radix: $radix, Nullable: $nullable, Remarks: $remarks, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Specific Name: $specificName"
-          }
+                      for
+                        functionCat     <- resultSet.getString("FUNCTION_CAT")
+                        functionSchem   <- resultSet.getString("FUNCTION_SCHEM")
+                        functionName    <- resultSet.getString("FUNCTION_NAME")
+                        columnName      <- resultSet.getString("COLUMN_NAME")
+                        columnType      <- resultSet.getShort("COLUMN_TYPE")
+                        dataType        <- resultSet.getInt("DATA_TYPE")
+                        typeName        <- resultSet.getString("TYPE_NAME")
+                        precision       <- resultSet.getInt("PRECISION")
+                        length          <- resultSet.getInt("LENGTH")
+                        scale           <- resultSet.getShort("SCALE")
+                        radix           <- resultSet.getShort("RADIX")
+                        nullable        <- resultSet.getShort("NULLABLE")
+                        remarks         <- resultSet.getString("REMARKS")
+                        charOctetLength <- resultSet.getInt("CHAR_OCTET_LENGTH")
+                        ordinalPosition <- resultSet.getInt("ORDINAL_POSITION")
+                        isNullable      <- resultSet.getString("IS_NULLABLE")
+                        specificName    <- resultSet.getString("SPECIFIC_NAME")
+                      yield s"Function Cat: $functionCat, Function Schem: $functionSchem, Function Name: $functionName, Column Name: $columnName, Column Type: $columnType, Data Type: $dataType, Type Name: $typeName, Precision: $precision, Length: $length, Scale: $scale, Radix: $radix, Nullable: $nullable, Remarks: $remarks, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Specific Name: $specificName"
+                    }
         yield values
       },
       Vector(
