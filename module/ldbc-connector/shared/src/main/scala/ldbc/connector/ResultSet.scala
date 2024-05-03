@@ -644,6 +644,7 @@ object ResultSet:
   private[ldbc] case class Impl[F[_]](
     columns:              Vector[ColumnDefinitionPacket],
     records:              Vector[ResultSetRowPacket],
+    serverVariables:      Map[String, String],
     version:              Version,
     isClosed:             Ref[F, Boolean],
     currentCursor:        Ref[F, Int],
@@ -819,7 +820,7 @@ object ResultSet:
 
     override def getMetaData(): F[ResultSetMetaData] =
       checkClose {
-        ev.pure(ResultSetMetaData(columns, version))
+        ev.pure(ResultSetMetaData(columns, serverVariables, version))
       }
 
     override def getBigDecimal(columnIndex: Int): F[Option[BigDecimal]] =
@@ -960,16 +961,18 @@ object ResultSet:
   def apply[F[_]](
     columns:       Vector[ColumnDefinitionPacket],
     records:       Vector[ResultSetRowPacket],
+    serverVariables:      Map[String, String],
     version:       Version,
     isClosed:      Ref[F, Boolean],
     currentCursor: Ref[F, Int],
     currentRow:    Ref[F, Option[ResultSetRowPacket]]
   )(using MonadError[F, Throwable]): ResultSet[F] =
-    Impl[F](columns, records, version, isClosed, currentCursor, currentRow, ResultSet.TYPE_FORWARD_ONLY)
+    Impl[F](columns, records, serverVariables, version, isClosed, currentCursor, currentRow, ResultSet.TYPE_FORWARD_ONLY)
 
   def apply[F[_]](
     columns:              Vector[ColumnDefinitionPacket],
     records:              Vector[ResultSetRowPacket],
+    serverVariables:      Map[String, String],
     version:              Version,
     isClosed:             Ref[F, Boolean],
     currentCursor:        Ref[F, Int],
@@ -977,9 +980,10 @@ object ResultSet:
     resultSetType:        Int,
     resultSetConcurrency: Int
   )(using MonadError[F, Throwable]): ResultSet[F] =
-    Impl[F](columns, records, version, isClosed, currentCursor, currentRow, resultSetType, resultSetConcurrency)
+    Impl[F](columns, records, serverVariables, version, isClosed, currentCursor, currentRow, resultSetType, resultSetConcurrency)
 
   def empty[F[_]](
+                   serverVariables:      Map[String, String],
     version:       Version,
     isClosed:      Ref[F, Boolean],
     currentCursor: Ref[F, Int],
@@ -988,6 +992,7 @@ object ResultSet:
     this.apply(
       Vector.empty,
       Vector.empty,
+      serverVariables,
       version,
       isClosed,
       currentCursor,

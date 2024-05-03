@@ -129,6 +129,7 @@ object Statement:
 
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:             Protocol[F],
+    serverVariables:      Map[String, String],
     batchedArgsRef:       Ref[F, Vector[String]],
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
@@ -152,6 +153,7 @@ object Statement:
                   resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 yield ResultSet
                   .empty(
+                    serverVariables,
                     protocol.initialPacket.serverVersion,
                     isResultSetClosed,
                     resultSetCurrentCursor,
@@ -176,6 +178,7 @@ object Statement:
                 yield ResultSet(
                   columnDefinitions,
                   resultSetRow,
+                  serverVariables,
                   protocol.initialPacket.serverVersion,
                   isResultSetClosed,
                   resultSetCurrentCursor,

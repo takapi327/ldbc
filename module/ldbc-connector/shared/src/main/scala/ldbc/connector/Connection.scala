@@ -652,6 +652,7 @@ object Connection:
         .map(batchedArgs =>
           Statement[F](
             protocol,
+            serverVariables,
             batchedArgs,
             resultSetType,
             resultSetConcurrency
@@ -664,6 +665,7 @@ object Connection:
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement.Client[F](
         protocol,
+        serverVariables,
         sql,
         params,
         batchedArgs,
@@ -684,6 +686,7 @@ object Connection:
       yield PreparedStatement
         .Client[F](
           protocol,
+          serverVariables,
           sql,
           params,
           batchedArgs,
@@ -717,6 +720,7 @@ object Connection:
       yield PreparedStatement
         .Server[F](
           protocol,
+          serverVariables,
           result.statementId,
           sql,
           params,

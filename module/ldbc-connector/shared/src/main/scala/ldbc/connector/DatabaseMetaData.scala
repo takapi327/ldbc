@@ -4561,6 +4561,7 @@ object DatabaseMetaData:
               override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
           },
           dbList.map(name => ResultSetRowPacket(List(Some(name)))).toVector,
+          serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
           resultSetCurrentCursor,
@@ -4585,6 +4586,7 @@ object DatabaseMetaData:
           .filterNot(_ == TableType.UNKNOWN)
           .map(tableType => ResultSetRowPacket(List(Some(tableType.name))))
           .toVector,
+        serverVariables,
         protocol.initialPacket.serverVersion,
         isResultSetClosed,
         resultSetCurrentCursor,
@@ -4951,6 +4953,7 @@ object DatabaseMetaData:
                 )
               )
           },
+          serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
           resultSetCurrentCursor,
@@ -5278,6 +5281,7 @@ object DatabaseMetaData:
               override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
           },
           types,
+          serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
           resultSetCurrentCursor,
@@ -5425,6 +5429,7 @@ object DatabaseMetaData:
               override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
           },
           dbList.map(name => ResultSetRowPacket(List(Some("def"), Some(name)))).toVector,
+          serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
           resultSetCurrentCursor,
@@ -5681,6 +5686,7 @@ object DatabaseMetaData:
         batchedArgs <- Ref[F].of(Vector.empty[String])
       yield PreparedStatement.Client[F](
         protocol,
+        serverVariables,
         sql,
         params,
         batchedArgs,
@@ -5846,6 +5852,7 @@ object DatabaseMetaData:
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
         Vector.empty,
+        serverVariables,
         protocol.initialPacket.serverVersion,
         isResultSetClosed,
         resultSetCurrentCursor,
