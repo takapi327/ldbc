@@ -179,31 +179,32 @@ object Statement:
    * The constant indicating that an error occurred while executing a batch statement.
    */
   val EXECUTE_FAILED = -3
-  
+
   private[ldbc] case class Impl[F[_]: Temporal: Exchange: Tracer](
     protocol:             Protocol[F],
     serverVariables:      Map[String, String],
-    batchedArgs:       Ref[F, Vector[String]],
+    batchedArgs:          Ref[F, Vector[String]],
     statementClosed:      Ref[F, Boolean],
     connectionClosed:     Ref[F, Boolean],
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  )(using ev: MonadError[F, Throwable]) extends Statement[F]:
+  )(using ev: MonadError[F, Throwable])
+    extends Statement[F]:
 
     private val attributes = protocol.initialPacket.attributes ++ List(Attribute("type", "Statement"))
 
     override def executeQuery(sql: String): F[ResultSet[F]] =
       checkClosed {
         exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-          span.addAttributes((attributes ++ List(Attribute("execute", "query"), Attribute("sql", sql))) *) *>
+          span.addAttributes((attributes ++ List(Attribute("execute", "query"), Attribute("sql", sql)))*) *>
             protocol.resetSequenceId *>
             protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
             protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case _: OKPacket =>
                 for
-                  isResultSetClosed <- Ref[F].of(false)
+                  isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 yield ResultSet
                   .empty(
                     serverVariables,
@@ -225,9 +226,9 @@ object Statement:
                       ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                       Vector.empty
                     )
-                  isResultSetClosed <- Ref[F].of(false)
+                  isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow <- Ref[F].of(resultSetRow.headOption)
+                  resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
                 yield ResultSet(
                   columnDefinitions,
                   resultSetRow,
@@ -247,15 +248,15 @@ object Statement:
       checkClosed {
         exchange[F, Int]("statement") { (span: Span[F]) =>
           span.addAttributes(
-            (attributes ++ List(Attribute("execute", "update"), Attribute("sql", sql))) *
+            (attributes ++ List(Attribute("execute", "update"), Attribute("sql", sql)))*
           ) *> protocol.resetSequenceId *> (
             protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
               protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(result.affectedRows)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
               }
-            )
+          )
         }
       }
 
@@ -270,15 +271,15 @@ object Statement:
       checkClosed {
         exchange[F, Int]("statement") { (span: Span[F]) =>
           span.addAttributes(
-            (attributes ++ List(Attribute("execute", "returning update"), Attribute("sql", sql))) *
+            (attributes ++ List(Attribute("execute", "returning update"), Attribute("sql", sql)))*
           ) *> protocol.resetSequenceId *> (
             protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
               protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
                 case result: OKPacket => ev.pure(result.lastInsertId)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
               }
-            )
+          )
         }
       }
 
@@ -293,7 +294,7 @@ object Statement:
                   Attribute("execute", "batch"),
                   Attribute("size", args.length.toLong),
                   Attribute("sql", args.toArray.toSeq)
-                )) *
+                ))*
               ) *> (
                 if args.isEmpty then ev.pure(List.empty)
                 else
@@ -317,20 +318,20 @@ object Statement:
                         yield result
                       }
                       .map(_.toList)
-                )
+              )
             }
           } <* protocol.resetSequenceId <* protocol.comSetOption(
-          EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF
-        ) <* clearBatch()
+            EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF
+          ) <* clearBatch()
       }
 
     private def checkClosed[T](f: => F[T]): F[T] =
       for
-        statementClosed <- statementClosed.get
+        statementClosed  <- statementClosed.get
         connectionClosed <- connectionClosed.get
         result <- if statementClosed || connectionClosed then
-          ev.raiseError(new SQLException("No operations allowed after statement closed."))
-        else f
+                    ev.raiseError(new SQLException("No operations allowed after statement closed."))
+                  else f
       yield result
 
   def apply[F[_]: Temporal: Exchange: Tracer](
@@ -342,4 +343,12 @@ object Statement:
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable]): Statement[F] =
-    Impl(protocol, serverVariables, batchedArgsRef, statementClosed, connectionClosed, resultSetType, resultSetConcurrency)
+    Impl(
+      protocol,
+      serverVariables,
+      batchedArgsRef,
+      statementClosed,
+      connectionClosed,
+      resultSetType,
+      resultSetConcurrency
+    )

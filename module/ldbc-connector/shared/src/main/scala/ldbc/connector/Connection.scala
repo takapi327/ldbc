@@ -648,8 +648,8 @@ object Connection:
 
     override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
       for
-        batchedArgs <- Ref[F].of(Vector.empty[String])
-        statementClosed      <- Ref[F].of(false)
+        batchedArgs     <- Ref[F].of(Vector.empty[String])
+        statementClosed <- Ref[F].of(false)
       yield Statement[F](
         protocol,
         serverVariables,
