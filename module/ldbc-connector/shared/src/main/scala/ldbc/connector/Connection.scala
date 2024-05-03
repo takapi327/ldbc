@@ -647,17 +647,18 @@ object Connection:
         case None          => throw new SQLFeatureNotSupportedException("Unknown transaction isolation level")
 
     override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
-      Ref[F]
-        .of(Vector.empty[String])
-        .map(batchedArgs =>
-          Statement[F](
-            protocol,
-            serverVariables,
-            batchedArgs,
-            resultSetType,
-            resultSetConcurrency
-          )
-        )
+      for
+        batchedArgs <- Ref[F].of(Vector.empty[String])
+        statementClosed      <- Ref[F].of(false)
+      yield Statement[F](
+        protocol,
+        serverVariables,
+        batchedArgs,
+        statementClosed,
+        closed,
+        resultSetType,
+        resultSetConcurrency
+      )
 
     override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
       for
