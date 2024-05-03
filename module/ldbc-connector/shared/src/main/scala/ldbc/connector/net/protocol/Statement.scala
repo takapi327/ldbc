@@ -330,15 +330,13 @@ object Statement:
         statementClosed  <- statementClosed.get
         connectionClosed <- connectionClosed.get
         result <- (if statementClosed || connectionClosed then
-                    ev.raiseError(new SQLException("No operations allowed after statement closed."))
-                  else f)
+                     ev.raiseError(new SQLException("No operations allowed after statement closed."))
+                   else f)
       yield result
-      
+
     private def checkNullOrEmptyQuery(sql: String): F[Unit] =
-      if sql.isEmpty then
-        ev.raiseError(new SQLException("Can not issue empty query."))
-      else if sql == null then
-        ev.raiseError(new SQLException("Can not issue NULL query."))
+      if sql.isEmpty then ev.raiseError(new SQLException("Can not issue empty query."))
+      else if sql == null then ev.raiseError(new SQLException("Can not issue NULL query."))
       else ev.unit
 
   def apply[F[_]: Temporal: Exchange: Tracer](
