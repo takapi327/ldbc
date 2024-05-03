@@ -959,15 +959,24 @@ object ResultSet:
       ev.raiseError(new SQLException(message))
 
   def apply[F[_]](
-    columns:       Vector[ColumnDefinitionPacket],
-    records:       Vector[ResultSetRowPacket],
-    serverVariables:      Map[String, String],
-    version:       Version,
-    isClosed:      Ref[F, Boolean],
-    currentCursor: Ref[F, Int],
-    currentRow:    Ref[F, Option[ResultSetRowPacket]]
+    columns:         Vector[ColumnDefinitionPacket],
+    records:         Vector[ResultSetRowPacket],
+    serverVariables: Map[String, String],
+    version:         Version,
+    isClosed:        Ref[F, Boolean],
+    currentCursor:   Ref[F, Int],
+    currentRow:      Ref[F, Option[ResultSetRowPacket]]
   )(using MonadError[F, Throwable]): ResultSet[F] =
-    Impl[F](columns, records, serverVariables, version, isClosed, currentCursor, currentRow, ResultSet.TYPE_FORWARD_ONLY)
+    Impl[F](
+      columns,
+      records,
+      serverVariables,
+      version,
+      isClosed,
+      currentCursor,
+      currentRow,
+      ResultSet.TYPE_FORWARD_ONLY
+    )
 
   def apply[F[_]](
     columns:              Vector[ColumnDefinitionPacket],
@@ -980,14 +989,24 @@ object ResultSet:
     resultSetType:        Int,
     resultSetConcurrency: Int
   )(using MonadError[F, Throwable]): ResultSet[F] =
-    Impl[F](columns, records, serverVariables, version, isClosed, currentCursor, currentRow, resultSetType, resultSetConcurrency)
+    Impl[F](
+      columns,
+      records,
+      serverVariables,
+      version,
+      isClosed,
+      currentCursor,
+      currentRow,
+      resultSetType,
+      resultSetConcurrency
+    )
 
   def empty[F[_]](
-                   serverVariables:      Map[String, String],
-    version:       Version,
-    isClosed:      Ref[F, Boolean],
-    currentCursor: Ref[F, Int],
-    currentRow:    Ref[F, Option[ResultSetRowPacket]]
+    serverVariables: Map[String, String],
+    version:         Version,
+    isClosed:        Ref[F, Boolean],
+    currentCursor:   Ref[F, Int],
+    currentRow:      Ref[F, Option[ResultSetRowPacket]]
   )(using MonadError[F, Throwable]): ResultSet[F] =
     this.apply(
       Vector.empty,

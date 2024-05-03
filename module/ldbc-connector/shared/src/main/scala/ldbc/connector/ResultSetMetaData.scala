@@ -225,7 +225,11 @@ object ResultSetMetaData:
     */
   val columnNullableUnknown = 2
 
-  def apply(columns: Vector[ColumnDefinitionPacket], serverVariables: Map[String, String], version: Version): ResultSetMetaData =
+  def apply(
+    columns:         Vector[ColumnDefinitionPacket],
+    serverVariables: Map[String, String],
+    version:         Version
+  ): ResultSetMetaData =
     new ResultSetMetaData:
       override def getColumnCount(): Int = columns.size
 
@@ -243,7 +247,9 @@ object ResultSetMetaData:
           ColumnDataType.MYSQL_TYPE_VAR_STRING | ColumnDataType.MYSQL_TYPE_JSON | ColumnDataType.MYSQL_TYPE_ENUM |
           ColumnDataType.MYSQL_TYPE_SET =>
           CharsetMapping
-            .getStaticCollationNameForCollationIndex(getMysqlCharsetForJavaEncoding(serverVariables.getOrElse("character_set_client", "utf8mb4")))
+            .getStaticCollationNameForCollationIndex(
+              getMysqlCharsetForJavaEncoding(serverVariables.getOrElse("character_set_client", "utf8mb4"))
+            )
             .fold(false)(_.endsWith("_ci"))
         case _ => true
 
