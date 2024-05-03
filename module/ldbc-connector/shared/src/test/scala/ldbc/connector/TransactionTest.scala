@@ -62,7 +62,7 @@ class TransactionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use { conn =>
       for
         _          <- conn.setAutoCommit(true)
-        autoCommit <- conn.getAutoCommit
+        autoCommit <- conn.getAutoCommit()
       yield autoCommit
     })
   }
@@ -78,7 +78,7 @@ class TransactionTest extends CatsEffectSuite:
     assertIOBoolean(connection.use { conn =>
       for
         _          <- conn.setAutoCommit(false)
-        autoCommit <- conn.getAutoCommit
+        autoCommit <- conn.getAutoCommit()
       yield !autoCommit
     })
   }

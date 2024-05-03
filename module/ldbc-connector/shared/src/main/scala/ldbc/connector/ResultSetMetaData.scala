@@ -225,7 +225,11 @@ object ResultSetMetaData:
     */
   val columnNullableUnknown = 2
 
-  def apply(columns: Vector[ColumnDefinitionPacket], version: Version): ResultSetMetaData =
+  def apply(
+    columns:         Vector[ColumnDefinitionPacket],
+    serverVariables: Map[String, String],
+    version:         Version
+  ): ResultSetMetaData =
     new ResultSetMetaData:
       override def getColumnCount(): Int = columns.size
 
@@ -243,8 +247,10 @@ object ResultSetMetaData:
           ColumnDataType.MYSQL_TYPE_VAR_STRING | ColumnDataType.MYSQL_TYPE_JSON | ColumnDataType.MYSQL_TYPE_ENUM |
           ColumnDataType.MYSQL_TYPE_SET =>
           CharsetMapping
-            .getStaticCollationNameForCollationIndex(getMysqlCharsetForJavaEncoding("UTF-8"))
-            .fold(false)(_.endsWith("_ci")) // TODO: Get the actual character code from the server and use it.
+            .getStaticCollationNameForCollationIndex(
+              getMysqlCharsetForJavaEncoding(serverVariables.getOrElse("character_set_client", "utf8mb4"))
+            )
+            .fold(false)(_.endsWith("_ci"))
         case _ => true
 
       override def isSearchable(column: Int): Boolean = true
@@ -280,10 +286,11 @@ object ResultSetMetaData:
             ColumnDataType.MYSQL_TYPE_DECIMAL =>
             clampedGetLength(definition)
           case _ =>
+            val charset = serverVariables.getOrElse("character_set_client", "utf8mb4")
             clampedGetLength(definition) / getMaxBytesPerChar(
-              getMysqlCharsetForJavaEncoding("UTF-8"),
-              "UTF-8"
-            ) // TODO: Get the actual character code from the server and use it.
+              getMysqlCharsetForJavaEncoding(charset),
+              charset
+            )
 
       override def getScale(column: Int): Int = unsafeFindByIndex(column) match
         case definition: ColumnDefinition41Packet => definition.decimals

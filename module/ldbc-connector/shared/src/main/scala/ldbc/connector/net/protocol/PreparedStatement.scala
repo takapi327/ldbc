@@ -534,6 +534,7 @@ object PreparedStatement:
    */
   case class Client[F[_]: Temporal: Exchange: Tracer](
     protocol:             Protocol[F],
+    serverVariables:      Map[String, String],
     sql:                  String,
     params:               Ref[F, ListMap[Int, Parameter]],
     batchedArgs:          Ref[F, Vector[String]],
@@ -568,6 +569,7 @@ object PreparedStatement:
                   resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 yield ResultSet
                   .empty(
+                    serverVariables,
                     protocol.initialPacket.serverVersion,
                     isResultSetClosed,
                     resultSetCurrentCursor,
@@ -592,6 +594,7 @@ object PreparedStatement:
                 yield ResultSet(
                   columnDefinitions,
                   resultSetRow,
+                  serverVariables,
                   protocol.initialPacket.serverVersion,
                   isResultSetClosed,
                   resultSetCurrentCursor,
@@ -748,6 +751,7 @@ object PreparedStatement:
    */
   case class Server[F[_]: Temporal: Exchange: Tracer](
     protocol:             Protocol[F],
+    serverVariables:      Map[String, String],
     statementId:          Long,
     sql:                  String,
     params:               Ref[F, ListMap[Int, Parameter]],
@@ -797,6 +801,7 @@ object PreparedStatement:
         yield ResultSet(
           columnDefinitions,
           resultSetRow,
+          serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
           resultSetCurrentCursor,

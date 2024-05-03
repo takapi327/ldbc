@@ -902,6 +902,7 @@ class ResultSetTest extends CatsEffectSuite:
     ResultSet[IO](
       columns,
       records,
+      Map.empty,
       version,
       Ref.unsafe[IO, Boolean](false),
       Ref.unsafe[IO, Int](0),

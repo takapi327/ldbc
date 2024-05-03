@@ -29,6 +29,7 @@ import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.DatabaseMetaData.DatabaseTerm
 import ldbc.connector.codec.text.text
 
 /**
@@ -40,6 +41,172 @@ import ldbc.connector.codec.text.text
 trait Connection[F[_]]:
 
   /**
+   * Creates a <code>Statement</code> object for sending
+   * SQL statements to the database.
+   * SQL statements without parameters are normally
+   * executed using <code>Statement</code> objects. If the same SQL statement
+   * is executed many times, it may be more efficient to use a
+   * <code>PreparedStatement</code> object.
+   * <P>
+   * Result sets created using the returned <code>Statement</code>
+   * object will by default be type <code>TYPE_FORWARD_ONLY</code>
+   * and have a concurrency level of <code>CONCUR_READ_ONLY</code>.
+   * The holdability of the created result sets can be determined by
+   * calling [[getHoldability]].
+   *
+   * @return a new default <code>Statement</code> object
+   */
+  def createStatement(): F[Statement[F]]
+
+  /**
+   * Creates a <code>PreparedStatement</code> object for sending
+   * parameterized SQL statements to the database.
+   * <P>
+   * A SQL statement with or without IN parameters can be
+   * pre-compiled and stored in a <code>PreparedStatement</code> object. This
+   * object can then be used to efficiently execute this statement
+   * multiple times.
+   *
+   * <P><B>Note:</B> This method is optimized for handling
+   * parametric SQL statements that benefit from precompilation. If
+   * the driver supports precompilation,
+   * the method <code>prepareStatement</code> will send
+   * the statement to the database for precompilation. Some drivers
+   * may not support precompilation. In this case, the statement may
+   * not be sent to the database until the <code>PreparedStatement</code>
+   * object is executed.  This has no direct effect on users; however, it does
+   * affect which methods throw certain <code>SQLException</code> objects.
+   * <P>
+   * Result sets created using the returned <code>PreparedStatement</code>
+   * object will by default be type <code>TYPE_FORWARD_ONLY</code>
+   * and have a concurrency level of <code>CONCUR_READ_ONLY</code>.
+   * The holdability of the created result sets can be determined by
+   * calling [[getHoldability]].
+   *
+   * @param sql an SQL statement that may contain one or more '?' IN
+   * parameter placeholders
+   * @return a new default <code>PreparedStatement</code> object containing the
+   * pre-compiled SQL statement
+   */
+  def prepareStatement(sql: String): F[PreparedStatement[F]]
+
+  /**
+   * Converts the given SQL statement into the system's native SQL grammar.
+   * A driver may convert the JDBC SQL grammar into its system's
+   * native SQL grammar prior to sending it. This method returns the
+   * native form of the statement that the driver would have sent.
+   *
+   * @param sql an SQL statement that may contain one or more '?'
+   * parameter placeholders
+   * @return the native form of this statement
+   */
+  def nativeSQL(sql: String): F[String]
+
+  /**
+   * Sets this connection's auto-commit mode to the given state.
+   * If a connection is in auto-commit mode, then all its SQL
+   * statements will be executed and committed as individual
+   * transactions.  Otherwise, its SQL statements are grouped into
+   * transactions that are terminated by a call to either
+   * the method <code>commit</code> or the method <code>rollback</code>.
+   * By default, new connections are in auto-commit
+   * mode.
+   * <P>
+   * The commit occurs when the statement completes. The time when the statement
+   * completes depends on the type of SQL Statement:
+   * <ul>
+   * <li>For DML statements, such as Insert, Update or Delete, and DDL statements,
+   * the statement is complete as soon as it has finished executing.
+   * <li>For Select statements, the statement is complete when the associated result
+   * set is closed.
+   * <li>For <code>CallableStatement</code> objects or for statements that return
+   * multiple results, the statement is complete
+   * when all of the associated result sets have been closed, and all update
+   * counts and output parameters have been retrieved.
+   *</ul>
+   * <P>
+   * <B>NOTE:</B>  If this method is called during a transaction and the
+   * auto-commit mode is changed, the transaction is committed.  If
+   * <code>setAutoCommit</code> is called and the auto-commit mode is
+   * not changed, the call is a no-op.
+   *
+   * @param autoCommit <code>true</code> to enable auto-commit mode;
+   *         <code>false</code> to disable it
+   */
+  def setAutoCommit(autoCommit: Boolean): F[Unit]
+
+  /**
+   * Retrieves the current auto-commit mode for this <code>Connection</code>
+   * object.
+   *
+   * @return the current state of this <code>Connection</code> object's
+   *         auto-commit mode
+   */
+  def getAutoCommit(): F[Boolean]
+
+  /**
+   * Makes all changes made since the previous
+   * commit/rollback permanent and releases any database locks
+   * currently held by this <code>Connection</code> object.
+   * This method should be
+   * used only when auto-commit mode has been disabled.
+   */
+  def commit(): F[Unit]
+
+  /**
+   * Undoes all changes made in the current transaction
+   * and releases any database locks currently held
+   * by this <code>Connection</code> object. This method should be
+   * used only when auto-commit mode has been disabled.
+   */
+  def rollback(): F[Unit]
+
+  /**
+   * Releases this <code>Connection</code> object's database and JDBC resources
+   * immediately instead of waiting for them to be automatically released.
+   * <P>
+   * Calling the method <code>close</code> on a <code>Connection</code>
+   * object that is already closed is a no-op.
+   * <P>
+   * It is <b>strongly recommended</b> that an application explicitly
+   * commits or rolls back an active transaction prior to calling the
+   * <code>close</code> method.  If the <code>close</code> method is called
+   * and there is an active transaction, the results are implementation-defined.
+   */
+  def close(): F[Unit]
+
+  /**
+   * Retrieves whether this <code>Connection</code> object has been
+   * closed.  A connection is closed if the method <code>close</code>
+   * has been called on it or if certain fatal errors have occurred.
+   * This method is guaranteed to return <code>true</code> only when
+   * it is called after the method <code>Connection.close</code> has
+   * been called.
+   * <P>
+   * This method generally cannot be called to determine whether a
+   * connection to a database is valid or invalid.  A typical client
+   * can determine that a connection is invalid by catching any
+   * exceptions that might be thrown when an operation is attempted.
+   *
+   * @return <code>true</code> if this <code>Connection</code> object
+   *         is closed; <code>false</code> if it is still open
+   */
+  def isClosed(): F[Boolean]
+
+  /**
+   * Retrieves a <code>DatabaseMetaData</code> object that contains
+   * metadata about the database to which this
+   * <code>Connection</code> object represents a connection.
+   * The metadata includes information about the database's
+   * tables, its supported SQL grammar, its stored
+   * procedures, the capabilities of this connection, and so on.
+   *
+   * @return a <code>DatabaseMetaData</code> object for this
+   *         <code>Connection</code> object
+   */
+  def getMetaData(): F[DatabaseMetaData[F]]
+
+  /**
    * Puts this connection in read-only mode as a hint to the driver to enable
    * database optimizations.
    *
@@ -49,43 +216,39 @@ trait Connection[F[_]]:
   def setReadOnly(isReadOnly: Boolean): F[Unit]
 
   /**
-   * Sets this connection's auto-commit mode to the given state.
-   * If a connection is in auto-commit mode, then all its SQL statements will be executed and committed as individual transactions.
-   * Otherwise, its SQL statements are grouped into transactions that are terminated by a call to either the method commit or the method rollback.
-   * By default, new connections are in auto-commit mode.
-   *
-   * @param isAutoCommit
-   *   true to enable auto-commit mode; false to disable it
-   */
-  def setAutoCommit(isAutoCommit: Boolean): F[Unit]
-
-  /**
-   * Retrieves the current auto-commit mode for this Connection object.
-   *
-   * @return
-   *   the current state of this Connection object's auto-commit mode
-   */
-  def getAutoCommit: F[Boolean]
-
-  /**
-   * Makes all changes made since the previous commit/rollback permanent and releases any database locks currently held by this Connection object.
-   * This method should be used only when auto-commit mode has been disabled.
-   */
-  def commit(): F[Unit]
-
-  /**
-   * Undoes all changes made in the current transaction and releases any database locks currently held by this Connection object.
-   * This method should be used only when auto-commit mode has been disabled.
-   */
-  def rollback(): F[Unit]
-
-  /**
    * Retrieves whether this Connection object is in read-only mode.
    *
    * @return
    *   true if this Connection object is read-only; false otherwise
    */
   def isReadOnly: F[Boolean]
+
+  /**
+   * Sets the given catalog name in order to select
+   * a subspace of this <code>Connection</code> object's database
+   * in which to work.
+   * <P>
+   * If the driver does not support catalogs, it will
+   * silently ignore this request.
+   * <p>
+   * Calling {@code setCatalog} has no effect on previously created or prepared
+   * {@code Statement} objects. It is implementation defined whether a DBMS
+   * prepare operation takes place immediately when the {@code Connection}
+   * method {@code prepareStatement} or {@code prepareCall} is invoked.
+   * For maximum portability, {@code setCatalog} should be called before a
+   * {@code Statement} is created or prepared.
+   *
+   * @param catalog the name of a catalog (subspace in this
+   *        <code>Connection</code> object's database) in which to work
+   */
+  def setCatalog(catalog: String): F[Unit]
+
+  /**
+   * Retrieves this <code>Connection</code> object's current catalog name.
+   *
+   * @return the current catalog name or <code>None</code> if there is none
+   */
+  def getCatalog(): F[String]
 
   /**
    * Attempts to change the transaction isolation level for this Connection object to the one given. The constants defined in the interface Connection are the possible transaction isolation levels.
@@ -110,13 +273,6 @@ trait Connection[F[_]]:
   def getTransactionIsolation: F[Connection.TransactionIsolationLevel]
 
   /**
-   * Creates a Statement object for sending SQL statements to the database.
-   * SQL statements without parameters are normally executed using Statement objects.
-   * If the same SQL statement is executed many times, it may be more efficient to use a PreparedStatement object.
-   */
-  def createStatement(): F[Statement[F]]
-
-  /**
    * Creates a <code>Statement</code> object that will generate
    * <code>ResultSet</code> objects with the given type and concurrency.
    * This method is the same as the <code>createStatement</code> method
@@ -137,6 +293,31 @@ trait Connection[F[_]]:
    *         concurrency
    */
   def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]]
+
+  /**
+   * Creates a <code>PreparedStatement</code> object that will generate
+   * <code>ResultSet</code> objects with the given type and concurrency.
+   * This method is the same as the <code>prepareStatement</code> method
+   * above, but it allows the default result set
+   * type and concurrency to be overridden.
+   * The holdability of the created result sets can be determined by
+   * calling {@link #getHoldability}.
+   *
+   * @param sql a <code>String</code> object that is the SQL statement to
+   *            be sent to the database; may contain one or more '?' IN
+   *            parameters
+   * @param resultSetType a result set type; one of
+   *         <code>ResultSet.TYPE_FORWARD_ONLY</code>,
+   *         <code>ResultSet.TYPE_SCROLL_INSENSITIVE</code>, or
+   *         <code>ResultSet.TYPE_SCROLL_SENSITIVE</code>
+   * @param resultSetConcurrency a concurrency type; one of
+   *         <code>ResultSet.CONCUR_READ_ONLY</code> or
+   *         <code>ResultSet.CONCUR_UPDATABLE</code>
+   * @return a new PreparedStatement object containing the
+   * pre-compiled SQL statement that will produce <code>ResultSet</code>
+   * objects with the given type and concurrency
+   */
+  def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]]
 
   /**
    * Creates a client-side prepared statement with the given SQL.
@@ -233,16 +414,6 @@ trait Connection[F[_]]:
   def releaseSavepoint(savepoint: Savepoint): F[Unit]
 
   /**
-   * Releases this Connection object's database and LDBC resources immediately instead of waiting for them to be automatically released.
-   *
-   * Calling the method close on a Connection object that is already closed is a no-op.
-   *
-   * It is strongly recommended that an application explicitly commits or rolls back an active transaction prior to calling the close method.
-   * If the close method is called and there is an active transaction, the results are implementation-defined.
-   */
-  def close(): F[Unit]
-
-  /**
    * Sets the schema name that will be used for subsequent queries.
    *
    * Calling setSchema has no effect on previously created or prepared Statement objects.
@@ -260,7 +431,7 @@ trait Connection[F[_]]:
    * @return
    *   the current schema name or null if there is none
    */
-  def getSchema: F[String]
+  def getSchema(): F[String]
 
   /**
    * Retrieves the statistics of this Connection object.
@@ -344,12 +515,105 @@ object Connection:
      */
     case SERIALIZABLE extends TransactionIsolationLevel("SERIALIZABLE")
 
+  /**
+   * A constant indicating that transactions are not supported.
+   */
+  val TRANSACTION_NONE: Int = 0
+
+  /**
+   * A constant indicating that
+   * dirty reads, non-repeatable reads and phantom reads can occur.
+   * This level allows a row changed by one transaction to be read
+   * by another transaction before any changes in that row have been
+   * committed (a "dirty read").  If any of the changes are rolled back,
+   * the second transaction will have retrieved an invalid row.
+   */
+  val TRANSACTION_READ_UNCOMMITTED: Int = 1
+
+  /**
+   * A constant indicating that
+   * dirty reads are prevented; non-repeatable reads and phantom
+   * reads can occur.  This level only prohibits a transaction
+   * from reading a row with uncommitted changes in it.
+   */
+  val TRANSACTION_READ_COMMITTED: Int = 2
+
+  /**
+   * A constant indicating that
+   * dirty reads and non-repeatable reads are prevented; phantom
+   * reads can occur.  This level prohibits a transaction from
+   * reading a row with uncommitted changes in it, and it also
+   * prohibits the situation where one transaction reads a row,
+   * a second transaction alters the row, and the first transaction
+   * rereads the row, getting different values the second time
+   * (a "non-repeatable read").
+   */
+  val TRANSACTION_REPEATABLE_READ: Int = 4
+
+  /**
+   * A constant indicating that
+   * dirty reads, non-repeatable reads and phantom reads are prevented.
+   * This level includes the prohibitions in
+   * <code>TRANSACTION_REPEATABLE_READ</code> and further prohibits the
+   * situation where one transaction reads all rows that satisfy
+   * a <code>WHERE</code> condition, a second transaction inserts a row that
+   * satisfies that <code>WHERE</code> condition, and the first transaction
+   * rereads for the same condition, retrieving the additional
+   * "phantom" row in the second read.
+   */
+  val TRANSACTION_SERIALIZABLE: Int = 8
+
   private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
-    protocol:   Protocol[F],
-    readOnly:   Ref[F, Boolean],
-    autoCommit: Ref[F, Boolean]
+    protocol:        Protocol[F],
+    serverVariables: Map[String, String],
+    database:        Option[String],
+    readOnly:        Ref[F, Boolean],
+    isAutoCommit:    Ref[F, Boolean],
+    closed:          Ref[F, Boolean],
+    databaseTerm:    Option[DatabaseTerm] = None
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
+
+    override def createStatement(): F[Statement[F]] =
+      createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+
+    override def prepareStatement(sql: String): F[PreparedStatement[F]] =
+      prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+
+    override def nativeSQL(sql: String): F[String] = ev.pure(sql)
+
+    override def setAutoCommit(autoCommit: Boolean): F[Unit] =
+      isAutoCommit.update(_ => autoCommit) *>
+        createStatement()
+          .flatMap(_.executeQuery("SET autocommit=" + (if autoCommit then "1" else "0")))
+          .void
+
+    override def getAutoCommit(): F[Boolean] = isAutoCommit.get
+
+    override def commit(): F[Unit] = isAutoCommit.get.flatMap { autoCommit =>
+      if !autoCommit then createStatement().flatMap(_.executeQuery("COMMIT")).void
+      else ev.raiseError(new SQLNonTransientException("Can't call commit when autocommit=true"))
+    }
+
+    override def rollback(): F[Unit] = isAutoCommit.get.flatMap { autoCommit =>
+      if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
+      else ev.raiseError(new SQLNonTransientException("Can't call rollback when autocommit=true"))
+    }
+
+    override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
+      (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
+       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> closed.update(_ => true)
+    }
+
+    override def isClosed(): F[Boolean] = closed.get
+
+    override def getMetaData(): F[DatabaseMetaData[F]] =
+      isClosed().map {
+        case true => throw new SQLException("Connection is closed")
+        case false =>
+          DatabaseMetaData[F](protocol, serverVariables, database, databaseTerm)
+      }
+
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
       readOnly.update(_ => isReadOnly) *>
         createStatement()
@@ -358,23 +622,13 @@ object Connection:
 
     override def isReadOnly: F[Boolean] = readOnly.get
 
-    override def setAutoCommit(isAutoCommit: Boolean): F[Unit] =
-      autoCommit.update(_ => isAutoCommit) *>
-        createStatement()
-          .flatMap(_.executeQuery("SET autocommit=" + (if isAutoCommit then "1" else "0")))
-          .void
+    override def setCatalog(catalog: String): F[Unit] =
+      if databaseTerm.contains(DatabaseTerm.CATALOG) then setSchema(catalog)
+      else ev.unit
 
-    override def getAutoCommit: F[Boolean] = autoCommit.get
-
-    override def commit(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
-      if !autoCommit then createStatement().flatMap(_.executeQuery("COMMIT")).void
-      else ev.raiseError(new SQLNonTransientException("Can't call commit when autocommit=true"))
-    }
-
-    override def rollback(): F[Unit] = autoCommit.get.flatMap { autoCommit =>
-      if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-      else ev.raiseError(new SQLNonTransientException("Can't call rollback when autocommit=true"))
-    }
+    override def getCatalog(): F[String] =
+      if databaseTerm.contains(DatabaseTerm.CATALOG) then getSchema()
+      else ev.pure("")
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
       createStatement().flatMap(_.executeQuery(s"SET SESSION TRANSACTION ISOLATION LEVEL ${ level.name }")).void
@@ -392,19 +646,32 @@ object Connection:
         case Some(unknown) => throw new SQLFeatureNotSupportedException(s"Unknown transaction isolation level $unknown")
         case None          => throw new SQLFeatureNotSupportedException("Unknown transaction isolation level")
 
-    override def createStatement(): F[Statement[F]] =
-      createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
     override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
       Ref[F]
         .of(Vector.empty[String])
         .map(batchedArgs =>
           Statement[F](
             protocol,
+            serverVariables,
             batchedArgs,
             resultSetType,
             resultSetConcurrency
           )
         )
+
+    override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
+      for
+        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs <- Ref[F].of(Vector.empty[String])
+      yield PreparedStatement.Client[F](
+        protocol,
+        serverVariables,
+        sql,
+        params,
+        batchedArgs,
+        resultSetType,
+        resultSetConcurrency
+      )
 
     override def clientPreparedStatement(sql: String): F[PreparedStatement.Client[F]] =
       clientPreparedStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
@@ -419,6 +686,7 @@ object Connection:
       yield PreparedStatement
         .Client[F](
           protocol,
+          serverVariables,
           sql,
           params,
           batchedArgs,
@@ -452,6 +720,7 @@ object Connection:
       yield PreparedStatement
         .Server[F](
           protocol,
+          serverVariables,
           result.statementId,
           sql,
           params,
@@ -475,14 +744,9 @@ object Connection:
     override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
       createStatement().flatMap(_.executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName }`")).void
 
-    override def close(): F[Unit] = getAutoCommit.flatMap { autoCommit =>
-      if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-      else ev.unit
-    }
-
     override def setSchema(schema: String): F[Unit] = protocol.resetSequenceId *> protocol.comInitDB(schema)
 
-    override def getSchema: F[String] =
+    override def getSchema(): F[String] =
       for
         statement <- createStatement()
         result    <- statement.executeQuery("SELECT DATABASE()")
@@ -498,7 +762,7 @@ object Connection:
         statement.executeQuery("SET NAMES utf8mb4") *>
           statement.executeQuery("SET character_set_results = NULL") *>
           statement.executeQuery("SET autocommit=1") *>
-          autoCommit.update(_ => true)
+          isAutoCommit.update(_ => true)
       }
 
     override def changeUser(user: String, password: String): F[Unit] =
@@ -514,7 +778,8 @@ object Connection:
     ssl:                     SSL = SSL.None,
     socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:            Option[DatabaseTerm] = None
   ): Tracer[F] ?=> Resource[F, Connection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -532,7 +797,8 @@ object Connection:
                       socketOptions,
                       sslOp,
                       readTimeout,
-                      allowPublicKeyRetrieval
+                      allowPublicKeyRetrieval,
+                      databaseTerm
                     )
     yield connection
 
@@ -546,19 +812,28 @@ object Connection:
     debug:                   Boolean = false,
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:            Option[DatabaseTerm] = None
   ): Resource[F, Connection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
       (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
+    val hostInfo = HostInfo(host, port, user, password, database)
     for
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol <-
-        Protocol[F](sockets, debug, sslOptions, database, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
-      _          <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
-      readOnly   <- Resource.eval(Ref[F].of[Boolean](false))
-      autoCommit <- Resource.eval(Ref[F].of[Boolean](true))
-      connection <- Resource.make(Temporal[F].pure(ConnectionImpl[F](protocol, readOnly, autoCommit)))(_.close())
+        Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
+      _               <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
+      serverVariables <- Resource.eval(protocol.serverVariables())
+      readOnly        <- Resource.eval(Ref[F].of[Boolean](false))
+      autoCommit      <- Resource.eval(Ref[F].of[Boolean](true))
+      closed          <- Resource.eval(Ref[F].of[Boolean](false))
+      connection <-
+        Resource.make(
+          Temporal[F].pure(
+            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit, closed, databaseTerm)
+          )
+        )(_.close())
     yield connection
 
   def fromSocketGroup[F[_]: Tracer: Console](
@@ -572,7 +847,8 @@ object Connection:
     socketOptions:           List[SocketOption],
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
-    allowPublicKeyRetrieval: Boolean = false
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:            Option[DatabaseTerm] = None
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
@@ -585,4 +861,16 @@ object Connection:
         case (None, _) => fail(s"""Hostname: "$host" is not syntactically valid.""")
         case (_, None) => fail(s"Port: $port falls out of the allowed range.")
 
-    fromSockets(sockets, host, port, user, password, database, debug, sslOptions, readTimeout, allowPublicKeyRetrieval)
+    fromSockets(
+      sockets,
+      host,
+      port,
+      user,
+      password,
+      database,
+      debug,
+      sslOptions,
+      readTimeout,
+      allowPublicKeyRetrieval,
+      databaseTerm
+    )
