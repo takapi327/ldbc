@@ -650,12 +650,14 @@ object Connection:
       for
         batchedArgs     <- Ref[F].of(Vector.empty[String])
         statementClosed <- Ref[F].of(false)
+        currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
       yield Statement[F](
         protocol,
         serverVariables,
         batchedArgs,
         statementClosed,
         closed,
+        currentResultSet,
         resultSetType,
         resultSetConcurrency
       )
