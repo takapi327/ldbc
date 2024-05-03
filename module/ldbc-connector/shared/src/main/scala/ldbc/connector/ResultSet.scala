@@ -952,7 +952,7 @@ object ResultSet:
           records.flatMap(row => codec.decode(0, row.values).toOption).toList
         )
       }
-      
+
     override def hasRows(): F[Boolean] =
       checkClose {
         ev.pure(records.nonEmpty)
