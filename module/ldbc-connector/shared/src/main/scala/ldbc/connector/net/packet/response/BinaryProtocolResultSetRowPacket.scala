@@ -30,7 +30,7 @@ object BinaryProtocolResultSetRowPacket:
         case MYSQL_TYPE_STRING | MYSQL_TYPE_VARCHAR | MYSQL_TYPE_VAR_STRING | MYSQL_TYPE_ENUM | MYSQL_TYPE_SET |
           MYSQL_TYPE_LONG_BLOB | MYSQL_TYPE_MEDIUM_BLOB | MYSQL_TYPE_BLOB | MYSQL_TYPE_TINY_BLOB | MYSQL_TYPE_GEOMETRY |
           MYSQL_TYPE_BIT | MYSQL_TYPE_DECIMAL | MYSQL_TYPE_NEWDECIMAL =>
-          uint8L.flatMap(bytes(_)).map(_.decodeUtf8Lenient.some)
+          lengthEncodedIntDecoder.flatMap(length => bytes(length.toInt)).map(_.decodeUtf8Lenient.some)
         case MYSQL_TYPE_LONGLONG                => bytes(8).map(byte => BigInt(1, byte.reverse.toArray).toString.some)
         case MYSQL_TYPE_LONG | MYSQL_TYPE_INT24 => uint32L.map(_.toString.some)
         case MYSQL_TYPE_SHORT | MYSQL_TYPE_YEAR => uint16L.map(_.toString.some)
