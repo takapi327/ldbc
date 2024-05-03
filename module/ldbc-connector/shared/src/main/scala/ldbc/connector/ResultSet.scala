@@ -595,6 +595,13 @@ trait ResultSet[F[_]]:
    */
   def decode[T](codec: Codec[T]): F[List[T]]
 
+  /**
+   * Does the result set contain rows, or is it the result of a DDL or DML statement?
+   *
+   * @return true if result set contains rows
+   */
+  def hasRows(): F[Boolean]
+
 object ResultSet:
 
   /**
@@ -944,6 +951,11 @@ object ResultSet:
         ev.point(
           records.flatMap(row => codec.decode(0, row.values).toOption).toList
         )
+      }
+      
+    override def hasRows(): F[Boolean] =
+      checkClose {
+        ev.pure(records.nonEmpty)
       }
 
     private def checkClose[T](f: => F[T]): F[T] =
