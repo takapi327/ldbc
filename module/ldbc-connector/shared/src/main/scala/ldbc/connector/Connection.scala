@@ -722,8 +722,8 @@ object Connection:
       isClosed().ifM(
         ev.raiseError(new SQLException("No operations allowed after connection closed.")),
         (for
-          statementClosed  <- Ref[F].of[Boolean](false)
-          resultSetClosed  <- Ref[F].of[Boolean](false)
+          statementClosed <- Ref[F].of[Boolean](false)
+          resultSetClosed <- Ref[F].of[Boolean](false)
         yield DatabaseMetaData[F](
           protocol,
           serverVariables,
