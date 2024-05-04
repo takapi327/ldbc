@@ -41,7 +41,7 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
             preparedStatement.setBoolean(1, true) *> preparedStatement.setBoolean(2, None) *> preparedStatement
               .executeUpdate() <* preparedStatement.close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_boolean_table`")
-        yield 1
+        yield count
       },
       1
     )
