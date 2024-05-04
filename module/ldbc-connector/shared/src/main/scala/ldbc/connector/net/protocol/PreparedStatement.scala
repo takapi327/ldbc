@@ -731,7 +731,8 @@ object PreparedStatement:
                                   protocol
                                     .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                                     .flatMap {
-                                      case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
+                                      case result: OKPacket =>
+                                        lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
                                       case error: ERRPacket =>
                                         ev.raiseError(error.toException("Failed to execute batch", acc))
                                       case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
@@ -946,7 +947,8 @@ object PreparedStatement:
                                   protocol
                                     .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                                     .flatMap {
-                                      case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
+                                      case result: OKPacket =>
+                                        lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
                                       case error: ERRPacket =>
                                         ev.raiseError(error.toException("Failed to execute batch", acc))
                                       case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
