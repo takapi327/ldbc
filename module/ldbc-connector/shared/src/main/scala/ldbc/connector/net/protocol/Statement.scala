@@ -222,7 +222,7 @@ object Statement:
     def connectionClosed: Ref[F, Boolean]
     def currentResultSet: Ref[F, Option[ResultSet[F]]]
     def updateCount:      Ref[F, Int]
-    def moreResults:          Ref[F, Boolean]
+    def moreResults:      Ref[F, Boolean]
 
     override def getResultSet():   F[Option[ResultSet[F]]] = checkClosed() *> currentResultSet.get
     override def getUpdateCount(): F[Int]                  = checkClosed() *> updateCount.get
