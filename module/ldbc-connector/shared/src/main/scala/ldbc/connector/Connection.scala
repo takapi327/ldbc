@@ -564,15 +564,15 @@ object Connection:
   val TRANSACTION_SERIALIZABLE: Int = 8
 
   private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
-    protocol:        Protocol[F],
-    serverVariables: Map[String, String],
-    database:        Option[String],
-    readOnly:        Ref[F, Boolean],
-    isAutoCommit:    Ref[F, Boolean],
-    connectionClosed:          Ref[F, Boolean],
-    statementClosed:          Ref[F, Boolean],
-    resultSetClosed:          Ref[F, Boolean],
-    databaseTerm:    Option[DatabaseTerm] = None
+    protocol:         Protocol[F],
+    serverVariables:  Map[String, String],
+    database:         Option[String],
+    readOnly:         Ref[F, Boolean],
+    isAutoCommit:     Ref[F, Boolean],
+    connectionClosed: Ref[F, Boolean],
+    statementClosed:  Ref[F, Boolean],
+    resultSetClosed:  Ref[F, Boolean],
+    databaseTerm:     Option[DatabaseTerm] = None
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
 
@@ -604,7 +604,8 @@ object Connection:
 
     override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
       (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> connectionClosed.set(true) *> statementClosed.set(true) *> resultSetClosed.set(true)
+       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> connectionClosed.set(true) *> statementClosed
+        .set(true) *> resultSetClosed.set(true)
     }
 
     override def isClosed(): F[Boolean] = connectionClosed.get
@@ -613,7 +614,15 @@ object Connection:
       isClosed().map {
         case true => throw new SQLException("Connection is closed")
         case false =>
-          DatabaseMetaData[F](protocol, serverVariables, connectionClosed, statementClosed, resultSetClosed, database, databaseTerm)
+          DatabaseMetaData[F](
+            protocol,
+            serverVariables,
+            connectionClosed,
+            statementClosed,
+            resultSetClosed,
+            database,
+            databaseTerm
+          )
       }
 
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
@@ -879,17 +888,27 @@ object Connection:
       given Exchange[F] <- Resource.eval(Exchange[F])
       protocol <-
         Protocol[F](sockets, hostInfo, debug, sslOptions, allowPublicKeyRetrieval, readTimeout, capabilityFlags)
-      _               <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
-      serverVariables <- Resource.eval(protocol.serverVariables())
-      readOnly        <- Resource.eval(Ref[F].of[Boolean](false))
-      autoCommit      <- Resource.eval(Ref[F].of[Boolean](true))
-      connectionClosed          <- Resource.eval(Ref[F].of[Boolean](false))
-      statementClosed          <- Resource.eval(Ref[F].of[Boolean](false))
-      resultSetClosed          <- Resource.eval(Ref[F].of[Boolean](false))
+      _                <- Resource.eval(protocol.startAuthentication(user, password.getOrElse("")))
+      serverVariables  <- Resource.eval(protocol.serverVariables())
+      readOnly         <- Resource.eval(Ref[F].of[Boolean](false))
+      autoCommit       <- Resource.eval(Ref[F].of[Boolean](true))
+      connectionClosed <- Resource.eval(Ref[F].of[Boolean](false))
+      statementClosed  <- Resource.eval(Ref[F].of[Boolean](false))
+      resultSetClosed  <- Resource.eval(Ref[F].of[Boolean](false))
       connection <-
         Resource.make(
           Temporal[F].pure(
-            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit, connectionClosed, statementClosed, resultSetClosed, databaseTerm)
+            ConnectionImpl[F](
+              protocol,
+              serverVariables,
+              database,
+              readOnly,
+              autoCommit,
+              connectionClosed,
+              statementClosed,
+              resultSetClosed,
+              databaseTerm
+            )
           )
         )(_.close())
     yield connection

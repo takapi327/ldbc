@@ -972,5 +972,7 @@ object PreparedStatement:
       exchange[F, Unit]("statement") { (span: Span[F]) =>
         span.addAttributes(
           (attributes ++ List(Attribute("execute", "close"), Attribute("statementId", statementId)))*
-        ) *> protocol.resetSequenceId *> protocol.send(ComStmtClosePacket(statementId)) *> statementClosed.set(true) *> resultSetClosed.set(true)
+        ) *> protocol.resetSequenceId *> protocol.send(ComStmtClosePacket(statementId)) *> statementClosed.set(
+          true
+        ) *> resultSetClosed.set(true)
       }
