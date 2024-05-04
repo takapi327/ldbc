@@ -530,8 +530,8 @@ object PreparedStatement:
     def currentResultSet: Ref[F, Option[ResultSet[F]]]
     def updateCount: Ref[F, Int]
 
-    override def getResultSet(): F[Option[ResultSet[F]]] = currentResultSet.get
-    override def getUpdateCount(): F[Int] = updateCount.get
+    override def getResultSet(): F[Option[ResultSet[F]]] = checkClosed() *> currentResultSet.get
+    override def getUpdateCount(): F[Int] = checkClosed() *> updateCount.get
 
     protected def checkClosed(): F[Unit] =
       for
