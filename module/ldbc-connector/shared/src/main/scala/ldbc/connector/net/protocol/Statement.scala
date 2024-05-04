@@ -349,13 +349,10 @@ object Statement:
       yield connClosed || stmtClosed
 
     protected def checkClosed(): F[Unit] =
-      for
-        statementClosed  <- statementClosed.get
-        connectionClosed <- connectionClosed.get
-        _ <- (if statementClosed || connectionClosed then
-                ev.raiseError(new SQLException("No operations allowed after statement closed."))
-              else ev.unit)
-      yield ()
+      isClosed().ifF(
+        ev.raiseError(new SQLException("No operations allowed after statement closed.")),
+        ev.unit
+      )
 
     protected def checkNullOrEmptyQuery(sql: String): F[Unit] =
       if sql.isEmpty then ev.raiseError(new SQLException("Can not issue empty query."))
