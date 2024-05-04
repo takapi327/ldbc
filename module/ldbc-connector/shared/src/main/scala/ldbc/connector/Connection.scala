@@ -611,7 +611,7 @@ object Connection:
       isClosed().map {
         case true => throw new SQLException("Connection is closed")
         case false =>
-          DatabaseMetaData[F](protocol, serverVariables, database, databaseTerm)
+          DatabaseMetaData[F](protocol, serverVariables, closed, database, databaseTerm)
       }
 
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
@@ -651,6 +651,7 @@ object Connection:
         batchedArgs      <- Ref[F].of(Vector.empty[String])
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
+        updateCount  <- Ref[F].of(-1)
       yield Statement[F](
         protocol,
         serverVariables,
@@ -658,6 +659,7 @@ object Connection:
         statementClosed,
         closed,
         currentResultSet,
+        updateCount,
         resultSetType,
         resultSetConcurrency
       )
@@ -666,12 +668,19 @@ object Connection:
       for
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
+        statementClosed  <- Ref[F].of(false)
+        currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
+        updateCount  <- Ref[F].of(-1)
       yield PreparedStatement.Client[F](
         protocol,
         serverVariables,
         sql,
         params,
         batchedArgs,
+        statementClosed,
+        closed,
+        currentResultSet,
+        updateCount,
         resultSetType,
         resultSetConcurrency
       )
@@ -686,6 +695,9 @@ object Connection:
       for
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
+        statementClosed  <- Ref[F].of(false)
+        currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
+        updateCount  <- Ref[F].of(-1)
       yield PreparedStatement
         .Client[F](
           protocol,
@@ -693,6 +705,10 @@ object Connection:
           sql,
           params,
           batchedArgs,
+          statementClosed,
+          closed,
+          currentResultSet,
+          updateCount,
           resultSetType,
           resultSetConcurrency
         )
@@ -720,6 +736,9 @@ object Connection:
              )
         params      <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs <- Ref[F].of(Vector.empty[String])
+        statementClosed  <- Ref[F].of(false)
+        currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
+        updateCount  <- Ref[F].of(-1)
       yield PreparedStatement
         .Server[F](
           protocol,
@@ -728,6 +747,10 @@ object Connection:
           sql,
           params,
           batchedArgs,
+          statementClosed,
+          closed,
+          currentResultSet,
+          updateCount,
           resultSetType,
           resultSetConcurrency
         )
