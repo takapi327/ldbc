@@ -508,7 +508,7 @@ class StatementQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          statement <- conn.createStatement()
+          statement   <- conn.createStatement()
           updateCount <- statement.getUpdateCount()
         yield updateCount
       },
@@ -520,7 +520,7 @@ class StatementQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          statement <- conn.createStatement()
+          statement   <- conn.createStatement()
           updateCount <- statement.executeUpdate("USE `connector_test`") *> statement.getUpdateCount()
         yield updateCount
       },

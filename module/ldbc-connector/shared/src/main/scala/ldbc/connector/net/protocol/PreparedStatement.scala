@@ -523,23 +523,24 @@ object PreparedStatement:
       case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
       case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
 
-  private[ldbc] trait SharePreparedStatement[F[_]: Temporal](using ev: MonadError[F, Throwable]) extends PreparedStatement[F]:
+  private[ldbc] trait SharePreparedStatement[F[_]: Temporal](using ev: MonadError[F, Throwable])
+    extends PreparedStatement[F]:
 
-    def statementClosed:      Ref[F, Boolean]
-    def connectionClosed:     Ref[F, Boolean]
+    def statementClosed:  Ref[F, Boolean]
+    def connectionClosed: Ref[F, Boolean]
     def currentResultSet: Ref[F, Option[ResultSet[F]]]
-    def updateCount: Ref[F, Int]
+    def updateCount:      Ref[F, Int]
 
-    override def getResultSet(): F[Option[ResultSet[F]]] = checkClosed() *> currentResultSet.get
-    override def getUpdateCount(): F[Int] = checkClosed() *> updateCount.get
+    override def getResultSet():   F[Option[ResultSet[F]]] = checkClosed() *> currentResultSet.get
+    override def getUpdateCount(): F[Int]                  = checkClosed() *> updateCount.get
 
     protected def checkClosed(): F[Unit] =
       for
         statementClosed  <- statementClosed.get
         connectionClosed <- connectionClosed.get
         _ <- (if statementClosed || connectionClosed then
-          ev.raiseError(new SQLException("No operations allowed after statement closed."))
-        else ev.unit)
+                ev.raiseError(new SQLException("No operations allowed after statement closed."))
+              else ev.unit)
       yield ()
 
   /**
@@ -705,11 +706,13 @@ object PreparedStatement:
                             ListMap.empty
                           )
                         ) *>
-                        protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                          case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
-                          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                          case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
-                        }
+                        protocol
+                          .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                          .flatMap {
+                            case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
+                            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                            case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                          }
                   )
                 }
             } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
@@ -760,7 +763,9 @@ object PreparedStatement:
               params.set(ListMap.empty) <*
               batchedArgs.set(Vector.empty)
           case _ =>
-            ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
+            ev.raiseError(
+              new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
+            )
       )
 
     override def close(): F[Unit] = statementClosed.set(true)
@@ -912,11 +917,13 @@ object PreparedStatement:
                             ListMap.empty
                           )
                         ) *>
-                        protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                          case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
-                          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                          case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
-                        }
+                        protocol
+                          .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                          .flatMap {
+                            case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
+                            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                            case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                          }
                   )
                 }
             } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
@@ -967,7 +974,9 @@ object PreparedStatement:
               params.set(ListMap.empty) <*
               batchedArgs.set(Vector.empty)
           case _ =>
-            ev.raiseError(new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement."))
+            ev.raiseError(
+              new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
+            )
       )
 
     override def close(): F[Unit] =

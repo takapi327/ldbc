@@ -4058,7 +4058,7 @@ object DatabaseMetaData:
   private[ldbc] case class Impl[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
-    connectionClosed:          Ref[F, Boolean],
+    connectionClosed:              Ref[F, Boolean],
     database:                      Option[String]       = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean              = true,
@@ -5683,11 +5683,11 @@ object DatabaseMetaData:
      */
     protected def prepareMetaDataSafeStatement(sql: String): F[PreparedStatement[F]] =
       for
-        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
-        batchedArgs <- Ref[F].of(Vector.empty[String])
+        params           <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs      <- Ref[F].of(Vector.empty[String])
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
-        updateCount  <- Ref[F].of(-1)
+        updateCount      <- Ref[F].of(-1)
       yield PreparedStatement.Client[F](
         protocol,
         serverVariables,
@@ -5882,7 +5882,7 @@ object DatabaseMetaData:
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
-    connectionClosed:          Ref[F, Boolean],
+    connectionClosed:              Ref[F, Boolean],
     database:                      Option[String] = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean = true,

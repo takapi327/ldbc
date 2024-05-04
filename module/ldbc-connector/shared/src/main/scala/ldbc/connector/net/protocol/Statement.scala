@@ -226,13 +226,13 @@ object Statement:
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 resultSet = ResultSet
-                  .empty(
-                    serverVariables,
-                    protocol.initialPacket.serverVersion,
-                    isResultSetClosed,
-                    resultSetCurrentCursor,
-                    resultSetCurrentRow
-                  )
+                              .empty(
+                                serverVariables,
+                                protocol.initialPacket.serverVersion,
+                                isResultSetClosed,
+                                resultSetCurrentCursor,
+                                resultSetCurrentRow
+                              )
                 _ <- currentResultSet.set(Some(resultSet))
               yield resultSet
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
@@ -252,16 +252,16 @@ object Statement:
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
                 resultSet = ResultSet(
-                  columnDefinitions,
-                  resultSetRow,
-                  serverVariables,
-                  protocol.initialPacket.serverVersion,
-                  isResultSetClosed,
-                  resultSetCurrentCursor,
-                  resultSetCurrentRow,
-                  resultSetType,
-                  resultSetConcurrency
-                )
+                              columnDefinitions,
+                              resultSetRow,
+                              serverVariables,
+                              protocol.initialPacket.serverVersion,
+                              isResultSetClosed,
+                              resultSetCurrentCursor,
+                              resultSetCurrentRow,
+                              resultSetType,
+                              resultSetConcurrency
+                            )
                 _ <- currentResultSet.set(Some(resultSet))
               yield resultSet
           }
@@ -278,7 +278,7 @@ object Statement:
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
             }
-          )
+        )
       }
 
     override def close(): F[Unit] = statementClosed.set(true)
@@ -301,7 +301,7 @@ object Statement:
               case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
               case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
             }
-          )
+        )
       }
 
     override def executeBatch(): F[List[Int]] =
@@ -338,19 +338,19 @@ object Statement:
                       yield result
                     }
                     .map(_.toList)
-              )
+            )
           }
         } <* protocol.resetSequenceId <* protocol.comSetOption(
-        EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF
-      ) <* clearBatch()
+          EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF
+        ) <* clearBatch()
 
     private def checkClosed(): F[Unit] =
       for
         statementClosed  <- statementClosed.get
         connectionClosed <- connectionClosed.get
         _ <- (if statementClosed || connectionClosed then
-                     ev.raiseError(new SQLException("No operations allowed after statement closed."))
-                   else ev.unit)
+                ev.raiseError(new SQLException("No operations allowed after statement closed."))
+              else ev.unit)
       yield ()
 
     private def checkNullOrEmptyQuery(sql: String): F[Unit] =

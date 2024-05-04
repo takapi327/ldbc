@@ -651,7 +651,7 @@ object Connection:
         batchedArgs      <- Ref[F].of(Vector.empty[String])
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
-        updateCount  <- Ref[F].of(-1)
+        updateCount      <- Ref[F].of(-1)
       yield Statement[F](
         protocol,
         serverVariables,
@@ -666,11 +666,11 @@ object Connection:
 
     override def prepareStatement(sql: String, resultSetType: Int, resultSetConcurrency: Int): F[PreparedStatement[F]] =
       for
-        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
-        batchedArgs <- Ref[F].of(Vector.empty[String])
+        params           <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs      <- Ref[F].of(Vector.empty[String])
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
-        updateCount  <- Ref[F].of(-1)
+        updateCount      <- Ref[F].of(-1)
       yield PreparedStatement.Client[F](
         protocol,
         serverVariables,
@@ -693,11 +693,11 @@ object Connection:
       resultSetConcurrency: Int
     ): F[PreparedStatement.Client[F]] =
       for
-        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
-        batchedArgs <- Ref[F].of(Vector.empty[String])
+        params           <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs      <- Ref[F].of(Vector.empty[String])
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
-        updateCount  <- Ref[F].of(-1)
+        updateCount      <- Ref[F].of(-1)
       yield PreparedStatement
         .Client[F](
           protocol,
@@ -734,11 +734,11 @@ object Connection:
                result.numColumns,
                ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
              )
-        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
-        batchedArgs <- Ref[F].of(Vector.empty[String])
+        params           <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs      <- Ref[F].of(Vector.empty[String])
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
-        updateCount  <- Ref[F].of(-1)
+        updateCount      <- Ref[F].of(-1)
       yield PreparedStatement
         .Server[F](
           protocol,
