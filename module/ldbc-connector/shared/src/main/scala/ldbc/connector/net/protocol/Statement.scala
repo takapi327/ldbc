@@ -201,21 +201,21 @@ object Statement:
 
   private[ldbc] trait ShareStatement[F[_]: Temporal](using ev: MonadError[F, Throwable]) extends Statement[F]:
 
-    def statementClosed: Ref[F, Boolean]
+    def statementClosed:  Ref[F, Boolean]
     def connectionClosed: Ref[F, Boolean]
     def currentResultSet: Ref[F, Option[ResultSet[F]]]
-    def updateCount: Ref[F, Int]
+    def updateCount:      Ref[F, Int]
 
-    override def getResultSet(): F[Option[ResultSet[F]]] = checkClosed() *> currentResultSet.get
-    override def getUpdateCount(): F[Int] = checkClosed() *> updateCount.get
+    override def getResultSet():   F[Option[ResultSet[F]]] = checkClosed() *> currentResultSet.get
+    override def getUpdateCount(): F[Int]                  = checkClosed() *> updateCount.get
 
     protected def checkClosed(): F[Unit] =
       for
-        statementClosed <- statementClosed.get
+        statementClosed  <- statementClosed.get
         connectionClosed <- connectionClosed.get
         _ <- (if statementClosed || connectionClosed then
-          ev.raiseError(new SQLException("No operations allowed after statement closed."))
-        else ev.unit)
+                ev.raiseError(new SQLException("No operations allowed after statement closed."))
+              else ev.unit)
       yield ()
 
     protected def checkNullOrEmptyQuery(sql: String): F[Unit] =
