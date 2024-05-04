@@ -349,8 +349,8 @@ object Statement:
       yield connClosed || stmtClosed
 
     protected def checkClosed(): F[Unit] =
-      isClosed().ifF(
-        ev.raiseError(new SQLException("No operations allowed after statement closed.")),
+      isClosed().ifM(
+        close() *> ev.raiseError(new SQLException("No operations allowed after statement closed.")),
         ev.unit
       )
 
