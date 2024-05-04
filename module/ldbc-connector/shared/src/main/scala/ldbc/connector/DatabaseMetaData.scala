@@ -4285,7 +4285,7 @@ object DatabaseMetaData:
           case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
           case _                           => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getProcedureColumns(
@@ -4469,7 +4469,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName))    => preparedStatement.setString(1, columnName)
           case (None, None, None)                => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getTables(
@@ -4545,7 +4545,7 @@ object DatabaseMetaData:
                   preparedStatement.setString(index + 3, tableType)
               }
           else ev.unit
-        ) *> preparedStatement.executeQuery() <* preparedStatement.close()
+        ) *> preparedStatement.executeQuery()
       }
 
     override def getCatalogs(): F[ResultSet[F]] =
@@ -4780,7 +4780,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName))     => preparedStatement.setString(1, columnName)
           case (None, None, None)                 => ev.unit
 
-        settings *> preparedStatement.executeQuery() <* preparedStatement.close()
+        settings *> preparedStatement.executeQuery()
       }
 
     override def getColumnPrivileges(
@@ -4825,7 +4825,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
           case (None, None, None)             => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getTablePrivileges(
@@ -4865,7 +4865,7 @@ object DatabaseMetaData:
           case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
           case _                       => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getBestRowIdentifier(
@@ -5005,7 +5005,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -5033,7 +5033,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -5076,7 +5076,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -5120,7 +5120,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getCrossReference(
@@ -5202,7 +5202,7 @@ object DatabaseMetaData:
           case (None, None, None) =>
             preparedStatement.setString(1, parentTable)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getTypeInfo(): F[ResultSet[F]] =
@@ -5326,7 +5326,7 @@ object DatabaseMetaData:
           case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
           case (None, None)            => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getUDTs(
@@ -5484,7 +5484,7 @@ object DatabaseMetaData:
           case (None, Some(functionName)) => preparedStatement.setString(1, functionName)
           case (None, None)               => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getFunctionColumns(
@@ -5644,7 +5644,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName))   => preparedStatement.setString(1, columnName)
           case (None, None, None)               => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getPseudoColumns(
