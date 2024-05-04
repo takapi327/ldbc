@@ -4058,7 +4058,9 @@ object DatabaseMetaData:
   private[ldbc] case class Impl[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
-    connectionClosed:              Ref[F, Boolean],
+    connectionClosed:          Ref[F, Boolean],
+    statementClosed:          Ref[F, Boolean],
+    resultSetClosed:          Ref[F, Boolean],
     database:                      Option[String]       = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean              = true,
@@ -5685,7 +5687,6 @@ object DatabaseMetaData:
       for
         params           <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs      <- Ref[F].of(Vector.empty[String])
-        statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
         moreResults      <- Ref[F].of(false)
@@ -5698,8 +5699,9 @@ object DatabaseMetaData:
         sql,
         params,
         batchedArgs,
-        statementClosed,
         connectionClosed,
+        statementClosed,
+        resultSetClosed,
         currentResultSet,
         updateCount,
         moreResults,
@@ -5889,7 +5891,9 @@ object DatabaseMetaData:
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
-    connectionClosed:              Ref[F, Boolean],
+    connectionClosed:          Ref[F, Boolean],
+    statementClosed:          Ref[F, Boolean],
+    resultSetClosed:          Ref[F, Boolean],
     database:                      Option[String] = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean = true,
@@ -5901,6 +5905,8 @@ object DatabaseMetaData:
       protocol,
       serverVariables,
       connectionClosed,
+      statementClosed,
+      resultSetClosed,
       database,
       databaseTerm,
       getProceduresReturnsFunctions,

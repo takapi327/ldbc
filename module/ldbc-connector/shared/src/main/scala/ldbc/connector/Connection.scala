@@ -569,7 +569,9 @@ object Connection:
     database:        Option[String],
     readOnly:        Ref[F, Boolean],
     isAutoCommit:    Ref[F, Boolean],
-    closed:          Ref[F, Boolean],
+    connectionClosed:          Ref[F, Boolean],
+    statementClosed:          Ref[F, Boolean],
+    resultSetClosed:          Ref[F, Boolean],
     databaseTerm:    Option[DatabaseTerm] = None
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
@@ -602,16 +604,16 @@ object Connection:
 
     override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
       (if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> closed.update(_ => true)
+       else ev.unit) *> protocol.resetSequenceId *> protocol.comQuit() *> connectionClosed.set(true) *> statementClosed.set(true) *> resultSetClosed.set(true)
     }
 
-    override def isClosed(): F[Boolean] = closed.get
+    override def isClosed(): F[Boolean] = connectionClosed.get
 
     override def getMetaData(): F[DatabaseMetaData[F]] =
       isClosed().map {
         case true => throw new SQLException("Connection is closed")
         case false =>
-          DatabaseMetaData[F](protocol, serverVariables, closed, database, databaseTerm)
+          DatabaseMetaData[F](protocol, serverVariables, connectionClosed, statementClosed, resultSetClosed, database, databaseTerm)
       }
 
     override def setReadOnly(isReadOnly: Boolean): F[Unit] =
@@ -649,7 +651,6 @@ object Connection:
     override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
       for
         batchedArgs      <- Ref[F].of(Vector.empty[String])
-        statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
         moreResults      <- Ref[F].of(false)
@@ -660,8 +661,9 @@ object Connection:
         protocol,
         serverVariables,
         batchedArgs,
+        connectionClosed,
         statementClosed,
-        closed,
+        resultSetClosed,
         currentResultSet,
         updateCount,
         moreResults,
@@ -675,7 +677,6 @@ object Connection:
       for
         params           <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs      <- Ref[F].of(Vector.empty[String])
-        statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
         moreResults      <- Ref[F].of(false)
@@ -688,8 +689,9 @@ object Connection:
         sql,
         params,
         batchedArgs,
+        connectionClosed,
         statementClosed,
-        closed,
+        resultSetClosed,
         currentResultSet,
         updateCount,
         moreResults,
@@ -709,7 +711,6 @@ object Connection:
       for
         params           <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs      <- Ref[F].of(Vector.empty[String])
-        statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
         moreResults      <- Ref[F].of(false)
@@ -723,8 +724,9 @@ object Connection:
           sql,
           params,
           batchedArgs,
+          connectionClosed,
           statementClosed,
-          closed,
+          resultSetClosed,
           currentResultSet,
           updateCount,
           moreResults,
@@ -757,7 +759,6 @@ object Connection:
              )
         params           <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs      <- Ref[F].of(Vector.empty[String])
-        statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
         moreResults      <- Ref[F].of(false)
@@ -772,8 +773,9 @@ object Connection:
           sql,
           params,
           batchedArgs,
+          connectionClosed,
           statementClosed,
-          closed,
+          resultSetClosed,
           currentResultSet,
           updateCount,
           moreResults,
@@ -881,11 +883,13 @@ object Connection:
       serverVariables <- Resource.eval(protocol.serverVariables())
       readOnly        <- Resource.eval(Ref[F].of[Boolean](false))
       autoCommit      <- Resource.eval(Ref[F].of[Boolean](true))
-      closed          <- Resource.eval(Ref[F].of[Boolean](false))
+      connectionClosed          <- Resource.eval(Ref[F].of[Boolean](false))
+      statementClosed          <- Resource.eval(Ref[F].of[Boolean](false))
+      resultSetClosed          <- Resource.eval(Ref[F].of[Boolean](false))
       connection <-
         Resource.make(
           Temporal[F].pure(
-            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit, closed, databaseTerm)
+            ConnectionImpl[F](protocol, serverVariables, database, readOnly, autoCommit, connectionClosed, statementClosed, resultSetClosed, databaseTerm)
           )
         )(_.close())
     yield connection

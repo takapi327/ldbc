@@ -371,8 +371,9 @@ object Statement:
     protocol:             Protocol[F],
     serverVariables:      Map[String, String],
     batchedArgs:          Ref[F, Vector[String]],
-    statementClosed:      Ref[F, Boolean],
     connectionClosed:     Ref[F, Boolean],
+    statementClosed:      Ref[F, Boolean],
+    resultSetClosed:      Ref[F, Boolean],
     currentResultSet:     Ref[F, Option[ResultSet[F]]],
     updateCount:          Ref[F, Int],
     moreResults:          Ref[F, Boolean],
@@ -419,7 +420,6 @@ object Statement:
                     ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                     Vector.empty
                   )
-                isResultSetClosed      <- Ref[F].of(false)
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
                 resultSet = ResultSet(
@@ -427,7 +427,7 @@ object Statement:
                               resultSetRow,
                               serverVariables,
                               protocol.initialPacket.serverVersion,
-                              isResultSetClosed,
+                              resultSetClosed,
                               resultSetCurrentCursor,
                               resultSetCurrentRow,
                               resultSetType,
@@ -453,7 +453,7 @@ object Statement:
         )
       }
 
-    override def close(): F[Unit] = statementClosed.set(true)
+    override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
     override def execute(sql: String): F[Boolean] =
       checkClosed() *> checkNullOrEmptyQuery(sql) *> (
@@ -520,8 +520,9 @@ object Statement:
     protocol:             Protocol[F],
     serverVariables:      Map[String, String],
     batchedArgsRef:       Ref[F, Vector[String]],
-    statementClosed:      Ref[F, Boolean],
     connectionClosed:     Ref[F, Boolean],
+    statementClosed:      Ref[F, Boolean],
+    resultSetClosed:      Ref[F, Boolean],
     currentResultSet:     Ref[F, Option[ResultSet[F]]],
     updateCount:          Ref[F, Int],
     moreResults:          Ref[F, Boolean],
@@ -534,8 +535,9 @@ object Statement:
       protocol,
       serverVariables,
       batchedArgsRef,
-      statementClosed,
       connectionClosed,
+      statementClosed,
+      resultSetClosed,
       currentResultSet,
       updateCount,
       moreResults,

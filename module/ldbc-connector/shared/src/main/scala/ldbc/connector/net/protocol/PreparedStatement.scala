@@ -543,8 +543,9 @@ object PreparedStatement:
     sql:                  String,
     params:               Ref[F, ListMap[Int, Parameter]],
     batchedArgs:          Ref[F, Vector[String]],
-    statementClosed:      Ref[F, Boolean],
     connectionClosed:     Ref[F, Boolean],
+    statementClosed:      Ref[F, Boolean],
+    resultSetClosed:      Ref[F, Boolean],
     currentResultSet:     Ref[F, Option[ResultSet[F]]],
     updateCount:          Ref[F, Int],
     moreResults:          Ref[F, Boolean],
@@ -577,14 +578,13 @@ object PreparedStatement:
             protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
               case _: OKPacket =>
                 for
-                  isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 yield ResultSet
                   .empty(
                     serverVariables,
                     protocol.initialPacket.serverVersion,
-                    isResultSetClosed,
+                    resultSetClosed,
                     resultSetCurrentCursor,
                     resultSetCurrentRow
                   )
@@ -601,7 +601,6 @@ object PreparedStatement:
                       ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                       Vector.empty
                     )
-                  isResultSetClosed      <- Ref[F].of(false)
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
                 yield ResultSet(
@@ -609,7 +608,7 @@ object PreparedStatement:
                   resultSetRow,
                   serverVariables,
                   protocol.initialPacket.serverVersion,
-                  isResultSetClosed,
+                  resultSetClosed,
                   resultSetCurrentCursor,
                   resultSetCurrentRow,
                   resultSetType,
@@ -753,7 +752,7 @@ object PreparedStatement:
             )
       )
 
-    override def close(): F[Unit] = statementClosed.set(true)
+    override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
   /**
    * PreparedStatement for query construction at the server side.
@@ -776,8 +775,9 @@ object PreparedStatement:
     sql:                  String,
     params:               Ref[F, ListMap[Int, Parameter]],
     batchedArgs:          Ref[F, Vector[String]],
-    statementClosed:      Ref[F, Boolean],
     connectionClosed:     Ref[F, Boolean],
+    statementClosed:      Ref[F, Boolean],
+    resultSetClosed:      Ref[F, Boolean],
     currentResultSet:     Ref[F, Option[ResultSet[F]]],
     updateCount:          Ref[F, Int],
     moreResults:          Ref[F, Boolean],
@@ -823,7 +823,6 @@ object PreparedStatement:
               Vector.empty
             )
           _                      <- params.set(ListMap.empty)
-          isResultSetClosed      <- Ref[F].of(false)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
         yield ResultSet(
@@ -831,7 +830,7 @@ object PreparedStatement:
           resultSetRow,
           serverVariables,
           protocol.initialPacket.serverVersion,
-          isResultSetClosed,
+          resultSetClosed,
           resultSetCurrentCursor,
           resultSetCurrentRow,
           resultSetType,
@@ -973,5 +972,5 @@ object PreparedStatement:
       exchange[F, Unit]("statement") { (span: Span[F]) =>
         span.addAttributes(
           (attributes ++ List(Attribute("execute", "close"), Attribute("statementId", statementId)))*
-        ) *> protocol.resetSequenceId *> protocol.send(ComStmtClosePacket(statementId)) *> statementClosed.set(true)
+        ) *> protocol.resetSequenceId *> protocol.send(ComStmtClosePacket(statementId)) *> statementClosed.set(true) *> resultSetClosed.set(true)
       }
