@@ -652,6 +652,7 @@ object Connection:
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
+        moreResults  <- Ref[F].of(false)
       yield Statement[F](
         protocol,
         serverVariables,
@@ -660,6 +661,7 @@ object Connection:
         closed,
         currentResultSet,
         updateCount,
+        moreResults,
         resultSetType,
         resultSetConcurrency
       )
@@ -671,6 +673,7 @@ object Connection:
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
+        moreResults  <- Ref[F].of(false)
       yield PreparedStatement.Client[F](
         protocol,
         serverVariables,
@@ -681,6 +684,7 @@ object Connection:
         closed,
         currentResultSet,
         updateCount,
+        moreResults,
         resultSetType,
         resultSetConcurrency
       )
@@ -698,6 +702,7 @@ object Connection:
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
+        moreResults  <- Ref[F].of(false)
       yield PreparedStatement
         .Client[F](
           protocol,
@@ -709,6 +714,7 @@ object Connection:
           closed,
           currentResultSet,
           updateCount,
+          moreResults,
           resultSetType,
           resultSetConcurrency
         )
@@ -739,6 +745,7 @@ object Connection:
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
+        moreResults  <- Ref[F].of(false)
       yield PreparedStatement
         .Server[F](
           protocol,
@@ -751,6 +758,7 @@ object Connection:
           closed,
           currentResultSet,
           updateCount,
+          moreResults,
           resultSetType,
           resultSetConcurrency
         )

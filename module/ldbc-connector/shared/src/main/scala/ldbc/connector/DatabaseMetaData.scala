@@ -5688,6 +5688,7 @@ object DatabaseMetaData:
         statementClosed  <- Ref[F].of(false)
         currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
         updateCount      <- Ref[F].of(-1)
+        moreResults  <- Ref[F].of(false)
       yield PreparedStatement.Client[F](
         protocol,
         serverVariables,
@@ -5698,6 +5699,7 @@ object DatabaseMetaData:
         connectionClosed,
         currentResultSet,
         updateCount,
+        moreResults,
         ResultSet.TYPE_SCROLL_INSENSITIVE,
         ResultSet.CONCUR_READ_ONLY
       )

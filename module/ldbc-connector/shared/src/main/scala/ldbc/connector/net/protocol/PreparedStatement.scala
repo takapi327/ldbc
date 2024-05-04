@@ -547,6 +547,7 @@ object PreparedStatement:
     connectionClosed:     Ref[F, Boolean],
     currentResultSet:     Ref[F, Option[ResultSet[F]]],
     updateCount:          Ref[F, Int],
+    moreResults:          Ref[F, Boolean],
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
@@ -776,6 +777,7 @@ object PreparedStatement:
     connectionClosed:     Ref[F, Boolean],
     currentResultSet:     Ref[F, Option[ResultSet[F]]],
     updateCount:          Ref[F, Int],
+    moreResults:          Ref[F, Boolean],
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
