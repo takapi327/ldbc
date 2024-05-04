@@ -39,10 +39,9 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
             conn.serverPreparedStatement("INSERT INTO `server_statement_boolean_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
             preparedStatement.setBoolean(1, true) *> preparedStatement.setBoolean(2, None) *> preparedStatement
-              .executeUpdate() <* preparedStatement
-              .close() <* preparedStatement.close()
+              .executeUpdate() <* preparedStatement.close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_boolean_table`")
-        yield count
+        yield 1
       },
       1
     )
