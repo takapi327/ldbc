@@ -503,3 +503,27 @@ class StatementQueryTest extends CatsEffectSuite:
       }
     )
   }
+
+  test("If the query has not been executed, the get updateCount is -1.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          updateCount <- statement.getUpdateCount()
+        yield updateCount
+      },
+      -1
+    )
+  }
+
+  test("When the query is executed, the updateCount is obtained 0 or 1+.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          updateCount <- statement.executeUpdate("USE `connector_test`") *> statement.getUpdateCount()
+        yield updateCount
+      },
+      0
+    )
+  }
