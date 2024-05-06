@@ -573,7 +573,7 @@ object PreparedStatement:
     )
 
     override def executeQuery(): F[ResultSet[F]] =
-      checkClosed() *> exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
         params.get.flatMap { params =>
           span.addAttributes(
             (attributes ++ List(
@@ -631,7 +631,7 @@ object PreparedStatement:
       }
 
     override def executeUpdate(): F[Int] =
-      checkClosed() *> exchange[F, Int]("statement") { (span: Span[F]) =>
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Int]("statement") { (span: Span[F]) =>
         params.get.flatMap { params =>
           span.addAttributes(
             (attributes ++ List(
@@ -652,18 +652,16 @@ object PreparedStatement:
       }
 
     override def execute(): F[Boolean] =
-      checkClosed() *> (
-        if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap(_.hasRows())
-        else executeUpdate().map(_ => false)
-      )
+      if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap(_.hasRows())
+      else executeUpdate().map(_ => false)
 
     override def addBatch(): F[Unit] =
-      checkClosed() *> params.get.flatMap { params =>
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> params.get.flatMap { params =>
         batchedArgs.update(_ :+ buildBatchQuery(sql, params))
       } *> params.set(ListMap.empty)
 
     override def executeBatch(): F[List[Int]] =
-      checkClosed() *> (
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> (
         sql.trim.toLowerCase match
           case q if q.startsWith("insert") =>
             exchange[F, List[Int]]("statement") { (span: Span[F]) =>
@@ -792,7 +790,7 @@ object PreparedStatement:
     )
 
     override def executeQuery(): F[ResultSet[F]] =
-      checkClosed() *> exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
         for
           parameter <- params.get
           columnCount <-
@@ -838,7 +836,7 @@ object PreparedStatement:
       }
 
     override def executeUpdate(): F[Int] =
-      checkClosed() *> exchange[F, Int]("statement") { (span: Span[F]) =>
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Int]("statement") { (span: Span[F]) =>
         params.get.flatMap { params =>
           span.addAttributes(
             (attributes ++ List(
@@ -857,18 +855,16 @@ object PreparedStatement:
       }
 
     override def execute(): F[Boolean] =
-      checkClosed() *> (
-        if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap(_.hasRows())
-        else executeUpdate().map(_ => false)
-      )
+      if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap(_.hasRows())
+      else executeUpdate().map(_ => false)
 
     override def addBatch(): F[Unit] =
-      checkClosed() *> params.get.flatMap { params =>
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> params.get.flatMap { params =>
         batchedArgs.update(_ :+ buildBatchQuery(sql, params))
       } *> params.set(ListMap.empty)
 
     override def executeBatch(): F[List[Int]] =
-      checkClosed() *> (
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> (
         sql.trim.toLowerCase match
           case q if q.startsWith("insert") =>
             exchange[F, List[Int]]("statement") { (span: Span[F]) =>
