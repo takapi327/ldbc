@@ -614,16 +614,16 @@ object PreparedStatement:
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
                   resultSet = ResultSet(
-                    columnDefinitions,
-                    resultSetRow,
-                    serverVariables,
-                    protocol.initialPacket.serverVersion,
-                    resultSetClosed,
-                    resultSetCurrentCursor,
-                    resultSetCurrentRow,
-                    resultSetType,
-                    resultSetConcurrency
-                  )
+                                columnDefinitions,
+                                resultSetRow,
+                                serverVariables,
+                                protocol.initialPacket.serverVersion,
+                                resultSetClosed,
+                                resultSetCurrentCursor,
+                                resultSetCurrentRow,
+                                resultSetType,
+                                resultSetConcurrency
+                              )
                   _ <- currentResultSet.set(Some(resultSet))
                 yield resultSet
             }
@@ -821,16 +821,16 @@ object PreparedStatement:
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
           resultSet = ResultSet(
-            columnDefinitions,
-            resultSetRow,
-            serverVariables,
-            protocol.initialPacket.serverVersion,
-            resultSetClosed,
-            resultSetCurrentCursor,
-            resultSetCurrentRow,
-            resultSetType,
-            resultSetConcurrency
-          )
+                        columnDefinitions,
+                        resultSetRow,
+                        serverVariables,
+                        protocol.initialPacket.serverVersion,
+                        resultSetClosed,
+                        resultSetCurrentCursor,
+                        resultSetCurrentRow,
+                        resultSetType,
+                        resultSetConcurrency
+                      )
           _ <- currentResultSet.set(Some(resultSet))
         yield resultSet
       }
