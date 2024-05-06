@@ -4058,6 +4058,9 @@ object DatabaseMetaData:
   private[ldbc] case class Impl[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
+    connectionClosed:              Ref[F, Boolean],
+    statementClosed:               Ref[F, Boolean],
+    resultSetClosed:               Ref[F, Boolean],
     database:                      Option[String]       = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean              = true,
@@ -4282,7 +4285,7 @@ object DatabaseMetaData:
           case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
           case _                           => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getProcedureColumns(
@@ -4466,7 +4469,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName))    => preparedStatement.setString(1, columnName)
           case (None, None, None)                => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getTables(
@@ -4542,7 +4545,7 @@ object DatabaseMetaData:
                   preparedStatement.setString(index + 3, tableType)
               }
           else ev.unit
-        ) *> preparedStatement.executeQuery() <* preparedStatement.close()
+        ) *> preparedStatement.executeQuery()
       }
 
     override def getCatalogs(): F[ResultSet[F]] =
@@ -4777,7 +4780,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName))     => preparedStatement.setString(1, columnName)
           case (None, None, None)                 => ev.unit
 
-        settings *> preparedStatement.executeQuery() <* preparedStatement.close()
+        settings *> preparedStatement.executeQuery()
       }
 
     override def getColumnPrivileges(
@@ -4822,7 +4825,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
           case (None, None, None)             => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getTablePrivileges(
@@ -4862,7 +4865,7 @@ object DatabaseMetaData:
           case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
           case _                       => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getBestRowIdentifier(
@@ -5002,7 +5005,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -5030,7 +5033,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -5073,7 +5076,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
@@ -5117,7 +5120,7 @@ object DatabaseMetaData:
           case None =>
             preparedStatement.setString(1, table)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getCrossReference(
@@ -5199,7 +5202,7 @@ object DatabaseMetaData:
           case (None, None, None) =>
             preparedStatement.setString(1, parentTable)
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getTypeInfo(): F[ResultSet[F]] =
@@ -5323,7 +5326,7 @@ object DatabaseMetaData:
           case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
           case (None, None)            => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getUDTs(
@@ -5481,7 +5484,7 @@ object DatabaseMetaData:
           case (None, Some(functionName)) => preparedStatement.setString(1, functionName)
           case (None, None)               => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getFunctionColumns(
@@ -5641,7 +5644,7 @@ object DatabaseMetaData:
           case (None, None, Some(columnName))   => preparedStatement.setString(1, columnName)
           case (None, None, None)               => ev.unit
 
-        setting *> preparedStatement.executeQuery() <* preparedStatement.close()
+        setting *> preparedStatement.executeQuery()
       }
 
     override def getPseudoColumns(
@@ -5682,14 +5685,28 @@ object DatabaseMetaData:
      */
     protected def prepareMetaDataSafeStatement(sql: String): F[PreparedStatement[F]] =
       for
-        params      <- Ref[F].of(ListMap.empty[Int, Parameter])
-        batchedArgs <- Ref[F].of(Vector.empty[String])
+        params           <- Ref[F].of(ListMap.empty[Int, Parameter])
+        batchedArgs      <- Ref[F].of(Vector.empty[String])
+        currentResultSet <- Ref[F].of[Option[ResultSet[F]]](None)
+        updateCount      <- Ref[F].of(-1)
+        moreResults      <- Ref[F].of(false)
+        autoGeneratedKeys <-
+          Ref[F].of[Statement.NO_GENERATED_KEYS | Statement.RETURN_GENERATED_KEYS](Statement.NO_GENERATED_KEYS)
+        lastInsertId <- Ref[F].of(0)
       yield PreparedStatement.Client[F](
         protocol,
         serverVariables,
         sql,
         params,
         batchedArgs,
+        connectionClosed,
+        statementClosed,
+        resultSetClosed,
+        currentResultSet,
+        updateCount,
+        moreResults,
+        autoGeneratedKeys,
+        lastInsertId,
         ResultSet.TYPE_SCROLL_INSENSITIVE,
         ResultSet.CONCUR_READ_ONLY
       )
@@ -5874,6 +5891,9 @@ object DatabaseMetaData:
   def apply[F[_]: Temporal: Exchange: Tracer](
     protocol:                      Protocol[F],
     serverVariables:               Map[String, String],
+    connectionClosed:              Ref[F, Boolean],
+    statementClosed:               Ref[F, Boolean],
+    resultSetClosed:               Ref[F, Boolean],
     database:                      Option[String] = None,
     databaseTerm:                  Option[DatabaseTerm] = None,
     getProceduresReturnsFunctions: Boolean = true,
@@ -5884,6 +5904,9 @@ object DatabaseMetaData:
     new Impl[F](
       protocol,
       serverVariables,
+      connectionClosed,
+      statementClosed,
+      resultSetClosed,
       database,
       databaseTerm,
       getProceduresReturnsFunctions,

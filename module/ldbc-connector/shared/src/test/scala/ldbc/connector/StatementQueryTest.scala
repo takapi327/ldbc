@@ -479,3 +479,51 @@ class StatementQueryTest extends CatsEffectSuite:
       List(("{\"a\": 1}", None))
     )
   }
+
+  test("If the query is not being executed, getting the ResultSet is None.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          resultSet <- statement.getResultSet()
+        yield resultSet
+      },
+      None
+    )
+  }
+
+  test("When the query is executed, the ResultSet is obtained Some.") {
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          hasResult <- statement.execute("SELECT 1")
+          resultSet <- statement.getResultSet()
+        yield hasResult && resultSet.nonEmpty
+      }
+    )
+  }
+
+  test("If the query has not been executed, the get updateCount is -1.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement   <- conn.createStatement()
+          updateCount <- statement.getUpdateCount()
+        yield updateCount
+      },
+      -1
+    )
+  }
+
+  test("When the query is executed, the updateCount is obtained 0 or 1+.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          statement   <- conn.createStatement()
+          updateCount <- statement.executeUpdate("USE `connector_test`") *> statement.getUpdateCount()
+        yield updateCount
+      },
+      0
+    )
+  }
