@@ -483,6 +483,26 @@ trait PreparedStatement[F[_]] extends Statement[F]:
   def executeUpdate(): F[Int]
 
   /**
+   * Executes the SQL statement in this <code>PreparedStatement</code> object,
+   * which may be any kind of SQL statement.
+   * Some prepared statements return multiple results; the <code>execute</code>
+   * method handles these complex statements as well as the simpler
+   * form of statements handled by the methods <code>executeQuery</code>
+   * and <code>executeUpdate</code>.
+   * <P>
+   * The <code>execute</code> method returns a <code>boolean</code> to
+   * indicate the form of the first result.  You must call either the method
+   * <code>getResultSet</code> or <code>getUpdateCount</code>
+   * to retrieve the result; you must call <code>getMoreResults</code> to
+   * move to any subsequent result(s).
+   *
+   * @return <code>true</code> if the first result is a <code>ResultSet</code>
+   *         object; <code>false</code> if the first result is an update
+   *         count or there is no result
+   */
+  def execute(): F[Boolean]
+
+  /**
    * Adds a set of parameters to this PreparedStatement object's batch of commands.
    */
   def addBatch(): F[Unit]
@@ -593,17 +613,19 @@ object PreparedStatement:
                     )
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-                yield ResultSet(
-                  columnDefinitions,
-                  resultSetRow,
-                  serverVariables,
-                  protocol.initialPacket.serverVersion,
-                  resultSetClosed,
-                  resultSetCurrentCursor,
-                  resultSetCurrentRow,
-                  resultSetType,
-                  resultSetConcurrency
-                )
+                  resultSet = ResultSet(
+                    columnDefinitions,
+                    resultSetRow,
+                    serverVariables,
+                    protocol.initialPacket.serverVersion,
+                    resultSetClosed,
+                    resultSetCurrentCursor,
+                    resultSetCurrentRow,
+                    resultSetType,
+                    resultSetConcurrency
+                  )
+                  _ <- currentResultSet.set(Some(resultSet))
+                yield resultSet
             }
         } <* params.set(ListMap.empty)
       }
@@ -628,6 +650,12 @@ object PreparedStatement:
             }
         } <* params.set(ListMap.empty)
       }
+
+    override def execute(): F[Boolean] =
+      checkClosed() *> (
+        if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap(_.hasRows())
+        else executeUpdate().map(_ => false)
+      )
 
     override def addBatch(): F[Unit] =
       checkClosed() *> params.get.flatMap { params =>
@@ -794,17 +822,19 @@ object PreparedStatement:
           _                      <- params.set(ListMap.empty)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
-        yield ResultSet(
-          columnDefinitions,
-          resultSetRow,
-          serverVariables,
-          protocol.initialPacket.serverVersion,
-          resultSetClosed,
-          resultSetCurrentCursor,
-          resultSetCurrentRow,
-          resultSetType,
-          resultSetConcurrency
-        )
+          resultSet = ResultSet(
+            columnDefinitions,
+            resultSetRow,
+            serverVariables,
+            protocol.initialPacket.serverVersion,
+            resultSetClosed,
+            resultSetCurrentCursor,
+            resultSetCurrentRow,
+            resultSetType,
+            resultSetConcurrency
+          )
+          _ <- currentResultSet.set(Some(resultSet))
+        yield resultSet
       }
 
     override def executeUpdate(): F[Int] =
@@ -825,6 +855,12 @@ object PreparedStatement:
             }
         } <* params.set(ListMap.empty)
       }
+
+    override def execute(): F[Boolean] =
+      checkClosed() *> (
+        if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap(_.hasRows())
+        else executeUpdate().map(_ => false)
+      )
 
     override def addBatch(): F[Unit] =
       checkClosed() *> params.get.flatMap { params =>
