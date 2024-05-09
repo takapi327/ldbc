@@ -23,7 +23,12 @@ object StringHelper:
   def regionMatchesIgnoreCase(searchIn: String, startAt: Int, searchFor: String): Boolean =
     searchIn.regionMatches(true, startAt, searchFor, 0, searchFor.length)
 
-  def isCharAtPosNotEqualIgnoreCase(searchIn: String, pos: Int, firstCharOfSearchForUc: Char, firstCharOfSearchForLc: Char): Boolean =
+  def isCharAtPosNotEqualIgnoreCase(
+    searchIn:               String,
+    pos:                    Int,
+    firstCharOfSearchForUc: Char,
+    firstCharOfSearchForLc: Char
+  ): Boolean =
     val charAtPos = searchIn.charAt(pos)
     charAtPos != firstCharOfSearchForUc && charAtPos != firstCharOfSearchForLc
 
@@ -39,12 +44,11 @@ object StringHelper:
    * @return the position where <code>searchFor</code> is found within <code>searchIn</code> starting from <code>startingPosition</code>.
    */
   def indexOfIgnoreCase(startingPosition: Int, searchIn: String, searchFor: String): Int =
-    val searchInLength = searchIn.length
+    val searchInLength  = searchIn.length
     val searchForLength = searchFor.length
     val stopSearchingAt = searchInLength - searchForLength
 
-    if startingPosition > stopSearchingAt || searchForLength == 0 then
-      -1
+    if startingPosition > stopSearchingAt || searchForLength == 0 then -1
     else
 
       // Some locales don't follow upper-case rule, so need to check both
@@ -55,10 +59,8 @@ object StringHelper:
         if i > stopSearchingAt then -1
         else if isCharAtPosNotEqualIgnoreCase(searchIn, i, firstCharOfSearchForUc, firstCharOfSearchForLc) then
           loop(i + 1)
-        else if regionMatchesIgnoreCase(searchIn, i, searchFor) then
-          i
-        else
-          loop(i + 1)
+        else if regionMatchesIgnoreCase(searchIn, i, searchFor) then i
+        else loop(i + 1)
 
       loop(startingPosition)
 

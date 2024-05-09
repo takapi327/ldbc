@@ -17,19 +17,18 @@ class CallableStatementTest extends CatsEffectSuite:
   given Tracer[IO] = Tracer.noop[IO]
 
   private val connection = Connection[IO](
-    host = "127.0.0.1",
-    port = 13306,
-    user = "ldbc",
-    password = Some("password"),
-    database = Some("connector_test"),
-    allowPublicKeyRetrieval = true,
-    //ssl = SSL.Trusted
+    host                    = "127.0.0.1",
+    port                    = 13306,
+    user                    = "ldbc",
+    password                = Some("password"),
+    database                = Some("connector_test"),
+    allowPublicKeyRetrieval = true
+    // ssl = SSL.Trusted
   )
 
   test("") {
     assertIOBoolean(connection.use { conn =>
-      for
-        _ <- conn.prepareCall("{call demoSp(?, ?)}")
+      for _ <- conn.prepareCall("{call demoSp(?, ?)}")
       yield true
     })
   }

@@ -893,11 +893,12 @@ object Connection:
       for
         metaData <- getMetaData()
         procName <- extractProcedureName(sql)
-        resultSet <- ev.pure(databaseTerm.contains(DatabaseTerm.SCHEMA)).ifM(
-          metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
-          metaData.getProcedureColumns(database, None, Some(procName), Some("%")),
-        )
-        paramInfo <- CallableStatement.ParamInfo(sql, database, resultSet, isFunctionCall = false)
+        resultSet <- ev.pure(databaseTerm.contains(DatabaseTerm.SCHEMA))
+                       .ifM(
+                         metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
+                         metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
+                       )
+        paramInfo        <- CallableStatement.ParamInfo(sql, database, resultSet, isFunctionCall = false)
         params           <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs      <- Ref[F].of(Vector.empty[String])
         statementClosed  <- Ref[F].of[Boolean](false)
@@ -1171,31 +1172,29 @@ object Connection:
     private def extractProcedureName(sql: String): F[String] =
 
       var endCallIndex = StringHelper.indexOfIgnoreCase(0, sql, "CALL ")
-      var offset = 5
+      var offset       = 5
 
       if endCallIndex == -1 then
         endCallIndex = StringHelper.indexOfIgnoreCase(0, sql, "SELECT ")
-        offset = 7
+        offset       = 7
 
       if endCallIndex != -1 then
         val nameBuf = new StringBuilder()
 
         val trimmedStatement = sql.substring(endCallIndex + offset).trim()
-        val statementLength = trimmedStatement.length
+        val statementLength  = trimmedStatement.length
 
         (0 until statementLength).takeWhile { i =>
           val c = trimmedStatement.charAt(i)
 
-          if Character.isWhitespace(c) || c == '(' || c == '?' then
-            false
+          if Character.isWhitespace(c) || c == '(' || c == '?' then false
           else
             nameBuf.append(c)
             true
         }
 
         ev.pure(nameBuf.toString())
-      else
-        ev.raiseError(new SQLException("Invalid SQL statement"))
+      else ev.raiseError(new SQLException("Invalid SQL statement"))
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,

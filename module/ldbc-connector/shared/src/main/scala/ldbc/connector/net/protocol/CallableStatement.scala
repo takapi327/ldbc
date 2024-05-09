@@ -16,7 +16,7 @@ import cats.syntax.all.*
 import cats.effect.*
 
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{Tracer, Span}
+import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.*
 import ldbc.connector.data.*
@@ -87,46 +87,51 @@ object CallableStatement:
   private val PARAMETER_NAMESPACE_PREFIX = "@com_mysql_ldbc_outparam_"
 
   case class CallableStatementParameter(
-                        paramName: Option[String],
-                        isIn: Boolean,
-                        isOut: Boolean,
-                        index: Int,
-                        jdbcType: Int,
-                        typeName: Option[String],
-                        precision: Int,
-                        scale: Int,
-                        nullability: Short,
-                        inOutModifier: Int,
-                      )
+    paramName:     Option[String],
+    isIn:          Boolean,
+    isOut:         Boolean,
+    index:         Int,
+    jdbcType:      Int,
+    typeName:      Option[String],
+    precision:     Int,
+    scale:         Int,
+    nullability:   Short,
+    inOutModifier: Int
+  )
 
   case class ParamInfo(
-                        nativeSql: String,
-                        dbInUse: Option[String],
-                        isFunctionCall: Boolean,
-                        numParameters: Int,
-                        parameterList: List[CallableStatementParameter],
-                        parameterMap: ListMap[String, CallableStatementParameter]
-                      )
+    nativeSql:      String,
+    dbInUse:        Option[String],
+    isFunctionCall: Boolean,
+    numParameters:  Int,
+    parameterList:  List[CallableStatementParameter],
+    parameterMap:   ListMap[String, CallableStatementParameter]
+  )
 
   object ParamInfo:
 
-    def apply[F[_]: Temporal](nativeSql: String, database: Option[String], resultSet: ResultSet[F], isFunctionCall: Boolean): F[ParamInfo] =
+    def apply[F[_]: Temporal](
+      nativeSql:      String,
+      database:       Option[String],
+      resultSet:      ResultSet[F],
+      isFunctionCall: Boolean
+    ): F[ParamInfo] =
       val parameterListF = Monad[F].whileM[List, CallableStatementParameter](resultSet.next()) {
         for
-          index <- resultSet.getRow()
-          paramName <- resultSet.getString(4)
+          index           <- resultSet.getRow()
+          paramName       <- resultSet.getString(4)
           procedureColumn <- resultSet.getInt(5)
-          jdbcType <- resultSet.getInt(6)
-          typeName <- resultSet.getString(7)
-          precision <- resultSet.getInt(8)
-          scale <- resultSet.getInt(19)
-          nullability <- resultSet.getShort(12)
+          jdbcType        <- resultSet.getInt(6)
+          typeName        <- resultSet.getString(7)
+          precision       <- resultSet.getInt(8)
+          scale           <- resultSet.getInt(19)
+          nullability     <- resultSet.getShort(12)
         yield
           val inOutModifier = procedureColumn match
-            case DatabaseMetaData.procedureColumnIn => 1
-            case DatabaseMetaData.procedureColumnInOut => 2
+            case DatabaseMetaData.procedureColumnIn                                           => 1
+            case DatabaseMetaData.procedureColumnInOut                                        => 2
             case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn => 4
-            case _ => 0
+            case _                                                                            => 0
 
           val (isOutParameter, isInParameter) =
             if index - 1 == 0 && isFunctionCall then (true, false)
@@ -134,19 +139,30 @@ object CallableStatement:
             else if inOutModifier == DatabaseMetaData.procedureColumnIn then (false, true)
             else if inOutModifier == DatabaseMetaData.procedureColumnOut then (true, false)
             else (false, false)
-          CallableStatementParameter(paramName, isInParameter, isOutParameter, index, jdbcType, typeName, precision, scale, nullability, inOutModifier)
+          CallableStatementParameter(
+            paramName,
+            isInParameter,
+            isOutParameter,
+            index,
+            jdbcType,
+            typeName,
+            precision,
+            scale,
+            nullability,
+            inOutModifier
+          )
       }
 
       for
         numParameters <- resultSet.getRow()
         parameterList <- parameterListF
       yield ParamInfo(
-        nativeSql = nativeSql,
-        dbInUse = database,
+        nativeSql      = nativeSql,
+        dbInUse        = database,
         isFunctionCall = isFunctionCall,
-        numParameters = numParameters,
-        parameterList = parameterList,
-        parameterMap = ListMap(parameterList.map(p => p.paramName.getOrElse("") -> p): _*)
+        numParameters  = numParameters,
+        parameterList  = parameterList,
+        parameterMap   = ListMap(parameterList.map(p => p.paramName.getOrElse("") -> p)*)
       )
 
   private[ldbc] case class Impl[F[_]: Temporal: Exchange: Tracer](
@@ -166,7 +182,9 @@ object CallableStatement:
     lastInsertId:         Ref[F, Int],
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  )(using ev: MonadError[F, Throwable]) extends CallableStatement[F], Statement.ShareStatement[F]:
+  )(using ev: MonadError[F, Throwable])
+    extends CallableStatement[F],
+            Statement.ShareStatement[F]:
 
     private val attributes = protocol.initialPacket.attributes ++ List(
       Attribute("type", "CallableStatement"),
@@ -186,11 +204,11 @@ object CallableStatement:
         }
       }
 
-    override def executeUpdate(): F[Int] = ???
-    override def execute(): F[Boolean] = ???
-    override def addBatch(): F[Unit] = ???
-    override def executeBatch(): F[List[Int]] = ???
-    override def close(): F[Unit] = ???
+    override def executeUpdate(): F[Int]       = ???
+    override def execute():       F[Boolean]   = ???
+    override def addBatch():      F[Unit]      = ???
+    override def executeBatch():  F[List[Int]] = ???
+    override def close():         F[Unit]      = ???
 
     override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] = ???
 
@@ -212,7 +230,7 @@ object CallableStatement:
       if paramInfo.numParameters > 0 then
         paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
           if param.isOut && param.isIn then
-            val paramName = param.paramName.getOrElse("nullnp" + param.index)
+            val paramName          = param.paramName.getOrElse("nullnp" + param.index)
             val inOutParameterName = mangleParameterName(paramName)
 
             val queryBuf = new StringBuilder(4 + inOutParameterName.length + 1)
@@ -225,9 +243,9 @@ object CallableStatement:
                 case Some(parameter) =>
                   val sql = (queryBuf.toString.toCharArray ++ parameter.sql).mkString
                   sendQuery(sql).flatMap {
-                    case _: OKPacket => ev.unit
+                    case _: OKPacket      => ev.unit
                     case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                    case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                    case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                   }
                 case None => ev.raiseError(new SQLException("Parameter not found"))
             }
@@ -235,20 +253,20 @@ object CallableStatement:
         }
       else ev.unit
 
-    //private def setOutParams(paramInfo: ParamInfo): F[Unit] =
+    // private def setOutParams(paramInfo: ParamInfo): F[Unit] =
     //  if paramInfo.numParameters > 0 then
     //    paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
     //      if !paramInfo.isFunctionCall && param.isOut then
     //        val paramName = param.paramName.getOrElse("nullnp" + param.index)
     //        val outParameterName = mangleParameterName(paramName)
 //
-    //        acc *> params.get.flatMap { params =>
-    //          val outParamIndex =
-    //            if params.isEmpty then param.index + 1
-    //            else params.keys.find(_ == param.index).getOrElse(param.index + 1)
-    //          ???
-    //        }
-    //        ???
-    //      else acc
-    //    }
-    //  else ev.unit
+//        acc *> params.get.flatMap { params =>
+//          val outParamIndex =
+//            if params.isEmpty then param.index + 1
+//            else params.keys.find(_ == param.index).getOrElse(param.index + 1)
+//          ???
+//        }
+//        ???
+//      else acc
+//    }
+//  else ev.unit
