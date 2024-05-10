@@ -369,8 +369,32 @@ object CallableStatement:
 
   val NOT_OUTPUT_PARAMETER_INDICATOR: Int = Int.MinValue
 
-  private val PARAMETER_NAMESPACE_PREFIX = "@com_mysql_ldbc_outparam_"
+  private val PARAMETER_NAMESPACE_PREFIX = "@ldbc_mysql_outparam_"
 
+  /**
+   * CallableStatementParameter represents a parameter in a stored procedure.
+   *
+   * @param paramName
+   *   the name of the parameter
+   * @param isIn
+   *   whether the parameter is an input parameter
+   * @param isOut
+   *   whether the parameter is an output parameter
+   * @param index
+   *   the index of the parameter
+   * @param jdbcType
+   *   the JDBC type of the parameter
+   * @param typeName
+   *   the name of the type of the parameter
+   * @param precision
+   *   the precision of the parameter
+   * @param scale
+   *   the scale of the parameter
+   * @param nullability
+   *   the nullability of the parameter
+   * @param inOutModifier
+   *   the in/out modifier of the parameter
+   */
   case class CallableStatementParameter(
     paramName:     Option[String],
     isIn:          Boolean,
@@ -384,6 +408,22 @@ object CallableStatement:
     inOutModifier: Int
   )
 
+  /**
+   * ParamInfo represents the information about the parameters in a stored procedure.
+   *
+   * @param nativeSql
+   *   the original SQL statement
+   * @param dbInUse
+   *   the database in use
+   * @param isFunctionCall
+   *   whether the SQL statement is a function call
+   * @param numParameters
+   *   the number of parameters in the SQL statement
+   * @param parameterList
+   *   a list of CallableStatementParameter representing each parameter
+   * @param parameterMap
+   *   a map from parameter name to CallableStatementParameter
+   */
   case class ParamInfo(
     nativeSql:      String,
     dbInUse:        Option[String],
@@ -844,6 +884,14 @@ object CallableStatement:
           yield resultSet
       }
 
+    /**
+     * Change the parameter name to an arbitrary prefixed naming.
+     *
+     * @param origParameterName
+     *   the original parameter name
+     * @return
+     *   the parameter name
+     */
     private def mangleParameterName(origParameterName: String): String =
       val offset = if origParameterName.nonEmpty && origParameterName.charAt(0) == '@' then 1 else 0
 
@@ -853,6 +901,12 @@ object CallableStatement:
 
       paramNameBuf.toString
 
+    /**
+     * Set output parameters to be used by the server.
+     *
+     * @param paramInfo
+     *   the parameter information
+     */
     private def setInOutParamsOnServer(paramInfo: ParamInfo): F[Unit] =
       if paramInfo.numParameters > 0 then
         paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
@@ -880,6 +934,12 @@ object CallableStatement:
         }
       else ev.unit
 
+    /**
+     * Set output parameters to be handled by the client.
+     *
+     * @param paramInfo
+     *   the parameter information
+     */
     private def setOutParams(paramInfo: ParamInfo): F[Unit] =
       if paramInfo.numParameters > 0 then
         paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
@@ -958,6 +1018,12 @@ object CallableStatement:
         case Some(resultSet) => resultSet.pure[F]
       }
 
+    /**
+     * Checks if the parameter index is within the bounds of the number of parameters.
+     *
+     * @param paramIndex
+     *   the parameter index to check
+     */
     private def checkBounds(paramIndex: Int): F[Unit] =
       if paramIndex < 1 || paramIndex > paramInfo.numParameters then
         ev.raiseError(
