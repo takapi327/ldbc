@@ -31,8 +31,8 @@ class CallableStatementTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL proc1()")
-          resultSet <- callableStatement.executeQuery()
-          value <- resultSet.getString(1)
+          resultSet         <- callableStatement.executeQuery()
+          value             <- resultSet.getString(1)
         yield value
       },
       Some("8.0.33")
@@ -44,20 +44,23 @@ class CallableStatementTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL proc2(?)")
-          resultSet <- callableStatement.setInt(1, 1024) *> callableStatement.executeQuery()
-          value <- resultSet.getInt(1)
+          resultSet         <- callableStatement.setInt(1, 1024) *> callableStatement.executeQuery()
+          value             <- resultSet.getInt(1)
         yield value
       },
       1024
     )
   }
 
-  test("The result of calling a procedure that accepts one or more IN parameter arguments matches the specified value.") {
+  test(
+    "The result of calling a procedure that accepts one or more IN parameter arguments matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL proc3(?, ?)")
-          resultSet <- callableStatement.setInt(1, 1024) *> callableStatement.setString(2, "Hello") *> callableStatement.executeQuery()
+          resultSet <- callableStatement.setInt(1, 1024) *> callableStatement.setString(2, "Hello") *> callableStatement
+                         .executeQuery()
           param1 <- resultSet.getInt(1)
           param2 <- resultSet.getString(2)
         yield (param1, param2)
@@ -66,12 +69,14 @@ class CallableStatementTest extends CatsEffectSuite:
     )
   }
 
-  test("The result of calling a procedure that accepts one or more OUT parameter arguments matches the specified value.") {
+  test(
+    "The result of calling a procedure that accepts one or more OUT parameter arguments matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL proc4(?, ?)")
-          _ <- callableStatement.setInt(1, 1) *> callableStatement.setInt(2, 2) *> callableStatement.executeQuery()
+          _      <- callableStatement.setInt(1, 1) *> callableStatement.setInt(2, 2) *> callableStatement.executeQuery()
           param1 <- callableStatement.getInt(1)
           param2 <- callableStatement.getString(2)
         yield (param1, param2)
@@ -86,7 +91,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           resultSet <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
-            .executeQuery()
+                         .executeQuery()
           value <- resultSet.getString(1)
         yield value
       },
@@ -100,7 +105,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           resultSet <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
-            .executeQuery()
+                         .executeQuery()
           outParam <- callableStatement.getInt(2)
         yield outParam
       },
@@ -114,7 +119,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           resultSet <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
-            .executeQuery()
+                         .executeQuery()
           outParam <- callableStatement.getInt("inOutParam")
         yield outParam
       },
