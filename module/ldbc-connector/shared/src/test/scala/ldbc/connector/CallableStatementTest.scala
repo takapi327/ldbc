@@ -45,9 +45,9 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL proc1()")
           resultSet         <- callableStatement.executeUpdate() *> callableStatement.getResultSet()
-          value             <- resultSet match
-            case Some(rs) => rs.getString(1)
-            case None     => IO.raiseError(new Exception("No result set"))
+          value <- resultSet match
+                     case Some(rs) => rs.getString(1)
+                     case None     => IO.raiseError(new Exception("No result set"))
         yield value
       },
       Some("8.0.33")

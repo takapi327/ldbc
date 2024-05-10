@@ -537,8 +537,7 @@ object CallableStatement:
       checkClosed() *>
         checkNullOrEmptyQuery(sql) *>
         exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-          if sql.toUpperCase.startsWith("CALL") then
-            executeCallStatement(span) <* retrieveOutParams()
+          if sql.toUpperCase.startsWith("CALL") then executeCallStatement(span) <* retrieveOutParams()
           else
             params.get.flatMap { params =>
               span.addAttributes(
@@ -555,32 +554,31 @@ object CallableStatement:
             }
         } <* params.set(ListMap.empty)
 
-    override def executeUpdate(): F[Int]       =
+    override def executeUpdate(): F[Int] =
       checkClosed() *>
         checkNullOrEmptyQuery(sql) *>
         exchange[F, Int]("statement") { (span: Span[F]) =>
-          if sql.toUpperCase.startsWith("CALL") then
-            executeCallStatement(span) *> retrieveOutParams() *> ev.pure(-1)
+          if sql.toUpperCase.startsWith("CALL") then executeCallStatement(span) *> retrieveOutParams() *> ev.pure(-1)
           else
             params.get.flatMap { params =>
               span.addAttributes(
                 (attributes ++ List(
                   Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
                   Attribute("execute", "update")
-                )) *
+                ))*
               ) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
                   case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                  case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                  case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                 }
             }
         }
 
-    override def execute():       F[Boolean]   = ???
-    override def addBatch():      F[Unit]      = ???
-    override def executeBatch():  F[List[Int]] = ???
-    override def close():         F[Unit]      = ???
+    override def execute():      F[Boolean]   = ???
+    override def addBatch():     F[Unit]      = ???
+    override def executeBatch(): F[List[Int]] = ???
+    override def close():        F[Unit]      = ???
 
     override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] = ???
 
@@ -1044,7 +1042,7 @@ object CallableStatement:
             (attributes ++ List(
               Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
               Attribute("execute", "query")
-            )) *
+            ))*
           ) *>
             protocol.resetSequenceId *>
             protocol.send(
@@ -1055,14 +1053,14 @@ object CallableStatement:
                 case None =>
                   for
                     resultSetCurrentCursor <- Ref[F].of(0)
-                    resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                    resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                     resultSet = ResultSet.empty(
-                      serverVariables,
-                      protocol.initialPacket.serverVersion,
-                      resultSetClosed,
-                      resultSetCurrentCursor,
-                      resultSetCurrentRow
-                    )
+                                  serverVariables,
+                                  protocol.initialPacket.serverVersion,
+                                  resultSetClosed,
+                                  resultSetCurrentCursor,
+                                  resultSetCurrentRow
+                                )
                     _ <- currentResultSet.set(Some(resultSet))
                   yield resultSet
                 case Some(resultSet) =>
