@@ -502,7 +502,7 @@ object CallableStatement:
     statementClosed:         Ref[F, Boolean],
     resultSetClosed:         Ref[F, Boolean],
     currentResultSet:        Ref[F, Option[ResultSet[F]]],
-    outputParameterResults:  Ref[F, Option[ResultSet[F]]],
+    outputParameterResult:   Ref[F, Option[ResultSet[F]]],
     parameterIndexToRsIndex: Ref[F, Map[Int, Int]],
     updateCount:             Ref[F, Int],
     moreResults:             Ref[F, Boolean],
@@ -999,7 +999,7 @@ object CallableStatement:
           protocol.resetSequenceId *>
           protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
           receiveQueryResult().flatMap { resultSet =>
-            outputParameterResults.update(_ => Some(resultSet))
+            outputParameterResult.update(_ => Some(resultSet))
           } *>
           parameters.zipWithIndex.foldLeft(ev.unit) {
             case (acc, ((paramIndex, _), index)) =>
@@ -1015,7 +1015,7 @@ object CallableStatement:
      *   the ResultSet that holds the output parameters
      */
     private def getOutputParameters(): F[ResultSet[F]] =
-      outputParameterResults.get.flatMap {
+      outputParameterResult.get.flatMap {
         case None =>
           if paramInfo.numParameters == 0 then ev.raiseError(new SQLException("No output parameters registered."))
           else ev.raiseError(new SQLException("No output parameters returned by procedure."))
