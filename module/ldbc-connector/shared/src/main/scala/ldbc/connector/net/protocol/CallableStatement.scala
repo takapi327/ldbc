@@ -68,7 +68,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
    * before a stored procedure is executed.
    * <p>
    * The JDBC type specified by <code>sqlType</code> for an OUT
-   * parameter determines the Java type that must be used
+   * parameter determines the Scala type that must be used
    * in the <code>get</code> method to read the value of that parameter.
    * <p>
    * If the JDBC type expected to be returned to this output parameter
@@ -108,7 +108,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   /**
    * Retrieves the value of the designated JDBC <code>BIT</code>
    * or <code>BOOLEAN</code> parameter as a
-   * <code>boolean</code> in the Sava programming language
+   * <code>Boolean</code> in the Sava programming language
    *
    * @param parameterIndex the first parameter is 1, the second is 2,
    *        and so on
@@ -255,7 +255,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   /**
    * Retrieves the value of a JDBC <code>BIT</code> or <code>BOOLEAN</code>
    * parameter as a
-   * <code>boolean</code> in the Sava programming language
+   * <code>Boolean</code> in the Sava programming language
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>, the result
    * is <code>false</code>.
@@ -320,7 +320,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of a JDBC <code>BINARY</code> or <code>VARBINARY</code>
-   * parameter as an array of <code>byte</code> values in the Java
+   * parameter as an array of <code>byte</code> values in the Scala
    * programming language.
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>, the result is
