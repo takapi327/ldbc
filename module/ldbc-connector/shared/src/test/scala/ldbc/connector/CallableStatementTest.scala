@@ -150,16 +150,16 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           hasResult <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
-            .execute()
+                         .execute()
           values <- Monad[IO].whileM[List, Option[String]](callableStatement.getMoreResults()) {
-            for
-              resultSet <- callableStatement.getResultSet().flatMap {
-                case Some(rs) => IO.pure(rs)
-                case None     => IO.raiseError(new Exception("No result set"))
-              }
-              value     <- resultSet.getString(1)
-            yield value
-          }
+                      for
+                        resultSet <- callableStatement.getResultSet().flatMap {
+                                       case Some(rs) => IO.pure(rs)
+                                       case None     => IO.raiseError(new Exception("No result set"))
+                                     }
+                        value <- resultSet.getString(1)
+                      yield value
+                    }
         yield values
       },
       List(Some("abcdefg"), Some("zyxwabcdefg"))
