@@ -983,12 +983,14 @@ object CallableStatement:
 
       if paramInfo.numParameters > 0 && parameters.nonEmpty then
 
-        val sql = parameters.zipWithIndex.map {
-          case ((_, paramName), index) =>
-            val prefix = if index != 0 then ", " else ""
-            val atSign = if !paramName.startsWith("@") then "@" else ""
-            s"$prefix$atSign$paramName"
-        }.mkString("SELECT ", "", "")
+        val sql = parameters.zipWithIndex
+          .map {
+            case ((_, paramName), index) =>
+              val prefix = if index != 0 then ", " else ""
+              val atSign = if !paramName.startsWith("@") then "@" else ""
+              s"$prefix$atSign$paramName"
+          }
+          .mkString("SELECT ", "", "")
 
         checkClosed() *>
           checkNullOrEmptyQuery(sql) *>
