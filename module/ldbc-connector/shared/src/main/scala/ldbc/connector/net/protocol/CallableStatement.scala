@@ -529,6 +529,16 @@ object CallableStatement:
         }
         .mkString
 
+    private def buildBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
+      val placeholderCount = original.split("\\?", -1).length - 1
+      require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
+      original.trim.toLowerCase match
+        case q if q.startsWith("insert") =>
+          val bindQuery = buildQuery(original, params)
+          bindQuery.split("VALUES").last
+        case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
+        case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
+
     private val attributes = protocol.initialPacket.attributes ++ List(
       Attribute("type", "CallableStatement"),
       Attribute("sql", sql)
@@ -652,7 +662,11 @@ object CallableStatement:
         else ev.pure(false)
       }
 
-    override def addBatch():     F[Unit]      = ???
+    override def addBatch():     F[Unit]      =
+      checkClosed() *> checkNullOrEmptyQuery(sql) *> setOutParams() *> params.get.flatMap { params =>
+        batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+      } *> params.set(ListMap.empty)
+
     override def executeBatch(): F[List[Int]] = ???
 
     override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
@@ -1014,11 +1028,8 @@ object CallableStatement:
 
     /**
      * Set output parameters to be handled by the client.
-     *
-     * @param paramInfo
-     *   the parameter information
      */
-    private def setOutParams(paramInfo: ParamInfo): F[Unit] =
+    private def setOutParams(): F[Unit] =
       if paramInfo.numParameters > 0 then
         paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
           if !paramInfo.isFunctionCall && param.isOut then
@@ -1113,7 +1124,7 @@ object CallableStatement:
 
     private def executeCallStatement(span: Span[F]): F[Vector[ResultSet[F]]] =
       setInOutParamsOnServer(paramInfo) *>
-        setOutParams(paramInfo) *>
+        setOutParams() *>
         params.get.flatMap { params =>
           span.addAttributes(
             (attributes ++ List(
