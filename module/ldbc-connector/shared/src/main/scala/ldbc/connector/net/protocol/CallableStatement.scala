@@ -662,7 +662,7 @@ object CallableStatement:
         else ev.pure(false)
       }
 
-    override def addBatch():     F[Unit]      =
+    override def addBatch(): F[Unit] =
       checkClosed() *> checkNullOrEmptyQuery(sql) *> setOutParams() *> params.get.flatMap { params =>
         batchedArgs.update(_ :+ buildBatchQuery(sql, params))
       } *> params.set(ListMap.empty)
