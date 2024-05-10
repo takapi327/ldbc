@@ -6,8 +6,6 @@
 
 package ldbc.connector.net.protocol
 
-//import java.time.*
-
 import scala.collection.immutable.ListMap
 
 import cats.*
