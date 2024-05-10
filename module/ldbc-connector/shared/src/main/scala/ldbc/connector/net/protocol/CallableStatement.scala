@@ -1122,6 +1122,14 @@ object CallableStatement:
         )
       else ev.unit
 
+    /**
+     * Executes a CALL/Stored function statement.
+     *
+     * @param span
+     *   the span
+     * @return
+     *   a list of ResultSet
+     */
     private def executeCallStatement(span: Span[F]): F[Vector[ResultSet[F]]] =
       setInOutParamsOnServer(paramInfo) *>
         setOutParams() *>
