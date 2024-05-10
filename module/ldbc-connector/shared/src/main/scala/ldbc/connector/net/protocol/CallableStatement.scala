@@ -18,6 +18,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.connector.*
 import ldbc.connector.data.*
+import ldbc.connector.sql.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.Protocol
 import ldbc.connector.net.packet.response.*
@@ -129,10 +130,10 @@ object CallableStatement:
           nullability     <- resultSet.getShort(12)
         yield
           val inOutModifier = procedureColumn match
-            case DatabaseMetaData.procedureColumnIn                                           => 1
-            case DatabaseMetaData.procedureColumnInOut                                        => 2
-            case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn => 4
-            case _                                                                            => 0
+            case DatabaseMetaData.procedureColumnIn                                           => ParameterMetaData.parameterModeIn
+            case DatabaseMetaData.procedureColumnInOut                                        => ParameterMetaData.parameterModeInOut
+            case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn => ParameterMetaData.parameterModeOut
+            case _                                                                            => ParameterMetaData.parameterModeUnknown
 
           val (isOutParameter, isInParameter) =
             if index - 1 == 0 && isFunctionCall then (true, false)
