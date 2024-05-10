@@ -152,3 +152,16 @@ class CallableStatementTest extends CatsEffectSuite:
       Some("hello, world")
     )
   }
+
+  test("The result of calling a stored function with arguments matches the specified value.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("select getPrice(?)")
+          resultSet         <- callableStatement.setInt(1, 100) *> callableStatement.executeQuery()
+          value             <- resultSet.getInt(1)
+        yield value
+      },
+      110
+    )
+  }
