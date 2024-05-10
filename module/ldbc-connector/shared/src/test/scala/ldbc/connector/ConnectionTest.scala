@@ -1597,7 +1597,6 @@ class ConnectionTest extends CatsEffectSuite:
       port         = 13306,
       user         = "ldbc",
       password     = Some("password"),
-      database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
@@ -1651,7 +1650,6 @@ class ConnectionTest extends CatsEffectSuite:
       port         = 13306,
       user         = "ldbc",
       password     = Some("password"),
-      database     = Some("connector_test"),
       ssl          = SSL.Trusted,
       databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
     )
