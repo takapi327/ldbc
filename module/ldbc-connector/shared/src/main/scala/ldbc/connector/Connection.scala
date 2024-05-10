@@ -1180,31 +1180,18 @@ object Connection:
       protocol.resetSequenceId *> protocol.changeUser(user, password)
 
     private def extractProcedureName(sql: String): F[String] =
+      val (keyword, offset) =
+        if (sql.toUpperCase.contains("CALL ")) ("CALL ", 5)
+        else if (sql.toUpperCase.contains("SELECT ")) ("SELECT ", 7)
+        else ("", -1)
 
-      var endCallIndex = StringHelper.indexOfIgnoreCase(0, sql, "CALL ")
-      var offset       = 5
-
-      if endCallIndex == -1 then
-        endCallIndex = StringHelper.indexOfIgnoreCase(0, sql, "SELECT ")
-        offset       = 7
-
-      if endCallIndex != -1 then
-        val nameBuf = new StringBuilder()
-
+      if offset != -1 then
+        val endCallIndex = StringHelper.indexOfIgnoreCase(0, sql, keyword)
         val trimmedStatement = sql.substring(endCallIndex + offset).trim()
-        val statementLength  = trimmedStatement.length
-
-        (0 until statementLength).takeWhile { i =>
-          val c = trimmedStatement.charAt(i)
-
-          if Character.isWhitespace(c) || c == '(' || c == '?' then false
-          else
-            nameBuf.append(c)
-            true
-        }
-
-        ev.pure(nameBuf.toString())
-      else ev.raiseError(new SQLException("Invalid SQL statement"))
+        val name = trimmedStatement.takeWhile(c => !Character.isWhitespace(c) && c != '(' && c != '?')
+        ev.pure(name)
+      else
+        ev.raiseError(new SQLException("Invalid SQL statement"))
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
