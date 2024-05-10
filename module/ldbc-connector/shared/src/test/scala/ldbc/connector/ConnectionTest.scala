@@ -1605,7 +1605,7 @@ class ConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getFunctions(None, None, None)
+          resultSet <- metaData.getFunctions(None, Some("sys"), None)
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
                       for
                         functionCat   <- resultSet.getString("FUNCTION_CAT")
@@ -1658,7 +1658,7 @@ class ConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getFunctionColumns(None, None, None, Some("in_host"))
+          resultSet <- metaData.getFunctionColumns(None, Some("sys"), None, Some("in_host"))
           values <- Monad[IO].whileM[Vector, String](resultSet.next()) {
                       for
                         functionCat     <- resultSet.getString("FUNCTION_CAT")
