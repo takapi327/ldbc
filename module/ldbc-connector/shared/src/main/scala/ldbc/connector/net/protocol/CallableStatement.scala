@@ -922,20 +922,14 @@ object CallableStatement:
       }
 
       if paramInfo.numParameters > 0 && parameters.nonEmpty then
-        val outParameterQuery = new StringBuilder("SELECT ")
 
-        parameters.zipWithIndex.foreach {
-          case ((paramIndex, paramName), index) =>
-            if index != 0 then
-              outParameterQuery.append(", ")
-              if !paramName.startsWith("@") then outParameterQuery.append("@")
-              outParameterQuery.append(paramName)
-            else
-              if !paramName.startsWith("@") then outParameterQuery.append("@")
-              outParameterQuery.append(paramName)
-        }
+        val sql = parameters.zipWithIndex.map {
+          case ((_, paramName), index) =>
+            val prefix = if index != 0 then ", " else ""
+            val atSign = if !paramName.startsWith("@") then "@" else ""
+            s"$prefix$atSign$paramName"
+        }.mkString("SELECT ", "", "")
 
-        val sql = outParameterQuery.toString
         checkClosed() *>
           checkNullOrEmptyQuery(sql) *>
           protocol.resetSequenceId *>
