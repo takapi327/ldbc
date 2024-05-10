@@ -647,12 +647,7 @@ object CallableStatement:
           resultSets.get.flatMap {
             case Nil => moreResults.set(false) *> ev.pure(false)
             case resultSet :: tail =>
-              currentResultSet.get.flatMap {
-                case Some(current) =>
-                  current.close() *> currentResultSet.set(Some(resultSet)) *> resultSets.set(tail) *> ev.pure(true)
-                case None =>
-                  currentResultSet.set(Some(resultSet)) *> resultSets.set(tail) *> ev.pure(true)
-              }
+              currentResultSet.set(Some(resultSet)) *> resultSets.set(tail) *> ev.pure(true)
           }
         else ev.pure(false)
       }
