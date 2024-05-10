@@ -26,7 +26,7 @@ trait ParameterMetaData:
    * information.
    *
    * @return the number of parameters
-   */  
+   */
   def getParameterCount(): Int
 
   /**

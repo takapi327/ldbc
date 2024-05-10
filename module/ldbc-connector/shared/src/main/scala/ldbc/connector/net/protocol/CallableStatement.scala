@@ -130,10 +130,11 @@ object CallableStatement:
           nullability     <- resultSet.getShort(12)
         yield
           val inOutModifier = procedureColumn match
-            case DatabaseMetaData.procedureColumnIn                                           => ParameterMetaData.parameterModeIn
-            case DatabaseMetaData.procedureColumnInOut                                        => ParameterMetaData.parameterModeInOut
-            case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn => ParameterMetaData.parameterModeOut
-            case _                                                                            => ParameterMetaData.parameterModeUnknown
+            case DatabaseMetaData.procedureColumnIn    => ParameterMetaData.parameterModeIn
+            case DatabaseMetaData.procedureColumnInOut => ParameterMetaData.parameterModeInOut
+            case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn =>
+              ParameterMetaData.parameterModeOut
+            case _ => ParameterMetaData.parameterModeUnknown
 
           val (isOutParameter, isInParameter) =
             if index - 1 == 0 && isFunctionCall then (true, false)
