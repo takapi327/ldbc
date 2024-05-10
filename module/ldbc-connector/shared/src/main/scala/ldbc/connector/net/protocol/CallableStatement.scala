@@ -687,79 +687,79 @@ object CallableStatement:
     override def getString(parameterName: String): F[Option[String]] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getString(mangleParameterName(parameterName))
+        value     <- resultSet.getString(mangleParameterName(parameterName))
       yield value
 
     override def getBoolean(parameterName: String): F[Boolean] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getBoolean(mangleParameterName(parameterName))
+        value     <- resultSet.getBoolean(mangleParameterName(parameterName))
       yield value
 
     override def getByte(parameterName: String): F[Byte] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getByte(mangleParameterName(parameterName))
+        value     <- resultSet.getByte(mangleParameterName(parameterName))
       yield value
 
     override def getShort(parameterName: String): F[Short] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getShort(mangleParameterName(parameterName))
+        value     <- resultSet.getShort(mangleParameterName(parameterName))
       yield value
 
     override def getInt(parameterName: String): F[Int] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getInt(mangleParameterName(parameterName))
+        value     <- resultSet.getInt(mangleParameterName(parameterName))
       yield value
 
     override def getLong(parameterName: String): F[Long] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getLong(mangleParameterName(parameterName))
+        value     <- resultSet.getLong(mangleParameterName(parameterName))
       yield value
 
     override def getFloat(parameterName: String): F[Float] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getFloat(mangleParameterName(parameterName))
+        value     <- resultSet.getFloat(mangleParameterName(parameterName))
       yield value
 
     override def getDouble(parameterName: String): F[Double] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getDouble(mangleParameterName(parameterName))
+        value     <- resultSet.getDouble(mangleParameterName(parameterName))
       yield value
 
     override def getBytes(parameterName: String): F[Option[Array[Byte]]] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getBytes(mangleParameterName(parameterName))
+        value     <- resultSet.getBytes(mangleParameterName(parameterName))
       yield value
 
     override def getDate(parameterName: String): F[Option[LocalDate]] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getDate(mangleParameterName(parameterName))
+        value     <- resultSet.getDate(mangleParameterName(parameterName))
       yield value
 
     override def getTime(parameterName: String): F[Option[LocalTime]] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getTime(mangleParameterName(parameterName))
+        value     <- resultSet.getTime(mangleParameterName(parameterName))
       yield value
 
     override def getTimestamp(parameterName: String): F[Option[LocalDateTime]] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getTimestamp(mangleParameterName(parameterName))
+        value     <- resultSet.getTimestamp(mangleParameterName(parameterName))
       yield value
 
     override def getBigDecimal(parameterName: String): F[Option[BigDecimal]] =
       for
         resultSet <- getOutputParameters()
-        value <- resultSet.getBigDecimal(mangleParameterName(parameterName))
+        value     <- resultSet.getBigDecimal(mangleParameterName(parameterName))
       yield value
 
     private def sendQuery(sql: String): F[GenericResponsePackets] =

@@ -60,7 +60,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           resultSet <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
-            .executeQuery()
+                         .executeQuery()
           outParam <- callableStatement.getInt("inOutParam")
         yield outParam
       },
