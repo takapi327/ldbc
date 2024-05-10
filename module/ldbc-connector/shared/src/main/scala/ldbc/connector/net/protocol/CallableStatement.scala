@@ -89,7 +89,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   /**
    * Retrieves the value of the designated JDBC <code>CHAR</code>,
    * <code>VARCHAR</code>, or <code>LONGVARCHAR</code> parameter as a
-   * <code>String</code> in the Java programming language.
+   * <code>String</code> in the Sava programming language
    * <p>
    * For the fixed-length type JDBC <code>CHAR</code>,
    * the <code>String</code> object
@@ -108,7 +108,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   /**
    * Retrieves the value of the designated JDBC <code>BIT</code>
    * or <code>BOOLEAN</code> parameter as a
-   * <code>boolean</code> in the Java programming language.
+   * <code>boolean</code> in the Sava programming language
    *
    * @param parameterIndex the first parameter is 1, the second is 2,
    *        and so on
@@ -119,7 +119,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of the designated JDBC <code>TINYINT</code> parameter
-   * as a <code>byte</code> in the Java programming language.
+   * as a <code>byte</code> in the Sava programming language
    *
    * @param parameterIndex the first parameter is 1, the second is 2,
    * and so on
@@ -130,7 +130,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of the designated JDBC <code>SMALLINT</code> parameter
-   * as a <code>short</code> in the Java programming language.
+   * as a <code>short</code> in the Sava programming language
    *
    * @param parameterIndex the first parameter is 1, the second is 2,
    * and so on
@@ -141,7 +141,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of the designated JDBC <code>INTEGER</code> parameter
-   * as an <code>int</code> in the Java programming language.
+   * as an <code>int</code> in the Sava programming language
    *
    * @param parameterIndex the first parameter is 1, the second is 2,
    * and so on
@@ -152,7 +152,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of the designated JDBC <code>BIGINT</code> parameter
-   * as a <code>long</code> in the Java programming language.
+   * as a <code>long</code> in the Sava programming language
    *
    * @param parameterIndex the first parameter is 1, the second is 2,
    * and so on
@@ -163,7 +163,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of the designated JDBC <code>FLOAT</code> parameter
-   * as a <code>float</code> in the Java programming language.
+   * as a <code>float</code> in the Sava programming language
    *
    * @param parameterIndex the first parameter is 1, the second is 2,
    *        and so on
@@ -174,7 +174,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of the designated JDBC <code>DOUBLE</code> parameter as a <code>double</code>
-   * in the Java programming language.
+   * in the Sava programming language
    * @param parameterIndex the first parameter is 1, the second is 2,
    *        and so on
    * @return the parameter value. If the value is SQL <code>NULL</code>, the result
@@ -185,7 +185,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   /**
    * Retrieves the value of the designated JDBC <code>BINARY</code> or
    * <code>VARBINARY</code> parameter as an array of <code>byte</code>
-   * values in the Java programming language.
+   * values in the Sava programming language
    * @param parameterIndex the first parameter is 1, the second is 2,
    *        and so on
    * @return the parameter value. If the value is SQL <code>NULL</code>, the result
@@ -239,7 +239,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   /**
    * Retrieves the value of a JDBC <code>CHAR</code>, <code>VARCHAR</code>,
    * or <code>LONGVARCHAR</code> parameter as a <code>String</code> in
-   * the Java programming language.
+   * the Sava programming language
    * <p>
    * For the fixed-length type JDBC <code>CHAR</code>,
    * the <code>String</code> object
@@ -255,7 +255,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   /**
    * Retrieves the value of a JDBC <code>BIT</code> or <code>BOOLEAN</code>
    * parameter as a
-   * <code>boolean</code> in the Java programming language.
+   * <code>boolean</code> in the Sava programming language
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>, the result
    * is <code>false</code>.
@@ -264,7 +264,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of a JDBC <code>TINYINT</code> parameter as a <code>byte</code>
-   * in the Java programming language.
+   * in the Sava programming language
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>, the result
    * is <code>0</code>.
@@ -273,7 +273,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of a JDBC <code>SMALLINT</code> parameter as a <code>short</code>
-   * in the Java programming language.
+   * in the Sava programming language
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>, the result
    * is <code>0</code>.
@@ -282,7 +282,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of a JDBC <code>INTEGER</code> parameter as an <code>int</code>
-   * in the Java programming language.
+   * in the Sava programming language
    *
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>,
@@ -292,7 +292,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of a JDBC <code>BIGINT</code> parameter as a <code>long</code>
-   * in the Java programming language.
+   * in the Sava programming language
    *
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>,
@@ -302,7 +302,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of a JDBC <code>FLOAT</code> parameter as a <code>float</code>
-   * in the Java programming language.
+   * in the Sava programming language
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>,
    *         the result is <code>0</code>.
@@ -311,7 +311,7 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
   /**
    * Retrieves the value of a JDBC <code>DOUBLE</code> parameter as a <code>double</code>
-   * in the Java programming language.
+   * in the Sava programming language
    * @param parameterName the name of the parameter
    * @return the parameter value. If the value is SQL <code>NULL</code>,
    *         the result is <code>0</code>.
