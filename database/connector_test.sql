@@ -175,7 +175,32 @@ INSERT INTO `all_types` VALUES (
 
 CREATE TABLE `transaction_test`(`c1` BIGINT NOT NULL);
 
-delimiter //
+DELIMITER //
+CREATE PROCEDURE proc1()
+BEGIN
+SELECT VERSION();
+END;
+//
+
+CREATE PROCEDURE proc2(IN param INT)
+BEGIN
+SELECT param;
+END;
+//
+
+CREATE PROCEDURE proc3(IN param1 INT, IN param2 VARCHAR(8))
+BEGIN
+SELECT param1, param2;
+END;
+//
+
+CREATE PROCEDURE proc4(OUT param1 INT, OUT param2 VARCHAR(8))
+BEGIN
+  SET param1 = -1;
+  SET param2 = 'hello';
+END;
+//
+
 CREATE PROCEDURE demoSp(IN inputParam VARCHAR(255), INOUT inOutParam INT)
 BEGIN
     DECLARE z INT;
@@ -187,7 +212,7 @@ SELECT inputParam;
 SELECT CONCAT('zyxw', inputParam);
 END
 //
-delimiter ;
+DELIMITER ;
 
 CREATE TABLE `privileges_table` (
   `c1` INT NOT NULL PRIMARY KEY,
