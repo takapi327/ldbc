@@ -6,6 +6,8 @@
 
 package ldbc.connector.net.protocol
 
+import java.time.*
+
 import scala.collection.immutable.ListMap
 
 import cats.*
@@ -85,6 +87,59 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
   def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit]
 
   /**
+   * Retrieves the value of the designated JDBC <code>CHAR</code>,
+   * <code>VARCHAR</code>, or <code>LONGVARCHAR</code> parameter as a
+   * <code>String</code> in the Java programming language.
+   * <p>
+   * For the fixed-length type JDBC <code>CHAR</code>,
+   * the <code>String</code> object
+   * returned has exactly the same value the SQL
+   * <code>CHAR</code> value had in the
+   * database, including any padding added by the database.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   * and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>,
+   *         the result
+   *         is <code>None</code>.
+   */
+  def getString(parameterIndex: Int): F[Option[String]]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>BIT</code>
+   * or <code>BOOLEAN</code> parameter as a
+   * <code>boolean</code> in the Java programming language.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   *        and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>,
+   *         the result is <code>false</code>.
+   */
+  def getBoolean(parameterIndex: Int): F[Boolean]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>TINYINT</code> parameter
+   * as a <code>byte</code> in the Java programming language.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   * and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>0</code>.
+   */
+  def getByte(parameterIndex: Int): F[Byte]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>SMALLINT</code> parameter
+   * as a <code>short</code> in the Java programming language.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   * and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>0</code>.
+   */
+  def getShort(parameterIndex: Int): F[Short]
+
+  /**
    * Retrieves the value of the designated JDBC <code>INTEGER</code> parameter
    * as an <code>int</code> in the Java programming language.
    *
@@ -94,6 +149,92 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
    * is <code>0</code>.
    */
   def getInt(parameterIndex: Int): F[Int]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>BIGINT</code> parameter
+   * as a <code>long</code> in the Java programming language.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   * and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>0</code>.
+   */
+  def getLong(parameterIndex: Int): F[Long]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>FLOAT</code> parameter
+   * as a <code>float</code> in the Java programming language.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   *        and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   *         is <code>0</code>.
+   */
+  def getFloat(parameterIndex: Int): F[Float]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>DOUBLE</code> parameter as a <code>double</code>
+   * in the Java programming language.
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   *        and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   *         is <code>0</code>.
+   */
+  def getDouble(parameterIndex: Int): F[Double]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>BINARY</code> or
+   * <code>VARBINARY</code> parameter as an array of <code>byte</code>
+   * values in the Java programming language.
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   *        and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   *         is <code>None</code>.
+   */
+  def getBytes(parameterIndex: Int): F[Option[Array[Byte]]]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>DATE</code> parameter as a
+   * <code>java.time.LocalDate</code> object.
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   *        and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   *         is <code>None</code>.
+   */
+  def getDate(parameterIndex: Int): F[Option[LocalDate]]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>TIME</code> parameter as a
+   * <code>java.time.LocalTime</code> object.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   *        and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   *         is <code>null</code>.
+   */
+  def getTime(parameterIndex: Int): F[Option[LocalTime]]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>TIMESTAMP</code> parameter as a
+   * <code>java.time.LocalDateTime</code> object.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   *        and so on
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   *         is <code>None</code>.
+   */
+  def getTimestamp(parameterIndex: Int): F[Option[LocalDateTime]]
+
+  /**
+   * Retrieves the value of the designated JDBC <code>NUMERIC</code> parameter as a
+   * <code>java.math.BigDecimal</code> object with as many digits to the
+   * right of the decimal point as the value contains.
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   * and so on
+   * @return the parameter value in full precision.  If the value is
+   * SQL <code>NULL</code>, the result is <code>None</code>.
+   */
+  def getBigDecimal(parameterIndex: Int): F[Option[BigDecimal]]
 
 object CallableStatement:
 
@@ -271,6 +412,50 @@ object CallableStatement:
 
     override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] = ???
 
+    override def getString(parameterIndex: Int): F[Option[String]] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getString(index))
+      yield value
+
+    override def getBoolean(parameterIndex: Int): F[Boolean] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getBoolean(index))
+      yield value
+
+    override def getByte(parameterIndex: Int): F[Byte] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getByte(index))
+      yield value
+
+    override def getShort(parameterIndex: Int): F[Short] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getShort(index))
+      yield value
+
     override def getInt(parameterIndex: Int): F[Int] =
       for
         resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
@@ -280,6 +465,94 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getInt(index))
+      yield value
+
+    override def getLong(parameterIndex: Int): F[Long] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getLong(index))
+      yield value
+
+    override def getFloat(parameterIndex: Int): F[Float] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getFloat(index))
+      yield value
+
+    override def getDouble(parameterIndex: Int): F[Double] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getDouble(index))
+      yield value
+
+    override def getBytes(parameterIndex: Int): F[Option[Array[Byte]]] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getBytes(index))
+      yield value
+
+    override def getDate(parameterIndex: Int): F[Option[LocalDate]] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getDate(index))
+      yield value
+
+    override def getTime(parameterIndex: Int): F[Option[LocalTime]] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getTime(index))
+      yield value
+
+    override def getTimestamp(parameterIndex: Int): F[Option[LocalDateTime]] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getTimestamp(index))
+      yield value
+
+    override def getBigDecimal(parameterIndex: Int): F[Option[BigDecimal]] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap  <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <-
+          (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
+             ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
+           else resultSet.getBigDecimal(index))
       yield value
 
     private def sendQuery(sql: String): F[GenericResponsePackets] =
