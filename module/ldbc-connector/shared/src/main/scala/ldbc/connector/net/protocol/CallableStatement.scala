@@ -503,6 +503,7 @@ object CallableStatement:
     resultSetClosed:         Ref[F, Boolean],
     currentResultSet:        Ref[F, Option[ResultSet[F]]],
     outputParameterResult:   Ref[F, Option[ResultSet[F]]],
+    resultSets:              Ref[F, List[ResultSet[F]]],
     parameterIndexToRsIndex: Ref[F, Map[Int, Int]],
     updateCount:             Ref[F, Int],
     moreResults:             Ref[F, Boolean],
@@ -537,7 +538,24 @@ object CallableStatement:
       checkClosed() *>
         checkNullOrEmptyQuery(sql) *>
         exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-          if sql.toUpperCase.startsWith("CALL") then executeCallStatement(span) <* retrieveOutParams()
+          if sql.toUpperCase.startsWith("CALL") then executeCallStatement(span).flatMap { resultSets =>
+            resultSets.headOption match
+              case None =>
+                for
+                  resultSetCurrentCursor <- Ref[F].of(0)
+                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                  resultSet = ResultSet.empty(
+                    serverVariables,
+                    protocol.initialPacket.serverVersion,
+                    resultSetClosed,
+                    resultSetCurrentCursor,
+                    resultSetCurrentRow
+                  )
+                  _ <- currentResultSet.set(Some(resultSet))
+                yield resultSet
+              case Some(resultSet) =>
+                currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+          } <* retrieveOutParams()
           else
             params.get.flatMap { params =>
               span.addAttributes(
@@ -558,7 +576,24 @@ object CallableStatement:
       checkClosed() *>
         checkNullOrEmptyQuery(sql) *>
         exchange[F, Int]("statement") { (span: Span[F]) =>
-          if sql.toUpperCase.startsWith("CALL") then executeCallStatement(span) *> retrieveOutParams() *> ev.pure(-1)
+          if sql.toUpperCase.startsWith("CALL") then executeCallStatement(span).flatMap { resultSets =>
+            resultSets.headOption match
+              case None =>
+                for
+                  resultSetCurrentCursor <- Ref[F].of(0)
+                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                  resultSet = ResultSet.empty(
+                    serverVariables,
+                    protocol.initialPacket.serverVersion,
+                    resultSetClosed,
+                    resultSetCurrentCursor,
+                    resultSetCurrentRow
+                  )
+                  _ <- currentResultSet.set(Some(resultSet))
+                yield resultSet
+              case Some(resultSet) =>
+                currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+          } *> retrieveOutParams() *> ev.pure(-1)
           else
             params.get.flatMap { params =>
               span.addAttributes(
@@ -575,7 +610,48 @@ object CallableStatement:
             }
         }
 
-    override def execute():      F[Boolean]   = ???
+    override def execute():      F[Boolean]   =
+      checkClosed() *>
+        checkNullOrEmptyQuery(sql) *>
+        exchange[F, Boolean]("statement") { (span: Span[F]) =>
+          if sql.toUpperCase.startsWith("CALL") then executeCallStatement(span).flatMap { results =>
+            moreResults.update(_ => results.nonEmpty) *>
+              currentResultSet.update(_ => results.headOption) *>
+              resultSets.set(results.toList) *>
+              ev.pure(results.nonEmpty)
+          }
+          else
+            params.get.flatMap { params =>
+              span.addAttributes(
+                (attributes ++ List(
+                  Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+                  Attribute("execute", "update")
+                )) *
+              ) *>
+                sendQuery(buildQuery(sql, params)).flatMap {
+                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
+                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                  case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                }
+            }.map(_ => false)
+        }
+
+    override def getMoreResults(): F[Boolean] =
+      checkClosed() *> moreResults.get.flatMap { isMoreResults =>
+        if isMoreResults then
+          resultSets.get.flatMap {
+            case Nil => moreResults.set(false) *> ev.pure(false)
+            case resultSet :: tail =>
+              currentResultSet.get.flatMap {
+                case Some(current) =>
+                  current.close() *> currentResultSet.set(Some(resultSet)) *> resultSets.set(tail) *> ev.pure(true)
+                case None =>
+                  currentResultSet.set(Some(resultSet)) *> resultSets.set(tail) *> ev.pure(true)
+              }
+          }
+        else ev.pure(false)
+      }
+
     override def addBatch():     F[Unit]      = ???
     override def executeBatch(): F[List[Int]] = ???
 
@@ -1035,7 +1111,7 @@ object CallableStatement:
         )
       else ev.unit
 
-    private def executeCallStatement(span: Span[F]): F[ResultSet[F]] =
+    private def executeCallStatement(span: Span[F]): F[Vector[ResultSet[F]]] =
       setInOutParamsOnServer(paramInfo) *>
         setOutParams(paramInfo) *>
         params.get.flatMap { params =>
@@ -1049,22 +1125,5 @@ object CallableStatement:
             protocol.send(
               ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
             ) *>
-            receiveUntilOkPacket(Vector.empty).flatMap { resultSets =>
-              resultSets.headOption match
-                case None =>
-                  for
-                    resultSetCurrentCursor <- Ref[F].of(0)
-                    resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                    resultSet = ResultSet.empty(
-                                  serverVariables,
-                                  protocol.initialPacket.serverVersion,
-                                  resultSetClosed,
-                                  resultSetCurrentCursor,
-                                  resultSetCurrentRow
-                                )
-                    _ <- currentResultSet.set(Some(resultSet))
-                  yield resultSet
-                case Some(resultSet) =>
-                  currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-            }
+            receiveUntilOkPacket(Vector.empty)
         }
