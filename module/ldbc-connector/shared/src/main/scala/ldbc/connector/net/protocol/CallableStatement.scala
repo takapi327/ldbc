@@ -236,6 +236,135 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
    */
   def getBigDecimal(parameterIndex: Int): F[Option[BigDecimal]]
 
+  /**
+   * Retrieves the value of a JDBC <code>CHAR</code>, <code>VARCHAR</code>,
+   * or <code>LONGVARCHAR</code> parameter as a <code>String</code> in
+   * the Java programming language.
+   * <p>
+   * For the fixed-length type JDBC <code>CHAR</code>,
+   * the <code>String</code> object
+   * returned has exactly the same value the SQL
+   * <code>CHAR</code> value had in the
+   * database, including any padding added by the database.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>None</code>.
+   */
+  def getString(parameterName: String): F[Option[String]]
+
+  /**
+   * Retrieves the value of a JDBC <code>BIT</code> or <code>BOOLEAN</code>
+   * parameter as a
+   * <code>boolean</code> in the Java programming language.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>false</code>.
+   */
+  def getBoolean(parameterName: String): F[Boolean]
+
+  /**
+   * Retrieves the value of a JDBC <code>TINYINT</code> parameter as a <code>byte</code>
+   * in the Java programming language.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>0</code>.
+   */
+  def getByte(parameterName: String): F[Byte]
+
+  /**
+   * Retrieves the value of a JDBC <code>SMALLINT</code> parameter as a <code>short</code>
+   * in the Java programming language.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>0</code>.
+   */
+  def getShort(parameterName: String): F[Short]
+
+  /**
+   * Retrieves the value of a JDBC <code>INTEGER</code> parameter as an <code>int</code>
+   * in the Java programming language.
+   *
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>,
+   *         the result is <code>0</code>.
+   */
+  def getInt(parameterName: String): F[Int]
+
+  /**
+   * Retrieves the value of a JDBC <code>BIGINT</code> parameter as a <code>long</code>
+   * in the Java programming language.
+   *
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>,
+   *         the result is <code>0</code>.
+   */
+  def getLong(parameterName: String): F[Long]
+
+  /**
+   * Retrieves the value of a JDBC <code>FLOAT</code> parameter as a <code>float</code>
+   * in the Java programming language.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>,
+   *         the result is <code>0</code>.
+   */
+  def getFloat(parameterName: String): F[Float]
+
+  /**
+   * Retrieves the value of a JDBC <code>DOUBLE</code> parameter as a <code>double</code>
+   * in the Java programming language.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>,
+   *         the result is <code>0</code>.
+   */
+  def getDouble(parameterName: String): F[Double]
+
+  /**
+   * Retrieves the value of a JDBC <code>BINARY</code> or <code>VARBINARY</code>
+   * parameter as an array of <code>byte</code> values in the Java
+   * programming language.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result is
+   *  <code>None</code>.
+   */
+  def getBytes(parameterName: String): F[Option[Array[Byte]]]
+
+  /**
+   * Retrieves the value of a JDBC <code>DATE</code> parameter as a
+   * <code>java.sql.Date</code> object.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>None</code>.
+   */
+  def getDate(parameterName: String): F[Option[LocalDate]]
+
+  /**
+   * Retrieves the value of a JDBC <code>TIME</code> parameter as a
+   * <code>java.sql.Time</code> object.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>null</code>.
+   */
+  def getTime(parameterName: String): F[Option[LocalTime]]
+
+  /**
+   * Retrieves the value of a JDBC <code>TIMESTAMP</code> parameter as a
+   * <code>java.sql.Timestamp</code> object.
+   * @param parameterName the name of the parameter
+   * @return the parameter value. If the value is SQL <code>NULL</code>, the result
+   * is <code>None</code>.
+   */
+  def getTimestamp(parameterName: String): F[Option[LocalDateTime]]
+
+  /**
+   * Retrieves the value of a JDBC <code>NUMERIC</code> parameter as a
+   * <code>java.math.BigDecimal</code> object with as many digits to the
+   * right of the decimal point as the value contains.
+   * @param parameterName the name of the parameter
+   * @return the parameter value in full precision. If the value is
+   * SQL <code>NULL</code>, the result is <code>None</code>.
+   */
+  def getBigDecimal(parameterName: String): F[Option[BigDecimal]]
+
 object CallableStatement:
 
   val NOT_OUTPUT_PARAMETER_INDICATOR: Int = Int.MinValue
@@ -553,6 +682,84 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getBigDecimal(index))
+      yield value
+
+    override def getString(parameterName: String): F[Option[String]] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getString(mangleParameterName(parameterName))
+      yield value
+
+    override def getBoolean(parameterName: String): F[Boolean] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getBoolean(mangleParameterName(parameterName))
+      yield value
+
+    override def getByte(parameterName: String): F[Byte] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getByte(mangleParameterName(parameterName))
+      yield value
+
+    override def getShort(parameterName: String): F[Short] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getShort(mangleParameterName(parameterName))
+      yield value
+
+    override def getInt(parameterName: String): F[Int] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getInt(mangleParameterName(parameterName))
+      yield value
+
+    override def getLong(parameterName: String): F[Long] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getLong(mangleParameterName(parameterName))
+      yield value
+
+    override def getFloat(parameterName: String): F[Float] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getFloat(mangleParameterName(parameterName))
+      yield value
+
+    override def getDouble(parameterName: String): F[Double] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getDouble(mangleParameterName(parameterName))
+      yield value
+
+    override def getBytes(parameterName: String): F[Option[Array[Byte]]] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getBytes(mangleParameterName(parameterName))
+      yield value
+
+    override def getDate(parameterName: String): F[Option[LocalDate]] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getDate(mangleParameterName(parameterName))
+      yield value
+
+    override def getTime(parameterName: String): F[Option[LocalTime]] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getTime(mangleParameterName(parameterName))
+      yield value
+
+    override def getTimestamp(parameterName: String): F[Option[LocalDateTime]] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getTimestamp(mangleParameterName(parameterName))
+      yield value
+
+    override def getBigDecimal(parameterName: String): F[Option[BigDecimal]] =
+      for
+        resultSet <- getOutputParameters()
+        value <- resultSet.getBigDecimal(mangleParameterName(parameterName))
       yield value
 
     private def sendQuery(sql: String): F[GenericResponsePackets] =
