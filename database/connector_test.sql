@@ -175,6 +175,9 @@ INSERT INTO `all_types` VALUES (
 
 CREATE TABLE `transaction_test`(`c1` BIGINT NOT NULL);
 
+CREATE TABLE `tax` (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `value` DOUBLE NOT NULL, `start_date` DATE NOT NULL);
+INSERT INTO `tax` (`value`, `start_date`) VALUES (0.05, '2020-01-01'), (0.08, '2020-02-01'), (0.1, '2020-03-01');
+
 DELIMITER //
 CREATE PROCEDURE proc1()
 BEGIN
@@ -224,6 +227,21 @@ CREATE FUNCTION func2()
   RETURNS VARCHAR(12) DETERMINISTIC
 BEGIN
 RETURN 'hello, world';
+END;
+//
+
+CREATE FUNCTION getPrice(price int)
+  RETURNS INT DETERMINISTIC
+BEGIN
+  declare tax DOUBLE DEFAULT 0.1;
+
+  SELECT VALUE INTO tax
+  from tax
+  WHERE start_date <= current_date
+  ORDER BY start_date DESC
+  LIMIT 1;
+
+  RETURN TRUNCATE(price + (price * tax), 0);
 END;
 //
 DELIMITER ;
