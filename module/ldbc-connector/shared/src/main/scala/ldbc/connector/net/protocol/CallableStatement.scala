@@ -578,7 +578,7 @@ object CallableStatement:
                 (attributes ++ List(
                   Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
                   Attribute("execute", "query")
-                )) *
+                ))*
               ) *>
                 protocol.resetSequenceId *>
                 protocol.send(
