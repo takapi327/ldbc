@@ -197,7 +197,7 @@ object CallableStatement:
             val index = query.indexOf('?', offset - 1)
             if index < 0 then query
             else
-              val (head, tail) = query.splitAt(index)
+              val (head, tail)         = query.splitAt(index)
               val (tailHead, tailTail) = tail.splitAt(1)
               head ++ param.sql ++ tailTail
         }
@@ -213,20 +213,20 @@ object CallableStatement:
         checkNullOrEmptyQuery(sql) *>
         exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
           setInOutParamsOnServer(paramInfo) *>
-          setOutParams(paramInfo) *>
-          params.get.flatMap { params =>
-            span.addAttributes(
-              (attributes ++ List(
-                Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-                Attribute("execute", "query")
-              ))*
-            ) *>
-              protocol.resetSequenceId *>
-              protocol.send(
-                ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+            setOutParams(paramInfo) *>
+            params.get.flatMap { params =>
+              span.addAttributes(
+                (attributes ++ List(
+                  Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+                  Attribute("execute", "query")
+                ))*
               ) *>
-              receiveQueryResult()
-          } <* params.set(ListMap.empty)
+                protocol.resetSequenceId *>
+                protocol.send(
+                  ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+                ) *>
+                receiveQueryResult()
+            } <* params.set(ListMap.empty)
         }
 
     override def executeUpdate(): F[Int]       = ???
@@ -247,7 +247,7 @@ object CallableStatement:
         case _: OKPacket =>
           for
             resultSetCurrentCursor <- Ref[F].of(0)
-            resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+            resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
           yield ResultSet
             .empty(
               serverVariables,
@@ -270,18 +270,18 @@ object CallableStatement:
                 Vector.empty
               )
             resultSetCurrentCursor <- Ref[F].of(0)
-            resultSetCurrentRow <- Ref[F].of(resultSetRow.headOption)
+            resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
             resultSet = ResultSet(
-              columnDefinitions,
-              resultSetRow,
-              serverVariables,
-              protocol.initialPacket.serverVersion,
-              resultSetClosed,
-              resultSetCurrentCursor,
-              resultSetCurrentRow,
-              resultSetType,
-              resultSetConcurrency
-            )
+                          columnDefinitions,
+                          resultSetRow,
+                          serverVariables,
+                          protocol.initialPacket.serverVersion,
+                          resultSetClosed,
+                          resultSetCurrentCursor,
+                          resultSetCurrentRow,
+                          resultSetType,
+                          resultSetConcurrency
+                        )
             _ <- currentResultSet.set(Some(resultSet))
           yield resultSet
       }
@@ -326,15 +326,24 @@ object CallableStatement:
       if paramInfo.numParameters > 0 then
         paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
           if !paramInfo.isFunctionCall && param.isOut then
-            val paramName = param.paramName.getOrElse("nullnp" + param.index)
+            val paramName        = param.paramName.getOrElse("nullnp" + param.index)
             val outParameterName = mangleParameterName(paramName)
 
             acc *> params.get.flatMap { params =>
               for
                 outParamIndex <- (
-                  if params.isEmpty then ev.pure(param.index)
-                  else params.keys.find(_ == param.index).fold(ev.raiseError(new SQLException(s"Parameter ${param.index} is not registered as an output parameter")))(_.pure[F])
-                )
+                                   if params.isEmpty then ev.pure(param.index)
+                                   else
+                                     params.keys
+                                       .find(_ == param.index)
+                                       .fold(
+                                         ev.raiseError(
+                                           new SQLException(
+                                             s"Parameter ${ param.index } is not registered as an output parameter"
+                                           )
+                                         )
+                                       )(_.pure[F])
+                                 )
                 _ <- setParameter(outParamIndex, outParameterName)
               yield ()
             }
