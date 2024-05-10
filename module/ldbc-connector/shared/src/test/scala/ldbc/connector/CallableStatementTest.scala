@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import cats.*
+
 import cats.effect.*
 
 import munit.CatsEffectSuite
@@ -139,6 +141,28 @@ class CallableStatementTest extends CatsEffectSuite:
         yield outParam
       },
       2
+    )
+  }
+
+  test("The results retrieved in multiple result sets returned from the procedure match the specified values.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+          hasResult <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
+            .execute()
+          values <- Monad[IO].whileM[List, Option[String]](callableStatement.getMoreResults()) {
+            for
+              resultSet <- callableStatement.getResultSet().flatMap {
+                case Some(rs) => IO.pure(rs)
+                case None     => IO.raiseError(new Exception("No result set"))
+              }
+              value     <- resultSet.getString(1)
+            yield value
+          }
+        yield values
+      },
+      List(Some("abcdefg"), Some("zyxwabcdefg"))
     )
   }
 
