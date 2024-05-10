@@ -1181,17 +1181,16 @@ object Connection:
 
     private def extractProcedureName(sql: String): F[String] =
       val (keyword, offset) =
-        if (sql.toUpperCase.contains("CALL ")) ("CALL ", 5)
-        else if (sql.toUpperCase.contains("SELECT ")) ("SELECT ", 7)
+        if sql.toUpperCase.contains("CALL ") then ("CALL ", 5)
+        else if sql.toUpperCase.contains("SELECT ") then ("SELECT ", 7)
         else ("", -1)
 
       if offset != -1 then
-        val endCallIndex = StringHelper.indexOfIgnoreCase(0, sql, keyword)
+        val endCallIndex     = StringHelper.indexOfIgnoreCase(0, sql, keyword)
         val trimmedStatement = sql.substring(endCallIndex + offset).trim()
-        val name = trimmedStatement.takeWhile(c => !Character.isWhitespace(c) && c != '(' && c != '?')
+        val name             = trimmedStatement.takeWhile(c => !Character.isWhitespace(c) && c != '(' && c != '?')
         ev.pure(name)
-      else
-        ev.raiseError(new SQLException("Invalid SQL statement"))
+      else ev.raiseError(new SQLException("Invalid SQL statement"))
 
   def apply[F[_]: Temporal: Network: Console](
     host:                    String,
