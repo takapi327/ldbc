@@ -537,40 +537,56 @@ object CallableStatement:
       checkClosed() *>
         checkNullOrEmptyQuery(sql) *>
         exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-          setInOutParamsOnServer(paramInfo) *>
-            setOutParams(paramInfo) *>
+          if sql.toUpperCase.startsWith("CALL") then
+            setInOutParamsOnServer(paramInfo) *>
+              setOutParams(paramInfo) *>
+              params.get.flatMap { params =>
+                span.addAttributes(
+                  (attributes ++ List(
+                    Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+                    Attribute("execute", "query")
+                  ))*
+                ) *>
+                  protocol.resetSequenceId *>
+                  protocol.send(
+                    ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+                  ) *>
+                  receiveUntilOkPacket(Vector.empty).flatMap { resultSets =>
+                    resultSets.headOption match
+                      case None =>
+                        for
+                          resultSetCurrentCursor <- Ref[F].of(0)
+                          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                          resultSet = ResultSet.empty(
+                                        serverVariables,
+                                        protocol.initialPacket.serverVersion,
+                                        resultSetClosed,
+                                        resultSetCurrentCursor,
+                                        resultSetCurrentRow
+                                      )
+                          _ <- currentResultSet.set(Some(resultSet))
+                        yield resultSet
+                      case Some(resultSet) =>
+                        currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
+                  }
+              } <*
+              params.set(ListMap.empty) <*
+              retrieveOutParams()
+          else
             params.get.flatMap { params =>
               span.addAttributes(
                 (attributes ++ List(
                   Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
                   Attribute("execute", "query")
-                ))*
+                )) *
               ) *>
                 protocol.resetSequenceId *>
                 protocol.send(
                   ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
                 ) *>
-                receiveUntilOkPacket(Vector.empty).flatMap { resultSets =>
-                  resultSets.headOption match
-                    case None =>
-                      for
-                        resultSetCurrentCursor <- Ref[F].of(0)
-                        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                        resultSet = ResultSet.empty(
-                                      serverVariables,
-                                      protocol.initialPacket.serverVersion,
-                                      resultSetClosed,
-                                      resultSetCurrentCursor,
-                                      resultSetCurrentRow
-                                    )
-                        _ <- currentResultSet.set(Some(resultSet))
-                      yield resultSet
-                    case Some(resultSet) =>
-                      currentResultSet.update(_ => Some(resultSet)) *> resultSet.pure[F]
-                }
+                receiveQueryResult()
             } <*
-            params.set(ListMap.empty) <*
-            retrieveOutParams()
+              params.set(ListMap.empty)
         }
 
     override def executeUpdate(): F[Int]       = ???
