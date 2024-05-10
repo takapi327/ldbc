@@ -57,6 +57,9 @@ import ldbc.connector.net.packet.request.*
  */
 trait CallableStatement[F[_]] extends PreparedStatement[F]:
 
+  private[ldbc] def setParameter(index: Int, value: String): F[Unit] =
+    params.update(_ + (index -> Parameter.parameter(value)))
+
   /**
    * Registers the OUT parameter in ordinal position
    * <code>parameterIndex</code> to the JDBC type
@@ -154,7 +157,7 @@ object CallableStatement:
       }
 
       for
-        numParameters <- resultSet.getRow()
+        numParameters <- resultSet.rowLength()
         parameterList <- parameterListF
       yield ParamInfo(
         nativeSql      = nativeSql,
@@ -186,23 +189,45 @@ object CallableStatement:
     extends CallableStatement[F],
             Statement.ShareStatement[F]:
 
+    private def buildQuery(original: String, params: ListMap[Int, Parameter]): String =
+      val query = original.toCharArray
+      params
+        .foldLeft(query) {
+          case (query, (offset, param)) =>
+            val index = query.indexOf('?', offset - 1)
+            if index < 0 then query
+            else
+              val (head, tail) = query.splitAt(index)
+              val (tailHead, tailTail) = tail.splitAt(1)
+              head ++ param.sql ++ tailTail
+        }
+        .mkString
+
     private val attributes = protocol.initialPacket.attributes ++ List(
       Attribute("type", "CallableStatement"),
       Attribute("sql", sql)
     )
 
     override def executeQuery(): F[ResultSet[F]] =
-      checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
-        params.get.flatMap { params =>
-          span.addAttributes(
-            (attributes ++ List(
-              Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
-              Attribute("execute", "query")
-            ))*
-          ) *>
-            setInOutParamsOnServer(paramInfo) *> ???
+      checkClosed() *>
+        checkNullOrEmptyQuery(sql) *>
+        exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
+          setInOutParamsOnServer(paramInfo) *>
+          setOutParams(paramInfo) *>
+          params.get.flatMap { params =>
+            span.addAttributes(
+              (attributes ++ List(
+                Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
+                Attribute("execute", "query")
+              ))*
+            ) *>
+              protocol.resetSequenceId *>
+              protocol.send(
+                ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
+              ) *>
+              receiveQueryResult()
+          } <* params.set(ListMap.empty)
         }
-      }
 
     override def executeUpdate(): F[Int]       = ???
     override def execute():       F[Boolean]   = ???
@@ -216,6 +241,50 @@ object CallableStatement:
       checkNullOrEmptyQuery(sql) *> protocol.resetSequenceId *> protocol.send(
         ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)
       ) *> protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+
+    private def receiveQueryResult(): F[ResultSet[F]] =
+      protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+        case _: OKPacket =>
+          for
+            resultSetCurrentCursor <- Ref[F].of(0)
+            resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          yield ResultSet
+            .empty(
+              serverVariables,
+              protocol.initialPacket.serverVersion,
+              resultSetClosed,
+              resultSetCurrentCursor,
+              resultSetCurrentRow
+            )
+        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+        case result: ColumnsNumberPacket =>
+          for
+            columnDefinitions <-
+              protocol.repeatProcess(
+                result.size,
+                ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
+              )
+            resultSetRow <-
+              protocol.readUntilEOF[ResultSetRowPacket](
+                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
+                Vector.empty
+              )
+            resultSetCurrentCursor <- Ref[F].of(0)
+            resultSetCurrentRow <- Ref[F].of(resultSetRow.headOption)
+            resultSet = ResultSet(
+              columnDefinitions,
+              resultSetRow,
+              serverVariables,
+              protocol.initialPacket.serverVersion,
+              resultSetClosed,
+              resultSetCurrentCursor,
+              resultSetCurrentRow,
+              resultSetType,
+              resultSetConcurrency
+            )
+            _ <- currentResultSet.set(Some(resultSet))
+          yield resultSet
+      }
 
     private def mangleParameterName(origParameterName: String): String =
       val offset = if origParameterName.nonEmpty && origParameterName.charAt(0) == '@' then 1 else 0
@@ -253,20 +322,22 @@ object CallableStatement:
         }
       else ev.unit
 
-    // private def setOutParams(paramInfo: ParamInfo): F[Unit] =
-    //  if paramInfo.numParameters > 0 then
-    //    paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
-    //      if !paramInfo.isFunctionCall && param.isOut then
-    //        val paramName = param.paramName.getOrElse("nullnp" + param.index)
-    //        val outParameterName = mangleParameterName(paramName)
-//
-//        acc *> params.get.flatMap { params =>
-//          val outParamIndex =
-//            if params.isEmpty then param.index + 1
-//            else params.keys.find(_ == param.index).getOrElse(param.index + 1)
-//          ???
-//        }
-//        ???
-//      else acc
-//    }
-//  else ev.unit
+    private def setOutParams(paramInfo: ParamInfo): F[Unit] =
+      if paramInfo.numParameters > 0 then
+        paramInfo.parameterList.foldLeft(ev.unit) { (acc, param) =>
+          if !paramInfo.isFunctionCall && param.isOut then
+            val paramName = param.paramName.getOrElse("nullnp" + param.index)
+            val outParameterName = mangleParameterName(paramName)
+
+            acc *> params.get.flatMap { params =>
+              for
+                outParamIndex <- (
+                  if params.isEmpty then ev.pure(param.index)
+                  else params.keys.find(_ == param.index).fold(ev.raiseError(new SQLException(s"Parameter ${param.index} is not registered as an output parameter")))(_.pure[F])
+                )
+                _ <- setParameter(outParamIndex, outParameterName)
+              yield ()
+            }
+          else acc
+        }
+      else ev.unit
