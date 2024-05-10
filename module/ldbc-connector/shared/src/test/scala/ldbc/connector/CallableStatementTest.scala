@@ -126,3 +126,29 @@ class CallableStatementTest extends CatsEffectSuite:
       2
     )
   }
+
+  test("The result of calling a stored function with an empty parameter argument matches the specified value.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("SELECT func1()")
+          resultSet         <- callableStatement.executeQuery()
+          value             <- resultSet.getInt(1)
+        yield value
+      },
+      -1
+    )
+  }
+
+  test("The result of calling a stored function with an empty parameter argument matches the specified value.") {
+    assertIO(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("SELECT func2()")
+          resultSet         <- callableStatement.executeQuery()
+          value             <- resultSet.getString(1)
+        yield value
+      },
+      Some("hello, world")
+    )
+  }
