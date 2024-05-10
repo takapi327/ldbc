@@ -53,3 +53,17 @@ class CallableStatementTest extends CatsEffectSuite:
       2
     )
   }
+
+  test("") {
+    assertIO(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+          resultSet <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
+            .executeQuery()
+          outParam <- callableStatement.getInt("inOutParam")
+        yield outParam
+      },
+      2
+    )
+  }
