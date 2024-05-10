@@ -904,7 +904,8 @@ object Connection:
         statementClosed        <- Ref[F].of[Boolean](false)
         resultSetClosed        <- Ref[F].of[Boolean](false)
         currentResultSet       <- Ref[F].of[Option[ResultSet[F]]](None)
-        outputParameterResults <- Ref[F].of[Option[ResultSet[F]]](None)
+        outputParameterResult  <- Ref[F].of[Option[ResultSet[F]]](None)
+        resultSets            <- Ref[F].of(List.empty[ResultSet[F]])
         parameterIndexToRsIndex <- Ref[F].of(
                                      List
                                        .fill(paramInfo.numParameters)(CallableStatement.NOT_OUTPUT_PARAMETER_INDICATOR)
@@ -928,7 +929,8 @@ object Connection:
         statementClosed,
         resultSetClosed,
         currentResultSet,
-        outputParameterResults,
+        outputParameterResult,
+        resultSets,
         parameterIndexToRsIndex,
         updateCount,
         moreResults,
