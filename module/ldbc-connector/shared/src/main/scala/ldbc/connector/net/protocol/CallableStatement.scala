@@ -84,6 +84,17 @@ trait CallableStatement[F[_]] extends PreparedStatement[F]:
    */
   def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit]
 
+  /**
+   * Retrieves the value of the designated JDBC <code>INTEGER</code> parameter
+   * as an <code>int</code> in the Java programming language.
+   *
+   * @param parameterIndex the first parameter is 1, the second is 2,
+   * and so on
+   * @return the parameter value.  If the value is SQL <code>NULL</code>, the result
+   * is <code>0</code>.
+   */
+  def getInt(parameterIndex: Int): F[Int]
+
 object CallableStatement:
 
   val NOT_OUTPUT_PARAMETER_INDICATOR: Int = Int.MinValue
@@ -259,6 +270,14 @@ object CallableStatement:
     override def close():         F[Unit]      = ???
 
     override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] = ???
+
+    override def getInt(parameterIndex: Int): F[Int] =
+      for
+        resultSet <- checkBounds(parameterIndex) *> getOutputParameters()
+        paramMap <- parameterIndexToRsIndex.get
+        index = paramMap.getOrElse(parameterIndex, parameterIndex)
+        value <- (if index == NOT_OUTPUT_PARAMETER_INDICATOR then ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter")) else resultSet.getInt(index))
+      yield value
 
     private def sendQuery(sql: String): F[GenericResponsePackets] =
       checkNullOrEmptyQuery(sql) *> protocol.resetSequenceId *> protocol.send(
@@ -445,4 +464,26 @@ object CallableStatement:
           parameters.zipWithIndex.foldLeft(ev.unit) { case (acc, ((paramIndex, _), index)) =>
             acc *> parameterIndexToRsIndex.update(_ + (paramIndex -> (index + 1)))
           }
+      else ev.unit
+
+    /**
+     * Returns the ResultSet that holds the output parameters, or throws an
+     * appropriate exception if none exist, or they weren't returned.
+     *
+     * @return
+     *   the ResultSet that holds the output parameters
+     */
+    private def getOutputParameters(): F[ResultSet[F]] =
+      outputParameterResults.get.flatMap {
+        case None =>
+          if paramInfo.numParameters == 0 then
+            ev.raiseError(new SQLException("No output parameters registered."))
+          else
+            ev.raiseError(new SQLException("No output parameters returned by procedure."))
+        case Some(resultSet) => resultSet.pure[F]
+      }
+
+    private def checkBounds(paramIndex: Int): F[Unit] =
+      if paramIndex < 1 || paramIndex > paramInfo.numParameters then
+        ev.raiseError(new SQLException(s"Parameter index of ${paramIndex} is out of range (1, ${paramInfo.numParameters})"))
       else ev.unit
