@@ -578,7 +578,8 @@ object CallableStatement:
     override def execute():      F[Boolean]   = ???
     override def addBatch():     F[Unit]      = ???
     override def executeBatch(): F[List[Int]] = ???
-    override def close():        F[Unit]      = ???
+
+    override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
     override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] = ???
 
