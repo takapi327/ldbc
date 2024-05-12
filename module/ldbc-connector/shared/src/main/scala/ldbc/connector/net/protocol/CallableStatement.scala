@@ -719,10 +719,11 @@ object CallableStatement:
                         .map(_.toList) <*
                       protocol.resetSequenceId <*
                       protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
-                  case _ => ev.raiseError(
-                    new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
-                  )
-              )
+                  case _ =>
+                    ev.raiseError(
+                      new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
+                    )
+            )
           }
         } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
 
