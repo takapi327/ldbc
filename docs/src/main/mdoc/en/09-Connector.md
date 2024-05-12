@@ -776,6 +776,68 @@ connection.use { conn =>
 
 This is because if you are using `PreparedStatement`, you can set multiple parameters for a single query by using the `addBatch` method after setting the query parameters.
 
+## Stored Procedure Execution
+
+LDBC provides an API for executing stored procedures.
+
+To execute a stored procedure, use the `prepareCall` method of `Connection` to construct a `CallableStatement`.
+
+※ The stored procedures used are those described in the [official](https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-statements-callable.html) document.
+
+```sql
+CREATE PROCEDURE demoSp(IN inputParam VARCHAR(255), INOUT inOutParam INT)
+BEGIN
+    DECLARE z INT;
+    SET z = inOutParam + 1;
+    SET inOutParam = z;
+
+    SELECT inputParam;
+
+    SELECT CONCAT('zyxw', inputParam);
+END
+```
+
+To execute the above stored procedure, the following would be used
+
+```scala
+connection.use { conn =>
+  for
+    callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+    _ <- callableStatement.setString(1, "abcdefg")
+    _ <- callableStatement.setInt(2, 1)
+    hasResult <- callableStatement.execute()
+    values <- Monad[IO].whileM[List, Option[String]](callableStatement.getMoreResults()) {
+      for
+        resultSet <- callableStatement.getResultSet().flatMap {
+          case Some(rs) => IO.pure(rs)
+          case None     => IO.raiseError(new Exception("No result set"))
+        }
+        value <- resultSet.getString(1)
+      yield value
+    }
+  yield values // List(Some("abcdefg"), Some("zyxwabcdefg"))
+}
+```
+
+To get the value of an output parameter (a parameter you specified as OUT or INOUT when you created the stored procedure), in JDBC you must use the various `registerOutputParameter()` methods of the CallableStatement interface to specify parameters before statement execution, while LDBC will also set parameters during query execution by simply setting them using the `setXXX` method.
+
+However, LDBC also allows you to specify parameters using the `registerOutputParameter()` method.
+
+```scala
+connection.use { conn =>
+  for
+    callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+    _ <- callableStatement.setString(1, "abcdefg")
+    _ <- callableStatement.setInt(2, 1)
+    _ <- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+    hasResult <- callableStatement.execute()
+    value <- callableStatement.getInt(2)
+  yield value // 2
+}
+```
+
+※ Note that if you specify an Out parameter with `registerOutParameter`, the value will be set at `Null` for the server if the parameter is not set with the `setXXX` method using the same index value.
+
 ## Unsupported Feature
 
 The LDBC connector is currently an experimental feature. Therefore, the following features are not supported.
@@ -783,5 +845,4 @@ We plan to provide the features as they become available.
 
 - Connection Pooling
 - Failover measures
-- Execution of SQL Stored Procedures
 - etc...
