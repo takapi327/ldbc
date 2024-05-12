@@ -667,7 +667,64 @@ object CallableStatement:
         batchedArgs.update(_ :+ buildBatchQuery(sql, params))
       } *> params.set(ListMap.empty)
 
-    override def executeBatch(): F[List[Int]] = ???
+    override def executeBatch(): F[List[Int]] =
+      checkClosed() *>
+        checkNullOrEmptyQuery(sql) *>
+        exchange[F, List[Int]]("statement") { (span: Span[F]) =>
+          batchedArgs.get.flatMap { args =>
+            span.addAttributes(
+              (attributes ++ List(
+                Attribute("execute", "batch"),
+                Attribute("size", args.length.toLong),
+                Attribute("sql", args.toArray.toSeq)
+              ))*
+            ) *> (
+              if args.isEmpty then ev.pure(List.empty)
+              else
+                sql.toUpperCase match
+                  case q if q.startsWith("INSERT") =>
+                    sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
+                      .flatMap {
+                        case _: OKPacket      => ev.pure(List.fill(args.length)(Statement.SUCCESS_NO_INFO))
+                        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                        case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                      }
+                  case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
+                    protocol.resetSequenceId *>
+                      protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
+                      protocol.resetSequenceId *>
+                      protocol.send(
+                        ComQueryPacket(
+                          args.mkString(";"),
+                          protocol.initialPacket.capabilityFlags,
+                          ListMap.empty
+                        )
+                      ) *>
+                      args
+                        .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
+                          for
+                            acc <- $acc
+                            result <-
+                              protocol
+                                .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+                                .flatMap {
+                                  case result: OKPacket =>
+                                    lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
+                                  case error: ERRPacket =>
+                                    ev.raiseError(error.toException("Failed to execute batch", acc))
+                                  case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                                }
+                          yield result
+                        }
+                        .map(_.toList) <*
+                      protocol.resetSequenceId <*
+                      protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF)
+                  case _ => ev.raiseError(
+                    new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
+                  )
+              )
+          }
+        } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
 
     override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
