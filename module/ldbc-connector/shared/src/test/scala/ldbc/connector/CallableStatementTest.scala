@@ -7,11 +7,9 @@
 package ldbc.connector
 
 import cats.*
-
 import cats.effect.*
-
+import ldbc.connector.exception.SQLException
 import munit.CatsEffectSuite
-
 import org.typelevel.otel4s.trace.Tracer
 
 class CallableStatementTest extends CatsEffectSuite:
@@ -202,5 +200,38 @@ class CallableStatementTest extends CatsEffectSuite:
         yield value
       },
       110
+    )
+  }
+
+  test("The registration process of Out parameter succeeds.") {
+    assertIOBoolean(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+        yield true
+      }
+    )
+  }
+
+  test("SQLException occurs if the Out parameter type of the procedure is different from the Out parameter type to be set.") {
+    interceptMessageIO[SQLException]("Message: The type specified for the parameter does not match the type registered as a procedure.")(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement.registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+        yield true
+      }
+    )
+  }
+
+  test("SQLException occurs if the procedure does not have an Out parameter and is preconfigured for Out.") {
+    interceptMessageIO[SQLException]("Message: No output parameters returned by procedure.")(
+      connection.use { conn =>
+        for
+          callableStatement <- conn.prepareCall("CALL proc3(?, ?)")
+          _ <- callableStatement.setInt(1, 1024) *> callableStatement.registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+        yield true
+      },
     )
   }
