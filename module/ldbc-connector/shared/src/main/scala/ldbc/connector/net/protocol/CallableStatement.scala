@@ -663,9 +663,17 @@ object CallableStatement:
       }
 
     override def addBatch(): F[Unit] =
-      checkClosed() *> checkNullOrEmptyQuery(sql) *> setOutParams() *> params.get.flatMap { params =>
-        batchedArgs.update(_ :+ buildBatchQuery(sql, params))
-      } *> params.set(ListMap.empty)
+      checkClosed() *>
+        checkNullOrEmptyQuery(sql) *> (
+          sql.toUpperCase match
+            case q if q.startsWith("CALL") =>
+              setInOutParamsOnServer(paramInfo) *> setOutParams()
+            case _ => ev.unit
+        ) *>
+        params.get.flatMap { params =>
+          batchedArgs.update(_ :+ buildBatchQuery(sql, params))
+        } *>
+        params.set(ListMap.empty)
 
     override def executeBatch(): F[List[Int]] =
       checkClosed() *>
