@@ -17,13 +17,12 @@ class CallableStatementTest extends CatsEffectSuite:
   given Tracer[IO] = Tracer.noop[IO]
 
   private val connection = Connection[IO](
-    host                    = "127.0.0.1",
-    port                    = 13306,
-    user                    = "ldbc",
-    password                = Some("password"),
-    database                = Some("connector_test"),
-    allowPublicKeyRetrieval = true
-    // ssl = SSL.Trusted
+    host     = "127.0.0.1",
+    port     = 13306,
+    user     = "ldbc",
+    password = Some("password"),
+    database = Some("connector_test"),
+    ssl      = SSL.Trusted
   )
 
   test("The result of calling an empty procedure matches the specified value.") {
