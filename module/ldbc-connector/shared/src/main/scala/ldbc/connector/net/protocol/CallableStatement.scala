@@ -632,7 +632,7 @@ object CallableStatement:
                 currentResultSet.update(_ => results.headOption) *>
                 resultSets.set(results.toList) *>
                 ev.pure(results.nonEmpty)
-            }
+            } <* retrieveOutParams()
           else
             params.get
               .flatMap { params =>
@@ -1114,15 +1114,12 @@ object CallableStatement:
             queryBuf.append("=")
 
             acc *> params.get.flatMap { params =>
-              params.get(param.index) match
-                case Some(parameter) =>
-                  val sql = (queryBuf.toString.toCharArray ++ parameter.sql).mkString
-                  sendQuery(sql).flatMap {
-                    case _: OKPacket      => ev.unit
-                    case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                    case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
-                  }
-                case None => ev.raiseError(new SQLException("Parameter not found"))
+              val sql = (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+              sendQuery(sql).flatMap {
+                case _: OKPacket      => ev.unit
+                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+              }
             }
           else acc
         }
