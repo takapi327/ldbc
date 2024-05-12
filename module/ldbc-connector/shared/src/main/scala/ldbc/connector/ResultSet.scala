@@ -602,6 +602,14 @@ trait ResultSet[F[_]]:
    */
   def hasRows(): F[Boolean]
 
+  /**
+   * Returns the number of rows in this <code>ResultSet</code> object.
+   *
+   * @return
+   *   the number of rows
+   */
+  def rowLength(): F[Int]
+
 object ResultSet:
 
   /**
@@ -956,6 +964,11 @@ object ResultSet:
     override def hasRows(): F[Boolean] =
       checkClose {
         ev.pure(records.nonEmpty)
+      }
+
+    override def rowLength(): F[Int] =
+      checkClose {
+        ev.pure(records.size)
       }
 
     private def checkClose[T](f: => F[T]): F[T] =

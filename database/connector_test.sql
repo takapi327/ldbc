@@ -175,7 +175,35 @@ INSERT INTO `all_types` VALUES (
 
 CREATE TABLE `transaction_test`(`c1` BIGINT NOT NULL);
 
-delimiter //
+CREATE TABLE `tax` (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `value` DOUBLE NOT NULL, `start_date` DATE NOT NULL);
+INSERT INTO `tax` (`value`, `start_date`) VALUES (0.05, '2020-01-01'), (0.08, '2020-02-01'), (0.1, '2020-03-01');
+
+DELIMITER //
+CREATE PROCEDURE proc1()
+BEGIN
+SELECT VERSION();
+END;
+//
+
+CREATE PROCEDURE proc2(IN param INT)
+BEGIN
+SELECT param;
+END;
+//
+
+CREATE PROCEDURE proc3(IN param1 INT, IN param2 VARCHAR(8))
+BEGIN
+SELECT param1, param2;
+END;
+//
+
+CREATE PROCEDURE proc4(OUT param1 INT, OUT param2 VARCHAR(8))
+BEGIN
+  SET param1 = -1;
+  SET param2 = 'hello';
+END;
+//
+
 CREATE PROCEDURE demoSp(IN inputParam VARCHAR(255), INOUT inOutParam INT)
 BEGIN
     DECLARE z INT;
@@ -187,7 +215,36 @@ SELECT inputParam;
 SELECT CONCAT('zyxw', inputParam);
 END
 //
-delimiter ;
+
+CREATE FUNCTION func1()
+  RETURNS INT DETERMINISTIC
+BEGIN
+RETURN -1;
+END;
+//
+
+CREATE FUNCTION func2()
+  RETURNS VARCHAR(12) DETERMINISTIC
+BEGIN
+RETURN 'hello, world';
+END;
+//
+
+CREATE FUNCTION getPrice(price int)
+  RETURNS INT DETERMINISTIC
+BEGIN
+  declare tax DOUBLE DEFAULT 0.1;
+
+  SELECT VALUE INTO tax
+  from tax
+  WHERE start_date <= current_date
+  ORDER BY start_date DESC
+  LIMIT 1;
+
+  RETURN TRUNCATE(price + (price * tax), 0);
+END;
+//
+DELIMITER ;
 
 CREATE TABLE `privileges_table` (
   `c1` INT NOT NULL PRIMARY KEY,

@@ -4362,7 +4362,7 @@ object DatabaseMetaData:
 
       if tinyInt1isBit && !transformedBitIsBoolean then
         sqlBuf.append(
-          " WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
+          " WHEN (UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0) AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
         )
       end if
 
@@ -5672,8 +5672,8 @@ object DatabaseMetaData:
 
     protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
       (databaseTerm, catalog, schema) match
-        case (Some(DatabaseTerm.SCHEMA), None, value)  => value
-        case (Some(DatabaseTerm.CATALOG), value, None) => value
+        case (Some(DatabaseTerm.SCHEMA), None, value)  => value.fold(database)(_.some)
+        case (Some(DatabaseTerm.CATALOG), value, None) => value.fold(database)(_.some)
         case _                                         => database
 
     /**

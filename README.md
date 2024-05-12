@@ -72,7 +72,7 @@ JVM, JS and Native platforms are all supported.
 
 - [x] Statement
 - [x] PreparedStatement
-- [ ] CallableStatement
+- [x] CallableStatement
 - [ ] ResultSet Insert/Update/Delete
 
 ### Transaction function implementation
@@ -86,13 +86,13 @@ JVM, JS and Native platforms are all supported.
 
 ### Utility Commands
 
-- [x] [COM_QUIT](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_quit.html)
-- [x] [COM_INIT_DB](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_init_db.html)
-- [x] [COM_STATISTICS](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_statistics.html)
-- [x] [COM_PING](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_ping.html)
-- [x] [COM_CHANGE_USER](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_change_user.html)
-- [x] [COM_RESET_CONNECTION](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_reset_connection.html)
-- [x] [COM_SET_OPTION](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_set_option.html)
+- [x] COM_QUIT
+- [x] COM_INIT_DB
+- [x] COM_STATISTICS
+- [x] COM_PING
+- [x] COM_CHANGE_USER
+- [x] COM_RESET_CONNECTION
+- [x] COM_SET_OPTION
 
 ### Connection pooling implementation
 

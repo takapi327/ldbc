@@ -770,6 +770,68 @@ connection.use { conn =>
 
 これは、`PreparedStatement`を使用している場合、クエリのパラメーターを設定した後に`addBatch`メソッドを使用することで、1つのクエリに複数のパラメーターを設定することができるためです。
 
+## ストアドプロシージャの実行
+
+LDBCではストアドプロシージャを実行するためのAPIを提供しています。
+
+ストアドプロシージャを実行するには`Connection`の`prepareCall`メソッドを使用して`CallableStatement`を構築します。
+
+※ 使用するストアドプロシージャは[公式](https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-statements-callable.html)ドキュメント記載のものを使用しています。
+
+```sql
+CREATE PROCEDURE demoSp(IN inputParam VARCHAR(255), INOUT inOutParam INT)
+BEGIN
+    DECLARE z INT;
+    SET z = inOutParam + 1;
+    SET inOutParam = z;
+
+    SELECT inputParam;
+
+    SELECT CONCAT('zyxw', inputParam);
+END
+```
+
+上記のストアドプロシージャを実行する場合は以下のようになります。
+
+```scala
+connection.use { conn =>
+  for
+    callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+    _ <- callableStatement.setString(1, "abcdefg")
+    _ <- callableStatement.setInt(2, 1)
+    hasResult <- callableStatement.execute()
+    values <- Monad[IO].whileM[List, Option[String]](callableStatement.getMoreResults()) {
+      for
+        resultSet <- callableStatement.getResultSet().flatMap {
+          case Some(rs) => IO.pure(rs)
+          case None     => IO.raiseError(new Exception("No result set"))
+        }
+        value <- resultSet.getString(1)
+      yield value
+    }
+  yield values // List(Some("abcdefg"), Some("zyxwabcdefg"))
+}
+```
+
+出力パラメータ（ストアド・プロシージャを作成したときにOUTまたはINOUTとして指定したパラメータ）の値を取得するには、JDBCでは、CallableStatementインターフェイスのさまざまな`registerOutputParameter()`メソッドを使用して、ステートメント実行前にパラメータを指定する必要がありますが、LDBCでは`setXXX`メソッドを使用してパラメータを設定することだけクエリ実行時にパラメーターの設定も行なってくれます。
+
+ただし、LDBCでも`registerOutputParameter()`メソッドを使用してパラメータを指定することもできます。
+
+```scala
+connection.use { conn =>
+  for
+    callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
+    _ <- callableStatement.setString(1, "abcdefg")
+    _ <- callableStatement.setInt(2, 1)
+    _ <- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+    hasResult <- callableStatement.execute()
+    value <- callableStatement.getInt(2)
+  yield value // 2
+}
+```
+
+※ `registerOutParameter`でOutパラメータを指定する場合、同じindex値を使用して`setXXX`メソッドでパラメータを設定していない場合サーバーには`Null`で値が設定されることに注意してください。
+
 ## 未対応機能
 
 LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。
@@ -777,5 +839,4 @@ LDBCコネクタは現在実験的な機能となります。そのため、以�
 
 - コネクションプーリング
 - フェイルオーバー対策
-- SQL ストアドプロシージャの実行
 - etc...
