@@ -208,18 +208,24 @@ class CallableStatementTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
-          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
+                 .registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
         yield true
       }
     )
   }
 
-  test("SQLException occurs if the Out parameter type of the procedure is different from the Out parameter type to be set.") {
-    interceptMessageIO[SQLException]("Message: The type specified for the parameter does not match the type registered as a procedure.")(
+  test(
+    "SQLException occurs if the Out parameter type of the procedure is different from the Out parameter type to be set."
+  ) {
+    interceptMessageIO[SQLException](
+      "Message: The type specified for the parameter does not match the type registered as a procedure."
+    )(
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
-          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement.registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+          _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
+                 .registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
         yield true
       }
     )
@@ -230,8 +236,9 @@ class CallableStatementTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL proc3(?, ?)")
-          _ <- callableStatement.setInt(1, 1024) *> callableStatement.registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+          _ <- callableStatement.setInt(1, 1024) *> callableStatement
+                 .registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
         yield true
-      },
+      }
     )
   }

@@ -742,11 +742,13 @@ object CallableStatement:
         paramInfo.parameterList.find(_.index == parameterIndex) match
           case Some(param) =>
             (if param.jdbcType == sqlType then ev.unit
-            else ev.raiseError(
-              new SQLException(
-                "The type specified for the parameter does not match the type registered as a procedure."
-              )
-            )) *> (
+             else
+               ev.raiseError(
+                 new SQLException(
+                   "The type specified for the parameter does not match the type registered as a procedure."
+                 )
+               )
+            ) *> (
               if param.isOut && param.isIn then
                 val paramName          = param.paramName.getOrElse("nullnp" + param.index)
                 val inOutParameterName = mangleParameterName(paramName)
@@ -757,7 +759,8 @@ object CallableStatement:
                 queryBuf.append("=")
 
                 params.get.flatMap { params =>
-                  val sql = (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+                  val sql =
+                    (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
                   sendQuery(sql).flatMap {
                     case _: OKPacket      => ev.unit
                     case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
@@ -767,7 +770,9 @@ object CallableStatement:
               else ev.raiseError(new SQLException("No output parameters returned by procedure."))
             )
           case None =>
-            ev.raiseError(new SQLException(s"Parameter index of $parameterIndex is out of range (1, ${paramInfo.numParameters})"))
+            ev.raiseError(
+              new SQLException(s"Parameter index of $parameterIndex is out of range (1, ${ paramInfo.numParameters })")
+            )
       else ev.unit
 
     override def getString(parameterIndex: Int): F[Option[String]] =
