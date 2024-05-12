@@ -737,7 +737,38 @@ object CallableStatement:
 
     override def close(): F[Unit] = statementClosed.set(true) *> resultSetClosed.set(true)
 
-    override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] = ???
+    override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] =
+      if paramInfo.numParameters > 0 then
+        paramInfo.parameterList.find(_.index == parameterIndex) match
+          case Some(param) =>
+            (if param.jdbcType == sqlType then ev.unit
+            else ev.raiseError(
+              new SQLException(
+                "The type specified for the parameter does not match the type registered as a procedure."
+              )
+            )) *> (
+              if param.isOut && param.isIn then
+                val paramName          = param.paramName.getOrElse("nullnp" + param.index)
+                val inOutParameterName = mangleParameterName(paramName)
+
+                val queryBuf = new StringBuilder(4 + inOutParameterName.length + 1)
+                queryBuf.append("SET ")
+                queryBuf.append(inOutParameterName)
+                queryBuf.append("=")
+
+                params.get.flatMap { params =>
+                  val sql = (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+                  sendQuery(sql).flatMap {
+                    case _: OKPacket      => ev.unit
+                    case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                    case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                  }
+                }
+              else ev.raiseError(new SQLException("No output parameters returned by procedure."))
+            )
+          case None =>
+            ev.raiseError(new SQLException(s"Parameter index of $parameterIndex is out of range (1, ${paramInfo.numParameters})"))
+      else ev.unit
 
     override def getString(parameterIndex: Int): F[Option[String]] =
       for
