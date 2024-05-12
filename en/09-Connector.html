@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha8
+0.3.0-alpha9
 </div>
 </div>
 <div class="nav-toc">
@@ -77,7 +77,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha8
+0.3.0-alpha9
 </div>
 </div>
 <div class="nav-toc">
@@ -127,10 +127,10 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>The LDBC connector is the lowest layer API. We plan to use this connector to provide higher-layer APIs in the future. We also plan to make it compatible with existing higher-layer APIs.</p>
 <p>The following dependencies must be set up in your project in order to use it.</p>
 <p><strong>JVM</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha8&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha9&quot;
 </code></pre>
 <p><strong>JS/Native</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha8&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha9&quot;
 </code></pre>
 <p><strong>Supported Versions</strong></p>
 <p>The current version supports the following versions of MySQL</p>
@@ -949,16 +949,63 @@ yield
 // INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20), (&#39;Bob&#39;, 30);
 </code></pre>
 <p>This is because if you are using <code>PreparedStatement</code>, you can set multiple parameters for a single query by using the <code>addBatch</code> method after setting the query parameters.</p>
+<h2><a href="#stored-procedure-execution" name="stored-procedure-execution" class="anchor"><span class="anchor-link"></span></a>Stored Procedure Execution</h2>
+<p>LDBC provides an API for executing stored procedures.</p>
+<p>To execute a stored procedure, use the <code>prepareCall</code> method of <code>Connection</code> to construct a <code>CallableStatement</code>.</p>
+<p>※ The stored procedures used are those described in the <a href="https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-statements-callable.html">official</a> document.</p>
+<pre class="prettyprint"><code class="language-sql">CREATE PROCEDURE demoSp(IN inputParam VARCHAR(255), INOUT inOutParam INT)
+BEGIN
+    DECLARE z INT;
+    SET z = inOutParam + 1;
+    SET inOutParam = z;
+
+    SELECT inputParam;
+
+    SELECT CONCAT(&#39;zyxw&#39;, inputParam);
+END
+</code></pre>
+<p>To execute the above stored procedure, the following would be used</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for
+    callableStatement &lt;- conn.prepareCall(&quot;CALL demoSp(?, ?)&quot;)
+    _ &lt;- callableStatement.setString(1, &quot;abcdefg&quot;)
+    _ &lt;- callableStatement.setInt(2, 1)
+    hasResult &lt;- callableStatement.execute()
+    values &lt;- Monad[IO].whileM[List, Option[String]](callableStatement.getMoreResults()) {
+      for
+        resultSet &lt;- callableStatement.getResultSet().flatMap {
+          case Some(rs) =&gt; IO.pure(rs)
+          case None     =&gt; IO.raiseError(new Exception(&quot;No result set&quot;))
+        }
+        value &lt;- resultSet.getString(1)
+      yield value
+    }
+  yield values // List(Some(&quot;abcdefg&quot;), Some(&quot;zyxwabcdefg&quot;))
+}
+</code></pre>
+<p>To get the value of an output parameter (a parameter you specified as OUT or INOUT when you created the stored procedure), in JDBC you must use the various <code>registerOutputParameter()</code> methods of the CallableStatement interface to specify parameters before statement execution, while LDBC will also set parameters during query execution by simply setting them using the <code>setXXX</code> method.</p>
+<p>However, LDBC also allows you to specify parameters using the <code>registerOutputParameter()</code> method.</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for
+    callableStatement &lt;- conn.prepareCall(&quot;CALL demoSp(?, ?)&quot;)
+    _ &lt;- callableStatement.setString(1, &quot;abcdefg&quot;)
+    _ &lt;- callableStatement.setInt(2, 1)
+    _ &lt;- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+    hasResult &lt;- callableStatement.execute()
+    value &lt;- callableStatement.getInt(2)
+  yield value // 2
+}
+</code></pre>
+<p>※ Note that if you specify an Out parameter with <code>registerOutParameter</code>, the value will be set at <code>Null</code> for the server if the parameter is not set with the <code>setXXX</code> method using the same index value.</p>
 <h2><a href="#unsupported-feature" name="unsupported-feature" class="anchor"><span class="anchor-link"></span></a>Unsupported Feature</h2>
 <p>The LDBC connector is currently an experimental feature. Therefore, the following features are not supported. We plan to provide the features as they become available.</p>
 <ul>
   <li>Connection Pooling</li>
   <li>Failover measures</li>
-  <li>Execution of SQL Stored Procedures</li>
   <li>etc&hellip;</li>
 </ul>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha8/docs/target/mdoc/en/09-Connector.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha9/docs/target/mdoc/en/09-Connector.md">here</a>.
 </div>
 
 </div>
@@ -975,6 +1022,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
     <li><a href="../en/09-Connector.html#transaction" class="header">Transaction</a></li>
     <li><a href="../en/09-Connector.html#utility-commands" class="header">Utility Commands</a></li>
     <li><a href="../en/09-Connector.html#batch-commands" class="header">Batch commands</a></li>
+    <li><a href="../en/09-Connector.html#stored-procedure-execution" class="header">Stored Procedure Execution</a></li>
     <li><a href="../en/09-Connector.html#unsupported-feature" class="header">Unsupported Feature</a></li>
   </ul></li>
 </ul>
@@ -1043,7 +1091,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha8', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha9', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>

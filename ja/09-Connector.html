@@ -32,7 +32,7 @@
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha8
+0.3.0-alpha9
 </div>
 </div>
 <div class="nav-toc">
@@ -77,7 +77,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <span class="home-icon">⌂</span>LDBC
 </a>
 <div class="version-number">
-0.3.0-alpha8
+0.3.0-alpha9
 </div>
 </div>
 <div class="nav-toc">
@@ -127,10 +127,10 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <p>LDBCコネクタは一番低レイヤーのAPIとなります。 今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。</p>
 <p>使用するにはプロジェクトに以下の依存関係を設定する必要があります。</p>
 <p><strong>JVM</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha8&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha9&quot;
 </code></pre>
 <p><strong>JS/Native</strong></p>
-<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha8&quot;
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;0.3.0-alpha9&quot;
 </code></pre>
 <p><strong>サポートバージョン</strong></p>
 <p>現在のバージョンは以下のバージョンのMySQLをサポートしています。</p>
@@ -946,16 +946,63 @@ yield
 // INSERT INTO users (name, age) VALUES (&#39;Alice&#39;, 20), (&#39;Bob&#39;, 30);
 </code></pre>
 <p>これは、<code>PreparedStatement</code>を使用している場合、クエリのパラメーターを設定した後に<code>addBatch</code>メソッドを使用することで、1つのクエリに複数のパラメーターを設定することができるためです。</p>
+<h2><a href="#ストアドプロシージャの実行" name="ストアドプロシージャの実行" class="anchor"><span class="anchor-link"></span></a>ストアドプロシージャの実行</h2>
+<p>LDBCではストアドプロシージャを実行するためのAPIを提供しています。</p>
+<p>ストアドプロシージャを実行するには<code>Connection</code>の<code>prepareCall</code>メソッドを使用して<code>CallableStatement</code>を構築します。</p>
+<p>※ 使用するストアドプロシージャは<a href="https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-statements-callable.html">公式</a>ドキュメント記載のものを使用しています。</p>
+<pre class="prettyprint"><code class="language-sql">CREATE PROCEDURE demoSp(IN inputParam VARCHAR(255), INOUT inOutParam INT)
+BEGIN
+    DECLARE z INT;
+    SET z = inOutParam + 1;
+    SET inOutParam = z;
+
+    SELECT inputParam;
+
+    SELECT CONCAT(&#39;zyxw&#39;, inputParam);
+END
+</code></pre>
+<p>上記のストアドプロシージャを実行する場合は以下のようになります。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for
+    callableStatement &lt;- conn.prepareCall(&quot;CALL demoSp(?, ?)&quot;)
+    _ &lt;- callableStatement.setString(1, &quot;abcdefg&quot;)
+    _ &lt;- callableStatement.setInt(2, 1)
+    hasResult &lt;- callableStatement.execute()
+    values &lt;- Monad[IO].whileM[List, Option[String]](callableStatement.getMoreResults()) {
+      for
+        resultSet &lt;- callableStatement.getResultSet().flatMap {
+          case Some(rs) =&gt; IO.pure(rs)
+          case None     =&gt; IO.raiseError(new Exception(&quot;No result set&quot;))
+        }
+        value &lt;- resultSet.getString(1)
+      yield value
+    }
+  yield values // List(Some(&quot;abcdefg&quot;), Some(&quot;zyxwabcdefg&quot;))
+}
+</code></pre>
+<p>出力パラメータ（ストアド・プロシージャを作成したときにOUTまたはINOUTとして指定したパラメータ）の値を取得するには、JDBCでは、CallableStatementインターフェイスのさまざまな<code>registerOutputParameter()</code>メソッドを使用して、ステートメント実行前にパラメータを指定する必要がありますが、LDBCでは<code>setXXX</code>メソッドを使用してパラメータを設定することだけクエリ実行時にパラメーターの設定も行なってくれます。</p>
+<p>ただし、LDBCでも<code>registerOutputParameter()</code>メソッドを使用してパラメータを指定することもできます。</p>
+<pre class="prettyprint"><code class="language-scala">connection.use { conn =&gt;
+  for
+    callableStatement &lt;- conn.prepareCall(&quot;CALL demoSp(?, ?)&quot;)
+    _ &lt;- callableStatement.setString(1, &quot;abcdefg&quot;)
+    _ &lt;- callableStatement.setInt(2, 1)
+    _ &lt;- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+    hasResult &lt;- callableStatement.execute()
+    value &lt;- callableStatement.getInt(2)
+  yield value // 2
+}
+</code></pre>
+<p>※ <code>registerOutParameter</code>でOutパラメータを指定する場合、同じindex値を使用して<code>setXXX</code>メソッドでパラメータを設定していない場合サーバーには<code>Null</code>で値が設定されることに注意してください。</p>
 <h2><a href="#未対応機能" name="未対応機能" class="anchor"><span class="anchor-link"></span></a>未対応機能</h2>
 <p>LDBCコネクタは現在実験的な機能となります。そのため、以下の機能はサポートされていません。 機能提供は順次行っていく予定です。</p>
 <ul>
   <li>コネクションプーリング</li>
   <li>フェイルオーバー対策</li>
-  <li>SQL ストアドプロシージャの実行</li>
   <li>etc&hellip;</li>
 </ul>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha8/docs/target/mdoc/ja/09-Connector.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-alpha9/docs/target/mdoc/ja/09-Connector.md">here</a>.
 </div>
 
 </div>
@@ -972,6 +1019,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
     <li><a href="../ja/09-Connector.html#トランザクション" class="header">トランザクション</a></li>
     <li><a href="../ja/09-Connector.html#ユーティリティコマンド" class="header">ユーティリティコマンド</a></li>
     <li><a href="../ja/09-Connector.html#バッチコマンド" class="header">バッチコマンド</a></li>
+    <li><a href="../ja/09-Connector.html#ストアドプロシージャの実行" class="header">ストアドプロシージャの実行</a></li>
     <li><a href="../ja/09-Connector.html#未対応機能" class="header">未対応機能</a></li>
   </ul></li>
 </ul>
@@ -1040,7 +1088,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="../lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha8', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-alpha9', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
