@@ -102,7 +102,7 @@ class CallableStatementTest extends CatsEffectSuite:
     )
   }
 
-  test("") {
+  test("The result of retrieving the In parameter with index matches the specified value.") {
     assertIO(
       connection.use { conn =>
         for
@@ -116,7 +116,7 @@ class CallableStatementTest extends CatsEffectSuite:
     )
   }
 
-  test("") {
+  test("The result of retrieving the Out parameter with index matches the specified value.") {
     assertIO(
       connection.use { conn =>
         for
@@ -130,7 +130,7 @@ class CallableStatementTest extends CatsEffectSuite:
     )
   }
 
-  test("") {
+  test("The result of retrieving the Out parameter with parameter name matches the specified value.") {
     assertIO(
       connection.use { conn =>
         for
