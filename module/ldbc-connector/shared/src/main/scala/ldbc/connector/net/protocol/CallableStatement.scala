@@ -1114,7 +1114,8 @@ object CallableStatement:
             queryBuf.append("=")
 
             acc *> params.get.flatMap { params =>
-              val sql = (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+              val sql =
+                (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
               sendQuery(sql).flatMap {
                 case _: OKPacket      => ev.unit
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))

@@ -163,16 +163,18 @@ class CallableStatementTest extends CatsEffectSuite:
     )
   }
 
-  test("If a query is executed with the Out parameter set in advance, the execution result will match the value that was set.") {
+  test(
+    "If a query is executed with the Out parameter set in advance, the execution result will match the value that was set."
+  ) {
     assertIO(
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
-          _ <- callableStatement.setString(1, "abcdefg")
-          _ <- callableStatement.setInt(2, 1)
-          _ <- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
-          hasResult <- callableStatement.execute()
-          value <- callableStatement.getInt(2)
+          _                 <- callableStatement.setString(1, "abcdefg")
+          _                 <- callableStatement.setInt(2, 1)
+          _                 <- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+          hasResult         <- callableStatement.execute()
+          value             <- callableStatement.getInt(2)
         yield value
       },
       2
