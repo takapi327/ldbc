@@ -492,19 +492,19 @@ object Statement:
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
             resultSet = ResultSet(
-              Vector(new ColumnDefinitionPacket:
-                override def table: String = ""
-                override def name: String = "GENERATED_KEYS"
-                override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
-                override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-              ),
-              Vector(ResultSetRowPacket(List(Some(lastInsertId.toString)))),
-              serverVariables,
-              protocol.initialPacket.serverVersion,
-              isResultSetClosed,
-              resultSetCurrentCursor,
-              resultSetCurrentRow
-            )
+                          Vector(new ColumnDefinitionPacket:
+                            override def table:      String                     = ""
+                            override def name:       String                     = "GENERATED_KEYS"
+                            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
+                            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+                          ),
+                          Vector(ResultSetRowPacket(List(Some(lastInsertId.toString)))),
+                          serverVariables,
+                          protocol.initialPacket.serverVersion,
+                          isResultSetClosed,
+                          resultSetCurrentCursor,
+                          resultSetCurrentRow
+                        )
             _ <- currentResultSet.set(Some(resultSet))
           yield resultSet
         case Statement.NO_GENERATED_KEYS =>
