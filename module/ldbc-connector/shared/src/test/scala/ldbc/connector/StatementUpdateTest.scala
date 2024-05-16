@@ -72,7 +72,7 @@ class StatementUpdateTest extends CatsEffectSuite:
               Statement.RETURN_GENERATED_KEYS
             ) *> statement.getGeneratedKeys()
           generated <- resultSet.next() *> resultSet.getLong(1)
-          _ <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
+          _         <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
         yield generated
       },
       2L
