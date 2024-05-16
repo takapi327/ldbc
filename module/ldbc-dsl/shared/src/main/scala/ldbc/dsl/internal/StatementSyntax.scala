@@ -27,7 +27,8 @@ trait StatementSyntax extends ResultSetSyntax:
 
       override def execute(sql: String): F[Boolean] = Sync[F].blocking(statement.execute(sql))
 
-      override def getResultSet(): F[Option[ResultSet[F]]] = Sync[F].blocking(Option(statement.getResultSet)).map(_.map(ResultSet[F]))
+      override def getResultSet(): F[Option[ResultSet[F]]] =
+        Sync[F].blocking(Option(statement.getResultSet)).map(_.map(ResultSet[F]))
 
       override def getUpdateCount(): F[Int] = Sync[F].blocking(statement.getUpdateCount)
 
