@@ -1105,10 +1105,10 @@ trait DatabaseMetaData[F[_]]:
     getProcedures(Some(catalog), Some(schemaPattern), Some(procedureNamePattern))
 
   def getProcedures(
-                     catalog:              Option[String],
-                     schemaPattern:        Option[String],
-                     procedureNamePattern: Option[String]
-                   ): F[ResultSet[F]]
+    catalog:              Option[String],
+    schemaPattern:        Option[String],
+    procedureNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given catalog's stored procedure parameter
@@ -1201,19 +1201,19 @@ trait DatabaseMetaData[F[_]]:
    *      column
    */
   def getProcedureColumns(
-                           catalog:              String,
-                           schemaPattern:        String,
-                           procedureNamePattern: String,
-                           columnNamePattern:    String
-                         ): F[ResultSet[F]] =
+    catalog:              String,
+    schemaPattern:        String,
+    procedureNamePattern: String,
+    columnNamePattern:    String
+  ): F[ResultSet[F]] =
     getProcedureColumns(Some(catalog), Some(schemaPattern), Some(procedureNamePattern), Some(columnNamePattern))
 
   def getProcedureColumns(
-                           catalog:              Option[String],
-                           schemaPattern:        Option[String],
-                           procedureNamePattern: Option[String],
-                           columnNamePattern:    Option[String]
-                         ): F[ResultSet[F]]
+    catalog:              Option[String],
+    schemaPattern:        Option[String],
+    procedureNamePattern: Option[String],
+    columnNamePattern:    Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the tables available in the given catalog.
@@ -1260,19 +1260,19 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row is a table description
    */
   def getTables(
-                 catalog:          String,
-                 schemaPattern:    String,
-                 tableNamePattern: String,
-                 types:            Array[String]
-               ): F[ResultSet[F]] =
+    catalog:          String,
+    schemaPattern:    String,
+    tableNamePattern: String,
+    types:            Array[String]
+  ): F[ResultSet[F]] =
     getTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern), types)
 
   def getTables(
-                 catalog:          Option[String],
-                 schemaPattern:    Option[String],
-                 tableNamePattern: Option[String],
-                 types:            Array[String]
-               ): F[ResultSet[F]]
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String],
+    types:            Array[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves the schema names available in this database.  The results
@@ -1409,19 +1409,19 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row is a column description
    */
   def getColumns(
-                  catalog:           String,
-                  schemaPattern:     String,
-                  tableName:         String,
-                  columnNamePattern: String
-                ): F[ResultSet[F]] =
+    catalog:           String,
+    schemaPattern:     String,
+    tableName:         String,
+    columnNamePattern: String
+  ): F[ResultSet[F]] =
     getColumns(Some(catalog), Some(schemaPattern), Some(tableName), Some(columnNamePattern))
 
   def getColumns(
-                  catalog:           Option[String],
-                  schemaPattern:     Option[String],
-                  tableName:         Option[String],
-                  columnNamePattern: Option[String]
-                ): F[ResultSet[F]]
+    catalog:           Option[String],
+    schemaPattern:     Option[String],
+    tableName:         Option[String],
+    columnNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for a table's columns.
@@ -1461,11 +1461,11 @@ trait DatabaseMetaData[F[_]]:
     getColumnPrivileges(Some(catalog), Some(schema), Some(table), Some(columnNamePattern))
 
   def getColumnPrivileges(
-                           catalog:           Option[String],
-                           schema:            Option[String],
-                           table:             Option[String],
-                           columnNamePattern: Option[String]
-                         ): F[ResultSet[F]]
+    catalog:           Option[String],
+    schema:            Option[String],
+    table:             Option[String],
+    columnNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the access rights for each table available
@@ -1509,10 +1509,10 @@ trait DatabaseMetaData[F[_]]:
     getTablePrivileges(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
 
   def getTablePrivileges(
-                          catalog:          Option[String],
-                          schemaPattern:    Option[String],
-                          tableNamePattern: Option[String]
-                        ): F[ResultSet[F]]
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of a table's optimal set of columns that
@@ -1565,21 +1565,21 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row is a column description
    */
   def getBestRowIdentifier(
-                            catalog:  String,
-                            schema:   String,
-                            table:    String,
-                            scope:    Int,
-                            nullable: Boolean
-                          ): F[ResultSet[F]] =
+    catalog:  String,
+    schema:   String,
+    table:    String,
+    scope:    Int,
+    nullable: Boolean
+  ): F[ResultSet[F]] =
     getBestRowIdentifier(Some(catalog), Some(schema), table, Some(scope), Some(nullable))
 
   def getBestRowIdentifier(
-                            catalog:  Option[String],
-                            schema:   Option[String],
-                            table:    String,
-                            scope:    Option[Int],
-                            nullable: Option[Boolean]
-                          ): F[ResultSet[F]]
+    catalog:  Option[String],
+    schema:   Option[String],
+    table:    String,
+    scope:    Option[Int],
+    nullable: Option[Boolean]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of a table's columns that are automatically
@@ -1901,13 +1901,13 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row is a foreign key column description
    */
   def getCrossReference(
-                         parentCatalog:  String,
-                         parentSchema:   String,
-                         parentTable:    String,
-                         foreignCatalog: String,
-                         foreignSchema:  String,
-                         foreignTable:   String
-                       ): F[ResultSet[F]] =
+    parentCatalog:  String,
+    parentSchema:   String,
+    parentTable:    String,
+    foreignCatalog: String,
+    foreignSchema:  String,
+    foreignTable:   String
+  ): F[ResultSet[F]] =
     getCrossReference(
       Some(parentCatalog),
       Some(parentSchema),
@@ -1918,13 +1918,13 @@ trait DatabaseMetaData[F[_]]:
     )
 
   def getCrossReference(
-                         parentCatalog:  Option[String],
-                         parentSchema:   Option[String],
-                         parentTable:    String,
-                         foreignCatalog: Option[String],
-                         foreignSchema:  Option[String],
-                         foreignTable:   Option[String]
-                       ): F[ResultSet[F]]
+    parentCatalog:  Option[String],
+    parentSchema:   Option[String],
+    parentTable:    String,
+    foreignCatalog: Option[String],
+    foreignSchema:  Option[String],
+    foreignTable:   Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of all the data types supported by
@@ -2048,21 +2048,21 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row is an index column description
    */
   def getIndexInfo(
-                    catalog:     String,
-                    schema:      String,
-                    table:       String,
-                    unique:      Boolean,
-                    approximate: Boolean
-                  ): F[ResultSet[F]] =
+    catalog:     String,
+    schema:      String,
+    table:       String,
+    unique:      Boolean,
+    approximate: Boolean
+  ): F[ResultSet[F]] =
     getIndexInfo(Some(catalog), Some(schema), Some(table), unique, approximate)
 
   def getIndexInfo(
-                    catalog:     Option[String],
-                    schema:      Option[String],
-                    table:       Option[String],
-                    unique:      Boolean,
-                    approximate: Boolean
-                  ): F[ResultSet[F]]
+    catalog:     Option[String],
+    schema:      Option[String],
+    table:       Option[String],
+    unique:      Boolean,
+    approximate: Boolean
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set type.
@@ -2255,11 +2255,11 @@ trait DatabaseMetaData[F[_]]:
     getUDTs(Some(catalog), Some(schemaPattern), Some(typeNamePattern), types)
 
   def getUDTs(
-               catalog:         Option[String],
-               schemaPattern:   Option[String],
-               typeNamePattern: Option[String],
-               types:           Array[Int]
-             ): F[ResultSet[F]]
+    catalog:         Option[String],
+    schemaPattern:   Option[String],
+    typeNamePattern: Option[String],
+    types:           Array[Int]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves the connection that produced this metadata object.
@@ -2349,10 +2349,10 @@ trait DatabaseMetaData[F[_]]:
     getSuperTypes(Some(catalog), Some(schemaPattern), Some(typeNamePattern))
 
   def getSuperTypes(
-                     catalog:         Option[String],
-                     schemaPattern:   Option[String],
-                     typeNamePattern: Option[String]
-                   ): F[ResultSet[F]]
+    catalog:         Option[String],
+    schemaPattern:   Option[String],
+    typeNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the table hierarchies defined in a particular
@@ -2389,10 +2389,10 @@ trait DatabaseMetaData[F[_]]:
     getSuperTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
 
   def getSuperTables(
-                      catalog:          Option[String],
-                      schemaPattern:    Option[String],
-                      tableNamePattern: Option[String]
-                    ): F[ResultSet[F]]
+    catalog:          Option[String],
+    schemaPattern:    Option[String],
+    tableNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given attribute of the given type
@@ -2470,19 +2470,19 @@ trait DatabaseMetaData[F[_]]:
    *         attribute description
    */
   def getAttributes(
-                     catalog:              String,
-                     schemaPattern:        String,
-                     typeNamePattern:      String,
-                     attributeNamePattern: String
-                   ): F[ResultSet[F]] =
+    catalog:              String,
+    schemaPattern:        String,
+    typeNamePattern:      String,
+    attributeNamePattern: String
+  ): F[ResultSet[F]] =
     getAttributes(Some(catalog), Some(schemaPattern), Some(typeNamePattern), Some(attributeNamePattern))
 
   def getAttributes(
-                     catalog:              Option[String],
-                     schemaPattern:        Option[String],
-                     typeNamePattern:      Option[String],
-                     attributeNamePattern: Option[String]
-                   ): F[ResultSet[F]]
+    catalog:              Option[String],
+    schemaPattern:        Option[String],
+    typeNamePattern:      Option[String],
+    attributeNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether this database supports the given result set holdability.
@@ -2680,10 +2680,10 @@ trait DatabaseMetaData[F[_]]:
     getFunctions(Some(catalog), Some(schemaPattern), Some(functionNamePattern))
 
   def getFunctions(
-                    catalog:             Option[String],
-                    schemaPattern:       Option[String],
-                    functionNamePattern: Option[String]
-                  ): F[ResultSet[F]]
+    catalog:             Option[String],
+    schemaPattern:       Option[String],
+    functionNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the given catalog's system or user
@@ -2776,19 +2776,19 @@ trait DatabaseMetaData[F[_]]:
    * user function parameter, column  or return type
    */
   def getFunctionColumns(
-                          catalog:             String,
-                          schemaPattern:       String,
-                          functionNamePattern: String,
-                          columnNamePattern:   String
-                        ): F[ResultSet[F]] =
+    catalog:             String,
+    schemaPattern:       String,
+    functionNamePattern: String,
+    columnNamePattern:   String
+  ): F[ResultSet[F]] =
     getFunctionColumns(Some(catalog), Some(schemaPattern), Some(functionNamePattern), Some(columnNamePattern))
 
   def getFunctionColumns(
-                          catalog:             Option[String],
-                          schemaPattern:       Option[String],
-                          functionNamePattern: Option[String],
-                          columnNamePattern:   Option[String]
-                        ): F[ResultSet[F]]
+    catalog:             Option[String],
+    schemaPattern:       Option[String],
+    functionNamePattern: Option[String],
+    columnNamePattern:   Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves a description of the pseudo or hidden columns available
@@ -2850,19 +2850,19 @@ trait DatabaseMetaData[F[_]]:
    * @return <code>ResultSet</code> - each row is a column description
    */
   def getPseudoColumns(
-                        catalog:           String,
-                        schemaPattern:     String,
-                        tableNamePattern:  String,
-                        columnNamePattern: String
-                      ): F[ResultSet[F]] =
+    catalog:           String,
+    schemaPattern:     String,
+    tableNamePattern:  String,
+    columnNamePattern: String
+  ): F[ResultSet[F]] =
     getPseudoColumns(Some(catalog), Some(schemaPattern), Some(tableNamePattern), Some(columnNamePattern))
 
   def getPseudoColumns(
-                        catalog:           Option[String],
-                        schemaPattern:     Option[String],
-                        tableNamePattern:  Option[String],
-                        columnNamePattern: Option[String]
-                      ): F[ResultSet[F]]
+    catalog:           Option[String],
+    schemaPattern:     Option[String],
+    tableNamePattern:  Option[String],
+    columnNamePattern: Option[String]
+  ): F[ResultSet[F]]
 
   /**
    * Retrieves whether a generated key will always be returned if the column

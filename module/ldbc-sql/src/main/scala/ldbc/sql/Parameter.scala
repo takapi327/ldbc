@@ -106,21 +106,21 @@ object Parameter:
 
   // given [F[_]]: Parameter[F, LocalDateTime] = Parameter.convert(ZonedDateTime.of(_, ZoneId.systemDefault()))
 
-  // given [F[_]]: Parameter[F, Object] with
-  //  override def bind(statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
-  //    statement.setObject(index, value)
+  given [F[_]]: Parameter[F, Object] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
+      statement.setObject(index, value)
 
   // given [F[_]]: Parameter[F, URL] with
   //  override def bind(statement: PreparedStatement[F], index: Int, value: URL): F[Unit] =
   //    statement.setURL(index, value)
 
-  // given [F[_]]: Parameter[F, Null] with
-  //  override def bind(statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
-  //    statement.setObject(index, value)
+  given [F[_]]: Parameter[F, Null] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
+      statement.setObject(index, value)
 
-  // given [F[_]]: Parameter[F, None.type] with
-  //  override def bind(statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
-  //    statement.setObject(index, null)
+  given [F[_]]: Parameter[F, None.type] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
+      statement.setObject(index, null)
 
   given [F[_], T](using parameter: Parameter[F, T], nullParameter: Parameter[F, Null]): Parameter[F, Option[T]] with
     override def bind(statement: PreparedStatement[F], index: Int, value: Option[T]): F[Unit] =

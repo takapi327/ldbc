@@ -209,6 +209,32 @@ trait PreparedStatement[F[_]] extends Statement[F]:
   def executeUpdate(): F[Int]
 
   /**
+   * Sets the value of the designated parameter using the given object.
+   *
+   * The JDBC specification specifies a standard mapping from Java Object types to SQL types. The given argument will be
+   * converted to the corresponding SQL type before being sent to the database.
+   *
+   * Note that this method may be used to pass datatabase- specific abstract data types, by using a driver-specific Java
+   * type. If the object is of a class implementing the interface SQLData, the JDBC driver should call the method
+   * SQLData.writeSQL to write it to the SQL data stream. If, on the other hand, the object is of a class implementing
+   * Ref, Blob, Clob, NClob, Struct, java.net.URL, RowId, SQLXML or Array, the driver should pass it to the database as
+   * a value of the corresponding SQL type.
+   *
+   * Note: Not all databases allow for a non-typed Null to be sent to the backend. For maximum portability, the setNull
+   * or the setObject(parameterIndex: Int, x: Object, sqlType: Int) method should be used instead of
+   * setObject(parameterIndex: Int, x: Object).
+   *
+   * Note: This method throws an exception if there is an ambiguity, for example, if the object is of a class
+   * implementing more than one of the interfaces named above.
+   *
+   * @param parameterIndex
+   * the first parameter is 1, the second is 2, ...
+   * @param x
+   * the object containing the input parameter value
+   */
+  def setObject(parameterIndex: Int, value: Object): F[Unit]
+
+  /**
    * Executes the SQL statement in this <code>PreparedStatement</code> object,
    * which may be any kind of SQL statement.
    * Some prepared statements return multiple results; the <code>execute</code>
