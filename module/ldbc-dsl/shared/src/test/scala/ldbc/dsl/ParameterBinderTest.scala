@@ -257,7 +257,7 @@ object ParameterBinderTest extends Specification:
     }
 
     "If a parameter of type Timestamp is passed, the bind method of the ParameterBinder calls setTimestamp of PreparedStatement." in {
-      val timestamp = java.sql.Timestamp.valueOf(java.time.LocalDateTime.now())
+      val timestamp = java.time.LocalDateTime.now()
       val sql       = sql"SELECT timestamp FROM test WHERE timestamp = $timestamp"
 
       val statement = mock(classOf[PreparedStatement[Id]])
