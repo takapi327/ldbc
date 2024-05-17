@@ -10,5 +10,6 @@ trait internalSyntax
   extends internal.ConnectionSyntax,
           internal.ResultSetMetaDataSyntax,
           internal.ParameterMetaDataSyntax,
-          internal.DatabaseMetaDataSyntax
+          internal.DatabaseMetaDataSyntax,
+          internal.CallableStatementSyntax
 package object internal extends internalSyntax
