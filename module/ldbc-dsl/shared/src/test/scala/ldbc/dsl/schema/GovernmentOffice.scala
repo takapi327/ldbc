@@ -8,7 +8,7 @@ package ldbc.dsl.schema
 
 import java.time.LocalDate
 
-import ldbc.sql.*
+import ldbc.dsl.io.*
 
 case class GovernmentOffice(
   id:                Int,
