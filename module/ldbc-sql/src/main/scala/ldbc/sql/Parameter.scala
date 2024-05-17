@@ -6,9 +6,8 @@
 
 package ldbc.sql
 
-import java.net.URL
-import java.sql.{ Date, Time, Timestamp }
-import java.util.Date as UtilDate
+//import java.net.URL
+//import java.util.Date as UtilDate
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneId, ZonedDateTime }
 
 import scala.compiletime.*
@@ -82,45 +81,45 @@ object Parameter:
     override def bind(statement: PreparedStatement[F], index: Int, value: Array[Byte]): F[Unit] =
       statement.setBytes(index, value)
 
-  given [F[_]]: Parameter[F, Date] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Date): F[Unit] =
+  given [F[_]]: Parameter[F, LocalDate] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: LocalDate): F[Unit] =
       statement.setDate(index, value)
 
-  given [F[_]]: Parameter[F, UtilDate] = Parameter.convert(date => new Timestamp(date.getTime))
+  //given [F[_]]: Parameter[F, UtilDate] = Parameter.convert(date => new Timestamp(date.getTime))
 
-  given [F[_]]: Parameter[F, Time] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Time): F[Unit] =
+  given [F[_]]: Parameter[F, LocalTime] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: LocalTime): F[Unit] =
       statement.setTime(index, value)
 
-  given [F[_]]: Parameter[F, Timestamp] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Timestamp): F[Unit] =
+  given [F[_]]: Parameter[F, LocalDateTime] with
+    override def bind(statement: PreparedStatement[F], index: Int, value: LocalDateTime): F[Unit] =
       statement.setTimestamp(index, value)
 
-  given [F[_]]: Parameter[F, Instant] = Parameter.convert(Timestamp.from)
+  given [F[_]]: Parameter[F, Instant] = Parameter.convert(instant => LocalDateTime.ofInstant(instant, ZoneId.systemDefault()))
 
   given [F[_]]: Parameter[F, ZonedDateTime] = Parameter.convert(_.toInstant)
 
-  given [F[_]]: Parameter[F, LocalTime] = Parameter.convert(Time.valueOf)
+  //given [F[_]]: Parameter[F, LocalTime] = Parameter.convert(Time.valueOf)
 
-  given [F[_]]: Parameter[F, LocalDate] = Parameter.convert(Date.valueOf)
+  //given [F[_]]: Parameter[F, LocalDate] = Parameter.convert(Date.valueOf)
 
-  given [F[_]]: Parameter[F, LocalDateTime] = Parameter.convert(ZonedDateTime.of(_, ZoneId.systemDefault()))
+  //given [F[_]]: Parameter[F, LocalDateTime] = Parameter.convert(ZonedDateTime.of(_, ZoneId.systemDefault()))
 
-  given [F[_]]: Parameter[F, Object] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
-      statement.setObject(index, value)
+  //given [F[_]]: Parameter[F, Object] with
+  //  override def bind(statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
+  //    statement.setObject(index, value)
 
-  given [F[_]]: Parameter[F, URL] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: URL): F[Unit] =
-      statement.setURL(index, value)
+  //given [F[_]]: Parameter[F, URL] with
+  //  override def bind(statement: PreparedStatement[F], index: Int, value: URL): F[Unit] =
+  //    statement.setURL(index, value)
 
-  given [F[_]]: Parameter[F, Null] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
-      statement.setObject(index, value)
+  //given [F[_]]: Parameter[F, Null] with
+  //  override def bind(statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
+  //    statement.setObject(index, value)
 
-  given [F[_]]: Parameter[F, None.type] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
-      statement.setObject(index, null)
+  //given [F[_]]: Parameter[F, None.type] with
+  //  override def bind(statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
+  //    statement.setObject(index, null)
 
   given [F[_], T](using parameter: Parameter[F, T], nullParameter: Parameter[F, Null]): Parameter[F, Option[T]] with
     override def bind(statement: PreparedStatement[F], index: Int, value: Option[T]): F[Unit] =
