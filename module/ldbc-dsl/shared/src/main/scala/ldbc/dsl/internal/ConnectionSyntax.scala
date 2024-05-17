@@ -14,7 +14,7 @@ import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedState
 import ldbc.dsl.PreparedStatement
 
 trait ConnectionSyntax extends StatementSyntax:
-  
+
   object Connection
 
   implicit class ConnectionF(connectionObject: Connection.type):
