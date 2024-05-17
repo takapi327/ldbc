@@ -8,63 +8,60 @@ package ldbc.dsl.internal
 
 import cats.effect.Sync
 
-import ldbc.core.JdbcType
 import ldbc.sql.ResultSetMetaData
-import ResultSetMetaData.*
 
 trait ResultSetMetaDataSyntax:
 
-  implicit class ResultSetMetaDataF(resultSetMetaDataObject: ResultSetMetaData.type):
+  object ResultSetMetaData
 
-    def apply[F[_]: Sync](resultSetMetaData: java.sql.ResultSetMetaData): ResultSetMetaData[F] =
-      new ResultSetMetaData[F]:
+  implicit class ResultSetMetaDataF[F[_]: Sync](resultSetMetaDataObject: ResultSetMetaData.type):
 
-        override def getColumnCount(): F[Int] = Sync[F].blocking(resultSetMetaData.getColumnCount)
+    def apply(resultSetMetaData: java.sql.ResultSetMetaData): ResultSetMetaData =
+      new ResultSetMetaData:
 
-        override def isAutoIncrement(column: Int): F[Boolean] =
-          Sync[F].blocking(resultSetMetaData.isAutoIncrement(column))
+        override def getColumnCount(): Int = resultSetMetaData.getColumnCount
 
-        override def isCaseSensitive(column: Int): F[Boolean] =
-          Sync[F].blocking(resultSetMetaData.isCaseSensitive(column))
+        override def isAutoIncrement(column: Int): Boolean =
+          resultSetMetaData.isAutoIncrement(column)
 
-        override def isSearchable(column: Int): F[Boolean] = Sync[F].blocking(resultSetMetaData.isSearchable(column))
+        override def isCaseSensitive(column: Int): Boolean =
+          resultSetMetaData.isCaseSensitive(column)
 
-        override def isCurrency(column: Int): F[Boolean] = Sync[F].blocking(resultSetMetaData.isCurrency(column))
+        override def isSearchable(column: Int): Boolean = resultSetMetaData.isSearchable(column)
 
-        override def isNullable(column: Int): F[Option[ColumnNull]] =
-          Sync[F].blocking(ColumnNull.values.find(_.code == resultSetMetaData.isNullable(column)))
+        override def isCurrency(column: Int): Boolean = resultSetMetaData.isCurrency(column)
 
-        override def isSigned(column: Int): F[Boolean] = Sync[F].blocking(resultSetMetaData.isSigned(column))
+        override def isNullable(column: Int): Int =
+          resultSetMetaData.isNullable(column)
 
-        override def getColumnDisplaySize(column: Int): F[Int] =
-          Sync[F].blocking(resultSetMetaData.getColumnDisplaySize(column))
+        override def isSigned(column: Int): Boolean = resultSetMetaData.isSigned(column)
 
-        override def getColumnLabel(column: Int): F[String] = Sync[F].blocking(resultSetMetaData.getColumnLabel(column))
+        override def getColumnDisplaySize(column: Int): Int =
+          resultSetMetaData.getColumnDisplaySize(column)
 
-        override def getColumnName(column: Int): F[String] = Sync[F].blocking(resultSetMetaData.getColumnName(column))
+        override def getColumnLabel(column: Int): String = resultSetMetaData.getColumnLabel(column)
 
-        override def getSchemaName(column: Int): F[String] = Sync[F].blocking(resultSetMetaData.getSchemaName(column))
+        override def getColumnName(column: Int): String = resultSetMetaData.getColumnName(column)
 
-        override def getPrecision(column: Int): F[Int] = Sync[F].blocking(resultSetMetaData.getPrecision(column))
+        override def getSchemaName(column: Int): String = resultSetMetaData.getSchemaName(column)
 
-        override def getScale(column: Int): F[Int] = Sync[F].blocking(resultSetMetaData.getScale(column))
+        override def getPrecision(column: Int): Int = resultSetMetaData.getPrecision(column)
 
-        override def getTableName(column: Int): F[String] = Sync[F].blocking(resultSetMetaData.getTableName(column))
+        override def getScale(column: Int): Int = resultSetMetaData.getScale(column)
 
-        override def getCatalogName(column: Int): F[String] = Sync[F].blocking(resultSetMetaData.getCatalogName(column))
+        override def getTableName(column: Int): String = resultSetMetaData.getTableName(column)
 
-        override def getColumnType(column: Int): F[JdbcType] =
-          Sync[F].blocking(JdbcType.fromCode(resultSetMetaData.getColumnType(column)))
+        override def getCatalogName(column: Int): String = resultSetMetaData.getCatalogName(column)
 
-        override def getColumnTypeName(column: Int): F[String] =
-          Sync[F].blocking(resultSetMetaData.getColumnTypeName(column))
+        override def getColumnType(column: Int): Int =
+          resultSetMetaData.getColumnType(column)
 
-        override def isReadOnly(column: Int): F[Boolean] = Sync[F].blocking(resultSetMetaData.isReadOnly(column))
+        override def getColumnTypeName(column: Int): String =
+          resultSetMetaData.getColumnTypeName(column)
 
-        override def isWritable(column: Int): F[Boolean] = Sync[F].blocking(resultSetMetaData.isWritable(column))
+        override def isReadOnly(column: Int): Boolean = resultSetMetaData.isReadOnly(column)
 
-        override def isDefinitelyWritable(column: Int): F[Boolean] =
-          Sync[F].blocking(resultSetMetaData.isDefinitelyWritable(column))
+        override def isWritable(column: Int): Boolean = resultSetMetaData.isWritable(column)
 
-        override def getColumnClassName(column: Int): F[String] =
-          Sync[F].blocking(resultSetMetaData.getColumnClassName(column))
+        override def isDefinitelyWritable(column: Int): Boolean =
+          resultSetMetaData.isDefinitelyWritable(column)

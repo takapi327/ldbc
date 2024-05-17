@@ -574,7 +574,7 @@ trait PreparedStatement[F[_]]:
    * @return
    *   the description of a ResultSet object's columns or null if the driver cannot return a ResultSetMetaData object
    */
-  def getMetaData(): F[ResultSetMetaData[F]]
+  def getMetaData(): F[ResultSetMetaData]
 
   /**
    * Sets the designated parameter to the given java.net.URL value. The driver converts this to an SQL DATALINK value

@@ -131,8 +131,8 @@ object PreparedStatement:
     override def setArray(parameterIndex: Int, x: java.sql.Array): F[Unit] =
       Sync[F].blocking(statement.setArray(parameterIndex, x))
 
-    override def getMetaData(): F[ResultSetMetaData[F]] =
-      Sync[F].blocking(statement.getMetaData).map(ResultSetMetaData(_))
+    override def getMetaData(): F[ResultSetMetaData] =
+      Sync[F].blocking(ResultSetMetaData(statement.getMetaData))
 
     override def setURL(parameterIndex: Int, x: java.net.URL): F[Unit] =
       Sync[F].blocking(statement.setURL(parameterIndex, x))
