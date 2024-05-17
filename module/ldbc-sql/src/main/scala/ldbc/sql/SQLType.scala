@@ -7,34 +7,29 @@
 package ldbc.sql
 
 /**
- * An object that is used to identify a generic SQL type, called a JDBC type or a vendor specific data type.
- *
- * @tparam F
- *   The effect type
+ * An object that is used to identify a generic SQL type, called a JDBC type or
+ * a vendor specific data type.
  */
-trait SQLType[F[_]]:
+trait SQLType:
 
   /**
-   * Returns the SQLType name that represents a SQL data type.
+   * Returns the {@code SQLType} name that represents a SQL data type.
    *
-   * @return
-   *   The name of this SQLType.
+   * @return The name of this {@code SQLType}.
    */
-  def getName(): F[String]
+  def getName(): String
 
   /**
-   * Returns the name of the vendor that supports this data type. The value returned typically is the package name for
-   * this vendor.
+   * Returns the name of the vendor that supports this data type. The value
+   * returned typically is the package name for this vendor.
    *
-   * @return
-   *   The name of the vendor for this data type
+   * @return The name of the vendor for this data type
    */
-  def getVendor(): F[String]
+  def getVendor(): String
 
   /**
    * Returns the vendor specific type number for the data type.
    *
-   * @return
-   *   An Integer representing the vendor specific data type
+   * @return An Integer representing the vendor specific data type
    */
-  def getVendorTypeNumber(): F[Int]
+  def getVendorTypeNumber(): Int
