@@ -86,13 +86,13 @@ trait ResultSetSyntax:
 
       override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
         Sync[F].blocking(resultSet.getTimestamp(columnIndex)).map {
-          case null => null
+          case null      => null
           case timestamp => timestamp.toLocalDateTime
         }
 
       override def getTimestamp(columnLabel: String): F[LocalDateTime] =
         Sync[F].blocking(resultSet.getTimestamp(columnLabel)).map {
-          case null => null
+          case null      => null
           case timestamp => timestamp.toLocalDateTime
         }
 
