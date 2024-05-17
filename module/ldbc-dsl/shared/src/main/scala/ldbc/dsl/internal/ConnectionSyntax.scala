@@ -10,7 +10,7 @@ import cats.Applicative
 import cats.implicits.*
 import cats.data.Kleisli
 import cats.effect.Sync
-import ldbc.sql.{CallableStatement, Connection, DatabaseMetaData, PreparedStatement, Statement}
+import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, Statement }
 import ldbc.dsl.PreparedStatement
 
 trait ConnectionSyntax extends StatementSyntax:
