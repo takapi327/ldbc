@@ -61,22 +61,40 @@ trait ResultSetSyntax:
       override def getDouble(columnLabel: String): F[Double] = Sync[F].blocking(resultSet.getDouble(columnLabel))
 
       override def getDate(columnIndex: Int): F[LocalDate] =
-        Sync[F].blocking(resultSet.getDate(columnIndex).toLocalDate)
+        Sync[F].blocking(resultSet.getDate(columnIndex)).map {
+          case null => null
+          case date => date.toLocalDate
+        }
 
       override def getDate(columnLabel: String): F[LocalDate] =
-        Sync[F].blocking(resultSet.getDate(columnLabel).toLocalDate)
+        Sync[F].blocking(resultSet.getDate(columnLabel)).map {
+          case null => null
+          case date => date.toLocalDate
+        }
 
       override def getTime(columnIndex: Int): F[LocalTime] =
-        Sync[F].blocking(resultSet.getTime(columnIndex).toLocalTime)
+        Sync[F].blocking(resultSet.getTime(columnIndex)).map {
+          case null => null
+          case time => time.toLocalTime
+        }
 
       override def getTime(columnLabel: String): F[LocalTime] =
-        Sync[F].blocking(resultSet.getTime(columnLabel).toLocalTime)
+        Sync[F].blocking(resultSet.getTime(columnLabel)).map {
+          case null => null
+          case time => time.toLocalTime
+        }
 
       override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
-        Sync[F].blocking(resultSet.getTimestamp(columnIndex).toLocalDateTime)
+        Sync[F].blocking(resultSet.getTimestamp(columnIndex)).map {
+          case null => null
+          case timestamp => timestamp.toLocalDateTime
+        }
 
       override def getTimestamp(columnLabel: String): F[LocalDateTime] =
-        Sync[F].blocking(resultSet.getTimestamp(columnLabel).toLocalDateTime)
+        Sync[F].blocking(resultSet.getTimestamp(columnLabel)).map {
+          case null => null
+          case timestamp => timestamp.toLocalDateTime
+        }
 
       override def getMetaData(): F[ResultSetMetaData] =
         Sync[F].blocking(resultSet.getMetaData).map(ResultSetMetaData(_))
