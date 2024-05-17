@@ -149,7 +149,7 @@ trait SQLSyntax[F[_]: Sync]:
       }
 
       (for
-        statement <- connection.prepareStatement(sql.statement, Statement.Generated.RETURN_GENERATED_KEYS)
+        statement <- connection.prepareStatement(sql.statement, Statement.Generated.RETURN_GENERATED_KEYS.code)
         resultSet <- sql.params.zipWithIndex.traverse {
                        case (param, index) => param.bind(statement, index + 1)
                      } >> statement.executeUpdate() >> statement.getGeneratedKeys()
