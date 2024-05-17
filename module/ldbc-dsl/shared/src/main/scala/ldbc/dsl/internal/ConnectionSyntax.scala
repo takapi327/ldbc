@@ -14,6 +14,8 @@ import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedState
 import ldbc.dsl.PreparedStatement
 
 trait ConnectionSyntax extends StatementSyntax:
+  
+  object Connection
 
   implicit class ConnectionF(connectionObject: Connection.type):
 
@@ -53,8 +55,8 @@ trait ConnectionSyntax extends StatementSyntax:
 
       override def getCatalog(): F[String] = Sync[F].blocking(connection.getCatalog)
 
-      override def setTransactionIsolation(level: Connection.TransactionIsolation): F[Unit] =
-        Sync[F].blocking(connection.setTransactionIsolation(level.code))
+      override def setTransactionIsolation(level: Int): F[Unit] =
+        Sync[F].blocking(connection.setTransactionIsolation(level))
 
       override def getTransactionIsolation(): F[Int] = Sync[F].blocking(connection.getTransactionIsolation)
 

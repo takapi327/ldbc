@@ -287,7 +287,7 @@ trait Connection[F[_]]:
    *   Connection.TRANSACTION_SERIALIZABLE. (Note that Connection.TRANSACTION_NONE cannot be used because it specifies
    *   that transactions are not supported.)
    */
-  def setTransactionIsolation(level: Connection.TransactionIsolation): F[Unit]
+  def setTransactionIsolation(level: Int): F[Unit]
 
   /**
    * Retrieves this Connection object's current transaction isolation level.
@@ -445,27 +445,3 @@ trait Connection[F[_]]:
    *   true if the connection is valid, false otherwise
    */
   def isValid(timeout: Int): F[Boolean]
-
-object Connection:
-
-  /**
-   * Enum to specify transaction isolation level
-   *
-   *   - TRANSACTION_NONE: Transactions are not supported.
-   *
-   *   - TRANSACTION_READ_UNCOMMITTED: Data with uncommitted changes can be read from other transactions.
-   *
-   *   - TRANSACTION_READ_COMMITTED: Only committed changes can be read from other transactions.
-   *
-   *   - TRANSACTION_REPEATABLE_READ: Ensure that the same query always returns the same results, unaffected by changes
-   *     from other transactions.
-   *
-   *   - TRANSACTION_SERIALIZABLE: Transactions are treated as if they are serialized to each other to guarantee data
-   *     integrity.
-   */
-  enum TransactionIsolation(val code: Int):
-    case TRANSACTION_NONE             extends TransactionIsolation(java.sql.Connection.TRANSACTION_NONE)
-    case TRANSACTION_READ_UNCOMMITTED extends TransactionIsolation(java.sql.Connection.TRANSACTION_READ_UNCOMMITTED)
-    case TRANSACTION_READ_COMMITTED   extends TransactionIsolation(java.sql.Connection.TRANSACTION_READ_COMMITTED)
-    case TRANSACTION_REPEATABLE_READ  extends TransactionIsolation(java.sql.Connection.TRANSACTION_REPEATABLE_READ)
-    case TRANSACTION_SERIALIZABLE     extends TransactionIsolation(java.sql.Connection.TRANSACTION_SERIALIZABLE)
