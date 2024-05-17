@@ -9,9 +9,10 @@ package ldbc.dsl.internal
 import cats.effect.Sync
 
 import ldbc.sql.ParameterMetaData
-import ParameterMetaData.*
 
 trait ParameterMetaDataSyntax:
+
+  object ParameterMetaData
 
   implicit class ParameterMetaDataF(parameterMetaDataObject: ParameterMetaData.type):
 
@@ -20,8 +21,8 @@ trait ParameterMetaDataSyntax:
 
         override def getParameterCount(): F[Int] = Sync[F].blocking(parameterMetaData.getParameterCount)
 
-        override def isNullable(param: Int): F[Option[Parameter]] =
-          Sync[F].blocking(Parameter.values.find(_.code == parameterMetaData.isNullable(param)))
+        override def isNullable(param: Int): F[Int] =
+          Sync[F].blocking(parameterMetaData.isNullable(param))
 
         override def isSigned(param: Int): F[Boolean] = Sync[F].blocking(parameterMetaData.isSigned(param))
 
@@ -38,5 +39,5 @@ trait ParameterMetaDataSyntax:
         override def getParameterClassName(param: Int): F[String] =
           Sync[F].blocking(parameterMetaData.getParameterClassName(param))
 
-        override def getParameterMode(param: Int): F[Option[Mode]] =
-          Sync[F].blocking(Mode.values.find(_.code == parameterMetaData.getParameterMode(param)))
+        override def getParameterMode(param: Int): F[Int] =
+          Sync[F].blocking(parameterMetaData.getParameterMode(param))
