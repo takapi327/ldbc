@@ -231,7 +231,7 @@ object ParameterBinderTest extends Specification:
     }
 
     "If a parameter of type Time is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
-      val time = java.sql.Time.valueOf(java.time.LocalTime.now())
+      val time = java.time.LocalTime.now()
       val sql  = sql"SELECT time FROM test WHERE time = $time"
 
       sql.statement === "SELECT time FROM test WHERE time = ?" and sql.params.size === 1
@@ -280,11 +280,13 @@ object ParameterBinderTest extends Specification:
       val sql     = sql"SELECT instant FROM test WHERE instant = $instant"
 
       val statement = mock(classOf[PreparedStatement[Id]])
-      when(statement.setTimestamp(1, java.sql.Timestamp.from(instant))).thenReturn(Id(()))
+      when(statement.setTimestamp(1, java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault)))
+        .thenReturn(Id(()))
 
       sql.params.head.bind(statement, 1)
 
-      verify(statement, org.mockito.Mockito.times(1)).setTimestamp(1, java.sql.Timestamp.from(instant))
+      verify(statement, org.mockito.Mockito.times(1))
+        .setTimestamp(1, java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault))
     }
 
     "If a parameter of type ZonedDateTime is passed, it will be equal to the value specified by statements and params in the generated SQL model." in {
