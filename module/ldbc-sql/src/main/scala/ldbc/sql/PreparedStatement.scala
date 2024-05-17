@@ -162,7 +162,6 @@ trait PreparedStatement[F[_]] extends Statement[F]:
    */
   def setBytes(index: Int, value: Array[Byte]): F[Unit]
 
-
   /**
    * Sets the designated parameter to the given java.time.Time value. The driver converts this to an SQL TIME value when
    * it sends it to the database.
