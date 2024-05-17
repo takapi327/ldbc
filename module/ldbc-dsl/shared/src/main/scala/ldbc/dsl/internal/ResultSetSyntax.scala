@@ -60,20 +60,26 @@ trait ResultSetSyntax:
 
       override def getDouble(columnLabel: String): F[Double] = Sync[F].blocking(resultSet.getDouble(columnLabel))
 
-      override def getDate(columnIndex: Int): F[LocalDate] = Sync[F].blocking(resultSet.getDate(columnIndex).toLocalDate)
+      override def getDate(columnIndex: Int): F[LocalDate] =
+        Sync[F].blocking(resultSet.getDate(columnIndex).toLocalDate)
 
-      override def getDate(columnLabel: String): F[LocalDate] = Sync[F].blocking(resultSet.getDate(columnLabel).toLocalDate)
+      override def getDate(columnLabel: String): F[LocalDate] =
+        Sync[F].blocking(resultSet.getDate(columnLabel).toLocalDate)
 
-      override def getTime(columnIndex: Int): F[LocalTime] = Sync[F].blocking(resultSet.getTime(columnIndex).toLocalTime)
+      override def getTime(columnIndex: Int): F[LocalTime] =
+        Sync[F].blocking(resultSet.getTime(columnIndex).toLocalTime)
 
-      override def getTime(columnLabel: String): F[LocalTime] = Sync[F].blocking(resultSet.getTime(columnLabel).toLocalTime)
+      override def getTime(columnLabel: String): F[LocalTime] =
+        Sync[F].blocking(resultSet.getTime(columnLabel).toLocalTime)
 
-      override def getTimestamp(columnIndex: Int): F[LocalDateTime] = Sync[F].blocking(resultSet.getTimestamp(columnIndex).toLocalDateTime)
+      override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
+        Sync[F].blocking(resultSet.getTimestamp(columnIndex).toLocalDateTime)
 
       override def getTimestamp(columnLabel: String): F[LocalDateTime] =
         Sync[F].blocking(resultSet.getTimestamp(columnLabel).toLocalDateTime)
 
-      override def getMetaData(): F[ResultSetMetaData] = Sync[F].blocking(resultSet.getMetaData).map(ResultSetMetaData(_))
+      override def getMetaData(): F[ResultSetMetaData] =
+        Sync[F].blocking(resultSet.getMetaData).map(ResultSetMetaData(_))
 
       override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
         Sync[F].blocking(resultSet.getBigDecimal(columnIndex))
