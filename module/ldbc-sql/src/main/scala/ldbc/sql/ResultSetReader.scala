@@ -6,9 +6,6 @@
 
 package ldbc.sql
 
-import java.io.{ InputStream, Reader }
-import java.sql.{ Date, Time, Timestamp }
-import java.util.Date as UtilDate
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
 import scala.compiletime.*
@@ -94,34 +91,16 @@ object ResultSetReader:
   given [F[_]]: ResultSetReader[F, Long]        = ResultSetReader(_.getLong, _.getLong)
   given [F[_]]: ResultSetReader[F, Float]       = ResultSetReader(_.getFloat, _.getFloat)
   given [F[_]]: ResultSetReader[F, Double]      = ResultSetReader(_.getDouble, _.getDouble)
-  given [F[_]]: ResultSetReader[F, Date]        = ResultSetReader(_.getDate, _.getDate)
-  given [F[_]]: ResultSetReader[F, Time]        = ResultSetReader(_.getTime, _.getTime)
-  given [F[_]]: ResultSetReader[F, Timestamp]   = ResultSetReader(_.getTimestamp, _.getTimestamp)
-  given [F[_]]: ResultSetReader[F, InputStream] = ResultSetReader(_.getAsciiStream, _.getAsciiStream)
-  given [F[_]]: ResultSetReader[F, Object]      = ResultSetReader(_.getObject, _.getObject)
-  given [F[_]]: ResultSetReader[F, Reader]      = ResultSetReader(_.getCharacterStream, _.getCharacterStream)
+  given [F[_]]: ResultSetReader[F, LocalDate]        = ResultSetReader(_.getDate, _.getDate)
+  given [F[_]]: ResultSetReader[F, LocalTime]        = ResultSetReader(_.getTime, _.getTime)
+  given [F[_]]: ResultSetReader[F, LocalDateTime]   = ResultSetReader(_.getTimestamp, _.getTimestamp)
   given [F[_]]: ResultSetReader[F, BigDecimal]  = ResultSetReader(_.getBigDecimal, _.getBigDecimal)
 
   given [F[_]: Functor](using reader: ResultSetReader[F, String]): ResultSetReader[F, BigInt] =
     reader.map(str => if str == null then null else BigInt(str))
 
-  given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, Instant] =
-    reader.map(timestamp => if timestamp == null then null else timestamp.toInstant)
-
-  given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, UtilDate] =
-    reader.map(timestamp => if timestamp == null then null else UtilDate(timestamp.getTime))
-
   given [F[_]: Functor](using reader: ResultSetReader[F, Instant]): ResultSetReader[F, ZonedDateTime] =
     reader.map(instant => if instant == null then null else ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()))
-
-  given [F[_]: Functor](using reader: ResultSetReader[F, Time]): ResultSetReader[F, LocalTime] =
-    reader.map(time => if time == null then null else time.toLocalTime)
-
-  given [F[_]: Functor](using reader: ResultSetReader[F, Date]): ResultSetReader[F, LocalDate] =
-    reader.map(date => if date == null then null else date.toLocalDate)
-
-  given [F[_]: Functor](using reader: ResultSetReader[F, Timestamp]): ResultSetReader[F, LocalDateTime] =
-    reader.map(timestamp => if timestamp == null then null else timestamp.toLocalDateTime)
 
   given [F[_]: Monad, A](using reader: ResultSetReader[F, A]): ResultSetReader[F, Option[A]] with
 
