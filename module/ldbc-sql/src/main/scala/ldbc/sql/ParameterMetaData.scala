@@ -6,8 +6,6 @@
 
 package ldbc.sql
 
-import ldbc.core.JdbcType
-
 /**
  * An object that can be used to get information about the types and properties for each parameter marker in a
  * PreparedStatement object. For some queries and driver implementations, the data that would be returned by a
@@ -85,9 +83,9 @@ trait ParameterMetaData[F[_]]:
    * @param param
    *   the first parameter is 1, the second is 2, ...
    * @return
-   *   SQL type from [[ldbc.core.JdbcType]]
+   *   SQL type from <code>java.sql.Types</code>
    */
-  def getParameterType(param: Int): F[JdbcType]
+  def getParameterType(param: Int): F[Int]
 
   /**
    * Retrieves the designated parameter's database-specific type name.

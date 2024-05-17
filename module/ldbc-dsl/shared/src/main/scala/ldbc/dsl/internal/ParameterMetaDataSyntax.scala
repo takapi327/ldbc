@@ -8,7 +8,6 @@ package ldbc.dsl.internal
 
 import cats.effect.Sync
 
-import ldbc.core.JdbcType
 import ldbc.sql.ParameterMetaData
 import ParameterMetaData.*
 
@@ -30,8 +29,8 @@ trait ParameterMetaDataSyntax:
 
         override def getScale(param: Int): F[Int] = Sync[F].blocking(parameterMetaData.getScale(param))
 
-        override def getParameterType(param: Int): F[JdbcType] =
-          Sync[F].blocking(JdbcType.fromCode(parameterMetaData.getParameterType(param)))
+        override def getParameterType(param: Int): F[Int] =
+          Sync[F].blocking(parameterMetaData.getParameterType(param))
 
         override def getParameterTypeName(param: Int): F[String] =
           Sync[F].blocking(parameterMetaData.getParameterTypeName(param))
