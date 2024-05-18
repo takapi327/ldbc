@@ -66,7 +66,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result    <- statement.executeBatch()
         yield result
       },
-      List(0, 1, 0)
+      Array(0, 1, 0)
     )
   }
 
@@ -83,7 +83,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result    <- statement.executeBatch()
         yield result
       },
-      List(0, 0)
+      Array(0, 0)
     )
   }
 
@@ -95,7 +95,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result    <- statement.executeBatch()
         yield result
       },
-      List.empty
+      Array.empty[Int]
     )
   }
 
@@ -128,7 +128,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result <- preparedStatement.executeBatch()
         yield result
       },
-      List(-2, -2, -2)
+      Array(-2, -2, -2)
     )
   }
 
@@ -161,7 +161,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result <- preparedStatement.executeBatch()
         yield result
       },
-      List(-2, -2, -2)
+      Array(-2, -2, -2)
     )
   }
 
@@ -187,7 +187,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result <- preparedStatement.executeBatch()
         yield result
       },
-      List(-2, -2, -2)
+      Array(-2, -2, -2)
     )
   }
 
@@ -204,7 +204,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result <- preparedStatement.executeBatch()
         yield result
       },
-      List(-2, -2, -2)
+      Array(-2, -2, -2)
     )
   }
 
@@ -221,7 +221,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result <- preparedStatement.executeBatch()
         yield result
       },
-      List(1, 1, 1)
+      Array(1, 1, 1)
     )
   }
 
@@ -257,7 +257,7 @@ class StatementBatchTest extends CatsEffectSuite:
           result            <- preparedStatement.executeBatch()
         yield result
       },
-      List(1, 1, 1)
+      Array(1, 1, 1)
     )
   }
 

@@ -12,7 +12,7 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
-import ldbc.connector.net.protocol.Statement
+import ldbc.sql.Statement
 
 class StatementUpdateTest extends CatsEffectSuite:
 
