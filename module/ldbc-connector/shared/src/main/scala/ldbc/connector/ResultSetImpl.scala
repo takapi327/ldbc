@@ -247,7 +247,7 @@ case class ResultSetImpl[F[_]](
 
   override def getMetaData(): F[ResultSetMetaData] =
     checkClose {
-      ev.pure(ResultSetImplMetaData(columns, serverVariables, version))
+      ev.pure(ResultSetMetaDataImpl(columns, serverVariables, version))
     }
 
   override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
