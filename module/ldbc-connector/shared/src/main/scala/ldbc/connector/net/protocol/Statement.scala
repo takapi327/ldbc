@@ -378,7 +378,7 @@ object Statement:
             case _: OKPacket =>
               for
                 isResultSetClosed      <- Ref[F].of(false)
-                lastColumnReadNullable      <- Ref[F].of(true)
+                lastColumnReadNullable <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                 resultSet = LdbcResultSet
@@ -414,7 +414,7 @@ object Statement:
                               serverVariables,
                               protocol.initialPacket.serverVersion,
                               resultSetClosed,
-                  lastColumnReadNullable,
+                              lastColumnReadNullable,
                               resultSetCurrentCursor,
                               resultSetCurrentRow,
                               resultSetType,
@@ -444,10 +444,11 @@ object Statement:
 
     override def execute(sql: String): F[Boolean] =
       checkClosed() *> checkNullOrEmptyQuery(sql) *> (
-        if sql.toUpperCase.startsWith("SELECT") then executeQuery(sql).flatMap {
-          case resultSet: LdbcResultSet[F] => resultSet.hasRows()
-          case _ => ev.pure(false)
-        }
+        if sql.toUpperCase.startsWith("SELECT") then
+          executeQuery(sql).flatMap {
+            case resultSet: LdbcResultSet[F] => resultSet.hasRows()
+            case _                           => ev.pure(false)
+          }
         else executeUpdate(sql).map(_ => false)
       )
 
@@ -497,7 +498,7 @@ object Statement:
         case Statement.RETURN_GENERATED_KEYS =>
           for
             isResultSetClosed      <- Ref[F].of(false)
-            lastColumnReadNullable      <- Ref[F].of(true)
+            lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
@@ -512,7 +513,7 @@ object Statement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           isResultSetClosed,
-              lastColumnReadNullable,
+                          lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow
                         )

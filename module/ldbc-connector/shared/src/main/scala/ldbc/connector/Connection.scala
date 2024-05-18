@@ -899,7 +899,8 @@ object Connection:
                          metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
                          metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
                        )
-        paramInfo             <- CallableStatement.ParamInfo(sql, database, resultSet.asInstanceOf[LdbcResultSet[F]], isFunctionCall = false)
+        paramInfo <-
+          CallableStatement.ParamInfo(sql, database, resultSet.asInstanceOf[LdbcResultSet[F]], isFunctionCall = false)
         params                <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs           <- Ref[F].of(Vector.empty[String])
         statementClosed       <- Ref[F].of[Boolean](false)

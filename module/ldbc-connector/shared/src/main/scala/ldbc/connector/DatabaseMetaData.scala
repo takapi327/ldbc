@@ -4554,7 +4554,7 @@ object DatabaseMetaData:
        else getDatabases(None)).flatMap { dbList =>
         for
           isResultSetClosed      <- Ref[F].of(false)
-          lastColumnReadNullable      <- Ref[F].of(true)
+          lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
         yield LdbcResultSet(
@@ -4578,7 +4578,7 @@ object DatabaseMetaData:
     override def getTableTypes(): F[ResultSet[F]] =
       for
         isResultSetClosed      <- Ref[F].of(false)
-        lastColumnReadNullable      <- Ref[F].of(true)
+        lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
       yield LdbcResultSet(
@@ -4926,7 +4926,7 @@ object DatabaseMetaData:
                        }
                      }
           isResultSetClosed      <- Ref[F].of(false)
-          lastColumnReadNullable      <- Ref[F].of(true)
+          lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
           _                      <- preparedStatement.close()
@@ -5215,7 +5215,7 @@ object DatabaseMetaData:
     override def getTypeInfo(): F[ResultSet[F]] =
       for
         isResultSetClosed      <- Ref[F].of(false)
-        lastColumnReadNullable      <- Ref[F].of(true)
+        lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
       yield
@@ -5430,7 +5430,7 @@ object DatabaseMetaData:
        else ev.pure(List.empty[String])).flatMap { dbList =>
         for
           isResultSetClosed      <- Ref[F].of(false)
-          lastColumnReadNullable      <- Ref[F].of(true)
+          lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
         yield LdbcResultSet(
@@ -5869,7 +5869,7 @@ object DatabaseMetaData:
     private def emptyResultSet(fields: Vector[String]): F[ResultSet[F]] =
       for
         isResultSetClosed      <- Ref[F].of(false)
-        lastColumnReadNullable      <- Ref[F].of(true)
+        lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
       yield LdbcResultSet(

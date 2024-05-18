@@ -555,14 +555,14 @@ object CallableStatement:
               resultSets.headOption match
                 case None =>
                   for
-                    lastColumnReadNullable      <- Ref[F].of(true)
+                    lastColumnReadNullable <- Ref[F].of(true)
                     resultSetCurrentCursor <- Ref[F].of(0)
                     resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                     resultSet = LdbcResultSet.empty(
                                   serverVariables,
                                   protocol.initialPacket.serverVersion,
                                   resultSetClosed,
-                      lastColumnReadNullable,
+                                  lastColumnReadNullable,
                                   resultSetCurrentCursor,
                                   resultSetCurrentRow
                                 )
@@ -596,14 +596,14 @@ object CallableStatement:
               resultSets.headOption match
                 case None =>
                   for
-                    lastColumnReadNullable      <- Ref[F].of(true)
+                    lastColumnReadNullable <- Ref[F].of(true)
                     resultSetCurrentCursor <- Ref[F].of(0)
                     resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                     resultSet = LdbcResultSet.empty(
                                   serverVariables,
                                   protocol.initialPacket.serverVersion,
                                   resultSetClosed,
-                      lastColumnReadNullable,
+                                  lastColumnReadNullable,
                                   resultSetCurrentCursor,
                                   resultSetCurrentRow
                                 )
@@ -746,7 +746,7 @@ object CallableStatement:
         case Statement.RETURN_GENERATED_KEYS =>
           for
             isResultSetClosed      <- Ref[F].of(false)
-            lastColumnReadNullable      <- Ref[F].of(true)
+            lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
@@ -764,7 +764,7 @@ object CallableStatement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           isResultSetClosed,
-              lastColumnReadNullable,
+                          lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow
                         )
@@ -1060,7 +1060,7 @@ object CallableStatement:
                 ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                 Vector.empty
               )
-            lastColumnReadNullable      <- Ref[F].of(true)
+            lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
             resultSet = LdbcResultSet(
@@ -1069,7 +1069,7 @@ object CallableStatement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           resultSetClosed,
-              lastColumnReadNullable,
+                          lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow,
                           resultSetType,
@@ -1083,7 +1083,7 @@ object CallableStatement:
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
         case _: OKPacket =>
           for
-            lastColumnReadNullable     <- Ref[F].of(true)
+            lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
           yield LdbcResultSet
@@ -1108,7 +1108,7 @@ object CallableStatement:
                 ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                 Vector.empty
               )
-            lastColumnReadNullable      <- Ref[F].of(true)
+            lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
             resultSet = LdbcResultSet(
@@ -1117,7 +1117,7 @@ object CallableStatement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           resultSetClosed,
-              lastColumnReadNullable,
+                          lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow,
                           resultSetType,

@@ -25,14 +25,13 @@ class LdbcResultSetMetaData(
 
   override def isCaseSensitive(column: Int): Boolean = unsafeFindByIndex(column).columnType match
     case ColumnDataType.MYSQL_TYPE_BIT | ColumnDataType.MYSQL_TYPE_TINY | ColumnDataType.MYSQL_TYPE_SHORT |
-         ColumnDataType.MYSQL_TYPE_LONG | ColumnDataType.MYSQL_TYPE_INT24 | ColumnDataType.MYSQL_TYPE_LONGLONG |
-         ColumnDataType.MYSQL_TYPE_FLOAT | ColumnDataType.MYSQL_TYPE_DOUBLE | ColumnDataType.MYSQL_TYPE_DATE |
-         ColumnDataType.MYSQL_TYPE_YEAR | ColumnDataType.MYSQL_TYPE_TIME | ColumnDataType.MYSQL_TYPE_TIMESTAMP |
-         ColumnDataType.MYSQL_TYPE_TIMESTAMP2 | ColumnDataType.MYSQL_TYPE_DATETIME =>
+      ColumnDataType.MYSQL_TYPE_LONG | ColumnDataType.MYSQL_TYPE_INT24 | ColumnDataType.MYSQL_TYPE_LONGLONG |
+      ColumnDataType.MYSQL_TYPE_FLOAT | ColumnDataType.MYSQL_TYPE_DOUBLE | ColumnDataType.MYSQL_TYPE_DATE |
+      ColumnDataType.MYSQL_TYPE_YEAR | ColumnDataType.MYSQL_TYPE_TIME | ColumnDataType.MYSQL_TYPE_TIMESTAMP |
+      ColumnDataType.MYSQL_TYPE_TIMESTAMP2 | ColumnDataType.MYSQL_TYPE_DATETIME =>
       false
-    case ColumnDataType.MYSQL_TYPE_STRING | ColumnDataType.MYSQL_TYPE_VARCHAR |
-         ColumnDataType.MYSQL_TYPE_VAR_STRING | ColumnDataType.MYSQL_TYPE_JSON | ColumnDataType.MYSQL_TYPE_ENUM |
-         ColumnDataType.MYSQL_TYPE_SET =>
+    case ColumnDataType.MYSQL_TYPE_STRING | ColumnDataType.MYSQL_TYPE_VARCHAR | ColumnDataType.MYSQL_TYPE_VAR_STRING |
+      ColumnDataType.MYSQL_TYPE_JSON | ColumnDataType.MYSQL_TYPE_ENUM | ColumnDataType.MYSQL_TYPE_SET =>
       CharsetMapping
         .getStaticCollationNameForCollationIndex(
           getMysqlCharsetForJavaEncoding(serverVariables.getOrElse("character_set_client", "utf8mb4"))
@@ -45,7 +44,8 @@ class LdbcResultSetMetaData(
   override def isCurrency(column: Int): Boolean = false
 
   override def isNullable(column: Int): Int =
-    if unsafeFindByIndex(column).flags.contains(ColumnDefinitionFlags.NOT_NULL_FLAG) then ResultSetMetaData.columnNoNulls
+    if unsafeFindByIndex(column).flags.contains(ColumnDefinitionFlags.NOT_NULL_FLAG) then
+      ResultSetMetaData.columnNoNulls
     else ResultSetMetaData.columnNullable
 
   override def isSigned(column: Int): Boolean =
@@ -54,23 +54,23 @@ class LdbcResultSetMetaData(
   override def getColumnDisplaySize(column: Int): Int = clampedGetLength(unsafeFindByIndex(column))
 
   override def getColumnLabel(column: Int): String = unsafeFindByIndex(column) match
-    case definition: ColumnDefinition41Packet => definition.name
+    case definition: ColumnDefinition41Packet  => definition.name
     case definition: ColumnDefinition320Packet => definition.name
 
   override def getColumnName(column: Int): String = unsafeFindByIndex(column) match
-    case definition: ColumnDefinition41Packet => definition.orgName
+    case definition: ColumnDefinition41Packet  => definition.orgName
     case definition: ColumnDefinition320Packet => definition.name
 
   override def getSchemaName(column: Int): String = unsafeFindByIndex(column) match
     case definition: ColumnDefinition41Packet => definition.schema
-    case _: ColumnDefinition320Packet => ""
+    case _: ColumnDefinition320Packet         => ""
 
   override def getPrecision(column: Int): Int =
     val definition = unsafeFindByIndex(column)
     definition.columnType match
       case ColumnDataType.MYSQL_TYPE_TINY_BLOB | ColumnDataType.MYSQL_TYPE_BLOB |
-           ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB | ColumnDataType.MYSQL_TYPE_LONG_BLOB |
-           ColumnDataType.MYSQL_TYPE_DECIMAL =>
+        ColumnDataType.MYSQL_TYPE_MEDIUM_BLOB | ColumnDataType.MYSQL_TYPE_LONG_BLOB |
+        ColumnDataType.MYSQL_TYPE_DECIMAL =>
         clampedGetLength(definition)
       case _ =>
         val charset = serverVariables.getOrElse("character_set_client", "utf8mb4")
@@ -81,21 +81,21 @@ class LdbcResultSetMetaData(
 
   override def getScale(column: Int): Int = unsafeFindByIndex(column) match
     case definition: ColumnDefinition41Packet => definition.decimals
-    case _ => 0
+    case _                                    => 0
 
   override def getTableName(column: Int): String = unsafeFindByIndex(column) match
-    case definition: ColumnDefinition41Packet => definition.orgTable
+    case definition: ColumnDefinition41Packet  => definition.orgTable
     case definition: ColumnDefinition320Packet => definition.table
 
   override def getCatalogName(column: Int): String = unsafeFindByIndex(column) match
     case definition: ColumnDefinition41Packet => definition.catalog
-    case _: ColumnDefinition320Packet => ""
+    case _: ColumnDefinition320Packet         => ""
 
   override def getColumnType(column: Int): Int =
     val dataType = unsafeFindByIndex(column).columnType
     dataType match
       case ColumnDataType.MYSQL_TYPE_YEAR => ColumnDataType.MYSQL_TYPE_SHORT.code.toInt
-      case _ => dataType.code.toInt
+      case _                              => dataType.code.toInt
 
   override def getColumnTypeName(column: Int): String = unsafeFindByIndex(column).columnType.name
 
@@ -125,12 +125,12 @@ class LdbcResultSetMetaData(
       case None =>
         CharsetMapping.getStaticMysqlCharsetForJavaEncoding(javaCharsetName, Some(version)) match
           case Some(charsetName) => CharsetMapping.getStaticMblen(charsetName)
-          case None => 1
+          case None              => 1
 
   private def unsafeFindByIndex(index: Int): ColumnDefinitionPacket =
     columns.lift(index - 1) match
       case Some(column) => column
-      case None => throw new SQLException("Column index out of range.")
+      case None         => throw new SQLException("Column index out of range.")
 
 object LdbcResultSetMetaData:
 

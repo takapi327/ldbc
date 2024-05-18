@@ -624,7 +624,7 @@ object PreparedStatement:
                                 serverVariables,
                                 protocol.initialPacket.serverVersion,
                                 resultSetClosed,
-                    lastColumnReadNullable,
+                                lastColumnReadNullable,
                                 resultSetCurrentCursor,
                                 resultSetCurrentRow,
                                 resultSetType,
@@ -658,10 +658,11 @@ object PreparedStatement:
       }
 
     override def execute(): F[Boolean] =
-      if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap {
-        case resultSet: LdbcResultSet[F] => resultSet.hasRows()
-        case _                            => ev.pure(false)
-      }
+      if sql.toUpperCase.startsWith("SELECT") then
+        executeQuery().flatMap {
+          case resultSet: LdbcResultSet[F] => resultSet.hasRows()
+          case _                           => ev.pure(false)
+        }
       else executeUpdate().map(_ => false)
 
     override def addBatch(): F[Unit] =
@@ -761,7 +762,7 @@ object PreparedStatement:
         case Statement.RETURN_GENERATED_KEYS =>
           for
             isResultSetClosed      <- Ref[F].of(false)
-            lastColumnReadNullable      <- Ref[F].of(true)
+            lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
@@ -779,7 +780,7 @@ object PreparedStatement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           isResultSetClosed,
-              lastColumnReadNullable,
+                          lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow
                         )
@@ -873,7 +874,7 @@ object PreparedStatement:
                         serverVariables,
                         protocol.initialPacket.serverVersion,
                         resultSetClosed,
-            lastColumnReadNullable,
+                        lastColumnReadNullable,
                         resultSetCurrentCursor,
                         resultSetCurrentRow,
                         resultSetType,
@@ -903,10 +904,11 @@ object PreparedStatement:
       }
 
     override def execute(): F[Boolean] =
-      if sql.toUpperCase.startsWith("SELECT") then executeQuery().flatMap {
-        case resultSet: LdbcResultSet[F] => resultSet.hasRows()
-        case _                            => ev.pure(false)
-      }
+      if sql.toUpperCase.startsWith("SELECT") then
+        executeQuery().flatMap {
+          case resultSet: LdbcResultSet[F] => resultSet.hasRows()
+          case _                           => ev.pure(false)
+        }
       else executeUpdate().map(_ => false)
 
     override def addBatch(): F[Unit] =
@@ -1006,7 +1008,7 @@ object PreparedStatement:
         case Statement.RETURN_GENERATED_KEYS =>
           for
             isResultSetClosed      <- Ref[F].of(false)
-            lastColumnReadNullable      <- Ref[F].of(true)
+            lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
@@ -1024,7 +1026,7 @@ object PreparedStatement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           isResultSetClosed,
-              lastColumnReadNullable,
+                          lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow
                         )
