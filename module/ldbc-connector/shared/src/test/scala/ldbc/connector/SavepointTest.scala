@@ -7,9 +7,10 @@
 package ldbc.connector
 
 import cats.effect.*
+
 import org.typelevel.otel4s.trace.Tracer
+
 import munit.{ AnyFixture, CatsEffectSuite }
-import ldbc.connector.codec.all.*
 
 class SavepointTest extends CatsEffectSuite:
 
@@ -73,13 +74,13 @@ class SavepointTest extends CatsEffectSuite:
           _          <- statement2.executeUpdate()
           _          <- conn.rollback(savepoint)
           _          <- conn.commit()
-          statement3 <- conn.clientPreparedStatement("SELECT * FROM `savepoint_test` WHERE `c1` IN (?, ?)")
+          statement3 <- conn.clientPreparedStatement("SELECT count(*) FROM `savepoint_test` WHERE `c1` IN (?, ?)")
           _          <- statement3.setLong(1, 1L)
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
           _          <- conn.setAutoCommit(true)
-          decoded    <- resultSet.decode(bigint)
-        yield decoded.length
+          decoded    <- resultSet.getInt(1)
+        yield decoded
       },
       1
     )
@@ -99,13 +100,13 @@ class SavepointTest extends CatsEffectSuite:
           _          <- statement2.executeUpdate()
           _          <- conn.releaseSavepoint(savepoint)
           _          <- conn.commit()
-          statement3 <- conn.clientPreparedStatement("SELECT * FROM `savepoint_test` WHERE `c1` IN (?, ?)")
+          statement3 <- conn.clientPreparedStatement("SELECT count(*) FROM `savepoint_test` WHERE `c1` IN (?, ?)")
           _          <- statement3.setLong(1, 1L)
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
           _          <- conn.setAutoCommit(true)
-          decoded    <- resultSet.decode(bigint)
-        yield decoded.length
+          decoded    <- resultSet.getInt(1)
+        yield decoded
       },
       2
     )
