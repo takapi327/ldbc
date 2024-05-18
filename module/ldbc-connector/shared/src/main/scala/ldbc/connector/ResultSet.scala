@@ -73,7 +73,7 @@ case class LdbcResultSet[F[_]](
 
   override def getByte(columnIndex: Int): F[Byte] =
     checkClose {
-      rowDecode(row => tinyint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
+      rowDecode(row => bit.decode(columnIndex, List(row.values(columnIndex - 1))).toOption)
         .flatMap {
           case Some(value) => lastColumnReadNullable.set(false).as(value)
           case None        => lastColumnReadNullable.set(true).as(0)
