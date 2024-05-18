@@ -24,7 +24,7 @@ object CountryLanguage:
   enum IsOfficial extends Enum:
     case T, F
   object IsOfficial extends EnumDataType[IsOfficial]
-  
+
   given Parameter[IO, IsOfficial] with
     override def bind(statement: PreparedStatement[IO], index: Int, value: IsOfficial): IO[Unit] =
       statement.setString(index, value.toString)
