@@ -9,6 +9,7 @@ package ldbc.dsl.schema
 import cats.effect.IO
 
 import ldbc.core.model.*
+import ldbc.sql.Parameter
 import ldbc.dsl.io.*
 
 case class CountryLanguage(
@@ -23,6 +24,10 @@ object CountryLanguage:
   enum IsOfficial extends Enum:
     case T, F
   object IsOfficial extends EnumDataType[IsOfficial]
+
+  given Parameter[IO, IsOfficial] with
+    override def bind(statement: PreparedStatement[IO], index: Int, value: IsOfficial): IO[Unit] =
+      statement.setString(index, value.toString)
 
   given ResultSetReader[IO, IsOfficial] =
     ResultSetReader.mapping[IO, String, IsOfficial](str => IsOfficial.valueOf(str))

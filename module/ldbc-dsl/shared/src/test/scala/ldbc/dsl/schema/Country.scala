@@ -9,6 +9,7 @@ package ldbc.dsl.schema
 import cats.effect.IO
 
 import ldbc.core.model.*
+import ldbc.sql.Parameter
 import ldbc.dsl.io.*
 
 case class Country(
@@ -42,6 +43,10 @@ object Country:
 
     override def toString: String = value
   object Continent extends EnumDataType[Continent]
+
+  given Parameter[IO, Continent] with
+    override def bind(statement: PreparedStatement[IO], index: Int, value: Continent): IO[Unit] =
+      statement.setString(index, value.toString)
 
   given ResultSetReader[IO, Continent] =
     ResultSetReader.mapping[IO, String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
