@@ -16,7 +16,9 @@ import cats.effect.*
 import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
 
-import ldbc.connector.ResultSet
+import ldbc.sql.ResultSet
+
+import ldbc.connector.LdbcResultSet
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.Protocol
@@ -376,13 +378,15 @@ object Statement:
             case _: OKPacket =>
               for
                 isResultSetClosed      <- Ref[F].of(false)
+                lastColumnReadNullable      <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                resultSet = ResultSet
+                resultSet = LdbcResultSet
                               .empty(
                                 serverVariables,
                                 protocol.initialPacket.serverVersion,
                                 isResultSetClosed,
+                                lastColumnReadNullable,
                                 resultSetCurrentCursor,
                                 resultSetCurrentRow
                               )
@@ -401,14 +405,16 @@ object Statement:
                     ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                     Vector.empty
                   )
+                lastColumnReadNullable <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-                resultSet = ResultSet(
+                resultSet = LdbcResultSet(
                               columnDefinitions,
                               resultSetRow,
                               serverVariables,
                               protocol.initialPacket.serverVersion,
                               resultSetClosed,
+                  lastColumnReadNullable,
                               resultSetCurrentCursor,
                               resultSetCurrentRow,
                               resultSetType,
@@ -438,7 +444,10 @@ object Statement:
 
     override def execute(sql: String): F[Boolean] =
       checkClosed() *> checkNullOrEmptyQuery(sql) *> (
-        if sql.toUpperCase.startsWith("SELECT") then executeQuery(sql).flatMap(_.hasRows())
+        if sql.toUpperCase.startsWith("SELECT") then executeQuery(sql).flatMap {
+          case resultSet: LdbcResultSet[F] => resultSet.hasRows()
+          case _ => ev.pure(false)
+        }
         else executeUpdate(sql).map(_ => false)
       )
 
@@ -488,10 +497,11 @@ object Statement:
         case Statement.RETURN_GENERATED_KEYS =>
           for
             isResultSetClosed      <- Ref[F].of(false)
+            lastColumnReadNullable      <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
-            resultSet = ResultSet(
+            resultSet = LdbcResultSet(
                           Vector(new ColumnDefinitionPacket:
                             override def table:      String                     = ""
                             override def name:       String                     = "GENERATED_KEYS"
@@ -502,6 +512,7 @@ object Statement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           isResultSetClosed,
+              lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow
                         )

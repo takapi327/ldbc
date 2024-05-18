@@ -15,6 +15,8 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
+import ldbc.sql.ResultSet
+
 import ldbc.connector.util.Version
 import ldbc.connector.data.*
 import ldbc.connector.data.Types.*
@@ -24,7 +26,6 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.net.protocol.*
-import ldbc.connector.codec.all.*
 
 /**
  * Comprehensive information about the database as a whole.
@@ -4553,9 +4554,10 @@ object DatabaseMetaData:
        else getDatabases(None)).flatMap { dbList =>
         for
           isResultSetClosed      <- Ref[F].of(false)
+          lastColumnReadNullable      <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-        yield ResultSet(
+        yield LdbcResultSet(
           Vector("TABLE_CAT").map { value =>
             new ColumnDefinitionPacket:
               override def table:      String                     = ""
@@ -4567,6 +4569,7 @@ object DatabaseMetaData:
           serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
+          lastColumnReadNullable,
           resultSetCurrentCursor,
           resultSetCurrentRow
         )
@@ -4575,9 +4578,10 @@ object DatabaseMetaData:
     override def getTableTypes(): F[ResultSet[F]] =
       for
         isResultSetClosed      <- Ref[F].of(false)
+        lastColumnReadNullable      <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield ResultSet(
+      yield LdbcResultSet(
         Vector(
           new ColumnDefinitionPacket:
             override def table:      String                     = ""
@@ -4592,6 +4596,7 @@ object DatabaseMetaData:
         serverVariables,
         protocol.initialPacket.serverVersion,
         isResultSetClosed,
+        lastColumnReadNullable,
         resultSetCurrentCursor,
         resultSetCurrentRow
       )
@@ -4892,11 +4897,11 @@ object DatabaseMetaData:
           resultSet <- preparedStatement.executeQuery()
           decoded <- Monad[F].whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]](resultSet.next()) {
                        resultSet.getString("Key").flatMap {
-                         case Some(key) if key.startsWith("PRI") =>
+                         case key if key.startsWith("PRI") =>
                            for
                              field  <- resultSet.getString("Field")
                              `type` <- resultSet.getString("Type")
-                           yield (field, `type`) match
+                           yield (Option(field), Option(`type`)) match
                              case (Some(columnName), Some(value)) =>
                                val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
                                val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
@@ -4921,10 +4926,11 @@ object DatabaseMetaData:
                        }
                      }
           isResultSetClosed      <- Ref[F].of(false)
+          lastColumnReadNullable      <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
           _                      <- preparedStatement.close()
-        yield ResultSet(
+        yield LdbcResultSet(
           Vector(
             "SCOPE",
             "COLUMN_NAME",
@@ -4959,6 +4965,7 @@ object DatabaseMetaData:
           serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
+          lastColumnReadNullable,
           resultSetCurrentCursor,
           resultSetCurrentRow
         )
@@ -5208,6 +5215,7 @@ object DatabaseMetaData:
     override def getTypeInfo(): F[ResultSet[F]] =
       for
         isResultSetClosed      <- Ref[F].of(false)
+        lastColumnReadNullable      <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
       yield
@@ -5256,7 +5264,7 @@ object DatabaseMetaData:
           ResultSetRowPacket(getTypeInfo("DATETIME")),
           ResultSetRowPacket(getTypeInfo("TIMESTAMP"))
         )
-        ResultSet(
+        LdbcResultSet(
           Vector(
             "TYPE_NAME",
             "DATA_TYPE",
@@ -5287,6 +5295,7 @@ object DatabaseMetaData:
           serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
+          lastColumnReadNullable,
           resultSetCurrentCursor,
           resultSetCurrentRow
         )
@@ -5421,9 +5430,10 @@ object DatabaseMetaData:
        else ev.pure(List.empty[String])).flatMap { dbList =>
         for
           isResultSetClosed      <- Ref[F].of(false)
+          lastColumnReadNullable      <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-        yield ResultSet(
+        yield LdbcResultSet(
           Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
             new ColumnDefinitionPacket:
               override def table:      String                     = ""
@@ -5435,6 +5445,7 @@ object DatabaseMetaData:
           serverVariables,
           protocol.initialPacket.serverVersion,
           isResultSetClosed,
+          lastColumnReadNullable,
           resultSetCurrentCursor,
           resultSetCurrentRow
         )
@@ -5769,8 +5780,8 @@ object DatabaseMetaData:
       for
         prepareStatement <- prepareMetaDataSafeStatement(sqlBuf.toString)
         resultSet        <- prepareStatement.executeQuery()
-        decoded          <- resultSet.decode[String](varchar(255))
-      yield decoded
+        decoded          <- Monad[F].whileM[Vector, String](resultSet.next())(resultSet.getString(1))
+      yield decoded.toList
 
     private def parseTypeColumn(`type`: String): (Int, Int, String, Boolean) =
       if `type`.indexOf("enum") != -1 then
@@ -5858,9 +5869,10 @@ object DatabaseMetaData:
     private def emptyResultSet(fields: Vector[String]): F[ResultSet[F]] =
       for
         isResultSetClosed      <- Ref[F].of(false)
+        lastColumnReadNullable      <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield ResultSet(
+      yield LdbcResultSet(
         fields.map { value =>
           new ColumnDefinitionPacket:
             override def table:      String                     = ""
@@ -5872,6 +5884,7 @@ object DatabaseMetaData:
         serverVariables,
         protocol.initialPacket.serverVersion,
         isResultSetClosed,
+        lastColumnReadNullable,
         resultSetCurrentCursor,
         resultSetCurrentRow
       )

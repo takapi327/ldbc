@@ -23,6 +23,8 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
+import ldbc.sql.ResultSet
+
 import ldbc.connector.data.*
 import ldbc.connector.util.StringHelper
 import ldbc.connector.exception.*
@@ -31,7 +33,6 @@ import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.DatabaseMetaData.DatabaseTerm
-import ldbc.connector.codec.text.text
 import ldbc.connector.net.protocol.Statement.{ NO_GENERATED_KEYS, RETURN_GENERATED_KEYS }
 
 /**
@@ -824,7 +825,7 @@ object Connection:
         statement            <- createStatement()
         result               <- statement.executeQuery("SELECT @@session.transaction_isolation")
         transactionIsolation <- result.getString(1)
-      yield transactionIsolation match
+      yield Option(transactionIsolation) match
         case Some("READ-UNCOMMITTED") => Connection.TransactionIsolationLevel.READ_UNCOMMITTED
         case Some("READ-COMMITTED")   => Connection.TransactionIsolationLevel.READ_COMMITTED
         case Some("REPEATABLE-READ")  => Connection.TransactionIsolationLevel.REPEATABLE_READ
@@ -898,14 +899,14 @@ object Connection:
                          metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
                          metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
                        )
-        paramInfo             <- CallableStatement.ParamInfo(sql, database, resultSet, isFunctionCall = false)
+        paramInfo             <- CallableStatement.ParamInfo(sql, database, resultSet.asInstanceOf[LdbcResultSet[F]], isFunctionCall = false)
         params                <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs           <- Ref[F].of(Vector.empty[String])
         statementClosed       <- Ref[F].of[Boolean](false)
         resultSetClosed       <- Ref[F].of[Boolean](false)
         currentResultSet      <- Ref[F].of[Option[ResultSet[F]]](None)
-        outputParameterResult <- Ref[F].of[Option[ResultSet[F]]](None)
-        resultSets            <- Ref[F].of(List.empty[ResultSet[F]])
+        outputParameterResult <- Ref[F].of[Option[LdbcResultSet[F]]](None)
+        resultSets            <- Ref[F].of(List.empty[LdbcResultSet[F]])
         parameterIndexToRsIndex <- Ref[F].of(
                                      List
                                        .fill(paramInfo.numParameters)(CallableStatement.NOT_OUTPUT_PARAMETER_INDICATOR)
@@ -1163,8 +1164,8 @@ object Connection:
       for
         statement <- createStatement()
         result    <- statement.executeQuery("SELECT DATABASE()")
-        decoded   <- result.decode(text)
-      yield decoded.headOption.getOrElse("")
+        decoded   <- result.getString(1)
+      yield Option(decoded).getOrElse("")
 
     override def getStatistics: F[StatisticsPacket] = protocol.resetSequenceId *> protocol.comStatistics()
 

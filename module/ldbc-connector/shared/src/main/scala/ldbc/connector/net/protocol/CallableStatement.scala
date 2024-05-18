@@ -18,6 +18,8 @@ import cats.effect.*
 import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
 
+import ldbc.sql.ResultSet
+
 import ldbc.connector.*
 import ldbc.connector.data.*
 import ldbc.connector.sql.*
@@ -438,7 +440,7 @@ object CallableStatement:
     def apply[F[_]: Temporal](
       nativeSql:      String,
       database:       Option[String],
-      resultSet:      ResultSet[F],
+      resultSet:      LdbcResultSet[F],
       isFunctionCall: Boolean
     ): F[ParamInfo] =
       val parameterListF = Monad[F].whileM[List, CallableStatementParameter](resultSet.next()) {
@@ -466,12 +468,12 @@ object CallableStatement:
             else if inOutModifier == DatabaseMetaData.procedureColumnOut then (true, false)
             else (false, false)
           CallableStatementParameter(
-            paramName,
+            Option(paramName),
             isInParameter,
             isOutParameter,
             index,
             jdbcType,
-            typeName,
+            Option(typeName),
             precision,
             scale,
             nullability,
@@ -502,8 +504,8 @@ object CallableStatement:
     statementClosed:         Ref[F, Boolean],
     resultSetClosed:         Ref[F, Boolean],
     currentResultSet:        Ref[F, Option[ResultSet[F]]],
-    outputParameterResult:   Ref[F, Option[ResultSet[F]]],
-    resultSets:              Ref[F, List[ResultSet[F]]],
+    outputParameterResult:   Ref[F, Option[LdbcResultSet[F]]],
+    resultSets:              Ref[F, List[LdbcResultSet[F]]],
     parameterIndexToRsIndex: Ref[F, Map[Int, Int]],
     updateCount:             Ref[F, Int],
     moreResults:             Ref[F, Boolean],
@@ -553,12 +555,14 @@ object CallableStatement:
               resultSets.headOption match
                 case None =>
                   for
+                    lastColumnReadNullable      <- Ref[F].of(true)
                     resultSetCurrentCursor <- Ref[F].of(0)
                     resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                    resultSet = ResultSet.empty(
+                    resultSet = LdbcResultSet.empty(
                                   serverVariables,
                                   protocol.initialPacket.serverVersion,
                                   resultSetClosed,
+                      lastColumnReadNullable,
                                   resultSetCurrentCursor,
                                   resultSetCurrentRow
                                 )
@@ -592,12 +596,14 @@ object CallableStatement:
               resultSets.headOption match
                 case None =>
                   for
+                    lastColumnReadNullable      <- Ref[F].of(true)
                     resultSetCurrentCursor <- Ref[F].of(0)
                     resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                    resultSet = ResultSet.empty(
+                    resultSet = LdbcResultSet.empty(
                                   serverVariables,
                                   protocol.initialPacket.serverVersion,
                                   resultSetClosed,
+                      lastColumnReadNullable,
                                   resultSetCurrentCursor,
                                   resultSetCurrentRow
                                 )
@@ -740,10 +746,11 @@ object CallableStatement:
         case Statement.RETURN_GENERATED_KEYS =>
           for
             isResultSetClosed      <- Ref[F].of(false)
+            lastColumnReadNullable      <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
-            resultSet = ResultSet(
+            resultSet = LdbcResultSet(
                           Vector(new ColumnDefinitionPacket:
                             override def table: String = ""
 
@@ -757,6 +764,7 @@ object CallableStatement:
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           isResultSetClosed,
+              lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow
                         )
@@ -819,7 +827,7 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getString(index))
-      yield value
+      yield Option(value)
 
     override def getBoolean(parameterIndex: Int): F[Boolean] =
       for
@@ -907,7 +915,7 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getBytes(index))
-      yield value
+      yield Option(value)
 
     override def getDate(parameterIndex: Int): F[Option[LocalDate]] =
       for
@@ -918,7 +926,7 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getDate(index))
-      yield value
+      yield Option(value)
 
     override def getTime(parameterIndex: Int): F[Option[LocalTime]] =
       for
@@ -929,7 +937,7 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getTime(index))
-      yield value
+      yield Option(value)
 
     override def getTimestamp(parameterIndex: Int): F[Option[LocalDateTime]] =
       for
@@ -940,7 +948,7 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getTimestamp(index))
-      yield value
+      yield Option(value)
 
     override def getBigDecimal(parameterIndex: Int): F[Option[BigDecimal]] =
       for
@@ -951,13 +959,13 @@ object CallableStatement:
           (if index == NOT_OUTPUT_PARAMETER_INDICATOR then
              ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
            else resultSet.getBigDecimal(index))
-      yield value
+      yield Option(value)
 
     override def getString(parameterName: String): F[Option[String]] =
       for
         resultSet <- getOutputParameters()
         value     <- resultSet.getString(mangleParameterName(parameterName))
-      yield value
+      yield Option(value)
 
     override def getBoolean(parameterName: String): F[Boolean] =
       for
@@ -1005,38 +1013,38 @@ object CallableStatement:
       for
         resultSet <- getOutputParameters()
         value     <- resultSet.getBytes(mangleParameterName(parameterName))
-      yield value
+      yield Option(value)
 
     override def getDate(parameterName: String): F[Option[LocalDate]] =
       for
         resultSet <- getOutputParameters()
         value     <- resultSet.getDate(mangleParameterName(parameterName))
-      yield value
+      yield Option(value)
 
     override def getTime(parameterName: String): F[Option[LocalTime]] =
       for
         resultSet <- getOutputParameters()
         value     <- resultSet.getTime(mangleParameterName(parameterName))
-      yield value
+      yield Option(value)
 
     override def getTimestamp(parameterName: String): F[Option[LocalDateTime]] =
       for
         resultSet <- getOutputParameters()
         value     <- resultSet.getTimestamp(mangleParameterName(parameterName))
-      yield value
+      yield Option(value)
 
     override def getBigDecimal(parameterName: String): F[Option[BigDecimal]] =
       for
         resultSet <- getOutputParameters()
         value     <- resultSet.getBigDecimal(mangleParameterName(parameterName))
-      yield value
+      yield Option(value)
 
     private def sendQuery(sql: String): F[GenericResponsePackets] =
       checkNullOrEmptyQuery(sql) *> protocol.resetSequenceId *> protocol.send(
         ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)
       ) *> protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
 
-    private def receiveUntilOkPacket(resultSets: Vector[ResultSet[F]]): F[Vector[ResultSet[F]]] =
+    private def receiveUntilOkPacket(resultSets: Vector[LdbcResultSet[F]]): F[Vector[LdbcResultSet[F]]] =
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
         case _: OKPacket      => resultSets.pure[F]
         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
@@ -1052,14 +1060,16 @@ object CallableStatement:
                 ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                 Vector.empty
               )
+            lastColumnReadNullable      <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-            resultSet = ResultSet(
+            resultSet = LdbcResultSet(
                           columnDefinitions,
                           resultSetRow,
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           resultSetClosed,
+              lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow,
                           resultSetType,
@@ -1073,13 +1083,15 @@ object CallableStatement:
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
         case _: OKPacket =>
           for
+            lastColumnReadNullable     <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-          yield ResultSet
+          yield LdbcResultSet
             .empty(
               serverVariables,
               protocol.initialPacket.serverVersion,
               resultSetClosed,
+              lastColumnReadNullable,
               resultSetCurrentCursor,
               resultSetCurrentRow
             )
@@ -1096,14 +1108,16 @@ object CallableStatement:
                 ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                 Vector.empty
               )
+            lastColumnReadNullable      <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-            resultSet = ResultSet(
+            resultSet = LdbcResultSet(
                           columnDefinitions,
                           resultSetRow,
                           serverVariables,
                           protocol.initialPacket.serverVersion,
                           resultSetClosed,
+              lastColumnReadNullable,
                           resultSetCurrentCursor,
                           resultSetCurrentRow,
                           resultSetType,
@@ -1220,8 +1234,8 @@ object CallableStatement:
           checkNullOrEmptyQuery(sql) *>
           protocol.resetSequenceId *>
           protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
-          receiveQueryResult().flatMap { resultSet =>
-            outputParameterResult.update(_ => Some(resultSet))
+          receiveQueryResult().flatMap {
+            case resultSet: LdbcResultSet[F] => outputParameterResult.update(_ => Some(resultSet))
           } *>
           parameters.zipWithIndex.foldLeft(ev.unit) {
             case (acc, ((paramIndex, _), index)) =>
@@ -1236,7 +1250,7 @@ object CallableStatement:
      * @return
      *   the ResultSet that holds the output parameters
      */
-    private def getOutputParameters(): F[ResultSet[F]] =
+    private def getOutputParameters(): F[LdbcResultSet[F]] =
       outputParameterResult.get.flatMap {
         case None =>
           if paramInfo.numParameters == 0 then ev.raiseError(new SQLException("No output parameters registered."))
@@ -1265,7 +1279,7 @@ object CallableStatement:
      * @return
      *   a list of ResultSet
      */
-    private def executeCallStatement(span: Span[F]): F[Vector[ResultSet[F]]] =
+    private def executeCallStatement(span: Span[F]): F[Vector[LdbcResultSet[F]]] =
       setInOutParamsOnServer(paramInfo) *>
         setOutParams() *>
         params.get.flatMap { params =>
