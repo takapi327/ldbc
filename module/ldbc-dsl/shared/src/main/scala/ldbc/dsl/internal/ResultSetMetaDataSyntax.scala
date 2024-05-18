@@ -12,8 +12,6 @@ import ldbc.sql.ResultSetMetaData
 
 trait ResultSetMetaDataSyntax:
 
-  object ResultSetMetaData
-
   implicit class ResultSetMetaDataF[F[_]: Sync](resultSetMetaDataObject: ResultSetMetaData.type):
 
     def apply(resultSetMetaData: java.sql.ResultSetMetaData): ResultSetMetaData =
