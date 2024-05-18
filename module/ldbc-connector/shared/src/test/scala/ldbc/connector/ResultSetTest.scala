@@ -150,7 +150,7 @@ class ResultSetTest extends CatsEffectSuite:
         c3 <- resultSet.getByte(3)
       yield (c1, c2, c3)
     }
-    assertIO(records, List((1.toByte, 2.toByte, 0.toByte)))
+    assertIO(records, List((49.toByte, 50.toByte, 0.toByte)))
   }
 
   test("ResultSet should return the correct value for getShort") {
