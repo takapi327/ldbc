@@ -6,8 +6,6 @@
 
 package ldbc.sql
 
-import ldbc.core.JdbcType
-
 /**
  * An object that can be used to get information about the types and properties for each parameter marker in a
  * PreparedStatement object. For some queries and driver implementations, the data that would be returned by a
@@ -39,7 +37,7 @@ trait ParameterMetaData[F[_]]:
    *   the nullability status of the given parameter; one of ParameterMetaData.parameterNoNulls,
    *   ParameterMetaData.parameterNullable, or ParameterMetaData.parameterNullableUnknown
    */
-  def isNullable(param: Int): F[Option[ParameterMetaData.Parameter]]
+  def isNullable(param: Int): F[Int]
 
   /**
    * Retrieves whether values for the designated parameter can be signed numbers.
@@ -85,9 +83,9 @@ trait ParameterMetaData[F[_]]:
    * @param param
    *   the first parameter is 1, the second is 2, ...
    * @return
-   *   SQL type from [[ldbc.core.JdbcType]]
+   *   SQL type from <code>java.sql.Types</code>
    */
-  def getParameterType(param: Int): F[JdbcType]
+  def getParameterType(param: Int): F[Int]
 
   /**
    * Retrieves the designated parameter's database-specific type name.
@@ -122,17 +120,4 @@ trait ParameterMetaData[F[_]]:
    *   mode of the parameter; one of ParameterMetaData.parameterModeIn, ParameterMetaData.parameterModeOut, or
    *   ParameterMetaData.parameterModeInOut ParameterMetaData.parameterModeUnknown.
    */
-  def getParameterMode(param: Int): F[Option[ParameterMetaData.Mode]]
-
-object ParameterMetaData:
-
-  enum Parameter(val code: Int):
-    case NO_NULLS         extends Parameter(java.sql.ParameterMetaData.parameterNoNulls)
-    case NULLABLE         extends Parameter(java.sql.ParameterMetaData.parameterNullable)
-    case NULLABLE_UNKNOWN extends Parameter(java.sql.ParameterMetaData.parameterNullableUnknown)
-
-  enum Mode(val code: Int):
-    case UNKNOWN extends Mode(java.sql.ParameterMetaData.parameterModeUnknown)
-    case IN      extends Mode(java.sql.ParameterMetaData.parameterModeIn)
-    case IN_OUT  extends Mode(java.sql.ParameterMetaData.parameterModeInOut)
-    case OUT     extends Mode(java.sql.ParameterMetaData.parameterModeOut)
+  def getParameterMode(param: Int): F[Int]

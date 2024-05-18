@@ -6,16 +6,37 @@
 
 package ldbc.dsl
 
+import java.time.*
+
 import cats.implicits.*
 
 import cats.effect.Sync
 
-import ldbc.sql.{ PreparedStatement, ResultSet, ParameterMetaData, ResultSetMetaData }
+import ldbc.sql.{ PreparedStatement, ResultSet }
 import ldbc.dsl.internal.*
 
 object PreparedStatement:
 
-  def apply[F[_]: Sync](statement: java.sql.PreparedStatement): PreparedStatement[F] = new PreparedStatement[F]:
+  private[ldbc] trait Impl[F[_]: Sync](statement: java.sql.PreparedStatement) extends PreparedStatement[F]:
+
+    @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
+    override def executeQuery(sql: String): F[ResultSet[F]] = throw new UnsupportedOperationException(
+      "This method cannot be called on a PreparedStatement."
+    )
+
+    @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
+    override def executeUpdate(sql: String): F[Int] = throw new UnsupportedOperationException(
+      "This method cannot be called on a PreparedStatement."
+    )
+
+    @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
+    override def execute(sql: String): F[Boolean] = throw new UnsupportedOperationException(
+      "This method cannot be called on a PreparedStatement."
+    )
+
+    override def addBatch(sql: String): F[Unit] = throw new UnsupportedOperationException(
+      "This method cannot be called on a PreparedStatement."
+    )
 
     override def executeQuery(): F[ResultSet[F]] = Sync[F].blocking(statement.executeQuery()).map(ResultSet[F])
 
@@ -26,155 +47,75 @@ object PreparedStatement:
       then Sync[F].blocking(statement.close())
       else Sync[F].unit
 
-    override def setNull(parameterIndex: Int, sqlType: Int): F[Unit] =
-      Sync[F].blocking(statement.setNull(parameterIndex, sqlType))
+    override def setNull(index: Int, sqlType: Int): F[Unit] =
+      Sync[F].blocking(statement.setNull(index, sqlType))
 
-    override def setNull(parameterIndex: Int, sqlType: Int, typeName: String): F[Unit] =
-      Sync[F].blocking(statement.setNull(parameterIndex, sqlType, typeName))
+    override def setBoolean(index: Int, value: Boolean): F[Unit] =
+      Sync[F].blocking(statement.setBoolean(index, value))
 
-    override def setBoolean(parameterIndex: Int, x: Boolean): F[Unit] =
-      Sync[F].blocking(statement.setBoolean(parameterIndex, x))
+    override def setByte(index: Int, value: Byte): F[Unit] = Sync[F].blocking(statement.setByte(index, value))
 
-    override def setByte(parameterIndex: Int, x: Byte): F[Unit] = Sync[F].blocking(statement.setByte(parameterIndex, x))
+    override def setShort(index: Int, value: Short): F[Unit] =
+      Sync[F].blocking(statement.setShort(index, value))
 
-    override def setShort(parameterIndex: Int, x: Short): F[Unit] =
-      Sync[F].blocking(statement.setShort(parameterIndex, x))
+    override def setInt(index: Int, value: Int): F[Unit] = Sync[F].blocking(statement.setInt(index, value))
 
-    override def setInt(parameterIndex: Int, x: Int): F[Unit] = Sync[F].blocking(statement.setInt(parameterIndex, x))
+    override def setLong(index: Int, value: Long): F[Unit] = Sync[F].blocking(statement.setLong(index, value))
 
-    override def setLong(parameterIndex: Int, x: Long): F[Unit] = Sync[F].blocking(statement.setLong(parameterIndex, x))
+    override def setFloat(index: Int, value: Float): F[Unit] =
+      Sync[F].blocking(statement.setFloat(index, value))
 
-    override def setFloat(parameterIndex: Int, x: Float): F[Unit] =
-      Sync[F].blocking(statement.setFloat(parameterIndex, x))
+    override def setDouble(index: Int, value: Double): F[Unit] =
+      Sync[F].blocking(statement.setDouble(index, value))
 
-    override def setDouble(parameterIndex: Int, x: Double): F[Unit] =
-      Sync[F].blocking(statement.setDouble(parameterIndex, x))
+    override def setBigDecimal(index: Int, value: BigDecimal): F[Unit] =
+      Sync[F].blocking(statement.setBigDecimal(index, value.bigDecimal))
 
-    override def setBigDecimal(parameterIndex: Int, x: BigDecimal): F[Unit] =
-      Sync[F].blocking(statement.setBigDecimal(parameterIndex, x.bigDecimal))
+    override def setString(index: Int, value: String): F[Unit] =
+      Sync[F].blocking(statement.setString(index, value))
 
-    override def setString(parameterIndex: Int, x: String): F[Unit] =
-      Sync[F].blocking(statement.setString(parameterIndex, x))
+    override def setBytes(index: Int, value: Array[Byte]): F[Unit] =
+      Sync[F].blocking(statement.setBytes(index, value))
 
-    override def setBytes(parameterIndex: Int, x: Array[Byte]): F[Unit] =
-      Sync[F].blocking(statement.setBytes(parameterIndex, x))
+    override def setDate(index: Int, value: LocalDate): F[Unit] =
+      Sync[F].blocking(statement.setDate(index, java.sql.Date.valueOf(value)))
 
-    override def setDate(parameterIndex: Int, x: java.sql.Date): F[Unit] =
-      Sync[F].blocking(statement.setDate(parameterIndex, x))
+    override def setTime(index: Int, value: LocalTime): F[Unit] =
+      Sync[F].blocking(statement.setTime(index, java.sql.Time.valueOf(value)))
 
-    override def setDate(parameterIndex: Int, x: java.sql.Date, cal: java.util.Calendar): F[Unit] =
-      Sync[F].blocking(statement.setDate(parameterIndex, x, cal))
-
-    override def setTime(parameterIndex: Int, x: java.sql.Time): F[Unit] =
-      Sync[F].blocking(statement.setTime(parameterIndex, x))
-
-    override def setTime(parameterIndex: Int, x: java.sql.Time, cal: java.util.Calendar): F[Unit] =
-      Sync[F].blocking(statement.setTime(parameterIndex, x, cal))
-
-    override def setTimestamp(parameterIndex: Int, x: java.sql.Timestamp): F[Unit] =
-      Sync[F].blocking(statement.setTimestamp(parameterIndex, x))
-
-    override def setTimestamp(parameterIndex: Int, x: java.sql.Timestamp, cal: java.util.Calendar): F[Unit] =
-      Sync[F].blocking(statement.setTimestamp(parameterIndex, x, cal))
-
-    override def setAsciiStream(parameterIndex: Int, x: java.io.InputStream, length: Int): F[Unit] =
-      Sync[F].blocking(statement.setAsciiStream(parameterIndex, x, length))
-
-    override def setAsciiStream(parameterIndex: Int, x: java.io.InputStream): F[Unit] =
-      Sync[F].blocking(statement.setAsciiStream(parameterIndex, x))
-
-    override def setBinaryStream(parameterIndex: Int, x: java.io.InputStream, length: Int): F[Unit] =
-      Sync[F].blocking(statement.setBinaryStream(parameterIndex, x, length))
-
-    override def setBinaryStream(parameterIndex: Int, x: java.io.InputStream): F[Unit] =
-      Sync[F].blocking(statement.setBinaryStream(parameterIndex, x))
-
-    override def clearParameters(): F[Unit] = Sync[F].blocking(statement.clearParameters())
-
-    override def setObject(parameterIndex: Int, x: Object, targetSqlType: Int): F[Unit] =
-      Sync[F].blocking(statement.setObject(parameterIndex, x, targetSqlType))
-
-    override def setObject(parameterIndex: Int, x: Object): F[Unit] =
-      Sync[F].blocking(statement.setObject(parameterIndex, x))
+    override def setTimestamp(index: Int, value: LocalDateTime): F[Unit] =
+      Sync[F].blocking(statement.setTimestamp(index, java.sql.Timestamp.valueOf(value)))
 
     override def execute(): F[Boolean] = Sync[F].blocking(statement.execute())
 
     override def addBatch(): F[Unit] = Sync[F].blocking(statement.addBatch())
 
-    override def setCharacterStream(parameterIndex: Int, reader: java.io.Reader, length: Int): F[Unit] =
-      Sync[F].blocking(statement.setCharacterStream(parameterIndex, reader, length))
+    override def getResultSet(): F[Option[ResultSet[F]]] =
+      Sync[F].blocking(Option(statement.getResultSet).map(ResultSet[F]))
 
-    override def setCharacterStream(parameterIndex: Int, reader: java.io.Reader): F[Unit] =
-      Sync[F].blocking(statement.setCharacterStream(parameterIndex, reader))
+    override def getUpdateCount(): F[Int] = Sync[F].blocking(statement.getUpdateCount)
 
-    override def setRef(parameterIndex: Int, x: java.sql.Ref): F[Unit] =
-      Sync[F].blocking(statement.setRef(parameterIndex, x))
+    override def getMoreResults(): F[Boolean] = Sync[F].blocking(statement.getMoreResults())
 
-    override def setBlob(parameterIndex: Int, x: java.sql.Blob): F[Unit] =
-      Sync[F].blocking(statement.setBlob(parameterIndex, x))
+    override def clearBatch(): F[Unit] = Sync[F].blocking(statement.clearBatch())
 
-    override def setBlob(parameterIndex: Int, inputStream: java.io.InputStream, length: Int): F[Unit] =
-      Sync[F].blocking(statement.setBlob(parameterIndex, inputStream, length))
-
-    override def setBlob(parameterIndex: Int, inputStream: java.io.InputStream): F[Unit] =
-      Sync[F].blocking(statement.setBlob(parameterIndex, inputStream))
-
-    override def setClob(parameterIndex: Int, x: java.sql.Clob): F[Unit] =
-      Sync[F].blocking(statement.setClob(parameterIndex, x))
-
-    override def setClob(parameterIndex: Int, reader: java.io.Reader, length: Int): F[Unit] =
-      Sync[F].blocking(statement.setClob(parameterIndex, reader, length))
-
-    override def setClob(parameterIndex: Int, reader: java.io.Reader): F[Unit] =
-      Sync[F].blocking(statement.setClob(parameterIndex, reader))
-
-    override def setArray(parameterIndex: Int, x: java.sql.Array): F[Unit] =
-      Sync[F].blocking(statement.setArray(parameterIndex, x))
-
-    override def getMetaData(): F[ResultSetMetaData[F]] =
-      Sync[F].blocking(statement.getMetaData).map(ResultSetMetaData(_))
-
-    override def setURL(parameterIndex: Int, x: java.net.URL): F[Unit] =
-      Sync[F].blocking(statement.setURL(parameterIndex, x))
-
-    override def getParameterMetaData(): F[ParameterMetaData[F]] =
-      Sync[F].blocking(statement.getParameterMetaData).map(ParameterMetaData(_))
-
-    override def setRowId(parameterIndex: Int, x: java.sql.RowId): F[Unit] =
-      Sync[F].blocking(statement.setRowId(parameterIndex, x))
-
-    override def setNString(parameterIndex: Int, x: String): F[Unit] =
-      Sync[F].blocking(statement.setNString(parameterIndex, x))
-
-    override def setNCharacterStream(parameterIndex: Int, value: java.io.Reader, length: Int): F[Unit] =
-      Sync[F].blocking(statement.setNCharacterStream(parameterIndex, value, length))
-
-    override def setNCharacterStream(parameterIndex: Int, value: java.io.Reader): F[Unit] =
-      Sync[F].blocking(statement.setNCharacterStream(parameterIndex, value))
-
-    override def setNClob(parameterIndex: Int, value: java.sql.NClob): F[Unit] =
-      Sync[F].blocking(statement.setNClob(parameterIndex, value))
-
-    override def setNClob(parameterIndex: Int, reader: java.io.Reader, length: Int): F[Unit] =
-      Sync[F].blocking(statement.setNClob(parameterIndex, reader, length))
-
-    override def setNClob(parameterIndex: Int, reader: java.io.Reader): F[Unit] =
-      Sync[F].blocking(statement.setNClob(parameterIndex, reader))
-
-    override def setSQLXML(parameterIndex: Int, xmlObject: java.sql.SQLXML): F[Unit] =
-      Sync[F].blocking(statement.setSQLXML(parameterIndex, xmlObject))
-
-    override def setObject(
-      parameterIndex: Int,
-      x:              Object,
-      targetSqlType:  java.sql.SQLType,
-      scaleOrLength:  Int
-    ): F[Unit] =
-      Sync[F].blocking(statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength))
-
-    override def setObject(parameterIndex: Int, x: Object, targetSqlType: Int, scaleOrLength: Int): F[Unit] =
-      Sync[F].blocking(statement.setObject(parameterIndex, x, targetSqlType, scaleOrLength))
-
-    override def executeLargeUpdate(): F[Long] = Sync[F].blocking(statement.executeLargeUpdate())
+    override def executeBatch(): F[Array[Int]] = Sync[F].blocking(statement.executeBatch())
 
     override def getGeneratedKeys(): F[ResultSet[F]] = Sync[F].blocking(statement.getGeneratedKeys).map(ResultSet[F])
+
+    override def executeUpdate(
+      sql:               String,
+      autoGeneratedKeys: Int
+    ): F[Int] =
+      Sync[F].blocking(statement.executeUpdate(sql, autoGeneratedKeys))
+
+    override def setObject(parameterIndex: Int, value: Object): F[Unit] =
+      Sync[F].blocking(statement.setObject(parameterIndex, value))
+
+    override def execute(sql: String, autoGeneratedKeys: Int): F[Boolean] =
+      Sync[F].blocking(statement.execute(sql, autoGeneratedKeys))
+
+    override def isClosed(): F[Boolean] = Sync[F].blocking(statement.isClosed)
+
+  def apply[F[_]: Sync](statement: java.sql.PreparedStatement): PreparedStatement[F] =
+    new Impl[F](statement) {}

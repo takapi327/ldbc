@@ -9,5 +9,7 @@ package ldbc.dsl
 trait internalSyntax
   extends internal.ConnectionSyntax,
           internal.ResultSetMetaDataSyntax,
-          internal.ParameterMetaDataSyntax
+          internal.ParameterMetaDataSyntax,
+          internal.DatabaseMetaDataSyntax,
+          internal.CallableStatementSyntax
 package object internal extends internalSyntax

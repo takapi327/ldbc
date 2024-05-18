@@ -66,14 +66,15 @@ class StatementUpdateTest extends CatsEffectSuite:
                 "CREATE TABLE `auto_inc_table`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)"
               )
           _ <- statement.executeUpdate("INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 1')")
-          generated <-
+          resultSet <-
             statement.executeUpdate(
               "INSERT INTO `auto_inc_table`(`id`, `c1`) VALUES (null, 'column 2')",
               Statement.RETURN_GENERATED_KEYS
             ) *> statement.getGeneratedKeys()
-          _ <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
+          generated <- resultSet.next() *> resultSet.getLong(1)
+          _         <- statement.executeUpdate("DROP TABLE `auto_inc_table`")
         yield generated
       },
-      2
+      2L
     )
   }

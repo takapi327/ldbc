@@ -6,16 +6,14 @@
 
 package ldbc.dsl
 
-import cats.effect.Sync
-
 import ldbc.sql.SQLType
 
 object SQLType:
 
-  def apply[F[_]: Sync](sqlType: java.sql.SQLType): SQLType[F] = new SQLType[F]:
+  def apply(sqlType: java.sql.SQLType): SQLType = new SQLType:
 
-    override def getName(): F[String] = Sync[F].blocking(sqlType.getName)
+    override def getName(): String = sqlType.getName
 
-    override def getVendor(): F[String] = Sync[F].blocking(sqlType.getVendor)
+    override def getVendor(): String = sqlType.getVendor
 
-    override def getVendorTypeNumber(): F[Int] = Sync[F].blocking(sqlType.getVendorTypeNumber)
+    override def getVendorTypeNumber(): Int = sqlType.getVendorTypeNumber

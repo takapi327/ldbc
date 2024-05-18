@@ -72,7 +72,7 @@ trait CommandSyntax[F[_]: Sync]:
           Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
         ] = Kleisli { resultSet => reader.read(resultSet, 1) }
         (for
-          statement <- connection.prepareStatement(insert.statement, Statement.Generated.RETURN_GENERATED_KEYS)
+          statement <- connection.prepareStatement(insert.statement, Statement.Generated.RETURN_GENERATED_KEYS.code)
           resultSet <- insert.params.zipWithIndex.traverse {
                          case (param, index) => param.bind(statement, index + 1)
                        } >> statement.executeUpdate() >> statement.getGeneratedKeys()

@@ -6,7 +6,7 @@
 
 package ldbc.dsl.schema
 
-import ldbc.sql.*
+import ldbc.dsl.io.*
 
 case class City(
   id:          Int,
