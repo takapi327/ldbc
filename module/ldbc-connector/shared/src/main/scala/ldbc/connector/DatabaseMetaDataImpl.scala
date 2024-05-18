@@ -132,7 +132,10 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                 ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
                 Vector.empty
               )
-          yield resultSetRow.flatMap(_.values.flatten).filterNot(DatabaseMetaDataImpl.SQL2003_KEYWORDS.contains).mkString(",")
+          yield resultSetRow
+            .flatMap(_.values.flatten)
+            .filterNot(DatabaseMetaDataImpl.SQL2003_KEYWORDS.contains)
+            .mkString(",")
       }
 
   override def getSchemaTerm(): String = databaseTerm.fold("") {
@@ -825,7 +828,9 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val conditionBuf = new StringBuilder()
 
     if db.nonEmpty then
-      conditionBuf.append(if databaseTerm.contains(DatabaseMetaDataImpl.DatabaseTerm.SCHEMA) then " db LIKE ?" else " db = ?")
+      conditionBuf.append(
+        if databaseTerm.contains(DatabaseMetaDataImpl.DatabaseTerm.SCHEMA) then " db LIKE ?" else " db = ?"
+      )
     end if
 
     if tableNamePattern.nonEmpty then
@@ -1825,7 +1830,7 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         case _ => List(Some(""), Some(""))
     ) ++ List(
       Some(mysqlType.createParams),                   // CREATE_PARAMS
-      Some(DatabaseMetaData.typeNullable.toString),    // NULLABLE
+      Some(DatabaseMetaData.typeNullable.toString),   // NULLABLE
       Some("true"),                                   // CASE_SENSITIVE
       Some(DatabaseMetaData.typeSearchable.toString), // SEARCHABLE
       if (mysqlType.allowedFlags & MysqlTypeVariables.FIELD_FLAG_UNSIGNED) > 0 then Some("true")

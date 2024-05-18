@@ -23,7 +23,7 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.{ResultSet, DatabaseMetaData}
+import ldbc.sql.{ ResultSet, DatabaseMetaData }
 
 import ldbc.connector.data.*
 import ldbc.connector.util.StringHelper
