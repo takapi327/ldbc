@@ -46,13 +46,20 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
-  .dependsOn(core)
+  .settings(
+    libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0"
+  )
+  .platformsSettings(JSPlatform, NativePlatform)(
+    libraryDependencies ++= Seq(
+      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+    )
+  )
 
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
-  .dependsOn(sql)
+  .dependsOn(core, sql)
 
 lazy val dsl = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
