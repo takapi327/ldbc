@@ -22,7 +22,6 @@ import ldbc.sql.{ ResultSet, DatabaseMetaData, ParameterMetaData }
 
 import ldbc.connector.*
 import ldbc.connector.data.*
-import ldbc.connector.sql.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.Protocol
 import ldbc.connector.net.packet.response.*

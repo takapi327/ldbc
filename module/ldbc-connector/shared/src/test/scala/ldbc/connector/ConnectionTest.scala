@@ -16,6 +16,7 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
+import ldbc.sql.DatabaseMetaData
 import ldbc.connector.exception.*
 
 class ConnectionTest extends CatsEffectSuite:

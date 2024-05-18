@@ -2907,6 +2907,9 @@ trait DatabaseMetaData[F[_]]:
 
 object DatabaseMetaData:
 
+  enum DatabaseTerm:
+    case SCHEMA, CATALOG
+
   /**
    * Indicates that it is not known whether the procedure returns
    * a result.

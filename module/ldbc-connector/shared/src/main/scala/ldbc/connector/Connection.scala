@@ -32,7 +32,6 @@ import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
-import ldbc.connector.DatabaseMetaDataImpl.DatabaseTerm
 import ldbc.connector.net.protocol.Statement.{ NO_GENERATED_KEYS, RETURN_GENERATED_KEYS }
 
 /**
@@ -744,7 +743,7 @@ object Connection:
     readOnly:         Ref[F, Boolean],
     isAutoCommit:     Ref[F, Boolean],
     connectionClosed: Ref[F, Boolean],
-    databaseTerm:     Option[DatabaseTerm] = None
+    databaseTerm:     Option[DatabaseMetaData.DatabaseTerm] = None
   )(using ev: MonadError[F, Throwable])
     extends Connection[F]:
 
@@ -810,11 +809,11 @@ object Connection:
     override def isReadOnly: F[Boolean] = readOnly.get
 
     override def setCatalog(catalog: String): F[Unit] =
-      if databaseTerm.contains(DatabaseTerm.CATALOG) then setSchema(catalog)
+      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG) then setSchema(catalog)
       else ev.unit
 
     override def getCatalog(): F[String] =
-      if databaseTerm.contains(DatabaseTerm.CATALOG) then getSchema()
+      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG) then getSchema()
       else ev.pure("")
 
     override def setTransactionIsolation(level: TransactionIsolationLevel): F[Unit] =
@@ -894,7 +893,7 @@ object Connection:
       for
         metaData <- getMetaData()
         procName <- extractProcedureName(sql)
-        resultSet <- ev.pure(databaseTerm.contains(DatabaseTerm.SCHEMA))
+        resultSet <- ev.pure(databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA))
                        .ifM(
                          metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
                          metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
@@ -1207,7 +1206,7 @@ object Connection:
     socketOptions:           List[SocketOption] = Connection.defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseTerm] = None
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
   ): Tracer[F] ?=> Resource[F, Connection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -1241,7 +1240,7 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseTerm] = None
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
   ): Resource[F, Connection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
@@ -1284,7 +1283,7 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseTerm] = None
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
   )(using ev: Temporal[F]): Resource[F, Connection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
