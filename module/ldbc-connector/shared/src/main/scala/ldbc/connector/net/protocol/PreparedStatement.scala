@@ -18,7 +18,7 @@ import cats.effect.*
 import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
 
-import ldbc.sql.{Statement, ResultSet}
+import ldbc.sql.{ Statement, ResultSet }
 
 import ldbc.connector.ResultSetImpl
 import ldbc.connector.data.*
@@ -567,7 +567,7 @@ object PreparedStatement:
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
     extends PreparedStatement[F],
-      StatementImpl.ShareStatement[F]:
+            StatementImpl.ShareStatement[F]:
 
     private val attributes = protocol.initialPacket.attributes ++ List(
       Attribute("type", "Client PreparedStatement"),
