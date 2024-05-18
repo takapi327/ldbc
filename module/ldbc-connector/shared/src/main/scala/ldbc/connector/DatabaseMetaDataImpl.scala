@@ -33,12 +33,12 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],
   resultSetClosed:               Ref[F, Boolean],
-  database:                      Option[String]                            = None,
+  database:                      Option[String]                        = None,
   databaseTerm:                  Option[DatabaseMetaData.DatabaseTerm] = None,
-  getProceduresReturnsFunctions: Boolean                                   = true,
-  tinyInt1isBit:                 Boolean                                   = true,
-  transformedBitIsBoolean:       Boolean                                   = false,
-  yearIsDateType:                Boolean                                   = true
+  getProceduresReturnsFunctions: Boolean                               = true,
+  tinyInt1isBit:                 Boolean                               = true,
+  transformedBitIsBoolean:       Boolean                               = false,
+  yearIsDateType:                Boolean                               = true
 )(using ev: MonadError[F, Throwable])
   extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
@@ -1679,7 +1679,7 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     (databaseTerm, catalog, schema) match
       case (Some(DatabaseMetaData.DatabaseTerm.SCHEMA), None, value)  => value.fold(database)(_.some)
       case (Some(DatabaseMetaData.DatabaseTerm.CATALOG), value, None) => value.fold(database)(_.some)
-      case _                                                              => database
+      case _                                                          => database
 
   /**
    * Get a prepared statement to query information_schema tables.
