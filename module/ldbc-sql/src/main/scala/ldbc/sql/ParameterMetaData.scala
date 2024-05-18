@@ -121,3 +121,43 @@ trait ParameterMetaData[F[_]]:
    *   ParameterMetaData.parameterModeInOut ParameterMetaData.parameterModeUnknown.
    */
   def getParameterMode(param: Int): F[Int]
+
+object ParameterMetaData:
+
+  /**
+   * The constant indicating that a
+   * parameter will not allow <code>NULL</code> values.
+   */
+  val parameterNoNulls = 0
+
+  /**
+   * The constant indicating that a
+   * parameter will allow <code>NULL</code> values.
+   */
+  val parameterNullable = 1
+
+  /**
+   * The constant indicating that the
+   * nullability of a parameter is unknown.
+   */
+  val parameterNullableUnknown = 2
+
+  /**
+   * The constant indicating that the mode of the parameter is unknown.
+   */
+  val parameterModeUnknown = 0
+
+  /**
+   * The constant indicating that the parameter's mode is IN.
+   */
+  val parameterModeIn = 1
+
+  /**
+   * The constant indicating that the parameter's mode is INOUT.
+   */
+  val parameterModeInOut = 2
+
+  /**
+   * The constant indicating that the parameter's mode is OUT.
+   */
+  val parameterModeOut = 4
