@@ -14,7 +14,7 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
-import ldbc.sql.{ResultSet, ResultSetMetaData}
+import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
 import ldbc.connector.util.Version
 import ldbc.connector.data.*
