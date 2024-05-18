@@ -900,14 +900,14 @@ object Connection:
                          metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
                        )
         paramInfo <-
-          CallableStatement.ParamInfo(sql, database, resultSet.asInstanceOf[LdbcResultSet[F]], isFunctionCall = false)
+          CallableStatement.ParamInfo(sql, database, resultSet.asInstanceOf[ResultSetImpl[F]], isFunctionCall = false)
         params                <- Ref[F].of(ListMap.empty[Int, Parameter])
         batchedArgs           <- Ref[F].of(Vector.empty[String])
         statementClosed       <- Ref[F].of[Boolean](false)
         resultSetClosed       <- Ref[F].of[Boolean](false)
         currentResultSet      <- Ref[F].of[Option[ResultSet[F]]](None)
-        outputParameterResult <- Ref[F].of[Option[LdbcResultSet[F]]](None)
-        resultSets            <- Ref[F].of(List.empty[LdbcResultSet[F]])
+        outputParameterResult <- Ref[F].of[Option[ResultSetImpl[F]]](None)
+        resultSets            <- Ref[F].of(List.empty[ResultSetImpl[F]])
         parameterIndexToRsIndex <- Ref[F].of(
                                      List
                                        .fill(paramInfo.numParameters)(CallableStatement.NOT_OUTPUT_PARAMETER_INDICATOR)

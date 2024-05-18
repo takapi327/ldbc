@@ -20,7 +20,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.sql.ResultSet
 
-import ldbc.connector.LdbcResultSet
+import ldbc.connector.ResultSetImpl
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.Protocol
@@ -593,7 +593,7 @@ object PreparedStatement:
                   lastColumnReadNullable <- Ref[F].of(true)
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                yield LdbcResultSet
+                yield ResultSetImpl
                   .empty(
                     serverVariables,
                     protocol.initialPacket.serverVersion,
@@ -618,7 +618,7 @@ object PreparedStatement:
                   lastColumnReadNullable <- Ref[F].of(true)
                   resultSetCurrentCursor <- Ref[F].of(0)
                   resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-                  resultSet = LdbcResultSet(
+                  resultSet = ResultSetImpl(
                                 columnDefinitions,
                                 resultSetRow,
                                 serverVariables,
@@ -660,7 +660,7 @@ object PreparedStatement:
     override def execute(): F[Boolean] =
       if sql.toUpperCase.startsWith("SELECT") then
         executeQuery().flatMap {
-          case resultSet: LdbcResultSet[F] => resultSet.hasRows()
+          case resultSet: ResultSetImpl[F] => resultSet.hasRows()
           case _                           => ev.pure(false)
         }
       else executeUpdate().map(_ => false)
@@ -766,7 +766,7 @@ object PreparedStatement:
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
-            resultSet = LdbcResultSet(
+            resultSet = ResultSetImpl(
                           Vector(new ColumnDefinitionPacket:
                             override def table: String = ""
 
@@ -868,7 +868,7 @@ object PreparedStatement:
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
-          resultSet = LdbcResultSet(
+          resultSet = ResultSetImpl(
                         columnDefinitions,
                         resultSetRow,
                         serverVariables,
@@ -906,7 +906,7 @@ object PreparedStatement:
     override def execute(): F[Boolean] =
       if sql.toUpperCase.startsWith("SELECT") then
         executeQuery().flatMap {
-          case resultSet: LdbcResultSet[F] => resultSet.hasRows()
+          case resultSet: ResultSetImpl[F] => resultSet.hasRows()
           case _                           => ev.pure(false)
         }
       else executeUpdate().map(_ => false)
@@ -1012,7 +1012,7 @@ object PreparedStatement:
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
-            resultSet = LdbcResultSet(
+            resultSet = ResultSetImpl(
                           Vector(new ColumnDefinitionPacket:
                             override def table: String = ""
 

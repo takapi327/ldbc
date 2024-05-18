@@ -900,8 +900,8 @@ class ResultSetTest extends CatsEffectSuite:
     version:              Version,
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  ): LdbcResultSet[IO] =
-    LdbcResultSet[IO](
+  ): ResultSetImpl[IO] =
+    ResultSetImpl[IO](
       columns,
       records,
       Map.empty,

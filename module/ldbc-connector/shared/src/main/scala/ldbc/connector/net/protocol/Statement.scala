@@ -18,7 +18,7 @@ import org.typelevel.otel4s.trace.{ Tracer, Span }
 
 import ldbc.sql.ResultSet
 
-import ldbc.connector.LdbcResultSet
+import ldbc.connector.ResultSetImpl
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.Protocol
@@ -381,7 +381,7 @@ object Statement:
                 lastColumnReadNullable <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                resultSet = LdbcResultSet
+                resultSet = ResultSetImpl
                               .empty(
                                 serverVariables,
                                 protocol.initialPacket.serverVersion,
@@ -408,7 +408,7 @@ object Statement:
                 lastColumnReadNullable <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-                resultSet = LdbcResultSet(
+                resultSet = ResultSetImpl(
                               columnDefinitions,
                               resultSetRow,
                               serverVariables,
@@ -446,7 +446,7 @@ object Statement:
       checkClosed() *> checkNullOrEmptyQuery(sql) *> (
         if sql.toUpperCase.startsWith("SELECT") then
           executeQuery(sql).flatMap {
-            case resultSet: LdbcResultSet[F] => resultSet.hasRows()
+            case resultSet: ResultSetImpl[F] => resultSet.hasRows()
             case _                           => ev.pure(false)
           }
         else executeUpdate(sql).map(_ => false)
@@ -502,7 +502,7 @@ object Statement:
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
-            resultSet = LdbcResultSet(
+            resultSet = ResultSetImpl(
                           Vector(new ColumnDefinitionPacket:
                             override def table:      String                     = ""
                             override def name:       String                     = "GENERATED_KEYS"

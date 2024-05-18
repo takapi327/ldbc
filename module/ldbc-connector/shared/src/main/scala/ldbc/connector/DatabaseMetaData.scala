@@ -4557,7 +4557,7 @@ object DatabaseMetaData:
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-        yield LdbcResultSet(
+        yield ResultSetImpl(
           Vector("TABLE_CAT").map { value =>
             new ColumnDefinitionPacket:
               override def table:      String                     = ""
@@ -4581,7 +4581,7 @@ object DatabaseMetaData:
         lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield LdbcResultSet(
+      yield ResultSetImpl(
         Vector(
           new ColumnDefinitionPacket:
             override def table:      String                     = ""
@@ -4930,7 +4930,7 @@ object DatabaseMetaData:
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
           _                      <- preparedStatement.close()
-        yield LdbcResultSet(
+        yield ResultSetImpl(
           Vector(
             "SCOPE",
             "COLUMN_NAME",
@@ -5264,7 +5264,7 @@ object DatabaseMetaData:
           ResultSetRowPacket(getTypeInfo("DATETIME")),
           ResultSetRowPacket(getTypeInfo("TIMESTAMP"))
         )
-        LdbcResultSet(
+        ResultSetImpl(
           Vector(
             "TYPE_NAME",
             "DATA_TYPE",
@@ -5433,7 +5433,7 @@ object DatabaseMetaData:
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-        yield LdbcResultSet(
+        yield ResultSetImpl(
           Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
             new ColumnDefinitionPacket:
               override def table:      String                     = ""
@@ -5872,7 +5872,7 @@ object DatabaseMetaData:
         lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      yield LdbcResultSet(
+      yield ResultSetImpl(
         fields.map { value =>
           new ColumnDefinitionPacket:
             override def table:      String                     = ""

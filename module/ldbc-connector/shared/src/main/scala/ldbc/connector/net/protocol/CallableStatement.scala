@@ -440,7 +440,7 @@ object CallableStatement:
     def apply[F[_]: Temporal](
       nativeSql:      String,
       database:       Option[String],
-      resultSet:      LdbcResultSet[F],
+      resultSet:      ResultSetImpl[F],
       isFunctionCall: Boolean
     ): F[ParamInfo] =
       val parameterListF = Monad[F].whileM[List, CallableStatementParameter](resultSet.next()) {
@@ -504,8 +504,8 @@ object CallableStatement:
     statementClosed:         Ref[F, Boolean],
     resultSetClosed:         Ref[F, Boolean],
     currentResultSet:        Ref[F, Option[ResultSet[F]]],
-    outputParameterResult:   Ref[F, Option[LdbcResultSet[F]]],
-    resultSets:              Ref[F, List[LdbcResultSet[F]]],
+    outputParameterResult:   Ref[F, Option[ResultSetImpl[F]]],
+    resultSets:              Ref[F, List[ResultSetImpl[F]]],
     parameterIndexToRsIndex: Ref[F, Map[Int, Int]],
     updateCount:             Ref[F, Int],
     moreResults:             Ref[F, Boolean],
@@ -558,7 +558,7 @@ object CallableStatement:
                     lastColumnReadNullable <- Ref[F].of(true)
                     resultSetCurrentCursor <- Ref[F].of(0)
                     resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                    resultSet = LdbcResultSet.empty(
+                    resultSet = ResultSetImpl.empty(
                                   serverVariables,
                                   protocol.initialPacket.serverVersion,
                                   resultSetClosed,
@@ -599,7 +599,7 @@ object CallableStatement:
                     lastColumnReadNullable <- Ref[F].of(true)
                     resultSetCurrentCursor <- Ref[F].of(0)
                     resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                    resultSet = LdbcResultSet.empty(
+                    resultSet = ResultSetImpl.empty(
                                   serverVariables,
                                   protocol.initialPacket.serverVersion,
                                   resultSetClosed,
@@ -750,7 +750,7 @@ object CallableStatement:
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
             lastInsertId           <- lastInsertId.get
-            resultSet = LdbcResultSet(
+            resultSet = ResultSetImpl(
                           Vector(new ColumnDefinitionPacket:
                             override def table: String = ""
 
@@ -1044,7 +1044,7 @@ object CallableStatement:
         ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)
       ) *> protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
 
-    private def receiveUntilOkPacket(resultSets: Vector[LdbcResultSet[F]]): F[Vector[LdbcResultSet[F]]] =
+    private def receiveUntilOkPacket(resultSets: Vector[ResultSetImpl[F]]): F[Vector[ResultSetImpl[F]]] =
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
         case _: OKPacket      => resultSets.pure[F]
         case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
@@ -1063,7 +1063,7 @@ object CallableStatement:
             lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-            resultSet = LdbcResultSet(
+            resultSet = ResultSetImpl(
                           columnDefinitions,
                           resultSetRow,
                           serverVariables,
@@ -1086,7 +1086,7 @@ object CallableStatement:
             lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-          yield LdbcResultSet
+          yield ResultSetImpl
             .empty(
               serverVariables,
               protocol.initialPacket.serverVersion,
@@ -1111,7 +1111,7 @@ object CallableStatement:
             lastColumnReadNullable <- Ref[F].of(true)
             resultSetCurrentCursor <- Ref[F].of(0)
             resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
-            resultSet = LdbcResultSet(
+            resultSet = ResultSetImpl(
                           columnDefinitions,
                           resultSetRow,
                           serverVariables,
@@ -1235,7 +1235,7 @@ object CallableStatement:
           protocol.resetSequenceId *>
           protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
           receiveQueryResult().flatMap {
-            case resultSet: LdbcResultSet[F] => outputParameterResult.update(_ => Some(resultSet))
+            case resultSet: ResultSetImpl[F] => outputParameterResult.update(_ => Some(resultSet))
           } *>
           parameters.zipWithIndex.foldLeft(ev.unit) {
             case (acc, ((paramIndex, _), index)) =>
@@ -1250,7 +1250,7 @@ object CallableStatement:
      * @return
      *   the ResultSet that holds the output parameters
      */
-    private def getOutputParameters(): F[LdbcResultSet[F]] =
+    private def getOutputParameters(): F[ResultSetImpl[F]] =
       outputParameterResult.get.flatMap {
         case None =>
           if paramInfo.numParameters == 0 then ev.raiseError(new SQLException("No output parameters registered."))
@@ -1279,7 +1279,7 @@ object CallableStatement:
      * @return
      *   a list of ResultSet
      */
-    private def executeCallStatement(span: Span[F]): F[Vector[LdbcResultSet[F]]] =
+    private def executeCallStatement(span: Span[F]): F[Vector[ResultSetImpl[F]]] =
       setInOutParamsOnServer(paramInfo) *>
         setOutParams() *>
         params.get.flatMap { params =>
