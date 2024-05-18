@@ -106,7 +106,6 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"         % "2.10.0",
       "org.typelevel" %%% "cats-effect"       % "3.5.4",
       "co.fs2"        %%% "fs2-core"          % "3.10-365636d",
       "co.fs2"        %%% "fs2-io"            % "3.10-365636d",
@@ -118,14 +117,10 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0-RC1" % Test
     )
   )
-  .platformsSettings(JSPlatform, NativePlatform)(
-    libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
-    )
-  )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
   )
+  .dependsOn(sql)
 
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
