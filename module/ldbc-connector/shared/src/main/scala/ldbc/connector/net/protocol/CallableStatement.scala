@@ -18,7 +18,7 @@ import cats.effect.*
 import org.typelevel.otel4s.Attribute
 import org.typelevel.otel4s.trace.{ Tracer, Span }
 
-import ldbc.sql.ResultSet
+import ldbc.sql.{ResultSet, DatabaseMetaData}
 
 import ldbc.connector.*
 import ldbc.connector.data.*

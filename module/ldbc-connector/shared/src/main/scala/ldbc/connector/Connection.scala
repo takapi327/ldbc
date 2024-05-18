@@ -23,7 +23,7 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.ResultSet
+import ldbc.sql.{ResultSet, DatabaseMetaData}
 
 import ldbc.connector.data.*
 import ldbc.connector.util.StringHelper
@@ -32,7 +32,7 @@ import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
-import ldbc.connector.DatabaseMetaData.DatabaseTerm
+import ldbc.connector.DatabaseMetaDataImpl.DatabaseTerm
 import ldbc.connector.net.protocol.Statement.{ NO_GENERATED_KEYS, RETURN_GENERATED_KEYS }
 
 /**
@@ -790,7 +790,7 @@ object Connection:
         (for
           statementClosed <- Ref[F].of[Boolean](false)
           resultSetClosed <- Ref[F].of[Boolean](false)
-        yield DatabaseMetaData[F](
+        yield DatabaseMetaDataImpl[F](
           protocol,
           serverVariables,
           connectionClosed,
