@@ -10,8 +10,6 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneId, ZonedDa
 
 import scala.compiletime.*
 
-import ldbc.core.model.Enum
-
 /**
  * Trait for setting Scala and Java values to PreparedStatement.
  *
@@ -113,10 +111,6 @@ object Parameter:
       value match
         case Some(value) => parameter.bind(statement, index, value)
         case None        => nullParameter.bind(statement, index, null)
-
-  given [F[_]]: Parameter[F, Enum] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] =
-      statement.setString(index, value.toString)
 
   given [F[_], T](using parameter: Parameter[F, String]): Parameter[F, List[T]] with
     override def bind(statement: PreparedStatement[F], index: Int, value: List[T]): F[Unit] =

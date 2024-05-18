@@ -13,6 +13,7 @@ import cats.effect.{ IO, Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.core.Database as CoreDatabase
+import ldbc.core.model.Enum
 import ldbc.sql.*
 import ldbc.dsl.syntax.*
 
@@ -119,4 +120,7 @@ package object dsl:
    *   import ldbc.dsl.io.*
    * }}}
    */
-  val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
+  val io: SyncSyntax[IO] = new SyncSyntax[IO]:
+    given [F[_]]: Parameter[F, Enum] with
+      override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] =
+        statement.setString(index, value.toString)
