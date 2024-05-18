@@ -197,3 +197,23 @@ trait ResultSetMetaData:
    * @return <code>true</code> if so; <code>false</code> otherwise
    */
   def isDefinitelyWritable(column: Int): Boolean
+
+object ResultSetMetaData:
+
+  /**
+   * The constant indicating that a
+   * column does not allow <code>NULL</code> values.
+   */
+  val columnNoNulls = 0
+
+  /**
+   * The constant indicating that a
+   * column allows <code>NULL</code> values.
+   */
+  val columnNullable = 1
+
+  /**
+   * The constant indicating that the
+   * nullability of a column's values is unknown.
+   */
+  val columnNullableUnknown = 2
