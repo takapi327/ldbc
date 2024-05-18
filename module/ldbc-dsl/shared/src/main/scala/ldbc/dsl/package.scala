@@ -30,9 +30,8 @@ package object dsl:
             Alias:
 
     implicit class ParameterSyntax(parameter: Parameter.type):
-
       given Parameter[F, Enum] with
-        override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] = 
+        override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] =
           statement.setString(index, value.toString)
 
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
