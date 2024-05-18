@@ -6,13 +6,15 @@
 
 package ldbc.connector
 
+import cats.Monad
+import cats.syntax.all.*
+
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
 import munit.CatsEffectSuite
 
-import ldbc.connector.codec.all.*
 import ldbc.connector.exception.*
 
 class TransactionTest extends CatsEffectSuite:
@@ -236,7 +238,7 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 1L)
         resultSet <- query.executeQuery()
-        decoded   <- resultSet.decode(bigint)
+        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
       yield decoded.contains(1L)
     })
   }
@@ -260,7 +262,7 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 2L)
         resultSet <- query.executeQuery()
-        decoded   <- resultSet.decode(bigint)
+        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
       yield decoded.isEmpty
     })
   }
