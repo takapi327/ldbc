@@ -30,8 +30,6 @@ object DatabaseConnectionTest extends Specification:
   ds.setDatabaseName("world")
   ds.setUser("ldbc")
   ds.setPassword("password")
-  ds.setUseSSL(false)
-  ds.setAllowPublicKeyRetrieval(true)
 
   private val dataSource = DataSource[IO](ds)
 
