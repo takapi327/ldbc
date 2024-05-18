@@ -14,6 +14,8 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
+import ldbc.sql.{ResultSet, ResultSetMetaData}
+
 import ldbc.connector.util.Version
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
@@ -106,7 +108,7 @@ class ResultSetTest extends CatsEffectSuite:
         c1 <- resultSet.getString(1)
         c2 <- resultSet.getString("c2")
         c3 <- resultSet.getString(3)
-      yield (c1, c2, c3)
+      yield (Option(c1), Option(c2), Option(c3))
     }
     assertIO(records, List((Some("1"), Some("2"), None)))
   }
@@ -207,7 +209,7 @@ class ResultSetTest extends CatsEffectSuite:
           c1 <- resultSet.getBigDecimal(1)
           c2 <- resultSet.getBigDecimal("c2")
           c3 <- resultSet.getBigDecimal(3)
-        yield (c1, c2, c3)
+        yield (Option(c1), Option(c2), Option(c3))
       }
     assertIO(records, List((Some(BigDecimal("1.1")), Some(BigDecimal("2.2")), None)))
   }
@@ -227,7 +229,7 @@ class ResultSetTest extends CatsEffectSuite:
         c1 <- resultSet.getDate(1)
         c2 <- resultSet.getDate("c2")
         c3 <- resultSet.getDate(3)
-      yield (c1, c2, c3)
+      yield (Option(c1), Option(c2), Option(c3))
     }
     assertIO(records, List((Some(LocalDate.of(2023, 1, 1)), Some(LocalDate.of(2023, 1, 2)), None)))
   }
@@ -247,7 +249,7 @@ class ResultSetTest extends CatsEffectSuite:
         c1 <- resultSet.getTime(1)
         c2 <- resultSet.getTime("c2")
         c3 <- resultSet.getTime(3)
-      yield (c1, c2, c3)
+      yield (Option(c1), Option(c2), Option(c3))
     }
     assertIO(records, List((Some(LocalTime.of(12, 34, 56)), Some(LocalTime.of(12, 34, 57)), None)))
   }
@@ -268,7 +270,7 @@ class ResultSetTest extends CatsEffectSuite:
           c1 <- resultSet.getTimestamp(1)
           c2 <- resultSet.getTimestamp("c2")
           c3 <- resultSet.getTimestamp(3)
-        yield (c1, c2, c3)
+        yield (Option(c1), Option(c2), Option(c3))
       }
     assertIO(
       records,
@@ -292,7 +294,7 @@ class ResultSetTest extends CatsEffectSuite:
           c1 <- resultSet.getTimestamp(1)
           c2 <- resultSet.getTimestamp("c2")
           c3 <- resultSet.getTimestamp(3)
-        yield (c1, c2, c3)
+        yield (Option(c1), Option(c2), Option(c3))
       }
     assertIO(
       records,
@@ -898,13 +900,14 @@ class ResultSetTest extends CatsEffectSuite:
     version:              Version,
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  ): ResultSet[IO] =
-    ResultSet[IO](
+  ): LdbcResultSet[IO] =
+    LdbcResultSet[IO](
       columns,
       records,
       Map.empty,
       version,
       Ref.unsafe[IO, Boolean](false),
+      Ref.unsafe[IO, Boolean](true),
       Ref.unsafe[IO, Int](0),
       Ref.unsafe[IO, Option[ResultSetRowPacket]](None),
       resultSetType,
