@@ -29,6 +29,12 @@ package object dsl:
             internalSyntax,
             Alias:
 
+    implicit class ParameterSyntax(parameter: Parameter.type):
+
+      given Parameter[F, Enum] with
+        override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] = 
+          statement.setString(index, value.toString)
+
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
       val release: Connection[F] => F[Unit] = connection => connection.close()
       Resource.make(acquire)(release)
@@ -120,7 +126,4 @@ package object dsl:
    *   import ldbc.dsl.io.*
    * }}}
    */
-  val io: SyncSyntax[IO] = new SyncSyntax[IO]:
-    given [F[_]]: Parameter[F, Enum] with
-      override def bind(statement: PreparedStatement[F], index: Int, value: Enum): F[Unit] =
-        statement.setString(index, value.toString)
+  val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
