@@ -6,7 +6,7 @@
 
 package ldbc.connector.data
 
-import ldbc.connector.sql.SQLType
+import ldbc.sql.SQLType
 
 enum MysqlType(
   val name:         String,
