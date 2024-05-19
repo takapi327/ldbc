@@ -10,10 +10,11 @@ import cats.Applicative
 import cats.implicits.*
 import cats.data.Kleisli
 import cats.effect.Sync
-import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, Statement }
+
+import ldbc.sql.*
 import ldbc.dsl.PreparedStatement
 
-trait ConnectionSyntax extends StatementSyntax:
+trait ConnectionSyntax extends StatementSyntax, SavepointSyntax:
 
   implicit class ConnectionF(connectionObject: Connection.type):
 
@@ -84,6 +85,14 @@ trait ConnectionSyntax extends StatementSyntax:
       override def setSchema(schema: String): F[Unit] = Sync[F].blocking(connection.setSchema(schema))
 
       override def getSchema(): F[String] = Sync[F].blocking(connection.getSchema)
+
+      override def setSavepoint(): F[Savepoint] = Sync[F].blocking(connection.setSavepoint()).map(Savepoint.apply)
+
+      override def setSavepoint(name: String): F[Savepoint] = Sync[F].blocking(connection.setSavepoint(name)).map(Savepoint.apply)
+
+      override def rollback(savepoint: Savepoint): F[Unit] = Sync[F].blocking(connection.rollback(MysqlSavepoint(savepoint.getSavepointName())))
+
+      override def releaseSavepoint(savepoint: Savepoint): F[Unit] = Sync[F].blocking(connection.releaseSavepoint(MysqlSavepoint(savepoint.getSavepointName())))
 
     def pure[F[_]: Applicative, T](value: T): Kleisli[F, Connection[F], T] =
       Kleisli.pure[F, Connection[F], T](value)
