@@ -6,7 +6,7 @@
 
 package ldbc.connector
 
-import ldbc.sql.Connection
+import ldbc.sql.{Connection, Savepoint}
 
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*

@@ -6,8 +6,6 @@
 
 package ldbc.connector
 
-import java.util.UUID
-
 import scala.collection.immutable.ListMap
 
 import cats.*
@@ -18,7 +16,7 @@ import cats.effect.std.Console
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.{ Connection, Statement, PreparedStatement, CallableStatement, ResultSet, DatabaseMetaData }
+import ldbc.sql.{ Connection, Statement, PreparedStatement, CallableStatement, ResultSet, DatabaseMetaData, Savepoint }
 
 import ldbc.connector.data.*
 import ldbc.connector.util.StringHelper
@@ -445,20 +443,19 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
       ResultSet.CONCUR_READ_ONLY
     )
 
-  override def setSavepoint(): F[Savepoint] = setSavepoint(UUID.randomUUID().toString)
+  override def setSavepoint(): F[Savepoint] = setSavepoint(StringHelper.getUniqueSavepointId)
 
   override def setSavepoint(name: String): F[Savepoint] =
     for
       statement <- createStatement()
       _         <- statement.executeQuery(s"SAVEPOINT `$name`")
-    yield new Savepoint:
-      override def getSavepointName: String = name
+    yield MysqlSavepoint(name)
 
   override def rollback(savepoint: Savepoint): F[Unit] =
-    createStatement().flatMap(_.executeQuery(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName }`")).void
+    createStatement().flatMap(_.executeQuery(s"ROLLBACK TO SAVEPOINT `${ savepoint.getSavepointName() }`")).void
 
   override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
-    createStatement().flatMap(_.executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName }`")).void
+    createStatement().flatMap(_.executeQuery(s"RELEASE SAVEPOINT `${ savepoint.getSavepointName() }`")).void
 
   override def setSchema(schema: String): F[Unit] = protocol.resetSequenceId *> protocol.comInitDB(schema)
 
