@@ -6,6 +6,8 @@
 
 package ldbc.connector.util
 
+import java.util.UUID
+
 object StringHelper:
 
   /**
@@ -65,3 +67,7 @@ object StringHelper:
       loop(startingPosition)
 
   end indexOfIgnoreCase
+
+  def getUniqueSavepointId: String =
+    val uuid = UUID.randomUUID().toString
+    uuid.replaceAll("-", "_")

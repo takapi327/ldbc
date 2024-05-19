@@ -54,7 +54,7 @@ class SavepointTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for savepoint <- conn.setSavepoint("test_savepoint")
-        yield savepoint.getSavepointName
+        yield savepoint.getSavepointName()
       },
       "test_savepoint"
     )

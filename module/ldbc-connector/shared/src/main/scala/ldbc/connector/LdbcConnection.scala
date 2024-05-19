@@ -155,44 +155,6 @@ trait LdbcConnection[F[_]] extends Connection[F]:
   ): F[ServerPreparedStatement[F]]
 
   /**
-   * Creates an unnamed savepoint in the current transaction and returns the new Savepoint object that represents it.
-   * if setSavepoint is invoked outside of an active transaction, a transaction will be started at this newly created savepoint.
-   *
-   * @return
-   *   the new Savepoint object
-   */
-  def setSavepoint(): F[Savepoint]
-
-  /**
-   * Creates a savepoint with the given name in the current transaction and returns the new Savepoint object that represents it.
-   * if setSavepoint is invoked outside of an active transaction, a transaction will be started at this newly created savepoint.
-   *
-   * @param name
-   *   a String containing the name of the savepoint
-   * @return
-   *   the new Savepoint object
-   */
-  def setSavepoint(name: String): F[Savepoint]
-
-  /**
-   * Undoes all changes made after the given Savepoint object was set.
-   * This method should be used only when auto-commit has been disabled.
-   *
-   * @param savepoint
-   *   the Savepoint object to roll back to
-   */
-  def rollback(savepoint: Savepoint): F[Unit]
-
-  /**
-   * Removes the specified Savepoint and subsequent Savepoint objects from the current transaction.
-   * Any reference to the savepoint after it have been removed will cause an SQLException to be thrown.
-   *
-   * @param savepoint
-   *   the Savepoint object to release
-   */
-  def releaseSavepoint(savepoint: Savepoint): F[Unit]
-
-  /**
    * Retrieves the statistics of this Connection object.
    *
    * @return

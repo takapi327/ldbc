@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector
+package ldbc.sql
 
 /**
  * The representation of a savepoint, which is a point within the current transaction that can be referenced from the Connection.rollback method.
@@ -15,9 +15,16 @@ package ldbc.connector
 trait Savepoint:
 
   /**
+   * Retrieves the generated ID for the savepoint that this
+   * <code>Savepoint</code> object represents.
+   * @return the numeric ID of this savepoint
+   */
+  def getSavepointId(): Int
+
+  /**
    * Retrieves the name of the savepoint that this Savepoint object represents.
    * 
    * @return
    *   the name of this savepoint
    */
-  def getSavepointName: String
+  def getSavepointName(): String
