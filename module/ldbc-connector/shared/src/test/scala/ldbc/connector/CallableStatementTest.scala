@@ -8,9 +8,13 @@ package ldbc.connector
 
 import cats.*
 import cats.effect.*
-import ldbc.connector.exception.SQLException
+
 import munit.CatsEffectSuite
+
 import org.typelevel.otel4s.trace.Tracer
+
+import ldbc.sql.Types
+import ldbc.connector.exception.SQLException
 
 class CallableStatementTest extends CatsEffectSuite:
 
@@ -172,7 +176,7 @@ class CallableStatementTest extends CatsEffectSuite:
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           _                 <- callableStatement.setString(1, "abcdefg")
           _                 <- callableStatement.setInt(2, 1)
-          _                 <- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+          _                 <- callableStatement.registerOutParameter(2, Types.INTEGER)
           hasResult         <- callableStatement.execute()
           value             <- callableStatement.getInt(2)
         yield value
@@ -226,7 +230,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
-                 .registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+                 .registerOutParameter(2, Types.INTEGER)
         yield true
       }
     )
@@ -242,7 +246,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
-                 .registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+                 .registerOutParameter(2, Types.VARCHAR)
         yield true
       }
     )
@@ -254,7 +258,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL proc3(?, ?)")
           _ <- callableStatement.setInt(1, 1024) *> callableStatement
-                 .registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+                 .registerOutParameter(2, Types.VARCHAR)
         yield true
       }
     )
