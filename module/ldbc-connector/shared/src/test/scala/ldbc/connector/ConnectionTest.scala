@@ -312,7 +312,7 @@ class ConnectionTest extends CatsEffectSuite:
       ssl      = SSL.Trusted
     )
 
-    assertIOBoolean(connection.use(_.isValid))
+    assertIOBoolean(connection.use(_.isValid(0)))
   }
 
   test("Connection state reset succeeds.") {
