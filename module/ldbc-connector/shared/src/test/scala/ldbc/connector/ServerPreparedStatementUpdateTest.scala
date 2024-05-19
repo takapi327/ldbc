@@ -40,7 +40,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_boolean_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            preparedStatement.setBoolean(1, true) *> preparedStatement.setNull(2, MysqlType.BOOLEAN.jdbcType) *> preparedStatement
+            preparedStatement.setBoolean(1, true) *> preparedStatement
+              .setNull(2, MysqlType.BOOLEAN.jdbcType) *> preparedStatement
               .executeUpdate() <* preparedStatement.close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_boolean_table`")
         yield count
@@ -58,7 +59,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_byte_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            preparedStatement.setByte(1, 1.toByte) *> preparedStatement.setNull(2, MysqlType.BIT.jdbcType) *> preparedStatement
+            preparedStatement.setByte(1, 1.toByte) *> preparedStatement
+              .setNull(2, MysqlType.BIT.jdbcType) *> preparedStatement
               .executeUpdate() <* preparedStatement
               .close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_byte_table`")
@@ -79,7 +81,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_short_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            preparedStatement.setShort(1, 1.toShort) *> preparedStatement.setNull(2, MysqlType.TINYINT.jdbcType) *> preparedStatement
+            preparedStatement.setShort(1, 1.toShort) *> preparedStatement
+              .setNull(2, MysqlType.TINYINT.jdbcType) *> preparedStatement
               .executeUpdate() <* preparedStatement
               .close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_short_table`")
@@ -99,7 +102,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_int_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- preparedStatement.setInt(1, 1) *> preparedStatement.setNull(2, MysqlType.SMALLINT.jdbcType) *> preparedStatement
+          count <- preparedStatement.setInt(1, 1) *> preparedStatement
+                     .setNull(2, MysqlType.SMALLINT.jdbcType) *> preparedStatement
                      .executeUpdate() <* preparedStatement.close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_int_table`")
         yield count
@@ -119,7 +123,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_long_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            preparedStatement.setLong(1, Long.MaxValue) *> preparedStatement.setNull(2, MysqlType.BIGINT.jdbcType) *> preparedStatement
+            preparedStatement.setLong(1, Long.MaxValue) *> preparedStatement
+              .setNull(2, MysqlType.BIGINT.jdbcType) *> preparedStatement
               .executeUpdate() <* preparedStatement
               .close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_long_table`")
@@ -160,7 +165,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_float_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            preparedStatement.setFloat(1, 1.1f) *> preparedStatement.setNull(2, MysqlType.FLOAT.jdbcType) *> preparedStatement
+            preparedStatement.setFloat(1, 1.1f) *> preparedStatement
+              .setNull(2, MysqlType.FLOAT.jdbcType) *> preparedStatement
               .executeUpdate() <* preparedStatement.close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_float_table`")
         yield count
@@ -179,7 +185,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
                )
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_double_table`(`c1`, `c2`) VALUES (?, ?)")
-          count <- preparedStatement.setDouble(1, 1.1) *> preparedStatement.setNull(2, MysqlType.DOUBLE.jdbcType) *> preparedStatement
+          count <- preparedStatement.setDouble(1, 1.1) *> preparedStatement
+                     .setNull(2, MysqlType.DOUBLE.jdbcType) *> preparedStatement
                      .executeUpdate() <* preparedStatement
                      .close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_double_table`")
@@ -220,7 +227,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_string_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            preparedStatement.setString(1, "test") *> preparedStatement.setNull(2, MysqlType.VARCHAR.jdbcType) *> preparedStatement
+            preparedStatement.setString(1, "test") *> preparedStatement
+              .setNull(2, MysqlType.VARCHAR.jdbcType) *> preparedStatement
               .executeUpdate() <* preparedStatement
               .close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_string_table`")
@@ -300,7 +308,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_datetime_table`(`c1`, `c2`) VALUES (?, ?)")
           count <- preparedStatement.setTimestamp(1, LocalDateTime.of(2020, 1, 1, 12, 34, 56)) *> preparedStatement
-                     .setNull(2, MysqlType.TIMESTAMP.jdbcType) *> preparedStatement.executeUpdate() <* preparedStatement.close()
+                     .setNull(2, MysqlType.TIMESTAMP.jdbcType) *> preparedStatement.executeUpdate() <* preparedStatement
+                     .close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_datetime_table`")
         yield count
       },
@@ -317,7 +326,8 @@ class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
           preparedStatement <-
             conn.serverPreparedStatement("INSERT INTO `server_statement_year_table`(`c1`, `c2`) VALUES (?, ?)")
           count <-
-            preparedStatement.setInt(1, 2020) *> preparedStatement.setNull(2, MysqlType.YEAR.jdbcType) *> preparedStatement
+            preparedStatement.setInt(1, 2020) *> preparedStatement
+              .setNull(2, MysqlType.YEAR.jdbcType) *> preparedStatement
               .executeUpdate() <* preparedStatement
               .close()
           _ <- statement.executeUpdate("DROP TABLE `server_statement_year_table`")
