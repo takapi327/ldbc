@@ -57,7 +57,9 @@ import ldbc.connector.net.packet.request.*
  * @tparam F
  *   the effect type
  */
-trait CallableStatement[F[_]] extends PreparedStatement[F]:
+trait CallableStatement[F[_]] extends PreparedStatementImpl.Share[F]:
+
+  def params: Ref[F, ListMap[Int, Parameter]]
 
   private[ldbc] def setParameter(index: Int, value: String): F[Unit] =
     params.update(_ + (index -> Parameter.parameter(value)))
@@ -513,32 +515,7 @@ object CallableStatement:
     resultSetType:           Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency:    Int = ResultSet.CONCUR_READ_ONLY
   )(using ev: MonadError[F, Throwable])
-    extends CallableStatement[F],
-            StatementImpl.ShareStatement[F]:
-
-    private def buildQuery(original: String, params: ListMap[Int, Parameter]): String =
-      val query = original.toCharArray
-      params
-        .foldLeft(query) {
-          case (query, (offset, param)) =>
-            val index = query.indexOf('?', offset - 1)
-            if index < 0 then query
-            else
-              val (head, tail)         = query.splitAt(index)
-              val (tailHead, tailTail) = tail.splitAt(1)
-              head ++ param.sql ++ tailTail
-        }
-        .mkString
-
-    private def buildBatchQuery(original: String, params: ListMap[Int, Parameter]): String =
-      val placeholderCount = original.split("\\?", -1).length - 1
-      require(placeholderCount == params.size, "The number of parameters does not match the number of placeholders")
-      original.trim.toLowerCase match
-        case q if q.startsWith("insert") =>
-          val bindQuery = buildQuery(original, params)
-          bindQuery.split("VALUES").last
-        case q if q.startsWith("update") || q.startsWith("delete") => buildQuery(original, params)
-        case _ => throw new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
+    extends CallableStatement[F]:
 
     private val attributes = protocol.initialPacket.attributes ++ List(
       Attribute("type", "CallableStatement"),
