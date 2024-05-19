@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector.data
+package ldbc.sql
 
 /**
  * The object that defines the constants that are used to identify generic

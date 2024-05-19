@@ -16,10 +16,10 @@ import cats.effect.*
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.{ Connection, Statement, PreparedStatement, ResultSet, DatabaseMetaData, RowIdLifetime }
+import ldbc.sql.Types.*
 
 import ldbc.connector.util.Version
 import ldbc.connector.data.*
-import ldbc.connector.data.Types.*
 import ldbc.connector.data.Constants.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.packet.response.*
@@ -888,7 +888,7 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                              val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
                              val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
                              val dataType =
-                               if mysqlType == MysqlType.YEAR && !yearIsDateType then Types.SMALLINT
+                               if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
                                else mysqlType.jdbcType
                              val columnSize = if hasLength then size + decimals else mysqlType.precision.toInt
                              Some(
@@ -1743,7 +1743,7 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             buf.append(if transformedBitIsBoolean then "16" else "-7")
             buf.append(" ELSE -6 END ")
           else buf.append(mysqlType.jdbcType)
-        case MysqlType.YEAR => buf.append(if yearIsDateType then mysqlType.jdbcType else Types.SMALLINT)
+        case MysqlType.YEAR => buf.append(if yearIsDateType then mysqlType.jdbcType else SMALLINT)
         case _              => buf.append(mysqlType.jdbcType)
     }
 
@@ -1814,7 +1814,7 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     List(
       Some(mysqlTypeName), // TYPE_NAME
-      if mysqlType == MysqlType.YEAR && !yearIsDateType then Some(Types.SMALLINT.toString)
+      if mysqlType == MysqlType.YEAR && !yearIsDateType then Some(SMALLINT.toString)
       else Some(mysqlType.jdbcType.toString), // DATA_TYPE
       if mysqlType.precision > Int.MaxValue then Some(Int.MaxValue.toString)
       else Some(mysqlType.precision.toString) // PRECISION
