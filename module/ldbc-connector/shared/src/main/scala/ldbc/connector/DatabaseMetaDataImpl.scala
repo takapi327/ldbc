@@ -27,7 +27,7 @@ import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.net.protocol.*
 
-case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
+private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   protocol:                      Protocol[F],
   serverVariables:               Map[String, String],
   connectionClosed:              Ref[F, Boolean],
@@ -1897,7 +1897,7 @@ case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       case FunctionConstant.FUNCTION_NULLABLE         => DatabaseMetaData.functionNullable
       case FunctionConstant.FUNCTION_NULLABLE_UNKNOWN => DatabaseMetaData.functionNullableUnknown
 
-object DatabaseMetaDataImpl:
+private[ldbc] object DatabaseMetaDataImpl:
 
   private val SQL2003_KEYWORDS = List(
     "ABS",

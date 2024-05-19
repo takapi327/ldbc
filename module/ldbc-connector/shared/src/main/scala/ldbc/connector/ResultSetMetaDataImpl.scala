@@ -13,7 +13,7 @@ import ldbc.connector.util.Version
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 
-class ResultSetMetaDataImpl(
+private[ldbc] class ResultSetMetaDataImpl(
   columns:         Vector[ColumnDefinitionPacket],
   serverVariables: Map[String, String],
   version:         Version
@@ -132,7 +132,7 @@ class ResultSetMetaDataImpl(
       case Some(column) => column
       case None         => throw new SQLException("Column index out of range.")
 
-object ResultSetMetaDataImpl:
+private[ldbc] object ResultSetMetaDataImpl:
 
   def apply(
     columns:         Vector[ColumnDefinitionPacket],

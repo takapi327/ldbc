@@ -496,5 +496,3 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
       val name             = trimmedStatement.takeWhile(c => !Character.isWhitespace(c) && c != '(' && c != '?')
       ev.pure(name)
     else ev.raiseError(new SQLException("Invalid SQL statement"))
-
-object ConnectionImpl
