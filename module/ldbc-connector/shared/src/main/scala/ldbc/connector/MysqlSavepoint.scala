@@ -14,5 +14,5 @@ import ldbc.connector.exception.SQLException
  * Represents SQL SAVEPOINTS in MySQL.
  */
 class MysqlSavepoint(name: String) extends Savepoint:
-  override def getSavepointId(): Int = throw SQLException("Only named savepoints are supported.")
+  override def getSavepointId():   Int    = throw SQLException("Only named savepoints are supported.")
   override def getSavepointName(): String = name
