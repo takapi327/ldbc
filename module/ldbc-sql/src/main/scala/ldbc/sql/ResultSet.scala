@@ -588,3 +588,49 @@ trait ResultSet[F[_]]:
    *         or <code>ResultSet.CONCUR_UPDATABLE</code>
    */
   def getConcurrency(): F[Int]
+
+object ResultSet:
+
+  /**
+   * The constant indicating the type for a <code>ResultSet</code> object
+   * whose cursor may move only forward.
+   */
+  val TYPE_FORWARD_ONLY: Int = 1003
+
+  /**
+   * The constant indicating the type for a <code>ResultSet</code> object
+   * that is scrollable but generally not sensitive to changes to the data
+   * that underlies the <code>ResultSet</code>.
+   */
+  val TYPE_SCROLL_INSENSITIVE: Int = 1004
+
+  /**
+   * The constant indicating the type for a <code>ResultSet</code> object
+   * that is scrollable and generally sensitive to changes to the data
+   * that underlies the <code>ResultSet</code>.
+   */
+  val TYPE_SCROLL_SENSITIVE: Int = 1005
+
+  /**
+   * The constant indicating the concurrency mode for a
+   * <code>ResultSet</code> object that may NOT be updated.
+   */
+  val CONCUR_READ_ONLY: Int = 1007
+
+  /**
+   * The constant indicating the concurrency mode for a
+   * <code>ResultSet</code> object that may be updated.
+   */
+  val CONCUR_UPDATABLE: Int = 1008
+
+  /**
+   * The constant indicating that open <code>ResultSet</code> objects with this
+   * holdability will remain open when the current transaction is committed.
+   */
+  val HOLD_CURSORS_OVER_COMMIT: Int = 1
+
+  /**
+   * The constant indicating that open <code>ResultSet</code> objects with this
+   * holdability will be closed when the current transaction is committed.
+   */
+  val CLOSE_CURSORS_AT_COMMIT: Int = 2

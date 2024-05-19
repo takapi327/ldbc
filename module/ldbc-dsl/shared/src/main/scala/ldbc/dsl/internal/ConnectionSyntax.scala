@@ -15,8 +15,6 @@ import ldbc.dsl.PreparedStatement
 
 trait ConnectionSyntax extends StatementSyntax:
 
-  object Connection
-
   implicit class ConnectionF(connectionObject: Connection.type):
 
     def apply[F[_]: Sync](connection: java.sql.Connection): Connection[F] = new Connection[F]:

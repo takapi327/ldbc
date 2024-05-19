@@ -64,7 +64,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _         <- statement.addBatch("INSERT INTO `batch_test_2` VALUES (1)")
           _         <- statement.addBatch("DROP TABLE `batch_test_2`")
           result    <- statement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(0, 1, 0)
     )
@@ -81,7 +81,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _         <- statement.addBatch("CREATE TABLE `batch_test_3` (`c1` INT)")
           _         <- statement.addBatch("DROP TABLE `batch_test_3`")
           result    <- statement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(0, 0)
     )
@@ -93,7 +93,7 @@ class StatementBatchTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           result    <- statement.executeBatch()
-        yield result
+        yield result.toList
       },
       List.empty
     )
@@ -110,7 +110,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (2, 2)")
           _         <- statement.addBatch("INSERT INTO `batch_test` VALUES (3, 'failed')")
           result    <- statement.executeBatch()
-        yield result
+        yield result.toList
       }
     )
   }
@@ -126,7 +126,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(-2, -2, -2)
     )
@@ -143,7 +143,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       }
     )
   }
@@ -159,7 +159,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(-2, -2, -2)
     )
@@ -185,7 +185,7 @@ class StatementBatchTest extends CatsEffectSuite:
                  9
                ) *> preparedStatement.setInt(4, 9) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(-2, -2, -2)
     )
@@ -202,7 +202,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _      <- preparedStatement.setInt(1, 5) *> preparedStatement.setInt(2, 6) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 6) *> preparedStatement.setInt(2, 7) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(-2, -2, -2)
     )
@@ -219,7 +219,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _      <- preparedStatement.setInt(1, 2) *> preparedStatement.setInt(2, 2) *> preparedStatement.addBatch()
           _      <- preparedStatement.setInt(1, 3) *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(1, 1, 1)
     )
@@ -239,7 +239,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _ <-
             preparedStatement.setString(1, "failed") *> preparedStatement.setInt(2, 3) *> preparedStatement.addBatch()
           result <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       }
     )
   }
@@ -255,7 +255,7 @@ class StatementBatchTest extends CatsEffectSuite:
           _                 <- preparedStatement.setInt(1, 2) *> preparedStatement.addBatch()
           _                 <- preparedStatement.setInt(1, 3) *> preparedStatement.addBatch()
           result            <- preparedStatement.executeBatch()
-        yield result
+        yield result.toList
       },
       List(1, 1, 1)
     )

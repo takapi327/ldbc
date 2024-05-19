@@ -6,13 +6,16 @@
 
 package ldbc.connector
 
+import cats.Monad
+
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
 import munit.CatsEffectSuite
 
-import ldbc.connector.codec.all.*
+import ldbc.sql.Connection as SQLConnection
+
 import ldbc.connector.exception.*
 
 class TransactionTest extends CatsEffectSuite:
@@ -163,9 +166,9 @@ class TransactionTest extends CatsEffectSuite:
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_UNCOMMITTED)
-        level <- conn.getTransactionIsolation
-      yield level == Connection.TransactionIsolationLevel.READ_UNCOMMITTED
+        _     <- conn.setTransactionIsolation(SQLConnection.TRANSACTION_READ_UNCOMMITTED)
+        level <- conn.getTransactionIsolation()
+      yield level == SQLConnection.TRANSACTION_READ_UNCOMMITTED
     })
   }
 
@@ -179,9 +182,9 @@ class TransactionTest extends CatsEffectSuite:
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.READ_COMMITTED)
-        level <- conn.getTransactionIsolation
-      yield level == Connection.TransactionIsolationLevel.READ_COMMITTED
+        _     <- conn.setTransactionIsolation(SQLConnection.TRANSACTION_READ_COMMITTED)
+        level <- conn.getTransactionIsolation()
+      yield level == SQLConnection.TRANSACTION_READ_COMMITTED
     })
   }
 
@@ -195,9 +198,9 @@ class TransactionTest extends CatsEffectSuite:
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.SERIALIZABLE)
-        level <- conn.getTransactionIsolation
-      yield level == Connection.TransactionIsolationLevel.SERIALIZABLE
+        _     <- conn.setTransactionIsolation(SQLConnection.TRANSACTION_SERIALIZABLE)
+        level <- conn.getTransactionIsolation()
+      yield level == SQLConnection.TRANSACTION_SERIALIZABLE
     })
   }
 
@@ -211,9 +214,9 @@ class TransactionTest extends CatsEffectSuite:
     )
     assertIOBoolean(connection.use { conn =>
       for
-        _     <- conn.setTransactionIsolation(Connection.TransactionIsolationLevel.REPEATABLE_READ)
-        level <- conn.getTransactionIsolation
-      yield level == Connection.TransactionIsolationLevel.REPEATABLE_READ
+        _     <- conn.setTransactionIsolation(SQLConnection.TRANSACTION_REPEATABLE_READ)
+        level <- conn.getTransactionIsolation()
+      yield level == SQLConnection.TRANSACTION_REPEATABLE_READ
     })
   }
 
@@ -236,7 +239,7 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 1L)
         resultSet <- query.executeQuery()
-        decoded   <- resultSet.decode(bigint)
+        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
       yield decoded.contains(1L)
     })
   }
@@ -260,7 +263,7 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 2L)
         resultSet <- query.executeQuery()
-        decoded   <- resultSet.decode(bigint)
+        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
       yield decoded.isEmpty
     })
   }

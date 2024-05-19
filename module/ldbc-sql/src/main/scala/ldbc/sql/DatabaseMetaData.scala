@@ -2904,3 +2904,642 @@ trait DatabaseMetaData[F[_]]:
    *         {@code false} otherwise
    */
   def supportsSharding(): Boolean = false
+
+object DatabaseMetaData:
+
+  enum DatabaseTerm:
+    case SCHEMA, CATALOG
+
+  /**
+   * Indicates that it is not known whether the procedure returns
+   * a result.
+   * <P>
+   * A possible value for column <code>PROCEDURE_TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getProcedures</code>.
+   */
+  val procedureResultUnknown: Int = 0
+
+  /**
+   * Indicates that the procedure does not return a result.
+   * <P>
+   * A possible value for column <code>PROCEDURE_TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getProcedures</code>.
+   */
+  val procedureNoResult: Int = 1
+
+  /**
+   * Indicates that the procedure returns a result.
+   * <P>
+   * A possible value for column <code>PROCEDURE_TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getProcedures</code>.
+   */
+  val procedureReturnsResult: Int = 2
+
+  /**
+   * Indicates that type of the column is unknown.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureColumnUnknown: Int = 0
+
+  /**
+   * Indicates that the column stores IN parameters.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureColumnIn: Int = 1
+
+  /**
+   * Indicates that the column stores INOUT parameters.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureColumnInOut: Int = 2
+
+  /**
+   * Indicates that the column stores results.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureColumnResult: Int = 3
+
+  /**
+   * Indicates that the column stores OUT parameters.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureColumnOut: Int = 4
+
+  /**
+   * Indicates that the column stores return values.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureColumnReturn: Int = 5
+
+  /**
+   * Indicates that <code>NULL</code> values are not allowed.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureNoNulls: Int = 0
+
+  /**
+   * Indicates that <code>NULL</code> values are allowed.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureNullable: Int = 1
+
+  /**
+   * Indicates that whether <code>NULL</code> values are allowed
+   * is unknown.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getProcedureColumns</code>.
+   */
+  val procedureNullableUnknown: Int = 2
+
+  /**
+   * Indicates that the column might not allow <code>NULL</code> values.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> returned by the method
+   * <code>getColumns</code>.
+   */
+  val columnNoNulls: Int = 0
+
+  /**
+   * Indicates that the column definitely allows <code>NULL</code> values.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> returned by the method
+   * <code>getColumns</code>.
+   */
+  val columnNullable: Int = 1
+
+  /**
+   * Indicates that the nullability of columns is unknown.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> returned by the method
+   * <code>getColumns</code>.
+   */
+  val columnNullableUnknown: Int = 2
+
+  /**
+   * Indicates that the scope of the best row identifier is
+   * very temporary, lasting only while the
+   * row is being used.
+   * <P>
+   * A possible value for the column
+   * <code>SCOPE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getBestRowIdentifier</code>.
+   */
+  val bestRowTemporary: Int = 0
+
+  /**
+   * Indicates that the scope of the best row identifier is
+   * the remainder of the current transaction.
+   * <P>
+   * A possible value for the column
+   * <code>SCOPE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getBestRowIdentifier</code>.
+   */
+  val bestRowTransaction: Int = 1
+
+  /**
+   * Indicates that the scope of the best row identifier is
+   * the remainder of the current session.
+   * <P>
+   * A possible value for the column
+   * <code>SCOPE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getBestRowIdentifier</code>.
+   */
+  val bestRowSession: Int = 2
+
+  /**
+   * Indicates that the best row identifier may or may not be a pseudo column.
+   * <P>
+   * A possible value for the column
+   * <code>PSEUDO_COLUMN</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getBestRowIdentifier</code>.
+   */
+  val bestRowUnknown: Int = 0
+
+  /**
+   * Indicates that the best row identifier is NOT a pseudo column.
+   * <P>
+   * A possible value for the column
+   * <code>PSEUDO_COLUMN</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getBestRowIdentifier</code>.
+   */
+  val bestRowNotPseudo: Int = 1
+
+  /**
+   * Indicates that the best row identifier is a pseudo column.
+   * <P>
+   * A possible value for the column
+   * <code>PSEUDO_COLUMN</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getBestRowIdentifier</code>.
+   */
+  val bestRowPseudo: Int = 2
+
+  /**
+   * Indicates that this version column may or may not be a pseudo column.
+   * <P>
+   * A possible value for the column
+   * <code>PSEUDO_COLUMN</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getVersionColumns</code>.
+   */
+  val versionColumnUnknown: Int = 0
+
+  /**
+   * Indicates that this version column is NOT a pseudo column.
+   * <P>
+   * A possible value for the column
+   * <code>PSEUDO_COLUMN</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getVersionColumns</code>.
+   */
+  val versionColumnNotPseudo: Int = 1
+
+  /**
+   * Indicates that this version column is a pseudo column.
+   * <P>
+   * A possible value for the column
+   * <code>PSEUDO_COLUMN</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getVersionColumns</code>.
+   */
+  val versionColumnPseudo: Int = 2
+
+  /**
+   * For the column <code>UPDATE_RULE</code>,
+   * indicates that
+   * when the primary key is updated, the foreign key (imported key)
+   * is changed to agree with it.
+   * For the column <code>DELETE_RULE</code>,
+   * it indicates that
+   * when the primary key is deleted, rows that imported that key
+   * are deleted.
+   * <P>
+   * A possible value for the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code> in the
+   * <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeyCascade: Int = 0
+
+  /**
+   * For the column <code>UPDATE_RULE</code>, indicates that
+   * a primary key may not be updated if it has been imported by
+   * another table as a foreign key.
+   * For the column <code>DELETE_RULE</code>, indicates that
+   * a primary key may not be deleted if it has been imported by
+   * another table as a foreign key.
+   * <P>
+   * A possible value for the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code> in the
+   * <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeyRestrict: Int = 1
+
+  /**
+   * For the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code>, indicates that
+   * when the primary key is updated or deleted, the foreign key (imported key)
+   * is changed to <code>NULL</code>.
+   * <P>
+   * A possible value for the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code> in the
+   * <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeySetNull: Int = 2
+
+  /**
+   * For the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code>, indicates that
+   * if the primary key has been imported, it cannot be updated or deleted.
+   * <P>
+   * A possible value for the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code> in the
+   * <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeyNoAction: Int = 3
+
+  /**
+   * For the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code>, indicates that
+   * if the primary key is updated or deleted, the foreign key (imported key)
+   * is set to the default value.
+   * <P>
+   * A possible value for the columns <code>UPDATE_RULE</code>
+   * and <code>DELETE_RULE</code> in the
+   * <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeySetDefault: Int = 4
+
+  /**
+   * Indicates deferrability.  See SQL-92 for a definition.
+   * <P>
+   * A possible value for the column <code>DEFERRABILITY</code>
+   * in the <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeyInitiallyDeferred: Int = 5
+
+  /**
+   * Indicates deferrability.  See SQL-92 for a definition.
+   * <P>
+   * A possible value for the column <code>DEFERRABILITY</code>
+   * in the <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeyInitiallyImmediate: Int = 6
+
+  /**
+   * Indicates deferrability.  See SQL-92 for a definition.
+   * <P>
+   * A possible value for the column <code>DEFERRABILITY</code>
+   * in the <code>ResultSet</code> objects returned by the methods
+   * <code>getImportedKeys</code>,  <code>getExportedKeys</code>,
+   * and <code>getCrossReference</code>.
+   */
+  val importedKeyNotDeferrable: Int = 7
+
+  /**
+   * Indicates that a <code>NULL</code> value is NOT allowed for this
+   * data type.
+   * <P>
+   * A possible value for column <code>NULLABLE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getTypeInfo</code>.
+   */
+  val typeNoNulls: Int = 0
+
+  /**
+   * Indicates that a <code>NULL</code> value is allowed for this
+   * data type.
+   * <P>
+   * A possible value for column <code>NULLABLE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getTypeInfo</code>.
+   */
+  val typeNullable: Int = 1
+
+  /**
+   * Indicates that it is not known whether a <code>NULL</code> value
+   * is allowed for this data type.
+   * <P>
+   * A possible value for column <code>NULLABLE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getTypeInfo</code>.
+   */
+  val typeNullableUnknown: Int = 2
+
+  /**
+   * Indicates that <code>WHERE</code> search clauses are not supported
+   * for this type.
+   * <P>
+   * A possible value for column <code>SEARCHABLE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getTypeInfo</code>.
+   */
+  val typePredNone: Int = 0
+
+  /**
+   * Indicates that the data type
+   * can be only be used in <code>WHERE</code> search clauses
+   * that  use <code>LIKE</code> predicates.
+   * <P>
+   * A possible value for column <code>SEARCHABLE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getTypeInfo</code>.
+   */
+  val typePredChar: Int = 1
+
+  /**
+   * Indicates that the data type can be only be used in <code>WHERE</code>
+   * search clauses
+   * that do not use <code>LIKE</code> predicates.
+   * <P>
+   * A possible value for column <code>SEARCHABLE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getTypeInfo</code>.
+   */
+  val typePredBasic: Int = 2
+
+  /**
+   * Indicates that all <code>WHERE</code> search clauses can be
+   * based on this type.
+   * <P>
+   * A possible value for column <code>SEARCHABLE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getTypeInfo</code>.
+   */
+  val typeSearchable: Int = 3
+
+  /**
+   * Indicates that this column contains table statistics that
+   * are returned in conjunction with a table's index descriptions.
+   * <P>
+   * A possible value for column <code>TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getIndexInfo</code>.
+   */
+  val tableIndexStatistic: Short = 0
+
+  /**
+   * Indicates that this table index is a clustered index.
+   * <P>
+   * A possible value for column <code>TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getIndexInfo</code>.
+   */
+  val tableIndexClustered: Short = 1
+
+  /**
+   * Indicates that this table index is a hashed index.
+   * <P>
+   * A possible value for column <code>TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getIndexInfo</code>.
+   */
+  val tableIndexHashed: Short = 2
+
+  /**
+   * Indicates that this table index is not a clustered
+   * index, a hashed index, or table statistics;
+   * it is something other than these.
+   * <P>
+   * A possible value for column <code>TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getIndexInfo</code>.
+   */
+  val tableIndexOther: Short = 3
+
+  /**
+   * Indicates that <code>NULL</code> values might not be allowed.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code> in the <code>ResultSet</code> object
+   * returned by the method <code>getAttributes</code>.
+   */
+  val attributeNoNulls: Short = 0
+
+  /**
+   * Indicates that <code>NULL</code> values are definitely allowed.
+   * <P>
+   * A possible value for the column <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getAttributes</code>.
+   */
+  val attributeNullable: Short = 1
+
+  /**
+   * Indicates that whether <code>NULL</code> values are allowed is not
+   * known.
+   * <P>
+   * A possible value for the column <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getAttributes</code>.
+   */
+  val attributeNullableUnknown: Short = 2
+
+  /**
+   * A possible return value for the method
+   * <code>DatabaseMetaData.getSQLStateType</code> which is used to indicate
+   * whether the value returned by the method
+   * <code>SQLException.getSQLState</code> is an
+   * X/Open (now know as Open Group) SQL CLI SQLSTATE value.
+   */
+  val sqlStateXOpen: Int = 1
+
+  /**
+   * A possible return value for the method
+   * <code>DatabaseMetaData.getSQLStateType</code> which is used to indicate
+   * whether the value returned by the method
+   * <code>SQLException.getSQLState</code> is an SQLSTATE value.
+   */
+  val sqlStateSQL: Int = 2
+
+  /**
+   * A possible return value for the method
+   * <code>DatabaseMetaData.getSQLStateType</code> which is used to indicate
+   * whether the value returned by the method
+   * <code>SQLException.getSQLState</code> is an SQL99 SQLSTATE value.
+   * <P>
+   * <b>Note:</b>This constant remains only for compatibility reasons. Developers
+   * should use the constant <code>sqlStateSQL</code> instead.
+   */
+  val sqlStateSQL99: Int = sqlStateSQL
+
+  /**
+   * Indicates that type of the parameter or column is unknown.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionColumnUnknown: Int = 0
+
+  /**
+   * Indicates that the parameter or column is an IN parameter.
+   * <P>
+   *  A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionColumnIn: Int = 1
+
+  /**
+   * Indicates that the parameter or column is an INOUT parameter.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionColumnInOut: Int = 2
+
+  /**
+   * Indicates that the parameter or column is an OUT parameter.
+   * <P>
+   * A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionColumnOut: Int = 3
+
+  /**
+   * Indicates that the parameter or column is a return value.
+   * <P>
+   *  A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionReturn: Int = 4
+
+  /**
+   * Indicates that the parameter or column is a column in a result set.
+   * <P>
+   *  A possible value for the column
+   * <code>COLUMN_TYPE</code>
+   * in the <code>ResultSet</code>
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionColumnResult: Int = 5
+
+  /**
+   * Indicates that <code>NULL</code> values are not allowed.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionNoNulls: Int = 0
+
+  /**
+   * Indicates that <code>NULL</code> values are allowed.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionNullable: Int = 1
+
+  /**
+   * Indicates that whether <code>NULL</code> values are allowed
+   * is unknown.
+   * <P>
+   * A possible value for the column
+   * <code>NULLABLE</code>
+   * in the <code>ResultSet</code> object
+   * returned by the method <code>getFunctionColumns</code>.
+   */
+  val functionNullableUnknown: Int = 2
+
+  /**
+   * Indicates that it is not known whether the function returns
+   * a result or a table.
+   * <P>
+   * A possible value for column <code>FUNCTION_TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getFunctions</code>.
+   */
+  val functionResultUnknown: Int = 0
+
+  /**
+   * Indicates that the function  does not return a table.
+   * <P>
+   * A possible value for column <code>FUNCTION_TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getFunctions</code>.
+   */
+  val functionNoTable: Int = 1
+
+  /**
+   * Indicates that the function  returns a table.
+   * <P>
+   * A possible value for column <code>FUNCTION_TYPE</code> in the
+   * <code>ResultSet</code> object returned by the method
+   * <code>getFunctions</code>.
+   */
+  val functionReturnsTable: Int = 2

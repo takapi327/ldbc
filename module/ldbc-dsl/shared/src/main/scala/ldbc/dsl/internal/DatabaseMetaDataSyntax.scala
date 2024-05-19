@@ -14,8 +14,6 @@ import ldbc.sql.*
 
 trait DatabaseMetaDataSyntax:
 
-  object DatabaseMetaData
-
   implicit class DatabaseMetaDataF(metaDataObject: DatabaseMetaData.type):
 
     def apply[F[_]: Sync](metaData: java.sql.DatabaseMetaData): DatabaseMetaData[F] =

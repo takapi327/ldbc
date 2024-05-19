@@ -16,6 +16,7 @@ import cats.effect.*
 
 import munit.CatsEffectSuite
 
+import ldbc.sql.DatabaseMetaData
 import ldbc.connector.exception.*
 
 class ConnectionTest extends CatsEffectSuite:
@@ -311,7 +312,7 @@ class ConnectionTest extends CatsEffectSuite:
       ssl      = SSL.Trusted
     )
 
-    assertIOBoolean(connection.use(_.isValid))
+    assertIOBoolean(connection.use(_.isValid(0)))
   }
 
   test("Connection state reset succeeds.") {
@@ -926,7 +927,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Remarks: Some(), Procedure Type: Some(1)"
+        "Procedure Catalog: connector_test, Procedure Schema: null, Procedure Name: demoSp, Remarks: , Procedure Type: 1"
       )
     )
   }
@@ -958,8 +959,8 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Column Name: Some(inputParam), Column Type: Some(1)",
-        "Procedure Catalog: Some(connector_test), Procedure Schema: None, Procedure Name: Some(demoSp), Column Name: Some(inOutParam), Column Type: Some(2)"
+        "Procedure Catalog: connector_test, Procedure Schema: null, Procedure Name: demoSp, Column Name: inputParam, Column Type: 1",
+        "Procedure Catalog: connector_test, Procedure Schema: null, Procedure Name: demoSp, Column Name: inOutParam, Column Type: 2"
       )
     )
   }
@@ -971,8 +972,7 @@ class ConnectionTest extends CatsEffectSuite:
       user     = "ldbc",
       password = Some("password"),
       database = Some("connector_test"),
-      // ssl      = SSL.Trusted
-      allowPublicKeyRetrieval = true
+      ssl      = SSL.Trusted
     )
 
     assertIO(
@@ -997,7 +997,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Catalog: Some(connector_test), Table Schema: None, Table Name: Some(all_types), Table Type: Some(TABLE), Remarks: Some(), Type Catalog: None, Type Schema: None, Type Name: None, Self Referencing Column Name: None, Reference Generation: None"
+        "Table Catalog: connector_test, Table Schema: null, Table Name: all_types, Table Type: TABLE, Remarks: , Type Catalog: null, Type Schema: null, Type Name: null, Self Referencing Column Name: null, Reference Generation: null"
       )
     )
   }
@@ -1027,13 +1027,13 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Catalog: Some(def), Table Schema: Some(connector_test)",
-        "Table Catalog: Some(def), Table Schema: Some(information_schema)",
-        "Table Catalog: Some(def), Table Schema: Some(mysql)",
-        "Table Catalog: Some(def), Table Schema: Some(performance_schema)",
-        "Table Catalog: Some(def), Table Schema: Some(sys)",
-        "Table Catalog: Some(def), Table Schema: Some(world)",
-        "Table Catalog: Some(def), Table Schema: Some(world2)"
+        "Table Catalog: def, Table Schema: connector_test",
+        "Table Catalog: def, Table Schema: information_schema",
+        "Table Catalog: def, Table Schema: mysql",
+        "Table Catalog: def, Table Schema: performance_schema",
+        "Table Catalog: def, Table Schema: sys",
+        "Table Catalog: def, Table Schema: world",
+        "Table Catalog: def, Table Schema: world2"
       )
     )
   }
@@ -1060,13 +1060,13 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Catalog: Some(connector_test)",
-        "Table Catalog: Some(information_schema)",
-        "Table Catalog: Some(mysql)",
-        "Table Catalog: Some(performance_schema)",
-        "Table Catalog: Some(sys)",
-        "Table Catalog: Some(world)",
-        "Table Catalog: Some(world2)"
+        "Table Catalog: connector_test",
+        "Table Catalog: information_schema",
+        "Table Catalog: mysql",
+        "Table Catalog: performance_schema",
+        "Table Catalog: sys",
+        "Table Catalog: world",
+        "Table Catalog: world2"
       )
     )
   }
@@ -1093,11 +1093,11 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Type: Some(LOCAL TEMPORARY)",
-        "Table Type: Some(SYSTEM TABLE)",
-        "Table Type: Some(SYSTEM VIEW)",
-        "Table Type: Some(TABLE)",
-        "Table Type: Some(VIEW)"
+        "Table Type: LOCAL TEMPORARY",
+        "Table Type: SYSTEM TABLE",
+        "Table Type: SYSTEM VIEW",
+        "Table Type: TABLE",
+        "Table Type: VIEW"
       )
     )
   }
@@ -1149,9 +1149,9 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c1), Data Type: 4, Type Name: Some(INT), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Data Type: 4, Type Name: Some(INT), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: None, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 2, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(updated_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: Some(), Column Def: Some(CURRENT_TIMESTAMP), SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 3, Is Nullable: Some(NO), Scope Catalog: None, Scope Schema: None, Scope Table: None, Source Data Type: 0, Is Autoincrement: Some(NO), Is Generatedcolumn: Some(YES)"
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c1, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: null, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: NO",
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c2, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: null, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 2, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: NO",
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: updated_at, Data Type: 93, Type Name: TIMESTAMP, Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: CURRENT_TIMESTAMP, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 3, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: YES"
       )
     )
   }
@@ -1187,10 +1187,10 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c1), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(INSERT), Is Grantable: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c1), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(SELECT), Is Grantable: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(INSERT), Is Grantable: Some(NO)",
-        "Table Cat: Some(def), Table Schem: Some(connector_test), Table Name: Some(privileges_table), Column Name: Some(c2), Grantor: None, Grantee: Some('ldbc'@'%'), Privilege: Some(SELECT), Is Grantable: Some(NO)"
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c1, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO",
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c1, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c2, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO",
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c2, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO"
       )
     )
   }
@@ -1225,7 +1225,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Cat: None, Table Schem: Some(connector_test), Table Name: Some(privileges_table), Grantor: Some(root@localhost), Grantee: Some(ldbc@%), Privilege: Some(Select,Insert), Is Grantable: None"
+        "Table Cat: null, Table Schem: connector_test, Table Name: privileges_table, Grantor: root@localhost, Grantee: ldbc@%, Privilege: Select,Insert, Is Grantable: null"
       )
     )
   }
@@ -1261,7 +1261,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Scope: 2, Column Name: Some(c1), Data Type: 4, Type Name: Some(int), Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+        "Scope: 2, Column Name: c1, Data Type: 4, Type Name: int, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }
@@ -1296,7 +1296,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Scope: 0, Column Name: Some(updated_at), Data Type: 93, Type Name: Some(TIMESTAMP), Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
+        "Scope: 0, Column Name: updated_at, Data Type: 93, Type Name: TIMESTAMP, Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Pseudo Column: 1"
       )
     )
   }
@@ -1329,7 +1329,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Cat: Some(connector_test), Table Schem: None, Table Name: Some(privileges_table), Column Name: Some(c1), Key Seq: 1, PK Name: Some(PRIMARY)"
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Column Name: c1, Key Seq: 1, PK Name: PRIMARY"
       )
     )
   }
@@ -1371,7 +1371,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "PK Table Cat: Some(def), PK Table Schem: Some(world), PK Table Name: Some(country), PK Column Name: Some(Code), FK Table Cat: Some(def), FK Table Schem: Some(world), FK Table Name: Some(city), FK Column Name: Some(CountryCode), Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: Some(city_ibfk_1), PK Name: Some(PRIMARY), Deferrability: 7"
+        "PK Table Cat: def, PK Table Schem: world, PK Table Name: country, PK Column Name: Code, FK Table Cat: def, FK Table Schem: world, FK Table Name: city, FK Column Name: CountryCode, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: city_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
       )
     )
   }
@@ -1413,7 +1413,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "PK Table Cat: Some(def), PK Table Schem: Some(world), PK Table Name: Some(city), PK Column Name: Some(ID), FK Table Cat: Some(def), FK Table Schem: Some(world), FK Table Name: Some(government_office), FK Column Name: Some(CityID), Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: Some(government_office_ibfk_1), PK Name: Some(PRIMARY), Deferrability: 7"
+        "PK Table Cat: def, PK Table Schem: world, PK Table Name: city, PK Column Name: ID, FK Table Cat: def, FK Table Schem: world, FK Table Name: government_office, FK Column Name: CityID, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: government_office_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
       )
     )
   }
@@ -1456,7 +1456,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "PK Table Cat: Some(def), PK Table Schem: Some(world), PK Table Name: Some(city), PK Column Name: Some(ID), FK Table Cat: Some(def), FK Table Schem: Some(world), FK Table Name: Some(government_office), FK Column Name: Some(CityID), Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: Some(government_office_ibfk_1), PK Name: Some(PRIMARY), Deferrability: 7"
+        "PK Table Cat: def, PK Table Schem: world, PK Table Name: city, PK Column Name: ID, FK Table Cat: def, FK Table Schem: world, FK Table Name: government_office, FK Column Name: CityID, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: government_office_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
       )
     )
   }
@@ -1503,49 +1503,49 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Type Name: Some(BIT), Data Type: -7, Precision: 1, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(BIT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(TINYINT), Data Type: -6, Precision: 3, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(TINYINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(TINYINT UNSIGNED), Data Type: -6, Precision: 3, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(TINYINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(BIGINT), Data Type: -5, Precision: 19, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(BIGINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(BIGINT UNSIGNED), Data Type: -5, Precision: 20, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(BIGINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(LONG VARBINARY), Data Type: -4, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(MEDIUMBLOB), Data Type: -4, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(LONGBLOB), Data Type: -4, Precision: 2147483647, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(LONGBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(BLOB), Data Type: -4, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(M)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(BLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(VARBINARY), Data Type: -3, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some((M)), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(VARBINARY), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(TINYBLOB), Data Type: -3, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TINYBLOB), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(BINARY), Data Type: -2, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some((M)), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(BINARY), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(LONG VARCHAR), Data Type: -1, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(MEDIUMTEXT), Data Type: -1, Precision: 16777215, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(MEDIUMTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(LONGTEXT), Data Type: -1, Precision: 2147483647, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(LONGTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(TEXT), Data Type: -1, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(M)] [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(CHAR), Data Type: 1, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(M)] [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(CHAR), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(ENUM), Data Type: 1, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(ENUM), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(SET), Data Type: 1, Precision: 64, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(SET), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(DECIMAL), Data Type: 3, Precision: 65, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M[,D])] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DECIMAL), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(NUMERIC), Data Type: 3, Precision: 65, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M[,D])] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DECIMAL), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(INTEGER), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(INT), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(MEDIUMINT), Data Type: 4, Precision: 7, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(MEDIUMINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(INTEGER UNSIGNED), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(INT UNSIGNED), Data Type: 4, Precision: 10, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(INT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(MEDIUMINT UNSIGNED), Data Type: 4, Precision: 8, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(MEDIUMINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(SMALLINT), Data Type: 5, Precision: 5, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(SMALLINT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(SMALLINT UNSIGNED), Data Type: 5, Precision: 5, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(SMALLINT UNSIGNED), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(YEAR), Data Type: 91, Precision: 4, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(4)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(YEAR), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(FLOAT), Data Type: 7, Precision: 12, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(FLOAT), Minimum Scale: -38, Maximum Scale: 38, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(DOUBLE), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(DOUBLE PRECISION), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(REAL), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(DOUBLE UNSIGNED), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE UNSIGNED), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(DOUBLE PRECISION UNSIGNED), Data Type: 8, Precision: 22, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some([(M,D)] [UNSIGNED] [ZEROFILL]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(DOUBLE UNSIGNED), Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(VARCHAR), Data Type: 12, Precision: 65535, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some((M) [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(VARCHAR), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(TINYTEXT), Data Type: 12, Precision: 255, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some( [CHARACTER SET charset_name] [COLLATE collation_name]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TINYTEXT), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(BOOL), Data Type: 16, Precision: 3, Literal Prefix: Some(), Literal Suffix: Some(), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: Some(BOOLEAN), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(DATE), Data Type: 91, Precision: 10, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some(), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DATE), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(TIME), Data Type: 92, Precision: 16, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(fsp)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TIME), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(DATETIME), Data Type: 93, Precision: 26, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(fsp)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(DATETIME), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
-        "Type Name: Some(TIMESTAMP), Data Type: 93, Precision: 26, Literal Prefix: Some('), Literal Suffix: Some('), Create Params: Some([(fsp)]), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: Some(TIMESTAMP), Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10"
+        "Type Name: BIT, Data Type: -7, Precision: 1, Literal Prefix: , Literal Suffix: , Create Params: [(M)], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: BIT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: TINYINT, Data Type: -6, Precision: 3, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: TINYINT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: TINYINT UNSIGNED, Data Type: -6, Precision: 3, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: TINYINT UNSIGNED, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: BIGINT, Data Type: -5, Precision: 19, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: BIGINT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: BIGINT UNSIGNED, Data Type: -5, Precision: 20, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: BIGINT UNSIGNED, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: LONG VARBINARY, Data Type: -4, Precision: 16777215, Literal Prefix: ', Literal Suffix: ', Create Params: , Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: MEDIUMBLOB, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: MEDIUMBLOB, Data Type: -4, Precision: 16777215, Literal Prefix: ', Literal Suffix: ', Create Params: , Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: MEDIUMBLOB, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: LONGBLOB, Data Type: -4, Precision: 2147483647, Literal Prefix: ', Literal Suffix: ', Create Params: , Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: LONGBLOB, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: BLOB, Data Type: -4, Precision: 65535, Literal Prefix: ', Literal Suffix: ', Create Params: [(M)], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: BLOB, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: VARBINARY, Data Type: -3, Precision: 65535, Literal Prefix: ', Literal Suffix: ', Create Params: (M), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: VARBINARY, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: TINYBLOB, Data Type: -3, Precision: 255, Literal Prefix: ', Literal Suffix: ', Create Params: , Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: TINYBLOB, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: BINARY, Data Type: -2, Precision: 255, Literal Prefix: ', Literal Suffix: ', Create Params: (M), Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: BINARY, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: LONG VARCHAR, Data Type: -1, Precision: 16777215, Literal Prefix: ', Literal Suffix: ', Create Params:  [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: MEDIUMTEXT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: MEDIUMTEXT, Data Type: -1, Precision: 16777215, Literal Prefix: ', Literal Suffix: ', Create Params:  [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: MEDIUMTEXT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: LONGTEXT, Data Type: -1, Precision: 2147483647, Literal Prefix: ', Literal Suffix: ', Create Params:  [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: LONGTEXT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: TEXT, Data Type: -1, Precision: 65535, Literal Prefix: ', Literal Suffix: ', Create Params: [(M)] [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: TEXT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: CHAR, Data Type: 1, Precision: 255, Literal Prefix: ', Literal Suffix: ', Create Params: [(M)] [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: CHAR, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: ENUM, Data Type: 1, Precision: 65535, Literal Prefix: ', Literal Suffix: ', Create Params: ('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: ENUM, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: SET, Data Type: 1, Precision: 64, Literal Prefix: ', Literal Suffix: ', Create Params: ('value1','value2',...) [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: SET, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: DECIMAL, Data Type: 3, Precision: 65, Literal Prefix: , Literal Suffix: , Create Params: [(M[,D])] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: DECIMAL, Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: NUMERIC, Data Type: 3, Precision: 65, Literal Prefix: , Literal Suffix: , Create Params: [(M[,D])] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: DECIMAL, Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: INTEGER, Data Type: 4, Precision: 10, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: INT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: INT, Data Type: 4, Precision: 10, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: INT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: MEDIUMINT, Data Type: 4, Precision: 7, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: MEDIUMINT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: INTEGER UNSIGNED, Data Type: 4, Precision: 10, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: INT UNSIGNED, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: INT UNSIGNED, Data Type: 4, Precision: 10, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: INT UNSIGNED, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: MEDIUMINT UNSIGNED, Data Type: 4, Precision: 8, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: MEDIUMINT UNSIGNED, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: SMALLINT, Data Type: 5, Precision: 5, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: SMALLINT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: SMALLINT UNSIGNED, Data Type: 5, Precision: 5, Literal Prefix: , Literal Suffix: , Create Params: [(M)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: SMALLINT UNSIGNED, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: YEAR, Data Type: 91, Precision: 4, Literal Prefix: , Literal Suffix: , Create Params: [(4)], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: YEAR, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: FLOAT, Data Type: 7, Precision: 12, Literal Prefix: , Literal Suffix: , Create Params: [(M,D)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: FLOAT, Minimum Scale: -38, Maximum Scale: 38, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: DOUBLE, Data Type: 8, Precision: 22, Literal Prefix: , Literal Suffix: , Create Params: [(M,D)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: DOUBLE, Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: DOUBLE PRECISION, Data Type: 8, Precision: 22, Literal Prefix: , Literal Suffix: , Create Params: [(M,D)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: DOUBLE, Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: REAL, Data Type: 8, Precision: 22, Literal Prefix: , Literal Suffix: , Create Params: [(M,D)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: DOUBLE, Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: DOUBLE UNSIGNED, Data Type: 8, Precision: 22, Literal Prefix: , Literal Suffix: , Create Params: [(M,D)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: DOUBLE UNSIGNED, Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: DOUBLE PRECISION UNSIGNED, Data Type: 8, Precision: 22, Literal Prefix: , Literal Suffix: , Create Params: [(M,D)] [UNSIGNED] [ZEROFILL], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: true, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: DOUBLE UNSIGNED, Minimum Scale: -308, Maximum Scale: 308, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: VARCHAR, Data Type: 12, Precision: 65535, Literal Prefix: ', Literal Suffix: ', Create Params: (M) [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: VARCHAR, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: TINYTEXT, Data Type: 12, Precision: 255, Literal Prefix: ', Literal Suffix: ', Create Params:  [CHARACTER SET charset_name] [COLLATE collation_name], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: TINYTEXT, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: BOOL, Data Type: 16, Precision: 3, Literal Prefix: , Literal Suffix: , Create Params: , Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: true, Local Type Name: BOOLEAN, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: DATE, Data Type: 91, Precision: 10, Literal Prefix: ', Literal Suffix: ', Create Params: , Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: DATE, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: TIME, Data Type: 92, Precision: 16, Literal Prefix: ', Literal Suffix: ', Create Params: [(fsp)], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: TIME, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: DATETIME, Data Type: 93, Precision: 26, Literal Prefix: ', Literal Suffix: ', Create Params: [(fsp)], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: DATETIME, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10",
+        "Type Name: TIMESTAMP, Data Type: 93, Precision: 26, Literal Prefix: ', Literal Suffix: ', Create Params: [(fsp)], Nullable: 1, Case Sensitive: true, Searchable: 3, Unsigned Attribute: false, Fixed Prec Scale: false, Auto Increment: false, Local Type Name: TIMESTAMP, Minimum Scale: 0, Maximum Scale: 0, SQL Data Type: 0, SQL Datetime Sub: 0, Num Prec Radix: 10"
       )
     )
   }
@@ -1586,7 +1586,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Table Cat: Some(def), Table Schem: Some(world), Table Name: Some(city), Non Unique: false, Index Qualifier: None, Index Name: Some(PRIMARY), Type: 3, Ordinal Position: 1, Column Name: Some(ID), Asc Or Desc: Some(A), Pages: 0, Filter Condition: None"
+        "Table Cat: def, Table Schem: world, Table Name: city, Non Unique: false, Index Qualifier: null, Index Name: PRIMARY, Type: 3, Ordinal Position: 1, Column Name: ID, Asc Or Desc: A, Pages: 0, Filter Condition: null"
       )
     )
   }
@@ -1618,28 +1618,28 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_schema_from_file_name), Function Type: 1, Specific Name: Some(extract_schema_from_file_name)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_table_from_file_name), Function Type: 1, Specific Name: Some(extract_table_from_file_name)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_bytes), Function Type: 1, Specific Name: Some(format_bytes)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_path), Function Type: 1, Specific Name: Some(format_path)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_statement), Function Type: 1, Specific Name: Some(format_statement)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_time), Function Type: 1, Specific Name: Some(format_time)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_add), Function Type: 1, Specific Name: Some(list_add)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_drop), Function Type: 1, Specific Name: Some(list_drop)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_account_enabled), Function Type: 1, Specific Name: Some(ps_is_account_enabled)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_consumer_enabled), Function Type: 1, Specific Name: Some(ps_is_consumer_enabled)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_enabled), Function Type: 1, Specific Name: Some(ps_is_instrument_default_enabled)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_timed), Function Type: 1, Specific Name: Some(ps_is_instrument_default_timed)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_thread_instrumented), Function Type: 1, Specific Name: Some(ps_is_thread_instrumented)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_account), Function Type: 1, Specific Name: Some(ps_thread_account)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_id), Function Type: 1, Specific Name: Some(ps_thread_id)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_stack), Function Type: 1, Specific Name: Some(ps_thread_stack)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_trx_info), Function Type: 1, Specific Name: Some(ps_thread_trx_info)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(quote_identifier), Function Type: 1, Specific Name: Some(quote_identifier)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(sys_get_config), Function Type: 1, Specific Name: Some(sys_get_config)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_major), Function Type: 1, Specific Name: Some(version_major)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_minor), Function Type: 1, Specific Name: Some(version_minor)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_patch), Function Type: 1, Specific Name: Some(version_patch)"
+        "Function Cat: def, Function Schem: sys, Function Name: extract_schema_from_file_name, Function Type: 1, Specific Name: extract_schema_from_file_name",
+        "Function Cat: def, Function Schem: sys, Function Name: extract_table_from_file_name, Function Type: 1, Specific Name: extract_table_from_file_name",
+        "Function Cat: def, Function Schem: sys, Function Name: format_bytes, Function Type: 1, Specific Name: format_bytes",
+        "Function Cat: def, Function Schem: sys, Function Name: format_path, Function Type: 1, Specific Name: format_path",
+        "Function Cat: def, Function Schem: sys, Function Name: format_statement, Function Type: 1, Specific Name: format_statement",
+        "Function Cat: def, Function Schem: sys, Function Name: format_time, Function Type: 1, Specific Name: format_time",
+        "Function Cat: def, Function Schem: sys, Function Name: list_add, Function Type: 1, Specific Name: list_add",
+        "Function Cat: def, Function Schem: sys, Function Name: list_drop, Function Type: 1, Specific Name: list_drop",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_account_enabled, Function Type: 1, Specific Name: ps_is_account_enabled",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_consumer_enabled, Function Type: 1, Specific Name: ps_is_consumer_enabled",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_enabled, Function Type: 1, Specific Name: ps_is_instrument_default_enabled",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_timed, Function Type: 1, Specific Name: ps_is_instrument_default_timed",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_thread_instrumented, Function Type: 1, Specific Name: ps_is_thread_instrumented",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_account, Function Type: 1, Specific Name: ps_thread_account",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_id, Function Type: 1, Specific Name: ps_thread_id",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_stack, Function Type: 1, Specific Name: ps_thread_stack",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_trx_info, Function Type: 1, Specific Name: ps_thread_trx_info",
+        "Function Cat: def, Function Schem: sys, Function Name: quote_identifier, Function Type: 1, Specific Name: quote_identifier",
+        "Function Cat: def, Function Schem: sys, Function Name: sys_get_config, Function Type: 1, Specific Name: sys_get_config",
+        "Function Cat: def, Function Schem: sys, Function Name: version_major, Function Type: 1, Specific Name: version_major",
+        "Function Cat: def, Function Schem: sys, Function Name: version_minor, Function Type: 1, Specific Name: version_minor",
+        "Function Cat: def, Function Schem: sys, Function Name: version_patch, Function Type: 1, Specific Name: version_patch"
       )
     )
   }
@@ -1683,29 +1683,29 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_schema_from_file_name), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(extract_schema_from_file_name)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(extract_table_from_file_name), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(extract_table_from_file_name)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_bytes), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_bytes)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_path), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 512, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2048, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_path)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_statement), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(LONGTEXT), Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_statement)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(format_time), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(format_time)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_add), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(list_add)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(list_drop), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(list_drop)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_account_enabled), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_account_enabled)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_account_enabled), Column Name: Some(in_host), Column Type: 1, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 255, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 1020, Ordinal Position: 1, Is Nullable: Some(YES), Specific Name: Some(ps_is_account_enabled)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_consumer_enabled), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_consumer_enabled)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_enabled), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_instrument_default_enabled)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_instrument_default_timed), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_instrument_default_timed)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_is_thread_instrumented), Column Name: Some(), Column Type: 4, Data Type: 1, Type Name: Some(ENUM), Precision: 0, Length: 7, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 28, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_is_thread_instrumented)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_account), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_account)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_id), Column Name: Some(), Column Type: 4, Data Type: -5, Type Name: Some(BIGINT UNSIGNED), Precision: 20, Length: 20, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_id)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_stack), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(LONGTEXT), Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_stack)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(ps_thread_trx_info), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(LONGTEXT), Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(ps_thread_trx_info)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(quote_identifier), Column Name: Some(), Column Type: 4, Data Type: -1, Type Name: Some(TEXT), Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(quote_identifier)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(sys_get_config), Column Name: Some(), Column Type: 4, Data Type: 12, Type Name: Some(VARCHAR), Precision: 0, Length: 128, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 512, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(sys_get_config)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_major), Column Name: Some(), Column Type: 4, Data Type: -6, Type Name: Some(TINYINT UNSIGNED), Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(version_major)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_minor), Column Name: Some(), Column Type: 4, Data Type: -6, Type Name: Some(TINYINT UNSIGNED), Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(version_minor)",
-        "Function Cat: Some(def), Function Schem: Some(sys), Function Name: Some(version_patch), Column Name: Some(), Column Type: 4, Data Type: -6, Type Name: Some(TINYINT UNSIGNED), Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: None, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: Some(YES), Specific Name: Some(version_patch)"
+        "Function Cat: def, Function Schem: sys, Function Name: extract_schema_from_file_name, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: YES, Specific Name: extract_schema_from_file_name",
+        "Function Cat: def, Function Schem: sys, Function Name: extract_table_from_file_name, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: YES, Specific Name: extract_table_from_file_name",
+        "Function Cat: def, Function Schem: sys, Function Name: format_bytes, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_bytes",
+        "Function Cat: def, Function Schem: sys, Function Name: format_path, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 512, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2048, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_path",
+        "Function Cat: def, Function Schem: sys, Function Name: format_statement, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_statement",
+        "Function Cat: def, Function Schem: sys, Function Name: format_time, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_time",
+        "Function Cat: def, Function Schem: sys, Function Name: list_add, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: list_add",
+        "Function Cat: def, Function Schem: sys, Function Name: list_drop, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: list_drop",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_account_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_account_enabled",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_account_enabled, Column Name: in_host, Column Type: 1, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 255, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 1020, Ordinal Position: 1, Is Nullable: YES, Specific Name: ps_is_account_enabled",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_consumer_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_consumer_enabled",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_instrument_default_enabled",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_timed, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_instrument_default_timed",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_is_thread_instrumented, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 7, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 28, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_thread_instrumented",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_account, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_account",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_id, Column Name: , Column Type: 4, Data Type: -5, Type Name: BIGINT UNSIGNED, Precision: 20, Length: 20, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_id",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_stack, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_stack",
+        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_trx_info, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_trx_info",
+        "Function Cat: def, Function Schem: sys, Function Name: quote_identifier, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: quote_identifier",
+        "Function Cat: def, Function Schem: sys, Function Name: sys_get_config, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 128, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 512, Ordinal Position: 0, Is Nullable: YES, Specific Name: sys_get_config",
+        "Function Cat: def, Function Schem: sys, Function Name: version_major, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_major",
+        "Function Cat: def, Function Schem: sys, Function Name: version_minor, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_minor",
+        "Function Cat: def, Function Schem: sys, Function Name: version_patch, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_patch"
       )
     )
   }

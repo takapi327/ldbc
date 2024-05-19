@@ -15,8 +15,6 @@ import ldbc.sql.*
 
 trait ResultSetSyntax:
 
-  object ResultSet
-
   implicit class ResultSetF(resultSetObject: ResultSet.type):
 
     def apply[F[_]: Sync](resultSet: java.sql.ResultSet): ResultSet[F] = new ResultSet[F]:

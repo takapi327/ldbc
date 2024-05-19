@@ -8,13 +8,13 @@ package ldbc.connector
 
 import java.time.*
 
+import cats.Monad
+
 import org.typelevel.otel4s.trace.Tracer
 
 import cats.effect.*
 
 import munit.CatsEffectSuite
-
-import ldbc.connector.codec.all.*
 
 class StatementQueryTest extends CatsEffectSuite:
 
@@ -34,10 +34,10 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT 1")
-          decoded   <- resultSet.decode[Int](int)
+          decoded   <- resultSet.getInt(1)
         yield decoded
       },
-      List(1)
+      1
     )
   }
 
@@ -47,10 +47,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Byte, Option[Byte])](bit *: bit.opt)
+          decoded <- Monad[IO].whileM[List, (Byte, Byte)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getByte(1)
+                         v2 <- resultSet.getByte(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((1.toByte, None))
+      List((1.toByte, 0.toByte))
     )
   }
 
@@ -60,10 +65,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Byte, Option[Byte])](tinyint *: tinyint.opt)
+          decoded <- Monad[IO].whileM[List, (Byte, Byte)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getByte(1)
+                         v2 <- resultSet.getByte(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((127.toByte, None))
+      List((127.toByte, 0.toByte))
     )
   }
 
@@ -75,10 +85,15 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery(
                          "SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
                        )
-          decoded <- resultSet.decode[(Short, Option[Short])](utinyint *: utinyint.opt)
+          decoded <- Monad[IO].whileM[List, (Short, Short)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getShort(1)
+                         v2 <- resultSet.getShort(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((255.toShort, None))
+      List((255.toShort, 0.toShort))
     )
   }
 
@@ -88,10 +103,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Short, Option[Short])](smallint *: smallint.opt)
+          decoded <- Monad[IO].whileM[List, (Short, Short)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getShort(1)
+                         v2 <- resultSet.getShort(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((32767.toShort, None))
+      List((32767.toShort, 0.toShort))
     )
   }
 
@@ -103,10 +123,15 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery(
                          "SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
                        )
-          decoded <- resultSet.decode[(Int, Option[Int])](usmallint *: usmallint.opt)
+          decoded <- Monad[IO].whileM[List, (Int, Int)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getInt(1)
+                         v2 <- resultSet.getInt(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((65535, None))
+      List((65535, 0))
     )
   }
 
@@ -116,10 +141,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Int, Option[Int])](mediumint *: mediumint.opt)
+          decoded <- Monad[IO].whileM[List, (Int, Int)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getInt(1)
+                         v2 <- resultSet.getInt(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((8388607, None))
+      List((8388607, 0))
     )
   }
 
@@ -129,10 +159,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `int`, `int_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Int, Option[Int])](int *: int.opt)
+          decoded <- Monad[IO].whileM[List, (Int, Int)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getInt(1)
+                         v2 <- resultSet.getInt(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((2147483647, None))
+      List((2147483647, 0))
     )
   }
 
@@ -143,10 +178,15 @@ class StatementQueryTest extends CatsEffectSuite:
           statement <- conn.createStatement()
           resultSet <-
             statement.executeQuery("SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`")
-          decoded <- resultSet.decode[(Long, Option[Long])](uint *: uint.opt)
+          decoded <- Monad[IO].whileM[List, (Long, Long)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getLong(1)
+                         v2 <- resultSet.getLong(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((4294967295L, None))
+      List((4294967295L, 0L))
     )
   }
 
@@ -156,10 +196,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Long, Option[Long])](bigint *: bigint.opt)
+          decoded <- Monad[IO].whileM[List, (Long, Long)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getLong(1)
+                         v2 <- resultSet.getLong(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((9223372036854775807L, None))
+      List((9223372036854775807L, 0L))
     )
   }
 
@@ -170,10 +215,15 @@ class StatementQueryTest extends CatsEffectSuite:
           statement <- conn.createStatement()
           resultSet <-
             statement.executeQuery("SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`")
-          decoded <- resultSet.decode[(BigInt, Option[BigInt])](ubigint *: ubigint.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((BigInt("18446744073709551615"), None))
+      List(("18446744073709551615", null))
     )
   }
 
@@ -183,10 +233,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `float`, `float_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Float, Option[Float])](float *: float.opt)
+          decoded <- Monad[IO].whileM[List, (Float, Float)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getFloat(1)
+                         v2 <- resultSet.getFloat(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((3.40282e38f, None))
+      List((3.40282e38f, 0f))
     )
   }
 
@@ -196,10 +251,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `double`, `double_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Double, Option[Double])](double *: double.opt)
+          decoded <- Monad[IO].whileM[List, (Double, Double)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getDouble(1)
+                         v2 <- resultSet.getDouble(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((1.7976931348623157e308, None))
+      List((1.7976931348623157e308, 0.toDouble))
     )
   }
 
@@ -209,10 +269,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(BigDecimal, Option[BigDecimal])](decimal(10, 2) *: decimal(10, 2).opt)
+          decoded <- Monad[IO].whileM[List, (BigDecimal, BigDecimal)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getBigDecimal(1)
+                         v2 <- resultSet.getBigDecimal(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((BigDecimal.decimal(9999999.99), None))
+      List((BigDecimal.decimal(9999999.99), null))
     )
   }
 
@@ -222,10 +287,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `date`, `date_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(LocalDate, Option[LocalDate])](date *: date.opt)
+          decoded <- Monad[IO].whileM[List, (LocalDate, LocalDate)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getDate(1)
+                         v2 <- resultSet.getDate(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((LocalDate.of(2020, 1, 1), None))
+      List((LocalDate.of(2020, 1, 1), null))
     )
   }
 
@@ -235,10 +305,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `time`, `time_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(LocalTime, Option[LocalTime])](time *: time.opt)
+          decoded <- Monad[IO].whileM[List, (LocalTime, LocalTime)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getTime(1)
+                         v2 <- resultSet.getTime(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((LocalTime.of(12, 34, 56), None))
+      List((LocalTime.of(12, 34, 56), null))
     )
   }
 
@@ -248,10 +323,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(LocalDateTime, Option[LocalDateTime])](datetime *: datetime.opt)
+          decoded <- Monad[IO].whileM[List, (LocalDateTime, LocalDateTime)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getTimestamp(1)
+                         v2 <- resultSet.getTimestamp(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
+      List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), null))
     )
   }
 
@@ -261,10 +341,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(LocalDateTime, Option[LocalDateTime])](timestamp *: timestamp.opt)
+          decoded <- Monad[IO].whileM[List, (LocalDateTime, LocalDateTime)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getTimestamp(1)
+                         v2 <- resultSet.getTimestamp(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
+      List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), null))
     )
   }
 
@@ -274,10 +359,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `year`, `year_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Year, Option[Year])](year *: year.opt)
+          decoded <- Monad[IO].whileM[List, (Short, Short)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getShort(1)
+                         v2 <- resultSet.getShort(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((Year.of(2020), None))
+      List((2020.toShort, 0.toShort))
     )
   }
 
@@ -287,10 +377,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `char`, `char_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](char(10) *: char(10).opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("char", None))
+      List(("char", null))
     )
   }
 
@@ -300,10 +395,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](varchar(10) *: varchar(10).opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("varchar", None))
+      List(("varchar", null))
     )
   }
 
@@ -313,10 +413,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(Array[Byte], Option[Array[Byte]])](binary(10) *: binary(10).opt)
-        yield decoded.map((a, b) => (a.mkString(":"), b.map(_.mkString(":"))))
+          decoded <- Monad[IO].whileM[List, (String, Array[Byte])](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getBytes(1)
+                         v2 <- resultSet.getBytes(2)
+                       yield (v1.mkString(":"), v2)
+                     }
+        yield decoded
       },
-      List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None))
+      List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), null))
     )
   }
 
@@ -326,10 +431,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](varbinary(10) *: varbinary(10).opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("varbinary", None))
+      List(("varbinary", null))
     )
   }
 
@@ -339,10 +449,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](tinyblob *: tinyblob.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("tinyblob", None))
+      List(("tinyblob", null))
     )
   }
 
@@ -352,10 +467,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](blob *: blob.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("blob", None))
+      List(("blob", null))
     )
   }
 
@@ -366,10 +486,15 @@ class StatementQueryTest extends CatsEffectSuite:
           statement <- conn.createStatement()
           resultSet <-
             statement.executeQuery("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`")
-          decoded <- resultSet.decode[(String, Option[String])](mediumblob *: mediumblob.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("mediumblob", None))
+      List(("mediumblob", null))
     )
   }
 
@@ -379,10 +504,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](longblob *: longblob.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("longblob", None))
+      List(("longblob", null))
     )
   }
 
@@ -392,10 +522,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](tinytext *: tinytext.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("tinytext", None))
+      List(("tinytext", null))
     )
   }
 
@@ -405,10 +540,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `text`, `text_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](text *: text.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("text", None))
+      List(("text", null))
     )
   }
 
@@ -419,10 +559,15 @@ class StatementQueryTest extends CatsEffectSuite:
           statement <- conn.createStatement()
           resultSet <-
             statement.executeQuery("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`")
-          decoded <- resultSet.decode[(String, Option[String])](mediumtext *: mediumtext.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("mediumtext", None))
+      List(("mediumtext", null))
     )
   }
 
@@ -432,38 +577,51 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](longtext *: longtext.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("longtext", None))
+      List(("longtext", null))
     )
   }
 
   test("Statement should be able to retrieve ENUM type records.") {
-    val t = `enum`("a", "b", "c")
     assertIO(
       connection.use { conn =>
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](t *: t.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("a", None))
+      List(("a", null))
     )
   }
 
   test("Statement should be able to retrieve SET type records.") {
-    val s = set("a", "b", "c")
     assertIO(
       connection.use { conn =>
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `set`, `set_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(List[String], Option[List[String]])](s *: s.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List((List("a", "b"), None))
+      List(("a,b", null))
     )
   }
 
@@ -473,10 +631,15 @@ class StatementQueryTest extends CatsEffectSuite:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery("SELECT `json`, `json_null` FROM `connector_test`.`all_types`")
-          decoded   <- resultSet.decode[(String, Option[String])](json *: json.opt)
+          decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
+                       for
+                         v1 <- resultSet.getString(1)
+                         v2 <- resultSet.getString(2)
+                       yield (v1, v2)
+                     }
         yield decoded
       },
-      List(("{\"a\": 1}", None))
+      List(("{\"a\": 1}", null))
     )
   }
 

@@ -8,9 +8,13 @@ package ldbc.connector
 
 import cats.*
 import cats.effect.*
-import ldbc.connector.exception.SQLException
+
 import munit.CatsEffectSuite
+
 import org.typelevel.otel4s.trace.Tracer
+
+import ldbc.sql.Types
+import ldbc.connector.exception.SQLException
 
 class CallableStatementTest extends CatsEffectSuite:
 
@@ -32,7 +36,7 @@ class CallableStatementTest extends CatsEffectSuite:
           callableStatement <- conn.prepareCall("CALL proc1()")
           resultSet         <- callableStatement.executeQuery()
           value             <- resultSet.getString(1)
-        yield value
+        yield Option(value)
       },
       Some("8.0.33")
     )
@@ -47,7 +51,7 @@ class CallableStatementTest extends CatsEffectSuite:
           value <- resultSet match
                      case Some(rs) => rs.getString(1)
                      case None     => IO.raiseError(new Exception("No result set"))
-        yield value
+        yield Option(value)
       },
       Some("8.0.33")
     )
@@ -77,7 +81,7 @@ class CallableStatementTest extends CatsEffectSuite:
                          .executeQuery()
           param1 <- resultSet.getInt(1)
           param2 <- resultSet.getString(2)
-        yield (param1, param2)
+        yield (param1, Option(param2))
       },
       (1024, Some("Hello"))
     )
@@ -107,7 +111,7 @@ class CallableStatementTest extends CatsEffectSuite:
           resultSet <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
                          .executeQuery()
           value <- resultSet.getString(1)
-        yield value
+        yield Option(value)
       },
       Some("abcdefg")
     )
@@ -155,7 +159,7 @@ class CallableStatementTest extends CatsEffectSuite:
                                        case None     => IO.raiseError(new Exception("No result set"))
                                      }
                         value <- resultSet.getString(1)
-                      yield value
+                      yield Option(value)
                     }
         yield values
       },
@@ -172,7 +176,7 @@ class CallableStatementTest extends CatsEffectSuite:
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           _                 <- callableStatement.setString(1, "abcdefg")
           _                 <- callableStatement.setInt(2, 1)
-          _                 <- callableStatement.registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+          _                 <- callableStatement.registerOutParameter(2, Types.INTEGER)
           hasResult         <- callableStatement.execute()
           value             <- callableStatement.getInt(2)
         yield value
@@ -201,7 +205,7 @@ class CallableStatementTest extends CatsEffectSuite:
           callableStatement <- conn.prepareCall("SELECT func2()")
           resultSet         <- callableStatement.executeQuery()
           value             <- resultSet.getString(1)
-        yield value
+        yield Option(value)
       },
       Some("hello, world")
     )
@@ -226,7 +230,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
-                 .registerOutParameter(2, ldbc.connector.data.Types.INTEGER)
+                 .registerOutParameter(2, Types.INTEGER)
         yield true
       }
     )
@@ -242,7 +246,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           _ <- callableStatement.setString(1, "abcdefg") *> callableStatement
-                 .registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+                 .registerOutParameter(2, Types.VARCHAR)
         yield true
       }
     )
@@ -254,7 +258,7 @@ class CallableStatementTest extends CatsEffectSuite:
         for
           callableStatement <- conn.prepareCall("CALL proc3(?, ?)")
           _ <- callableStatement.setInt(1, 1024) *> callableStatement
-                 .registerOutParameter(2, ldbc.connector.data.Types.VARCHAR)
+                 .registerOutParameter(2, Types.VARCHAR)
         yield true
       }
     )

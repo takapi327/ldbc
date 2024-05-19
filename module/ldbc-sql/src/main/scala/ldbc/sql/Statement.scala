@@ -270,6 +270,24 @@ trait Statement[F[_]]:
 
 object Statement:
 
-  enum Generated(val code: Int):
-    case RETURN_GENERATED_KEYS extends Generated(java.sql.Statement.RETURN_GENERATED_KEYS)
-    case NO_GENERATED_KEYS     extends Generated(java.sql.Statement.NO_GENERATED_KEYS)
+  /**
+   * The constant indicating that a batch statement executed successfully but that no count of the number of rows it affected is available.
+   */
+  val SUCCESS_NO_INFO: Int = -2
+
+  /**
+   * The constant indicating that an error occurred while executing a batch statement.
+   */
+  val EXECUTE_FAILED: Int = -3
+
+  /**
+   * The constant indicating that generated keys should be made
+   * available for retrieval.
+   */
+  val RETURN_GENERATED_KEYS: Int = 1
+
+  /**
+   * The constant indicating that generated keys should not be made
+   * available for retrieval.
+   */
+  val NO_GENERATED_KEYS: Int = 2
