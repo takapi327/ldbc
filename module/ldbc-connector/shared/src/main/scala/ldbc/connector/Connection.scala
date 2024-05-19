@@ -20,7 +20,7 @@ import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.{ Connection, DatabaseMetaData }
+import ldbc.sql.DatabaseMetaData
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
@@ -61,7 +61,7 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
-  ): Tracer[F] ?=> Resource[F, Connection[F]] =
+  ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
 
@@ -95,7 +95,7 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
-  ): Resource[F, Connection[F]] =
+  ): Resource[F, LdbcConnection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
       (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
@@ -138,7 +138,7 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
-  )(using ev: Temporal[F]): Resource[F, Connection[F]] =
+  )(using ev: Temporal[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
       Resource.eval(ev.raiseError(new SQLClientInfoException(msg)))
