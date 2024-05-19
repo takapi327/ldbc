@@ -16,6 +16,8 @@ import org.typelevel.otel4s.trace.Tracer
 
 import munit.CatsEffectSuite
 
+import ldbc.connector.data.MysqlType
+
 class ServerPreparedStatementQueryTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
@@ -34,7 +36,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.serverPreparedStatement("SELECT `bit`, `bit_null` FROM `all_types` WHERE `bit_null` <=> ?")
-          resultSet <- statement.setNull(1) *> statement.executeQuery()
+          resultSet <- statement.setNull(1, MysqlType.BIT.jdbcType) *> statement.executeQuery()
           decoded <- Monad[IO].whileM[List, (Byte, Byte)](resultSet.next()) {
                        for
                          v1 <- resultSet.getByte(1)
@@ -229,7 +231,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
                          "SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `all_types` WHERE `bigint_unsigned` = ?"
                        )
           resultSet <-
-            statement.setBigInt(1, BigInt("18446744073709551615")) *> statement.executeQuery()
+            statement.setString(1, "18446744073709551615") *> statement.executeQuery()
           decoded <- Monad[IO].whileM[List, (String, String)](resultSet.next()) {
                        for
                          v1 <- resultSet.getString(1)
@@ -380,7 +382,7 @@ class ServerPreparedStatementQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           statement <- conn.serverPreparedStatement("SELECT `year`, `year_null` FROM `all_types` WHERE `year` = ?")
-          resultSet <- statement.setYear(1, Year.of(2020)) *> statement.executeQuery()
+          resultSet <- statement.setInt(1, 2020) *> statement.executeQuery()
           decoded <- Monad[IO].whileM[List, (Short, Short)](resultSet.next()) {
                        for
                          v1 <- resultSet.getShort(1)
