@@ -88,11 +88,14 @@ trait ConnectionSyntax extends StatementSyntax, SavepointSyntax:
 
       override def setSavepoint(): F[Savepoint] = Sync[F].blocking(connection.setSavepoint()).map(Savepoint.apply)
 
-      override def setSavepoint(name: String): F[Savepoint] = Sync[F].blocking(connection.setSavepoint(name)).map(Savepoint.apply)
+      override def setSavepoint(name: String): F[Savepoint] =
+        Sync[F].blocking(connection.setSavepoint(name)).map(Savepoint.apply)
 
-      override def rollback(savepoint: Savepoint): F[Unit] = Sync[F].blocking(connection.rollback(MysqlSavepoint(savepoint.getSavepointName())))
+      override def rollback(savepoint: Savepoint): F[Unit] =
+        Sync[F].blocking(connection.rollback(MysqlSavepoint(savepoint.getSavepointName())))
 
-      override def releaseSavepoint(savepoint: Savepoint): F[Unit] = Sync[F].blocking(connection.releaseSavepoint(MysqlSavepoint(savepoint.getSavepointName())))
+      override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
+        Sync[F].blocking(connection.releaseSavepoint(MysqlSavepoint(savepoint.getSavepointName())))
 
     def pure[F[_]: Applicative, T](value: T): Kleisli[F, Connection[F], T] =
       Kleisli.pure[F, Connection[F], T](value)
