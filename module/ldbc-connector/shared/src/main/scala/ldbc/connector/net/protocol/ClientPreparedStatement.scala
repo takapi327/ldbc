@@ -55,7 +55,8 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
   lastInsertId:         Ref[F, Int],
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-)(using ev: MonadError[F, Throwable]) extends PreparedStatementImpl.Share[F]:
+)(using ev: MonadError[F, Throwable])
+  extends PreparedStatementImpl.Share[F]:
 
   private val attributes = protocol.initialPacket.attributes ++ List(
     Attribute("type", "Client PreparedStatement"),
@@ -69,7 +70,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           (attributes ++ List(
             Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
             Attribute("execute", "query")
-          )) *
+          ))*
         ) *>
           protocol.resetSequenceId *>
           protocol.send(
@@ -80,7 +81,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
               for
                 lastColumnReadNullable <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
-                resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
               yield ResultSetImpl
                 .empty(
                   serverVariables,
@@ -105,19 +106,19 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                   )
                 lastColumnReadNullable <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
-                resultSetCurrentRow <- Ref[F].of(resultSetRow.headOption)
+                resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
                 resultSet = ResultSetImpl(
-                  columnDefinitions,
-                  resultSetRow,
-                  serverVariables,
-                  protocol.initialPacket.serverVersion,
-                  resultSetClosed,
-                  lastColumnReadNullable,
-                  resultSetCurrentCursor,
-                  resultSetCurrentRow,
-                  resultSetType,
-                  resultSetConcurrency
-                )
+                              columnDefinitions,
+                              resultSetRow,
+                              serverVariables,
+                              protocol.initialPacket.serverVersion,
+                              resultSetClosed,
+                              lastColumnReadNullable,
+                              resultSetCurrentCursor,
+                              resultSetCurrentRow,
+                              resultSetType,
+                              resultSetConcurrency
+                            )
                 _ <- currentResultSet.set(Some(resultSet))
               yield resultSet
           }
@@ -131,7 +132,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           (attributes ++ List(
             Attribute("params", params.map((_, param) => param.toString).mkString(", ")),
             Attribute("execute", "update")
-          )) *
+          ))*
         ) *>
           protocol.resetSequenceId *>
           protocol.send(
@@ -140,7 +141,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-            case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+            case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
           }
       } <* params.set(ListMap.empty)
     }
@@ -149,7 +150,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
     if sql.toUpperCase.startsWith("SELECT") then
       executeQuery().flatMap {
         case resultSet: ResultSetImpl[F] => resultSet.hasRows()
-        case _ => ev.pure(false)
+        case _                           => ev.pure(false)
       }
     else executeUpdate().map(_ => false)
 
@@ -172,7 +173,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                     Attribute("execute", "batch"),
                     Attribute("size", args.length.toLong),
                     Attribute("sql", args.toArray.toSeq)
-                  )) *
+                  ))*
                 ) *> (
                   if args.isEmpty then ev.pure(Array.empty)
                   else
@@ -187,11 +188,11 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                       protocol
                         .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                         .flatMap {
-                          case _: OKPacket => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO))
+                          case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO))
                           case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                          case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                          case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                         }
-                  )
+                )
               }
           } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
@@ -205,7 +206,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                       Attribute("execute", "batch"),
                       Attribute("size", args.length.toLong),
                       Attribute("sql", args.toArray.toSeq)
-                    )) *
+                    ))*
                   ) *> (
                     if args.isEmpty then ev.pure(Array.empty)
                     else
@@ -234,7 +235,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                             yield result
                           }
                           .map(_.toArray)
-                    )
+                  )
                 }
             } <*
             protocol.resetSequenceId <*
@@ -245,35 +246,35 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           ev.raiseError(
             new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
           )
-      )
+    )
 
   override def getGeneratedKeys(): F[ResultSet[F]] =
     autoGeneratedKeys.get.flatMap {
       case Statement.RETURN_GENERATED_KEYS =>
         for
-          isResultSetClosed <- Ref[F].of(false)
+          isResultSetClosed      <- Ref[F].of(false)
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
-          lastInsertId <- lastInsertId.get
+          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
+          lastInsertId           <- lastInsertId.get
           resultSet = ResultSetImpl(
-            Vector(new ColumnDefinitionPacket:
-              override def table: String = ""
+                        Vector(new ColumnDefinitionPacket:
+                          override def table: String = ""
 
-              override def name: String = "GENERATED_KEYS"
+                          override def name: String = "GENERATED_KEYS"
 
-              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
+                          override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
 
-              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-            ),
-            Vector(ResultSetRowPacket(List(Some(lastInsertId.toString)))),
-            serverVariables,
-            protocol.initialPacket.serverVersion,
-            isResultSetClosed,
-            lastColumnReadNullable,
-            resultSetCurrentCursor,
-            resultSetCurrentRow
-          )
+                          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+                        ),
+                        Vector(ResultSetRowPacket(List(Some(lastInsertId.toString)))),
+                        serverVariables,
+                        protocol.initialPacket.serverVersion,
+                        isResultSetClosed,
+                        lastColumnReadNullable,
+                        resultSetCurrentCursor,
+                        resultSetCurrentRow
+                      )
           _ <- currentResultSet.set(Some(resultSet))
         yield resultSet
       case Statement.NO_GENERATED_KEYS =>
