@@ -57,7 +57,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
 )(using ev: MonadError[F, Throwable])
-  extends PreparedStatementImpl.Share[F]:
+  extends SharedPreparedStatement[F]:
 
   private val attributes = List(
     Attribute("type", "Server PreparedStatement"),

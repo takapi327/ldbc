@@ -57,7 +57,7 @@ import ldbc.connector.net.packet.request.*
  * @tparam F
  *   the effect type
  */
-trait CallableStatement[F[_]] extends PreparedStatementImpl.Share[F]:
+trait CallableStatement[F[_]] extends SharedPreparedStatement[F]:
 
   def params: Ref[F, ListMap[Int, Parameter]]
 
