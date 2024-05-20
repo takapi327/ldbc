@@ -75,7 +75,35 @@ trait SQL[F[_]: Monad]:
    * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
    * first one is retrieved.
    */
-  inline def headOption[T <: Tuple]: Kleisli[F, Connection[F], Option[T]] = ???
+  inline def headOption[T <: Tuple]: Kleisli[F, Connection[F], Option[T]] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
+      ResultSetReader
+        .fold[F, T]
+        .toList
+        .zipWithIndex
+        .traverse {
+          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
+    }
+
+    connectionToHeadOption[T](statement, params)
+
+  inline def headOption[P <: Product](using
+   mirror: Mirror.ProductOf[P]
+  ): Kleisli[F, Connection[F], Option[P]] =
+    given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
+      ResultSetReader
+        .fold[F, mirror.MirroredElemTypes]
+        .toList
+        .zipWithIndex
+        .traverse {
+          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+    }
+
+    connectionToHeadOption[P](statement, params)
 
   /**
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
@@ -102,3 +130,13 @@ trait SQL[F[_]: Monad]:
     params:    Seq[ParameterBinder[F]]
   )(using Kleisli[F, ResultSet[F], T], FactoryCompat[T, List[T]]): Kleisli[F, Connection[F], List[T]] =
     connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
+
+  /**
+   * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the first
+   * one is retrieved.
+   */
+  private def connectionToHeadOption[T](
+    statement: String,
+    params: Seq[ParameterBinder[F]]
+  )(using Kleisli[F, ResultSet[F], T]): Kleisli[F, Connection[F], Option[T]] =
+    connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
