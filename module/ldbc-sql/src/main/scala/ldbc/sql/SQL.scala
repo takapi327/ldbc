@@ -9,7 +9,7 @@ package ldbc.sql
 import scala.deriving.Mirror
 import scala.annotation.targetName
 
-import cats.{Monad, MonadError}
+import cats.{ Monad, MonadError }
 import cats.data.Kleisli
 import cats.syntax.all.*
 
@@ -123,7 +123,10 @@ trait SQL[F[_]: Monad]:
 
     connectionToUnsafe[T](statement, params)
 
-  inline def unsafe[P <: Product](using mirror: Mirror.ProductOf[P], ev: MonadError[F, Throwable]): Kleisli[F, Connection[F], P] =
+  inline def unsafe[P <: Product](using
+    mirror: Mirror.ProductOf[P],
+    ev:     MonadError[F, Throwable]
+  ): Kleisli[F, Connection[F], P] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, mirror.MirroredElemTypes]
