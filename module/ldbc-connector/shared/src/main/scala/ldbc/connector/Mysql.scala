@@ -20,11 +20,11 @@ import ldbc.sql.*
  * etc.
  *
  * @param statement
- * an SQL statement that may contain one or more '?' IN parameter placeholders
+ *   an SQL statement that may contain one or more '?' IN parameter placeholders
  * @param params
- * statement has '?' that the statement has.
+ *   statement has '?' that the statement has.
  * @tparam F
- * The effect type
+ *   The effect type
  */
 case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[F]]) extends SQL[F]:
 
