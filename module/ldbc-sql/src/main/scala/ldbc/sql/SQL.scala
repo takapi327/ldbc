@@ -9,7 +9,7 @@ package ldbc.sql
 import scala.deriving.Mirror
 import scala.annotation.targetName
 
-import cats.Monad
+import cats.{Monad, MonadError}
 import cats.data.Kleisli
 import cats.syntax.all.*
 
@@ -109,7 +109,33 @@ trait SQL[F[_]: Monad]:
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
    * raised. Use the [[headOption]] method if you want to retrieve individual data.
    */
-  inline def unsafe[T <: Tuple]: Kleisli[F, Connection[F], T] = ???
+  inline def unsafe[T <: Tuple](using MonadError[F, Throwable]): Kleisli[F, Connection[F], T] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
+      ResultSetReader
+        .fold[F, T]
+        .toList
+        .zipWithIndex
+        .traverse {
+          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
+        }
+        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
+    }
+
+    connectionToUnsafe[T](statement, params)
+
+  inline def unsafe[P <: Product](using mirror: Mirror.ProductOf[P], ev: MonadError[F, Throwable]): Kleisli[F, Connection[F], P] =
+    given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
+      ResultSetReader
+        .fold[F, mirror.MirroredElemTypes]
+        .toList
+        .zipWithIndex
+        .traverse {
+          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
+        }
+        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+    }
+
+    connectionToUnsafe[P](statement, params)
 
   /**
    * A method to return the number of rows updated by the SQL statement.
@@ -140,3 +166,13 @@ trait SQL[F[_]: Monad]:
     params:    Seq[ParameterBinder[F]]
   )(using Kleisli[F, ResultSet[F], T]): Kleisli[F, Connection[F], Option[T]] =
     connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
+
+  /**
+   * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
+   * raised. Use the [[connectionToHeadOption]] method if you want to retrieve individual data.
+   */
+  private def connectionToUnsafe[T](
+    statement: String,
+    params:    Seq[ParameterBinder[F]]
+  )(using Kleisli[F, ResultSet[F], T], MonadError[F, Throwable]): Kleisli[F, Connection[F], T] =
+    connection[T](statement, params, summon[ResultSetConsumer[F, T]])
