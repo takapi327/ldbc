@@ -21,13 +21,13 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   given Tracer[IO] = Tracer.noop[IO]
 
   private val connection = Connection[IO](
-    host = "127.0.0.1",
-    port = 13306,
-    user = "ldbc",
+    host     = "127.0.0.1",
+    port     = 13306,
+    user     = "ldbc",
     password = Some("password"),
-    ssl = SSL.Trusted
+    ssl      = SSL.Trusted
   )
-  
+
   test("Statement should be able to execute a query") {
     assertIO(
       connection.use { conn =>
@@ -58,7 +58,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve unsigned TINYINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`".toList[(Short, Short)].run(conn)
+        sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
+          .toList[(Short, Short)]
+          .run(conn)
       },
       List((255.toShort, 0.toShort))
     )
@@ -76,7 +78,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve unsigned SMALLINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`".toList[(Int, Int)].run(conn)
+        sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
+          .toList[(Int, Int)]
+          .run(conn)
       },
       List((65535, 0))
     )
@@ -121,7 +125,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve unsigned BIGINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("18446744073709551615", None))
     )
@@ -148,7 +154,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve DECIMAL type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`".toList[(BigDecimal, Option[BigDecimal])].run(conn)
+        sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`"
+          .toList[(BigDecimal, Option[BigDecimal])]
+          .run(conn)
       },
       List((BigDecimal.decimal(9999999.99), None))
     )
@@ -157,7 +165,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve DATE type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".toList[(LocalDate, Option[LocalDate])].run(conn)
+        sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`"
+          .toList[(LocalDate, Option[LocalDate])]
+          .run(conn)
       },
       List((LocalDate.of(2020, 1, 1), None))
     )
@@ -166,7 +176,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve TIME type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".toList[(LocalTime, Option[LocalTime])].run(conn)
+        sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`"
+          .toList[(LocalTime, Option[LocalTime])]
+          .run(conn)
       },
       List((LocalTime.of(12, 34, 56), None))
     )
@@ -175,7 +187,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve DATETIME type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`".toList[(LocalDateTime, Option[LocalDateTime])].run(conn)
+        sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`"
+          .toList[(LocalDateTime, Option[LocalDateTime])]
+          .run(conn)
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
     )
@@ -184,7 +198,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve TIMESTAMP type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`".toList[(LocalDateTime, Option[LocalDateTime])].run(conn)
+        sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`"
+          .toList[(LocalDateTime, Option[LocalDateTime])]
+          .run(conn)
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
     )
@@ -211,7 +227,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve VARCHAR type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("varchar", None))
     )
@@ -220,8 +238,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve BINARY type records.") {
     assertIO(
       connection.use { conn =>
-        (for
-          result <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`".toList[(Array[Byte], Option[Array[Byte]])]
+        (for result <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`"
+                         .toList[(Array[Byte], Option[Array[Byte]])]
         yield result.map { case (v1, v2) => (v1.mkString(":"), v2) }).run(conn)
       },
       List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None))
@@ -231,7 +249,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve VARBINARY type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("varbinary", None))
     )
@@ -240,7 +260,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MEDIUMBLOB type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("mediumblob", None))
     )
@@ -249,7 +271,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve LONGBLOB type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("longblob", None))
     )
@@ -258,7 +282,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve TINYTEXT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("tinytext", None))
     )
@@ -276,7 +302,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve MEDIUMTEXT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("mediumtext", None))
     )
@@ -285,7 +313,9 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve LONGTEXT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`"
+          .toList[(String, Option[String])]
+          .run(conn)
       },
       List(("longtext", None))
     )

@@ -11,7 +11,7 @@ import cats.effect.*
 import ldbc.sql.*
 
 package object connector:
-  
+
   private trait StringContextSyntax[F[_]: Temporal]:
 
     extension (sc: StringContext)
