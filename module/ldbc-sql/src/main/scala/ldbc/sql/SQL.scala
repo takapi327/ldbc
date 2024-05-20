@@ -55,9 +55,9 @@ trait SQL[F[_]: Monad]:
     connectionToList[T](statement, params)
 
   inline def toList[P <: Product](using
-                                  mirror: Mirror.ProductOf[P],
-                                  factory: FactoryCompat[P, List[P]]
-                                 ): Kleisli[F, Connection[F], List[P]] =
+    mirror:  Mirror.ProductOf[P],
+    factory: FactoryCompat[P, List[P]]
+  ): Kleisli[F, Connection[F], List[P]] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, mirror.MirroredElemTypes]
@@ -90,8 +90,8 @@ trait SQL[F[_]: Monad]:
 
   private[ldbc] def connection[T](
     statement: String,
-    params: Seq[ParameterBinder[F]],
-    consumer: ResultSetConsumer[F, T]
+    params:    Seq[ParameterBinder[F]],
+    consumer:  ResultSetConsumer[F, T]
   ): Kleisli[F, Connection[F], T]
 
   /**
@@ -99,6 +99,6 @@ trait SQL[F[_]: Monad]:
    */
   private def connectionToList[T](
     statement: String,
-    params: Seq[ParameterBinder[F]]
+    params:    Seq[ParameterBinder[F]]
   )(using Kleisli[F, ResultSet[F], T], FactoryCompat[T, List[T]]): Kleisli[F, Connection[F], List[T]] =
     connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
