@@ -90,7 +90,7 @@ trait SQL[F[_]: Monad]:
     connectionToHeadOption[T](statement, params)
 
   inline def headOption[P <: Product](using
-   mirror: Mirror.ProductOf[P]
+    mirror: Mirror.ProductOf[P]
   ): Kleisli[F, Connection[F], Option[P]] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
@@ -137,6 +137,6 @@ trait SQL[F[_]: Monad]:
    */
   private def connectionToHeadOption[T](
     statement: String,
-    params: Seq[ParameterBinder[F]]
+    params:    Seq[ParameterBinder[F]]
   )(using Kleisli[F, ResultSet[F], T]): Kleisli[F, Connection[F], Option[T]] =
     connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])

@@ -68,8 +68,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`".toList[(Short, Short)]
-          result2 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`".headOption[(Short, Short)]
+          result1 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
+                       .toList[(Short, Short)]
+          result2 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
+                       .headOption[(Short, Short)]
         yield (result1, result2)).run(conn)
       },
       (List((255.toShort, 0.toShort)), Some((255.toShort, 0.toShort)))
@@ -81,7 +83,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".toList[(Short, Short)]
-          result2 <- sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".headOption[(Short, Short)]
+          result2 <-
+            sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".headOption[(Short, Short)]
         yield (result1, result2)).run(conn)
       },
       (List((32767.toShort, 0.toShort)), Some((32767.toShort, 0.toShort)))
@@ -92,8 +95,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`".toList[(Int, Int)]
-          result2 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`".headOption[(Int, Int)]
+          result1 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
+                       .toList[(Int, Int)]
+          result2 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
+                       .headOption[(Int, Int)]
         yield (result1, result2)).run(conn)
       },
       (List((65535, 0)), Some((65535, 0)))
@@ -128,8 +133,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[(Long, Long)]
-          result2 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".headOption[(Long, Long)]
+          result1 <-
+            sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[(Long, Long)]
+          result2 <-
+            sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".headOption[(Long, Long)]
         yield (result1, result2)).run(conn)
       },
       (List((4294967295L, 0L)), Some((4294967295L, 0L)))
@@ -152,8 +159,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`"
+                       .toList[(String, Option[String])]
+          result2 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`"
+                       .headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("18446744073709551615", None)), Some(("18446744073709551615", None)))
@@ -185,8 +194,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`".toList[(BigDecimal, Option[BigDecimal])]
-          result2 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`".headOption[(BigDecimal, Option[BigDecimal])]
+          result1 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`"
+                       .toList[(BigDecimal, Option[BigDecimal])]
+          result2 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`"
+                       .headOption[(BigDecimal, Option[BigDecimal])]
         yield (result1, result2)).run(conn)
       },
       (List((BigDecimal.decimal(9999999.99), None)), Some((BigDecimal.decimal(9999999.99), None)))
@@ -197,8 +208,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".toList[(LocalDate, Option[LocalDate])]
-          result2 <- sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".headOption[(LocalDate, Option[LocalDate])]
+          result1 <-
+            sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".toList[(LocalDate, Option[LocalDate])]
+          result2 <-
+            sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".headOption[(LocalDate, Option[LocalDate])]
         yield (result1, result2)).run(conn)
       },
       (List((LocalDate.of(2020, 1, 1), None)), Some((LocalDate.of(2020, 1, 1), None)))
@@ -209,8 +222,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".toList[(LocalTime, Option[LocalTime])]
-          result2 <- sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".headOption[(LocalTime, Option[LocalTime])]
+          result1 <-
+            sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".toList[(LocalTime, Option[LocalTime])]
+          result2 <-
+            sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".headOption[(LocalTime, Option[LocalTime])]
         yield (result1, result2)).run(conn)
       },
       (List((LocalTime.of(12, 34, 56), None)), Some((LocalTime.of(12, 34, 56), None)))
@@ -221,8 +236,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`".toList[(LocalDateTime, Option[LocalDateTime])]
-          result2 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`".headOption[(LocalDateTime, Option[LocalDateTime])]
+          result1 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`"
+                       .toList[(LocalDateTime, Option[LocalDateTime])]
+          result2 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`"
+                       .headOption[(LocalDateTime, Option[LocalDateTime])]
         yield (result1, result2)).run(conn)
       },
       (List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)), Some((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)))
@@ -233,8 +250,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`".toList[(LocalDateTime, Option[LocalDateTime])]
-          result2 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`".headOption[(LocalDateTime, Option[LocalDateTime])]
+          result1 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`"
+                       .toList[(LocalDateTime, Option[LocalDateTime])]
+          result2 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`"
+                       .headOption[(LocalDateTime, Option[LocalDateTime])]
         yield (result1, result2)).run(conn)
       },
       (List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)), Some((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)))
@@ -246,7 +265,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".toList[(Short, Option[Short])]
-          result2 <- sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".headOption[(Short, Option[Short])]
+          result2 <-
+            sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".headOption[(Short, Option[Short])]
         yield (result1, result2)).run(conn)
       },
       (List((2020.toShort, None)), Some((2020.toShort, None)))
@@ -258,7 +278,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result2 <-
+            sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("char", None)), Some(("char", None)))
@@ -269,8 +290,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <-
+            sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <-
+            sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("varchar", None)), Some(("varchar", None)))
@@ -281,14 +304,19 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`".toList[(Array[Byte], Option[Array[Byte]])]
-          result2 <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`".headOption[(Array[Byte], Option[Array[Byte]])]
+          result1 <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`"
+                       .toList[(Array[Byte], Option[Array[Byte]])]
+          result2 <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`"
+                       .headOption[(Array[Byte], Option[Array[Byte]])]
         yield (
           result1.map { case (v1, v2) => (v1.mkString(":"), v2) },
           result2.map { case (v1, v2) => (v1.mkString(":"), v2) }
         )).run(conn)
       },
-      (List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None)), Some((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None)))
+      (
+        List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None)),
+        Some((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None))
+      )
     )
   }
 
@@ -296,8 +324,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <-
+            sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`"
+                       .headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("varbinary", None)), Some(("varbinary", None)))
@@ -308,8 +338,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`"
+                       .toList[(String, Option[String])]
+          result2 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`"
+                       .headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("mediumblob", None)), Some(("mediumblob", None)))
@@ -320,8 +352,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <-
+            sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`"
+                       .headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("longblob", None)), Some(("longblob", None)))
@@ -332,8 +366,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <-
+            sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`"
+                       .headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("tinytext", None)), Some(("tinytext", None)))
@@ -345,7 +381,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result2 <-
+            sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("text", None)), Some(("text", None)))
@@ -356,8 +393,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`"
+                       .toList[(String, Option[String])]
+          result2 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`"
+                       .headOption[(String, Option[String])]
         yield (result1, result2))
           .run(conn)
       },
@@ -369,8 +408,10 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result1 <-
+            sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`"
+                       .headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("longtext", None)), Some(("longtext", None)))
@@ -382,7 +423,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result2 <-
+            sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("a", None)), Some(("a", None)))
@@ -394,7 +436,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result2 <-
+            sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("a,b", None)), Some(("a,b", None)))
@@ -406,7 +449,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
-          result2 <- sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+          result2 <-
+            sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
         yield (result1, result2)).run(conn)
       },
       (List(("{\"a\": 1}", None)), Some(("{\"a\": 1}", None)))
@@ -419,7 +463,8 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           result1 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[LongClass]
-          result2 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".headOption[LongClass]
+          result2 <-
+            sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".headOption[LongClass]
         yield (result1, result2)).run(conn)
       },
       (List(LongClass(4294967295L, None)), Some(LongClass(4294967295L, None)))
