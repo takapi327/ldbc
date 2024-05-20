@@ -64,7 +64,7 @@ trait SQL[F[_]: Monad]:
         .toList
         .zipWithIndex
         .traverse {
-          case (reader: ResultSetReader[F, ?], index) => reader.read(resultSet, index + 1)
+          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
         }
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
     }

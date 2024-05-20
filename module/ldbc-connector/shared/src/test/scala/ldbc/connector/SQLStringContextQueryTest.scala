@@ -347,3 +347,13 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
       List(("{\"a\": 1}", None))
     )
   }
+
+  test("Statement and can be converted to any model.") {
+    case class LongClass(int: Long, intNull: Option[Long])
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[LongClass].run(conn)
+      },
+      List(LongClass(4294967295L, None))
+    )
+  }
