@@ -31,114 +31,144 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to execute a query") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT 1".toList[Tuple1[Int]].run(conn)
+        (for
+          result1 <- sql"SELECT 1".toList[Tuple1[Int]]
+          result2 <- sql"SELECT 2".headOption[Tuple1[Int]]
+        yield (result1, result2)).run(conn)
       },
-      List(Tuple1(1))
+      (List(Tuple1(1)), Some(Tuple1(2)))
     )
   }
 
   test("Statement should be able to retrieve BIT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".toList[(Byte, Byte)].run(conn)
+        (for
+          result1 <- sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".toList[(Byte, Byte)]
+          result2 <- sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".headOption[(Byte, Byte)]
+        yield (result1, result2)).run(conn)
       },
-      List((1.toByte, 0.toByte))
+      (List((1.toByte, 0.toByte)), Some((1.toByte, 0.toByte)))
     )
   }
 
   test("Statement should be able to retrieve TINYINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`".toList[(Byte, Byte)].run(conn)
+        (for
+          result1 <- sql"SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`".toList[(Byte, Byte)]
+          result2 <- sql"SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`".headOption[(Byte, Byte)]
+        yield (result1, result2)).run(conn)
       },
-      List((127.toByte, 0.toByte))
+      (List((127.toByte, 0.toByte)), Some((127.toByte, 0.toByte)))
     )
   }
 
   test("Statement should be able to retrieve unsigned TINYINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
-          .toList[(Short, Short)]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`".toList[(Short, Short)]
+          result2 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`".headOption[(Short, Short)]
+        yield (result1, result2)).run(conn)
       },
-      List((255.toShort, 0.toShort))
+      (List((255.toShort, 0.toShort)), Some((255.toShort, 0.toShort)))
     )
   }
 
   test("Statement should be able to retrieve SMALLINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".toList[(Short, Short)].run(conn)
+        (for
+          result1 <- sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".toList[(Short, Short)]
+          result2 <- sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".headOption[(Short, Short)]
+        yield (result1, result2)).run(conn)
       },
-      List((32767.toShort, 0.toShort))
+      (List((32767.toShort, 0.toShort)), Some((32767.toShort, 0.toShort)))
     )
   }
 
   test("Statement should be able to retrieve unsigned SMALLINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
-          .toList[(Int, Int)]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`".toList[(Int, Int)]
+          result2 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`".headOption[(Int, Int)]
+        yield (result1, result2)).run(conn)
       },
-      List((65535, 0))
+      (List((65535, 0)), Some((65535, 0)))
     )
   }
 
   test("Statement should be able to retrieve MEDIUMINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`".toList[(Int, Int)].run(conn)
+        (for
+          result1 <- sql"SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`".toList[(Int, Int)]
+          result2 <- sql"SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`".headOption[(Int, Int)]
+        yield (result1, result2)).run(conn)
       },
-      List((8388607, 0))
+      (List((8388607, 0)), Some((8388607, 0)))
     )
   }
 
   test("Statement should be able to retrieve INT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `int`, `int_null` FROM `connector_test`.`all_types`".toList[(Int, Int)].run(conn)
+        (for
+          result1 <- sql"SELECT `int`, `int_null` FROM `connector_test`.`all_types`".toList[(Int, Int)]
+          result2 <- sql"SELECT `int`, `int_null` FROM `connector_test`.`all_types`".headOption[(Int, Int)]
+        yield (result1, result2)).run(conn)
       },
-      List((2147483647, 0))
+      (List((2147483647, 0)), Some((2147483647, 0)))
     )
   }
 
   test("Statement should be able to retrieve unsigned INT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[(Long, Long)].run(conn)
+        (for
+          result1 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[(Long, Long)]
+          result2 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".headOption[(Long, Long)]
+        yield (result1, result2)).run(conn)
       },
-      List((4294967295L, 0L))
+      (List((4294967295L, 0L)), Some((4294967295L, 0L)))
     )
   }
 
   test("Statement should be able to retrieve BIGINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`".toList[(Long, Long)].run(conn)
+        (for
+          result1 <- sql"SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`".toList[(Long, Long)]
+          result2 <- sql"SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`".headOption[(Long, Long)]
+        yield (result1, result2)).run(conn)
       },
-      List((9223372036854775807L, 0L))
+      (List((9223372036854775807L, 0L)), Some((9223372036854775807L, 0L)))
     )
   }
 
   test("Statement should be able to retrieve unsigned BIGINT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("18446744073709551615", None))
+      (List(("18446744073709551615", None)), Some(("18446744073709551615", None)))
     )
   }
 
   test("Statement should be able to retrieve FLOAT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `float`, `float_null` FROM `connector_test`.`all_types`".toList[(Float, Float)].run(conn)
+        (for
+          result1 <- sql"SELECT `float`, `float_null` FROM `connector_test`.`all_types`".toList[(Float, Float)]
+          result2 <- sql"SELECT `float`, `float_null` FROM `connector_test`.`all_types`".headOption[(Float, Float)]
+        yield (result1, result2)).run(conn)
       },
-      List((3.40282e38f, 0f))
+      (List((3.40282e38f, 0f)), Some((3.40282e38f, 0f)))
     )
   }
 
@@ -154,197 +184,232 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
   test("Statement should be able to retrieve DECIMAL type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`"
-          .toList[(BigDecimal, Option[BigDecimal])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`".toList[(BigDecimal, Option[BigDecimal])]
+          result2 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`".headOption[(BigDecimal, Option[BigDecimal])]
+        yield (result1, result2)).run(conn)
       },
-      List((BigDecimal.decimal(9999999.99), None))
+      (List((BigDecimal.decimal(9999999.99), None)), Some((BigDecimal.decimal(9999999.99), None)))
     )
   }
 
   test("Statement should be able to retrieve DATE type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`"
-          .toList[(LocalDate, Option[LocalDate])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".toList[(LocalDate, Option[LocalDate])]
+          result2 <- sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".headOption[(LocalDate, Option[LocalDate])]
+        yield (result1, result2)).run(conn)
       },
-      List((LocalDate.of(2020, 1, 1), None))
+      (List((LocalDate.of(2020, 1, 1), None)), Some((LocalDate.of(2020, 1, 1), None)))
     )
   }
 
   test("Statement should be able to retrieve TIME type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`"
-          .toList[(LocalTime, Option[LocalTime])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".toList[(LocalTime, Option[LocalTime])]
+          result2 <- sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".headOption[(LocalTime, Option[LocalTime])]
+        yield (result1, result2)).run(conn)
       },
-      List((LocalTime.of(12, 34, 56), None))
+      (List((LocalTime.of(12, 34, 56), None)), Some((LocalTime.of(12, 34, 56), None)))
     )
   }
 
   test("Statement should be able to retrieve DATETIME type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`"
-          .toList[(LocalDateTime, Option[LocalDateTime])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`".toList[(LocalDateTime, Option[LocalDateTime])]
+          result2 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`".headOption[(LocalDateTime, Option[LocalDateTime])]
+        yield (result1, result2)).run(conn)
       },
-      List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
+      (List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)), Some((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)))
     )
   }
 
   test("Statement should be able to retrieve TIMESTAMP type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`"
-          .toList[(LocalDateTime, Option[LocalDateTime])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`".toList[(LocalDateTime, Option[LocalDateTime])]
+          result2 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`".headOption[(LocalDateTime, Option[LocalDateTime])]
+        yield (result1, result2)).run(conn)
       },
-      List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None))
+      (List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)), Some((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)))
     )
   }
 
   test("Statement should be able to retrieve YEAR type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".toList[(Short, Option[Short])].run(conn)
+        (for
+          result1 <- sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".toList[(Short, Option[Short])]
+          result2 <- sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".headOption[(Short, Option[Short])]
+        yield (result1, result2)).run(conn)
       },
-      List((2020.toShort, None))
+      (List((2020.toShort, None)), Some((2020.toShort, None)))
     )
   }
 
   test("Statement should be able to retrieve CHAR type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        (for
+          result1 <- sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("char", None))
+      (List(("char", None)), Some(("char", None)))
     )
   }
 
   test("Statement should be able to retrieve VARCHAR type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("varchar", None))
+      (List(("varchar", None)), Some(("varchar", None)))
     )
   }
 
   test("Statement should be able to retrieve BINARY type records.") {
     assertIO(
       connection.use { conn =>
-        (for result <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`"
-                         .toList[(Array[Byte], Option[Array[Byte]])]
-        yield result.map { case (v1, v2) => (v1.mkString(":"), v2) }).run(conn)
+        (for
+          result1 <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`".toList[(Array[Byte], Option[Array[Byte]])]
+          result2 <- sql"SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`".headOption[(Array[Byte], Option[Array[Byte]])]
+        yield (
+          result1.map { case (v1, v2) => (v1.mkString(":"), v2) },
+          result2.map { case (v1, v2) => (v1.mkString(":"), v2) }
+        )).run(conn)
       },
-      List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None))
+      (List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None)), Some((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None)))
     )
   }
 
   test("Statement should be able to retrieve VARBINARY type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("varbinary", None))
+      (List(("varbinary", None)), Some(("varbinary", None)))
     )
   }
 
   test("Statement should be able to retrieve MEDIUMBLOB type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("mediumblob", None))
+      (List(("mediumblob", None)), Some(("mediumblob", None)))
     )
   }
 
   test("Statement should be able to retrieve LONGBLOB type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("longblob", None))
+      (List(("longblob", None)), Some(("longblob", None)))
     )
   }
 
   test("Statement should be able to retrieve TINYTEXT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("tinytext", None))
+      (List(("tinytext", None)), Some(("tinytext", None)))
     )
   }
 
   test("Statement should be able to retrieve TEXT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        (for
+          result1 <- sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("text", None))
+      (List(("text", None)), Some(("text", None)))
     )
   }
 
   test("Statement should be able to retrieve MEDIUMTEXT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
+        (for
+          result1 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2))
           .run(conn)
       },
-      List(("mediumtext", None))
+      (List(("mediumtext", None)), Some(("mediumtext", None)))
     )
   }
 
   test("Statement should be able to retrieve LONGTEXT type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`"
-          .toList[(String, Option[String])]
-          .run(conn)
+        (for
+          result1 <- sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("longtext", None))
+      (List(("longtext", None)), Some(("longtext", None)))
     )
   }
 
   test("Statement should be able to retrieve ENUM type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        (for
+          result1 <- sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("a", None))
+      (List(("a", None)), Some(("a", None)))
     )
   }
 
   test("Statement should be able to retrieve SET type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        (for
+          result1 <- sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("a,b", None))
+      (List(("a,b", None)), Some(("a,b", None)))
     )
   }
 
   test("Statement should be able to retrieve JSON type records.") {
     assertIO(
       connection.use { conn =>
-        sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])].run(conn)
+        (for
+          result1 <- sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".toList[(String, Option[String])]
+          result2 <- sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
+        yield (result1, result2)).run(conn)
       },
-      List(("{\"a\": 1}", None))
+      (List(("{\"a\": 1}", None)), Some(("{\"a\": 1}", None)))
     )
   }
 
@@ -352,8 +417,11 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     case class LongClass(int: Long, intNull: Option[Long])
     assertIO(
       connection.use { conn =>
-        sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[LongClass].run(conn)
+        (for
+          result1 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".toList[LongClass]
+          result2 <- sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".headOption[LongClass]
+        yield (result1, result2)).run(conn)
       },
-      List(LongClass(4294967295L, None))
+      (List(LongClass(4294967295L, None)), Some(LongClass(4294967295L, None)))
     )
   }
