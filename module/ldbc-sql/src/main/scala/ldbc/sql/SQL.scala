@@ -147,8 +147,8 @@ trait SQL[F[_]: Monad]:
     for
       statement <- connection.prepareStatement(statement)
       result <- params.zipWithIndex.traverse {
-        case (param, index) => param.bind(statement, index + 1)
-      } >> statement.executeUpdate() <* statement.close()
+                  case (param, index) => param.bind(statement, index + 1)
+                } >> statement.executeUpdate() <* statement.close()
     yield result
   }
 

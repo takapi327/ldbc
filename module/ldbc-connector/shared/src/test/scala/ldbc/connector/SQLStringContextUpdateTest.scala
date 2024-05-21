@@ -31,9 +31,9 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          _         <- sql"CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)".update
-          count     <- sql"INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')".update
-          _         <- sql"DROP TABLE `bit_table`".update
+          _     <- sql"CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)".update
+          count <- sql"INSERT INTO `bit_table`(`bit_column`) VALUES (b'1')".update
+          _     <- sql"DROP TABLE `bit_table`".update
         yield count).run(conn)
       },
       1
@@ -44,9 +44,9 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          _         <- sql"CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)".update
-          count     <- sql"INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')".update
-          _         <- sql"DROP TABLE `bit_table`".update
+          _     <- sql"CREATE TABLE `bit_table`(`bit_column` BIT NOT NULL)".update
+          count <- sql"INSERT INTO `bit_table`(`bit_column`) VALUES (b'0'),(b'1')".update
+          _     <- sql"DROP TABLE `bit_table`".update
         yield count).run(conn)
       },
       2
