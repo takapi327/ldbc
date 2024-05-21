@@ -17,8 +17,9 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
+import ldbc.sql.logging.LogHandler
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
+import ldbc.dsl.logging.ConsoleLogHandler
 import ldbc.query.builder.TableQuery
 import ldbc.dsl.schema.*
 
@@ -33,7 +34,7 @@ object DatabaseConnectionTest extends Specification:
 
   private val dataSource = DataSource[IO](ds)
 
-  given LogHandler[IO] = LogHandler.consoleLogger
+  given LogHandler[IO] = ConsoleLogHandler[IO]
 
   private val country          = TableQuery[IO, Country](Country.table)
   private val city             = TableQuery[IO, City](City.table)

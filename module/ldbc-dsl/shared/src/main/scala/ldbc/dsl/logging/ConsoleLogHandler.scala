@@ -13,7 +13,7 @@ import cats.effect.std.Console
 
 import ldbc.sql.logging.*
 
-object LogHandler:
+object ConsoleLogHandler:
 
   /**
    * LogHandler for simple log output using Console.
@@ -24,7 +24,7 @@ object LogHandler:
    * @tparam F
    *   The effect type
    */
-  def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
+  def apply[F[_]: Console: Sync]: LogHandler[F] =
     case LogEvent.Success(sql, args) =>
       Console[F].println(
         s"""Successful Statement Execution:

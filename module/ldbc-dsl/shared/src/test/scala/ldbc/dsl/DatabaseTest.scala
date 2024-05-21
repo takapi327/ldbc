@@ -12,14 +12,15 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
+import ldbc.sql.logging.LogHandler
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
+import ldbc.dsl.logging.ConsoleLogHandler
 import ldbc.query.builder.TableQuery
 import ldbc.dsl.schema.*
 
 object DatabaseTest extends Specification:
 
-  given LogHandler[IO] = LogHandler.consoleLogger
+  given LogHandler[IO] = ConsoleLogHandler[IO]
 
   private val db = Database.fromMySQLDriver[IO]("world2", "127.0.0.1", 13306, "ldbc", "password")
 
