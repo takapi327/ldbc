@@ -143,7 +143,14 @@ trait SQL[F[_]: Monad]:
   /**
    * A method to return the number of rows updated by the SQL statement.
    */
-  def update: Kleisli[F, Connection[F], Int] = ???
+  def update: Kleisli[F, Connection[F], Int] = Kleisli { connection =>
+    for
+      statement <- connection.prepareStatement(statement)
+      result <- params.zipWithIndex.traverse {
+        case (param, index) => param.bind(statement, index + 1)
+      } >> statement.executeUpdate() <* statement.close()
+    yield result
+  }
 
   private[ldbc] def connection[T](
     statement: String,
