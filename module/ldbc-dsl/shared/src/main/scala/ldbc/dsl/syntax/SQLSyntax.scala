@@ -14,8 +14,9 @@ import cats.effect.Sync
 
 import ldbc.sql.*
 import ldbc.sql.util.FactoryCompat
+import ldbc.sql.logging.LogEvent
 import ldbc.dsl.{ SQL, ConnectionProvider }
-import ldbc.dsl.logging.{ LogEvent, LogHandler }
+import ldbc.dsl.logging.LogHandler
 
 /**
  * Trait for giving database connection information to SQL.

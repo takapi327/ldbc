@@ -11,6 +11,8 @@ import cats.implicits.*
 import cats.effect.Sync
 import cats.effect.std.Console
 
+import ldbc.sql.logging.LogEvent
+
 /**
  * copied from doobie:
  * https://github.com/tpolecat/doobie/blob/main/modules/free/src/main/scala/doobie/util/log.scala#L42
