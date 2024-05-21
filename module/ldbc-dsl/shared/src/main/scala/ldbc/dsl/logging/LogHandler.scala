@@ -11,17 +11,7 @@ import cats.implicits.*
 import cats.effect.Sync
 import cats.effect.std.Console
 
-import ldbc.sql.logging.LogEvent
-
-/**
- * copied from doobie:
- * https://github.com/tpolecat/doobie/blob/main/modules/free/src/main/scala/doobie/util/log.scala#L42
- *
- * Provides additional processing for Doobie `LogEvent`s.
- */
-trait LogHandler[F[_]]:
-
-  def run(logEvent: LogEvent): F[Unit]
+import ldbc.sql.logging.*
 
 object LogHandler:
 
