@@ -15,6 +15,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -40,6 +41,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -67,6 +69,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -92,6 +95,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -117,6 +121,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -144,6 +149,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -170,6 +176,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -195,6 +202,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -222,6 +230,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -248,6 +257,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -288,6 +298,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -328,6 +339,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -386,6 +398,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
@@ -444,6 +457,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
         |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
