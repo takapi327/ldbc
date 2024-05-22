@@ -15,8 +15,9 @@ import org.specs2.specification.BeforeAfterEach
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
+import ldbc.sql.logging.LogHandler
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
+import ldbc.dsl.logging.ConsoleLogHandler
 import ldbc.query.builder.TableQuery
 
 object DDLTest extends Specification, BeforeAfterEach:
@@ -30,7 +31,7 @@ object DDLTest extends Specification, BeforeAfterEach:
 
   private val dataSource = DataSource[IO](ds)
 
-  given LogHandler[IO] = LogHandler.consoleLogger
+  given LogHandler[IO] = ConsoleLogHandler[IO]
 
   private val tableQuery = TableQuery[IO, User](table)
 

@@ -15,8 +15,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -29,7 +30,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |val query = user.selectAll.toList[User]
         |""".stripMargin
     )
@@ -40,8 +41,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -54,7 +56,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |case class FailedUser(id: Long, name: String, age: Option[Int])
         |val query = user.selectAll.toList[FailedUser]
         |""".stripMargin
@@ -67,8 +69,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -81,7 +84,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |val query: Kleisli[IO, Connection[IO], List[(Long, String, Int)]] = user.selectAll.toList
         |""".stripMargin
     )
@@ -92,8 +95,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -106,7 +110,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |val query = user.selectAll.where(_.id === 1).headOption[User]
         |""".stripMargin
     )
@@ -117,8 +121,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -131,7 +136,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |case class FailedUser(id: Long, name: String, age: Option[Int])
         |val query = user.selectAll.where(_.id === 1).headOption[FailedUser]
         |""".stripMargin
@@ -144,8 +149,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -158,7 +164,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |val query: Kleisli[IO, Connection[IO], Option[(Long, String, Int)]] = user.selectAll.where(_.id === 1).headOption
         |""".stripMargin
     )
@@ -170,8 +176,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -184,7 +191,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |val query: Kleisli[IO, Connection[IO], User] = user.selectAll.where(_.id === 1).unsafe[User]
         |""".stripMargin
     )
@@ -195,8 +202,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -209,7 +217,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |case class FailedUser(id: Long, name: String, age: Option[Int])
         |val query = user.selectAll.where(_.id === 1).unsafe[FailedUser]
         |""".stripMargin
@@ -222,8 +230,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int)
@@ -236,7 +245,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = TableQuery[IO, User](User.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |val query: Kleisli[IO, Connection[IO], (Long, String, Int)] = user.selectAll.where(_.id === 1).unsafe
         |""".stripMargin
     )
@@ -248,8 +257,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int, categoryId: Long)
@@ -271,7 +281,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |val category = TableQuery[IO, Category](Category.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |
         |case class UserCategory(userName: String, categoryName: String)
         |
@@ -288,8 +298,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class User(id: Long, name: String, age: Int, categoryId: Long)
@@ -311,7 +322,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val user = TableQuery[IO, User](User.table)
         |val category = TableQuery[IO, Category](Category.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |
         |case class UserCategory(userName: String, categoryName: String)
         |
@@ -328,8 +339,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class Country(code: String, name: String)
@@ -370,7 +382,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val cityQuery = TableQuery[IO, City](City.table)
         |val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |
         |val query: Kleisli[IO, Connection[IO], List[(String, String, Option[String])]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
         |  .leftJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
@@ -386,8 +398,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class Country(code: String, name: String)
@@ -428,7 +441,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val cityQuery = TableQuery[IO, City](City.table)
         |val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |
         |val query: Kleisli[IO, Connection[IO], List[(Option[String], Option[String], String)]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
         |  .rightJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
@@ -444,8 +457,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.data.Kleisli
         |import cats.effect.IO
         |
+        |import ldbc.sql.logging.LogHandler
         |import ldbc.dsl.io.{ *, given }
-        |import ldbc.dsl.logging.LogHandler
+        |import ldbc.dsl.logging.ConsoleLogHandler
         |import ldbc.query.builder.TableQuery
         |
         |case class Country(code: String, name: String)
@@ -486,7 +500,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |val cityQuery = TableQuery[IO, City](City.table)
         |val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
         |
-        |given LogHandler[IO] = LogHandler.consoleLogger
+        |given LogHandler[IO] = ConsoleLogHandler[IO]
         |
         |val query: Kleisli[IO, Connection[IO], List[(String, String, Option[String])]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
         |  .leftJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)

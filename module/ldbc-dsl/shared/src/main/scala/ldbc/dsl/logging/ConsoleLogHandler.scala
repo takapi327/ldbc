@@ -11,17 +11,9 @@ import cats.implicits.*
 import cats.effect.Sync
 import cats.effect.std.Console
 
-/**
- * copied from doobie:
- * https://github.com/tpolecat/doobie/blob/main/modules/free/src/main/scala/doobie/util/log.scala#L42
- *
- * Provides additional processing for Doobie `LogEvent`s.
- */
-trait LogHandler[F[_]]:
+import ldbc.sql.logging.*
 
-  def run(logEvent: LogEvent): F[Unit]
-
-object LogHandler:
+object ConsoleLogHandler:
 
   /**
    * LogHandler for simple log output using Console.
@@ -32,7 +24,7 @@ object LogHandler:
    * @tparam F
    *   The effect type
    */
-  def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
+  def apply[F[_]: Console: Sync]: LogHandler[F] =
     case LogEvent.Success(sql, args) =>
       Console[F].println(
         s"""Successful Statement Execution:

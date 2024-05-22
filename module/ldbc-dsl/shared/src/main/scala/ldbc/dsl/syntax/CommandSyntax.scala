@@ -15,8 +15,8 @@ import cats.effect.Sync
 import ldbc.core.attribute.AutoInc
 import ldbc.core.interpreter.Tuples as CoreTuples
 import ldbc.sql.*
+import ldbc.sql.logging.*
 import ldbc.query.builder.statement.{ Command, Insert }
-import ldbc.dsl.logging.{ LogEvent, LogHandler }
 
 trait CommandSyntax[F[_]: Sync]:
 

@@ -27,7 +27,7 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
+import ldbc.dsl.logging.ConsoleLogHandler
 import ldbc.query.builder.TableQuery
 ```
 
@@ -69,7 +69,7 @@ LDBC can export execution and error logs of Database connections in any format u
 A logger using Cats Effect's Console is provided as standard, which can be used during development.
 
 ```scala 3
-given LogHandler[IO] = LogHandler.consoleLogger
+given LogHandler[IO] = ConsoleLogHandler[IO]
 ```
 
 ### Customize

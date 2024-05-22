@@ -14,8 +14,8 @@ import cats.effect.Sync
 
 import ldbc.sql.*
 import ldbc.sql.util.FactoryCompat
+import ldbc.sql.logging.LogHandler
 import ldbc.dsl.ConnectionProvider
-import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.statement.Query
 import ldbc.query.builder.interpreter.Tuples
 

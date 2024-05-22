@@ -27,7 +27,7 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
+import ldbc.dsl.logging.ConsoleLogHandler
 import ldbc.query.builder.TableQuery
 ```
 
@@ -69,7 +69,7 @@ LDBCではDatabase接続の実行ログやエラーログを任意のロギン�
 標準ではCats EffectのConsoleを使用したロガーが提供されているため開発時はこちらを使用することができます。
 
 ```scala 3
-given LogHandler[IO] = LogHandler.consoleLogger
+given LogHandler[IO] = ConsoleLogHandler[IO]
 ```
 
 ### カスタマイズ
