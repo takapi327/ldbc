@@ -61,8 +61,8 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
         (for
           _ <-
             sql"CREATE TABLE `returning_auto_inc`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
-          _         <- sql"INSERT INTO `returning_auto_inc`(`id`, `c1`) VALUES ($None, ${"column 1"})".update
-          generated <- sql"INSERT INTO `returning_auto_inc`(`id`, `c1`) VALUES ($None, ${"column 2"})".returning[Long]
+          _         <- sql"INSERT INTO `returning_auto_inc`(`id`, `c1`) VALUES ($None, ${ "column 1" })".update
+          generated <- sql"INSERT INTO `returning_auto_inc`(`id`, `c1`) VALUES ($None, ${ "column 2" })".returning[Long]
           _         <- sql"DROP TABLE `returning_auto_inc`".update
         yield generated).run(conn)
       },
