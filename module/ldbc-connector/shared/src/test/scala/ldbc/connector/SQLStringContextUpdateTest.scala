@@ -17,7 +17,7 @@ import ldbc.connector.io.*
 
 class SQLStringContextUpdateTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
+  given Tracer[IO]     = Tracer.noop[IO]
   given LogHandler[IO] = LogHandler.noop[IO]
 
   private val connection = Connection[IO](
@@ -26,7 +26,7 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
     user     = "ldbc",
     password = Some("password"),
     database = Some("connector_test"),
-    ssl      = SSL.Trusted 
+    ssl      = SSL.Trusted
   )
 
   test("As a result of entering one case of data, there will be one affected row.") {
