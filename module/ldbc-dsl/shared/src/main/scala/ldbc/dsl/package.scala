@@ -20,7 +20,6 @@ package object dsl:
 
   private trait SyncSyntax[F[_]: Sync]
     extends StringContextSyntax[F],
-            SQLSyntax[F],
             ConnectionSyntax[F],
             QuerySyntax[F],
             CommandSyntax[F],
