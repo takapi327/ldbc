@@ -14,11 +14,13 @@ import org.typelevel.otel4s.trace.Tracer
 
 import munit.CatsEffectSuite
 
+import ldbc.sql.logging.LogHandler
 import ldbc.connector.io.*
 
 class SQLStringContextQueryTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
+  given Tracer[IO]     = Tracer.noop[IO]
+  given LogHandler[IO] = LogHandler.noop[IO]
 
   private val connection = Connection[IO](
     host     = "127.0.0.1",
