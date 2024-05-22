@@ -6,8 +6,10 @@
 
 package ldbc.dsl.syntax
 
+import cats.effect.Temporal
+
 import ldbc.sql.*
-import ldbc.dsl.SQL
+import ldbc.dsl.Mysql
 
 /**
  * Trait for generating SQL models from string completion knowledge.
@@ -15,10 +17,10 @@ import ldbc.dsl.SQL
  * @tparam F
  *   The effect type
  */
-trait StringContextSyntax[F[_]]:
+trait StringContextSyntax[F[_]: Temporal]:
 
   extension (sc: StringContext)
     inline def sql(inline args: ParameterBinder[F]*): SQL[F] =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
-      SQL(strings.mkString("?"), expressions.toSeq)
+      Mysql(strings.mkString("?"), expressions.toSeq)
