@@ -55,8 +55,8 @@ trait SQL[F[_]: Monad]:
     connectionToList[T](statement, params)
 
   inline def toList[P <: Product](using
-    mirror:     Mirror.ProductOf[P],
-    factory:    FactoryCompat[P, List[P]]
+    mirror:  Mirror.ProductOf[P],
+    factory: FactoryCompat[P, List[P]]
   ): Query[F, List[P]] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
@@ -90,7 +90,7 @@ trait SQL[F[_]: Monad]:
     connectionToHeadOption[T](statement, params)
 
   inline def headOption[P <: Product](using
-    mirror:     Mirror.ProductOf[P]
+    mirror: Mirror.ProductOf[P]
   ): Query[F, Option[P]] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
@@ -124,8 +124,8 @@ trait SQL[F[_]: Monad]:
     connectionToUnsafe[T](statement, params)
 
   inline def unsafe[P <: Product](using
-    mirror:     Mirror.ProductOf[P],
-    ev:         MonadError[F, Throwable]
+    mirror: Mirror.ProductOf[P],
+    ev:     MonadError[F, Throwable]
   ): Query[F, P] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
@@ -146,7 +146,7 @@ trait SQL[F[_]: Monad]:
   def update: Query[F, Int]
 
   def returning[T <: String | Int | Long](using
-    reader:     ResultSetReader[F, T],
+    reader: ResultSetReader[F, T]
   ): Query[F, T]
 
   private[ldbc] def connection[T](

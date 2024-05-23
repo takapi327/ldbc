@@ -42,7 +42,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
   }
 
   override def returning[T <: String | Int | Long](using
-    reader:     ResultSetReader[F, T],
+    reader: ResultSetReader[F, T]
   ): Query[F, T] = QueryImpl[F, T](statement, params.map(_.parameter).toList) { connection =>
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       reader.read(resultSet, 1)

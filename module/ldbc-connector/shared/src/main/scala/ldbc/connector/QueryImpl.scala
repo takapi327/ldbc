@@ -13,7 +13,8 @@ import cats.effect.kernel.Resource.ExitCase
 import ldbc.sql.*
 import ldbc.sql.logging.*
 
-private[ldbc] case class QueryImpl[F[_]: Temporal, T](statement: String, params: List[Any])(func: Connection[F] => F[T]) extends Query[F, T]:
+private[ldbc] case class QueryImpl[F[_]: Temporal, T](statement: String, params: List[Any])(func: Connection[F] => F[T])
+  extends Query[F, T]:
 
   override def run: Connection[F] => F[T] = func
 
@@ -43,7 +44,9 @@ private[ldbc] case class QueryImpl[F[_]: Temporal, T](statement: String, params:
         case _                    => connection.commit()
       }
 
-    Resource.makeCase(acquire)(release).use(run)
+    Resource
+      .makeCase(acquire)(release)
+      .use(run)
       .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params, ex)))
       <* logHandler.run(LogEvent.Success(statement, params))
 
