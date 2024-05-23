@@ -11,23 +11,30 @@ import cats.effect.{ Temporal, Resource }
 import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.sql.*
+import ldbc.sql.logging.*
 
-private[ldbc] case class QueryImpl[F[_]: Temporal, T](run: Connection[F] => F[T]) extends Query[F, T]:
+private[ldbc] case class QueryImpl[F[_]: Temporal, T](statement: String, params: List[Any])(func: Connection[F] => F[T]) extends Query[F, T]:
 
-  override def readOnly(connection: Connection[F]): F[T] =
-    for
+  override def run: Connection[F] => F[T] = func
+
+  override def readOnly(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
+    (for
       _      <- connection.setReadOnly(true)
       result <- run(connection)
-    yield result
+    yield result)
+      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params, ex)))
+      <* logHandler.run(LogEvent.Success(statement, params))
 
-  override def autoCommit(connection: Connection[F]): F[T] =
-    for
+  override def autoCommit(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
+    (for
       _      <- connection.setReadOnly(false)
       _      <- connection.setAutoCommit(true)
       result <- run(connection)
-    yield result
+    yield result)
+      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params, ex)))
+      <* logHandler.run(LogEvent.Success(statement, params))
 
-  override def transaction(connection: Connection[F]): F[T] =
+  override def transaction(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
     val acquire = connection.setReadOnly(false) >> connection.setAutoCommit(false) >> Temporal[F].pure(connection)
 
     val release = (connection: Connection[F], exitCase: ExitCase) =>
@@ -37,11 +44,15 @@ private[ldbc] case class QueryImpl[F[_]: Temporal, T](run: Connection[F] => F[T]
       }
 
     Resource.makeCase(acquire)(release).use(run)
+      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params, ex)))
+      <* logHandler.run(LogEvent.Success(statement, params))
 
-  override def rollback(connection: Connection[F]): F[T] =
-    for
+  override def rollback(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
+    (for
       _      <- connection.setReadOnly(false)
       _      <- connection.setAutoCommit(false)
       result <- run(connection)
       _      <- connection.rollback()
-    yield result
+    yield result)
+      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params, ex)))
+      <* logHandler.run(LogEvent.Success(statement, params))
