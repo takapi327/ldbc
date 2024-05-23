@@ -33,7 +33,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
   override def ++(sql: SQL[F]): SQL[F] =
     Mysql[F](statement ++ " " ++ sql.statement, params ++ sql.params)
 
-  override def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
+  override def update(using logHandler: LogHandler[F]): Query[F, Int] = QueryImpl[F, Int] { connection =>
     (for
       statement <- connection.prepareStatement(statement)
       result <- params.zipWithIndex.traverse {
@@ -47,7 +47,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
   override def returning[T <: String | Int | Long](using
     reader:     ResultSetReader[F, T],
     logHandler: LogHandler[F]
-  ): Kleisli[F, Connection[F], T] = Kleisli { connection =>
+  ): Query[F, T] = QueryImpl[F, T] { connection =>
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       reader.read(resultSet, 1)
     }
@@ -67,8 +67,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
     statement: String,
     params:    Seq[ParameterBinder[F]],
     consumer:  ResultSetConsumer[F, T]
-  )(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] =
-    Kleisli { connection =>
+  )(using logHandler: LogHandler[F]): Query[F, T] =
+    QueryImpl[F, T] { connection =>
       for
         prepareStatement <- connection.prepareStatement(statement)
         resultSet <- params.zipWithIndex.traverse {
