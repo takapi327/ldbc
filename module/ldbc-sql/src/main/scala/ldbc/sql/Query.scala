@@ -10,6 +10,23 @@ import cats.*
 
 import ldbc.sql.logging.LogHandler
 
+/**
+ * The `Query` trait represents a database query operation that can be run against a connection.
+ * It is parameterized by the effect type `F[_]` and the result type `T`.
+ *
+ * The `run` method is the main method that executes the query against a given connection and returns a result of type `T`.
+ *
+ * The `map` and `flatMap` methods are used to transform the result of the query operation.
+ *
+ * The `readOnly`, `autoCommit`, `transaction`, and `rollback` methods are used to manage the processing of connections in different modes.
+ * `readOnly` is for managing the processing of connections in a read-only manner.
+ * `autoCommit` is for managing the processing of connections for writing.
+ * `transaction` is for managing the processing of connections in a transaction.
+ * `rollback` is for managing the processing of connections, always rolling back.
+ *
+ * @tparam F
+ *   The effect type
+ */
 trait Query[F[_], T]:
 
   def run: Connection[F] => F[T]
