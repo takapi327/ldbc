@@ -37,7 +37,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
           result1 <- sql"SELECT 1".toList[Tuple1[Int]]
           result2 <- sql"SELECT 2".headOption[Tuple1[Int]]
           result3 <- sql"SELECT 3".unsafe[Tuple1[Int]]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(Tuple1(1)), Some(Tuple1(2)), Tuple1(3))
     )
@@ -50,7 +50,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
           result1 <- sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".toList[(Byte, Byte)]
           result2 <- sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".headOption[(Byte, Byte)]
           result3 <- sql"SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`".unsafe[(Byte, Byte)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((1.toByte, 0.toByte)), Some((1.toByte, 0.toByte)), (1.toByte, 0.toByte))
     )
@@ -65,7 +65,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
             sql"SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types` WHERE `tinyint` = ${ 127.toByte }"
               .headOption[(Byte, Byte)]
           result3 <- sql"SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`".unsafe[(Byte, Byte)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((127.toByte, 0.toByte)), Some((127.toByte, 0.toByte)), (127.toByte, 0.toByte))
     )
@@ -82,7 +82,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(Short, Short)]
           result3 <- sql"SELECT `tinyint_unsigned`, `tinyint_unsigned_null` FROM `connector_test`.`all_types`"
                        .unsafe[(Short, Short)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((255.toShort, 0.toShort)), Some((255.toShort, 0.toShort)), (255.toShort, 0.toShort))
     )
@@ -98,7 +98,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(Short, Short)]
           result3 <-
             sql"SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`".unsafe[(Short, Short)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((32767.toShort, 0.toShort)), Some((32767.toShort, 0.toShort)), (32767.toShort, 0.toShort))
     )
@@ -115,7 +115,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(Int, Int)]
           result3 <- sql"SELECT `smallint_unsigned`, `smallint_unsigned_null` FROM `connector_test`.`all_types`"
                        .unsafe[(Int, Int)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((65535, 0)), Some((65535, 0)), (65535, 0))
     )
@@ -130,7 +130,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
             sql"SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types` WHERE `mediumint` = ${ 8388607 }"
               .headOption[(Int, Int)]
           result3 <- sql"SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`".unsafe[(Int, Int)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((8388607, 0)), Some((8388607, 0)), (8388607, 0))
     )
@@ -144,7 +144,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
           result2 <- sql"SELECT `int`, `int_null` FROM `connector_test`.`all_types` WHERE `int` = ${ 2147483647 }"
                        .headOption[(Int, Int)]
           result3 <- sql"SELECT `int`, `int_null` FROM `connector_test`.`all_types`".unsafe[(Int, Int)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((2147483647, 0)), Some((2147483647, 0)), (2147483647, 0))
     )
@@ -161,7 +161,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(Long, Long)]
           result3 <-
             sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".unsafe[(Long, Long)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((4294967295L, 0L)), Some((4294967295L, 0L)), (4294967295L, 0L))
     )
@@ -176,7 +176,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
             sql"SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types` WHERE `bigint` = ${ 9223372036854775807L }"
               .headOption[(Long, Long)]
           result3 <- sql"SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`".unsafe[(Long, Long)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((9223372036854775807L, 0L)), Some((9223372036854775807L, 0L)), (9223372036854775807L, 0L))
     )
@@ -193,7 +193,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <- sql"SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`"
                        .unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("18446744073709551615", None)), Some(("18446744073709551615", None)), ("18446744073709551615", None))
     )
@@ -207,7 +207,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
           result2 <- sql"SELECT `float`, `float_null` FROM `connector_test`.`all_types` WHERE `float` >= ${ 3.3f }"
                        .headOption[(Float, Float)]
           result3 <- sql"SELECT `float`, `float_null` FROM `connector_test`.`all_types`".unsafe[(Float, Float)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((3.40282e38f, 0f)), Some((3.40282e38f, 0f)), (3.40282e38f, 0f))
     )
@@ -222,7 +222,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
             sql"SELECT `double`, `double_null` FROM `connector_test`.`all_types` WHERE `double` = ${ 1.7976931348623157e308 }"
               .headOption[(Double, Double)]
           result3 <- sql"SELECT `double`, `double_null` FROM `connector_test`.`all_types`".unsafe[(Double, Double)]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (
         List((1.7976931348623157e308, 0.toDouble)),
@@ -243,7 +243,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(BigDecimal, Option[BigDecimal])]
           result3 <- sql"SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`"
                        .unsafe[(BigDecimal, Option[BigDecimal])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (
         List((BigDecimal.decimal(9999999.99), None)),
@@ -264,7 +264,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(LocalDate, Option[LocalDate])]
           result3 <-
             sql"SELECT `date`, `date_null` FROM `connector_test`.`all_types`".unsafe[(LocalDate, Option[LocalDate])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((LocalDate.of(2020, 1, 1), None)), Some((LocalDate.of(2020, 1, 1), None)), (LocalDate.of(2020, 1, 1), None))
     )
@@ -281,7 +281,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(LocalTime, Option[LocalTime])]
           result3 <-
             sql"SELECT `time`, `time_null` FROM `connector_test`.`all_types`".unsafe[(LocalTime, Option[LocalTime])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((LocalTime.of(12, 34, 56), None)), Some((LocalTime.of(12, 34, 56), None)), (LocalTime.of(12, 34, 56), None))
     )
@@ -299,7 +299,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(LocalDateTime, Option[LocalDateTime])]
           result3 <- sql"SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`"
                        .unsafe[(LocalDateTime, Option[LocalDateTime])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (
         List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)),
@@ -321,7 +321,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(LocalDateTime, Option[LocalDateTime])]
           result3 <- sql"SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`"
                        .unsafe[(LocalDateTime, Option[LocalDateTime])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (
         List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), None)),
@@ -341,7 +341,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(Short, Option[Short])]
           result3 <-
             sql"SELECT `year`, `year_null` FROM `connector_test`.`all_types`".unsafe[(Short, Option[Short])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List((2020.toShort, None)), Some((2020.toShort, None)), (2020.toShort, None))
     )
@@ -357,7 +357,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <-
             sql"SELECT `char`, `char_null` FROM `connector_test`.`all_types`".unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("char", None)), Some(("char", None)), ("char", None))
     )
@@ -374,7 +374,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <-
             sql"SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`".unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("varchar", None)), Some(("varchar", None)), ("varchar", None))
     )
@@ -394,7 +394,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
           result1.map { case (v1, v2) => (v1.mkString(":"), v2) },
           result2.map { case (v1, v2) => (v1.mkString(":"), v2) },
           (result3._1.mkString(":"), result3._2)
-        )).run(conn)
+        )).readOnly(conn)
       },
       (
         List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), None)),
@@ -415,7 +415,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <- sql"SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`"
                        .unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("varbinary", None)), Some(("varbinary", None)), ("varbinary", None))
     )
@@ -432,7 +432,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <- sql"SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`"
                        .unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("mediumblob", None)), Some(("mediumblob", None)), ("mediumblob", None))
     )
@@ -449,7 +449,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <- sql"SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`"
                        .unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("longblob", None)), Some(("longblob", None)), ("longblob", None))
     )
@@ -466,7 +466,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <- sql"SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`"
                        .unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("tinytext", None)), Some(("tinytext", None)), ("tinytext", None))
     )
@@ -482,7 +482,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <-
             sql"SELECT `text`, `text_null` FROM `connector_test`.`all_types`".unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("text", None)), Some(("text", None)), ("text", None))
     )
@@ -500,7 +500,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
           result3 <- sql"SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`"
                        .unsafe[(String, Option[String])]
         yield (result1, result2, result3))
-          .run(conn)
+          .readOnly(conn)
       },
       (List(("mediumtext", None)), Some(("mediumtext", None)), ("mediumtext", None))
     )
@@ -517,7 +517,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <- sql"SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`"
                        .unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("longtext", None)), Some(("longtext", None)), ("longtext", None))
     )
@@ -533,7 +533,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <-
             sql"SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`".unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("a", None)), Some(("a", None)), ("a", None))
     )
@@ -549,7 +549,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[(String, Option[String])]
           result3 <-
             sql"SELECT `set`, `set_null` FROM `connector_test`.`all_types`".unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("a,b", None)), Some(("a,b", None)), ("a,b", None))
     )
@@ -564,7 +564,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
             sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".headOption[(String, Option[String])]
           result3 <-
             sql"SELECT `json`, `json_null` FROM `connector_test`.`all_types`".unsafe[(String, Option[String])]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(("{\"a\": 1}", None)), Some(("{\"a\": 1}", None)), ("{\"a\": 1}", None))
     )
@@ -581,7 +581,7 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
               .headOption[LongClass]
           result3 <-
             sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".unsafe[LongClass]
-        yield (result1, result2, result3)).run(conn)
+        yield (result1, result2, result3)).readOnly(conn)
       },
       (List(LongClass(4294967295L, None)), Some(LongClass(4294967295L, None)), LongClass(4294967295L, None))
     )
