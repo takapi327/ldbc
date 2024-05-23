@@ -32,7 +32,7 @@ trait SQL[F[_]: Monad]:
   /**
    * statement has '?' that the statement has.
    */
-  def params: Seq[ParameterBinder[F]]
+  def params: List[ParameterBinder[F]]
 
   @targetName("combine")
   def ++(sql: SQL[F]): SQL[F]

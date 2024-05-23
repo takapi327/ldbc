@@ -26,13 +26,13 @@ import ldbc.sql.*
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[F]]) extends SQL[F]:
+case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder[F]]) extends SQL[F]:
 
   @targetName("combine")
   override def ++(sql: SQL[F]): SQL[F] =
     Mysql[F](statement ++ " " ++ sql.statement, params ++ sql.params)
 
-  override def update: Query[F, Int] = QueryImpl[F, Int](statement, params.map(_.parameter).toList) { connection =>
+  override def update: Query[F, Int] = QueryImpl[F, Int](statement, params.map(_.parameter)) { connection =>
     for
       statement <- connection.prepareStatement(statement)
       result <- params.zipWithIndex.traverse {
@@ -43,7 +43,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
 
   override def returning[T <: String | Int | Long](using
     reader: ResultSetReader[F, T]
-  ): Query[F, T] = QueryImpl[F, T](statement, params.map(_.parameter).toList) { connection =>
+  ): Query[F, T] = QueryImpl[F, T](statement, params.map(_.parameter)) { connection =>
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       reader.read(resultSet, 1)
     }
