@@ -41,7 +41,7 @@ trait SQL[F[_]: Monad]:
   /**
    * Methods for returning an array of data to be retrieved from the database.
    */
-  inline def toList[T <: Tuple](using FactoryCompat[T, List[T]], LogHandler[F]): Kleisli[F, Connection[F], List[T]] =
+  inline def toList[T <: Tuple](using FactoryCompat[T, List[T]], LogHandler[F]): Query[F, List[T]] =
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, T]
@@ -59,7 +59,7 @@ trait SQL[F[_]: Monad]:
     mirror:     Mirror.ProductOf[P],
     logHandler: LogHandler[F],
     factory:    FactoryCompat[P, List[P]]
-  ): Kleisli[F, Connection[F], List[P]] =
+  ): Query[F, List[P]] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, mirror.MirroredElemTypes]
@@ -77,7 +77,7 @@ trait SQL[F[_]: Monad]:
    * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
    * first one is retrieved.
    */
-  inline def headOption[T <: Tuple](using LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
+  inline def headOption[T <: Tuple](using LogHandler[F]): Query[F, Option[T]] =
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, T]
@@ -94,7 +94,7 @@ trait SQL[F[_]: Monad]:
   inline def headOption[P <: Product](using
     mirror:     Mirror.ProductOf[P],
     logHandler: LogHandler[F]
-  ): Kleisli[F, Connection[F], Option[P]] =
+  ): Query[F, Option[P]] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, mirror.MirroredElemTypes]
@@ -112,7 +112,7 @@ trait SQL[F[_]: Monad]:
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
    * raised. Use the [[headOption]] method if you want to retrieve individual data.
    */
-  inline def unsafe[T <: Tuple](using MonadError[F, Throwable], LogHandler[F]): Kleisli[F, Connection[F], T] =
+  inline def unsafe[T <: Tuple](using MonadError[F, Throwable], LogHandler[F]): Query[F, T] =
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, T]
@@ -130,7 +130,7 @@ trait SQL[F[_]: Monad]:
     mirror:     Mirror.ProductOf[P],
     logHandler: LogHandler[F],
     ev:         MonadError[F, Throwable]
-  ): Kleisli[F, Connection[F], P] =
+  ): Query[F, P] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, mirror.MirroredElemTypes]
@@ -147,18 +147,18 @@ trait SQL[F[_]: Monad]:
   /**
    * A method to return the number of rows updated by the SQL statement.
    */
-  def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int]
+  def update(using logHandler: LogHandler[F]): Query[F, Int]
 
   def returning[T <: String | Int | Long](using
     reader:     ResultSetReader[F, T],
     logHandler: LogHandler[F]
-  ): Kleisli[F, Connection[F], T]
+  ): Query[F, T]
 
   private[ldbc] def connection[T](
     statement: String,
     params:    Seq[ParameterBinder[F]],
     consumer:  ResultSetConsumer[F, T]
-  )(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T]
+  )(using logHandler: LogHandler[F]): Query[F, T]
 
   /**
    * Methods for returning an array of data to be retrieved from the database.
@@ -166,7 +166,7 @@ trait SQL[F[_]: Monad]:
   private def connectionToList[T](
     statement: String,
     params:    Seq[ParameterBinder[F]]
-  )(using Kleisli[F, ResultSet[F], T], LogHandler[F], FactoryCompat[T, List[T]]): Kleisli[F, Connection[F], List[T]] =
+  )(using Kleisli[F, ResultSet[F], T], LogHandler[F], FactoryCompat[T, List[T]]): Query[F, List[T]] =
     connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
 
   /**
@@ -176,7 +176,7 @@ trait SQL[F[_]: Monad]:
   private def connectionToHeadOption[T](
     statement: String,
     params:    Seq[ParameterBinder[F]]
-  )(using Kleisli[F, ResultSet[F], T], LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
+  )(using Kleisli[F, ResultSet[F], T], LogHandler[F]): Query[F, Option[T]] =
     connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
 
   /**
@@ -186,5 +186,5 @@ trait SQL[F[_]: Monad]:
   private def connectionToUnsafe[T](
     statement: String,
     params:    Seq[ParameterBinder[F]]
-  )(using Kleisli[F, ResultSet[F], T], LogHandler[F], MonadError[F, Throwable]): Kleisli[F, Connection[F], T] =
+  )(using Kleisli[F, ResultSet[F], T], LogHandler[F], MonadError[F, Throwable]): Query[F, T] =
     connection[T](statement, params, summon[ResultSetConsumer[F, T]])
