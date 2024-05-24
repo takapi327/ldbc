@@ -11,6 +11,7 @@ import scala.annotation.targetName
 
 import cats.{ Monad, MonadError }
 import cats.data.Kleisli
+import cats.kernel.Semigroup
 import cats.syntax.all.*
 
 import ldbc.sql.util.FactoryCompat
@@ -188,3 +189,8 @@ trait SQL[F[_]: Monad]:
     params:    Seq[ParameterBinder[F]]
   )(using Kleisli[F, ResultSet[F], T], LogHandler[F], MonadError[F, Throwable]): Kleisli[F, Connection[F], T] =
     connection[T](statement, params, summon[ResultSetConsumer[F, T]])
+
+object SQL:
+  
+  given [F[_]]: Semigroup[SQL[F]] with
+    override def combine(x: SQL[F], y: SQL[F]): SQL[F] = x ++ y
