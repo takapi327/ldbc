@@ -31,7 +31,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
 
   @targetName("combine")
   override def ++(sql: SQL[F]): SQL[F] =
-    Mysql[F](statement ++ " " ++ sql.statement, params ++ sql.params)
+    Mysql[F](statement ++ sql.statement, params ++ sql.params)
 
   override def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
     (for

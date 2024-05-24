@@ -27,11 +27,11 @@ import ldbc.sql.logging.*
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[F]]) extends SQL[F]:
+case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder[F]]) extends SQL[F]:
 
   @targetName("combine")
   override def ++(sql: SQL[F]): SQL[F] =
-    Mysql[F](statement ++ " " ++ sql.statement, params ++ sql.params)
+    Mysql[F](statement ++ sql.statement, params ++ sql.params)
 
   override def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
     (for
@@ -40,8 +40,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
                   case (param, index) => param.bind(statement, index + 1)
                 } >> statement.executeUpdate() <* statement.close()
     yield result)
-      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params.map(_.parameter).toList, ex)))
-      <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter).toList))
+      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params.map(_.parameter), ex)))
+      <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter)))
   }
 
   override def returning[T <: String | Int | Long](using
@@ -59,8 +59,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[
                    } >> statement.executeUpdate() >> statement.getGeneratedKeys()
       result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* statement.close()
     yield result)
-      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params.map(_.parameter).toList, ex)))
-      <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter).toList))
+      .onError(ex => logHandler.run(LogEvent.ExecFailure(statement, params.map(_.parameter), ex)))
+      <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter)))
   }
 
   private[ldbc] override def connection[T](
