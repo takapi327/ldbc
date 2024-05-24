@@ -23,7 +23,7 @@ package object connector:
         val strings     = sc.parts.iterator
         val expressions = args.iterator
         Mysql[F](strings.mkString("?"), expressions.toList)
-        
+
   private trait ConnectionSyntax[F[_]: Temporal]:
 
     extension [T](connectionKleisli: Kleisli[F, Connection[F], T])
@@ -37,17 +37,19 @@ package object connector:
       def transaction(connection: Connection[F]): F[T] =
         val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
 
-        val release = (connection: Connection[F], exitCase: ExitCase) => 
+        val release = (connection: Connection[F], exitCase: ExitCase) =>
           exitCase match
-            case ExitCase.Errored(ex) => connection.rollback() *> Temporal[F].raiseError(ex) 
-            case _ => connection.commit()
+            case ExitCase.Errored(ex) => connection.rollback() *> Temporal[F].raiseError(ex)
+            case _                    => connection.commit()
 
         Resource
           .makeCase(acquire)(release)
           .use(connectionKleisli.run)
 
       def rollback(connection: Connection[F]): F[T] =
-        connection.setReadOnly(false) *> connection.setAutoCommit(false) *> connectionKleisli.run(connection) <* connection.rollback()
+        connection.setReadOnly(false) *> connection.setAutoCommit(false) *> connectionKleisli.run(
+          connection
+        ) <* connection.rollback()
 
   /**
    * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
