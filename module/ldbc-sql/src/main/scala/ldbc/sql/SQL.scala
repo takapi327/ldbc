@@ -191,6 +191,6 @@ trait SQL[F[_]: Monad]:
     connection[T](statement, params, summon[ResultSetConsumer[F, T]])
 
 object SQL:
-  
+
   given [F[_]]: Semigroup[SQL[F]] with
     override def combine(x: SQL[F], y: SQL[F]): SQL[F] = x ++ y
