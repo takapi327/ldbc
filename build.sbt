@@ -62,7 +62,7 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .dependsOn(core, sql)
 
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
+  .crossType(CrossType.Full)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
