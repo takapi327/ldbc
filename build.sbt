@@ -161,7 +161,7 @@ lazy val tests = crossProject(JVMPlatform)
   .settings(
     name        := "tests",
     description := "Projects for testing",
-    Test / fork := true,
+    Test / fork := true
   )
   .defaultSettings
   .settings(libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test)
