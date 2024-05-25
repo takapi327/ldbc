@@ -33,12 +33,12 @@ class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
   override def connection: Resource[IO, Connection[IO]] =
     ldbc.connector.Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("world"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
 class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
@@ -64,32 +64,32 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   def connection: Resource[IO, Connection[IO]]
 
   case class Country(
-                      code: String,
-                      name: String,
-                      continent: Country.Continent,
-                      region: String,
-                      surfaceArea: BigDecimal,
-                      indepYear: Option[Short],
-                      population: Int,
-                      lifeExpectancy: Option[BigDecimal],
-                      gnp: Option[BigDecimal],
-                      gnpOld: Option[BigDecimal],
-                      localName: String,
-                      governmentForm: String,
-                      headOfState: Option[String],
-                      capital: Option[Int],
-                      code2: String
-                    )
+    code:           String,
+    name:           String,
+    continent:      Country.Continent,
+    region:         String,
+    surfaceArea:    BigDecimal,
+    indepYear:      Option[Short],
+    population:     Int,
+    lifeExpectancy: Option[BigDecimal],
+    gnp:            Option[BigDecimal],
+    gnpOld:         Option[BigDecimal],
+    localName:      String,
+    governmentForm: String,
+    headOfState:    Option[String],
+    capital:        Option[Int],
+    code2:          String
+  )
 
   object Country:
 
     enum Continent(val value: String) extends Enum:
-      case Asia extends Continent("Asia")
-      case Europe extends Continent("Europe")
+      case Asia          extends Continent("Asia")
+      case Europe        extends Continent("Europe")
       case North_America extends Continent("North America")
-      case Africa extends Continent("Africa")
-      case Oceania extends Continent("Oceania")
-      case Antarctica extends Continent("Antarctica")
+      case Africa        extends Continent("Africa")
+      case Oceania       extends Continent("Oceania")
+      case Antarctica    extends Continent("Antarctica")
       case South_America extends Continent("South America")
 
       override def toString: String = value
@@ -122,12 +122,12 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
 
   case class City(
-                   id: Int,
-                   name: String,
-                   countryCode: String,
-                   district: String,
-                   population: Int
-                 )
+    id:          Int,
+    name:        String,
+    countryCode: String,
+    district:    String,
+    population:  Int
+  )
 
   object City:
 
@@ -142,11 +142,11 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       .keySet(v => CONSTRAINT("city_ibfk_1", FOREIGN_KEY(v.countryCode, REFERENCE(Country.table, Country.table.code))))
 
   case class CountryLanguage(
-                              countryCode: String,
-                              language: String,
-                              isOfficial: CountryLanguage.IsOfficial,
-                              percentage: BigDecimal
-                            )
+    countryCode: String,
+    language:    String,
+    isOfficial:  CountryLanguage.IsOfficial,
+    percentage:  BigDecimal
+  )
 
   object CountryLanguage:
 
@@ -175,11 +175,11 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       )
 
   case class GovernmentOffice(
-                               id: Int,
-                               cityId: Int,
-                               name: String,
-                               establishmentDate: Option[LocalDate]
-                             )
+    id:                Int,
+    cityId:            Int,
+    name:              String,
+    establishmentDate: Option[LocalDate]
+  )
 
   object GovernmentOffice:
 
@@ -191,12 +191,14 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
       .keySet(v => CONSTRAINT("government_office_ibfk_1", FOREIGN_KEY(v.cityId, REFERENCE(City.table, City.table.id))))
 
-  private final val country = TableQuery[IO, Country](Country.table)
-  private final val city = TableQuery[IO, City](City.table)
-  private final val countryLanguage = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+  private final val country          = TableQuery[IO, Country](Country.table)
+  private final val city             = TableQuery[IO, City](City.table)
+  private final val countryLanguage  = TableQuery[IO, CountryLanguage](CountryLanguage.table)
   private final val governmentOffice = TableQuery[IO, GovernmentOffice](GovernmentOffice.table)
 
-  test("The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value.") {
+  test(
+    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         country.selectAll.toList[Country].readOnly(conn).map(_.length)
@@ -205,7 +207,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value.") {
+  test(
+    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         city.selectAll.toList[City].readOnly(conn).map(_.length)
@@ -214,7 +218,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value.") {
+  test(
+    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         countryLanguage.selectAll.toList[CountryLanguage].readOnly(conn).map(_.length)
@@ -223,7 +229,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value.") {
+  test(
+    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         countryLanguage.selectAll.toList[CountryLanguage].readOnly(conn).map(_.length)
@@ -232,7 +240,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value.") {
+  test(
+    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         governmentOffice.selectAll.toList[GovernmentOffice].readOnly(conn).map(_.length)
@@ -425,18 +435,20 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value.") {
+  test(
+    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
+  ) {
     assertIO(
       connection.use { conn =>
         (for
           codeOpt <- country.select(_.code).where(_.code _equals "JPN").headOption
           cities <- codeOpt match
-            case None => Kleisli.pure[IO, Connection[IO], List[City]](List.empty[City])
-            case Some(code *: EmptyTuple) =>
-              city
-                .select(v => (v.name, v.countryCode))
-                .where(_.countryCode _equals code)
-                .toList
+                      case None => Kleisli.pure[IO, Connection[IO], List[City]](List.empty[City])
+                      case Some(code *: EmptyTuple) =>
+                        city
+                          .select(v => (v.name, v.countryCode))
+                          .where(_.countryCode _equals code)
+                          .toList
         yield cities.length).readOnly(conn)
       },
       248
