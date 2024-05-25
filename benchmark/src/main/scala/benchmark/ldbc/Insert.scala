@@ -62,12 +62,14 @@ class Insert:
   @Benchmark
   def insertN: Unit =
     given LogHandler[IO] = noLog
-    query
-      .insertInto(test => (test.c1, test.c2))
-      .values(records)
-      .update
-      .rollback(dataSource)
-      .unsafeRunSync()
+    (for
+      connection <- dataSource.getConnection
+      result <- query
+                  .insertInto(test => (test.c1, test.c2))
+                  .values(records)
+                  .update
+                  .rollback(connection)
+    yield result).unsafeRunSync()
 
 case class Test(id: Option[Int], c1: Int, c2: String)
 object Test:

@@ -59,11 +59,14 @@ class Select:
   @Benchmark
   def selectN: List[(Int, String, String)] =
     given LogHandler[IO] = noLog
-    query
-      .select(city => (city.id, city.name, city.countryCode))
-      .limit(len)
-      .toList
-      .readOnly(dataSource)
+    (for
+      connection <- dataSource.getConnection
+      result <- query
+                  .select(city => (city.id, city.name, city.countryCode))
+                  .limit(len)
+                  .toList
+                  .readOnly(connection)
+    yield result)
       .unsafeRunSync()
 
 object City:
