@@ -14,7 +14,7 @@ import cats.effect.Sync
 
 import ldbc.sql.{PreparedStatement, ResultSet}
 
-private[jdbc] case class PreparedStatementImpl[F[_]: Sync](statement: java.sql.PreparedStatement) extends PreparedStatement[F]:
+private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.PreparedStatement) extends PreparedStatement[F]:
 
   @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
   override def executeQuery(sql: String): F[ResultSet[F]] = throw new UnsupportedOperationException(
