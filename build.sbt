@@ -61,8 +61,8 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
   .dependsOn(core, sql)
 
-lazy val dsl = crossProject(JVMPlatform)
-  .crossType(CrossType.Full)
+lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
