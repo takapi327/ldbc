@@ -11,6 +11,7 @@ import scala.annotation.targetName
 
 import cats.{ Monad, MonadError }
 import cats.data.Kleisli
+import cats.kernel.Semigroup
 import cats.syntax.all.*
 
 import ldbc.sql.util.FactoryCompat
@@ -41,19 +42,9 @@ trait SQL[F[_]: Monad]:
   /**
    * Methods for returning an array of data to be retrieved from the database.
    */
-  inline def toList[T <: Tuple](using FactoryCompat[T, List[T]], LogHandler[F]): Kleisli[F, Connection[F], List[T]] =
-    given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-      ResultSetReader
-        .fold[F, T]
-        .toList
-        .zipWithIndex
-        .traverse {
-          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
-        }
-        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
-    }
-
-    connectionToList[T](statement, params)
+  def toList[T](using reader: ResultSetReader[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], List[T]] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+    connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
 
   inline def toList[P <: Product](using
     mirror:     Mirror.ProductOf[P],
@@ -71,25 +62,18 @@ trait SQL[F[_]: Monad]:
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
     }
 
-    connectionToList[P](statement, params)
+    connection[List[P]](statement, params, summon[ResultSetConsumer[F, List[P]]])
 
   /**
    * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
    * first one is retrieved.
    */
-  inline def headOption[T <: Tuple](using LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
-    given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-      ResultSetReader
-        .fold[F, T]
-        .toList
-        .zipWithIndex
-        .traverse {
-          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
-        }
-        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
-    }
-
-    connectionToHeadOption[T](statement, params)
+  def headOption[T](using
+    reader:     ResultSetReader[F, T],
+    logHandler: LogHandler[F]
+  ): Kleisli[F, Connection[F], Option[T]] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+    connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
 
   inline def headOption[P <: Product](using
     mirror:     Mirror.ProductOf[P],
@@ -106,25 +90,19 @@ trait SQL[F[_]: Monad]:
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
     }
 
-    connectionToHeadOption[P](statement, params)
+    connection[Option[P]](statement, params, summon[ResultSetConsumer[F, Option[P]]])
 
   /**
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
    * raised. Use the [[headOption]] method if you want to retrieve individual data.
    */
-  inline def unsafe[T <: Tuple](using MonadError[F, Throwable], LogHandler[F]): Kleisli[F, Connection[F], T] =
-    given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
-      ResultSetReader
-        .fold[F, T]
-        .toList
-        .zipWithIndex
-        .traverse {
-          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
-        }
-        .map(list => Tuple.fromArray(list.toArray).asInstanceOf[T])
-    }
-
-    connectionToUnsafe[T](statement, params)
+  def unsafe[T](using
+    reader:     ResultSetReader[F, T],
+    logHandler: LogHandler[F],
+    ev:         MonadError[F, Throwable]
+  ): Kleisli[F, Connection[F], T] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+    connection[T](statement, params, summon[ResultSetConsumer[F, T]])
 
   inline def unsafe[P <: Product](using
     mirror:     Mirror.ProductOf[P],
@@ -142,7 +120,7 @@ trait SQL[F[_]: Monad]:
         .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
     }
 
-    connectionToUnsafe[P](statement, params)
+    connection[P](statement, params, summon[ResultSetConsumer[F, P]])
 
   /**
    * A method to return the number of rows updated by the SQL statement.
@@ -160,31 +138,7 @@ trait SQL[F[_]: Monad]:
     consumer:  ResultSetConsumer[F, T]
   )(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T]
 
-  /**
-   * Methods for returning an array of data to be retrieved from the database.
-   */
-  private def connectionToList[T](
-    statement: String,
-    params:    Seq[ParameterBinder[F]]
-  )(using Kleisli[F, ResultSet[F], T], LogHandler[F], FactoryCompat[T, List[T]]): Kleisli[F, Connection[F], List[T]] =
-    connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
+object SQL:
 
-  /**
-   * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the first
-   * one is retrieved.
-   */
-  private def connectionToHeadOption[T](
-    statement: String,
-    params:    Seq[ParameterBinder[F]]
-  )(using Kleisli[F, ResultSet[F], T], LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
-    connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
-
-  /**
-   * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
-   * raised. Use the [[connectionToHeadOption]] method if you want to retrieve individual data.
-   */
-  private def connectionToUnsafe[T](
-    statement: String,
-    params:    Seq[ParameterBinder[F]]
-  )(using Kleisli[F, ResultSet[F], T], LogHandler[F], MonadError[F, Throwable]): Kleisli[F, Connection[F], T] =
-    connection[T](statement, params, summon[ResultSetConsumer[F, T]])
+  given [F[_]]: Semigroup[SQL[F]] with
+    override def combine(x: SQL[F], y: SQL[F]): SQL[F] = x ++ y

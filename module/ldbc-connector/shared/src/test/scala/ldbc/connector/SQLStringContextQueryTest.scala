@@ -34,12 +34,12 @@ class SQLStringContextQueryTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          result1 <- sql"SELECT 1".toList[Tuple1[Int]]
-          result2 <- sql"SELECT 2".headOption[Tuple1[Int]]
-          result3 <- sql"SELECT 3".unsafe[Tuple1[Int]]
+          result1 <- sql"SELECT 1".toList[Int]
+          result2 <- sql"SELECT 2".headOption[Int]
+          result3 <- sql"SELECT 3".unsafe[Int]
         yield (result1, result2, result3)).run(conn)
       },
-      (List(Tuple1(1)), Some(Tuple1(2)), Tuple1(3))
+      (List(1), Some(2), 3)
     )
   }
 

@@ -27,11 +27,11 @@ import ldbc.sql.logging.*
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: Seq[ParameterBinder[F]]) extends SQL[F]:
+case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder[F]]) extends SQL[F]:
 
   @targetName("combine")
   override def ++(sql: SQL[F]): SQL[F] =
-    Mysql[F](statement ++ " " ++ sql.statement, params ++ sql.params)
+    Mysql[F](statement ++ sql.statement, params ++ sql.params)
 
   override def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
     (for

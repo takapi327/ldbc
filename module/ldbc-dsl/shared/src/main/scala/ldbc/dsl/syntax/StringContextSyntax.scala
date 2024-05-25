@@ -23,4 +23,4 @@ trait StringContextSyntax[F[_]: Temporal]:
     inline def sql(inline args: ParameterBinder[F]*): SQL[F] =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
-      Mysql(strings.mkString("?"), expressions.toSeq)
+      Mysql(strings.mkString("?"), expressions.toList)
