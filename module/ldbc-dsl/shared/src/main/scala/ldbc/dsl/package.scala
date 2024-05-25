@@ -12,7 +12,6 @@ import cats.implicits.*
 import cats.effect.{ IO, Resource, Sync }
 import cats.effect.kernel.Resource.ExitCase
 
-import ldbc.core.Database as CoreDatabase
 import ldbc.sql.*
 import ldbc.dsl.syntax.*
 
@@ -22,10 +21,7 @@ package object dsl:
     extends StringContextSyntax[F],
             ConnectionSyntax[F],
             QuerySyntax[F],
-            CommandSyntax[F],
-            DatabaseSyntax[F],
-            internalSyntax,
-            Alias:
+            CommandSyntax[F]:
 
     private def buildConnectionResource(acquire: F[Connection[F]]): Resource[F, Connection[F]] =
       val release: Connection[F] => F[Unit] = connection => connection.close()
@@ -42,9 +38,6 @@ package object dsl:
         }
           .use(connectionKleisli.run)
 
-      def readOnly(database: Database[F]): F[T] =
-        database.readOnly(connectionKleisli)
-
       def autoCommit(dataSource: DataSource[F]): F[T] =
         buildConnectionResource {
           for
@@ -53,9 +46,6 @@ package object dsl:
           yield connection
         }
           .use(connectionKleisli.run)
-
-      def autoCommit(database: Database[F]): F[T] =
-        database.autoCommit(connectionKleisli)
 
       def transaction(dataSource: DataSource[F]): F[T] =
         (for
@@ -71,9 +61,6 @@ package object dsl:
                       }
         yield transact).use(connectionKleisli.run)
 
-      def transaction(database: Database[F]): F[T] =
-        database.transaction(connectionKleisli)
-
       def rollback(dataSource: DataSource[F]): F[T] =
         val connectionResource = buildConnectionResource {
           for
@@ -84,30 +71,6 @@ package object dsl:
         connectionResource.use { connection =>
           connectionKleisli.run(connection) <* connection.rollback()
         }
-
-      def rollback(database: Database[F]): F[T] =
-        database.rollback(connectionKleisli)
-
-    extension (database: CoreDatabase)
-
-      def fromDriverManager(): Database[F] =
-        Database.fromDriverManager[F](database.databaseType, database.name, database.host, database.port, None, None)
-
-      def fromDriverManager(
-        user:     String,
-        password: String
-      ): Database[F] =
-        Database.fromDriverManager[F](
-          database.databaseType,
-          database.name,
-          database.host,
-          database.port,
-          Some(user),
-          Some(password)
-        )
-
-      def fromDataSource(dataSource: DataSource[F]): Database[F] =
-        Database.fromDataSource[F](database.databaseType, database.name, database.host, database.port, dataSource)
 
   /**
    * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
