@@ -164,7 +164,10 @@ lazy val tests = crossProject(JVMPlatform)
     Test / fork := true
   )
   .defaultSettings
-  .settings(libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test)
+  .settings(libraryDependencies ++= Seq(
+    "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test,
+    mysql % Test
+  ))
   .dependsOn(jdbcConnector, connector, dsl)
   .enablePlugins(NoPublishPlugin)
 
