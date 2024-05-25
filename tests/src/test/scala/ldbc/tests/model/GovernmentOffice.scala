@@ -11,11 +11,11 @@ import java.time.LocalDate
 import ldbc.core.*
 
 case class GovernmentOffice(
-                             id: Int,
-                             cityId: Int,
-                             name: String,
-                             establishmentDate: Option[LocalDate]
-                           )
+  id:                Int,
+  cityId:            Int,
+  name:              String,
+  establishmentDate: Option[LocalDate]
+)
 
 object GovernmentOffice:
 

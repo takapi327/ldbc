@@ -13,11 +13,11 @@ import ldbc.core.model.*
 import ldbc.sql.*
 
 case class CountryLanguage(
-                            countryCode: String,
-                            language: String,
-                            isOfficial: CountryLanguage.IsOfficial,
-                            percentage: BigDecimal
-                          )
+  countryCode: String,
+  language:    String,
+  isOfficial:  CountryLanguage.IsOfficial,
+  percentage:  BigDecimal
+)
 
 object CountryLanguage:
 

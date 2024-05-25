@@ -13,32 +13,32 @@ import ldbc.core.model.*
 import ldbc.sql.*
 
 case class Country(
-                    code: String,
-                    name: String,
-                    continent: Country.Continent,
-                    region: String,
-                    surfaceArea: BigDecimal,
-                    indepYear: Option[Short],
-                    population: Int,
-                    lifeExpectancy: Option[BigDecimal],
-                    gnp: Option[BigDecimal],
-                    gnpOld: Option[BigDecimal],
-                    localName: String,
-                    governmentForm: String,
-                    headOfState: Option[String],
-                    capital: Option[Int],
-                    code2: String
-                  )
+  code:           String,
+  name:           String,
+  continent:      Country.Continent,
+  region:         String,
+  surfaceArea:    BigDecimal,
+  indepYear:      Option[Short],
+  population:     Int,
+  lifeExpectancy: Option[BigDecimal],
+  gnp:            Option[BigDecimal],
+  gnpOld:         Option[BigDecimal],
+  localName:      String,
+  governmentForm: String,
+  headOfState:    Option[String],
+  capital:        Option[Int],
+  code2:          String
+)
 
 object Country:
 
   enum Continent(val value: String) extends Enum:
-    case Asia extends Continent("Asia")
-    case Europe extends Continent("Europe")
+    case Asia          extends Continent("Asia")
+    case Europe        extends Continent("Europe")
     case North_America extends Continent("North America")
-    case Africa extends Continent("Africa")
-    case Oceania extends Continent("Oceania")
-    case Antarctica extends Continent("Antarctica")
+    case Africa        extends Continent("Africa")
+    case Oceania       extends Continent("Oceania")
+    case Antarctica    extends Continent("Antarctica")
     case South_America extends Continent("South America")
 
     override def toString: String = value
