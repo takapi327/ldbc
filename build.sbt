@@ -104,7 +104,7 @@ lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("module/jdbc-connector"))
   .settings(
-    name := "jdbc-connector",
+    name        := "jdbc-connector",
     description := "JDBC API wrapped project with Effect System."
   )
   .defaultSettings
