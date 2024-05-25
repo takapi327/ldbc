@@ -66,8 +66,8 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"          % "3.5.4",
-      "org.scalatest" %%% "scalatest" % "3.2.18" % Test,
+      "org.typelevel" %%% "cats-effect" % "3.5.4",
+      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test
     )
   )
   .dependsOn(queryBuilder)
