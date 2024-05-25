@@ -39,7 +39,7 @@ package object connector:
 
         val release = (connection: Connection[F], exitCase: ExitCase) =>
           exitCase match
-            case ExitCase.Errored(ex) => connection.rollback() *> Temporal[F].raiseError(ex)
+            case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
             case _                    => connection.commit()
 
         Resource
