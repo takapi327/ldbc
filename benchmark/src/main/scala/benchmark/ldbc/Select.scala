@@ -17,7 +17,9 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
+import ldbc.core.*
 import ldbc.query.builder.TableQuery
+import ldbc.sql.DataSource
 import ldbc.sql.logging.LogHandler
 import ldbc.dsl.io.*
 
@@ -45,7 +47,7 @@ class Select:
     ds.setDatabaseName("world")
     ds.setUser("ldbc")
     ds.setPassword("password")
-    dataSource = DataSource[IO](ds)
+    dataSource = jdbc.connector.MysqlDataSource[IO](ds)
 
     noLog = _ => IO.unit
 
