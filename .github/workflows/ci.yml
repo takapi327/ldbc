@@ -124,11 +124,11 @@ jobs:
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: mkdir -p module/jdbc-connector/jvm/target module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-dsl/js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
+        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/jvm/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-dsl/js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
 
       - name: Compress target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: tar cf targets.tar module/jdbc-connector/jvm/target module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-dsl/js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
+        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/jvm/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target core/jvm/target module/ldbc-dsl/js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target plugin/target module/ldbc-dsl/jvm/target project/target
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
@@ -305,7 +305,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: ldbcjs_3 ldbcjs_3 docs_3 docs_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 benchmark_3 benchmark_3
+          modules-ignore: ldbcjs_3 ldbcjs_3 docs_3 docs_3 tests_3 ldbcnative_3 ldbcnative_3 ldbcjvm_3 ldbcjvm_3 benchmark_3 benchmark_3
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   validate-steward:
