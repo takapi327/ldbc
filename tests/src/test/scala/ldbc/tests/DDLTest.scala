@@ -52,16 +52,16 @@ trait DDLTest extends CatsEffectSuite:
   given Tracer[IO]     = Tracer.noop[IO]
   given LogHandler[IO] = LogHandler.noop[IO]
 
-  def prefix: "jdbc" | "ldbc"
+  def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
 
   final case class User(
-                   id: Long,
-                   name: String,
-                   age: Option[Int]
-                 )
+    id:   Long,
+    name: String,
+    age:  Option[Int]
+  )
 
-  private final val table = Table[User](s"${prefix}_user")(
+  private final val table = Table[User](s"${ prefix }_user")(
     column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
     column("name", VARCHAR(255)),
     column("age", INT)
@@ -70,19 +70,25 @@ trait DDLTest extends CatsEffectSuite:
   final val tableQuery = TableQuery[IO, User](table)
 
   override def beforeAll(): Unit =
-    connection.use { conn =>
-      tableQuery.createTable.update.autoCommit(conn) *> IO.unit
-    }.unsafeRunSync()
+    connection
+      .use { conn =>
+        tableQuery.createTable.update.autoCommit(conn) *> IO.unit
+      }
+      .unsafeRunSync()
 
   override def afterAll(): Unit =
-    connection.use { conn =>
-      tableQuery.dropTable.update.autoCommit(conn) *> IO.unit
-    }.unsafeRunSync()
+    connection
+      .use { conn =>
+        tableQuery.dropTable.update.autoCommit(conn) *> IO.unit
+      }
+      .unsafeRunSync()
 
   override def afterEach(context: AfterEach): Unit =
-    connection.use { conn =>
-      tableQuery.truncateTable.update.autoCommit(conn) *> IO.unit
-    }.unsafeRunSync()
+    connection
+      .use { conn =>
+        tableQuery.truncateTable.update.autoCommit(conn) *> IO.unit
+      }
+      .unsafeRunSync()
 
   test("When the table is created, the number of records is 0.") {
     assertIO(
@@ -98,11 +104,13 @@ trait DDLTest extends CatsEffectSuite:
       connection.use { conn =>
         tableQuery
           .insertInto(user => (user.name, user.age))
-          .values(List(
-            ("Alice", Some(20)),
-            ("Bob", Some(25)),
-            ("Charlie", None)
-          ))
+          .values(
+            List(
+              ("Alice", Some(20)),
+              ("Bob", Some(25)),
+              ("Charlie", None)
+            )
+          )
           .update
           .autoCommit(conn)
       },
