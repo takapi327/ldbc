@@ -99,7 +99,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .dependsOn(core)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
-  .crossType(CrossType.Full)
+  .crossType(CrossType.Pure)
   .withoutSuffixFor(JVMPlatform)
   .in(file("module/jdbc-connector"))
   .settings(
