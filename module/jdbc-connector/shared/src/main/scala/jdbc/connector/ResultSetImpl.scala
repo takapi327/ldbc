@@ -12,13 +12,12 @@ import cats.syntax.all.*
 
 import cats.effect.Sync
 
-import ldbc.sql.{ResultSet, ResultSetMetaData}
+import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
 private[jdbc] case class ResultSetImpl[F[_]: Sync](resultSet: java.sql.ResultSet) extends ResultSet[F]:
   override def next(): F[Boolean] = Sync[F].blocking(resultSet.next())
 
   override def close(): F[Unit] = Sync[F].blocking(resultSet.close())
-
 
   override def wasNull(): F[Boolean] = Sync[F].blocking(resultSet.wasNull())
 
@@ -84,13 +83,13 @@ private[jdbc] case class ResultSetImpl[F[_]: Sync](resultSet: java.sql.ResultSet
 
   override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
     Sync[F].blocking(resultSet.getTimestamp(columnIndex)).map {
-      case null => null
+      case null      => null
       case timestamp => timestamp.toLocalDateTime
     }
 
   override def getTimestamp(columnLabel: String): F[LocalDateTime] =
     Sync[F].blocking(resultSet.getTimestamp(columnLabel)).map {
-      case null => null
+      case null      => null
       case timestamp => timestamp.toLocalDateTime
     }
 
