@@ -100,6 +100,17 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .dependsOn(core)
 
+lazy val jdbcConnector = crossProject(JVMPlatform)
+  .crossType(CrossType.Full)
+  .in(file("module/jdbc-connector"))
+  .settings(
+    name := "jdbc-connector",
+    description := "JDBC API wrapped project with Effect System."
+  )
+  .defaultSettings
+  .settings(libraryDependencies += catsEffect)
+  .dependsOn(sql)
+
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("connector", "MySQL connector written in pure Scala3")
@@ -198,6 +209,7 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     dsl,
     codegen,
+    jdbcConnector,
     connector,
     plugin,
     docs,
