@@ -36,7 +36,7 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
           _     <- sql"CREATE TABLE `string_context_bit_table1`(`bit_column` BIT NOT NULL)".update
           count <- sql"INSERT INTO `string_context_bit_table1`(`bit_column`) VALUES (b'1')".update
           _     <- sql"DROP TABLE `string_context_bit_table1`".update
-        yield count).run(conn)
+        yield count).transaction(conn)
       },
       1
     )
@@ -49,7 +49,7 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
           _     <- sql"CREATE TABLE `string_context_bit_table2`(`bit_column` BIT NOT NULL)".update
           count <- sql"INSERT INTO `string_context_bit_table2`(`bit_column`) VALUES (b'0'),(b'1')".update
           _     <- sql"DROP TABLE `string_context_bit_table2`".update
-        yield count).run(conn)
+        yield count).transaction(conn)
       },
       2
     )
@@ -64,8 +64,26 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
           _         <- sql"INSERT INTO `returning_auto_inc`(`id`, `c1`) VALUES ($None, ${ "column 1" })".update
           generated <- sql"INSERT INTO `returning_auto_inc`(`id`, `c1`) VALUES ($None, ${ "column 2" })".returning[Long]
           _         <- sql"DROP TABLE `returning_auto_inc`".update
-        yield generated).run(conn)
+        yield generated).transaction(conn)
       },
       2L
+    )
+  }
+
+  test("Not a single submission of result data rolled back in transaction has been reflected.　") {
+    assertIO(
+      connection.use { conn =>
+        for
+          _ <-
+            sql"CREATE TABLE `transaction_rollback_test`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update.autoCommit(conn)
+          result         <- sql"INSERT INTO `transaction_rollback_test`(`id`, `c1`) VALUES ($None, ${ "column 1" })".update
+            .flatMap(_ => sql"INSERT INTO `transaction_rollback_test`(`id`, `xxx`) VALUES ($None, ${ "column 2" })".update)
+            .transaction(conn)
+            .attempt
+          recode <- sql"SELECT * FROM `transaction_rollback_test`".toList[(Long, String)]().readOnly(conn)
+          _         <- sql"DROP TABLE `transaction_rollback_test`".update.autoCommit(conn)
+        yield recode.length
+      },
+      0
     )
   }
