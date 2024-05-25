@@ -54,8 +54,8 @@ import ldbc.connector.data.*
  */
 case class OKPacket(
   status:           Int,
-  affectedRows:     Int,
-  lastInsertId:     Int,
+  affectedRows:     Long,
+  lastInsertId:     Long,
   statusFlags:      Seq[ServerStatusFlags],
   warnings:         Option[Int],
   info:             Option[String],
@@ -74,8 +74,8 @@ object OKPacket:
     val hasClientTransactionsFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_TRANSACTIONS)
     val hasClientSessionTrackFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_SESSION_TRACK)
     for
-      affectedRows <- uint8
-      lastInsertId <- uint8
+      affectedRows <- lengthEncodedIntDecoder
+      lastInsertId <- lengthEncodedIntDecoder
       statusFlags <-
         (if hasClientProtocol41Flag || hasClientTransactionsFlag then uint16L.map(int => ServerStatusFlags(int.toLong))
          else provide(Nil))
