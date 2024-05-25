@@ -12,7 +12,8 @@ import cats.effect.Sync
 
 import ldbc.sql.ParameterMetaData
 
-private[jdbc] case class ParameterMetaDataImpl[F[_]: Sync](parameterMetaData: java.sql.ParameterMetaData) extends ParameterMetaData[F]:
+private[jdbc] case class ParameterMetaDataImpl[F[_]: Sync](parameterMetaData: java.sql.ParameterMetaData)
+  extends ParameterMetaData[F]:
 
   override def getParameterCount(): F[Int] = Sync[F].blocking(parameterMetaData.getParameterCount)
 
