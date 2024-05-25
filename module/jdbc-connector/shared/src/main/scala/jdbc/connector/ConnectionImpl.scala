@@ -54,16 +54,16 @@ private[jdbc] case class ConnectionImpl[F[_]: Sync](connection: java.sql.Connect
   override def getTransactionIsolation(): F[Int] = Sync[F].blocking(connection.getTransactionIsolation)
 
   override def createStatement(
-                                resultSetType: Int,
-                                resultSetConcurrency: Int
-                              ): F[Statement[F]] =
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[Statement[F]] =
     Sync[F].blocking(connection.createStatement(resultSetType, resultSetConcurrency)).map(StatementImpl.apply)
 
   override def prepareStatement(
-                                 sql: String,
-                                 resultSetType: Int,
-                                 resultSetConcurrency: Int
-                               ): F[PreparedStatement[F]] =
+    sql:                  String,
+    resultSetType:        Int,
+    resultSetConcurrency: Int
+  ): F[PreparedStatement[F]] =
     Sync[F]
       .blocking(connection.prepareStatement(sql, resultSetType, resultSetConcurrency))
       .map(PreparedStatementImpl(_))
@@ -90,4 +90,3 @@ private[jdbc] case class ConnectionImpl[F[_]: Sync](connection: java.sql.Connect
 
   override def releaseSavepoint(savepoint: Savepoint): F[Unit] =
     Sync[F].blocking(connection.releaseSavepoint(MysqlSavepoint.toJdbc(savepoint)))
-  

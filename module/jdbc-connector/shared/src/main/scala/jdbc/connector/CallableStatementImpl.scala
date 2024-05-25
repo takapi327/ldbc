@@ -14,7 +14,9 @@ import cats.effect.Sync
 
 import ldbc.sql.CallableStatement
 
-private[jdbc] case class CallableStatementImpl[F[_] : Sync](callableStatement: java.sql.CallableStatement) extends PreparedStatementImpl[F](callableStatement), CallableStatement[F]:
+private[jdbc] case class CallableStatementImpl[F[_]: Sync](callableStatement: java.sql.CallableStatement)
+  extends PreparedStatementImpl[F](callableStatement),
+          CallableStatement[F]:
 
   override def registerOutParameter(parameterIndex: Int, sqlType: Int): F[Unit] =
     Sync[F].blocking(callableStatement.registerOutParameter(parameterIndex, sqlType))
