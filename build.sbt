@@ -100,6 +100,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
+  .withoutSuffixFor(JVMPlatform)
   .in(file("module/jdbc-connector"))
   .settings(
     name        := "jdbc-connector",
@@ -152,6 +153,20 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
       dir          = (Compile / sourceManaged).value
     )
   }.taskValue)
+
+lazy val tests = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .in(file("tests"))
+  .settings(
+    name        := "tests",
+    description := "Projects for testing",
+    Test / fork := true,
+  )
+  .defaultSettings
+  .settings(libraryDependencies += "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test)
+  .dependsOn(jdbcConnector, connector, dsl)
+  .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
   .settings(description := "Projects for Benchmark Measurement")
@@ -210,6 +225,7 @@ lazy val ldbc = tlCrossRootProject
     jdbcConnector,
     connector,
     plugin,
+    tests,
     docs,
     benchmark,
     schemaSpy,
