@@ -37,12 +37,13 @@ Please drop a :star: if this project interests you. I need encouragement.
 |     `ldbc-core`      |  ✅  |      ✅       |    ✅     |
 |      `ldbc-sql`      |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-|      `ldbc-dsl`      |  ✅  |      ❌       |    ❌     | 
+|      `ldbc-dsl`      |  ✅  |      ✅       |    ✅     | 
 |   `ldbc-schemaSpy`   |  ✅  |      ❌       |    ❌     | 
 |    `ldbc-codegen`    |  ✅  |      ✅       |    ✅     |
 |    `ldbc-hikari`     |  ✅  |      ❌       |    ❌     | 
 |    `ldbc-plugin`     |  ✅  |      ❌       |    ❌     | 
 |   `ldbc-connector`   |  ✅  |      ✅       |    ✅     | 
+|   `jdbc-connector`   |  ✅  |      ❌       |    ❌     | 
 
 ## Documentation
 
