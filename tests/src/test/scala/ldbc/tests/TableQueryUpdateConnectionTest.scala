@@ -94,7 +94,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
             )
           )
           .update
-          .autoCommit(conn)
+          .rollback(conn)
       },
       1
     )
@@ -143,7 +143,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
             )
           )
           .update
-          .autoCommit(conn)
+          .rollback(conn)
       },
       2
     )
@@ -172,7 +172,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (country += newCountry).update
-          .autoCommit(conn)
+          .rollback(conn)
       },
       1
     )
@@ -233,7 +233,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
           .insertInto(v => (v.name, v.countryCode, v.district, v.population))
           .values(("Test", "T1", "T", 1))
           .update
-          .autoCommit(conn)
+          .rollback(conn)
       },
       1
     )
@@ -248,7 +248,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
           .insertInto(v => (v.name, v.countryCode, v.district, v.population))
           .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
           .update
-          .autoCommit(conn)
+          .rollback(conn)
       },
       2
     )
@@ -457,11 +457,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         country.delete
-          .where(_.code _equals "T5")
+          .where(v => (v.code _equals "T5") or (v.code _equals "T6"))
           .update
           .autoCommit(conn)
       },
-      1
+      2
     )
   }
 
@@ -473,7 +473,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         countryLanguage.delete
           .where(_.countryCode _equals "AFG")
           .update
-          .autoCommit(conn)
+          .rollback(conn)
       },
       5
     )
