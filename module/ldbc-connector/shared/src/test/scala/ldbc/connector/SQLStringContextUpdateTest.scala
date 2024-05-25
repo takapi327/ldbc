@@ -75,13 +75,16 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
       connection.use { conn =>
         for
           _ <-
-            sql"CREATE TABLE `transaction_rollback_test`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update.autoCommit(conn)
-          result         <- sql"INSERT INTO `transaction_rollback_test`(`id`, `c1`) VALUES ($None, ${ "column 1" })".update
-            .flatMap(_ => sql"INSERT INTO `transaction_rollback_test`(`id`, `xxx`) VALUES ($None, ${ "column 2" })".update)
-            .transaction(conn)
-            .attempt
+            sql"CREATE TABLE `transaction_rollback_test`(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
+              .autoCommit(conn)
+          result <- sql"INSERT INTO `transaction_rollback_test`(`id`, `c1`) VALUES ($None, ${ "column 1" })".update
+                      .flatMap(_ =>
+                        sql"INSERT INTO `transaction_rollback_test`(`id`, `xxx`) VALUES ($None, ${ "column 2" })".update
+                      )
+                      .transaction(conn)
+                      .attempt
           recode <- sql"SELECT * FROM `transaction_rollback_test`".toList[(Long, String)]().readOnly(conn)
-          _         <- sql"DROP TABLE `transaction_rollback_test`".update.autoCommit(conn)
+          _      <- sql"DROP TABLE `transaction_rollback_test`".update.autoCommit(conn)
         yield recode.length
       },
       0
