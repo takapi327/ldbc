@@ -83,9 +83,9 @@ class SQLStringContextUpdateTest extends CatsEffectSuite:
                       )
                       .transaction(conn)
                       .attempt
-          recode <- sql"SELECT * FROM `transaction_rollback_test`".toList[(Long, String)]().readOnly(conn)
+          count <- sql"SELECT count(*) FROM `transaction_rollback_test`".unsafe[Int].readOnly(conn)
           _      <- sql"DROP TABLE `transaction_rollback_test`".update.autoCommit(conn)
-        yield recode.length
+        yield count
       },
       0
     )
