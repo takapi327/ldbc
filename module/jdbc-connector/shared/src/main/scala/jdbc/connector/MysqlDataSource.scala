@@ -12,7 +12,7 @@ import cats.syntax.all.*
 
 import cats.effect.Sync
 
-import ldbc.sql.{DataSource, Connection}
+import ldbc.sql.{ DataSource, Connection }
 
 case class MysqlDataSource[F[_]: Sync](dataSource: javax.sql.DataSource) extends DataSource[F]:
 
