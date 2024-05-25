@@ -42,7 +42,7 @@ trait SQL[F[_]: Monad]:
   /**
    * Methods for returning an array of data to be retrieved from the database.
    */
-  inline def toList[T <: Tuple](using FactoryCompat[T, List[T]], LogHandler[F]): Kleisli[F, Connection[F], List[T]] =
+  inline def toList[T <: Tuple]()(using FactoryCompat[T, List[T]], LogHandler[F]): Kleisli[F, Connection[F], List[T]] =
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, T]
@@ -78,7 +78,7 @@ trait SQL[F[_]: Monad]:
    * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
    * first one is retrieved.
    */
-  inline def headOption[T <: Tuple](using LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
+  inline def headOption[T <: Tuple]()(using LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
     given Kleisli[F, ResultSet[F], T] = Kleisli { resultSet =>
       ResultSetReader
         .fold[F, T]
