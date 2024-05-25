@@ -14,9 +14,9 @@ case class MysqlSavepoint(name: String) extends Savepoint:
   override def getSavepointId():   Int    = throw new java.sql.SQLException("Only named savepoints are supported.")
   override def getSavepointName(): String = name
 
-  def toJdbc: java.sql.Savepoint = new sql.Savepoint:
-    override def getSavepointId:   Int    = MysqlSavepoint.this.getSavepointId()
-    override def getSavepointName: String = MysqlSavepoint.this.getSavepointName()
-
 object MysqlSavepoint:
   def apply(savepoint: java.sql.Savepoint): Savepoint = MysqlSavepoint(savepoint.getSavepointName)
+
+  def toJdbc(savepoint: Savepoint): java.sql.Savepoint = new sql.Savepoint:
+    override def getSavepointId:   Int    = savepoint.getSavepointId()
+    override def getSavepointName: String = savepoint.getSavepointName()
