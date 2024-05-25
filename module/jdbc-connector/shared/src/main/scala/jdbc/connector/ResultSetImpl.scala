@@ -94,7 +94,7 @@ private[jdbc] case class ResultSetImpl[F[_]: Sync](resultSet: java.sql.ResultSet
     }
 
   override def getMetaData(): F[ResultSetMetaData] =
-    Sync[F].blocking(resultSet.getMetaData).map(ResultSetMetaDataImpl)
+    Sync[F].blocking(resultSet.getMetaData).map(ResultSetMetaDataImpl.apply)
 
   override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
     Sync[F].blocking(resultSet.getBigDecimal(columnIndex))
