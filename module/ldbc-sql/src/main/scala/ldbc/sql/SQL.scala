@@ -42,6 +42,10 @@ trait SQL[F[_]: Monad]:
   /**
    * Methods for returning an array of data to be retrieved from the database.
    */
+  def toList[T](using reader: ResultSetReader[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], List[T]] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+    connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
+
   inline def toList[P <: Product](using
     mirror:     Mirror.ProductOf[P],
     logHandler: LogHandler[F],
@@ -64,6 +68,10 @@ trait SQL[F[_]: Monad]:
    * A method to return the data to be retrieved from the database as Option type. If there are multiple data, the
    * first one is retrieved.
    */
+  def headOption[T](using reader: ResultSetReader[F, T], logHandler: LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+    connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
+
   inline def headOption[P <: Product](using
     mirror:     Mirror.ProductOf[P],
     logHandler: LogHandler[F]
@@ -85,6 +93,10 @@ trait SQL[F[_]: Monad]:
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
    * raised. Use the [[headOption]] method if you want to retrieve individual data.
    */
+  def unsafe[T](using reader: ResultSetReader[F, T], logHandler: LogHandler[F], ev: MonadError[F, Throwable]): Kleisli[F, Connection[F], T] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+    connection[T](statement, params, summon[ResultSetConsumer[F, T]])
+
   inline def unsafe[P <: Product](using
     mirror:     Mirror.ProductOf[P],
     logHandler: LogHandler[F],
