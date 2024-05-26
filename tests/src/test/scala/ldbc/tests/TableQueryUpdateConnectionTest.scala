@@ -331,20 +331,20 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     )
   }
 
-  // test(
-  //  "If the primary key is duplicated, the data is updated."
-  // ) {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      (for
-  //        _       <- city.insertOrUpdates(List(City(1638, "update Kofu", "JPN", "Yamanashi", 199753))).update
-  //        updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1638).unsafe
-  //      yield updated)
-  //        .transaction(conn)
-  //    },
-  //    ("update Kofu", "Yamanashi")
-  //  )
-  // }
+  test(
+    "If the primary key is duplicated, the data is updated."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        (for
+          _       <- city.insertOrUpdates(List(City(1638, "update Kofu", "JPN", "Yamanashi", 199753))).update
+          updated <- city.select(v => (v.name, v.district)).where(_.id _equals 1638).unsafe
+        yield updated)
+          .transaction(conn)
+      },
+      ("update Kofu", "Yamanashi")
+    )
+  }
 
   test(
     "If there are duplicate primary keys, only the specified columns are updated."
@@ -390,12 +390,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
                       .insertInto(v => (v.name, v.countryCode, v.district, v.population))
                       .values(("Test4", code(4), "T", 1))
                       .returning("id")
-        yield
-          println("===================")
-          println(s"result: $result, length: $length")
-          println("===================")
-          result === length
-        )
+        yield result === length)
           .autoCommit(conn)
       }
     )
