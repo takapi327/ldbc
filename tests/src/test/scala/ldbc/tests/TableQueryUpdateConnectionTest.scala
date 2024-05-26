@@ -129,7 +129,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
               code(2)
             ),
             (
-              s"${ prefix }_T3",
+              code(3),
               s"${ prefix }_Test3",
               Country.Continent.Asia,
               "Northeast",
@@ -306,7 +306,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
           .set("population", 2)
           .where(_.name _equals "Jokohama [Yokohama]")
           .update
-          .autoCommit(conn)
+          .rollback(conn)
       },
       1
     )
@@ -418,7 +418,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
                           .where(_.name _equals "Test2")
                           .update
         yield result)
-          .transaction(conn)
+          .rollback(conn)
       },
       1
     )
