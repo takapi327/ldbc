@@ -17,7 +17,9 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
+import ldbc.core.*
 import ldbc.query.builder.TableQuery
+import ldbc.sql.DataSource
 import ldbc.sql.logging.LogHandler
 import ldbc.dsl.io.*
 
@@ -46,7 +48,7 @@ class Insert:
     ds.setDatabaseName("world")
     ds.setUser("ldbc")
     ds.setPassword("password")
-    dataSource = DataSource[IO](ds)
+    dataSource = jdbc.connector.MysqlDataSource[IO](ds)
 
     records = (1 to len).map(num => (num, s"record$num")).toList
 
@@ -60,12 +62,14 @@ class Insert:
   @Benchmark
   def insertN: Unit =
     given LogHandler[IO] = noLog
-    query
-      .insertInto(test => (test.c1, test.c2))
-      .values(records)
-      .update
-      .rollback(dataSource)
-      .unsafeRunSync()
+    (for
+      connection <- dataSource.getConnection
+      result <- query
+                  .insertInto(test => (test.c1, test.c2))
+                  .values(records)
+                  .update
+                  .rollback(connection)
+    yield result).unsafeRunSync()
 
 case class Test(id: Option[Int], c1: Int, c2: String)
 object Test:

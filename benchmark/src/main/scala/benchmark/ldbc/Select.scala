@@ -17,7 +17,9 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
+import ldbc.core.*
 import ldbc.query.builder.TableQuery
+import ldbc.sql.DataSource
 import ldbc.sql.logging.LogHandler
 import ldbc.dsl.io.*
 
@@ -45,7 +47,7 @@ class Select:
     ds.setDatabaseName("world")
     ds.setUser("ldbc")
     ds.setPassword("password")
-    dataSource = DataSource[IO](ds)
+    dataSource = jdbc.connector.MysqlDataSource[IO](ds)
 
     noLog = _ => IO.unit
 
@@ -57,11 +59,14 @@ class Select:
   @Benchmark
   def selectN: List[(Int, String, String)] =
     given LogHandler[IO] = noLog
-    query
-      .select(city => (city.id, city.name, city.countryCode))
-      .limit(len)
-      .toList
-      .readOnly(dataSource)
+    (for
+      connection <- dataSource.getConnection
+      result <- query
+                  .select(city => (city.id, city.name, city.countryCode))
+                  .limit(len)
+                  .toList
+                  .readOnly(connection)
+    yield result)
       .unsafeRunSync()
 
 object City:
