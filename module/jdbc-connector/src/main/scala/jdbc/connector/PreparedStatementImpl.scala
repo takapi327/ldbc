@@ -101,3 +101,6 @@ private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.P
 
   override def executeLargeUpdate(): F[Long] =
     Sync[F].blocking(statement.executeLargeUpdate())
+
+  override def executeLargeBatch(): F[Array[Long]] =
+    Sync[F].blocking(statement.executeLargeBatch())
