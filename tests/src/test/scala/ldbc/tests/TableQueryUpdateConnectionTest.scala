@@ -76,8 +76,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         country
           .insert(
             (
-              "T1",
-              "Test1",
+              s"${prefix}_T1",
+              s"${prefix}_Test1",
               Country.Continent.Asia,
               "Northeast",
               BigDecimal.decimal(390757.00),
@@ -90,11 +90,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
               "Test",
               None,
               None,
-              "T1"
+              s"${prefix}_T1"
             )
           )
           .update
-          .rollback(conn)
+          .autoCommit(conn)
       },
       1
     )
@@ -108,8 +108,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         country
           .insert(
             (
-              "T2",
-              "Test2",
+              s"${prefix}_T2",
+              s"${prefix}_Test2",
               Country.Continent.Asia,
               "Northeast",
               BigDecimal.decimal(390757.00),
@@ -122,11 +122,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
               "Test",
               None,
               None,
-              "T2"
+              s"${prefix}_T2"
             ),
             (
-              "T3",
-              "Test3",
+              s"${prefix}_T3",
+              s"${prefix}_Test3",
               Country.Continent.Asia,
               "Northeast",
               BigDecimal.decimal(390757.00),
@@ -139,11 +139,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
               "Test",
               None,
               None,
-              "T3"
+              s"${prefix}_T3"
             )
           )
           .update
-          .rollback(conn)
+          .autoCommit(conn)
       },
       2
     )
@@ -153,8 +153,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "New data can be registered from the model."
   ) {
     val newCountry = Country(
-      "T4",
-      "Test4",
+      s"${prefix}_T4",
+      s"${prefix}_Test4",
       Country.Continent.Asia,
       "Northeast",
       BigDecimal.decimal(390757.00),
@@ -167,12 +167,12 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       "Test",
       None,
       None,
-      "T4"
+      s"${prefix}_T4"
     )
     assertIO(
       connection.use { conn =>
         (country += newCountry).update
-          .rollback(conn)
+          .autoCommit(conn)
       },
       1
     )
@@ -182,8 +182,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     "New data can be registered from the model."
   ) {
     val newCountry1 = Country(
-      "T5",
-      "Test5",
+      s"${prefix}_T5",
+      s"${prefix}_Test5",
       Country.Continent.Asia,
       "Northeast",
       BigDecimal.decimal(390757.00),
@@ -196,11 +196,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       "Test",
       None,
       None,
-      "T5"
+      s"${prefix}_T5"
     )
     val newCountry2 = Country(
-      "T6",
-      "Test6",
+      s"${prefix}_T6",
+      s"${prefix}_Test6",
       Country.Continent.North_America,
       "Northeast",
       BigDecimal.decimal(390757.00),
@@ -213,7 +213,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       "Test",
       None,
       None,
-      "T6"
+      s"${prefix}_T6"
     )
     assertIO(
       connection.use { conn =>
@@ -231,7 +231,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         city
           .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-          .values(("Test", "T1", "T", 1))
+          .values(("Test", s"${prefix}_T1", "T", 1))
           .update
           .rollback(conn)
       },
@@ -246,7 +246,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         city
           .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-          .values(List(("Test2", "T2", "T", 1), ("Test3", "T3", "T3", 2)))
+          .values(List(("Test2", s"${prefix}_T2", "T", 1), ("Test3", s"${prefix}_T3", "T3", 2)))
           .update
           .rollback(conn)
       },
@@ -383,7 +383,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         (for
           result <- city
                       .insertInto(v => (v.name, v.countryCode, v.district, v.population))
-                      .values(("Test4", "T4", "T", 1))
+                      .values(("Test4", s"${prefix}_T4", "T", 1))
                       .returning("id")
           length <- city.select(_.id.count).unsafe.map(_._1)
         yield result === length)
@@ -400,7 +400,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         (for
           codeOpt <- country
                        .select(_.code)
-                       .where(_.name _equals "Test1")
+                       .where(_.name _equals s"${prefix}_Test1")
                        .and(_.continent _equals Country.Continent.Asia)
                        .headOption
           result <- codeOpt match
@@ -457,7 +457,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         country.delete
-          .where(v => (v.code _equals "T5") or (v.code _equals "T6"))
+          .where(v => (v.code _equals s"${prefix}_T5") or (v.code _equals s"${prefix}_T6"))
           .update
           .autoCommit(conn)
       },
