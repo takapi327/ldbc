@@ -34,12 +34,13 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 |     `ldbc-core`      |  ✅  |      ✅       |    ✅     |
 |      `ldbc-sql`      |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-|      `ldbc-dsl`      |  ✅  |      ❌       |    ❌     | 
+|      `ldbc-dsl`      |  ✅  |      ✅       |    ✅     | 
 |   `ldbc-schemaSpy`   |  ✅  |      ❌       |    ❌     | 
 |    `ldbc-codegen`    |  ✅  |      ✅       |    ✅     |
 |    `ldbc-hikari`     |  ✅  |      ❌       |    ❌     | 
 |    `ldbc-plugin`     |  ✅  |      ❌       |    ❌     | 
 |   `ldbc-connector`   |  ✅  |      ✅       |    ✅     | 
+|   `jdbc-connector`   |  ✅  |      ❌       |    ❌     | 
 
 ## Quick Start
 

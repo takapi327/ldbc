@@ -61,16 +61,14 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
   .dependsOn(core, sql)
 
-lazy val dsl = crossProject(JVMPlatform)
-  .crossType(CrossType.Full)
+lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      catsEffect,
-      mockito,
-      scalaTest,
-      mysql % Test
-    ) ++ specs2
+      "org.typelevel" %%% "cats-effect" % "3.5.4",
+      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test
+    )
   )
   .dependsOn(queryBuilder)
 
@@ -99,6 +97,18 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
   .dependsOn(core)
+
+lazy val jdbcConnector = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .in(file("module/jdbc-connector"))
+  .settings(
+    name        := "jdbc-connector",
+    description := "JDBC API wrapped project with Effect System."
+  )
+  .defaultSettings
+  .settings(libraryDependencies += catsEffect)
+  .dependsOn(sql)
 
 lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
@@ -144,6 +154,25 @@ lazy val plugin = LepusSbtPluginProject("ldbc-plugin", "plugin")
     )
   }.taskValue)
 
+lazy val tests = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .in(file("tests"))
+  .settings(
+    name        := "tests",
+    description := "Projects for testing",
+    Test / fork := true
+  )
+  .defaultSettings
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test,
+      mysql            % Test
+    )
+  )
+  .dependsOn(jdbcConnector, connector, dsl)
+  .enablePlugins(NoPublishPlugin)
+
 lazy val benchmark = (project in file("benchmark"))
   .settings(description := "Projects for Benchmark Measurement")
   .settings(scalacOptions --= removeSettings)
@@ -156,7 +185,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(dsl.jvm)
+  .dependsOn(jdbcConnector.jvm, dsl.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
@@ -198,8 +227,10 @@ lazy val ldbc = tlCrossRootProject
     queryBuilder,
     dsl,
     codegen,
+    jdbcConnector,
     connector,
     plugin,
+    tests,
     docs,
     benchmark,
     schemaSpy,
