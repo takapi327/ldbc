@@ -1,12 +1,12 @@
-# LDBC
+# ldbc (Lepus Database Connectivity)
 
 <div align="center">
   <img alt="LDBC" src="./img/lepus_logo.png">
 </div>
 
 <div align="center">
-  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.3.0-beta2/jar">
-    <img alt="Maven Central Version" src="https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue">
+  <a href="https://github.com/takapi327/ldbc/actions/workflows/ci.yml">
+    <img alt="Continuous Integration" src="https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master">
   </a>
   <a href="https://en.wikipedia.org/wiki/MIT_License">
     <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green">
@@ -16,6 +16,24 @@
   </a>
   <a href="https://typelevel.org/projects/affiliate/">
     <img alt="Typelevel Affiliate Project" src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg">
+  </a>
+  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.3.0-beta2/jar">
+    <img alt="Maven Central Version" src="https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue">
+  </a>
+  <a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3">
+    <img alt="javadoc" src="https://javadoc.io/badge2/io.github.takapi327/ldbc-core_3/javadoc.svg">
+  </a>
+</div>
+
+<div align="center">
+  <a href="https://index.scala-lang.org/takapi327/ldbc">
+    <img alt="scaladex" src="https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue">
+  </a>
+  <a href="https://index.scala-lang.org/takapi327/ldbc">
+    <img alt="scaladex" src="https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue&targetType=js">
+  </a>
+  <a href="https://index.scala-lang.org/takapi327/ldbc">
+    <img alt="scaladex" src="https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue&targetType=native">
   </a>
 </div>
 
