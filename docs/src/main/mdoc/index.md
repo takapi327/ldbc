@@ -24,6 +24,8 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 ## Modules availability
 
+ldbc is available on the JVM, Scala.js, and ScalaNative
+
 |  Module / Platform   | JVM | Scala Native | Scala.js |  
 |:--------------------:|:---:|:------------:|:--------:|
 |     `ldbc-core`      |  ✅  |      ✅       |    ✅     |

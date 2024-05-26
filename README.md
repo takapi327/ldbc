@@ -27,6 +27,8 @@ Please drop a :star: if this project interests you. I need encouragement.
 
 ## Modules availability
 
+ldbc is available on the JVM, Scala.js, and ScalaNative
+
 |  Module / Platform   | JVM | Scala Native | Scala.js |  
 |:--------------------:|:---:|:------------:|:--------:|
 |     `ldbc-core`      |  ✅  |      ✅       |    ✅     |
