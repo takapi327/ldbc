@@ -34,6 +34,11 @@ trait PreparedStatement[F[_]] extends Statement[F]:
   )
 
   @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
+  override def executeLargeUpdate(sql: String): F[Long] = throw new UnsupportedOperationException(
+    "This method cannot be called on a PreparedStatement."
+  )
+
+  @deprecated("This method cannot be called on a PreparedStatement.", "0.3.0")
   override def execute(sql: String): F[Boolean] = throw new UnsupportedOperationException(
     "This method cannot be called on a PreparedStatement."
   )
@@ -258,3 +263,20 @@ trait PreparedStatement[F[_]] extends Statement[F]:
    * Adds a set of parameters to this PreparedStatement object's batch of commands.
    */
   def addBatch(): F[Unit]
+
+  /**
+   * Executes the SQL statement in this <code>PreparedStatement</code> object,
+   * which must be an SQL Data Manipulation Language (DML) statement,
+   * such as <code>INSERT</code>, <code>UPDATE</code> or
+   * <code>DELETE</code>; or an SQL statement that returns nothing,
+   * such as a DDL statement.
+   * <p>
+   * This method should be used when the returned row count may exceed
+   * {@link Integer#MAX_VALUE}.
+   * <p>
+   * The default implementation will throw {@code UnsupportedOperationException}
+   *
+   * @return either (1) the row count for SQL Data Manipulation Language
+   * (DML) statements or (2) 0 for SQL statements that return nothing
+   */
+  def executeLargeUpdate(): F[Long]
