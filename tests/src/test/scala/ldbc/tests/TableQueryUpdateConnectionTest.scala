@@ -237,7 +237,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
           .insertInto(v => (v.name, v.countryCode, v.district, v.population))
           .values(("Test", code(1), "T", 1))
           .update
-          .rollback(conn)
+          .autoCommit(conn)
       },
       1
     )
@@ -252,7 +252,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
           .insertInto(v => (v.name, v.countryCode, v.district, v.population))
           .values(List(("Test2", code(2), "T", 1), ("Test3", code(3), "T3", 2)))
           .update
-          .rollback(conn)
+          .autoCommit(conn)
       },
       2
     )
@@ -385,18 +385,18 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIOBoolean(
       IO.sleep(5.seconds) >> connection.use { conn =>
         (for
+          length <- city.select(_.id.count).unsafe.map(_._1 + 1)
           result <- city
                       .insertInto(v => (v.name, v.countryCode, v.district, v.population))
                       .values(("Test4", code(4), "T", 1))
                       .returning("id")
-          length <- city.select(_.id.count).unsafe.map(_._1)
         yield
           println("===================")
           println(s"result: $result, length: $length")
           println("===================")
           result === length
         )
-          .rollback(conn)
+          .autoCommit(conn)
       }
     )
   }
