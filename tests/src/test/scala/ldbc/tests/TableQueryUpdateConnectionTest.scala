@@ -419,8 +419,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
                           .update("name", "update New York")
                           .set("district", "TT")
                           .set("population", 2)
-                          .where(_.name _equals "New York")
-                          .and(_.countryCode _equals code)
+                          .where(v => v.name _equals "New York" and (v.countryCode _equals code))
                           .update
         yield result)
           .rollback(conn)
