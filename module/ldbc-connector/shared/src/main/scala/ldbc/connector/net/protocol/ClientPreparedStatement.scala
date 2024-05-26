@@ -125,8 +125,8 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
       } <* params.set(ListMap.empty)
     }
 
-  override def executeUpdate(): F[Int] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Int]("statement") { (span: Span[F]) =>
+  override def executeLargeUpdate(): F[Long] =
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long]("statement") { (span: Span[F]) =>
       params.get.flatMap { params =>
         span.addAttributes(
           (attributes ++ List(
@@ -139,7 +139,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
           ) *>
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows.toInt)
+            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
             case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
           }
@@ -161,11 +161,11 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
 
   override def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)
 
-  override def executeBatch(): F[Array[Int]] =
+  override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> (
       sql.trim.toLowerCase match
         case q if q.startsWith("insert") =>
-          exchange[F, Array[Int]]("statement") { (span: Span[F]) =>
+          exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
             protocol.resetSequenceId *>
               batchedArgs.get.flatMap { args =>
                 span.addAttributes(
@@ -188,7 +188,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                       protocol
                         .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                         .flatMap {
-                          case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO))
+                          case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
                           case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
                           case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                         }
@@ -198,7 +198,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
         case q if q.startsWith("update") || q.startsWith("delete") =>
           protocol.resetSequenceId *>
             protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
-            exchange[F, Array[Int]]("statement") { (span: Span[F]) =>
+            exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
               protocol.resetSequenceId *>
                 batchedArgs.get.flatMap { args =>
                   span.addAttributes(
@@ -219,7 +219,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                           )
                         ) *>
                         args
-                          .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
+                          .foldLeft(ev.pure(Vector.empty[Long])) { ($acc, _) =>
                             for
                               acc <- $acc
                               result <-
@@ -227,7 +227,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                                   .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                                   .flatMap {
                                     case result: OKPacket =>
-                                      lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows.toInt)
+                                      lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
                                     case error: ERRPacket =>
                                       ev.raiseError(error.toException("Failed to execute batch", acc))
                                     case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
