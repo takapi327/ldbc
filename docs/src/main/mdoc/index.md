@@ -69,6 +69,12 @@ libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "${version}"
 libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "${version}"
 ```
 
+For Cross-Platform projects (JVM, JS, and/or Native)
+
+```scala
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "${version}"
+```
+
 ### Usage
 
 The difference in usage is that there are differences in the way connections are built between jdbc and ldbc.

@@ -70,6 +70,8 @@ libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "${version}"
 
 ```scala
 libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "${version}"
+// or For Cross-Platform projects (JVM, JS, and/or Native)
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "${version}"
 ```
 
 ### Usage
