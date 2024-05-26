@@ -193,10 +193,10 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
 
   override def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)
 
-  override def executeBatch(): F[Array[Int]] =
+  override def executeLargeBatch(): F[Array[Long]] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, Array[Int]]("statement") { (span: Span[F]) =>
+      exchange[F, Array[Long]]("statement") { (span: Span[F]) =>
         batchedArgs.get.flatMap { args =>
           span.addAttributes(
             (attributes ++ List(
@@ -211,9 +211,9 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                 case q if q.startsWith("INSERT") =>
                   sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
                     .flatMap {
-                      case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO))
+                      case _: OKPacket => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
                       case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                      case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                      case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
                     }
                 case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
                   protocol.resetSequenceId *>
@@ -227,7 +227,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                       )
                     ) *>
                     args
-                      .foldLeft(ev.pure(Vector.empty[Int])) { ($acc, _) =>
+                      .foldLeft(ev.pure(Vector.empty[Long])) { ($acc, _) =>
                         for
                           acc <- $acc
                           result <-
@@ -235,7 +235,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                               .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                               .flatMap {
                                 case result: OKPacket =>
-                                  lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows.toInt)
+                                  lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
                                 case error: ERRPacket =>
                                   ev.raiseError(error.toException("Failed to execute batch", acc))
                                 case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
@@ -249,7 +249,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                   ev.raiseError(
                     new SQLException("The batch query must be an INSERT, UPDATE, or DELETE, CALL statement.")
                   )
-          )
+            )
         }
       } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
 

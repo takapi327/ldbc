@@ -20,7 +20,7 @@ import org.typelevel.otel4s.Attribute
  */
 class BatchUpdateException(
   message:          String,
-  updateCounts:     List[Int],
+  updateCounts:     List[Long],
   sqlState:         Option[String] = None,
   vendorCode:       Option[Int]    = None,
   sql:              Option[String] = None,

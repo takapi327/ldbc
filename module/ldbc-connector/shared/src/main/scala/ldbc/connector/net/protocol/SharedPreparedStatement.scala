@@ -88,6 +88,9 @@ private[ldbc] trait SharedPreparedStatement[F[_]: Temporal]
 
   override def executeUpdate(): F[Int] = executeLargeUpdate().map(_.toInt)
 
+  override def executeBatch(): F[Array[Int]] =
+    executeLargeBatch().map(_.map(_.toInt))
+
   protected def buildQuery(original: String, params: ListMap[Int, Parameter]): String =
     val query = original.toCharArray
     params
