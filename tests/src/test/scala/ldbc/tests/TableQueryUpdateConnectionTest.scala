@@ -94,7 +94,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
               "Test",
               None,
               None,
-              s"${ prefix }_T1"
+              code(1)
             )
           )
           .update
@@ -126,7 +126,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
               "Test",
               None,
               None,
-              s"${ prefix }_T2"
+              code(2)
             ),
             (
               s"${ prefix }_T3",
@@ -143,7 +143,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
               "Test",
               None,
               None,
-              s"${ prefix }_T3"
+              code(3)
             )
           )
           .update
@@ -171,7 +171,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       "Test",
       None,
       None,
-      s"${ prefix }_T4"
+      code(4)
     )
     assertIO(
       connection.use { conn =>
@@ -200,7 +200,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       "Test",
       None,
       None,
-      s"${ prefix }_T5"
+      code(5)
     )
     val newCountry2 = Country(
       code(6),
@@ -217,7 +217,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       "Test",
       None,
       None,
-      s"${ prefix }_T6"
+      code(6)
     )
     assertIO(
       connection.use { conn =>
