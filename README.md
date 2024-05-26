@@ -107,6 +107,16 @@ val connection: Resource[IO, Connection[IO]] =
 
 The connection process to the database can be carried out using the connections established by each of these methods.
 
+```scala
+val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
+  (for
+    result1 <- sql"SELECT 1".toList[Int]
+    result2 <- sql"SELECT 2".headOption[Int]
+    result3 <- sql"SELECT 3".unsafe[Int]
+  yield (result1, result2, result3)).run(conn)
+}
+```
+
 ## Documentation
 
 Full documentation can be found at Currently available in English and Japanese.
