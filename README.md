@@ -82,6 +82,9 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "${version}"
 
 The difference in usage is that there are differences in the way connections are built between jdbc and ldbc.
 
+> [!CAUTION]
+> **ldbc** is currently under active development. Please note that current functionality may therefore be deprecated or changed in the future.
+
 **jdbc connector**
 
 ```scala
