@@ -41,7 +41,75 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 |    `ldbc-plugin`     |  ✅  |      ❌       |    ❌     | 
 |   `ldbc-connector`   |  ✅  |      ✅       |    ✅     | 
 
+## Quick Start
+
+For people that want to skip the explanations and see it action, this is the place to start!
+
+### Dependency Configuration
+
+```scala
+libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "${version}"
+```
+
+For Cross-Platform projects (JVM, JS, and/or Native):
+
+```scala
+libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "${version}"
+```
+
+The dependency package used depends on whether the database connection is made via a connector using the Java API or a connector provided by ldbc.
+
+**Use jdbc connector**
+
+```scala
+libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "${version}"
+```
+
+**Use ldbc connector**
+
+```scala
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "${version}"
+```
+
+### Usage
+
+The difference in usage is that there are differences in the way connections are built between jdbc and ldbc.
+
+**jdbc connector**
+
+```scala
+val ds = new com.mysql.cj.jdbc.MysqlDataSource()
+ds.setServerName("127.0.0.1")
+ds.setPortNumber(13306)
+ds.setDatabaseName("world")
+ds.setUser("ldbc")
+ds.setPassword("password")
+
+val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+
+val connection: Resource[IO, Connection[IO]] =
+  Resource.make(datasource.getConnection)(_.close())
+```
+
+**ldbc connector**
+
+```scala
+val connection: Resource[IO, Connection[IO]] =
+  ldbc.connector.Connection[IO](
+    host     = "127.0.0.1",
+    port     = 3306,
+    user     = "ldbc",
+    password = Some("password"),
+    database = Some("ldbc"),
+    ssl      = SSL.Trusted
+  )
+```
+
+The connection process to the database can be carried out using the connections established by each of these methods.
+
 ## Documentation
+
+Full documentation can be found at Currently available in English and Japanese.
 
 - [English](https://takapi327.github.io/ldbc/en/index.html)
 - [Japanese](https://takapi327.github.io/ldbc/ja/index.html)
