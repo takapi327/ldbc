@@ -125,8 +125,8 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
       } <* params.set(ListMap.empty)
     }
 
-  override def executeUpdate(): F[Int] =
-    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Int]("statement") { (span: Span[F]) =>
+  override def executeLargeUpdate(): F[Long] =
+    checkClosed() *> checkNullOrEmptyQuery(sql) *> exchange[F, Long]("statement") { (span: Span[F]) =>
       params.get.flatMap { params =>
         span.addAttributes(
           (attributes ++ List(
@@ -139,9 +139,9 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
           ) *>
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows.toInt)
+            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-            case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+            case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
           }
       } <* params.set(ListMap.empty)
     }

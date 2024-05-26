@@ -86,6 +86,8 @@ private[ldbc] trait SharedPreparedStatement[F[_]: Temporal]
         setTimestamp(parameterIndex, value.asInstanceOf[LocalDateTime])
       case unknown => throw new SQLException(s"Unsupported object type ${ unknown.getClass.getName } for setObject")
 
+  override def executeUpdate(): F[Int] = executeLargeUpdate().map(_.toInt)
+
   protected def buildQuery(original: String, params: ListMap[Int, Parameter]): String =
     val query = original.toCharArray
     params
