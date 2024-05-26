@@ -141,7 +141,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-            case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+            case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
           }
       } <* params.set(ListMap.empty)
     }

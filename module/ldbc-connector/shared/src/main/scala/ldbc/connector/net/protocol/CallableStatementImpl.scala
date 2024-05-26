@@ -108,15 +108,15 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                 for
                   lastColumnReadNullable <- Ref[F].of(true)
                   resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow <- Ref[F].of[Option[ResultSetRowPacket]](None)
+                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
                   resultSet = ResultSetImpl.empty(
-                    serverVariables,
-                    protocol.initialPacket.serverVersion,
-                    resultSetClosed,
-                    lastColumnReadNullable,
-                    resultSetCurrentCursor,
-                    resultSetCurrentRow
-                  )
+                                serverVariables,
+                                protocol.initialPacket.serverVersion,
+                                resultSetClosed,
+                                lastColumnReadNullable,
+                                resultSetCurrentCursor,
+                                resultSetCurrentRow
+                              )
                   _ <- currentResultSet.set(Some(resultSet))
                 yield resultSet
               case Some(resultSet) =>
@@ -133,7 +133,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               sendQuery(buildQuery(sql, params)).flatMap {
                 case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
                 case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
-                case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
               }
           }
       }
