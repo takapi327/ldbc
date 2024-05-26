@@ -390,8 +390,13 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
                       .values(("Test4", code(4), "T", 1))
                       .returning("id")
           length <- city.select(_.id.count).unsafe.map(_._1)
-        yield result === length)
-          .transaction(conn)
+        yield
+          println("===================")
+          println(s"result: $result, length: $length")
+          println("===================")
+          result === length
+        )
+          .rollback(conn)
       }
     )
   }
@@ -415,7 +420,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
                           .set("countryCode", code)
                           .set("district", "TT")
                           .set("population", 2)
-                          .where(_.name _equals "Test2")
+                          .where(_.name _equals s"${ prefix }_Test2")
                           .update
         yield result)
           .rollback(conn)
