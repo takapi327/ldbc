@@ -409,18 +409,18 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         (for
           codeOpt <- country
                        .select(_.code)
-                       .where(_.name _equals s"${ prefix }_Test1")
-                       .and(_.continent _equals Country.Continent.Asia)
+                       .where(_.name _equals "United States")
+                       .and(_.continent _equals Country.Continent.North_America)
                        .headOption
           result <- codeOpt match
                       case None => Kleisli.pure[IO, Connection[IO], Int](0)
                       case Some(code *: EmptyTuple) =>
                         city
-                          .update("name", "Test1")
-                          .set("countryCode", code)
+                          .update("name", "update New York")
                           .set("district", "TT")
                           .set("population", 2)
-                          .where(_.name _equals s"${ prefix }_Test2")
+                          .where(_.name _equals "New York")
+                          .and(_.countryCode _equals code)
                           .update
         yield result)
           .rollback(conn)
