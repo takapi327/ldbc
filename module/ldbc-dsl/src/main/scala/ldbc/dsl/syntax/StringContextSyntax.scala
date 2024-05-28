@@ -20,7 +20,7 @@ import ldbc.dsl.Mysql
 trait StringContextSyntax[F[_]: Temporal]:
 
   extension (sc: StringContext)
-    inline def sql(inline args: ParameterBinder[F]*): SQL[F] =
+    def sql(args: ParameterBinder[F]*): SQL[F] =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
       Mysql(strings.mkString("?"), expressions.toList)
