@@ -32,3 +32,8 @@ trait StringContextSyntax[F[_]: Temporal]:
         case (acc, (str, expr)) => acc + str + expr
       }
       Mysql(query, List.empty)
+
+    def p(args: ParameterBinder[F]*): SQL[F] =
+      val strings     = sc.parts.iterator
+      val expressions = args.iterator
+      Mysql(strings.mkString("?"), expressions.toList)
