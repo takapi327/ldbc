@@ -28,7 +28,7 @@ trait StringContextSyntax[F[_]: Temporal]:
     def q(args: String*): SQL[F] =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
-      val query      = strings.zipAll(expressions, "", "").foldLeft("") {
+      val query = strings.zipAll(expressions, "", "").foldLeft("") {
         case (acc, (str, expr)) => acc + str + expr
       }
       Mysql(query, List.empty)

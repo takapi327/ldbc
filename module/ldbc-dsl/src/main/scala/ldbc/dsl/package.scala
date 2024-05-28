@@ -6,7 +6,7 @@
 
 package ldbc
 
-import cats.{Foldable, Functor, Reducible}
+import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 
@@ -28,7 +28,7 @@ package object dsl:
       q"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(sql"$v")))
 
     /** Returns `VALUES (sql0, sql1, ...)`. */
-    def values[M[_] : Reducible](vs: M[SQL[F]]): SQL[F] =
+    def values[M[_]: Reducible](vs: M[SQL[F]]): SQL[F] =
       q"VALUES" ++ parentheses(comma(vs.toNonEmptyList))
 
     /** Returns `(sql IN (sql0, sql1, ...))`. */
@@ -74,7 +74,10 @@ package object dsl:
       q"WHERE " ++ NonEmptyList(s1, s2 :: ss.toList).nonEmptyIntercalate(q" $bind ")
 
     def where(bind: "AND" | "OR", s1: SQL[F], s2: Option[SQL[F]], ss: Option[SQL[F]]*): SQL[F] =
-      q"WHERE " ++ NonEmptyList.fromFoldable((Some(s1) :: s2 :: ss.toList).flatten).map(_.nonEmptyIntercalate(q" $bind ")).getOrElse(q"TRUE")
+      q"WHERE " ++ NonEmptyList
+        .fromFoldable((Some(s1) :: s2 :: ss.toList).flatten)
+        .map(_.nonEmptyIntercalate(q" $bind "))
+        .getOrElse(q"TRUE")
 
     /** Returns `SET sql1, sql2, ... sql*`. */
     def set(s1: SQL[F], ss: SQL[F]*): SQL[F] =
@@ -93,7 +96,7 @@ package object dsl:
       comma(NonEmptyList(s1, s2 :: ss.toList))
 
     /** Returns `sql1, sql2, ... sql*`. */
-    def comma[M[_]:  Reducible](ss: M[SQL[F]]): SQL[F] =
+    def comma[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
       ss.nonEmptyIntercalate(q",")
 
   /**
