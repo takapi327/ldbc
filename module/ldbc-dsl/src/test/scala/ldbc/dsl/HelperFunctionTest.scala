@@ -25,7 +25,7 @@ class HelperFunctionTest extends munit.CatsEffectSuite:
     case class Value(c1: Int, c2: String)
     val vs: NonEmptyList[Value] = NonEmptyList.of(Value(1, "value1"), Value(2, "value2"))
     val sql =
-      q"INSERT INTO `table` (`column1`, `column2`) VALUES" ++ comma(vs.map(v => parentheses(p"${v.c1},${v.c2}")))
+      q"INSERT INTO `table` (`column1`, `column2`) VALUES" ++ comma(vs.map(v => parentheses(p"${ v.c1 },${ v.c2 }")))
     assertEquals(sql.statement, "INSERT INTO `table` (`column1`, `column2`) VALUES(?,?),(?,?)")
   }
 

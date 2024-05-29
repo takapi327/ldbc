@@ -50,14 +50,14 @@ package object dsl:
       notIn(s, NonEmptyList(v0, v1 :: vs.toList))
 
     /** Returns `(sql NOT IN (v0, v1, ...))`, or `true` for empty `fs`. */
-    def notIn[M[_] : Reducible : Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
+    def notIn[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
       parentheses(s ++ q" NOT IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
     def notInOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): Option[SQL[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => notIn(s, nel))
 
     /** Returns `(s1 AND s2 AND ... sn)` for a non-empty collection. */
-    def and[M[_] : Reducible](ss: M[SQL[F]], grouping: Boolean = true): SQL[F] =
+    def and[M[_]: Reducible](ss: M[SQL[F]], grouping: Boolean = true): SQL[F] =
       val expr = ss.reduceLeftTo(s => parentheses(s))((s1, s2) => s1 ++ q" AND " ++ parentheses(s2))
       if grouping then parentheses(expr) else expr
 
@@ -103,7 +103,7 @@ package object dsl:
       whereAnd(NonEmptyList(s1, ss.toList))
 
     /** Returns `WHERE s1 AND s2 AND ... sn` or the empty sql if `ss` is empty. */
-    def whereAnd[M[_] : Reducible](ss: M[SQL[F]]): SQL[F] =
+    def whereAnd[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
       q"WHERE " ++ and(ss, grouping = false)
 
     /** Returns `WHERE s1 AND s2 AND ... sn` for defined `s`, if any, otherwise the empty sql. */
@@ -114,14 +114,14 @@ package object dsl:
     def whereAndOpt[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
       NonEmptyList.fromFoldable(ss) match
         case Some(nel) => whereAnd(nel)
-        case None => q""
+        case None      => q""
 
     /** Returns `WHERE s1 OR s2 OR ... sn`. */
     def whereOr(s1: SQL[F], ss: SQL[F]*): SQL[F] =
       whereOr(NonEmptyList(s1, ss.toList))
 
     /** Returns `WHERE s1 OR s2 OR ... sn` or the empty sql if `ss` is empty. */
-    def whereOr[M[_] : Reducible](ss: M[SQL[F]]): SQL[F] =
+    def whereOr[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
       q"WHERE " ++ or(ss, grouping = false)
 
     /** Returns `WHERE s1 OR s2 OR ... sn` for defined `s`, if any, otherwise the empty sql. */
@@ -129,10 +129,10 @@ package object dsl:
       whereOrOpt((s1 :: s2 :: ss.toList).flatten)
 
     /** Returns `WHERE s1 OR s2 OR ... sn` if collection is not empty. If collection is empty returns an empty sql. */
-    def whereOrOpt[M[_] : Foldable](ss: M[SQL[F]]): SQL[F] =
+    def whereOrOpt[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
       NonEmptyList.fromFoldable(ss) match
         case Some(nel) => whereOr(nel)
-        case None => q""
+        case None      => q""
 
     /** Returns `SET s1, s2, ... sn`. */
     def set(s1: SQL[F], ss: SQL[F]*): SQL[F] =
@@ -165,7 +165,7 @@ package object dsl:
     def orderByOpt[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
       NonEmptyList.fromFoldable(ss) match
         case Some(nel) => orderBy(nel)
-        case None => q""
+        case None      => q""
 
     /** Returns `ORDER BY s1, s2, ... sn` for defined `s`, if any, otherwise the empty sql. */
     def orderByOpt(s1: Option[SQL[F]], s2: Option[SQL[F]], ss: Option[SQL[F]]*): SQL[F] =
