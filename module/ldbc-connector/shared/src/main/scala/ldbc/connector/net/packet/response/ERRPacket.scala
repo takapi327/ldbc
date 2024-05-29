@@ -131,7 +131,7 @@ case class ERRPacket(
 
   def toException(message: String, sql: String): SQLException = toException(message, Some(sql))
 
-  def toException(message: String, updateCounts: Vector[Int]): SQLException = BatchUpdateException(
+  def toException(message: String, updateCounts: Vector[Long]): SQLException = BatchUpdateException(
     message      = message,
     updateCounts = updateCounts.toList,
     sqlState     = sqlState,
