@@ -40,7 +40,7 @@ package object dsl:
 
     /** Returns `(sql IN (s0, s1, ...))`. */
     def in[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
-      parentheses(s ++ q" IN" ++ parentheses(comma(vs.map(v => p"$v"))))
+      parentheses(s ++ q" IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
     def inOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): Option[SQL[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => in(s, nel))
@@ -51,7 +51,7 @@ package object dsl:
 
     /** Returns `(sql NOT IN (v0, v1, ...))`, or `true` for empty `fs`. */
     def notIn[M[_] : Reducible : Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
-      parentheses(s ++ q" NOT IN" ++ parentheses(comma(vs.map(v => p"$v"))))
+      parentheses(s ++ q" NOT IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
     def notInOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): Option[SQL[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => notIn(s, nel))
@@ -78,8 +78,8 @@ package object dsl:
       andOpt(ss).getOrElse(q"TRUE")
 
     /** Returns `(s1 OR s2 OR ... sn)` for a non-empty collection. */
-    def or[M[_]: Reducible](vs: M[SQL[F]], grouping: Boolean = true): SQL[F] =
-      val expr = vs.nonEmptyIntercalate(q" OR")
+    def or[M[_]: Reducible](ss: M[SQL[F]], grouping: Boolean = true): SQL[F] =
+      val expr = ss.reduceLeftTo(s => parentheses(s))((s1, s2) => s1 ++ q" OR " ++ parentheses(s2))
       if grouping then parentheses(expr) else expr
 
     /** Returns `(s1 OR s2 OR ... sn)`. */
@@ -104,7 +104,7 @@ package object dsl:
 
     /** Returns `WHERE s1 AND s2 AND ... sn` or the empty sql if `ss` is empty. */
     def whereAnd[M[_] : Reducible](ss: M[SQL[F]]): SQL[F] =
-      q"WHERE" ++ and(ss, grouping = false)
+      q"WHERE " ++ and(ss, grouping = false)
 
     /** Returns `WHERE s1 AND s2 AND ... sn` for defined `s`, if any, otherwise the empty sql. */
     def whereAndOpt(s1: Option[SQL[F]], s2: Option[SQL[F]], ss: Option[SQL[F]]*): SQL[F] =
@@ -122,7 +122,7 @@ package object dsl:
 
     /** Returns `WHERE s1 OR s2 OR ... sn` or the empty sql if `ss` is empty. */
     def whereOr[M[_] : Reducible](ss: M[SQL[F]]): SQL[F] =
-      q"WHERE" ++ or(ss, grouping = false)
+      q"WHERE " ++ or(ss, grouping = false)
 
     /** Returns `WHERE s1 OR s2 OR ... sn` for defined `s`, if any, otherwise the empty sql. */
     def whereOrOpt(s1: Option[SQL[F]], s2: Option[SQL[F]], ss: Option[SQL[F]]*): SQL[F] =
@@ -140,7 +140,7 @@ package object dsl:
 
     /** Returns `SET s1, s2, ... sn`. */
     def set[M[_]: Reducible](fs: M[SQL[F]]): SQL[F] =
-      q"SET" ++ comma(fs)
+      q"SET " ++ comma(fs)
 
     /** Returns `(sql)`. */
     def parentheses(s: SQL[F]): SQL[F] =
@@ -159,7 +159,7 @@ package object dsl:
       orderBy(NonEmptyList(s1, ss.toList))
 
     def orderBy[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
-      q"ORDER BY" ++ comma(ss)
+      q"ORDER BY " ++ comma(ss)
 
     /** Returns `ORDER BY s1, s2, ... sn` or the empty sql if `ss` is empty. */
     def orderByOpt[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
