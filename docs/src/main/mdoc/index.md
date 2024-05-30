@@ -124,12 +124,110 @@ val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
 }
 ```
 
+#### Using the query builder
+
+ldbc provides not only plain queries but also type-safe database connections using the query builder.
+
+The first step is to create a schema for use by the query builder.
+
+ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+
+```scala
+case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val table = Table[User]("user")(                     // CREATE TABLE `user` (
+  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
+  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
+)              
+```
+
+The next step is to build a TableQuery using the schema you have created.
+
+```scala
+import ldbc.query.builder.TableQuery
+
+val userQuery = TableQuery[IO, User](table)
+```
+
+Finally, you can use the query builder to create a query.
+
+```scala
+val result: IO[List[User]] = connection.use { conn =>
+  userQuery.selectAll.toList[User].readOnly(conn)
+  // "SELECT `id`, `name`, `age` FROM user"
+}
+```
+
 ## Documentation
 
 Full documentation can be found at Currently available in English and Japanese.
 
 - [English](/ldbc/en/index.html)
 - [Japanese](/ldbc/ja/index.html)
+
+## Features/Roadmap
+
+Creating a MySQL connector project written in pure Scala3.
+
+JVM, JS and Native platforms are all supported.
+
+> [!IMPORTANT]
+> **ldbc** is currently focused on developing connectors written in pure Scala3 to work with JVM, JS and Native.
+> In the future, we also plan to rewrite existing functions based on a pure Scala3 connector.
+
+### Enhanced functionality and improved stability of the MySQL connector written in pure Scala3
+
+Most of the jdbc functionality used in other packages of ldbc at the moment could be implemented.
+
+However, not all jdbc APIs could be supported. Nor can we guarantee that it is proven and stable enough to operate in a production environment.
+
+We will continue to develop features and improve the stability of the ldbc connector to achieve the same level of stability and reliability as the jdbc connector.
+
+#### Connection pooling implementation
+
+- [ ] Failover Countermeasures
+
+#### Performance Verification
+
+- [ ] Comparison with JDBC
+- [ ] Comparison with other MySQL Scala libraries
+- [ ] Verification of operation in AWS and other infrastructure environments
+
+#### Other
+
+- [ ] Additional streaming implementation
+- [ ] Integration with java.sql API
+- [ ] etc...
+
+### Plain query enhancements
+
+Even though we are not currently running a query, we have had to use the Effect System at the point of building the query. This makes it difficult to compose the query itself, for example.
+Future enhancements will therefore be made to simplify the construction of queries without the need for the Effect System, so that it is required when the query is executed.
+
+This will allow for easy integration with the query builder and will aim for a more flexible query building system combining query builder and plain queries.
+
+### Redesign of query builders and schema definitions
+
+Initially, ldbc was inspired by tapir to create a development system that could centralise Scala models, sql schemas and documentation by managing a single resource at the database level.
+
+In addition, database connection, query construction and document generation were to be used in combination with retrofitted packages, as the aim was to be able to integrate with other database systems.
+
+As a result, we feel that it has become difficult for users to use because of the various configurations required to build it.
+
+What users originally wanted from a database connectivity library was something simpler, easier and more intuitive to use.
+
+Initially, ldbc aimed to create documentation from the schema, so building the schema and query builder was not as simple as it could have been, as it required a complete description of the database data types and so on.
+
+It was therefore decided to redesign it to make it simpler and easier to use.
+
+### Discontinuation of the SchemaSPY project
+
+A project was provided that could generate SchemaSPY documentation using schemas created in ldbc, but as there is currently almost no benefit to using ldbc schema-based documentation generation rather than pure SchemaSPY, it was decided to remove it once and for all following a redesign of schema management.
 
 ## Contributing
 
