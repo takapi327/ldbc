@@ -19,7 +19,7 @@ import munit.CatsEffectSuite
 import ldbc.sql.Connection
 import ldbc.sql.logging.LogHandler
 import ldbc.connector.SSL
-import ldbc.dsl.io.{*,given}
+import ldbc.dsl.io.{ *, given }
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"

@@ -50,7 +50,7 @@ object Executor:
   def pure[F[_]: Monad, T](value: T): Executor[F, T] =
     new Executor[F, T]:
       override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def readOnly(connection: Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def commit(connection: Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def rollback(connection: Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def transaction(connection: Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
+      override def readOnly(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
+      override def commit(connection:                Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
+      override def rollback(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
+      override def transaction(connection:           Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)

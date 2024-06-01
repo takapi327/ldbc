@@ -37,11 +37,11 @@ package object dsl:
             val release = (connection: Connection[F], exitCase: ExitCase) =>
               exitCase match
                 case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
-                case _ => connection.commit()
+                case _                                       => connection.commit()
 
             Resource
               .makeCase(acquire)(release)
-            .use(execute)
+              .use(execute)
 
       override def tailRecM[A, B](a: A)(f: A => Executor[F, Either[A, B]]): Executor[F, B] = ???
 
