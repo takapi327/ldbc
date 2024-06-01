@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql
+package ldbc.dsl
 
 import scala.deriving.Mirror
 import scala.annotation.targetName
@@ -13,6 +13,8 @@ import cats.Monad
 import cats.data.Kleisli
 import cats.kernel.Semigroup
 import cats.syntax.all.*
+
+import ldbc.sql.ResultSet
 
 /**
  * A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,
@@ -31,7 +33,7 @@ trait SQL[F[_]: Monad]:
   /**
    * statement has '?' that the statement has.
    */
-  def params: Seq[ParameterBinder[F]]
+  def params: List[ParameterBinder[F]]
 
   @targetName("combine")
   def ++(sql: SQL[F]): SQL[F]

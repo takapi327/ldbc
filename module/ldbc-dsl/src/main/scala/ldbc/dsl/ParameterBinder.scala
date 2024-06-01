@@ -4,7 +4,9 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql
+package ldbc.dsl
+
+import ldbc.sql.PreparedStatement
 
 /**
  * Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.

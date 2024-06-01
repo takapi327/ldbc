@@ -13,7 +13,7 @@ import cats.syntax.all.*
 
 import cats.effect.Temporal
 
-import ldbc.sql.*
+import ldbc.sql.{Statement, ResultSet}
 
 /**
  * A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,
@@ -33,7 +33,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder
     Mysql[F](statement ++ sql.statement, params ++ sql.params)
 
   override def to[T](using consumer: ResultSetConsumer[F, T]): Executor[F, T] =
-    ExecutorImpl[F, T](
+    Executor.Impl[F, T](
       statement,
       params,
       connection =>
@@ -47,7 +47,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder
     )
 
   override def update: Executor[F, Int] =
-    ExecutorImpl[F, Int](
+    Executor.Impl[F, Int](
       statement,
       params,
       connection =>
@@ -62,7 +62,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder
   override def returning[T <: String | Int | Long](using reader: ResultSetReader[F, T]): Executor[F, T] =
     given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
 
-    ExecutorImpl[F, T](
+    Executor.Impl[F, T](
       statement,
       params,
       connection =>

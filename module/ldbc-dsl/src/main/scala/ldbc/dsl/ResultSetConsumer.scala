@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql
+package ldbc.dsl
 
 import scala.collection.mutable
 
@@ -12,6 +12,7 @@ import cats.{ Monad, MonadError, Traverse, Alternative }
 import cats.data.Kleisli
 import cats.implicits.*
 
+import ldbc.sql.ResultSet
 import ldbc.sql.util.FactoryCompat
 
 /**

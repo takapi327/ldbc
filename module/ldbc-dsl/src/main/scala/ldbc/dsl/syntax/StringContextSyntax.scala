@@ -8,8 +8,7 @@ package ldbc.dsl.syntax
 
 import cats.effect.Temporal
 
-import ldbc.sql.*
-import ldbc.dsl.Mysql
+import ldbc.dsl.*
 
 /**
  * Trait for generating SQL models from string completion knowledge.

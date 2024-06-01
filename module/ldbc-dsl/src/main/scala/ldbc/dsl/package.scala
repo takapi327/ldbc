@@ -6,15 +6,12 @@
 
 package ldbc
 
-import cats.{ Monad, Foldable, Functor, Reducible }
+import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 
 import cats.effect.*
-import cats.effect.kernel.Resource.ExitCase
 
-import ldbc.sql.*
-import ldbc.sql.logging.*
 import ldbc.dsl.syntax.*
 
 package object dsl:
@@ -24,26 +21,6 @@ package object dsl:
             ConnectionSyntax[F],
             QuerySyntax[F],
             CommandSyntax[F]:
-
-    given Monad[[T] =>> Executor[F, T]] with
-      override def pure[A](x: A): Executor[F, A] = Executor.pure(x)
-      override def flatMap[A, B](fa: Executor[F, A])(f: A => Executor[F, B]): Executor[F, B] =
-        new Executor[F, B]:
-          override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[B] =
-            fa.execute(connection).flatMap(a => f(a).execute(connection))
-          override def transaction(connection: Connection[F])(using LogHandler[F]): F[B] =
-            val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Monad[F].pure(connection)
-
-            val release = (connection: Connection[F], exitCase: ExitCase) =>
-              exitCase match
-                case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
-                case _                                       => connection.commit()
-
-            Resource
-              .makeCase(acquire)(release)
-              .use(execute)
-
-      override def tailRecM[A, B](a: A)(f: A => Executor[F, Either[A, B]]): Executor[F, B] = ???
 
     // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
