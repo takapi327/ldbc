@@ -8,6 +8,8 @@ package ldbc.dsl.syntax
 
 import cats.effect.Temporal
 
+import ldbc.sql.ParameterBinder
+
 import ldbc.dsl.*
 
 /**

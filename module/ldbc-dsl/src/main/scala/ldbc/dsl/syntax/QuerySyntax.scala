@@ -13,10 +13,10 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
-import ldbc.sql.logging.LogHandler
 
-import ldbc.dsl.ConnectionProvider
+import ldbc.dsl.*
 import ldbc.dsl.util.FactoryCompat
+import ldbc.dsl.logging.LogHandler
 
 import ldbc.query.builder.statement.Query
 import ldbc.query.builder.interpreter.Tuples

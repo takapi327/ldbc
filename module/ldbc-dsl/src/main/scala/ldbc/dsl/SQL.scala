@@ -14,7 +14,7 @@ import cats.data.Kleisli
 import cats.kernel.Semigroup
 import cats.syntax.all.*
 
-import ldbc.sql.ResultSet
+import ldbc.sql.*
 
 /**
  * A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,

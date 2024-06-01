@@ -12,7 +12,7 @@ import cats.syntax.all.*
 import cats.effect.*
 import cats.effect.kernel.Resource.ExitCase
 
-import ldbc.sql.Connection
+import ldbc.sql.*
 
 import ldbc.dsl.logging.*
 
