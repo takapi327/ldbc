@@ -14,7 +14,7 @@ import cats.effect.Sync
 
 import ldbc.core.attribute.AutoInc
 import ldbc.core.interpreter.Tuples as CoreTuples
-import ldbc.sql.{Connection, Statement, ResultSet}
+import ldbc.sql.{ Connection, Statement, ResultSet }
 import ldbc.query.builder.statement.{ Command, Insert }
 import ldbc.dsl.*
 import ldbc.dsl.logging.*

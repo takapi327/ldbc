@@ -32,7 +32,7 @@ object LogHandler:
         s"""Successful Statement Execution:
            |  $sql
            |
-           | arguments = [${args.mkString(",")}]
+           | arguments = [${ args.mkString(",") }]
            |""".stripMargin
       )
     case LogEvent.ProcessingFailure(sql, args, failure) =>
@@ -40,7 +40,7 @@ object LogHandler:
         s"""Failed ResultSet Processing:
            |  $sql
            |
-           | arguments = [${args.mkString(",")}]
+           | arguments = [${ args.mkString(",") }]
            |""".stripMargin
       ) >> Console[F].printStackTrace(failure)
     case LogEvent.ExecFailure(sql, args, failure) =>
@@ -48,6 +48,6 @@ object LogHandler:
         s"""Failed Statement Execution:
            |  $sql
            |
-           | arguments = [${args.mkString(",")}]
+           | arguments = [${ args.mkString(",") }]
            |""".stripMargin
       ) >> Console[F].printStackTrace(failure)
