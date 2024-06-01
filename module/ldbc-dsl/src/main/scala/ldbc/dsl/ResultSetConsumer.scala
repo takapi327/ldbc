@@ -13,7 +13,8 @@ import cats.data.Kleisli
 import cats.implicits.*
 
 import ldbc.sql.ResultSet
-import ldbc.sql.util.FactoryCompat
+
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for generating the specified data type from a ResultSet.
