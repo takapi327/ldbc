@@ -55,14 +55,14 @@ trait Executor[F[_]: Temporal, T]:
     val release = (connection: Connection[F], exitCase: ExitCase) =>
       exitCase match
         case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
-        case _ => connection.commit()
+        case _                                       => connection.commit()
 
     Resource
       .makeCase(acquire)(release)
       .use(execute)
 
 object Executor:
-  
+
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
     params:    List[ParameterBinder[F]],

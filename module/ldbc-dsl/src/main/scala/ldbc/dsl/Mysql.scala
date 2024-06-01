@@ -13,7 +13,7 @@ import cats.syntax.all.*
 
 import cats.effect.Temporal
 
-import ldbc.sql.{Statement, ResultSet}
+import ldbc.sql.{ Statement, ResultSet }
 
 /**
  * A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,
