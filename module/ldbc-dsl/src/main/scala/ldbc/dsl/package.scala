@@ -12,7 +12,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import ldbc.sql.Parameter
+import ldbc.sql.{PreparedStatement, Parameter, ParameterBinder}
 
 import ldbc.dsl.syntax.*
 
@@ -24,16 +24,30 @@ package object dsl:
             QuerySyntax[F],
             CommandSyntax[F]:
 
+    private case class StaticImpl(value: String) extends ParameterBinder.Static[F]:
+      override def bind(statement: PreparedStatement[F], index: Int): F[Unit] = Sync[F].unit
+      override def toString: String = value
+
+    /**
+     * Function for setting parameters to be used as static strings.
+     * {{{
+     *   val table = sc("table")
+     *   sql"SELECT * FROM $table WHERE id = ${1L}"
+     *   // SELECT * FROM table WHERE id = ?
+     * }}}
+     */
+    def sc(value: String): ParameterBinder.Static[F] = StaticImpl(value)
+
     // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
     /** Returns `VALUES (v0), (v1), ...`. */
     def values[M[_]: Reducible, T](vs: M[T])(using Parameter[F, T]): SQL[F] =
-      q"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(sql"$v")))
+      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(p"$v")))
 
     /** Returns `VALUES (s0, s1, ...)`. */
     def values[M[_]: Reducible](vs: M[SQL[F]]): SQL[F] =
-      q"VALUES" ++ parentheses(comma(vs.toNonEmptyList))
+      sql"VALUES" ++ parentheses(comma(vs.toNonEmptyList))
 
     /** Returns `(sql IN (v0, v1, ...))`. */
     def in[T](s: SQL[F], v0: T, v1: T, vs: T*)(using Parameter[F, T]): SQL[F] =
@@ -41,7 +55,7 @@ package object dsl:
 
     /** Returns `(sql IN (s0, s1, ...))`. */
     def in[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
-      parentheses(s ++ q" IN " ++ parentheses(comma(vs.map(v => p"$v"))))
+      parentheses(s ++ sql" IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
     def inOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): Option[SQL[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => in(s, nel))
@@ -52,14 +66,14 @@ package object dsl:
 
     /** Returns `(sql NOT IN (v0, v1, ...))`, or `true` for empty `fs`. */
     def notIn[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
-      parentheses(s ++ q" NOT IN " ++ parentheses(comma(vs.map(v => p"$v"))))
+      parentheses(s ++ sql" NOT IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
     def notInOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): Option[SQL[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => notIn(s, nel))
 
     /** Returns `(s1 AND s2 AND ... sn)` for a non-empty collection. */
     def and[M[_]: Reducible](ss: M[SQL[F]], grouping: Boolean = true): SQL[F] =
-      val expr = ss.reduceLeftTo(s => parentheses(s))((s1, s2) => s1 ++ q" AND " ++ parentheses(s2))
+      val expr = ss.reduceLeftTo(s => parentheses(s))((s1, s2) => s1 ++ sql" AND " ++ parentheses(s2))
       if grouping then parentheses(expr) else expr
 
     /** Returns `(s1 AND s2 AND ... sn)`. */
@@ -76,11 +90,11 @@ package object dsl:
 
     /** Similar to andOpt, but defaults to TRUE if passed an empty collection */
     def andFallbackTrue[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
-      andOpt(ss).getOrElse(q"TRUE")
+      andOpt(ss).getOrElse(sql"TRUE")
 
     /** Returns `(s1 OR s2 OR ... sn)` for a non-empty collection. */
     def or[M[_]: Reducible](ss: M[SQL[F]], grouping: Boolean = true): SQL[F] =
-      val expr = ss.reduceLeftTo(s => parentheses(s))((s1, s2) => s1 ++ q" OR " ++ parentheses(s2))
+      val expr = ss.reduceLeftTo(s => parentheses(s))((s1, s2) => s1 ++ sql" OR " ++ parentheses(s2))
       if grouping then parentheses(expr) else expr
 
     /** Returns `(s1 OR s2 OR ... sn)`. */
@@ -97,7 +111,7 @@ package object dsl:
 
     /** Similar to orOpt, but defaults to FALSE if passed an empty collection */
     def orFallbackFalse[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
-      orOpt(ss).getOrElse(q"FALSE")
+      orOpt(ss).getOrElse(sql"FALSE")
 
     /** Returns `WHERE s1 AND s2 AND ... sn`. */
     def whereAnd(s1: SQL[F], ss: SQL[F]*): SQL[F] =
@@ -105,7 +119,7 @@ package object dsl:
 
     /** Returns `WHERE s1 AND s2 AND ... sn` or the empty sql if `ss` is empty. */
     def whereAnd[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
-      q"WHERE " ++ and(ss, grouping = false)
+      sql"WHERE " ++ and(ss, grouping = false)
 
     /** Returns `WHERE s1 AND s2 AND ... sn` for defined `s`, if any, otherwise the empty sql. */
     def whereAndOpt(s1: Option[SQL[F]], s2: Option[SQL[F]], ss: Option[SQL[F]]*): SQL[F] =
@@ -115,7 +129,7 @@ package object dsl:
     def whereAndOpt[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
       NonEmptyList.fromFoldable(ss) match
         case Some(nel) => whereAnd(nel)
-        case None      => q""
+        case None      => sql""
 
     /** Returns `WHERE s1 OR s2 OR ... sn`. */
     def whereOr(s1: SQL[F], ss: SQL[F]*): SQL[F] =
@@ -123,7 +137,7 @@ package object dsl:
 
     /** Returns `WHERE s1 OR s2 OR ... sn` or the empty sql if `ss` is empty. */
     def whereOr[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
-      q"WHERE " ++ or(ss, grouping = false)
+      sql"WHERE " ++ or(ss, grouping = false)
 
     /** Returns `WHERE s1 OR s2 OR ... sn` for defined `s`, if any, otherwise the empty sql. */
     def whereOrOpt(s1: Option[SQL[F]], s2: Option[SQL[F]], ss: Option[SQL[F]]*): SQL[F] =
@@ -133,7 +147,7 @@ package object dsl:
     def whereOrOpt[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
       NonEmptyList.fromFoldable(ss) match
         case Some(nel) => whereOr(nel)
-        case None      => q""
+        case None      => sql""
 
     /** Returns `SET s1, s2, ... sn`. */
     def set(s1: SQL[F], ss: SQL[F]*): SQL[F] =
@@ -141,11 +155,11 @@ package object dsl:
 
     /** Returns `SET s1, s2, ... sn`. */
     def set[M[_]: Reducible](fs: M[SQL[F]]): SQL[F] =
-      q"SET " ++ comma(fs)
+      sql"SET " ++ comma(fs)
 
     /** Returns `(sql)`. */
     def parentheses(s: SQL[F]): SQL[F] =
-      q"(" ++ s ++ q")"
+      sql"(" ++ s ++ sql")"
 
     /** Returns `s1, s2, ... sn`. */
     def comma(s1: SQL[F], s2: SQL[F], ss: SQL[F]*): SQL[F] =
@@ -153,20 +167,20 @@ package object dsl:
 
     /** Returns `s1, s2, ... sn`. */
     def comma[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
-      ss.nonEmptyIntercalate(q",")
+      ss.nonEmptyIntercalate(sql",")
 
     /** Returns `ORDER BY s1, s2, ... sn`. */
     def orderBy(s1: SQL[F], ss: SQL[F]*): SQL[F] =
       orderBy(NonEmptyList(s1, ss.toList))
 
     def orderBy[M[_]: Reducible](ss: M[SQL[F]]): SQL[F] =
-      q"ORDER BY " ++ comma(ss)
+      sql"ORDER BY " ++ comma(ss)
 
     /** Returns `ORDER BY s1, s2, ... sn` or the empty sql if `ss` is empty. */
     def orderByOpt[M[_]: Foldable](ss: M[SQL[F]]): SQL[F] =
       NonEmptyList.fromFoldable(ss) match
         case Some(nel) => orderBy(nel)
-        case None      => q""
+        case None      => sql""
 
     /** Returns `ORDER BY s1, s2, ... sn` for defined `s`, if any, otherwise the empty sql. */
     def orderByOpt(s1: Option[SQL[F]], s2: Option[SQL[F]], ss: Option[SQL[F]]*): SQL[F] =
