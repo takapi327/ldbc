@@ -6,7 +6,7 @@
 
 package ldbc.dsl
 
-import cats.{Functor, Monad}
+import cats.{ Functor, Monad }
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -81,7 +81,7 @@ object Executor:
       override def commit(connection:                Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
       override def rollback(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
       override def transaction(connection:           Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      
+
   given [F[_]: Temporal]: Functor[[T] =>> Executor[F, T]] with
     override def map[A, B](fa: Executor[F, A])(f: A => B): Executor[F, B] =
       new Executor[F, B]:
