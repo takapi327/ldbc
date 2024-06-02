@@ -12,7 +12,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import ldbc.sql.{PreparedStatement, Parameter, ParameterBinder}
+import ldbc.sql.{ PreparedStatement, Parameter, ParameterBinder }
 
 import ldbc.dsl.syntax.*
 

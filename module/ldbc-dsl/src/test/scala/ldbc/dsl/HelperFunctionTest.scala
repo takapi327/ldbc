@@ -50,7 +50,8 @@ class HelperFunctionTest extends munit.CatsEffectSuite:
   }
 
   test("The statement that constructs the AND clause with multiple values is the same as the string specified.") {
-    val sql = sql"SELECT * FROM `table` WHERE" ++ andOpt(Some(sql"`column1` = 1"), Some(sql"`column2` = 2")).getOrElse(sql"")
+    val sql =
+      sql"SELECT * FROM `table` WHERE" ++ andOpt(Some(sql"`column1` = 1"), Some(sql"`column2` = 2")).getOrElse(sql"")
     assertEquals(sql.statement, "SELECT * FROM `table` WHERE((`column1` = 1) AND (`column2` = 2))")
   }
 
@@ -60,7 +61,8 @@ class HelperFunctionTest extends munit.CatsEffectSuite:
   }
 
   test("The statement that constructs the OR clause with multiple values is the same as the string specified.") {
-    val sql = sql"SELECT * FROM `table` WHERE" ++ orOpt(Some(sql"`column1` = 1"), Some(sql"`column2` = 2")).getOrElse(sql"")
+    val sql =
+      sql"SELECT * FROM `table` WHERE" ++ orOpt(Some(sql"`column1` = 1"), Some(sql"`column2` = 2")).getOrElse(sql"")
     assertEquals(sql.statement, "SELECT * FROM `table` WHERE((`column1` = 1) OR (`column2` = 2))")
   }
 
