@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql
+package ldbc.dsl
 
 import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
@@ -12,6 +12,8 @@ import scala.compiletime.*
 
 import cats.{ Functor, Monad }
 import cats.implicits.*
+
+import ldbc.sql.ResultSet
 
 /**
  * Trait to get the DataType that matches the Scala type information from the ResultSet.

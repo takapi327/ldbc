@@ -6,25 +6,27 @@
 
 package ldbc.dsl.logging
 
-import cats.implicits.*
+import cats.Applicative
+import cats.syntax.all.*
 
 import cats.effect.Sync
 import cats.effect.std.Console
 
-import ldbc.sql.logging.*
+/**
+ * copied from doobie:
+ * https://github.com/tpolecat/doobie/blob/main/modules/free/src/main/scala/doobie/util/log.scala#L42
+ *
+ * Provides additional processing for Doobie `LogEvent`s.
+ */
+trait LogHandler[F[_]]:
 
-object ConsoleLogHandler:
+  def run(logEvent: LogEvent): F[Unit]
 
-  /**
-   * LogHandler for simple log output using Console.
-   *
-   * In a production environment, it is recommended to use a customized LogHandler using log4j, etc. instead of this
-   * one.
-   *
-   * @tparam F
-   *   The effect type
-   */
-  def apply[F[_]: Console: Sync]: LogHandler[F] =
+object LogHandler:
+
+  def noop[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
+
+  def console[F[_]: Console: Sync]: LogHandler[F] =
     case LogEvent.Success(sql, args) =>
       Console[F].println(
         s"""Successful Statement Execution:

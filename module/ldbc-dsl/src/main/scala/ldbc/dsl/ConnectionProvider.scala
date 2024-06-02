@@ -11,8 +11,9 @@ import cats.implicits.*
 import cats.effect.Sync
 
 import ldbc.sql.*
-import ldbc.sql.util.FactoryCompat
-import ldbc.sql.logging.*
+
+import ldbc.dsl.util.FactoryCompat
+import ldbc.dsl.logging.*
 
 /**
  * Trait provides a connection method to the database.

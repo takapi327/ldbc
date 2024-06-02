@@ -8,6 +8,8 @@ package ldbc.tests
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
+import cats.syntax.all.*
+
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
@@ -15,9 +17,9 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.CatsEffectSuite
 
 import ldbc.sql.Connection
-import ldbc.sql.logging.LogHandler
 import ldbc.connector.SSL
 import ldbc.dsl.io.*
+import ldbc.dsl.logging.LogHandler
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
@@ -62,28 +64,28 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
     connection
       .use { conn =>
         (sql"CREATE TABLE " ++ table ++ sql"(`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)").update
-          .autoCommit(conn)
+          .commit(conn)
       }
       .unsafeRunSync()
 
   override def afterAll(): Unit =
     connection
       .use { conn =>
-        (sql"DROP TABLE " ++ table).update.autoCommit(conn)
+        (sql"DROP TABLE " ++ table).update.commit(conn)
       }
       .unsafeRunSync()
 
   override def afterEach(context: AfterEach): Unit =
     connection
       .use { conn =>
-        (sql"TRUNCATE TABLE " ++ table).update.autoCommit(conn)
+        (sql"TRUNCATE TABLE " ++ table).update.commit(conn)
       }
       .unsafeRunSync()
 
   test("As a result of entering one case of data, there will be one affected row.") {
     assertIO(
       connection.use { conn =>
-        (sql"INSERT INTO " ++ table ++ sql"(`c1`) VALUES ('value1')").update.autoCommit(conn)
+        (sql"INSERT INTO " ++ table ++ sql"(`c1`) VALUES ('value1')").update.commit(conn)
       },
       1
     )
@@ -92,7 +94,7 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
   test("As a result of entering data for two cases, there will be two affected rows.") {
     assertIO(
       connection.use { conn =>
-        (sql"INSERT INTO " ++ table ++ sql"(`c1`) VALUES ('value1'),('value2')").update.autoCommit(conn)
+        (sql"INSERT INTO " ++ table ++ sql"(`c1`) VALUES ('value1'),('value2')").update.commit(conn)
       },
       2
     )

@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql.util
+package ldbc.dsl.util
 
 import scala.annotation.implicitNotFound
 import scala.collection.Factory

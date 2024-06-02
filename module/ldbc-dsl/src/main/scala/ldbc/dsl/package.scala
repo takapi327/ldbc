@@ -10,9 +10,10 @@ import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 
-import cats.effect.{ IO, Sync }
+import cats.effect.*
 
-import ldbc.sql.*
+import ldbc.sql.Parameter
+
 import ldbc.dsl.syntax.*
 
 package object dsl:

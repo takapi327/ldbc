@@ -21,10 +21,10 @@ import munit.*
 
 import ldbc.core.*
 import ldbc.sql.*
-import ldbc.sql.logging.LogHandler
 import ldbc.query.builder.TableQuery
 import ldbc.connector.SSL
 import ldbc.dsl.io.*
+import ldbc.dsl.logging.LogHandler
 
 import ldbc.tests.model.*
 
