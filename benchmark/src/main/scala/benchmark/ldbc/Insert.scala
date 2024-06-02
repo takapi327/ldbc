@@ -20,8 +20,8 @@ import cats.effect.unsafe.implicits.global
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
 import ldbc.sql.DataSource
-import ldbc.sql.logging.LogHandler
 import ldbc.dsl.io.*
+import ldbc.dsl.logging.LogHandler
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)

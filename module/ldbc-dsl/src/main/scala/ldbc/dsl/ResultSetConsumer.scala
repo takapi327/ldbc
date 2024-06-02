@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql
+package ldbc.dsl
 
 import scala.collection.mutable
 
@@ -12,7 +12,9 @@ import cats.{ Monad, MonadError, Traverse, Alternative }
 import cats.data.Kleisli
 import cats.implicits.*
 
-import ldbc.sql.util.FactoryCompat
+import ldbc.sql.ResultSet
+
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for generating the specified data type from a ResultSet.
