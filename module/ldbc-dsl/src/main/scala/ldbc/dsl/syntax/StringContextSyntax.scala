@@ -21,20 +21,21 @@ import ldbc.dsl.*
 trait StringContextSyntax[F[_]: Temporal]:
 
   extension (sc: StringContext)
-    def sql(args: ParameterBinder[F]*): SQL[F] =
-      val strings     = sc.parts.iterator
-      val expressions = args.iterator
-      Mysql(strings.mkString("?"), expressions.toList)
-
-    def q(args: String*): SQL[F] =
-      val strings     = sc.parts.iterator
-      val expressions = args.iterator
-      val query = strings.zipAll(expressions, "", "").foldLeft("") {
-        case (acc, (str, expr)) => acc + str + expr
-      }
-      Mysql(query, List.empty)
 
     def p(args: ParameterBinder[F]*): SQL[F] =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
       Mysql(strings.mkString("?"), expressions.toList)
+
+    def sql(args: ParameterBinder[F]*): SQL[F] =
+      val query = sc.parts.iterator.mkString("?")
+
+      // If it is Static, the value is replaced with the ? If it is a ParameterBinder, it is replaced with ? and create a list of ParameterBinders.
+      val (expressions, parameters) = args.foldLeft((query, List.empty[ParameterBinder[F]])) {
+        case ((query, parameters), s: ParameterBinder.Static[?]) =>
+          (query.replaceFirst("\\?", s.toString), parameters)
+        case ((query, parameters), p: ParameterBinder[?]) =>
+          (query, parameters :+ p)
+      }
+
+      Mysql(expressions, parameters)
