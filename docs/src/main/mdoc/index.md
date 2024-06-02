@@ -120,7 +120,7 @@ val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
     result1 <- sql"SELECT 1".toList[Int]
     result2 <- sql"SELECT 2".headOption[Int]
     result3 <- sql"SELECT 3".unsafe[Int]
-  yield (result1, result2, result3)).run(conn)
+  yield (result1, result2, result3)).readOnly(conn)
 }
 ```
 
