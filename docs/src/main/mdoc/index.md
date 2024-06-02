@@ -204,13 +204,6 @@ We will continue to develop features and improve the stability of the ldbc conne
 - [ ] Integration with java.sql API
 - [ ] etc...
 
-### Plain query enhancements
-
-Even though we are not currently running a query, we have had to use the Effect System at the point of building the query. This makes it difficult to compose the query itself, for example.
-Future enhancements will therefore be made to simplify the construction of queries without the need for the Effect System, so that it is required when the query is executed.
-
-This will allow for easy integration with the query builder and will aim for a more flexible query building system combining query builder and plain queries.
-
 ### Redesign of query builders and schema definitions
 
 Initially, ldbc was inspired by tapir to create a development system that could centralise Scala models, sql schemas and documentation by managing a single resource at the database level.
@@ -224,10 +217,6 @@ What users originally wanted from a database connectivity library was something 
 Initially, ldbc aimed to create documentation from the schema, so building the schema and query builder was not as simple as it could have been, as it required a complete description of the database data types and so on.
 
 It was therefore decided to redesign it to make it simpler and easier to use.
-
-### Discontinuation of the SchemaSPY project
-
-A project was provided that could generate SchemaSPY documentation using schemas created in ldbc, but as there is currently almost no benefit to using ldbc schema-based documentation generation rather than pure SchemaSPY, it was decided to remove it once and for all following a redesign of schema management.
 
 ## Contributing
 
