@@ -2,7 +2,7 @@
 <html class="no-js" lang="en">
 
 <head>
-<title>LDBC</title>
+<title>ldbc (Lepus Database Connectivity)</title>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="description" content='Documentation for ldbc'/>
@@ -29,10 +29,10 @@
 <nav class="off-canvas-nav">
 <div class="nav-home">
 <a href="index.html" class="active">
-<span class="home-icon">⌂</span>LDBC
+<span class="home-icon">⌂</span>ldbc (Lepus Database Connectivity)
 </a>
 <div class="version-number">
-0.3.0-beta2
+0.3.0-beta3
 </div>
 </div>
 <div class="nav-toc">
@@ -51,7 +51,7 @@
 H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
 C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
 </a>
-<div class="title"><a href="index.html" class="active">LDBC</a></div>
+<div class="title"><a href="index.html" class="active">ldbc (Lepus Database Connectivity)</a></div>
 
 <!--
 <a href="https://www.example.com" class="logo show-for-medium">logo</a>
@@ -65,10 +65,10 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <nav class="site-nav">
 <div class="nav-home">
 <a href="index.html" class="active">
-<span class="home-icon">⌂</span>LDBC
+<span class="home-icon">⌂</span>ldbc (Lepus Database Connectivity)
 </a>
 <div class="version-number">
-0.3.0-beta2
+0.3.0-beta3
 </div>
 </div>
 <div class="nav-toc">
@@ -91,29 +91,17 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 
 <div class="page-content row">
 <div class="small-12 large-9 column" id="docs">
-<h1><a href="#ldbc" name="ldbc" class="anchor"><span class="anchor-link"></span></a>LDBC</h1>
+<h1><a href="#ldbc-lepus-database-connectivity-" name="ldbc-lepus-database-connectivity-" class="anchor"><span class="anchor-link"></span></a>ldbc (Lepus Database Connectivity)</h1>
 <div align="center">
   <img alt="LDBC" src="./img/lepus_logo.png">
 </div>
-<div align="center">
-  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.3.0-beta2/jar">
-    <img alt="Maven Central Version" src="https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue">
-  </a>
-  <a href="https://en.wikipedia.org/wiki/MIT_License">
-    <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green">
-  </a>
-  <a href="https://github.com/lampepfl/dotty">
-    <img alt="Scala Version" src="https://img.shields.io/badge/scala-v3.3.x-red">
-  </a>
-  <a href="https://typelevel.org/projects/affiliate/">
-    <img alt="Typelevel Affiliate Project" src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg">
-  </a>
-</div>
+<p><a href="https://github.com/takapi327/ldbc/actions/workflows/ci.yml"><img src="https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master" alt="Continuous Integration" /></a> <a href="https://en.wikipedia.org/wiki/MIT_License"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a> <a href="https://github.com/lampepfl/dotty"><img src="https://img.shields.io/badge/scala-v3.3.x-red" alt="Scala Version" /></a> <a href="https://typelevel.org/projects/affiliate/"><img src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg" alt="Typelevel Affiliate Project" /></a> <a href="https://javadoc.io/doc/io.github.takapi327/ldbc-core_3"><img src="https://javadoc.io/badge2/io.github.takapi327/ldbc-core_3/javadoc.svg" alt="javadoc" /></a> <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.3.0-beta3/jar"><img src="https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-core_3/badge.svg?color=blue" alt="Maven Central Version" /></a> <a href="https://index.scala-lang.org/takapi327/ldbc"><img src="https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue" alt="scaladex" /></a> <a href="https://index.scala-lang.org/takapi327/ldbc"><img src="https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue&targetType=js" alt="scaladex" /></a> <a href="https://index.scala-lang.org/takapi327/ldbc"><img src="https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue&targetType=native" alt="scaladex" /></a></p>
 <p>ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.</p>
 <p>ldbc is Created under the influence of <a href="https://github.com/softwaremill/tapir">tapir</a>, a declarative, type-safe web endpoint library. Using tapir, you can build type-safe endpoints and also generate OpenAPI documentation from the endpoints you build.</p>
 <p>ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.</p>
 <p>Note that <strong>ldbc</strong> is pre-1.0 software and is still undergoing active development. New versions are <strong>not</strong> binary compatible with prior versions, although in most cases user code will be source compatible.</p>
 <h2><a href="#modules-availability" name="modules-availability" class="anchor"><span class="anchor-link"></span></a>Modules availability</h2>
+<p>ldbc is available on the JVM, Scala.js, and ScalaNative</p>
 <table>
   <thead>
     <tr>
@@ -145,8 +133,8 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
     <tr>
       <td align="center"><code>ldbc-dsl</code> </td>
       <td align="center">✅ </td>
-      <td align="center">❌ </td>
-      <td align="center">❌ </td>
+      <td align="center">✅ </td>
+      <td align="center">✅ </td>
     </tr>
     <tr>
       <td align="center"><code>ldbc-schemaSpy</code> </td>
@@ -178,13 +166,136 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
       <td align="center">✅ </td>
       <td align="center">✅ </td>
     </tr>
+    <tr>
+      <td align="center"><code>jdbc-connector</code> </td>
+      <td align="center">✅ </td>
+      <td align="center">❌ </td>
+      <td align="center">❌ </td>
+    </tr>
   </tbody>
 </table>
+<h2><a href="#quick-start" name="quick-start" class="anchor"><span class="anchor-link"></span></a>Quick Start</h2>
+<p>For people that want to skip the explanations and see it action, this is the place to start!</p>
+<h3><a href="#dependency-configuration" name="dependency-configuration" class="anchor"><span class="anchor-link"></span></a>Dependency Configuration</h3>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot; % &quot;${version}&quot;
+</code></pre>
+<p>For Cross-Platform projects (JVM, JS, and/or Native):</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-dsl&quot; % &quot;${version}&quot;
+</code></pre>
+<p>The dependency package used depends on whether the database connection is made via a connector using the Java API or a connector provided by ldbc.</p>
+<p><strong>Use jdbc connector</strong></p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;jdbc-connector&quot; % &quot;${version}&quot;
+</code></pre>
+<p><strong>Use ldbc connector</strong></p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %% &quot;ldbc-connector&quot; % &quot;${version}&quot;
+</code></pre>
+<p>For Cross-Platform projects (JVM, JS, and/or Native)</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies += &quot;io.github.takapi327&quot; %%% &quot;ldbc-connector&quot; % &quot;${version}&quot;
+</code></pre>
+<h3><a href="#usage" name="usage" class="anchor"><span class="anchor-link"></span></a>Usage</h3>
+<p>The difference in usage is that there are differences in the way connections are built between jdbc and ldbc.</p>
+<blockquote>
+  <p>[!CAUTION] <strong>ldbc</strong> is currently under active development. Please note that current functionality may therefore be deprecated or changed in the future.</p>
+</blockquote>
+<p><strong>jdbc connector</strong></p>
+<pre class="prettyprint"><code class="language-scala">val ds = new com.mysql.cj.jdbc.MysqlDataSource()
+ds.setServerName(&quot;127.0.0.1&quot;)
+ds.setPortNumber(13306)
+ds.setDatabaseName(&quot;world&quot;)
+ds.setUser(&quot;ldbc&quot;)
+ds.setPassword(&quot;password&quot;)
+
+val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+
+val connection: Resource[IO, Connection[IO]] =
+  Resource.make(datasource.getConnection)(_.close())
+</code></pre>
+<p><strong>ldbc connector</strong></p>
+<pre class="prettyprint"><code class="language-scala">val connection: Resource[IO, Connection[IO]] =
+  ldbc.connector.Connection[IO](
+    host     = &quot;127.0.0.1&quot;,
+    port     = 3306,
+    user     = &quot;ldbc&quot;,
+    password = Some(&quot;password&quot;),
+    database = Some(&quot;ldbc&quot;),
+    ssl      = SSL.Trusted
+  )
+</code></pre>
+<p>The connection process to the database can be carried out using the connections established by each of these methods.</p>
+<pre class="prettyprint"><code class="language-scala">val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =&gt;
+  (for
+    result1 &lt;- sql&quot;SELECT 1&quot;.toList[Int]
+    result2 &lt;- sql&quot;SELECT 2&quot;.headOption[Int]
+    result3 &lt;- sql&quot;SELECT 3&quot;.unsafe[Int]
+  yield (result1, result2, result3)).readOnly(conn)
+}
+</code></pre>
+<h4><a href="#using-the-query-builder" name="using-the-query-builder" class="anchor"><span class="anchor-link"></span></a>Using the query builder</h4>
+<p>ldbc provides not only plain queries but also type-safe database connections using the query builder.</p>
+<p>The first step is to create a schema for use by the query builder.</p>
+<p>ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.</p>
+<pre class="prettyprint"><code class="language-scala">case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val table = Table[User](&quot;user&quot;)(                     // CREATE TABLE `user` (
+  column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  column(&quot;name&quot;, VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
+)              
+</code></pre>
+<p>The next step is to build a TableQuery using the schema you have created.</p>
+<pre class="prettyprint"><code class="language-scala">import ldbc.query.builder.TableQuery
+
+val userQuery = TableQuery[IO, User](table)
+</code></pre>
+<p>Finally, you can use the query builder to create a query.</p>
+<pre class="prettyprint"><code class="language-scala">val result: IO[List[User]] = connection.use { conn =&gt;
+  userQuery.selectAll.toList[User].readOnly(conn)
+  // &quot;SELECT `id`, `name`, `age` FROM user&quot;
+}
+</code></pre>
 <h2><a href="#documentation" name="documentation" class="anchor"><span class="anchor-link"></span></a>Documentation</h2>
+<p>Full documentation can be found at Currently available in English and Japanese.</p>
 <ul>
   <li><a href="/ldbc/en/index.html">English</a></li>
   <li><a href="/ldbc/ja/index.html">Japanese</a></li>
 </ul>
+<h2><a href="#features-roadmap" name="features-roadmap" class="anchor"><span class="anchor-link"></span></a>Features/Roadmap</h2>
+<p>Creating a MySQL connector project written in pure Scala3.</p>
+<p>JVM, JS and Native platforms are all supported.</p>
+<blockquote>
+  <p>[!IMPORTANT] <strong>ldbc</strong> is currently focused on developing connectors written in pure Scala3 to work with JVM, JS and Native. In the future, we also plan to rewrite existing functions based on a pure Scala3 connector.</p>
+</blockquote>
+<h3><a href="#enhanced-functionality-and-improved-stability-of-the-mysql-connector-written-in-pure-scala3" name="enhanced-functionality-and-improved-stability-of-the-mysql-connector-written-in-pure-scala3" class="anchor"><span class="anchor-link"></span></a>Enhanced functionality and improved stability of the MySQL connector written in pure Scala3</h3>
+<p>Most of the jdbc functionality used in other packages of ldbc at the moment could be implemented.</p>
+<p>However, not all jdbc APIs could be supported. Nor can we guarantee that it is proven and stable enough to operate in a production environment.</p>
+<p>We will continue to develop features and improve the stability of the ldbc connector to achieve the same level of stability and reliability as the jdbc connector.</p>
+<h4><a href="#connection-pooling-implementation" name="connection-pooling-implementation" class="anchor"><span class="anchor-link"></span></a>Connection pooling implementation</h4>
+<ul>
+  <li>[ ] Failover Countermeasures</li>
+</ul>
+<h4><a href="#performance-verification" name="performance-verification" class="anchor"><span class="anchor-link"></span></a>Performance Verification</h4>
+<ul>
+  <li>[ ] Comparison with JDBC</li>
+  <li>[ ] Comparison with other MySQL Scala libraries</li>
+  <li>[ ] Verification of operation in AWS and other infrastructure environments</li>
+</ul>
+<h4><a href="#other" name="other" class="anchor"><span class="anchor-link"></span></a>Other</h4>
+<ul>
+  <li>[ ] Additional streaming implementation</li>
+  <li>[ ] Integration with java.sql API</li>
+  <li>[ ] etc&hellip;</li>
+</ul>
+<h3><a href="#redesign-of-query-builders-and-schema-definitions" name="redesign-of-query-builders-and-schema-definitions" class="anchor"><span class="anchor-link"></span></a>Redesign of query builders and schema definitions</h3>
+<p>Initially, ldbc was inspired by tapir to create a development system that could centralise Scala models, sql schemas and documentation by managing a single resource at the database level.</p>
+<p>In addition, database connection, query construction and document generation were to be used in combination with retrofitted packages, as the aim was to be able to integrate with other database systems.</p>
+<p>As a result, we feel that it has become difficult for users to use because of the various configurations required to build it.</p>
+<p>What users originally wanted from a database connectivity library was something simpler, easier and more intuitive to use.</p>
+<p>Initially, ldbc aimed to create documentation from the schema, so building the schema and query builder was not as simple as it could have been, as it required a complete description of the database data types and so on.</p>
+<p>It was therefore decided to redesign it to make it simpler and easier to use.</p>
 <h2><a href="#contributing" name="contributing" class="anchor"><span class="anchor-link"></span></a>Contributing</h2>
 <p>All suggestions welcome :)!</p>
 <p>If you’d like to contribute, see the list of <a href="https://github.com/takapi327/ldbc/issues">issues</a> and pick one! Or report your own. If you have an idea you’d like to discuss, that’s always a good option.</p>
@@ -192,7 +303,7 @@ C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.
 <h3><a href="#testing-locally" name="testing-locally" class="anchor"><span class="anchor-link"></span></a>Testing locally</h3>
 <p>If you want to build and run the tests for yourself, you&rsquo;ll need a local MySQL database. The easiest way to do this is to run <code>docker-compose up</code> from the project root.</p>
 <div class="source-github">
-The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-beta2/docs/target/mdoc/index.md">here</a>.
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.3.0-beta3/docs/target/mdoc/index.md">here</a>.
 </div>
 
 </div>
@@ -202,10 +313,12 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <div class="nav-title">On this page:</div>
 <div class="nav-toc">
 <ul>
-  <li><a href="index.html#ldbc" class="header">LDBC</a>
+  <li><a href="index.html#ldbc-lepus-database-connectivity-" class="header">ldbc (Lepus Database Connectivity)</a>
   <ul>
     <li><a href="index.html#modules-availability" class="header">Modules availability</a></li>
+    <li><a href="index.html#quick-start" class="header">Quick Start</a></li>
     <li><a href="index.html#documentation" class="header">Documentation</a></li>
+    <li><a href="index.html#features-roadmap" class="header">Features/Roadmap</a></li>
     <li><a href="index.html#contributing" class="header">Contributing</a></li>
   </ul></li>
 </ul>
@@ -274,7 +387,7 @@ The source code for this page can be found <a href="https://github.com/takapi327
 <script type="text/javascript" src="lib/prettify/prettify.js"></script>
 <script type="text/javascript" src="lib/prettify/lang-scala.js"></script>
 <script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
-<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-beta2', 'https://takapi327.github.io/ldbc/')});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.3.0-beta3', 'https://takapi327.github.io/ldbc/')});</script>
 
 
 </html>
