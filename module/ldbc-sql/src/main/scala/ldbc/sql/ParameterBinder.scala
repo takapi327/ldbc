@@ -29,6 +29,10 @@ trait ParameterBinder[F[_]]:
 
 object ParameterBinder:
 
+  trait Static[F[_]] extends ParameterBinder[F]:
+    def value:              String
+    override def parameter: Any = value
+
   def apply[F[_], T](value: T)(using param: Parameter[F, T]): ParameterBinder[F] =
     new ParameterBinder[F]:
       override def parameter: Any = value
