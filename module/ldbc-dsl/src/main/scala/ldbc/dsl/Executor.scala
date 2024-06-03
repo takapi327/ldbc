@@ -44,7 +44,8 @@ trait Executor[F[_]: Temporal, T]:
    * Functions to manage the processing of connections, always rolling back.
    */
   def rollback(connection: Connection[F])(using LogHandler[F]): F[T] =
-    connection.setReadOnly(false) *> connection.setAutoCommit(false) *> execute(connection) <* connection.rollback() <* connection.setAutoCommit(true)
+    connection.setReadOnly(false) *> connection.setAutoCommit(false) *> execute(connection) <* connection
+      .rollback() <* connection.setAutoCommit(true)
 
   /**
    * Functions to manage the processing of connections in a transaction.
@@ -55,8 +56,9 @@ trait Executor[F[_]: Temporal, T]:
     val release = (connection: Connection[F], exitCase: ExitCase) =>
       (exitCase match
         case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
-        case _                                       => connection.commit())
-      *> connection.setAutoCommit(true)
+        case _                                       => connection.commit()
+      )
+        *> connection.setAutoCommit(true)
 
     Resource
       .makeCase(acquire)(release)
