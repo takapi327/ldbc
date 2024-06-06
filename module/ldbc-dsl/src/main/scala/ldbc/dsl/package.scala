@@ -19,7 +19,8 @@ import ldbc.dsl.syntax.*
 package object dsl:
 
   private case class StaticImpl(value: String) extends ParameterBinder.Static:
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit] = throw new UnsupportedOperationException
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit] =
+      throw new UnsupportedOperationException
     override def toString: String = value
 
   private trait SyncSyntax[F[_]: Sync]

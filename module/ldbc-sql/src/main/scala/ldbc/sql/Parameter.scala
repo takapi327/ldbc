@@ -35,7 +35,7 @@ trait Parameter[-T]:
 object Parameter:
 
   def convert[A, B](f: B => A)(using parameter: Parameter[A]): Parameter[B] = new Parameter[B]:
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: B): F[Unit] = 
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: B): F[Unit] =
       parameter.bind[F](statement, index, f(value))
 
   given Parameter[Boolean] with
@@ -133,7 +133,7 @@ object Parameter:
   inline def infer[T]: Parameter[T] =
     summonFrom[Parameter[T]] {
       case parameter: Parameter[T] => parameter
-      case _                          => error("Parameter cannot be inferred")
+      case _                       => error("Parameter cannot be inferred")
     }
 
   inline def fold[T]: MapToTuple[T] =
