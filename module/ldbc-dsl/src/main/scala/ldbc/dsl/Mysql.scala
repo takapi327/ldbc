@@ -26,7 +26,7 @@ import ldbc.sql.*
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder]) extends SQL[F]:
+case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.DynamicBinder]) extends SQL[F]:
 
   @targetName("combine")
   override def ++(sql: SQL[F]): SQL[F] =

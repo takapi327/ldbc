@@ -25,7 +25,7 @@ trait ConnectionProvider[F[_]: Sync]:
 
   private def connection[T](
     statement: String,
-    params:    Seq[ParameterBinder],
+    params:    Seq[Parameter.DynamicBinder],
     consumer:  ResultSetConsumer[F, T]
   )(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], T] =
     Kleisli { connection =>
@@ -54,7 +54,7 @@ trait ConnectionProvider[F[_]: Sync]:
    */
   protected def connectionToList[T](
     statement: String,
-    params:    Seq[ParameterBinder]
+    params:    Seq[Parameter.DynamicBinder]
   )(using Kleisli[F, ResultSet[F], T], LogHandler[F], FactoryCompat[T, List[T]]): Kleisli[F, Connection[F], List[T]] =
     connection[List[T]](statement, params, summon[ResultSetConsumer[F, List[T]]])
 
@@ -64,7 +64,7 @@ trait ConnectionProvider[F[_]: Sync]:
    */
   protected def connectionToHeadOption[T](
     statement: String,
-    params:    Seq[ParameterBinder]
+    params:    Seq[Parameter.DynamicBinder]
   )(using Kleisli[F, ResultSet[F], T], LogHandler[F]): Kleisli[F, Connection[F], Option[T]] =
     connection[Option[T]](statement, params, summon[ResultSetConsumer[F, Option[T]]])
 
@@ -74,6 +74,6 @@ trait ConnectionProvider[F[_]: Sync]:
    */
   protected def connectionToUnsafe[T](
     statement: String,
-    params:    Seq[ParameterBinder]
+    params:    Seq[Parameter.DynamicBinder]
   )(using Kleisli[F, ResultSet[F], T], LogHandler[F]): Kleisli[F, Connection[F], T] =
     connection[T](statement, params, summon[ResultSetConsumer[F, T]])

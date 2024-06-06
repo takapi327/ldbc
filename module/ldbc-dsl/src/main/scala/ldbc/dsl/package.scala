@@ -12,16 +12,11 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import ldbc.sql.{ PreparedStatement, Parameter, ParameterBinder }
+import ldbc.sql.Parameter
 
 import ldbc.dsl.syntax.*
 
 package object dsl:
-
-  private case class StaticImpl(value: String) extends ParameterBinder.Static:
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit] =
-      throw new UnsupportedOperationException
-    override def toString: String = value
 
   private trait SyncSyntax[F[_]: Sync]
     extends StringContextSyntax[F],
@@ -37,7 +32,7 @@ package object dsl:
      *   // SELECT * FROM table WHERE id = ?
      * }}}
      */
-    def sc(value: String): ParameterBinder.Static = StaticImpl(value)
+    def sc(value: String): Parameter.StaticBinder = Parameter.StaticBinder(value)
 
     // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
