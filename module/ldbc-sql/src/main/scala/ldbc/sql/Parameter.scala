@@ -33,6 +33,36 @@ trait Parameter[-T]:
   def bind[F[_]](statement: PreparedStatement[F], index: Int, value: T): F[Unit]
 
 object Parameter:
+  
+  trait Binder:
+
+    /** Query parameters to be plugged into the Statement. */
+    def parameter: String
+    
+  case class StaticBinder(parameter: String) extends Binder:
+    override def toString: String = parameter
+    
+  trait DynamicBinder extends Binder:
+
+    /**
+     * Methods for setting Scala and Java values to the specified position in PreparedStatement.
+     *
+     * @param statement
+     * An object that represents a precompiled SQL statement.
+     * @param index
+     * the first parameter is 1, the second is 2, ...
+     */
+    def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit]
+    
+  object DynamicBinder:
+    def apply[T](value: T)(using param: Parameter[T]): DynamicBinder =
+      new DynamicBinder:
+        override def parameter: String = value.toString
+        override def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit] =
+          param.bind(statement, index, value)
+
+  given [T](using Parameter[T]): Conversion[T, DynamicBinder] with
+    override def apply(x: T): DynamicBinder = DynamicBinder[T](x)
 
   def convert[A, B](f: B => A)(using parameter: Parameter[A]): Parameter[B] = new Parameter[B]:
     override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: B): F[Unit] =
