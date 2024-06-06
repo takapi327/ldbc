@@ -151,7 +151,7 @@ object Join:
     selects:       SELECTS,
     fromStatement: String,
     columns:       T,
-    params:        Seq[ParameterBinder]
+    params:        Seq[Parameter.DynamicBinder]
   ) extends Query[F, T],
             JoinOrderByProvider[F, SELECTS, T],
             LimitProvider[F, T]:
@@ -182,7 +182,7 @@ object Join:
     selects:   SELECTS,
     statement: String,
     columns:   T,
-    params:    Seq[ParameterBinder]
+    params:    Seq[Parameter.DynamicBinder]
   ) extends Query[F, T],
             JoinOrderByProvider[F, SELECTS, T],
             LimitProvider[F, T]:
@@ -217,7 +217,7 @@ object Join:
   private[ldbc] case class JoinOrderBy[F[_], T](
     statement: String,
     columns:   T,
-    params:    Seq[ParameterBinder]
+    params:    Seq[Parameter.DynamicBinder]
   ) extends Query[F, T],
             LimitProvider[F, T]
 
@@ -243,7 +243,7 @@ object Join:
     selects:   SELECTS,
     statement: String,
     columns:   T,
-    params:    Seq[ParameterBinder]
+    params:    Seq[Parameter.DynamicBinder]
   ) extends Query[F, T],
             JoinOrderByProvider[F, SELECTS, T],
             LimitProvider[F, T]
@@ -252,7 +252,7 @@ object Join:
     selects:   SELECTS,
     statement: String,
     columns:   T,
-    params:    Seq[ParameterBinder]
+    params:    Seq[Parameter.DynamicBinder]
   ) extends Query[F, T],
             JoinOrderByProvider[F, SELECTS, T],
             LimitProvider[F, T]:

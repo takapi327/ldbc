@@ -6,7 +6,7 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.sql.{ Parameter, ParameterBinder }
+import ldbc.sql.Parameter
 
 /**
  * Trait for building Statements to be added, updated, and deleted.
@@ -25,7 +25,7 @@ private[ldbc] trait Command[F[_]]:
    * A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    * only.
    */
-  def params: Seq[ParameterBinder]
+  def params: Seq[Parameter.DynamicBinder]
 
 object Command:
 
@@ -45,7 +45,7 @@ object Command:
   case class Where[F[_]](
     _statement:       String,
     expressionSyntax: ExpressionSyntax[F],
-    params:           Seq[ParameterBinder]
+    params:           Seq[Parameter.DynamicBinder]
   ) extends Command[F],
             LimitProvider[F]:
 
@@ -62,7 +62,7 @@ object Command:
    */
   case class Limit[F[_]](
     _statement: String,
-    params:     Seq[ParameterBinder]
+    params:     Seq[Parameter.DynamicBinder]
   ) extends Command[F]:
 
     override def statement: String = _statement ++ " LIMIT ?"
@@ -85,5 +85,5 @@ object Command:
     def limit(length: Long): Parameter[Long] ?=> Limit[F] =
       Limit[F](
         _statement = statement,
-        params     = params :+ ParameterBinder(length)
+        params     = params :+ Parameter.DynamicBinder(length)
       )

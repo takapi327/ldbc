@@ -7,7 +7,7 @@
 package ldbc.query.builder.statement
 
 import ldbc.core.*
-import ldbc.sql.ParameterBinder
+import ldbc.sql.Parameter
 import ldbc.query.builder.TableQuery
 
 /**
@@ -33,7 +33,7 @@ private[ldbc] case class Select[F[_], P <: Product, T](
   tableQuery: TableQuery[F, P],
   statement:  String,
   columns:    T,
-  params:     Seq[ParameterBinder]
+  params:     Seq[Parameter.DynamicBinder]
 ) extends Query[F, T],
           OrderByProvider[F, P, T],
           LimitProvider[F, T]:

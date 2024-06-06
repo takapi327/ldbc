@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import ldbc.core.Column
 import ldbc.core.interpreter.Extract
-import ldbc.sql.{ Parameter, ParameterBinder }
+import ldbc.sql.Parameter
 import ldbc.query.builder.ColumnQuery
 
 /**
@@ -31,7 +31,7 @@ private[ldbc] trait ExpressionSyntax[F[_]]:
   /**
    * Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.
    */
-  def parameter: Seq[ParameterBinder]
+  def parameter: Seq[Parameter.DynamicBinder]
 
   /**
    * Methods for combining expressions. Both conditions must be positive for the expression to be combined with this
@@ -113,7 +113,7 @@ object ExpressionSyntax:
         case (l, r)          => l.statement + flag + r.statement
       s"($result)"
 
-    override def parameter: Seq[ParameterBinder] = left.parameter ++ right.parameter
+    override def parameter: Seq[Parameter.DynamicBinder] = left.parameter ++ right.parameter
 
   /**
    * Model for building sub queries.
@@ -136,7 +136,7 @@ object ExpressionSyntax:
   ) extends ExpressionSyntax[F]:
 
     override def statement: String               = s"$column $flag (${ value.statement })"
-    override def parameter: Seq[ParameterBinder] = value.params
+    override def parameter: Seq[Parameter.DynamicBinder] = value.params
 
   /**
    * Model for building join queries.
@@ -160,14 +160,14 @@ object ExpressionSyntax:
 
     override def statement = s"${ left.alias.fold(left.label)(name => s"$name.${ left.label }") } $flag ${ right.alias
         .fold(right.label)(name => s"$name.${ right.label }") }"
-    override def parameter: Seq[ParameterBinder] = Seq.empty
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq.empty
 
   /** comparison operator */
   private[ldbc] case class MatchCondition[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "="
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -178,7 +178,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = ">="
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -189,7 +189,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = ">"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -200,7 +200,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "<="
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -211,7 +211,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "<"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -221,7 +221,7 @@ object ExpressionSyntax:
   private[ldbc] case class NotEqual[F[_], T](flag: String, column: String, isNot: Boolean, value: Extract[T])(using
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -234,7 +234,7 @@ object ExpressionSyntax:
     value:  T
   ) extends SingleValue[F, T]:
     override def flag:      String               = "IS"
-    override def parameter: Seq[ParameterBinder] = Seq.empty
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq.empty
     override def statement: String =
       val not = if isNot then " NOT" else ""
       s"$column $flag$not $value"
@@ -245,7 +245,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "<=>"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -256,7 +256,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String               = "IN"
-    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
+    override def parameter: Seq[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$column $not$flag (${ values.map(_ => "?").mkString(", ") })"
@@ -267,7 +267,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String               = "BETWEEN"
-    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
+    override def parameter: Seq[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$column $not$flag ? AND ?"
@@ -278,7 +278,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "LIKE"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -289,7 +289,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String               = "LIKE"
-    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
+    override def parameter: Seq[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? ESCAPE ?"
@@ -300,7 +300,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "REGEXP"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -311,7 +311,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "<<"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -322,7 +322,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = ">>"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -333,7 +333,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String               = "DIV"
-    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
+    override def parameter: Seq[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
@@ -343,7 +343,7 @@ object ExpressionSyntax:
   private[ldbc] case class Mod[F[_], T](flag: String, column: String, isNot: Boolean, values: Extract[T]*)(using
     _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
-    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
+    override def parameter: Seq[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
@@ -354,7 +354,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "^"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -365,7 +365,7 @@ object ExpressionSyntax:
     _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String               = "~"
-    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
+    override def parameter: Seq[Parameter.DynamicBinder] = Seq(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$flag$column = ?"

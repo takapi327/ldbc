@@ -6,7 +6,7 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.sql.{ Parameter, ParameterBinder }
+import ldbc.sql.Parameter
 
 /**
  * A model for constructing LIMIT statements in MySQL.
@@ -26,7 +26,7 @@ import ldbc.sql.{ Parameter, ParameterBinder }
 private[ldbc] case class Limit[F[_], T](
   statement: String,
   columns:   T,
-  params:    Seq[ParameterBinder]
+  params:    Seq[Parameter.DynamicBinder]
 ) extends Query[F, T]:
 
   /**
@@ -36,7 +36,7 @@ private[ldbc] case class Limit[F[_], T](
     Limit(
       statement = statement ++ " OFFSET ?",
       columns   = columns,
-      params    = params :+ ParameterBinder(length)
+      params    = params :+ Parameter.DynamicBinder(length)
     )
 
 /**
@@ -57,5 +57,5 @@ private[ldbc] transparent trait LimitProvider[F[_], T]:
     Limit(
       statement = statement ++ " LIMIT ?",
       columns   = columns,
-      params    = params :+ ParameterBinder(length)
+      params    = params :+ Parameter.DynamicBinder(length)
     )

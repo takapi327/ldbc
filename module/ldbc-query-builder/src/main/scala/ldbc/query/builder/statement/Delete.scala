@@ -6,7 +6,7 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.sql.ParameterBinder
+import ldbc.sql.Parameter
 import ldbc.query.builder.TableQuery
 
 /**
@@ -24,7 +24,7 @@ case class Delete[F[_], P <: Product](
 ) extends Command[F],
           Command.LimitProvider[F]:
 
-  override def params: Seq[ParameterBinder] = Seq.empty
+  override def params: Seq[Parameter.DynamicBinder] = Seq.empty
 
   override def statement: String = s"DELETE FROM ${ tableQuery.table._name }"
 
