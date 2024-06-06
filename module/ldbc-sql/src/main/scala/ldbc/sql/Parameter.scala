@@ -33,15 +33,15 @@ trait Parameter[-T]:
   def bind[F[_]](statement: PreparedStatement[F], index: Int, value: T): F[Unit]
 
 object Parameter:
-  
+
   trait Binder:
 
     /** Query parameters to be plugged into the Statement. */
     def parameter: String
-    
+
   case class StaticBinder(parameter: String) extends Binder:
     override def toString: String = parameter
-    
+
   trait DynamicBinder extends Binder:
 
     /**
@@ -53,7 +53,7 @@ object Parameter:
      * the first parameter is 1, the second is 2, ...
      */
     def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit]
-    
+
   object DynamicBinder:
     def apply[T](value: T)(using param: Parameter[T]): DynamicBinder =
       new DynamicBinder:
