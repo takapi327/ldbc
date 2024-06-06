@@ -40,7 +40,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
     )
 
   /** Type alias for ParameterBinder. Mainly for use with Tuple.map. */
-  private type ParamBind[A] = ParameterBinder[F]
+  private type ParamBind[A] = ParameterBinder
 
   /**
    * A method to build a query model to retrieve all columns defined in the Table.
@@ -160,17 +160,17 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
   ): Insert[F, P] =
     val parameterBinders = values
       .flatMap(
-        _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
+        _.zip(Parameter.fold[mirror.MirroredElemTypes])
           .map[ParamBind](
             [t] =>
               (x: t) =>
-                val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
-                ParameterBinder[F, t](value)(using parameter)
+                val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+                ParameterBinder[t](value)(using parameter)
           )
           .toList
       )
       .toList
-      .asInstanceOf[List[ParameterBinder[F]]]
+      .asInstanceOf[List[ParameterBinder]]
     new MultiInsert[F, P, Tuple](this, values.toList, parameterBinders)
 
   /**
@@ -184,7 +184,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
   inline def insertInto[T](func: TableQuery[F, P] => T)(using
     Tuples.IsColumnQuery[F, T] =:= true
   ): SelectInsert[F, P, T] =
-    val parameter: Parameter.MapToTuple[F, Column.Extract[T]] = Parameter.fold[F, Column.Extract[T]]
+    val parameter: Parameter.MapToTuple[Column.Extract[T]] = Parameter.fold[Column.Extract[T]]
     SelectInsert[F, P, T](this, func(this), parameter)
 
   /**
@@ -199,15 +199,15 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
   inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[F, P] =
     val tuples = Tuple.fromProductTyped(value)
     val parameterBinders = tuples
-      .zip(Parameter.fold[F, mirror.MirroredElemTypes])
+      .zip(Parameter.fold[mirror.MirroredElemTypes])
       .map[ParamBind](
         [t] =>
           (x: t) =>
-            val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
-            ParameterBinder[F, t](value)(using parameter)
+            val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+            ParameterBinder[t](value)(using parameter)
       )
       .toList
-      .asInstanceOf[List[ParameterBinder[F]]]
+      .asInstanceOf[List[ParameterBinder]]
     new SingleInsert[F, P, Tuple](this, tuples, parameterBinders)
 
   /**
@@ -223,16 +223,16 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
     val tuples = values.map(Tuple.fromProductTyped)
     val parameterBinders = tuples
       .flatMap(
-        _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
+        _.zip(Parameter.fold[mirror.MirroredElemTypes])
           .map[ParamBind](
             [t] =>
               (x: t) =>
-                val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
-                ParameterBinder[F, t](value)(using parameter)
+                val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+                ParameterBinder[t](value)(using parameter)
           )
           .toList
       )
-      .asInstanceOf[List[ParameterBinder[F]]]
+      .asInstanceOf[List[ParameterBinder]]
     new MultiInsert[F, P, Tuple](this, tuples, parameterBinders)
 
   /**
@@ -249,17 +249,17 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
   ): DuplicateKeyUpdateInsert[F] =
     val parameterBinders = values
       .flatMap(
-        _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
+        _.zip(Parameter.fold[mirror.MirroredElemTypes])
           .map[ParamBind](
             [t] =>
               (x: t) =>
-                val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
-                ParameterBinder[F, t](value)(using parameter)
+                val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+                ParameterBinder[t](value)(using parameter)
           )
           .toList
       )
       .toList
-      .asInstanceOf[List[ParameterBinder[F]]]
+      .asInstanceOf[List[ParameterBinder]]
     new DuplicateKeyUpdate[F, P, Tuple](this, values.toList, parameterBinders)
 
   /**
@@ -275,16 +275,16 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
     val tuples = values.map(Tuple.fromProductTyped)
     val parameterBinders = tuples
       .flatMap(
-        _.zip(Parameter.fold[F, mirror.MirroredElemTypes])
+        _.zip(Parameter.fold[mirror.MirroredElemTypes])
           .map[ParamBind](
             [t] =>
               (x: t) =>
-                val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
-                ParameterBinder[F, t](value)(using parameter)
+                val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+                ParameterBinder[t](value)(using parameter)
           )
           .toList
       )
-      .asInstanceOf[List[ParameterBinder[F]]]
+      .asInstanceOf[List[ParameterBinder]]
     new DuplicateKeyUpdate[F, P, Tuple](this, tuples, parameterBinders)
 
   /**
@@ -311,7 +311,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[F, P] =
     type PARAM = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    val params = List(ParameterBinder[F, PARAM](check(value))(using Parameter.infer[F, PARAM]))
+    val params = List(ParameterBinder[PARAM](check(value))(using Parameter.infer[PARAM]))
     new Update[F, P](
       tableQuery = this,
       columns    = List(table.selectDynamic[Tag](tag).label),
@@ -329,15 +329,15 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
   inline def update(value: P)(using mirror: Mirror.ProductOf[P]): Update[F, P] =
     val params = Tuple
       .fromProductTyped(value)
-      .zip(Parameter.fold[F, mirror.MirroredElemTypes])
+      .zip(Parameter.fold[mirror.MirroredElemTypes])
       .map[ParamBind](
         [t] =>
           (x: t) =>
-            val (value, parameter) = x.asInstanceOf[(t, Parameter[F, t])]
-            ParameterBinder[F, t](value)(using parameter)
+            val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+            ParameterBinder[t](value)(using parameter)
       )
       .toList
-      .asInstanceOf[List[ParameterBinder[F]]]
+      .asInstanceOf[List[ParameterBinder]]
     new Update[F, P](
       tableQuery = this,
       columns    = table.all.map(_.label),
@@ -353,19 +353,19 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
    * Method to construct a query to create a table.
    */
   val createTable: Command[F] = new Command[F]:
-    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def params:    Seq[ParameterBinder] = Seq.empty
     override def statement: String                  = createStatement
 
   /**
    * Method to construct a query to drop a table.
    */
   val dropTable: Command[F] = new Command[F]:
-    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def params:    Seq[ParameterBinder] = Seq.empty
     override def statement: String                  = dropStatement
 
   /**
    * Method to construct a query to truncate a table.
    */
   val truncateTable: Command[F] = new Command[F]:
-    override def params:    Seq[ParameterBinder[F]] = Seq.empty
+    override def params:    Seq[ParameterBinder] = Seq.empty
     override def statement: String                  = truncateStatement

@@ -25,7 +25,7 @@ private[ldbc] trait Command[F[_]]:
    * A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    * only.
    */
-  def params: Seq[ParameterBinder[F]]
+  def params: Seq[ParameterBinder]
 
 object Command:
 
@@ -45,7 +45,7 @@ object Command:
   case class Where[F[_]](
     _statement:       String,
     expressionSyntax: ExpressionSyntax[F],
-    params:           Seq[ParameterBinder[F]]
+    params:           Seq[ParameterBinder]
   ) extends Command[F],
             LimitProvider[F]:
 
@@ -62,7 +62,7 @@ object Command:
    */
   case class Limit[F[_]](
     _statement: String,
-    params:     Seq[ParameterBinder[F]]
+    params:     Seq[ParameterBinder]
   ) extends Command[F]:
 
     override def statement: String = _statement ++ " LIMIT ?"
@@ -82,7 +82,7 @@ object Command:
      * @param length
      *   Upper limit to be updated
      */
-    def limit(length: Long): Parameter[F, Long] ?=> Limit[F] =
+    def limit(length: Long): Parameter[Long] ?=> Limit[F] =
       Limit[F](
         _statement = statement,
         params     = params :+ ParameterBinder(length)

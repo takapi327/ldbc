@@ -34,105 +34,105 @@ private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
 
   def desc: OrderBy.Desc = OrderBy.Desc(this)
 
-  def _equals(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): MatchCondition[F, T] =
+  def _equals(value: Extract[T])(using parameter: Parameter[Extract[T]]): MatchCondition[F, T] =
     MatchCondition[F, T](noBagQuotLabel, false, value)
 
   @targetName("matchCondition")
-  def ===(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): MatchCondition[F, T] = _equals(value)
+  def ===(value: Extract[T])(using parameter: Parameter[Extract[T]]): MatchCondition[F, T] = _equals(value)
 
-  def orMore(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): OrMore[F, T] =
+  def orMore(value: Extract[T])(using parameter: Parameter[Extract[T]]): OrMore[F, T] =
     OrMore[F, T](noBagQuotLabel, false, value)
 
   @targetName("_orMore")
-  def >=(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): OrMore[F, T] = orMore(value)
+  def >=(value: Extract[T])(using parameter: Parameter[Extract[T]]): OrMore[F, T] = orMore(value)
 
-  def over(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Over[F, T] =
+  def over(value: Extract[T])(using parameter: Parameter[Extract[T]]): Over[F, T] =
     Over[F, T](noBagQuotLabel, false, value)
 
   @targetName("_over")
-  def >(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Over[F, T] = over(value)
+  def >(value: Extract[T])(using parameter: Parameter[Extract[T]]): Over[F, T] = over(value)
 
-  def lessThanOrEqual(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThanOrEqualTo[F, T] =
+  def lessThanOrEqual(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThanOrEqualTo[F, T] =
     LessThanOrEqualTo[F, T](noBagQuotLabel, false, value)
 
   @targetName("_lessThanOrEqual")
-  def <=(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThanOrEqualTo[F, T] = lessThanOrEqual(value)
+  def <=(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThanOrEqualTo[F, T] = lessThanOrEqual(value)
 
-  def lessThan(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThan[F, T] =
+  def lessThan(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThan[F, T] =
     LessThan[F, T](noBagQuotLabel, false, value)
 
   @targetName("_lessThan")
-  def <(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThan[F, T] = lessThan(value)
+  def <(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThan[F, T] = lessThan(value)
 
-  def notEqual(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NotEqual[F, T] =
+  def notEqual(value: Extract[T])(using parameter: Parameter[Extract[T]]): NotEqual[F, T] =
     NotEqual[F, T]("<>", noBagQuotLabel, false, value)
 
   @targetName("_notEqual")
-  def <>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NotEqual[F, T] = notEqual(value)
+  def <>(value: Extract[T])(using parameter: Parameter[Extract[T]]): NotEqual[F, T] = notEqual(value)
 
   @targetName("_!equal")
-  def !==(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NotEqual[F, T] =
+  def !==(value: Extract[T])(using parameter: Parameter[Extract[T]]): NotEqual[F, T] =
     NotEqual[F, T]("!=", noBagQuotLabel, false, value)
 
   def IS[A <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: A): Is[F, A] =
     Is[F, A](noBagQuotLabel, false, value)
 
-  def nullSafeEqual(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NullSafeEqual[F, T] =
+  def nullSafeEqual(value: Extract[T])(using parameter: Parameter[Extract[T]]): NullSafeEqual[F, T] =
     NullSafeEqual[F, T](noBagQuotLabel, false, value)
 
   @targetName("_nullSafeEqual")
-  def <=>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NullSafeEqual[F, T] = nullSafeEqual(value)
+  def <=>(value: Extract[T])(using parameter: Parameter[Extract[T]]): NullSafeEqual[F, T] = nullSafeEqual(value)
 
-  def IN(value: Extract[T]*)(using parameter: Parameter[F, Extract[T]]): In[F, T] =
+  def IN(value: Extract[T]*)(using parameter: Parameter[Extract[T]]): In[F, T] =
     In[F, T](noBagQuotLabel, false, value*)
 
-  def BETWEEN(start: Extract[T], end: Extract[T])(using parameter: Parameter[F, Extract[T]]): Between[F, T] =
+  def BETWEEN(start: Extract[T], end: Extract[T])(using parameter: Parameter[Extract[T]]): Between[F, T] =
     Between[F, T](noBagQuotLabel, false, start, end)
 
-  def LIKE(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Like[F, T] =
+  def LIKE(value: Extract[T])(using parameter: Parameter[Extract[T]]): Like[F, T] =
     Like[F, T](noBagQuotLabel, false, value)
 
-  def LIKE_ESCAPE(like: Extract[T], escape: Extract[T])(using parameter: Parameter[F, Extract[T]]): LikeEscape[F, T] =
+  def LIKE_ESCAPE(like: Extract[T], escape: Extract[T])(using parameter: Parameter[Extract[T]]): LikeEscape[F, T] =
     LikeEscape[F, T](noBagQuotLabel, false, like, escape)
 
-  def REGEXP(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Regexp[F, T] =
+  def REGEXP(value: Extract[T])(using parameter: Parameter[Extract[T]]): Regexp[F, T] =
     Regexp[F, T](noBagQuotLabel, false, value)
 
-  def leftShift(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LeftShift[F, T] =
+  def leftShift(value: Extract[T])(using parameter: Parameter[Extract[T]]): LeftShift[F, T] =
     LeftShift[F, T](noBagQuotLabel, false, value)
 
   @targetName("_leftShift")
-  def <<(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LeftShift[F, T] = leftShift(value)
+  def <<(value: Extract[T])(using parameter: Parameter[Extract[T]]): LeftShift[F, T] = leftShift(value)
 
-  def rightShift(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): RightShift[F, T] =
+  def rightShift(value: Extract[T])(using parameter: Parameter[Extract[T]]): RightShift[F, T] =
     RightShift[F, T](noBagQuotLabel, false, value)
 
   @targetName("_rightShift")
-  def >>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): RightShift[F, T] = rightShift(value)
+  def >>(value: Extract[T])(using parameter: Parameter[Extract[T]]): RightShift[F, T] = rightShift(value)
 
-  def DIV(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Div[F, T] =
+  def DIV(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Div[F, T] =
     Div[F, T](noBagQuotLabel, false, cond, result)
 
-  def MOD(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Mod[F, T] =
+  def MOD(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Mod[F, T] =
     Mod[F, T]("MOD", noBagQuotLabel, false, cond, result)
 
-  def mod(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Mod[F, T] =
+  def mod(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Mod[F, T] =
     Mod[F, T]("%", noBagQuotLabel, false, cond, result)
 
   @targetName("_mod")
-  def %(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Mod[F, T] = mod(cond, result)
+  def %(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Mod[F, T] = mod(cond, result)
 
-  def bitXOR(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitXOR[F, T] =
+  def bitXOR(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitXOR[F, T] =
     BitXOR[F, T](noBagQuotLabel, false, value)
 
   @targetName("_bitXOR")
-  def ^(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitXOR[F, T] = bitXOR(value)
+  def ^(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitXOR[F, T] = bitXOR(value)
 
-  def bitFlip(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitFlip[F, T] =
+  def bitFlip(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitFlip[F, T] =
     BitFlip[F, T](noBagQuotLabel, false, value)
 
   @targetName("_bitFlip")
-  def ~(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitFlip[F, T] = bitFlip(value)
+  def ~(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitFlip[F, T] = bitFlip(value)
 
   def combine(other: ColumnQuery[F, T]): ColumnQuery.MultiColumn[F, T] = ColumnQuery.MultiColumn[F, T]("+", this, other)
 
@@ -253,104 +253,104 @@ object ColumnQuery:
   private[ldbc] case class MultiColumn[F[_], T](flag: String, left: ColumnQuery[F, T], right: ColumnQuery[F, T]):
     val label: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
 
-    def _equals(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): MatchCondition[F, T] =
+    def _equals(value: Extract[T])(using parameter: Parameter[Extract[T]]): MatchCondition[F, T] =
       MatchCondition[F, T](label, false, value)
 
     @targetName("multiColumnEquals")
-    def ===(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): MatchCondition[F, T] = _equals(value)
+    def ===(value: Extract[T])(using parameter: Parameter[Extract[T]]): MatchCondition[F, T] = _equals(value)
 
-    def orMore(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): OrMore[F, T] =
+    def orMore(value: Extract[T])(using parameter: Parameter[Extract[T]]): OrMore[F, T] =
       OrMore[F, T](label, false, value)
 
     @targetName("multiColumnOrMore")
-    def >=(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): OrMore[F, T] = orMore(value)
+    def >=(value: Extract[T])(using parameter: Parameter[Extract[T]]): OrMore[F, T] = orMore(value)
 
-    def over(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Over[F, T] = Over[F, T](label, false, value)
+    def over(value: Extract[T])(using parameter: Parameter[Extract[T]]): Over[F, T] = Over[F, T](label, false, value)
 
     @targetName("multiColumnOver")
-    def >(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Over[F, T] = over(value)
+    def >(value: Extract[T])(using parameter: Parameter[Extract[T]]): Over[F, T] = over(value)
 
-    def lessThanOrEqual(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThanOrEqualTo[F, T] =
+    def lessThanOrEqual(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThanOrEqualTo[F, T] =
       LessThanOrEqualTo[F, T](label, false, value)
 
     @targetName("multiColumnLessThanOrEqual")
-    def <=(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThanOrEqualTo[F, T] = lessThanOrEqual(
+    def <=(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThanOrEqualTo[F, T] = lessThanOrEqual(
       value
     )
 
-    def lessThan(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThan[F, T] =
+    def lessThan(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThan[F, T] =
       LessThan[F, T](label, false, value)
 
     @targetName("multiColumnLessThan")
-    def <(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LessThan[F, T] = lessThan(value)
+    def <(value: Extract[T])(using parameter: Parameter[Extract[T]]): LessThan[F, T] = lessThan(value)
 
-    def notEqual(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NotEqual[F, T] =
+    def notEqual(value: Extract[T])(using parameter: Parameter[Extract[T]]): NotEqual[F, T] =
       NotEqual[F, T]("<>", label, false, value)
 
     @targetName("multiColumnNotEqual")
-    def <>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NotEqual[F, T] = notEqual(value)
+    def <>(value: Extract[T])(using parameter: Parameter[Extract[T]]): NotEqual[F, T] = notEqual(value)
 
     @targetName("multiColumn!Equal")
-    def !==(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NotEqual[F, T] =
+    def !==(value: Extract[T])(using parameter: Parameter[Extract[T]]): NotEqual[F, T] =
       NotEqual[F, T]("!=", label, false, value)
 
     def IS[A <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: A): Is[F, A] = Is[F, A](label, false, value)
 
-    def nullSafeEqual(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NullSafeEqual[F, T] =
+    def nullSafeEqual(value: Extract[T])(using parameter: Parameter[Extract[T]]): NullSafeEqual[F, T] =
       NullSafeEqual[F, T](label, false, value)
 
     @targetName("multiColumnNullSafeEqual")
-    def <=>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): NullSafeEqual[F, T] = nullSafeEqual(value)
+    def <=>(value: Extract[T])(using parameter: Parameter[Extract[T]]): NullSafeEqual[F, T] = nullSafeEqual(value)
 
-    def IN(value: Extract[T]*)(using parameter: Parameter[F, Extract[T]]): In[F, T] = In[F, T](label, false, value*)
+    def IN(value: Extract[T]*)(using parameter: Parameter[Extract[T]]): In[F, T] = In[F, T](label, false, value*)
 
-    def BETWEEN(start: Extract[T], end: Extract[T])(using parameter: Parameter[F, Extract[T]]): Between[F, T] =
+    def BETWEEN(start: Extract[T], end: Extract[T])(using parameter: Parameter[Extract[T]]): Between[F, T] =
       Between[F, T](label, false, start, end)
 
-    def LIKE(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Like[F, T] = Like[F, T](label, false, value)
+    def LIKE(value: Extract[T])(using parameter: Parameter[Extract[T]]): Like[F, T] = Like[F, T](label, false, value)
 
-    def LIKE_ESCAPE(like: Extract[T], escape: Extract[T])(using parameter: Parameter[F, Extract[T]]): LikeEscape[F, T] =
+    def LIKE_ESCAPE(like: Extract[T], escape: Extract[T])(using parameter: Parameter[Extract[T]]): LikeEscape[F, T] =
       LikeEscape[F, T](label, false, like, escape)
 
-    def REGEXP(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): Regexp[F, T] =
+    def REGEXP(value: Extract[T])(using parameter: Parameter[Extract[T]]): Regexp[F, T] =
       Regexp[F, T](label, false, value)
 
-    def leftShift(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LeftShift[F, T] =
+    def leftShift(value: Extract[T])(using parameter: Parameter[Extract[T]]): LeftShift[F, T] =
       LeftShift[F, T](label, false, value)
 
     @targetName("multiColumnLeftShift")
-    def <<(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): LeftShift[F, T] = leftShift(value)
+    def <<(value: Extract[T])(using parameter: Parameter[Extract[T]]): LeftShift[F, T] = leftShift(value)
 
-    def rightShift(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): RightShift[F, T] =
+    def rightShift(value: Extract[T])(using parameter: Parameter[Extract[T]]): RightShift[F, T] =
       RightShift[F, T](label, false, value)
 
     @targetName("multiColumnRightShift")
-    def >>(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): RightShift[F, T] = rightShift(value)
+    def >>(value: Extract[T])(using parameter: Parameter[Extract[T]]): RightShift[F, T] = rightShift(value)
 
-    def DIV(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Div[F, T] =
+    def DIV(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Div[F, T] =
       Div[F, T](label, false, cond, result)
 
-    def MOD(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Mod[F, T] =
+    def MOD(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Mod[F, T] =
       Mod[F, T]("MOD", label, false, cond, result)
 
-    def mod(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Mod[F, T] =
+    def mod(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Mod[F, T] =
       Mod[F, T]("%", label, false, cond, result)
 
     @targetName("multiColumnMOD")
-    def %(cond: Extract[T], result: Extract[T])(using parameter: Parameter[F, Extract[T]]): Mod[F, T] =
+    def %(cond: Extract[T], result: Extract[T])(using parameter: Parameter[Extract[T]]): Mod[F, T] =
       mod(cond, result)
 
-    def bitXOR(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitXOR[F, T] =
+    def bitXOR(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitXOR[F, T] =
       BitXOR[F, T](label, false, value)
 
     @targetName("multiColumnBitXOR")
-    def ^(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitXOR[F, T] = bitXOR(value)
+    def ^(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitXOR[F, T] = bitXOR(value)
 
-    def bitFlip(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitFlip[F, T] =
+    def bitFlip(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitFlip[F, T] =
       BitFlip[F, T](label, false, value)
 
     @targetName("multiColumnBitFlip")
-    def ~(value: Extract[T])(using parameter: Parameter[F, Extract[T]]): BitFlip[F, T] = bitFlip(value)
+    def ~(value: Extract[T])(using parameter: Parameter[Extract[T]]): BitFlip[F, T] = bitFlip(value)
 
     /** List of sub query methods */
     def _equals(value: Query[F, ColumnQuery[F, T] & Column[T]]): SubQuery[F, T] =

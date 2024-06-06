@@ -33,7 +33,7 @@ private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
       case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
       case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
     new DuplicateKeyUpdateInsert[F]:
-      override def params: Seq[ParameterBinder[F]] = self.params
+      override def params: Seq[ParameterBinder] = self.params
 
       override def statement: String =
         s"${ self.statement } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
@@ -66,7 +66,7 @@ trait DuplicateKeyUpdateInsert[F[_]] extends Command[F]
 case class SingleInsert[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuple:      T,
-  params:     Seq[ParameterBinder[F]]
+  params:     Seq[ParameterBinder]
 ) extends Insert[F, P]:
 
   override val statement: String =
@@ -93,7 +93,7 @@ case class SingleInsert[F[_], P <: Product, T <: Tuple](
 case class MultiInsert[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuples:     List[T],
-  params:     Seq[ParameterBinder[F]]
+  params:     Seq[ParameterBinder]
 ) extends Insert[F, P]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
@@ -120,7 +120,7 @@ case class MultiInsert[F[_], P <: Product, T <: Tuple](
 case class SelectInsert[F[_], P <: Product, T](
   query:     TableQuery[F, P],
   columns:   T,
-  parameter: Parameter.MapToTuple[F, Column.Extract[T]]
+  parameter: Parameter.MapToTuple[Column.Extract[T]]
 ):
 
   private val columnStatement = columns match
@@ -134,10 +134,10 @@ case class SelectInsert[F[_], P <: Product, T](
     new Insert[F, P]:
       override def tableQuery: TableQuery[F, P] = query
       override def statement: String = s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
-      override def params: Seq[ParameterBinder[F]] =
+      override def params: Seq[ParameterBinder] =
         tuple.zip(parameter).toArray.toSeq.map {
           case (value: Any, parameter: Any) =>
-            ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+            ParameterBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
         }
 
   def values(tuples: List[Column.Extract[T]]): Insert[F, P] =
@@ -145,10 +145,10 @@ case class SelectInsert[F[_], P <: Product, T](
     new Insert[F, P]:
       override def tableQuery: TableQuery[F, P] = query
       override def statement:  String           = s"$insertStatement VALUES${ values.mkString(", ") }"
-      override def params: Seq[ParameterBinder[F]] =
+      override def params: Seq[ParameterBinder] =
         tuples.flatMap(_.zip(parameter).toArray.map {
           case (value: Any, parameter: Any) =>
-            ParameterBinder[F, Any](value)(using parameter.asInstanceOf[Parameter[F, Any]])
+            ParameterBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
         })
 
 /**
@@ -171,7 +171,7 @@ case class SelectInsert[F[_], P <: Product, T](
 case class DuplicateKeyUpdate[F[_], P <: Product, T <: Tuple](
   tableQuery: TableQuery[F, P],
   tuples:     List[T],
-  params:     Seq[ParameterBinder[F]]
+  params:     Seq[ParameterBinder]
 ) extends DuplicateKeyUpdateInsert[F]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")

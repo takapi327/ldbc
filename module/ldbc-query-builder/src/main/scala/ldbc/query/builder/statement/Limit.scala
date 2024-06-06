@@ -26,13 +26,13 @@ import ldbc.sql.{ Parameter, ParameterBinder }
 private[ldbc] case class Limit[F[_], T](
   statement: String,
   columns:   T,
-  params:    Seq[ParameterBinder[F]]
+  params:    Seq[ParameterBinder]
 ) extends Query[F, T]:
 
   /**
    * A method for setting the OFFSET condition in a statement.
    */
-  def offset(length: Long): Parameter[F, Long] ?=> Limit[F, T] =
+  def offset(length: Long): Parameter[Long] ?=> Limit[F, T] =
     Limit(
       statement = statement ++ " OFFSET ?",
       columns   = columns,
@@ -53,7 +53,7 @@ private[ldbc] transparent trait LimitProvider[F[_], T]:
   /**
    * A method for setting the LIMIT condition in a statement.
    */
-  def limit(length: Long): Parameter[F, Long] ?=> Limit[F, T] =
+  def limit(length: Long): Parameter[Long] ?=> Limit[F, T] =
     Limit(
       statement = statement ++ " LIMIT ?",
       columns   = columns,

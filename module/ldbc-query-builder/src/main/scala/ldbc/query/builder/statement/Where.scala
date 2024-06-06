@@ -33,7 +33,7 @@ private[ldbc] case class Where[F[_], P <: Product, T](
   tableQuery: TableQuery[F, P],
   statement:  String,
   columns:    T,
-  params:     Seq[ParameterBinder[F]]
+  params:     Seq[ParameterBinder]
 ) extends Query[F, T],
           OrderByProvider[F, P, T],
           LimitProvider[F, T]:

@@ -24,7 +24,7 @@ case class Delete[F[_], P <: Product](
 ) extends Command[F],
           Command.LimitProvider[F]:
 
-  override def params: Seq[ParameterBinder[F]] = Seq.empty
+  override def params: Seq[ParameterBinder] = Seq.empty
 
   override def statement: String = s"DELETE FROM ${ tableQuery.table._name }"
 

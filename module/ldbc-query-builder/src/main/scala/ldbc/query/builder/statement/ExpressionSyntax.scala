@@ -31,7 +31,7 @@ private[ldbc] trait ExpressionSyntax[F[_]]:
   /**
    * Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.
    */
-  def parameter: Seq[ParameterBinder[F]]
+  def parameter: Seq[ParameterBinder]
 
   /**
    * Methods for combining expressions. Both conditions must be positive for the expression to be combined with this
@@ -113,7 +113,7 @@ object ExpressionSyntax:
         case (l, r)          => l.statement + flag + r.statement
       s"($result)"
 
-    override def parameter: Seq[ParameterBinder[F]] = left.parameter ++ right.parameter
+    override def parameter: Seq[ParameterBinder] = left.parameter ++ right.parameter
 
   /**
    * Model for building sub queries.
@@ -136,7 +136,7 @@ object ExpressionSyntax:
   ) extends ExpressionSyntax[F]:
 
     override def statement: String                  = s"$column $flag (${ value.statement })"
-    override def parameter: Seq[ParameterBinder[F]] = value.params
+    override def parameter: Seq[ParameterBinder] = value.params
 
   /**
    * Model for building join queries.
@@ -160,14 +160,14 @@ object ExpressionSyntax:
 
     override def statement = s"${ left.alias.fold(left.label)(name => s"$name.${ left.label }") } $flag ${ right.alias
         .fold(right.label)(name => s"$name.${ right.label }") }"
-    override def parameter: Seq[ParameterBinder[F]] = Seq.empty
+    override def parameter: Seq[ParameterBinder] = Seq.empty
 
   /** comparison operator */
   private[ldbc] case class MatchCondition[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "="
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -175,10 +175,10 @@ object ExpressionSyntax:
     def NOT: MatchCondition[F, T] = MatchCondition[F, T](this.column, true, this.value)
 
   private[ldbc] case class OrMore[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = ">="
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -186,10 +186,10 @@ object ExpressionSyntax:
     def NOT: OrMore[F, T] = OrMore[F, T](this.column, true, this.value)
 
   private[ldbc] case class Over[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = ">"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -197,10 +197,10 @@ object ExpressionSyntax:
     def NOT: Over[F, T] = Over[F, T](this.column, true, this.value)
 
   private[ldbc] case class LessThanOrEqualTo[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "<="
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -208,10 +208,10 @@ object ExpressionSyntax:
     def NOT: LessThanOrEqualTo[F, T] = LessThanOrEqualTo[F, T](this.column, true, this.value)
 
   private[ldbc] case class LessThan[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "<"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -219,9 +219,9 @@ object ExpressionSyntax:
     def NOT: LessThan[F, T] = LessThan[F, T](this.column, true, this.value)
 
   private[ldbc] case class NotEqual[F[_], T](flag: String, column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -234,7 +234,7 @@ object ExpressionSyntax:
     value:  T
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "IS"
-    override def parameter: Seq[ParameterBinder[F]] = Seq.empty
+    override def parameter: Seq[ParameterBinder] = Seq.empty
     override def statement: String =
       val not = if isNot then " NOT" else ""
       s"$column $flag$not $value"
@@ -242,10 +242,10 @@ object ExpressionSyntax:
     def NOT: Is[F, T] = Is[F, T](this.column, true, this.value)
 
   private[ldbc] case class NullSafeEqual[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "<=>"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -253,10 +253,10 @@ object ExpressionSyntax:
     def NOT: NullSafeEqual[F, T] = NullSafeEqual[F, T](this.column, true, this.value)
 
   private[ldbc] case class In[F[_], T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String                  = "IN"
-    override def parameter: Seq[ParameterBinder[F]] = values.map(ParameterBinder(_))
+    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$column $not$flag (${ values.map(_ => "?").mkString(", ") })"
@@ -264,10 +264,10 @@ object ExpressionSyntax:
     def NOT: In[F, T] = In[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Between[F[_], T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String                  = "BETWEEN"
-    override def parameter: Seq[ParameterBinder[F]] = values.map(ParameterBinder(_))
+    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$column $not$flag ? AND ?"
@@ -275,10 +275,10 @@ object ExpressionSyntax:
     def NOT: Between[F, T] = Between[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Like[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "LIKE"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -286,10 +286,10 @@ object ExpressionSyntax:
     def NOT: Like[F, T] = Like[F, T](this.column, true, this.value)
 
   private[ldbc] case class LikeEscape[F[_], T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String                  = "LIKE"
-    override def parameter: Seq[ParameterBinder[F]] = values.map(ParameterBinder(_))
+    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? ESCAPE ?"
@@ -297,10 +297,10 @@ object ExpressionSyntax:
     def NOT: LikeEscape[F, T] = LikeEscape[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Regexp[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "REGEXP"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -308,10 +308,10 @@ object ExpressionSyntax:
     def NOT: Regexp[F, T] = Regexp[F, T](this.column, true, this.value)
 
   private[ldbc] case class LeftShift[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "<<"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -319,10 +319,10 @@ object ExpressionSyntax:
     def NOT: LeftShift[F, T] = LeftShift[F, T](this.column, true, this.value)
 
   private[ldbc] case class RightShift[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = ">>"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -330,10 +330,10 @@ object ExpressionSyntax:
     def NOT: RightShift[F, T] = RightShift[F, T](this.column, true, this.value)
 
   private[ldbc] case class Div[F[_], T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
     override def flag:      String                  = "DIV"
-    override def parameter: Seq[ParameterBinder[F]] = values.map(ParameterBinder(_))
+    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
@@ -341,9 +341,9 @@ object ExpressionSyntax:
     def NOT: Div[F, T] = Div[F, T](this.column, true, this.values*)
 
   private[ldbc] case class Mod[F[_], T](flag: String, column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[F, T]:
-    override def parameter: Seq[ParameterBinder[F]] = values.map(ParameterBinder(_))
+    override def parameter: Seq[ParameterBinder] = values.map(ParameterBinder(_))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ? = ?"
@@ -351,10 +351,10 @@ object ExpressionSyntax:
     def NOT: Mod[F, T] = Mod[F, T](this.flag, this.column, true, this.values*)
 
   private[ldbc] case class BitXOR[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "^"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -362,10 +362,10 @@ object ExpressionSyntax:
     def NOT: BitXOR[F, T] = BitXOR[F, T](this.column, true, this.value)
 
   private[ldbc] case class BitFlip[F[_], T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[F, Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[F, T]:
     override def flag:      String                  = "~"
-    override def parameter: Seq[ParameterBinder[F]] = Seq(ParameterBinder(value))
+    override def parameter: Seq[ParameterBinder] = Seq(ParameterBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$flag$column = ?"

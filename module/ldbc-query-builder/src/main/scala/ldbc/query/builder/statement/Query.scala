@@ -32,4 +32,4 @@ private[ldbc] trait Query[F[_], T]:
    * A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    * only.
    */
-  def params: Seq[ParameterBinder[F]]
+  def params: Seq[ParameterBinder]
