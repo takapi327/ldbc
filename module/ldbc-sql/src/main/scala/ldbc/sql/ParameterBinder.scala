@@ -12,7 +12,7 @@ package ldbc.sql
  * @tparam F
  *   The effect type
  */
-trait ParameterBinder[F[_]]:
+trait ParameterBinder:
 
   /** Query parameters to be plugged into the Statement. */
   def parameter: Any
@@ -25,19 +25,19 @@ trait ParameterBinder[F[_]]:
    * @param index
    *   the first parameter is 1, the second is 2, ...
    */
-  def bind(statement: PreparedStatement[F], index: Int): F[Unit]
+  def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit]
 
 object ParameterBinder:
 
-  trait Static[F[_]] extends ParameterBinder[F]:
+  trait Static extends ParameterBinder:
     def value:              String
     override def parameter: Any = value
 
-  def apply[F[_], T](value: T)(using param: Parameter[F, T]): ParameterBinder[F] =
-    new ParameterBinder[F]:
+  def apply[T](value: T)(using param: Parameter[T]): ParameterBinder =
+    new ParameterBinder:
       override def parameter: Any = value
-      override def bind(statement: PreparedStatement[F], index: Int): F[Unit] =
+      override def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit] =
         param.bind(statement, index, value)
 
-  given [F[_], T](using Parameter[F, T]): Conversion[T, ParameterBinder[F]] with
-    override def apply(x: T): ParameterBinder[F] = ParameterBinder[F, T](x)
+  given [T](using Parameter[T]): Conversion[T, ParameterBinder] with
+    override def apply(x: T): ParameterBinder = ParameterBinder[T](x)

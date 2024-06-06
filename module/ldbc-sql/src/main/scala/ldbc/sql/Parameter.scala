@@ -13,12 +13,10 @@ import scala.compiletime.*
 /**
  * Trait for setting Scala and Java values to PreparedStatement.
  *
- * @tparam F
- *   The effect type
  * @tparam T
  *   Scala and Java types available in PreparedStatement.
  */
-trait Parameter[F[_], -T]:
+trait Parameter[-T]:
 
   /**
    * Methods for setting Scala and Java values to the specified position in PreparedStatement.
@@ -29,114 +27,117 @@ trait Parameter[F[_], -T]:
    *   the first parameter is 1, the second is 2, ...
    * @param value
    *   the parameter value
+   * @tparam F
+   *   The effect type
    */
-  def bind(statement: PreparedStatement[F], index: Int, value: T): F[Unit]
+  def bind[F[_]](statement: PreparedStatement[F], index: Int, value: T): F[Unit]
 
 object Parameter:
 
-  def convert[F[_], A, B](f: B => A)(using parameter: Parameter[F, A]): Parameter[F, B] =
-    (statement: PreparedStatement[F], index: Int, value: B) => parameter.bind(statement, index, f(value))
+  def convert[A, B](f: B => A)(using parameter: Parameter[A]): Parameter[B] = new Parameter[B]:
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: B): F[Unit] = 
+      parameter.bind[F](statement, index, f(value))
 
-  given [F[_]]: Parameter[F, Boolean] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Boolean): F[Unit] =
+  given Parameter[Boolean] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Boolean): F[Unit] =
       statement.setBoolean(index, value)
 
-  given [F[_]]: Parameter[F, Byte] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Byte): F[Unit] =
+  given Parameter[Byte] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Byte): F[Unit] =
       statement.setByte(index, value)
 
-  given [F[_]]: Parameter[F, Int] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Int): F[Unit] =
+  given Parameter[Int] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Int): F[Unit] =
       statement.setInt(index, value)
 
-  given [F[_]]: Parameter[F, Short] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Short): F[Unit] =
+  given Parameter[Short] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Short): F[Unit] =
       statement.setShort(index, value)
 
-  given [F[_]]: Parameter[F, Long] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Long): F[Unit] =
+  given Parameter[Long] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Long): F[Unit] =
       statement.setLong(index, value)
 
-  given [F[_]]: Parameter[F, Float] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Float): F[Unit] =
+  given Parameter[Float] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Float): F[Unit] =
       statement.setFloat(index, value)
 
-  given [F[_]]: Parameter[F, Double] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Double): F[Unit] =
+  given Parameter[Double] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Double): F[Unit] =
       statement.setDouble(index, value)
 
-  given [F[_]]: Parameter[F, BigDecimal] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: BigDecimal): F[Unit] =
+  given Parameter[BigDecimal] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: BigDecimal): F[Unit] =
       statement.setBigDecimal(index, value)
 
-  given [F[_]]: Parameter[F, String] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: String): F[Unit] =
+  given Parameter[String] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: String): F[Unit] =
       statement.setString(index, value)
 
-  given [F[_]]: Parameter[F, Array[Byte]] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Array[Byte]): F[Unit] =
+  given Parameter[Array[Byte]] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Array[Byte]): F[Unit] =
       statement.setBytes(index, value)
 
-  given [F[_]]: Parameter[F, LocalDate] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: LocalDate): F[Unit] =
+  given Parameter[LocalDate] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: LocalDate): F[Unit] =
       statement.setDate(index, value)
 
-  given [F[_]]: Parameter[F, LocalTime] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: LocalTime): F[Unit] =
+  given Parameter[LocalTime] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: LocalTime): F[Unit] =
       statement.setTime(index, value)
 
-  given [F[_]]: Parameter[F, LocalDateTime] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: LocalDateTime): F[Unit] =
+  given Parameter[LocalDateTime] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: LocalDateTime): F[Unit] =
       statement.setTimestamp(index, value)
 
-  given [F[_]]: Parameter[F, Instant] =
+  given Parameter[Instant] =
     Parameter.convert(instant => LocalDateTime.ofInstant(instant, ZoneId.systemDefault()))
 
-  given [F[_]]: Parameter[F, ZonedDateTime] = Parameter.convert(_.toInstant)
+  given Parameter[ZonedDateTime] = Parameter.convert(_.toInstant)
 
-  given [F[_]]: Parameter[F, Object] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
+  given Parameter[Object] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
       statement.setObject(index, value)
 
-  given [F[_]]: Parameter[F, Null] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
+  given Parameter[Null] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
       statement.setObject(index, value)
 
-  given [F[_]]: Parameter[F, None.type] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
+  given Parameter[None.type] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
       statement.setObject(index, null)
 
-  given [F[_], T](using parameter: Parameter[F, T], nullParameter: Parameter[F, Null]): Parameter[F, Option[T]] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Option[T]): F[Unit] =
+  given [T](using parameter: Parameter[T], nullParameter: Parameter[Null]): Parameter[Option[T]] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Option[T]): F[Unit] =
       value match
         case Some(value) => parameter.bind(statement, index, value)
         case None        => nullParameter.bind(statement, index, null)
 
-  given [F[_], T](using parameter: Parameter[F, String]): Parameter[F, List[T]] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: List[T]): F[Unit] =
+  given [T](using parameter: Parameter[String]): Parameter[List[T]] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: List[T]): F[Unit] =
       parameter.bind(statement, index, value.mkString(","))
 
-  given [F[_], T](using parameter: Parameter[F, String]): Parameter[F, Seq[T]] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Seq[T]): F[Unit] =
+  given [T](using parameter: Parameter[String]): Parameter[Seq[T]] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Seq[T]): F[Unit] =
       parameter.bind(statement, index, value.mkString(","))
 
-  given [F[_], T](using parameter: Parameter[F, String]): Parameter[F, Set[T]] with
-    override def bind(statement: PreparedStatement[F], index: Int, value: Set[T]): F[Unit] =
+  given [T](using parameter: Parameter[String]): Parameter[Set[T]] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Set[T]): F[Unit] =
       parameter.bind(statement, index, value.mkString(","))
 
-  type MapToTuple[F[_], T] <: Tuple = T match
+  type MapToTuple[T] <: Tuple = T match
     case EmptyTuple      => EmptyTuple
-    case h *: EmptyTuple => Parameter[F, h] *: EmptyTuple
-    case h *: t          => Parameter[F, h] *: MapToTuple[F, t]
+    case h *: EmptyTuple => Parameter[h] *: EmptyTuple
+    case h *: t          => Parameter[h] *: MapToTuple[t]
 
-  inline def infer[F[_], T]: Parameter[F, T] =
-    summonFrom[Parameter[F, T]] {
-      case parameter: Parameter[F, T] => parameter
+  inline def infer[T]: Parameter[T] =
+    summonFrom[Parameter[T]] {
+      case parameter: Parameter[T] => parameter
       case _                          => error("Parameter cannot be inferred")
     }
 
-  inline def fold[F[_], T]: MapToTuple[F, T] =
+  inline def fold[T]: MapToTuple[T] =
     inline erasedValue[T] match
       case _: EmptyTuple        => EmptyTuple
-      case _: (h *: EmptyTuple) => infer[F, h] *: EmptyTuple
-      case _: (h *: t)          => infer[F, h] *: fold[F, t]
+      case _: (h *: EmptyTuple) => infer[h] *: EmptyTuple
+      case _: (h *: t)          => infer[h] *: fold[t]
