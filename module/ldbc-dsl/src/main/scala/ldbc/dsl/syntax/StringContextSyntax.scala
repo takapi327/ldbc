@@ -22,19 +22,19 @@ trait StringContextSyntax[F[_]: Temporal]:
 
   extension (sc: StringContext)
 
-    def p(args: ParameterBinder[F]*): SQL[F] =
+    def p(args: ParameterBinder*): SQL[F] =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
       Mysql(strings.mkString("?"), expressions.toList)
 
-    def sql(args: ParameterBinder[F]*): SQL[F] =
+    def sql(args: ParameterBinder*): SQL[F] =
       val query = sc.parts.iterator.mkString("?")
 
       // If it is Static, the value is replaced with the ? If it is a ParameterBinder, it is replaced with ? and create a list of ParameterBinders.
-      val (expressions, parameters) = args.foldLeft((query, List.empty[ParameterBinder[F]])) {
-        case ((query, parameters), s: ParameterBinder.Static[?]) =>
+      val (expressions, parameters) = args.foldLeft((query, List.empty[ParameterBinder])) {
+        case ((query, parameters), s: ParameterBinder.Static) =>
           (query.replaceFirst("\\?", s.toString), parameters)
-        case ((query, parameters), p: ParameterBinder[?]) =>
+        case ((query, parameters), p: ParameterBinder) =>
           (query, parameters :+ p)
       }
 
