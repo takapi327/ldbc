@@ -8,8 +8,6 @@ package ldbc.query.builder
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import cats.Id
-
 import ldbc.core.*
 
 class TableQueryTest extends AnyFlatSpec:
