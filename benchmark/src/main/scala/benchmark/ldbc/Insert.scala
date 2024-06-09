@@ -35,7 +35,7 @@ class Insert:
   var noLog: LogHandler[IO] = uninitialized
 
   @volatile
-  var query: TableQuery[IO, Test] = uninitialized
+  var query: TableQuery[Test] = uninitialized
 
   @volatile
   var records: List[(Int, String)] = List.empty
@@ -54,7 +54,7 @@ class Insert:
 
     noLog = _ => IO.unit
 
-    query = TableQuery[IO, Test](Test.table)
+    query = TableQuery[Test](Test.table)
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized

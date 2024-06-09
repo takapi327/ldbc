@@ -28,7 +28,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |val query = user.selectAll.toList[User]
@@ -54,7 +54,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |case class FailedUser(id: Long, name: String, age: Option[Int])
@@ -83,7 +83,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |val query: Kleisli[IO, Connection[IO], List[(Long, String, Int)]] = user.selectAll.toList
@@ -109,7 +109,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |val query = user.selectAll.where(_.id === 1).headOption[User]
@@ -135,7 +135,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |case class FailedUser(id: Long, name: String, age: Option[Int])
@@ -164,7 +164,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |val query: Kleisli[IO, Connection[IO], Option[(Long, String, Int)]] = user.selectAll.where(_.id === 1).headOption
@@ -192,7 +192,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |val query: Kleisli[IO, Connection[IO], User] = user.selectAll.where(_.id === 1).unsafe[User]
@@ -218,7 +218,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |case class FailedUser(id: Long, name: String, age: Option[Int])
@@ -247,7 +247,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("age", INT)
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
+        |val user = TableQuery[User](User.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |val query: Kleisli[IO, Connection[IO], (Long, String, Int)] = user.selectAll.where(_.id === 1).unsafe
@@ -283,8 +283,8 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("name", VARCHAR(255))
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
-        |val category = TableQuery[IO, Category](Category.table)
+        |val user = TableQuery[User](User.table)
+        |val category = TableQuery[Category](Category.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |
@@ -324,8 +324,8 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |    column("name", VARCHAR(255))
         |  )
         |
-        |val user = TableQuery[IO, User](User.table)
-        |val category = TableQuery[IO, Category](Category.table)
+        |val user = TableQuery[User](User.table)
+        |val category = TableQuery[Category](Category.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |
@@ -384,9 +384,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |      CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(table.countryCode, REFERENCE(Country.table, Country.table.code)))
         |    ))
         |
-        |val countryQuery = TableQuery[IO, Country](Country.table)
-        |val cityQuery = TableQuery[IO, City](City.table)
-        |val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+        |val countryQuery = TableQuery[Country](Country.table)
+        |val cityQuery = TableQuery[City](City.table)
+        |val countryLanguageQuery = TableQuery[CountryLanguage](CountryLanguage.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |
@@ -444,9 +444,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |      CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(table.countryCode, REFERENCE(Country.table, Country.table.code)))
         |    ))
         |
-        |val countryQuery = TableQuery[IO, Country](Country.table)
-        |val cityQuery = TableQuery[IO, City](City.table)
-        |val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+        |val countryQuery = TableQuery[Country](Country.table)
+        |val cityQuery = TableQuery[City](City.table)
+        |val countryLanguageQuery = TableQuery[CountryLanguage](CountryLanguage.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |
@@ -504,9 +504,9 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |      CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(table.countryCode, REFERENCE(Country.table, Country.table.code)))
         |    ))
         |
-        |val countryQuery = TableQuery[IO, Country](Country.table)
-        |val cityQuery = TableQuery[IO, City](City.table)
-        |val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+        |val countryQuery = TableQuery[Country](Country.table)
+        |val cityQuery = TableQuery[City](City.table)
+        |val countryLanguageQuery = TableQuery[CountryLanguage](CountryLanguage.table)
         |
         |given LogHandler[IO] = LogHandler.noop[IO]
         |

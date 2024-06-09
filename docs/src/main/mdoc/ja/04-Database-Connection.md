@@ -46,7 +46,7 @@ val table = Table[User]("user")(
   column("age", INT.UNSIGNED.DEFAULT(None)),
 )
 
-val userQuery = TableQuery[IO, User](table)
+val userQuery = TableQuery[User](table)
 ```
 
 ## DataSourceの使用
