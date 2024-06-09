@@ -13,7 +13,7 @@ import ldbc.sql.Parameter
 import ldbc.dsl.SQL
 
 /**
- * A model for constructing LIMIT statements in MySQL.
+ * A model for constructing OFFSET statements in MySQL.
  *
  * @param query
  *   Query string
@@ -21,22 +21,13 @@ import ldbc.dsl.SQL
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
  */
-private[ldbc] case class Limit(
+private[ldbc] case class Offset(
                                    query: String,
                                    params:    List[Parameter.DynamicBinder]
                                  ) extends SQL:
-  
-  override def statement: String = query ++ " LIMIT ?"
+
+  override def statement: String = query ++ " OFFSET ?"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Limit(statement ++ sql.statement, params ++ sql.params)
-
-  /**
-   * A method for setting the OFFSET condition in a statement.
-   */
-  def offset(length: Long): Parameter[Long] ?=> Offset =
-    Offset(
-      query  = statement,
-      params = params :+ Parameter.DynamicBinder(length)
-    )
+    Offset(statement ++ sql.statement, params ++ sql.params)
