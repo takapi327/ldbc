@@ -21,7 +21,7 @@ import ldbc.dsl.logging.*
 
 trait CommandSyntax[F[_]: Sync]:
 
-  extension (command: Command[F])
+  extension (command: Command)
     def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
       (for
         statement <- connection.prepareStatement(command.statement)

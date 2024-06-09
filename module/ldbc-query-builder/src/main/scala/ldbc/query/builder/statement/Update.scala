@@ -31,7 +31,7 @@ case class Update[F[_], P <: Product](
   tableQuery: TableQuery[F, P],
   columns:    List[String],
   params:     Seq[Parameter.DynamicBinder]
-) extends Command[F],
+) extends Command,
           Command.LimitProvider[F]:
 
   private val values = columns.map(column => s"$column = ?")

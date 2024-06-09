@@ -19,7 +19,7 @@ import ldbc.query.builder.interpreter.Tuples
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
+private[ldbc] trait Insert[F[_], P <: Product] extends Command:
   self =>
 
   /** A model for generating queries from Table information. */
@@ -44,7 +44,7 @@ private[ldbc] trait Insert[F[_], P <: Product] extends Command[F]:
  * @tparam F
  *   The effect type
  */
-trait DuplicateKeyUpdateInsert[F[_]] extends Command[F]
+trait DuplicateKeyUpdateInsert[F[_]] extends Command
 
 /**
  * A model for constructing INSERT statements that insert single values in MySQL.

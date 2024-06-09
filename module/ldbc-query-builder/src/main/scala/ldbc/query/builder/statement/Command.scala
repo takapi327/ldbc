@@ -10,11 +10,8 @@ import ldbc.sql.Parameter
 
 /**
  * Trait for building Statements to be added, updated, and deleted.
- *
- * @tparam F
- *   The effect type
  */
-private[ldbc] trait Command[F[_]]:
+private[ldbc] trait Command:
 
   /**
    * SQL statement string
@@ -46,7 +43,7 @@ object Command:
     _statement:       String,
     expressionSyntax: ExpressionSyntax[F],
     params:           Seq[Parameter.DynamicBinder]
-  ) extends Command[F],
+  ) extends Command,
             LimitProvider[F]:
 
     override def statement: String = _statement ++ s" WHERE ${ expressionSyntax.statement }"
@@ -63,7 +60,7 @@ object Command:
   case class Limit[F[_]](
     _statement: String,
     params:     Seq[Parameter.DynamicBinder]
-  ) extends Command[F]:
+  ) extends Command:
 
     override def statement: String = _statement ++ " LIMIT ?"
 
@@ -74,7 +71,7 @@ object Command:
    *   The effect type
    */
   private[ldbc] transparent trait LimitProvider[F[_]]:
-    self: Command[F] =>
+    self: Command =>
 
     /**
      * A method for setting the LIMIT condition in a statement.

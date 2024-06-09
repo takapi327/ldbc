@@ -21,7 +21,7 @@ import ldbc.query.builder.TableQuery
  */
 case class Delete[F[_], P <: Product](
   tableQuery: TableQuery[F, P]
-) extends Command[F],
+) extends Command,
           Command.LimitProvider[F]:
 
   override def params: Seq[Parameter.DynamicBinder] = Seq.empty

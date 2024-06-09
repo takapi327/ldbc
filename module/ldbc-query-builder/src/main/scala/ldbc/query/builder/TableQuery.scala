@@ -352,20 +352,20 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
   /**
    * Method to construct a query to create a table.
    */
-  val createTable: Command[F] = new Command[F]:
+  val createTable: Command = new Command:
     override def params:    Seq[Parameter.DynamicBinder] = Seq.empty
     override def statement: String                       = createStatement
 
   /**
    * Method to construct a query to drop a table.
    */
-  val dropTable: Command[F] = new Command[F]:
+  val dropTable: Command = new Command:
     override def params:    Seq[Parameter.DynamicBinder] = Seq.empty
     override def statement: String                       = dropStatement
 
   /**
    * Method to construct a query to truncate a table.
    */
-  val truncateTable: Command[F] = new Command[F]:
+  val truncateTable: Command = new Command:
     override def params:    Seq[Parameter.DynamicBinder] = Seq.empty
     override def statement: String                       = truncateStatement
