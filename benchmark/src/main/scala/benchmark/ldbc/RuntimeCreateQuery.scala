@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
-
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
 
