@@ -63,8 +63,7 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
   override def beforeAll(): Unit =
     connection
       .use { conn =>
-        sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)"
-          .update
+        sql"CREATE TABLE $table (`id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, `c1` VARCHAR(255) NOT NULL)".update
           .commit(conn)
       }
       .unsafeRunSync()

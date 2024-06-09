@@ -52,11 +52,13 @@ object ResultSetConsumer:
         result  <- if hasNext then resultSetKleisli.run(resultSet).map(_.some) else Monad[F].pure(None)
       yield result
 
-  given [F[_]: Monad, T, G[_]: Applicative: MonoidK](using resultSetKleisli: Kleisli[F, ResultSet[F], T]): ResultSetConsumer[F, G[T]] with
+  given [F[_]: Monad, T, G[_]: Applicative: MonoidK](using
+    resultSetKleisli: Kleisli[F, ResultSet[F], T]
+  ): ResultSetConsumer[F, G[T]] with
     override def consume(resultSet: ResultSet[F]): F[G[T]] =
       def loop(acc: G[T]): F[G[T]] =
         resultSet.next().flatMap {
           case false => Monad[F].pure(acc)
-          case true => resultSetKleisli.run(resultSet).flatMap(v => loop(acc <+> Applicative[G].pure(v)))
+          case true  => resultSetKleisli.run(resultSet).flatMap(v => loop(acc <+> Applicative[G].pure(v)))
         }
       loop(MonoidK[G].empty)

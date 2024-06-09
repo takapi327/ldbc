@@ -12,7 +12,7 @@ import cats.syntax.all.*
 
 import cats.effect.Temporal
 
-import ldbc.sql.{Parameter, ResultSet}
+import ldbc.sql.{ Parameter, ResultSet }
 import ldbc.dsl.*
 
 /**
@@ -28,7 +28,7 @@ trait Query[F[_], T](using Kleisli[F, ResultSet[F], T]):
   /**
    * Functions for safely retrieving data from a database in an array or Option type.
    */
-  def to[G[_] : Traverse : Alternative]: Executor[F, G[T]]
+  def to[G[_]: Traverse: Alternative]: Executor[F, G[T]]
 
   /**
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
@@ -37,13 +37,14 @@ trait Query[F[_], T](using Kleisli[F, ResultSet[F], T]):
   def unsafe: Executor[F, T]
 
 object Query:
-  
+
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
-    params: List[Parameter.DynamicBinder]
-  )(using Kleisli[F, ResultSet[F], T]) extends Query[F, T]:
+    params:    List[Parameter.DynamicBinder]
+  )(using Kleisli[F, ResultSet[F], T])
+    extends Query[F, T]:
 
-    override def to[G[_] : Traverse : Alternative]: Executor[F, G[T]] =
+    override def to[G[_]: Traverse: Alternative]: Executor[F, G[T]] =
       Executor.Impl[F, G[T]](
         statement,
         params,
@@ -51,8 +52,8 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet <- params.zipWithIndex.traverse {
-              case (param, index) => param.bind[F](prepareStatement, index + 1)
-            } >> prepareStatement.executeQuery()
+                           case (param, index) => param.bind[F](prepareStatement, index + 1)
+                         } >> prepareStatement.executeQuery()
             result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
           yield result
       )
@@ -65,8 +66,8 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet <- params.zipWithIndex.traverse {
-              case (param, index) => param.bind[F](prepareStatement, index + 1)
-            } >> prepareStatement.executeQuery()
+                           case (param, index) => param.bind[F](prepareStatement, index + 1)
+                         } >> prepareStatement.executeQuery()
             result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
           yield result
       )
