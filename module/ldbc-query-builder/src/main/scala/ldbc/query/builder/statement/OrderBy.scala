@@ -7,7 +7,7 @@
 package ldbc.query.builder.statement
 
 import ldbc.core.Column
-import ldbc.sql.ParameterBinder
+import ldbc.sql.Parameter
 import ldbc.query.builder.TableQuery
 
 /**
@@ -22,20 +22,18 @@ import ldbc.query.builder.TableQuery
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Union type of column
  */
-private[ldbc] case class OrderBy[F[_], P <: Product, T](
-  tableQuery: TableQuery[F, P],
+private[ldbc] case class OrderBy[P <: Product, T](
+  tableQuery: TableQuery[P],
   statement:  String,
   columns:    T,
-  params:     Seq[ParameterBinder[F]]
-) extends Query[F, T],
-          LimitProvider[F, T]
+  params:     Seq[Parameter.DynamicBinder]
+) extends Query[T],
+          LimitProvider[T]
 
 object OrderBy:
 
@@ -63,20 +61,18 @@ object OrderBy:
 /**
  * Transparent Trait to provide orderBy method.
  *
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Union type of column
  */
-private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T]:
-  self: Query[F, T] =>
+private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
+  self: Query[T] =>
 
   /**
    * Trait for generating SQL table information.
    */
-  def tableQuery: TableQuery[F, P]
+  def tableQuery: TableQuery[P]
 
   /**
    * A method for setting the ORDER BY condition in a statement.
@@ -85,8 +81,8 @@ private[ldbc] transparent trait OrderByProvider[F[_], P <: Product, T]:
    *   Function to construct an expression using the columns that Table has.
    */
   def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](
-    func: TableQuery[F, P] => A
-  ): OrderBy[F, P, T] =
+    func: TableQuery[P] => A
+  ): OrderBy[P, T] =
     val order = func(tableQuery) match
       case v: Tuple         => v.toList.mkString(", ")
       case v: OrderBy.Order => v.statement

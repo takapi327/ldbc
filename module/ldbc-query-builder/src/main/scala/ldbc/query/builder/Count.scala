@@ -13,10 +13,8 @@ import ldbc.core.*
  *
  * @param _label
  *   Column name
- * @tparam F
- *   The effect type
  */
-case class Count[F[_]](_label: String) extends ColumnQuery[F, Int]:
+case class Count(_label: String) extends ColumnQuery[Int]:
 
   override def label: String = s"COUNT($_label)"
 
@@ -30,4 +28,4 @@ case class Count[F[_]](_label: String) extends ColumnQuery[F, Int]:
 
 object Count:
 
-  def all[F[_]] = Count[F]("*")
+  def all = Count("*")

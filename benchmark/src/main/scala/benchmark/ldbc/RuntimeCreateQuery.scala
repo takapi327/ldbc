@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
-
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
 
@@ -29,7 +27,7 @@ class RuntimeCreateQuery:
     val table = Table[Model1]("model1")(
       column("c1", INT)
     )
-    TableQuery[IO, Model1](table).select(_.c1)
+    TableQuery[Model1](table).select(_.c1)
 
   @Benchmark
   def createM5 =
@@ -40,7 +38,7 @@ class RuntimeCreateQuery:
       column("c4", INT),
       column("c5", INT)
     )
-    TableQuery[IO, Model5](table).select(v => (v.c1, v.c2, v.c3, v.c4, v.c5))
+    TableQuery[Model5](table).select(v => (v.c1, v.c2, v.c3, v.c4, v.c5))
 
   @Benchmark
   def createM10 =
@@ -56,7 +54,7 @@ class RuntimeCreateQuery:
       column("c9", INT),
       column("c10", INT)
     )
-    TableQuery[IO, Model10](table).select(v => (v.c1, v.c2, v.c3, v.c4, v.c5, v.c6, v.c7, v.c8, v.c9, v.c10))
+    TableQuery[Model10](table).select(v => (v.c1, v.c2, v.c3, v.c4, v.c5, v.c6, v.c7, v.c8, v.c9, v.c10))
 
   @Benchmark
   def createM20 =
@@ -82,7 +80,7 @@ class RuntimeCreateQuery:
       column("c19", INT),
       column("c20", INT)
     )
-    TableQuery[IO, Model20](table).select(v =>
+    TableQuery[Model20](table).select(v =>
       (
         v.c1,
         v.c2,
@@ -136,7 +134,7 @@ class RuntimeCreateQuery:
       column("c24", INT),
       column("c25", INT)
     )
-    TableQuery[IO, Model25](table).select(v =>
+    TableQuery[Model25](table).select(v =>
       (
         v.c1,
         v.c2,

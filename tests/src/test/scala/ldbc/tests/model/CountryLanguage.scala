@@ -27,8 +27,8 @@ object CountryLanguage:
 
   object IsOfficial extends EnumDataType[IsOfficial]
 
-  given Parameter[IO, IsOfficial] with
-    override def bind(statement: PreparedStatement[IO], index: Int, value: IsOfficial): IO[Unit] =
+  given Parameter[IsOfficial] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: IsOfficial): F[Unit] =
       statement.setString(index, value.toString)
 
   given ResultSetReader[IO, IsOfficial] =

@@ -12,7 +12,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import ldbc.sql.{ PreparedStatement, Parameter, ParameterBinder }
+import ldbc.sql.Parameter
 
 import ldbc.dsl.syntax.*
 
@@ -24,10 +24,6 @@ package object dsl:
             QuerySyntax[F],
             CommandSyntax[F]:
 
-    private case class StaticImpl(value: String) extends ParameterBinder.Static[F]:
-      override def bind(statement: PreparedStatement[F], index: Int): F[Unit] = Sync[F].unit
-      override def toString: String = value
-
     /**
      * Function for setting parameters to be used as static strings.
      * {{{
@@ -36,13 +32,13 @@ package object dsl:
      *   // SELECT * FROM table WHERE id = ?
      * }}}
      */
-    def sc(value: String): ParameterBinder.Static[F] = StaticImpl(value)
+    def sc(value: String): Parameter.StaticBinder = Parameter.StaticBinder(value)
 
     // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
     /** Returns `VALUES (v0), (v1), ...`. */
-    def values[M[_]: Reducible, T](vs: M[T])(using Parameter[F, T]): SQL[F] =
+    def values[M[_]: Reducible, T](vs: M[T])(using Parameter[T]): SQL[F] =
       sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(p"$v")))
 
     /** Returns `VALUES (s0, s1, ...)`. */
@@ -50,25 +46,25 @@ package object dsl:
       sql"VALUES" ++ parentheses(comma(vs.toNonEmptyList))
 
     /** Returns `(sql IN (v0, v1, ...))`. */
-    def in[T](s: SQL[F], v0: T, v1: T, vs: T*)(using Parameter[F, T]): SQL[F] =
+    def in[T](s: SQL[F], v0: T, v1: T, vs: T*)(using Parameter[T]): SQL[F] =
       in(s, NonEmptyList(v0, v1 :: vs.toList))
 
     /** Returns `(sql IN (s0, s1, ...))`. */
-    def in[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
+    def in[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[T]): SQL[F] =
       parentheses(s ++ sql" IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
-    def inOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): Option[SQL[F]] =
+    def inOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[T]): Option[SQL[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => in(s, nel))
 
     /** Returns `(sql NOT IN (v0, v1, ...))`. */
-    def notIn[T](s: SQL[F], v0: T, v1: T, vs: T*)(using Parameter[F, T]): SQL[F] =
+    def notIn[T](s: SQL[F], v0: T, v1: T, vs: T*)(using Parameter[T]): SQL[F] =
       notIn(s, NonEmptyList(v0, v1 :: vs.toList))
 
     /** Returns `(sql NOT IN (v0, v1, ...))`, or `true` for empty `fs`. */
-    def notIn[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): SQL[F] =
+    def notIn[M[_]: Reducible: Functor, T](s: SQL[F], vs: M[T])(using Parameter[T]): SQL[F] =
       parentheses(s ++ sql" NOT IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
-    def notInOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[F, T]): Option[SQL[F]] =
+    def notInOpt[M[_]: Foldable, T](s: SQL[F], vs: M[T])(using Parameter[T]): Option[SQL[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => notIn(s, nel))
 
     /** Returns `(s1 AND s2 AND ... sn)` for a non-empty collection. */

@@ -22,17 +22,15 @@ import ldbc.query.builder.TableQuery
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  */
-case class Update[F[_], P <: Product](
-  tableQuery: TableQuery[F, P],
+case class Update[P <: Product](
+  tableQuery: TableQuery[P],
   columns:    List[String],
-  params:     Seq[ParameterBinder[F]]
-) extends Command[F],
-          Command.LimitProvider[F]:
+  params:     Seq[Parameter.DynamicBinder]
+) extends Command,
+          Command.LimitProvider:
 
   private val values = columns.map(column => s"$column = ?")
 
@@ -61,9 +59,9 @@ case class Update[F[_], P <: Product](
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Update[F, P] =
+  ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
+    val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
     this.copy(
       columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
       params  = params :+ param
@@ -92,9 +90,9 @@ case class Update[F[_], P <: Product](
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check:  Option[T] =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Update[F, P] =
+  ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
+    val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
     this.copy(
       columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
       params  = params :+ param
@@ -125,10 +123,10 @@ case class Update[F[_], P <: Product](
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Update[F, P] =
+  ): Update[P] =
     if bool then
       type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-      val param = ParameterBinder[F, Param](check(value))(using Parameter.infer[F, Param])
+      val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
       this.copy(
         columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
         params  = params :+ param
@@ -141,9 +139,9 @@ case class Update[F[_], P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Command.Where[F] =
+  def where(func: TableQuery[P] => ExpressionSyntax): Command.Where =
     val expressionSyntax = func(tableQuery)
-    Command.Where[F](
+    Command.Where(
       _statement       = statement,
       expressionSyntax = expressionSyntax,
       params           = params ++ expressionSyntax.parameter

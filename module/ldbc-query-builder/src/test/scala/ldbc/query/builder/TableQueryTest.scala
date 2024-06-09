@@ -8,8 +8,6 @@ package ldbc.query.builder
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import cats.Id
-
 import ldbc.core.*
 
 class TableQueryTest extends AnyFlatSpec:
@@ -36,9 +34,9 @@ class TableQueryTest extends AnyFlatSpec:
     column("p3", VARCHAR(255))
   )
 
-  private val query      = TableQuery[Id, Test](table)
-  private val joinQuery  = TableQuery[Id, JoinTest](joinTable)
-  private val joinQuery2 = TableQuery[Id, JoinTest2](joinTable2)
+  private val query      = TableQuery[Test](table)
+  private val joinQuery  = TableQuery[JoinTest](joinTable)
+  private val joinQuery2 = TableQuery[JoinTest2](joinTable2)
 
   it should "The select query statement generated from Table is equal to the specified query statement." in {
     assert(query.select(_.p1).statement === "SELECT `p1` FROM test")

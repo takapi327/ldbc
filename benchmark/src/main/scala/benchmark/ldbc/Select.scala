@@ -37,7 +37,7 @@ class Select:
   var noLog: LogHandler[IO] = uninitialized
 
   @volatile
-  var query: TableQuery[IO, City] = uninitialized
+  var query: TableQuery[City] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -51,7 +51,7 @@ class Select:
 
     noLog = _ => IO.unit
 
-    query = TableQuery[IO, City](City.table)
+    query = TableQuery[City](City.table)
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized

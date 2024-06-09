@@ -26,7 +26,7 @@ import ldbc.sql.*
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder[F]]) extends SQL[F]:
+case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.DynamicBinder]) extends SQL[F]:
 
   @targetName("combine")
   override def ++(sql: SQL[F]): SQL[F] =
@@ -40,7 +40,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder
         for
           prepareStatement <- connection.prepareStatement(statement)
           resultSet <- params.zipWithIndex.traverse {
-                         case (param, index) => param.bind(prepareStatement, index + 1)
+                         case (param, index) => param.bind[F](prepareStatement, index + 1)
                        } >> prepareStatement.executeQuery()
           result <- consumer.consume(resultSet) <* prepareStatement.close()
         yield result
@@ -54,7 +54,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder
         for
           prepareStatement <- connection.prepareStatement(statement)
           result <- params.zipWithIndex.traverse {
-                      case (param, index) => param.bind(prepareStatement, index + 1)
+                      case (param, index) => param.bind[F](prepareStatement, index + 1)
                     } >> prepareStatement.executeUpdate() <* prepareStatement.close()
         yield result
     )
@@ -69,7 +69,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[ParameterBinder
         for
           prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
           resultSet <- params.zipWithIndex.traverse {
-                         case (param, index) => param.bind(prepareStatement, index + 1)
+                         case (param, index) => param.bind[F](prepareStatement, index + 1)
                        } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
           result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
         yield result

@@ -35,7 +35,7 @@ val table = Table[User]("user")(
   column("age", INT.UNSIGNED.DEFAULT(None)),
 )
 
-val userQuery = TableQuery[IO, User](table)
+val userQuery = TableQuery[User](table)
 ```
 
 ## SELECT
@@ -199,9 +199,9 @@ object CountryLanguage:
     column("language", CHAR(30))
   )
 
-val countryQuery = TableQuery[IO, Country](Country.table)
-val cityQuery = TableQuery[IO, City](City.table)
-val countryLanguageQuery = TableQuery[IO, CountryLanguage](CountryLanguage.table)
+val countryQuery = TableQuery[Country](Country.table)
+val cityQuery = TableQuery[City](City.table)
+val countryLanguageQuery = TableQuery[CountryLanguage](CountryLanguage.table)
 ```
 
 If you want to do a simple Join first, use `join`.

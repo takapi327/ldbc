@@ -46,8 +46,8 @@ object Country:
 
   object Continent extends EnumDataType[Continent]
 
-  given Parameter[IO, Continent] with
-    override def bind(statement: PreparedStatement[IO], index: Int, value: Continent): IO[Unit] =
+  given Parameter[Continent] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Continent): F[Unit] =
       statement.setString(index, value.toString)
 
   given ResultSetReader[IO, Continent] =

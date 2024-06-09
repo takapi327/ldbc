@@ -7,7 +7,7 @@
 package ldbc.query.builder.statement
 
 import ldbc.core.*
-import ldbc.sql.ParameterBinder
+import ldbc.sql.Parameter
 import ldbc.query.builder.TableQuery
 
 /**
@@ -22,21 +22,19 @@ import ldbc.query.builder.TableQuery
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Union type of column
  */
-private[ldbc] case class Select[F[_], P <: Product, T](
-  tableQuery: TableQuery[F, P],
+private[ldbc] case class Select[P <: Product, T](
+  tableQuery: TableQuery[P],
   statement:  String,
   columns:    T,
-  params:     Seq[ParameterBinder[F]]
-) extends Query[F, T],
-          OrderByProvider[F, P, T],
-          LimitProvider[F, T]:
+  params:     Seq[Parameter.DynamicBinder]
+) extends Query[T],
+          OrderByProvider[P, T],
+          LimitProvider[T]:
 
   /**
    * A method for setting the WHERE condition in a SELECT statement.
@@ -44,16 +42,16 @@ private[ldbc] case class Select[F[_], P <: Product, T](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] =
+  def where(func: TableQuery[P] => ExpressionSyntax): Where[P, T] =
     val expressionSyntax = func(tableQuery)
-    Where[F, P, T](
+    Where[P, T](
       tableQuery = tableQuery,
       statement  = statement ++ s" WHERE ${ expressionSyntax.statement }",
       columns    = columns,
       params     = params ++ expressionSyntax.parameter
     )
 
-  def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
+  def groupBy[A](func: T => Column[A]): GroupBy[P, T] =
     GroupBy(
       tableQuery = tableQuery,
       statement  = statement ++ s" GROUP BY ${ func(columns).label }",

@@ -67,7 +67,7 @@ trait DDLTest extends CatsEffectSuite:
     column("age", INT)
   )
 
-  final val tableQuery = TableQuery[IO, User](table)
+  final val tableQuery = TableQuery[User](table)
 
   override def beforeAll(): Unit =
     connection

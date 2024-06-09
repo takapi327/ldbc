@@ -154,7 +154,7 @@ The next step is to build a TableQuery using the schema you have created.
 ```scala
 import ldbc.query.builder.TableQuery
 
-val userQuery = TableQuery[IO, User](table)
+val userQuery = TableQuery[User](table)
 ```
 
 Finally, you can use the query builder to create a query.

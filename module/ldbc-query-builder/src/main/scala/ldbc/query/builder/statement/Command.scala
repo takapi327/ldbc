@@ -6,15 +6,12 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.sql.{ Parameter, ParameterBinder }
+import ldbc.sql.Parameter
 
 /**
  * Trait for building Statements to be added, updated, and deleted.
- *
- * @tparam F
- *   The effect type
  */
-private[ldbc] trait Command[F[_]]:
+private[ldbc] trait Command:
 
   /**
    * SQL statement string
@@ -25,7 +22,7 @@ private[ldbc] trait Command[F[_]]:
    * A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    * only.
    */
-  def params: Seq[ParameterBinder[F]]
+  def params: Seq[Parameter.DynamicBinder]
 
 object Command:
 
@@ -39,15 +36,13 @@ object Command:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    *   only.
-   * @tparam F
-   *   The effect type
    */
-  case class Where[F[_]](
+  case class Where(
     _statement:       String,
-    expressionSyntax: ExpressionSyntax[F],
-    params:           Seq[ParameterBinder[F]]
-  ) extends Command[F],
-            LimitProvider[F]:
+    expressionSyntax: ExpressionSyntax,
+    params:           Seq[Parameter.DynamicBinder]
+  ) extends Command,
+            LimitProvider:
 
     override def statement: String = _statement ++ s" WHERE ${ expressionSyntax.statement }"
 
@@ -57,24 +52,19 @@ object Command:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    *   only.
-   * @tparam F
-   *   The effect type
    */
-  case class Limit[F[_]](
+  case class Limit(
     _statement: String,
-    params:     Seq[ParameterBinder[F]]
-  ) extends Command[F]:
+    params:     Seq[Parameter.DynamicBinder]
+  ) extends Command:
 
     override def statement: String = _statement ++ " LIMIT ?"
 
   /**
    * Transparent Trait to provide limit method.
-   *
-   * @tparam F
-   *   The effect type
    */
-  private[ldbc] transparent trait LimitProvider[F[_]]:
-    self: Command[F] =>
+  private[ldbc] transparent trait LimitProvider:
+    self: Command =>
 
     /**
      * A method for setting the LIMIT condition in a statement.
@@ -82,8 +72,8 @@ object Command:
      * @param length
      *   Upper limit to be updated
      */
-    def limit(length: Long): Parameter[F, Long] ?=> Limit[F] =
-      Limit[F](
+    def limit(length: Long): Parameter[Long] ?=> Limit =
+      Limit(
         _statement = statement,
-        params     = params :+ ParameterBinder(length)
+        params     = params :+ Parameter.DynamicBinder(length)
       )

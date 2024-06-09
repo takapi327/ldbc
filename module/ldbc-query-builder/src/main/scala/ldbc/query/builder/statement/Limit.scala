@@ -6,7 +6,7 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.sql.{ Parameter, ParameterBinder }
+import ldbc.sql.Parameter
 
 /**
  * A model for constructing LIMIT statements in MySQL.
@@ -18,44 +18,40 @@ import ldbc.sql.{ Parameter, ParameterBinder }
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam T
  *   Union type of column
  */
-private[ldbc] case class Limit[F[_], T](
+private[ldbc] case class Limit[T](
   statement: String,
   columns:   T,
-  params:    Seq[ParameterBinder[F]]
-) extends Query[F, T]:
+  params:    Seq[Parameter.DynamicBinder]
+) extends Query[T]:
 
   /**
    * A method for setting the OFFSET condition in a statement.
    */
-  def offset(length: Long): Parameter[F, Long] ?=> Limit[F, T] =
+  def offset(length: Long): Parameter[Long] ?=> Limit[T] =
     Limit(
       statement = statement ++ " OFFSET ?",
       columns   = columns,
-      params    = params :+ ParameterBinder(length)
+      params    = params :+ Parameter.DynamicBinder(length)
     )
 
 /**
  * Transparent Trait to provide limit method.
  *
- * @tparam F
- *   The effect type
  * @tparam T
  *   Union type of column
  */
-private[ldbc] transparent trait LimitProvider[F[_], T]:
-  self: Query[F, T] =>
+private[ldbc] transparent trait LimitProvider[T]:
+  self: Query[T] =>
 
   /**
    * A method for setting the LIMIT condition in a statement.
    */
-  def limit(length: Long): Parameter[F, Long] ?=> Limit[F, T] =
+  def limit(length: Long): Parameter[Long] ?=> Limit[T] =
     Limit(
       statement = statement ++ " LIMIT ?",
       columns   = columns,
-      params    = params :+ ParameterBinder(length)
+      params    = params :+ Parameter.DynamicBinder(length)
     )

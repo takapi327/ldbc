@@ -6,7 +6,7 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.sql.ParameterBinder
+import ldbc.sql.Parameter
 import ldbc.query.builder.TableQuery
 
 /**
@@ -14,17 +14,15 @@ import ldbc.query.builder.TableQuery
  *
  * @param tableQuery
  *   Trait for generating SQL table information.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  */
-case class Delete[F[_], P <: Product](
-  tableQuery: TableQuery[F, P]
-) extends Command[F],
-          Command.LimitProvider[F]:
+case class Delete[P <: Product](
+  tableQuery: TableQuery[P]
+) extends Command,
+          Command.LimitProvider:
 
-  override def params: Seq[ParameterBinder[F]] = Seq.empty
+  override def params: Seq[Parameter.DynamicBinder] = Seq.empty
 
   override def statement: String = s"DELETE FROM ${ tableQuery.table._name }"
 
@@ -34,9 +32,9 @@ case class Delete[F[_], P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Command.Where[F] =
+  def where(func: TableQuery[P] => ExpressionSyntax): Command.Where =
     val expressionSyntax = func(tableQuery)
-    Command.Where[F](
+    Command.Where(
       _statement       = statement,
       expressionSyntax = expressionSyntax,
       params           = params ++ expressionSyntax.parameter
