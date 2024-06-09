@@ -22,12 +22,12 @@ trait StringContextSyntax[F[_]: Temporal]:
 
   extension (sc: StringContext)
 
-    def p(args: Parameter.DynamicBinder*): SQL[F] =
+    def p(args: Parameter.DynamicBinder*): Mysql[F] =
       val strings     = sc.parts.iterator
       val expressions = args.iterator
       Mysql(strings.mkString("?"), expressions.toList)
 
-    def sql(args: Parameter.Binder*): SQL[F] =
+    def sql(args: Parameter.Binder*): Mysql[F] =
       val query = sc.parts.iterator.mkString("?")
 
       // If it is Static, the value is replaced with the ? If it is a Parameter.Binder, it is replaced with ? and create a list of Parameter.Binders.

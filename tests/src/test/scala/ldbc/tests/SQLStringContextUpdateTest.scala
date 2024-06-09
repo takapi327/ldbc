@@ -121,7 +121,7 @@ trait SQLStringContextUpdateTest extends CatsEffectSuite:
               .flatMap(_ => sql"INSERT INTO $table (`id`, `xxx`) VALUES ($None, ${ "column 2" })".update)
               .transaction(conn)
               .attempt
-          count <- sql"SELECT count(*) FROM $table".unsafe[Int].readOnly(conn)
+          count <- sql"SELECT count(*) FROM $table".query[Int].unsafe.readOnly(conn)
         yield count
       },
       0

@@ -6,15 +6,11 @@
 
 package ldbc.dsl
 
-import scala.collection.mutable
-
-import cats.{ Monad, MonadError, Traverse, Alternative }
+import cats.*
 import cats.data.Kleisli
 import cats.implicits.*
 
 import ldbc.sql.ResultSet
-
-import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for generating the specified data type from a ResultSet.
@@ -56,14 +52,13 @@ object ResultSetConsumer:
         result  <- if hasNext then resultSetKleisli.run(resultSet).map(_.some) else Monad[F].pure(None)
       yield result
 
-  given [F[_]: Monad, T, S[_]: Traverse: Alternative](using
-    resultSetKleisli: Kleisli[F, ResultSet[F], T],
-    factory:          FactoryCompat[T, S[T]]
-  ): ResultSetConsumer[F, S[T]] with
-    override def consume(resultSet: ResultSet[F]): F[S[T]] =
-      def loop(acc: mutable.Builder[T, S[T]]): F[S[T]] =
+  given [F[_]: Monad, T, G[_]: Applicative: MonoidK](using
+    resultSetKleisli: Kleisli[F, ResultSet[F], T]
+  ): ResultSetConsumer[F, G[T]] with
+    override def consume(resultSet: ResultSet[F]): F[G[T]] =
+      def loop(acc: G[T]): F[G[T]] =
         resultSet.next().flatMap {
-          case false => Monad[F].pure(acc.result())
-          case true  => resultSetKleisli.run(resultSet).flatMap(v => loop(acc += v))
+          case false => Monad[F].pure(acc)
+          case true  => resultSetKleisli.run(resultSet).flatMap(v => loop(acc <+> Applicative[G].pure(v)))
         }
-      loop(factory.newBuilder)
+      loop(MonoidK[G].empty)
