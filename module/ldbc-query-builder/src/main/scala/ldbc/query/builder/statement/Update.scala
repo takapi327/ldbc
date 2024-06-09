@@ -32,7 +32,7 @@ case class Update[F[_], P <: Product](
   columns:    List[String],
   params:     Seq[Parameter.DynamicBinder]
 ) extends Command,
-          Command.LimitProvider[F]:
+          Command.LimitProvider:
 
   private val values = columns.map(column => s"$column = ?")
 
@@ -141,9 +141,9 @@ case class Update[F[_], P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax): Command.Where[F] =
+  def where(func: TableQuery[F, P] => ExpressionSyntax): Command.Where =
     val expressionSyntax = func(tableQuery)
-    Command.Where[F](
+    Command.Where(
       _statement       = statement,
       expressionSyntax = expressionSyntax,
       params           = params ++ expressionSyntax.parameter

@@ -36,15 +36,13 @@ object Command:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    *   only.
-   * @tparam F
-   *   The effect type
    */
-  case class Where[F[_]](
+  case class Where(
     _statement:       String,
     expressionSyntax: ExpressionSyntax,
     params:           Seq[Parameter.DynamicBinder]
   ) extends Command,
-            LimitProvider[F]:
+            LimitProvider:
 
     override def statement: String = _statement ++ s" WHERE ${ expressionSyntax.statement }"
 
@@ -54,10 +52,8 @@ object Command:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    *   only.
-   * @tparam F
-   *   The effect type
    */
-  case class Limit[F[_]](
+  case class Limit(
     _statement: String,
     params:     Seq[Parameter.DynamicBinder]
   ) extends Command:
@@ -66,11 +62,8 @@ object Command:
 
   /**
    * Transparent Trait to provide limit method.
-   *
-   * @tparam F
-   *   The effect type
    */
-  private[ldbc] transparent trait LimitProvider[F[_]]:
+  private[ldbc] transparent trait LimitProvider:
     self: Command =>
 
     /**
@@ -79,8 +72,8 @@ object Command:
      * @param length
      *   Upper limit to be updated
      */
-    def limit(length: Long): Parameter[Long] ?=> Limit[F] =
-      Limit[F](
+    def limit(length: Long): Parameter[Long] ?=> Limit =
+      Limit(
         _statement = statement,
         params     = params :+ Parameter.DynamicBinder(length)
       )

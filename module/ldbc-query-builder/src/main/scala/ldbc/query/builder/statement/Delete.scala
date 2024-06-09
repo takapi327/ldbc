@@ -22,7 +22,7 @@ import ldbc.query.builder.TableQuery
 case class Delete[F[_], P <: Product](
   tableQuery: TableQuery[F, P]
 ) extends Command,
-          Command.LimitProvider[F]:
+          Command.LimitProvider:
 
   override def params: Seq[Parameter.DynamicBinder] = Seq.empty
 
@@ -34,9 +34,9 @@ case class Delete[F[_], P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax): Command.Where[F] =
+  def where(func: TableQuery[F, P] => ExpressionSyntax): Command.Where =
     val expressionSyntax = func(tableQuery)
-    Command.Where[F](
+    Command.Where(
       _statement       = statement,
       expressionSyntax = expressionSyntax,
       params           = params ++ expressionSyntax.parameter
