@@ -108,7 +108,7 @@ object ExpressionSyntax:
           l.left.statement + l.flag + l.right.statement + flag + r.left.statement + r.flag + r.right.statement
         case (l, r: Pair) => l.statement + flag + r.left.statement + r.flag + r.right.statement
         case (l: Pair, r) => l.left.statement + l.flag + l.right.statement + flag + r.statement
-        case (l, r)          => l.statement + flag + r.statement
+        case (l, r)       => l.statement + flag + r.statement
       s"($result)"
 
     override def parameter: Seq[Parameter.DynamicBinder] = left.parameter ++ right.parameter

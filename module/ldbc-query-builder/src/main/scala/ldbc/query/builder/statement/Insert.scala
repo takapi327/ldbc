@@ -133,7 +133,7 @@ case class SelectInsert[P <: Product, T](
     val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
     new Insert[P]:
       override def tableQuery: TableQuery[P] = query
-      override def statement:  String           = s"$insertStatement VALUES${ values.mkString(", ") }"
+      override def statement:  String        = s"$insertStatement VALUES${ values.mkString(", ") }"
       override def params: Seq[Parameter.DynamicBinder] =
         tuples.flatMap(_.zip(parameter).toArray.map {
           case (value: Any, parameter: Any) =>

@@ -82,8 +82,8 @@ case class TableQuery[P <: Product](table: Table[P]) extends Dynamic, TableQuery
   def join[O <: Product](other: TableQuery[O])(
     on: TableQuery[P] *: Tuple1[TableQuery[O]] => ExpressionSyntax
   ): Join[TableQuery[P] *: Tuple1[TableQuery[O]], TableQuery[P] *: Tuple1[TableQuery[O]]] =
-    val main:      TableQuery[P]                             = setNameForJoin(this)
-    val joinTable: TableQuery[O]                             = setNameForJoin(other)
+    val main:      TableQuery[P]                          = setNameForJoin(this)
+    val joinTable: TableQuery[O]                          = setNameForJoin(other)
     val joins:     TableQuery[P] *: Tuple1[TableQuery[O]] = main *: Tuple(joinTable)
     Join[TableQuery[P] *: Tuple1[TableQuery[O]], TableQuery[P] *: Tuple1[TableQuery[O]]](
       this,
@@ -105,8 +105,8 @@ case class TableQuery[P <: Product](table: Table[P]) extends Dynamic, TableQuery
   def leftJoin[O <: Product](other: TableQuery[O])(
     on: TableQuery[P] *: Tuple1[TableQuery[O]] => ExpressionSyntax
   ): Join[TableQuery[P] *: Tuple1[TableQuery[O]], TableQuery[P] *: Tuple1[TableOpt[O]]] =
-    val main:      TableQuery[P]                             = setNameForJoin(this)
-    val joinTable: TableQuery[O]                             = setNameForJoin(other)
+    val main:      TableQuery[P]                          = setNameForJoin(this)
+    val joinTable: TableQuery[O]                          = setNameForJoin(other)
     val joins:     TableQuery[P] *: Tuple1[TableQuery[O]] = main *: Tuple(joinTable)
     Join[TableQuery[P] *: Tuple1[TableQuery[O]], TableQuery[P] *: Tuple1[TableOpt[O]]](
       this,
@@ -128,8 +128,8 @@ case class TableQuery[P <: Product](table: Table[P]) extends Dynamic, TableQuery
   def rightJoin[O <: Product](other: TableQuery[O])(
     on: TableQuery[P] *: Tuple1[TableQuery[O]] => ExpressionSyntax
   ): Join[TableQuery[P] *: Tuple1[TableQuery[O]], TableOpt[P] *: Tuple1[TableQuery[O]]] =
-    val main:      TableQuery[P]                             = setNameForJoin(this)
-    val joinTable: TableQuery[O]                             = setNameForJoin(other)
+    val main:      TableQuery[P]                          = setNameForJoin(this)
+    val joinTable: TableQuery[O]                          = setNameForJoin(other)
     val joins:     TableQuery[P] *: Tuple1[TableQuery[O]] = main *: Tuple(joinTable)
     Join[TableQuery[P] *: Tuple1[TableQuery[O]], TableOpt[P] *: Tuple1[TableQuery[O]]](
       this,

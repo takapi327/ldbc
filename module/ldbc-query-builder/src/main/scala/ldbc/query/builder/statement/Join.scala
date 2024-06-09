@@ -141,9 +141,9 @@ object Join:
   ): Join[JOINS, SELECTS] =
     new Join[JOINS, SELECTS]:
       override def main:           TableQuery[?] = _main
-      override val joins:          JOINS            = joinQueries
-      override def selects:        SELECTS          = selectQueries
-      override val joinStatements: Seq[String]      = statements
+      override val joins:          JOINS         = joinQueries
+      override def selects:        SELECTS       = selectQueries
+      override val joinStatements: Seq[String]   = statements
 
   private[ldbc] case class JoinSelect[SELECTS <: Tuple, T](
     selects:       SELECTS,
