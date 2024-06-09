@@ -50,7 +50,7 @@ object Tuples:
     case EmptyTuple                   => false
     case ColumnQuery[h]               => true
     case ColumnQuery[h] *: EmptyTuple => true
-    case ColumnQuery[h] *: t          => IsColumnQuery[T]
+    case ColumnQuery[h] *: t          => IsColumnQuery[t]
     case _                            => false
 
   type ToColumn[T] = T match
