@@ -37,7 +37,7 @@ private[ldbc] case class GroupBy[F[_], P <: Product, T](
           OrderByProvider[F, P, T],
           LimitProvider[F, T]:
 
-  def having(func: T => ExpressionSyntax[F]): Having[F, P, T] =
+  def having(func: T => ExpressionSyntax): Having[F, P, T] =
     val expressionSyntax = func(columns)
     Having(
       tableQuery = tableQuery,

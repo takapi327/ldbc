@@ -196,38 +196,38 @@ private[ldbc] trait ColumnQuery[F[_], T] extends Column[T]:
     SubQuery[F, T]("IN", noBagQuotLabel, value)
 
   /** List of join query methods */
-  def _equals(other: Column[?]): ExpressionSyntax[F] = JoinQuery("=", this, other)
+  def _equals(other: Column[?]): ExpressionSyntax = JoinQuery("=", this, other)
 
   @targetName("joinEqual")
-  def ===(other: Column[?]): ExpressionSyntax[F] = _equals(other)
+  def ===(other: Column[?]): ExpressionSyntax = _equals(other)
 
-  def orMore(other: Column[?]): ExpressionSyntax[F] = JoinQuery(">=", this, other)
+  def orMore(other: Column[?]): ExpressionSyntax = JoinQuery(">=", this, other)
 
   @targetName("joinOrMore")
-  def >=(other: Column[?]): ExpressionSyntax[F] = orMore(other)
+  def >=(other: Column[?]): ExpressionSyntax = orMore(other)
 
-  def over(other: Column[?]): ExpressionSyntax[F] = JoinQuery(">", this, other)
+  def over(other: Column[?]): ExpressionSyntax = JoinQuery(">", this, other)
 
   @targetName("joinOver")
-  def >(other: Column[?]): ExpressionSyntax[F] = over(other)
+  def >(other: Column[?]): ExpressionSyntax = over(other)
 
-  def lessThanOrEqual(other: Column[?]): ExpressionSyntax[F] = JoinQuery("<=", this, other)
+  def lessThanOrEqual(other: Column[?]): ExpressionSyntax = JoinQuery("<=", this, other)
 
   @targetName("joinLessThanOrEqual")
-  def <=(other: Column[?]): ExpressionSyntax[F] = lessThanOrEqual(other)
+  def <=(other: Column[?]): ExpressionSyntax = lessThanOrEqual(other)
 
-  def lessThan(other: Column[?]): ExpressionSyntax[F] = JoinQuery("<", this, other)
+  def lessThan(other: Column[?]): ExpressionSyntax = JoinQuery("<", this, other)
 
   @targetName("joinLessThan")
-  def <(other: Column[?]): ExpressionSyntax[F] = lessThan(other)
+  def <(other: Column[?]): ExpressionSyntax = lessThan(other)
 
-  def notEqual(other: Column[?]): ExpressionSyntax[F] = JoinQuery("<>", this, other)
+  def notEqual(other: Column[?]): ExpressionSyntax = JoinQuery("<>", this, other)
 
   @targetName("joinNotEqual")
-  def <>(other: Column[?]): ExpressionSyntax[F] = notEqual(other)
+  def <>(other: Column[?]): ExpressionSyntax = notEqual(other)
 
   @targetName("join!Equal")
-  def !==(other: Column[?]): ExpressionSyntax[F] = JoinQuery("!=", this, other)
+  def !==(other: Column[?]): ExpressionSyntax = JoinQuery("!=", this, other)
 
 object ColumnQuery:
 

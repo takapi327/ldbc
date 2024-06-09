@@ -16,7 +16,7 @@ import ldbc.query.builder.ColumnQuery
  *
  * SEE: https://dev.mysql.com/doc/refman/8.0/en/expressions.html
  */
-private[ldbc] trait ExpressionSyntax[F[_]]:
+private[ldbc] trait ExpressionSyntax:
 
   /**
    * Formula to determine
@@ -40,9 +40,9 @@ private[ldbc] trait ExpressionSyntax[F[_]]:
    * @param other
    *   Right side of combined expression
    */
-  def and(other: ExpressionSyntax[F]): ExpressionSyntax[F] =
+  def and(other: ExpressionSyntax): ExpressionSyntax =
     ExpressionSyntax.Pair(" AND ", this, other)
-  def &&(other: ExpressionSyntax[F]): ExpressionSyntax[F] = and(other)
+  def &&(other: ExpressionSyntax): ExpressionSyntax = and(other)
 
   /**
    * A method for combining expressions. The expressions combined with this method must have one of the conditions be
@@ -51,9 +51,9 @@ private[ldbc] trait ExpressionSyntax[F[_]]:
    * @param other
    *   Right side of combined expression
    */
-  def or(other: ExpressionSyntax[F]): ExpressionSyntax[F] =
+  def or(other: ExpressionSyntax): ExpressionSyntax =
     ExpressionSyntax.Pair(" OR ", this, other)
-  def ||(other: ExpressionSyntax[F]): ExpressionSyntax[F] = or(other)
+  def ||(other: ExpressionSyntax): ExpressionSyntax = or(other)
 
   /**
    * A method for combining expressions. The expressions combined with this method must be positive either individually
@@ -62,12 +62,12 @@ private[ldbc] trait ExpressionSyntax[F[_]]:
    * @param other
    *   Right side of combined expression
    */
-  def xor(other: ExpressionSyntax[F]): ExpressionSyntax[F] =
+  def xor(other: ExpressionSyntax): ExpressionSyntax =
     ExpressionSyntax.Pair(" XOR ", this, other)
 
 object ExpressionSyntax:
 
-  private[ldbc] trait SingleValue[F[_], T] extends ExpressionSyntax[F]:
+  private[ldbc] trait SingleValue[F[_], T] extends ExpressionSyntax:
 
     /**
      * Column name to be judged
@@ -79,7 +79,7 @@ object ExpressionSyntax:
      */
     def value: Extract[T]
 
-  private[ldbc] trait MultiValue[F[_], T] extends ExpressionSyntax[F]:
+  private[ldbc] trait MultiValue[F[_], T] extends ExpressionSyntax:
 
     /**
      * List of values to be set for the Statement.
@@ -95,21 +95,19 @@ object ExpressionSyntax:
    *   Left side of combined expression
    * @param right
    *   Right side of combined expression
-   * @tparam F
-   *   The effect type
    */
-  private[ldbc] case class Pair[F[_]](
+  private[ldbc] case class Pair(
     flag:  String,
-    left:  ExpressionSyntax[F],
-    right: ExpressionSyntax[F]
-  ) extends ExpressionSyntax[F]:
+    left:  ExpressionSyntax,
+    right: ExpressionSyntax
+  ) extends ExpressionSyntax:
 
     override def statement: String =
       val result = (left, right) match
-        case (l: Pair[F], r: Pair[F]) =>
+        case (l: Pair, r: Pair) =>
           l.left.statement + l.flag + l.right.statement + flag + r.left.statement + r.flag + r.right.statement
-        case (l, r: Pair[F]) => l.statement + flag + r.left.statement + r.flag + r.right.statement
-        case (l: Pair[F], r) => l.left.statement + l.flag + l.right.statement + flag + r.statement
+        case (l, r: Pair) => l.statement + flag + r.left.statement + r.flag + r.right.statement
+        case (l: Pair, r) => l.left.statement + l.flag + l.right.statement + flag + r.statement
         case (l, r)          => l.statement + flag + r.statement
       s"($result)"
 
@@ -133,7 +131,7 @@ object ExpressionSyntax:
     flag:   String,
     column: String,
     value:  Query[F, ColumnQuery[F, T] & Column[T]]
-  ) extends ExpressionSyntax[F]:
+  ) extends ExpressionSyntax:
 
     override def statement: String                       = s"$column $flag (${ value.statement })"
     override def parameter: Seq[Parameter.DynamicBinder] = value.params
@@ -156,7 +154,7 @@ object ExpressionSyntax:
     flag:  String,
     left:  Column[?],
     right: Column[?]
-  ) extends ExpressionSyntax[F]:
+  ) extends ExpressionSyntax:
 
     override def statement = s"${ left.alias.fold(left.label)(name => s"$name.${ left.label }") } $flag ${ right.alias
         .fold(right.label)(name => s"$name.${ right.label }") }"

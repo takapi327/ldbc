@@ -34,7 +34,7 @@ case class Delete[F[_], P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Command.Where[F] =
+  def where(func: TableQuery[F, P] => ExpressionSyntax): Command.Where[F] =
     val expressionSyntax = func(tableQuery)
     Command.Where[F](
       _statement       = statement,

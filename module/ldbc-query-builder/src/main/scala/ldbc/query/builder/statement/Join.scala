@@ -54,7 +54,7 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
    *   Base trait for all products
    */
   def join[P <: Product](other: TableQuery[F, P])(
-    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
+    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax
   )(using
     Tuples.IsTableQueryOpt[F, SELECTS] =:= true
   ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableQuery[F, P]]]] =
@@ -79,7 +79,7 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
    *   Base trait for all products
    */
   def leftJoin[P <: Product](other: TableQuery[F, P])(
-    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
+    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax
   )(using
     Tuples.IsTableQueryOpt[F, SELECTS] =:= true
   ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[F, P]]]] =
@@ -104,7 +104,7 @@ trait Join[F[_], JOINS <: Tuple, SELECTS <: Tuple]:
    *   Base trait for all products
    */
   def rightJoin[P <: Product](other: TableQuery[F, P])(
-    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax[F]
+    on: Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]] => ExpressionSyntax
   )(using
     Tuples.IsTableQueryOpt[F, SELECTS] =:= true
   ): Join[F, Tuple.Concat[JOINS, Tuple1[TableQuery[F, P]]], Tuple.Concat[Tuples.ToTableOpt[F, SELECTS], Tuple1[
@@ -161,7 +161,7 @@ object Join:
       case v        => v
     override def statement: String = s"SELECT $str $fromStatement"
 
-    def where(func: SELECTS => ExpressionSyntax[F]): JoinWhere[F, SELECTS, T] =
+    def where(func: SELECTS => ExpressionSyntax): JoinWhere[F, SELECTS, T] =
       val expressionSyntax = func(selects)
       JoinWhere(
         selects   = selects,
@@ -187,7 +187,7 @@ object Join:
             JoinOrderByProvider[F, SELECTS, T],
             LimitProvider[F, T]:
 
-    private def union(label: String, expressionSyntax: ExpressionSyntax[F]): JoinWhere[F, SELECTS, T] =
+    private def union(label: String, expressionSyntax: ExpressionSyntax): JoinWhere[F, SELECTS, T] =
       JoinWhere[F, SELECTS, T](
         selects   = selects,
         statement = statement ++ s" $label ${ expressionSyntax.statement }",
@@ -195,15 +195,15 @@ object Join:
         params    = params ++ expressionSyntax.parameter
       )
 
-    def and(func: SELECTS => ExpressionSyntax[F]): JoinWhere[F, SELECTS, T] =
+    def and(func: SELECTS => ExpressionSyntax): JoinWhere[F, SELECTS, T] =
       union("AND", func(selects))
-    def or(func: SELECTS => ExpressionSyntax[F]): JoinWhere[F, SELECTS, T] =
+    def or(func: SELECTS => ExpressionSyntax): JoinWhere[F, SELECTS, T] =
       union("OR", func(selects))
-    def ||(func: SELECTS => ExpressionSyntax[F]): JoinWhere[F, SELECTS, T] =
+    def ||(func: SELECTS => ExpressionSyntax): JoinWhere[F, SELECTS, T] =
       union("||", func(selects))
-    def xor(func: SELECTS => ExpressionSyntax[F]): JoinWhere[F, SELECTS, T] =
+    def xor(func: SELECTS => ExpressionSyntax): JoinWhere[F, SELECTS, T] =
       union("XOR", func(selects))
-    def &&(func: SELECTS => ExpressionSyntax[F]): JoinWhere[F, SELECTS, T] =
+    def &&(func: SELECTS => ExpressionSyntax): JoinWhere[F, SELECTS, T] =
       union("&&", func(selects))
 
     def groupBy[A](func: T => Column[A]): JoinGroupBy[F, SELECTS, T] =
@@ -257,7 +257,7 @@ object Join:
             JoinOrderByProvider[F, SELECTS, T],
             LimitProvider[F, T]:
 
-    def having[A](func: T => ExpressionSyntax[F]): JoinHaving[F, SELECTS, T] =
+    def having[A](func: T => ExpressionSyntax): JoinHaving[F, SELECTS, T] =
       val expressionSyntax = func(columns)
       JoinHaving(
         selects   = selects,

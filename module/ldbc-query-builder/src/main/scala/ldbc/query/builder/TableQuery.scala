@@ -82,7 +82,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
    *   A class that implements a [[Product]] that is one-to-one with the table definition.
    */
   def join[O <: Product](other: TableQuery[F, O])(
-    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
+    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax
   ): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableQuery[F, O]]] =
     val main:      TableQuery[F, P]                             = setNameForJoin(this)
     val joinTable: TableQuery[F, O]                             = setNameForJoin(other)
@@ -105,7 +105,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
    *   A class that implements a [[Product]] that is one-to-one with the table definition.
    */
   def leftJoin[O <: Product](other: TableQuery[F, O])(
-    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
+    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax
   ): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableQuery[F, P] *: Tuple1[TableOpt[F, O]]] =
     val main:      TableQuery[F, P]                             = setNameForJoin(this)
     val joinTable: TableQuery[F, O]                             = setNameForJoin(other)
@@ -128,7 +128,7 @@ case class TableQuery[F[_], P <: Product](table: Table[P]) extends Dynamic, Tabl
    *   A class that implements a [[Product]] that is one-to-one with the table definition.
    */
   def rightJoin[O <: Product](other: TableQuery[F, O])(
-    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax[F]
+    on: TableQuery[F, P] *: Tuple1[TableQuery[F, O]] => ExpressionSyntax
   ): Join[F, TableQuery[F, P] *: Tuple1[TableQuery[F, O]], TableOpt[F, P] *: Tuple1[TableQuery[F, O]]] =
     val main:      TableQuery[F, P]                             = setNameForJoin(this)
     val joinTable: TableQuery[F, O]                             = setNameForJoin(other)

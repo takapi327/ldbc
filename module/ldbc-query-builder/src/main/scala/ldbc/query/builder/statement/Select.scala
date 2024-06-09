@@ -44,7 +44,7 @@ private[ldbc] case class Select[F[_], P <: Product, T](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] =
+  def where(func: TableQuery[F, P] => ExpressionSyntax): Where[F, P, T] =
     val expressionSyntax = func(tableQuery)
     Where[F, P, T](
       tableQuery = tableQuery,

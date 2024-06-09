@@ -41,7 +41,7 @@ object Command:
    */
   case class Where[F[_]](
     _statement:       String,
-    expressionSyntax: ExpressionSyntax[F],
+    expressionSyntax: ExpressionSyntax,
     params:           Seq[Parameter.DynamicBinder]
   ) extends Command,
             LimitProvider[F]:

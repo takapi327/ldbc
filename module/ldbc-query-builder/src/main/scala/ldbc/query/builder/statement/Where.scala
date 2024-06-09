@@ -46,7 +46,7 @@ private[ldbc] case class Where[F[_], P <: Product, T](
    * @param expressionSyntax
    *   Trait for the syntax of expressions available in MySQL.
    */
-  private def union(label: String, expressionSyntax: ExpressionSyntax[F]): Where[F, P, T] =
+  private def union(label: String, expressionSyntax: ExpressionSyntax): Where[F, P, T] =
     Where[F, P, T](
       tableQuery = tableQuery,
       statement  = statement ++ s" $label ${ expressionSyntax.statement }",
@@ -54,15 +54,15 @@ private[ldbc] case class Where[F[_], P <: Product, T](
       params     = params ++ expressionSyntax.parameter
     )
 
-  def and(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("AND", func(tableQuery))
+  def and(func: TableQuery[F, P] => ExpressionSyntax): Where[F, P, T] = union("AND", func(tableQuery))
 
-  def or(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("OR", func(tableQuery))
+  def or(func: TableQuery[F, P] => ExpressionSyntax): Where[F, P, T] = union("OR", func(tableQuery))
 
-  def ||(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("||", func(tableQuery))
+  def ||(func: TableQuery[F, P] => ExpressionSyntax): Where[F, P, T] = union("||", func(tableQuery))
 
-  def xor(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("XOR", func(tableQuery))
+  def xor(func: TableQuery[F, P] => ExpressionSyntax): Where[F, P, T] = union("XOR", func(tableQuery))
 
-  def &&(func: TableQuery[F, P] => ExpressionSyntax[F]): Where[F, P, T] = union("&&", func(tableQuery))
+  def &&(func: TableQuery[F, P] => ExpressionSyntax): Where[F, P, T] = union("&&", func(tableQuery))
 
   def groupBy[A](func: T => Column[A]): GroupBy[F, P, T] =
     GroupBy(
