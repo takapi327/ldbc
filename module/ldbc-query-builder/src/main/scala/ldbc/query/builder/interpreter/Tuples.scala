@@ -11,61 +11,61 @@ import ldbc.query.builder.statement.TableOpt
 
 object Tuples:
 
-  type MapToColumn[T <: Tuple, F[_]] <: Tuple = T match
+  type MapToColumn[T <: Tuple] <: Tuple = T match
     case EmptyTuple      => EmptyTuple
-    case h *: EmptyTuple => ColumnQuery[F, h] *: EmptyTuple
-    case h *: t          => ColumnQuery[F, h] *: MapToColumn[t, F]
+    case h *: EmptyTuple => ColumnQuery[h] *: EmptyTuple
+    case h *: t          => ColumnQuery[h] *: MapToColumn[t]
 
-  type InverseColumnMap[F[_], T] <: Tuple = T match
+  type InverseColumnMap[T] <: Tuple = T match
     case EmptyTuple                      => EmptyTuple
-    case ColumnQuery[F, h]               => h *: EmptyTuple
-    case ColumnQuery[F, h] *: EmptyTuple => h *: EmptyTuple
-    case ColumnQuery[F, h] *: t          => h *: InverseColumnMap[F, t]
+    case ColumnQuery[h]               => h *: EmptyTuple
+    case ColumnQuery[h] *: EmptyTuple => h *: EmptyTuple
+    case ColumnQuery[h] *: t          => h *: InverseColumnMap[t]
 
-  type IsTableQuery[F[_], T] <: Boolean = T match
+  type IsTableQuery[T] <: Boolean = T match
     case EmptyTuple                     => false
-    case TableQuery[F, p]               => true
-    case TableQuery[F, p] *: EmptyTuple => true
-    case TableQuery[F, p] *: ts         => IsTableQuery[F, ts]
+    case TableQuery[p]               => true
+    case TableQuery[p] *: EmptyTuple => true
+    case TableQuery[p] *: ts         => IsTableQuery[ts]
     case _                              => false
 
-  type IsTableOpt[F[_], T] <: Boolean = T match
+  type IsTableOpt[T] <: Boolean = T match
     case EmptyTuple                   => false
-    case TableOpt[F, p]               => true
-    case TableOpt[F, p] *: EmptyTuple => true
-    case TableOpt[F, p] *: ts         => IsTableQuery[F, ts]
+    case TableOpt[p]               => true
+    case TableOpt[p] *: EmptyTuple => true
+    case TableOpt[p] *: ts         => IsTableQuery[ts]
     case _                            => false
 
-  type IsTableQueryOpt[F[_], T] <: Boolean = T match
+  type IsTableQueryOpt[T] <: Boolean = T match
     case EmptyTuple                     => false
-    case TableQuery[F, p]               => true
-    case TableOpt[F, p]                 => true
-    case TableQuery[F, p] *: EmptyTuple => true
-    case TableOpt[F, p] *: EmptyTuple   => true
-    case TableQuery[F, p] *: ts         => IsTableQueryOpt[F, ts]
-    case TableOpt[F, p] *: ts           => IsTableQueryOpt[F, ts]
+    case TableQuery[p]               => true
+    case TableOpt[p]                 => true
+    case TableQuery[p] *: EmptyTuple => true
+    case TableOpt[p] *: EmptyTuple   => true
+    case TableQuery[p] *: ts         => IsTableQueryOpt[ts]
+    case TableOpt[p] *: ts           => IsTableQueryOpt[ts]
     case _                              => false
 
-  type IsColumnQuery[F[_], T] <: Boolean = T match
+  type IsColumnQuery[T] <: Boolean = T match
     case EmptyTuple                      => false
-    case ColumnQuery[F, h]               => true
-    case ColumnQuery[F, h] *: EmptyTuple => true
-    case ColumnQuery[F, h] *: t          => IsColumnQuery[F, t]
+    case ColumnQuery[h]               => true
+    case ColumnQuery[h] *: EmptyTuple => true
+    case ColumnQuery[h] *: t          => IsColumnQuery[T]
     case _                               => false
 
-  type ToColumn[F[_], T] = T match
-    case Tuple => MapToColumn[T, F]
-    case _     => ColumnQuery[F, T]
+  type ToColumn[T] = T match
+    case Tuple => MapToColumn[T]
+    case _     => ColumnQuery[T]
 
-  type ToTableOpt[F[_], T <: Tuple] <: Tuple = T match
-    case TableQuery[F, t] *: EmptyTuple => TableOpt[F, t] *: EmptyTuple
-    case TableOpt[F, t] *: EmptyTuple   => TableOpt[F, t] *: EmptyTuple
-    case TableQuery[F, t] *: ts         => TableOpt[F, t] *: ToTableOpt[F, ts]
-    case TableOpt[F, t] *: ts           => TableOpt[F, t] *: ToTableOpt[F, ts]
+  type ToTableOpt[T <: Tuple] <: Tuple = T match
+    case TableQuery[t] *: EmptyTuple => TableOpt[t] *: EmptyTuple
+    case TableOpt[t] *: EmptyTuple   => TableOpt[t] *: EmptyTuple
+    case TableQuery[t] *: ts         => TableOpt[t] *: ToTableOpt[ts]
+    case TableOpt[t] *: ts           => TableOpt[t] *: ToTableOpt[ts]
 
-  def toTableOpt[F[_], T <: Tuple](tuple: T)(using IsTableQueryOpt[F, T] =:= true): ToTableOpt[F, T] =
-    val list = tuple.toList.asInstanceOf[List[TableQuery[F, ?] | TableOpt[F, ?]]].map {
-      case query: TableQuery[F, p] => TableOpt[F, p](query.table)
-      case opt: TableOpt[F, p]     => opt
+  def toTableOpt[T <: Tuple](tuple: T)(using IsTableQueryOpt[T] =:= true): ToTableOpt[T] =
+    val list = tuple.toList.asInstanceOf[List[TableQuery[?] | TableOpt[?]]].map {
+      case query: TableQuery[p] => TableOpt[p](query.table)
+      case opt: TableOpt[p]     => opt
     }
-    Tuple.fromArray(list.toArray).asInstanceOf[ToTableOpt[F, T]]
+    Tuple.fromArray(list.toArray).asInstanceOf[ToTableOpt[T]]

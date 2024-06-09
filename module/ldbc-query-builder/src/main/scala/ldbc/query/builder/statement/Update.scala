@@ -22,13 +22,11 @@ import ldbc.query.builder.TableQuery
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  */
-case class Update[F[_], P <: Product](
-  tableQuery: TableQuery[F, P],
+case class Update[P <: Product](
+  tableQuery: TableQuery[P],
   columns:    List[String],
   params:     Seq[Parameter.DynamicBinder]
 ) extends Command,
@@ -61,7 +59,7 @@ case class Update[F[_], P <: Product](
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Update[F, P] =
+  ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
     this.copy(
@@ -92,7 +90,7 @@ case class Update[F[_], P <: Product](
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check:  Option[T] =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Update[F, P] =
+  ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
     this.copy(
@@ -125,7 +123,7 @@ case class Update[F[_], P <: Product](
     mirror: Mirror.ProductOf[P],
     index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Update[F, P] =
+  ): Update[P] =
     if bool then
       type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
       val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
@@ -141,7 +139,7 @@ case class Update[F[_], P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[F, P] => ExpressionSyntax): Command.Where =
+  def where(func: TableQuery[P] => ExpressionSyntax): Command.Where =
     val expressionSyntax = func(tableQuery)
     Command.Where(
       _statement       = statement,

@@ -18,21 +18,19 @@ import ldbc.sql.Parameter
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam T
  *   Union type of column
  */
-private[ldbc] case class Limit[F[_], T](
+private[ldbc] case class Limit[T](
   statement: String,
   columns:   T,
   params:    Seq[Parameter.DynamicBinder]
-) extends Query[F, T]:
+) extends Query[T]:
 
   /**
    * A method for setting the OFFSET condition in a statement.
    */
-  def offset(length: Long): Parameter[Long] ?=> Limit[F, T] =
+  def offset(length: Long): Parameter[Long] ?=> Limit[T] =
     Limit(
       statement = statement ++ " OFFSET ?",
       columns   = columns,
@@ -42,18 +40,16 @@ private[ldbc] case class Limit[F[_], T](
 /**
  * Transparent Trait to provide limit method.
  *
- * @tparam F
- *   The effect type
  * @tparam T
  *   Union type of column
  */
-private[ldbc] transparent trait LimitProvider[F[_], T]:
-  self: Query[F, T] =>
+private[ldbc] transparent trait LimitProvider[T]:
+  self: Query[T] =>
 
   /**
    * A method for setting the LIMIT condition in a statement.
    */
-  def limit(length: Long): Parameter[Long] ?=> Limit[F, T] =
+  def limit(length: Long): Parameter[Long] ?=> Limit[T] =
     Limit(
       statement = statement ++ " LIMIT ?",
       columns   = columns,

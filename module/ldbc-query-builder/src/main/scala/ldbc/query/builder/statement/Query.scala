@@ -11,12 +11,10 @@ import ldbc.sql.Parameter
 /**
  * Trait for constructing Statements that set conditions.
  *
- * @tparam F
- *   The effect type
  * @tparam T
  *   Column Tuples
  */
-private[ldbc] trait Query[F[_], T]:
+private[ldbc] trait Query[T]:
 
   /**
    * SQL statement string

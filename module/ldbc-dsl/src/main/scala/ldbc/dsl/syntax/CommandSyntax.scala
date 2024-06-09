@@ -35,7 +35,7 @@ trait CommandSyntax[F[_]: Sync]:
         <* logHandler.run(LogEvent.Success(command.statement, command.params.map(_.parameter).toList))
     }
 
-  implicit class InsertOps[P <: Product](insert: Insert[F, P]):
+  implicit class InsertOps[P <: Product](insert: Insert[P]):
     def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
       (for
         statement <- connection.prepareStatement(insert.statement)

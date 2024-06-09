@@ -14,25 +14,23 @@ import ldbc.query.builder.interpreter.Tuples
 /**
  * Trait for building Statements to be added.
  *
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] trait Insert[F[_], P <: Product] extends Command:
+private[ldbc] trait Insert[P <: Product] extends Command:
   self =>
 
   /** A model for generating queries from Table information. */
-  def tableQuery: TableQuery[F, P]
+  def tableQuery: TableQuery[P]
 
   /** Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements. */
-  def onDuplicateKeyUpdate[T](func: TableQuery[F, P] => T)(using
-    Tuples.IsColumnQuery[F, T] =:= true
-  ): DuplicateKeyUpdateInsert[F] =
+  def onDuplicateKeyUpdate[T](func: TableQuery[P] => T)(using
+    Tuples.IsColumnQuery[T] =:= true
+  ): DuplicateKeyUpdateInsert =
     val duplicateKeys = func(self.tableQuery) match
       case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
       case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
-    new DuplicateKeyUpdateInsert[F]:
+    new DuplicateKeyUpdateInsert:
       override def params: Seq[Parameter.DynamicBinder] = self.params
 
       override def statement: String =
@@ -40,11 +38,8 @@ private[ldbc] trait Insert[F[_], P <: Product] extends Command:
 
 /**
  * Insert trait that provides a method to update in case of duplicate keys.
- *
- * @tparam F
- *   The effect type
  */
-trait DuplicateKeyUpdateInsert[F[_]] extends Command
+trait DuplicateKeyUpdateInsert extends Command
 
 /**
  * A model for constructing INSERT statements that insert single values in MySQL.
@@ -56,18 +51,16 @@ trait DuplicateKeyUpdateInsert[F[_]] extends Command
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Tuple type of the property with type parameter P
  */
-case class SingleInsert[F[_], P <: Product, T <: Tuple](
-  tableQuery: TableQuery[F, P],
+case class SingleInsert[P <: Product, T <: Tuple](
+  tableQuery: TableQuery[P],
   tuple:      T,
   params:     Seq[Parameter.DynamicBinder]
-) extends Insert[F, P]:
+) extends Insert[P]:
 
   override val statement: String =
     s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
@@ -83,18 +76,16 @@ case class SingleInsert[F[_], P <: Product, T <: Tuple](
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Tuple type of the property with type parameter P
  */
-case class MultiInsert[F[_], P <: Product, T <: Tuple](
-  tableQuery: TableQuery[F, P],
+case class MultiInsert[P <: Product, T <: Tuple](
+  tableQuery: TableQuery[P],
   tuples:     List[T],
   params:     Seq[Parameter.DynamicBinder]
-) extends Insert[F, P]:
+) extends Insert[P]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
@@ -110,15 +101,13 @@ case class MultiInsert[F[_], P <: Product, T <: Tuple](
  *   List of columns into which values are to be inserted.
  * @param parameter
  *   Parameters of the value to be inserted
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Tuple type of the property with type parameter P
  */
-case class SelectInsert[F[_], P <: Product, T](
-  query:     TableQuery[F, P],
+case class SelectInsert[P <: Product, T](
+  query:     TableQuery[P],
   columns:   T,
   parameter: Parameter.MapToTuple[Column.Extract[T]]
 ):
@@ -130,9 +119,9 @@ case class SelectInsert[F[_], P <: Product, T](
   private val insertStatement: String =
     s"INSERT INTO ${ query.table._name } ($columnStatement)"
 
-  def values(tuple: Column.Extract[T]): Insert[F, P] =
-    new Insert[F, P]:
-      override def tableQuery: TableQuery[F, P] = query
+  def values(tuple: Column.Extract[T]): Insert[P] =
+    new Insert[P]:
+      override def tableQuery: TableQuery[P] = query
       override def statement: String = s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
       override def params: Seq[Parameter.DynamicBinder] =
         tuple.zip(parameter).toArray.toSeq.map {
@@ -140,10 +129,10 @@ case class SelectInsert[F[_], P <: Product, T](
             Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
         }
 
-  def values(tuples: List[Column.Extract[T]]): Insert[F, P] =
+  def values(tuples: List[Column.Extract[T]]): Insert[P] =
     val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
-    new Insert[F, P]:
-      override def tableQuery: TableQuery[F, P] = query
+    new Insert[P]:
+      override def tableQuery: TableQuery[P] = query
       override def statement:  String           = s"$insertStatement VALUES${ values.mkString(", ") }"
       override def params: Seq[Parameter.DynamicBinder] =
         tuples.flatMap(_.zip(parameter).toArray.map {
@@ -161,18 +150,16 @@ case class SelectInsert[F[_], P <: Product, T](
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam F
- *   The effect type
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Tuple type of the property with type parameter P
  */
-case class DuplicateKeyUpdate[F[_], P <: Product, T <: Tuple](
-  tableQuery: TableQuery[F, P],
+case class DuplicateKeyUpdate[P <: Product, T <: Tuple](
+  tableQuery: TableQuery[P],
   tuples:     List[T],
   params:     Seq[Parameter.DynamicBinder]
-) extends DuplicateKeyUpdateInsert[F]:
+) extends DuplicateKeyUpdateInsert:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
