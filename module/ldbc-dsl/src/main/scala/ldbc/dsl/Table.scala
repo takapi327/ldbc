@@ -24,8 +24,8 @@ import scala.Tuple.Elem
  */
 trait Table[P] extends Dynamic:
 
-  def name: String
-  
+  def _name: String
+
   type Columns <: Tuple
   @targetName("all")
   def * : Columns
@@ -45,7 +45,7 @@ trait Table[P] extends Dynamic:
     val str = columns match
       case v: Tuple => v.toArray.distinct.mkString(", ")
       case v => v
-    val statement = s"SELECT $str FROM $name"
+    val statement = s"SELECT $str FROM $_name"
     Select(this, statement, columns, Nil)
 
 object Table:
@@ -66,7 +66,7 @@ object Table:
   inline def derived[P](using m: Mirror.ProductOf[P]): Table[P] =
     val labels = constValueTuple[m.MirroredElemLabels]
     new:
-      override def name: String = constValue[m.MirroredLabel]
+      override def _name: String = constValue[m.MirroredLabel]
       override type Columns = Tuple.Map[m.MirroredElemTypes, Column]
       @targetName("all")
       override def * : Columns = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)

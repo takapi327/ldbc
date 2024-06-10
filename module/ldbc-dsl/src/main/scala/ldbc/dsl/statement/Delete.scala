@@ -32,7 +32,7 @@ case class Delete[P <: Product, T](
   @targetName("combine")
   override def ++(sql: SQL): SQL = Delete[P, T](table, columns, statement ++ sql.statement, params ++ sql.params)
 
-  override def statement: String = s"DELETE FROM ${table.name}"
+  override def statement: String = s"DELETE FROM ${table._name}"
 
   /**
    * A method for setting the WHERE condition in a DELETE statement.
