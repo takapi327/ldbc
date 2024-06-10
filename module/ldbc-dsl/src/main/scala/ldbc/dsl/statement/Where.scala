@@ -29,7 +29,7 @@ import ldbc.dsl.*
  * @tparam T
  *   Union type of column
  */
-private[ldbc] case class Where[P <: Product, T](
+private[ldbc] case class Where[P, T](
   table: Table[P],
   statement:  String,
   columns:    T,

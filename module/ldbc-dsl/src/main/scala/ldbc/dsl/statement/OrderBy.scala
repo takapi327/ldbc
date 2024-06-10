@@ -27,7 +27,7 @@ import ldbc.dsl.*
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] case class OrderBy[P <: Product](
+private[ldbc] case class OrderBy[P](
   table: Table[P],
   query:  String,
   order:  String,
@@ -54,7 +54,7 @@ object OrderBy:
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] transparent trait OrderByProvider[P <: Product]:
+private[ldbc] transparent trait OrderByProvider[P]:
   self: SQL =>
   
   /** Trait for generating SQL table information. */
