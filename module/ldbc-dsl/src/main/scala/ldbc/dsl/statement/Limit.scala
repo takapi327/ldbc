@@ -40,3 +40,18 @@ private[ldbc] case class Limit(
       query  = statement,
       params = params :+ Parameter.DynamicBinder(length)
     )
+
+/**
+ * Transparent Trait to provide limit method.
+ */
+private[ldbc] transparent trait LimitProvider:
+  self: SQL =>
+
+  /**
+   * A method for setting the LIMIT condition in a statement.
+   */
+  def limit(length: Long): Parameter[Long] ?=> Limit =
+    Limit(
+      query = statement,
+      params = params :+ Parameter.DynamicBinder(length)
+    )
