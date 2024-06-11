@@ -25,7 +25,7 @@ import ldbc.dsl.*
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] case class Having[P](
+private[ldbc] case class Having[P <: Product](
                                                table: Table[P],
   query:  String,
   params:     List[Parameter.DynamicBinder],

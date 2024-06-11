@@ -12,6 +12,7 @@ import scala.compiletime.*
 import scala.compiletime.ops.int.*
 import scala.annotation.targetName
 
+import ldbc.sql.*
 import ldbc.dsl.interpreter.*
 import ldbc.dsl.statement.*
 
@@ -23,7 +24,7 @@ import scala.Tuple.Elem
  * @tparam P
  *   A class that implements a [[Product]] that is one-to-one with the table definition.
  */
-trait Table[P] extends Dynamic:
+trait Table[P <: Product] extends Dynamic:
 
   def _name: String
 
@@ -112,9 +113,114 @@ trait Table[P] extends Dynamic:
       List(s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other._name } ON ${ on(joins).statement }")
     )
 
+  /** Type alias for ParameterBinder. Mainly for use with Tuple.map. */
+  private type ParamBind[A] = Parameter.Binder
+
+  /**
+   * A method to build a query model that inserts data into all columns defined in the table.
+   *
+   * @param mirror
+   *   product isomorphism map
+   * @param values
+   *   A list of Tuples constructed with all the property types that Table has.
+   */
+  inline def insert(using mirror: Mirror.ProductOf[P])(
+    values: mirror.MirroredElemTypes*
+  ): Insert[P] =
+    val parameterBinders = values
+      .flatMap(
+        _.zip(Parameter.fold[mirror.MirroredElemTypes])
+          .map[ParamBind](
+            [t] =>
+              (x: t) =>
+                val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+                Parameter.DynamicBinder[t](value)(using parameter)
+          )
+          .toList
+      )
+      .toList
+      .asInstanceOf[List[Parameter.DynamicBinder]]
+    new MultiInsert[P, Tuple](this, values.toList, parameterBinders)
+
+  /**
+   * A method to build a query model that inserts data into specified columns defined in a table.
+   *
+   * @param func
+   *   Function to retrieve columns from Table.
+   * @tparam T
+   *   Type of value to be obtained
+   */
+  inline def insertInto[T](func: Table[P] => T)(using
+                                                     Tuples.IsColumn[T] =:= true
+  ): SelectInsert[P, T] =
+    val parameter: Parameter.MapToTuple[Column.Extract[T]] = Parameter.fold[Column.Extract[T]]
+    SelectInsert[P, T](this, func(this), parameter)
+
+  /**
+   * A method to build a query model that updates specified columns defined in a table.
+   *
+   * @param tag
+   *   A type with a single instance. Here, Column is passed.
+   * @param value
+   *   A value of type T to be inserted into the specified column.
+   * @param mirror
+   *   product isomorphism map
+   * @param index
+   *   Position of the specified type in tuple X
+   * @param check
+   *   A value to verify that the specified type matches the type of the specified column that the Table has.
+   * @tparam Tag
+   *   Type with a single instance
+   * @tparam T
+   *   Scala types that match SQL DataType
+   */
+  inline def update[Tag <: Singleton, T](tag: Tag, value: T)(using
+                                                             mirror: Mirror.ProductOf[P],
+                                                             index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+                                                             check: T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+  ): Update[P] =
+    type PARAM = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    val params = List(Parameter.DynamicBinder[PARAM](check(value))(using Parameter.infer[PARAM]))
+    new Update[P](
+      table = this,
+      columns = List(selectDynamic[Tag](tag).name),
+      params = params
+    )
+
+  /**
+   * A method to build a query model that updates all columns defined in the table using the model.
+   *
+   * @param value
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   * @param mirror
+   *   product isomorphism map
+   */
+  inline def update(value: P)(using mirror: Mirror.ProductOf[P]): Update[P] =
+    val params = Tuple
+      .fromProductTyped(value)
+      .zip(Parameter.fold[mirror.MirroredElemTypes])
+      .map[ParamBind](
+        [t] =>
+          (x: t) =>
+            val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
+            Parameter.DynamicBinder[t](value)(using parameter)
+      )
+      .toList
+      .asInstanceOf[List[Parameter.DynamicBinder]]
+    new Update[P](
+      table = this,
+      columns    = *.toList.map(_.asInstanceOf[Column[?]].name),
+      params     = params
+    )
+
+  /**
+   * Method to construct a query to delete a table.
+   */
+  def delete: Delete[P, Columns] = Delete[P, Columns](this, *)
+
 object Table:
 
-  def apply[P](using t: Table[P]): Table[P] = t
+  def apply[P <: Product](using t: Table[P]): Table[P] = t
   
   private[ldbc] case class Opt[P](columns: Tuple) extends Dynamic:
 
@@ -139,7 +245,7 @@ object Table:
             error("stat " + constValue[name] + " should be a constant string")
       case _: EmptyTuple => Tuple.fromArray(xs.toArray).asInstanceOf[Tuple.Map[T, Column]]
 
-  inline def derived[P](using m: Mirror.ProductOf[P]): Table[P] =
+  inline def derived[P <: Product](using m: Mirror.ProductOf[P]): Table[P] =
     val labels = constValueTuple[m.MirroredElemLabels]
     new:
       override def _name: String = constValue[m.MirroredLabel]

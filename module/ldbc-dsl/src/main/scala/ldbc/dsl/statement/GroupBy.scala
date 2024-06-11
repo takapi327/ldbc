@@ -31,7 +31,7 @@ import ldbc.dsl.*
  * @tparam A
  *   Union type of column
  */
-private[ldbc] case class GroupBy[P, A, B](
+private[ldbc] case class GroupBy[P <: Product, A, B](
                                                    table: Table[P],
                                                    columns:    A,
                                                    column:    Column[B],

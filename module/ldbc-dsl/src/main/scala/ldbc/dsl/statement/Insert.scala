@@ -162,38 +162,3 @@ case class SelectInsert[P <: Product, T](
           Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
       })
     )
-
-///**
-// * A model for constructing ON DUPLICATE KEY UPDATE statements that insert multiple values in MySQL.
-// *
-// * @param table
-// *   Trait for generating SQL table information.
-// * @param tuples
-// *   Tuple type value of the property with type parameter P.
-// * @param params
-// *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
-// *   only.
-// * @tparam P
-// *   Base trait for all products
-// * @tparam T
-// *   Tuple type of the property with type parameter P
-// */
-//case class DuplicateKeyUpdate[P <: Product, T <: Tuple](
-//                                                         table: Table[P],
-//                                                         tuples:     List[T],
-//                                                         params:     List[Parameter.DynamicBinder]
-//                                                       ) extends SQL:
-//
-//  private def values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
-//
-//  private def duplicateKeys = table.*.toList.map(column => s"$column = new_${ table._name }.$column")
-//
-//  override def statement: String =
-//    s"INSERT INTO ${ table._name } (${ table.*.toList.mkString(", ") }) VALUES${ values.mkString(
-//      ", "
-//    ) } AS new_${ table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
-//    
-//  @targetName("combine")
-//  override def ++(sql: SQL): SQL =
-//    DuplicateKeyUpdate(table, tuples, params ++ sql.params)
-//
