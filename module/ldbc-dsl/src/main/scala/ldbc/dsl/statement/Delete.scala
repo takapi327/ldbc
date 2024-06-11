@@ -23,16 +23,17 @@ import ldbc.dsl.*
  *   Union type of column
  */
 case class Delete[P <: Product, T](
-  table: Table[P],
-  columns:    T,
-  other: Option[String] = None,
-  params: List[Parameter.DynamicBinder] = List.empty,
-) extends SQL, LimitProvider:
-  
+  table:   Table[P],
+  columns: T,
+  other:   Option[String]                = None,
+  params:  List[Parameter.DynamicBinder] = List.empty
+) extends SQL,
+          LimitProvider:
+
   @targetName("combine")
   override def ++(sql: SQL): SQL = Delete[P, T](table, columns, Some(sql.statement), params ++ sql.params)
 
-  override def statement: String = s"DELETE FROM ${table._name}" ++ other.fold("")(s => s" $s")
+  override def statement: String = s"DELETE FROM ${ table._name }" ++ other.fold("")(s => s" $s")
 
   /**
    * A method for setting the WHERE condition in a DELETE statement.
@@ -43,8 +44,8 @@ case class Delete[P <: Product, T](
   def where(func: Table[P] => Expression): Where[P, T] =
     val expression = func(table)
     Where(
-      table = table,
-      statement       = statement ++ s" WHERE ${ expression.statement }",
-      columns    = columns,
-      params           = params ++ expression.parameter
+      table     = table,
+      statement = statement ++ s" WHERE ${ expression.statement }",
+      columns   = columns,
+      params    = params ++ expression.parameter
     )

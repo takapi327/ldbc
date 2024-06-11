@@ -97,8 +97,8 @@ object Expression:
    *   Right side of combined expression
    */
   private[ldbc] case class Pair(
-    flag: String,
-    left: Expression,
+    flag:  String,
+    left:  Expression,
     right: Expression
   ) extends Expression:
 
@@ -108,7 +108,7 @@ object Expression:
           l.left.statement + l.flag + l.right.statement + flag + r.left.statement + r.flag + r.right.statement
         case (l, r: Pair) => l.statement + flag + r.left.statement + r.flag + r.right.statement
         case (l: Pair, r) => l.left.statement + l.flag + l.right.statement + flag + r.statement
-        case (l, r) => l.statement + flag + r.statement
+        case (l, r)       => l.statement + flag + r.statement
       s"($result)"
 
     override def parameter: List[Parameter.DynamicBinder] = left.parameter ++ right.parameter
@@ -126,12 +126,12 @@ object Expression:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class SubQuery[T](
-                                        flag:   String,
-                                        column: String,
-                                        value:  SQL
-                                      ) extends Expression:
+    flag:   String,
+    column: String,
+    value:  SQL
+  ) extends Expression:
 
-    override def statement: String                       = s"$column $flag (${ value.statement })"
+    override def statement: String                        = s"$column $flag (${ value.statement })"
     override def parameter: List[Parameter.DynamicBinder] = value.params
 
   /**
@@ -149,22 +149,20 @@ object Expression:
    * Scala types that match SQL DataType
    */
   private[ldbc] case class JoinQuery[F[_], T](
-                                               flag: String,
-                                               left: Column[?],
-                                               right: Column[?]
-                                             ) extends Expression:
+    flag:  String,
+    left:  Column[?],
+    right: Column[?]
+  ) extends Expression:
 
-    override def statement = s"${left.alias.fold(left.name)(alias => s"$alias.${left.name}")} $flag ${
-      right.alias
-        .fold(right.name)(alias => s"$alias.${right.name}")
-    }"
+    override def statement = s"${ left.alias.fold(left.name)(alias => s"$alias.${ left.name }") } $flag ${ right.alias
+        .fold(right.name)(alias => s"$alias.${ right.name }") }"
     override def parameter: List[Parameter.DynamicBinder] = List.empty
 
   /** comparison operator */
   private[ldbc] case class MatchCondition[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                                _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
-    override def flag:      String                       = "="
+    override def flag:      String                        = "="
     override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -173,7 +171,7 @@ object Expression:
     def NOT: MatchCondition[T] = MatchCondition[T](this.column, true, this.value)
 
   private[ldbc] case class OrMore[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                        _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = ">="
 
@@ -186,7 +184,7 @@ object Expression:
     def NOT: OrMore[T] = OrMore[T](this.column, true, this.value)
 
   private[ldbc] case class Over[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                      _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = ">"
 
@@ -199,7 +197,7 @@ object Expression:
     def NOT: Over[T] = Over[T](this.column, true, this.value)
 
   private[ldbc] case class LessThanOrEqualTo[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                                   _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<="
 
@@ -212,7 +210,7 @@ object Expression:
     def NOT: LessThanOrEqualTo[T] = LessThanOrEqualTo[T](this.column, true, this.value)
 
   private[ldbc] case class LessThan[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                          _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<"
 
@@ -225,7 +223,7 @@ object Expression:
     def NOT: LessThan[T] = LessThan[T](this.column, true, this.value)
 
   private[ldbc] case class NotEqual[T](flag: String, column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                                        _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
 
@@ -236,10 +234,10 @@ object Expression:
     def NOT: NotEqual[T] = NotEqual[T](this.flag, this.column, true, this.value)
 
   private[ldbc] case class Is[T <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](
-                                                                           column: String,
-                                                                           isNot: Boolean,
-                                                                           value: T
-                                                                         ) extends SingleValue[T]:
+    column: String,
+    isNot:  Boolean,
+    value:  T
+  ) extends SingleValue[T]:
     override def flag: String = "IS"
 
     override def parameter: List[Parameter.DynamicBinder] = List.empty
@@ -251,7 +249,7 @@ object Expression:
     def NOT: Is[T] = Is[T](this.column, true, this.value)
 
   private[ldbc] case class NullSafeEqual[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                               _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<=>"
 
@@ -264,7 +262,7 @@ object Expression:
     def NOT: NullSafeEqual[T] = NullSafeEqual[T](this.column, true, this.value)
 
   private[ldbc] case class In[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-                                                                                      _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "IN"
 
@@ -272,12 +270,12 @@ object Expression:
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
-      s"$column $not$flag (${values.map(_ => "?").mkString(", ")})"
+      s"$column $not$flag (${ values.map(_ => "?").mkString(", ") })"
 
     def NOT: In[T] = In[T](this.column, true, this.values*)
 
   private[ldbc] case class Between[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-                                                                                           _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "BETWEEN"
 
@@ -290,7 +288,7 @@ object Expression:
     def NOT: Between[T] = Between[T](this.column, true, this.values*)
 
   private[ldbc] case class Like[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                      _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "LIKE"
 
@@ -303,7 +301,7 @@ object Expression:
     def NOT: Like[T] = Like[T](this.column, true, this.value)
 
   private[ldbc] case class LikeEscape[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-                                                                                              _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "LIKE"
 
@@ -316,7 +314,7 @@ object Expression:
     def NOT: LikeEscape[T] = LikeEscape[T](this.column, true, this.values*)
 
   private[ldbc] case class Regexp[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                        _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "REGEXP"
 
@@ -329,7 +327,7 @@ object Expression:
     def NOT: Regexp[T] = Regexp[T](this.column, true, this.value)
 
   private[ldbc] case class LeftShift[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                           _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<<"
 
@@ -342,7 +340,7 @@ object Expression:
     def NOT: LeftShift[T] = LeftShift[T](this.column, true, this.value)
 
   private[ldbc] case class RightShift[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                            _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = ">>"
 
@@ -355,7 +353,7 @@ object Expression:
     def NOT: RightShift[T] = RightShift[T](this.column, true, this.value)
 
   private[ldbc] case class Div[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-                                                                                       _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "DIV"
 
@@ -368,7 +366,7 @@ object Expression:
     def NOT: Div[T] = Div[T](this.column, true, this.values*)
 
   private[ldbc] case class Mod[T](flag: String, column: String, isNot: Boolean, values: Extract[T]*)(using
-                                                                                                     _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends MultiValue[T]:
     override def parameter: List[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_)).toList
 
@@ -379,7 +377,7 @@ object Expression:
     def NOT: Mod[T] = Mod[T](this.flag, this.column, true, this.values*)
 
   private[ldbc] case class BitXOR[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                        _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "^"
 
@@ -392,7 +390,7 @@ object Expression:
     def NOT: BitXOR[T] = BitXOR[T](this.column, true, this.value)
 
   private[ldbc] case class BitFlip[T](column: String, isNot: Boolean, value: Extract[T])(using
-                                                                                         _parameter: Parameter[Extract[T]]
+    _parameter: Parameter[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "~"
 

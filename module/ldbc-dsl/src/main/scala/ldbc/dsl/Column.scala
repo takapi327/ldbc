@@ -31,7 +31,7 @@ sealed trait Column[T]:
   /** Functions for setting aliases on columns */
   def as(name: String): Column[T]
 
-  def asc: OrderBy.Order[T] = OrderBy.Order.Asc(this)
+  def asc:  OrderBy.Order[T] = OrderBy.Order.Asc(this)
   def desc: OrderBy.Order[T] = OrderBy.Order.Desc(this)
 
   private lazy val noBagQuotLabel: String =
@@ -362,7 +362,7 @@ sealed trait Column[T]:
    */
   def MOD(cond: Extract[T], result: Extract[T])(using Parameter[Extract[T]]): Mod[T] =
     Mod[T]("MOD", noBagQuotLabel, false, cond, result)
-  
+
   def mod(cond: Extract[T], result: Extract[T])(using Parameter[Extract[T]]): Mod[T] =
     Mod[T]("%", noBagQuotLabel, false, cond, result)
 
@@ -588,16 +588,17 @@ sealed trait Column[T]:
 object Column:
 
   type Extract[T] <: Tuple = T match
-    case Column[t] => t *: EmptyTuple
+    case Column[t]               => t *: EmptyTuple
     case Column[t] *: EmptyTuple => t *: EmptyTuple
-    case Column[t] *: ts => t *: Extract[ts]
-  
+    case Column[t] *: ts         => t *: Extract[ts]
+
   private[ldbc] case class Impl[T](
-    name: String,
+    name:  String,
     alias: Option[String]
   ) extends Column[T]:
     override def as(name: String): Column[T] = Impl[T](this.name, Some(name))
 
-  private[ldbc] case class MultiColumn[T](flag: String, left: Column[T], right: Column[T], alias: Option[String] = None) extends Column[T]:
+  private[ldbc] case class MultiColumn[T](flag: String, left: Column[T], right: Column[T], alias: Option[String] = None)
+    extends Column[T]:
     override def name: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this.copy(alias = Some(name))

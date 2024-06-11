@@ -36,17 +36,16 @@ trait Table[P <: Product] extends Dynamic:
     tag: Tag
   )(using
     mirror: Mirror.ProductOf[P],
-    index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-    *
-      .productElement(index.value)
+    *.productElement(index.value)
       .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
 
   def select[T](func: Table[P] => T): Select[P, T] =
     val columns = func(this)
     val str = columns match
       case v: Tuple => v.toArray.distinct.mkString(", ")
-      case v => v
+      case v        => v
     val statement = s"SELECT $str FROM $_name"
     Select(this, statement, columns, Nil)
 
@@ -63,7 +62,7 @@ trait Table[P <: Product] extends Dynamic:
   def join[O <: Product](other: Table[O])(
     on: Table[P] *: Tuple1[Table[O]] => Expression
   ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table[O]]] =
-    val joins:     Table[P] *: Tuple1[Table[O]] = this *: Tuple(other)
+    val joins: Table[P] *: Tuple1[Table[O]] = this *: Tuple(other)
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table[O]]](
       this,
       joins,
@@ -89,7 +88,7 @@ trait Table[P <: Product] extends Dynamic:
       this,
       joins,
       this *: Tuple(Table.Opt(other.*)),
-      List(s"${Join.JoinType.LEFT_JOIN.statement} ${other._name} ON ${on(joins).statement}")
+      List(s"${ Join.JoinType.LEFT_JOIN.statement } ${ other._name } ON ${ on(joins).statement }")
     )
 
   /**
@@ -105,7 +104,7 @@ trait Table[P <: Product] extends Dynamic:
   def rightJoin[O <: Product](other: Table[O])(
     on: Table[P] *: Tuple1[Table[O]] => Expression
   ): Join[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]] =
-    val joins:     Table[P] *: Tuple1[Table[O]] = this *: Tuple(other)
+    val joins: Table[P] *: Tuple1[Table[O]] = this *: Tuple(other)
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]](
       this,
       joins,
@@ -151,7 +150,7 @@ trait Table[P <: Product] extends Dynamic:
    *   Type of value to be obtained
    */
   inline def insertInto[T](func: Table[P] => T)(using
-                                                     Tuples.IsColumn[T] =:= true
+    Tuples.IsColumn[T] =:= true
   ): SelectInsert[P, T] =
     val parameter: Parameter.MapToTuple[Column.Extract[T]] = Parameter.fold[Column.Extract[T]]
     SelectInsert[P, T](this, func(this), parameter)
@@ -175,16 +174,16 @@ trait Table[P <: Product] extends Dynamic:
    *   Scala types that match SQL DataType
    */
   inline def update[Tag <: Singleton, T](tag: Tag, value: T)(using
-                                                             mirror: Mirror.ProductOf[P],
-                                                             index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-                                                             check: T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    mirror: Mirror.ProductOf[P],
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
     type PARAM = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val params = List(Parameter.DynamicBinder[PARAM](check(value))(using Parameter.infer[PARAM]))
     new Update[P](
-      table = this,
+      table   = this,
       columns = List(selectDynamic[Tag](tag).name),
-      params = params
+      params  = params
     )
 
   /**
@@ -208,9 +207,9 @@ trait Table[P <: Product] extends Dynamic:
       .toList
       .asInstanceOf[List[Parameter.DynamicBinder]]
     new Update[P](
-      table = this,
-      columns    = *.toList.map(_.asInstanceOf[Column[?]].name),
-      params     = params
+      table   = this,
+      columns = *.toList.map(_.asInstanceOf[Column[?]].name),
+      params  = params
     )
 
   /**
@@ -221,27 +220,34 @@ trait Table[P <: Product] extends Dynamic:
 object Table:
 
   def apply[P <: Product](using t: Table[P]): Table[P] = t
-  
+
   private[ldbc] case class Opt[P](columns: Tuple) extends Dynamic:
 
     transparent inline def selectDynamic[Tag <: Singleton](
       tag: Tag
     )(using
       mirror: Mirror.ProductOf[P],
-      index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    ): Column[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]] =
+      index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    ): Column[
+      Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+    ] =
       columns
         .productElement(index.value)
-        .asInstanceOf[Column[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]]
+        .asInstanceOf[Column[
+          Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+        ]]
 
-  private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](inline nt: NT, inline xs: List[Column[?]]): Tuple.Map[T, Column] =
+  private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](
+    inline nt: NT,
+    inline xs: List[Column[?]]
+  ): Tuple.Map[T, Column] =
     inline nt match
-      case nt1: (e *: ts)  =>
+      case nt1: (e *: ts) =>
         inline nt1.head match
           case h: String =>
             val c = Column.Impl[Tuple.Elem[T, I]](h, None)
             buildColumns[ts, T, I + 1](nt1.tail, xs :+ c)
-          case n: (name, _)                 =>
+          case n: (name, _) =>
             error("stat " + constValue[name] + " should be a constant string")
       case _: EmptyTuple => Tuple.fromArray(xs.toArray).asInstanceOf[Tuple.Map[T, Column]]
 

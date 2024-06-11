@@ -27,32 +27,33 @@ private[ldbc] trait Insert[P <: Product] extends SQL:
 
   /** Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements. */
   def onDuplicateKeyUpdate[T](func: Table[P] => T)(using
-                                                        Tuples.IsColumn[T] =:= true
+    Tuples.IsColumn[T] =:= true
   ): DuplicateKeyUpdateInsert =
     val duplicateKeys = func(self.table) match
-      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${table._name}.$column")
-      case column => List(s"$column = new_${table._name}.$column")
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ table._name }.$column")
+      case column       => List(s"$column = new_${ table._name }.$column")
     DuplicateKeyUpdateInsert(
-      s"${self.statement} AS new_${table._name} ON DUPLICATE KEY UPDATE ${duplicateKeys.mkString(", ")}",
+      s"${ self.statement } AS new_${ table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }",
       self.params
     )
-    
+
 object Insert:
-  
-  private[ldbc] case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder]) extends Insert[P]:
-      
-      @targetName("combine")
-      override def ++(sql: SQL): SQL =
-        Impl(table, statement ++ sql.statement, params ++ sql.params)
+
+  private[ldbc] case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder])
+    extends Insert[P]:
+
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
+      Impl(table, statement ++ sql.statement, params ++ sql.params)
 
 /**
  * Insert trait that provides a method to update in case of duplicate keys.
  */
 case class DuplicateKeyUpdateInsert(
-                                                   statement: String,
-                                                   params: List[Parameter.DynamicBinder]
-                                                 ) extends SQL:
-  
+  statement: String,
+  params:    List[Parameter.DynamicBinder]
+) extends SQL:
+
   @targetName("combine")
   override def ++(sql: SQL): SQL =
     DuplicateKeyUpdateInsert(statement ++ sql.statement, params ++ sql.params)
@@ -73,10 +74,10 @@ case class DuplicateKeyUpdateInsert(
  *   Tuple type of the property with type parameter P
  */
 case class SingleInsert[P <: Product, T <: Tuple](
-                                                   table: Table[P],
-                                                   tuple:      T,
-                                                   params:     List[Parameter.DynamicBinder]
-                                                 ) extends Insert[P]:
+  table:  Table[P],
+  tuple:  T,
+  params: List[Parameter.DynamicBinder]
+) extends Insert[P]:
 
   override def statement: String =
     s"INSERT INTO ${ table._name } (${ table.*.toList.mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
@@ -101,16 +102,16 @@ case class SingleInsert[P <: Product, T <: Tuple](
  *   Tuple type of the property with type parameter P
  */
 case class MultiInsert[P <: Product, T <: Tuple](
-                                                  table: Table[P],
-                                                  tuples:     List[T],
-                                                  params:     List[Parameter.DynamicBinder]
-                                                ) extends Insert[P]:
+  table:  Table[P],
+  tuples: List[T],
+  params: List[Parameter.DynamicBinder]
+) extends Insert[P]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
   override def statement: String =
     s"INSERT INTO ${ table._name } (${ table.*.toList.mkString(", ") }) VALUES${ values.mkString(", ") }"
-    
+
   @targetName("combine")
   override def ++(sql: SQL): SQL =
     MultiInsert(table, tuples, params ++ sql.params)
@@ -130,10 +131,10 @@ case class MultiInsert[P <: Product, T <: Tuple](
  *   Tuple type of the property with type parameter P
  */
 case class SelectInsert[P <: Product, T](
-                                          table:     Table[P],
-                                          columns:   T,
-                                          parameter: Parameter.MapToTuple[Column.Extract[T]]
-                                        ):
+  table:     Table[P],
+  columns:   T,
+  parameter: Parameter.MapToTuple[Column.Extract[T]]
+):
 
   private val columnStatement = columns match
     case v: Tuple => v.toArray.distinct.mkString(", ")
@@ -146,10 +147,14 @@ case class SelectInsert[P <: Product, T](
     Insert.Impl[P](
       table,
       s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })",
-      tuple.zip(parameter).toArray.map { 
-        case (value: Any, parameter: Any) => 
-          Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
-      }.toList
+      tuple
+        .zip(parameter)
+        .toArray
+        .map {
+          case (value: Any, parameter: Any) =>
+            Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
+        }
+        .toList
     )
 
   def values(tuples: List[Column.Extract[T]]): Insert[P] =
@@ -157,8 +162,8 @@ case class SelectInsert[P <: Product, T](
     Insert.Impl[P](
       table,
       s"$insertStatement VALUES${ values.mkString(", ") }",
-      tuples.flatMap(_.zip(parameter).toArray.map { 
-        case (value: Any, parameter: Any) => 
+      tuples.flatMap(_.zip(parameter).toArray.map {
+        case (value: Any, parameter: Any) =>
           Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
       })
     )

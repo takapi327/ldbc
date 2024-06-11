@@ -22,9 +22,9 @@ import ldbc.dsl.SQL
  *   only.
  */
 private[ldbc] case class Offset(
-                                   query: String,
-                                   params:    List[Parameter.DynamicBinder]
-                                 ) extends SQL:
+  query:  String,
+  params: List[Parameter.DynamicBinder]
+) extends SQL:
 
   override def statement: String = query ++ " OFFSET ?"
 

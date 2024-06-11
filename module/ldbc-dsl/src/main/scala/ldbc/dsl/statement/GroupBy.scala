@@ -32,12 +32,14 @@ import ldbc.dsl.*
  *   Union type of column
  */
 private[ldbc] case class GroupBy[P <: Product, A, B](
-                                                   table: Table[P],
-                                                   columns:    A,
-                                                   column:    Column[B],
-                                                   query:  String,
-                                                   params:     List[Parameter.DynamicBinder]
-                                                 ) extends SQL, OrderByProvider[P], LimitProvider:
+  table:   Table[P],
+  columns: A,
+  column:  Column[B],
+  query:   String,
+  params:  List[Parameter.DynamicBinder]
+) extends SQL,
+          OrderByProvider[P],
+          LimitProvider:
 
   override def statement: String = query ++ s" GROUP BY ${ column.name }"
 
@@ -48,8 +50,8 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
   def having(func: A => Expression): Having[P] =
     val expression = func(columns)
     Having(
-      table = table,
-      query = query,
-      params = params ++ expression.parameter,
+      table      = table,
+      query      = query,
+      params     = params ++ expression.parameter,
       expression = expression
-   )
+    )

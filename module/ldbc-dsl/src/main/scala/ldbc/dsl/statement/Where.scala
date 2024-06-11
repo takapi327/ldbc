@@ -30,12 +30,14 @@ import ldbc.dsl.*
  *   Union type of column
  */
 private[ldbc] case class Where[P <: Product, T](
-  table: Table[P],
-  statement:  String,
-  columns:    T,
-  params:     List[Parameter.DynamicBinder]
-) extends SQL, OrderByProvider[P], LimitProvider:
-  
+  table:     Table[P],
+  statement: String,
+  columns:   T,
+  params:    List[Parameter.DynamicBinder]
+) extends SQL,
+          OrderByProvider[P],
+          LimitProvider:
+
   @targetName("combine")
   override def ++(sql: SQL): SQL =
     Where[P, T](table, statement ++ sql.statement, columns, params ++ sql.params)
@@ -50,10 +52,10 @@ private[ldbc] case class Where[P <: Product, T](
    */
   private def union(label: String, expression: Expression): Where[P, T] =
     Where[P, T](
-      table = table,
-      statement = statement ++ s" $label ${expression.statement}",
-      columns = columns,
-      params = params ++ expression.parameter
+      table     = table,
+      statement = statement ++ s" $label ${ expression.statement }",
+      columns   = columns,
+      params    = params ++ expression.parameter
     )
 
   def and(func: Table[P] => Expression): Where[P, T] = union("AND", func(table))
@@ -70,9 +72,9 @@ private[ldbc] case class Where[P <: Product, T](
 
   def groupBy[A](func: T => Column[A]): GroupBy[P, T, A] =
     GroupBy(
-      table = table,
-      query  = statement,
-      columns    = columns,
-      column     = func(columns),
-      params     = params
+      table   = table,
+      query   = statement,
+      columns = columns,
+      column  = func(columns),
+      params  = params
     )

@@ -28,11 +28,12 @@ import ldbc.dsl.*
  *   Base trait for all products
  */
 private[ldbc] case class OrderBy[P <: Product](
-  table: Table[P],
+  table:  Table[P],
   query:  String,
   order:  String,
-  params:     List[Parameter.DynamicBinder]
-) extends SQL, LimitProvider:
+  params: List[Parameter.DynamicBinder]
+) extends SQL,
+          LimitProvider:
 
   override def statement: String = query ++ s" ORDER BY $order"
 
@@ -41,11 +42,11 @@ private[ldbc] case class OrderBy[P <: Product](
     OrderBy[P](table, query ++ sql.statement, order, params ++ sql.params)
 
 object OrderBy:
-  
+
   enum Order[T](val name: String, val column: Column[T]):
-    case Asc(v: Column[T]) extends Order[T]("ASC", v)
+    case Asc(v: Column[T])  extends Order[T]("ASC", v)
     case Desc(v: Column[T]) extends Order[T]("DESC", v)
-    
+
     val statement: String = column.alias.fold(s"${ column.name } $name")(as => s"$as.${ column.name } $name")
 
 /**
@@ -56,7 +57,7 @@ object OrderBy:
  */
 private[ldbc] transparent trait OrderByProvider[P <: Product]:
   self: SQL =>
-  
+
   /** Trait for generating SQL table information. */
   def table: Table[P]
 
@@ -65,12 +66,12 @@ private[ldbc] transparent trait OrderByProvider[P <: Product]:
    */
   def orderBy[T <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](func: Table[P] => T): OrderBy[P] =
     val order = func(table) match
-      case tuple: Tuple => tuple.toList.mkString(", ")
+      case tuple: Tuple            => tuple.toList.mkString(", ")
       case order: OrderBy.Order[?] => order.statement
-      case column: Column[?] => column.toString
+      case column: Column[?]       => column.toString
     OrderBy(
-      table   = table,
-      query   = statement,
-      order   = order,
-      params  = params
+      table  = table,
+      query  = statement,
+      order  = order,
+      params = params
     )

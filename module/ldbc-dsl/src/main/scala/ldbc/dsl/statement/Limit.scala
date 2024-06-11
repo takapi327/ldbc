@@ -22,10 +22,10 @@ import ldbc.dsl.SQL
  *   only.
  */
 private[ldbc] case class Limit(
-                                   query: String,
-                                   params:    List[Parameter.DynamicBinder]
-                                 ) extends SQL:
-  
+  query:  String,
+  params: List[Parameter.DynamicBinder]
+) extends SQL:
+
   override def statement: String = query ++ " LIMIT ?"
 
   @targetName("combine")
@@ -52,6 +52,6 @@ private[ldbc] transparent trait LimitProvider:
    */
   def limit(length: Long): Parameter[Long] ?=> Limit =
     Limit(
-      query = statement,
+      query  = statement,
       params = params :+ Parameter.DynamicBinder(length)
     )

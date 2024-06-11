@@ -26,12 +26,14 @@ import ldbc.dsl.*
  *   Base trait for all products
  */
 private[ldbc] case class Having[P <: Product](
-                                               table: Table[P],
-  query:  String,
+  table:      Table[P],
+  query:      String,
   params:     List[Parameter.DynamicBinder],
   expression: Expression
-) extends SQL, OrderByProvider[P], LimitProvider:
-  
+) extends SQL,
+          OrderByProvider[P],
+          LimitProvider:
+
   override def statement: String = query ++ s" HAVING ${ expression.statement }"
 
   @targetName("combine")
