@@ -51,6 +51,18 @@ trait Table[P] extends Dynamic:
 object Table:
 
   def apply[P](using t: Table[P]): Table[P] = t
+  
+  private[ldbc] case class Opt[P](columns: Tuple) extends Dynamic:
+
+    transparent inline def selectDynamic[Tag <: Singleton](
+      tag: Tag
+    )(using
+      mirror: Mirror.ProductOf[P],
+      index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    ): Column[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]] =
+      columns
+        .productElement(index.value)
+        .asInstanceOf[Column[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]]
 
   private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](inline nt: NT, inline xs: List[Column[?]]): Tuple.Map[T, Column] =
     inline nt match
@@ -60,7 +72,7 @@ object Table:
             val c = Column.Impl[Tuple.Elem[T, I]](h, None)
             buildColumns[ts, T, I + 1](nt1.tail, xs :+ c)
           case n: (name, _)                 =>
-            error("stat " + constValue[name] + " should be a constant integer")
+            error("stat " + constValue[name] + " should be a constant string")
       case _: EmptyTuple => Tuple.fromArray(xs.toArray).asInstanceOf[Tuple.Map[T, Column]]
 
   inline def derived[P](using m: Mirror.ProductOf[P]): Table[P] =
