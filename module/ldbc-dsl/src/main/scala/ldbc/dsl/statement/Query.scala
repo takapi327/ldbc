@@ -23,7 +23,7 @@ import ldbc.dsl.*
  * @tparam T
  *   Column Tuples
  */
-trait Query[F[_], T](using Kleisli[F, ResultSet[F], T]):
+trait Query[F[_], T]:
 
   /**
    * Functions for safely retrieving data from a database in an array or Option type.
