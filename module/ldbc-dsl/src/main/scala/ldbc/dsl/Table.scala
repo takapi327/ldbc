@@ -11,8 +11,9 @@ import scala.deriving.Mirror
 import scala.compiletime.*
 import scala.compiletime.ops.int.*
 import scala.annotation.targetName
+
 import ldbc.dsl.interpreter.*
-import ldbc.dsl.statement.Select
+import ldbc.dsl.statement.*
 
 import scala.Tuple.Elem
 
@@ -47,6 +48,69 @@ trait Table[P] extends Dynamic:
       case v => v
     val statement = s"SELECT $str FROM $_name"
     Select(this, statement, columns, Nil)
+
+  /**
+   * A method to perform a simple Join.
+   *
+   * @param other
+   *   [[Table]] to do a Join.
+   * @param on
+   *   Comparison function that performs a Join.
+   * @tparam O
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
+  def join[O <: Product](other: Table[O])(
+    on: Table[P] *: Tuple1[Table[O]] => Expression
+  ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table[O]]] =
+    val joins:     Table[P] *: Tuple1[Table[O]] = this *: Tuple(other)
+    Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table[O]]](
+      this,
+      joins,
+      joins,
+      List(s"${ Join.JoinType.JOIN.statement } ${ other._name } ON ${ on(joins).statement }")
+    )
+
+  /**
+   * Method to perform Left Join.
+   *
+   * @param other
+   *   [[Table]] to do a Join.
+   * @param on
+   *   Comparison function that performs a Join.
+   * @tparam O
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
+  def leftJoin[O <: Product](other: Table[O])(
+    on: Table[P] *: Tuple1[Table[O]] => Expression
+  ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table.Opt[O]]] =
+    val joins: Table[P] *: Tuple1[Table[O]] = this *: Tuple(other)
+    Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table.Opt[O]]](
+      this,
+      joins,
+      this *: Tuple(Table.Opt(other.*)),
+      List(s"${Join.JoinType.LEFT_JOIN.statement} ${other._name} ON ${on(joins).statement}")
+    )
+
+  /**
+   * Method to perform Right Join.
+   *
+   * @param other
+   *   [[Table]] to do a Join.
+   * @param on
+   *   Comparison function that performs a Join.
+   * @tparam O
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   */
+  def rightJoin[O <: Product](other: Table[O])(
+    on: Table[P] *: Tuple1[Table[O]] => Expression
+  ): Join[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]] =
+    val joins:     Table[P] *: Tuple1[Table[O]] = this *: Tuple(other)
+    Join.Impl[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]](
+      this,
+      joins,
+      Table.Opt(this.*) *: Tuple(other),
+      List(s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other._name } ON ${ on(joins).statement }")
+    )
 
 object Table:
 
