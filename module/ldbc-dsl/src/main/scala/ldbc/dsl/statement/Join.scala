@@ -37,7 +37,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
   def joinStatements: List[String]
 
   /** Statement of Join. */
-  def statement: String = s"FROM ${ main._name } ${ joinStatements.mkString(" ") }"
+  def statement: String = s"FROM ${ main.label } ${ joinStatements.mkString(" ") }"
 
   /**
    * A method to perform a simple Join.
@@ -58,7 +58,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       main,
       joins ++ Tuple(other),
       selects ++ Tuple(other),
-      joinStatements :+ s"${ Join.JoinType.JOIN.statement } ${ other._name } ON ${ on(joins ++ Tuple(other)).statement }"
+      joinStatements :+ s"${ Join.JoinType.JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(other)).statement }"
     )
 
   /**
@@ -80,7 +80,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       main,
       joins ++ Tuple(other),
       selects ++ Tuple(Table.Opt(other.*)),
-      joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other._name } ON ${ on(joins ++ Tuple(other)).statement }"
+      joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(other)).statement }"
     )
 
   /**
@@ -102,7 +102,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       main,
       joins ++ Tuple(other),
       Tuples.toTableOpt[SELECTS](selects) ++ Tuple(other),
-      joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other._name } ON ${ on(joins ++ Tuple(other)).statement }"
+      joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(other)).statement }"
     )
 
   def select[C](func: SELECTS => C)(using Tuples.IsColumn[C] =:= true): Join.JoinSelect[SELECTS, C] =
