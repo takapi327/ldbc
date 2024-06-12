@@ -6,40 +6,51 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
+import scala.annotation.targetName
+
+import ldbc.dsl.*
+import ldbc.query.builder.*
 
 /**
  * A model for constructing GROUP BY statements in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
- * @param statement
- *   SQL statement string
  * @param columns
  *   Union-type column list
+ * @param column
+ *   Trait for representing SQL Column
+ * @param query
+ *   Query string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
  * @tparam P
  *   Base trait for all products
- * @tparam T
+ * @tparam A
  *   Union type of column
  */
-private[ldbc] case class GroupBy[P <: Product, T](
-  tableQuery: TableQuery[P],
-  statement:  String,
-  columns:    T,
-  params:     Seq[Parameter.DynamicBinder]
-) extends Query[T],
-          OrderByProvider[P, T],
-          LimitProvider[T]:
+private[ldbc] case class GroupBy[P <: Product, A, B](
+  table:   Table[P],
+  columns: A,
+  column:  Column[B],
+  query:   String,
+  params:  List[Parameter.DynamicBinder]
+) extends QueryProvider[A],
+          OrderByProvider[P, A],
+          LimitProvider[A]:
 
-  def having(func: T => ExpressionSyntax): Having[P, T] =
-    val expressionSyntax = func(columns)
-    Having(
-      tableQuery = tableQuery,
-      statement  = statement ++ s" HAVING ${ expressionSyntax.statement }",
-      columns    = columns,
-      params     = params ++ expressionSyntax.parameter
+  override def statement: String = query ++ s" GROUP BY ${ column.name }"
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    GroupBy[P, A, B](table, columns, column, query ++ sql.statement, params ++ sql.params)
+
+  def having(func: A => Expression): Having[P, A] =
+    val expression = func(columns)
+    Having[P, A](
+      table      = table,
+      query      = query,
+      params     = params ++ expression.parameter,
+      expression = expression
     )

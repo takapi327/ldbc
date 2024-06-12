@@ -6,10 +6,15 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.Column
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
-import ldbc.query.builder.interpreter.Tuples
+import scala.annotation.targetName
+
+import cats.data.Kleisli
+import cats.syntax.all.*
+
+import ldbc.sql.*
+import ldbc.dsl.*
+import ldbc.query.builder.*
+import ldbc.query.builder.interpreter.*
 
 /**
  * Trait for building Statements to be added.
@@ -17,34 +22,80 @@ import ldbc.query.builder.interpreter.Tuples
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] trait Insert[P <: Product] extends Command:
+private[ldbc] trait Insert[P <: Product] extends SQL:
   self =>
 
   /** A model for generating queries from Table information. */
-  def tableQuery: TableQuery[P]
+  def table: Table[P]
 
   /** Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements. */
-  def onDuplicateKeyUpdate[T](func: TableQuery[P] => T)(using
-    Tuples.IsColumnQuery[T] =:= true
+  def onDuplicateKeyUpdate[T](func: Table[P] => T)(using
+    Tuples.IsColumn[T] =:= true
   ): DuplicateKeyUpdateInsert =
-    val duplicateKeys = func(self.tableQuery) match
-      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ tableQuery.table._name }.$column")
-      case column       => List(s"$column = new_${ tableQuery.table._name }.$column")
-    new DuplicateKeyUpdateInsert:
-      override def params: Seq[Parameter.DynamicBinder] = self.params
+    val duplicateKeys = func(self.table) match
+      case tuple: Tuple => tuple.toList.map(column => s"$column = new_${ table._name }.$column")
+      case column       => List(s"$column = new_${ table._name }.$column")
+    DuplicateKeyUpdateInsert(
+      s"${ self.statement } AS new_${ table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }",
+      self.params
+    )
 
-      override def statement: String =
-        s"${ self.statement } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
+  def update[F[_]: cats.effect.Temporal]: Executor[F, Int] =
+    Executor.Impl[F, Int](
+      statement,
+      params,
+      connection =>
+        for
+          prepareStatement <- connection.prepareStatement(statement)
+          result <- params.zipWithIndex.traverse {
+                      case (param, index) => param.bind[F](prepareStatement, index + 1)
+                    } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+        yield result
+    )
+
+  def returning[F[_]: cats.effect.Temporal, T <: String | Int | Long](using
+    reader: ResultSetReader[F, T]
+  ): Executor[F, T] =
+    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+
+    Executor.Impl[F, T](
+      statement,
+      params,
+      connection =>
+        for
+          prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
+          resultSet <- params.zipWithIndex.traverse {
+                         case (param, index) => param.bind[F](prepareStatement, index + 1)
+                       } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+          result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
+        yield result
+    )
+
+object Insert:
+
+  private[ldbc] case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder])
+    extends Insert[P]:
+
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
+      Impl(table, statement ++ sql.statement, params ++ sql.params)
 
 /**
  * Insert trait that provides a method to update in case of duplicate keys.
  */
-trait DuplicateKeyUpdateInsert extends Command
+case class DuplicateKeyUpdateInsert(
+  statement: String,
+  params:    List[Parameter.DynamicBinder]
+) extends SQL:
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    DuplicateKeyUpdateInsert(statement ++ sql.statement, params ++ sql.params)
 
 /**
  * A model for constructing INSERT statements that insert single values in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
  * @param tuple
  *   Tuple type value of the property with type parameter P.
@@ -57,19 +108,22 @@ trait DuplicateKeyUpdateInsert extends Command
  *   Tuple type of the property with type parameter P
  */
 case class SingleInsert[P <: Product, T <: Tuple](
-  tableQuery: TableQuery[P],
-  tuple:      T,
-  params:     Seq[Parameter.DynamicBinder]
+  table:  Table[P],
+  tuple:  T,
+  params: List[Parameter.DynamicBinder]
 ) extends Insert[P]:
 
-  override val statement: String =
-    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all
-        .mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
+  override def statement: String =
+    s"INSERT INTO ${ table._name } (${ table.*.toList.mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    SingleInsert(table, tuple, params ++ sql.params)
 
 /**
  * A model for constructing INSERT statements that insert multiple values in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
  * @param tuples
  *   Tuple type value of the property with type parameter P.
@@ -82,21 +136,23 @@ case class SingleInsert[P <: Product, T <: Tuple](
  *   Tuple type of the property with type parameter P
  */
 case class MultiInsert[P <: Product, T <: Tuple](
-  tableQuery: TableQuery[P],
-  tuples:     List[T],
-  params:     Seq[Parameter.DynamicBinder]
+  table:  Table[P],
+  tuples: List[T],
+  params: List[Parameter.DynamicBinder]
 ) extends Insert[P]:
 
   private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
 
-  override val statement: String =
-    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(", ") }"
+  override def statement: String =
+    s"INSERT INTO ${ table._name } (${ table.*.toList.mkString(", ") }) VALUES${ values.mkString(", ") }"
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    MultiInsert(table, tuples, params ++ sql.params)
 
 /**
  * A model for constructing INSERT statements that insert values into specified columns in MySQL.
  *
- * @param query
- *   Trait for generating SQL table information.
  * @param columns
  *   List of columns into which values are to be inserted.
  * @param parameter
@@ -107,7 +163,7 @@ case class MultiInsert[P <: Product, T <: Tuple](
  *   Tuple type of the property with type parameter P
  */
 case class SelectInsert[P <: Product, T](
-  query:     TableQuery[P],
+  table:     Table[P],
   columns:   T,
   parameter: Parameter.MapToTuple[Column.Extract[T]]
 ):
@@ -117,55 +173,29 @@ case class SelectInsert[P <: Product, T](
     case v        => v
 
   private val insertStatement: String =
-    s"INSERT INTO ${ query.table._name } ($columnStatement)"
+    s"INSERT INTO ${ table._name } ($columnStatement)"
 
   def values(tuple: Column.Extract[T]): Insert[P] =
-    new Insert[P]:
-      override def tableQuery: TableQuery[P] = query
-      override def statement: String = s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
-      override def params: Seq[Parameter.DynamicBinder] =
-        tuple.zip(parameter).toArray.toSeq.map {
+    Insert.Impl[P](
+      table,
+      s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })",
+      tuple
+        .zip(parameter)
+        .toArray
+        .map {
           case (value: Any, parameter: Any) =>
             Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
         }
+        .toList
+    )
 
   def values(tuples: List[Column.Extract[T]]): Insert[P] =
     val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
-    new Insert[P]:
-      override def tableQuery: TableQuery[P] = query
-      override def statement:  String        = s"$insertStatement VALUES${ values.mkString(", ") }"
-      override def params: Seq[Parameter.DynamicBinder] =
-        tuples.flatMap(_.zip(parameter).toArray.map {
-          case (value: Any, parameter: Any) =>
-            Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
-        })
-
-/**
- * A model for constructing ON DUPLICATE KEY UPDATE statements that insert multiple values in MySQL.
- *
- * @param tableQuery
- *   Trait for generating SQL table information.
- * @param tuples
- *   Tuple type value of the property with type parameter P.
- * @param params
- *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
- *   only.
- * @tparam P
- *   Base trait for all products
- * @tparam T
- *   Tuple type of the property with type parameter P
- */
-case class DuplicateKeyUpdate[P <: Product, T <: Tuple](
-  tableQuery: TableQuery[P],
-  tuples:     List[T],
-  params:     Seq[Parameter.DynamicBinder]
-) extends DuplicateKeyUpdateInsert:
-
-  private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
-
-  private val duplicateKeys = tableQuery.table.all.map(column => s"$column = new_${ tableQuery.table._name }.$column")
-
-  override val statement: String =
-    s"INSERT INTO ${ tableQuery.table._name } (${ tableQuery.table.all.mkString(", ") }) VALUES${ values.mkString(
-        ", "
-      ) } AS new_${ tableQuery.table._name } ON DUPLICATE KEY UPDATE ${ duplicateKeys.mkString(", ") }"
+    Insert.Impl[P](
+      table,
+      s"$insertStatement VALUES${ values.mkString(", ") }",
+      tuples.flatMap(_.zip(parameter).toArray.map {
+        case (value: Any, parameter: Any) =>
+          Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
+      })
+    )

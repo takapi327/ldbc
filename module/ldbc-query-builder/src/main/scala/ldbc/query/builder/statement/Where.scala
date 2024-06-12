@@ -6,14 +6,15 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.*
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
+import scala.annotation.targetName
+
+import ldbc.dsl.*
+import ldbc.query.builder.*
 
 /**
  * A model for constructing WHERE statements in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
  * @param statement
  *   SQL statement string
@@ -28,44 +29,51 @@ import ldbc.query.builder.TableQuery
  *   Union type of column
  */
 private[ldbc] case class Where[P <: Product, T](
-  tableQuery: TableQuery[P],
-  statement:  String,
-  columns:    T,
-  params:     Seq[Parameter.DynamicBinder]
-) extends Query[T],
+  table:     Table[P],
+  statement: String,
+  columns:   T,
+  params:    List[Parameter.DynamicBinder]
+) extends QueryProvider[T],
           OrderByProvider[P, T],
           LimitProvider[T]:
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    Where[P, T](table, statement ++ sql.statement, columns, params ++ sql.params)
 
   /**
    * A method for combining WHERE statements.
    *
    * @param label
    *   A conjunctive expression to join WHERE statements together.
-   * @param expressionSyntax
+   * @param expression
    *   Trait for the syntax of expressions available in MySQL.
    */
-  private def union(label: String, expressionSyntax: ExpressionSyntax): Where[P, T] =
+  private def union(label: String, expression: Expression): Where[P, T] =
     Where[P, T](
-      tableQuery = tableQuery,
-      statement  = statement ++ s" $label ${ expressionSyntax.statement }",
-      columns    = columns,
-      params     = params ++ expressionSyntax.parameter
+      table     = table,
+      statement = statement ++ s" $label ${ expression.statement }",
+      columns   = columns,
+      params    = params ++ expression.parameter
     )
 
-  def and(func: TableQuery[P] => ExpressionSyntax): Where[P, T] = union("AND", func(tableQuery))
+  def and(func: Table[P] => Expression): Where[P, T] = union("AND", func(table))
 
-  def or(func: TableQuery[P] => ExpressionSyntax): Where[P, T] = union("OR", func(tableQuery))
+  def or(func: Table[P] => Expression): Where[P, T] = union("OR", func(table))
 
-  def ||(func: TableQuery[P] => ExpressionSyntax): Where[P, T] = union("||", func(tableQuery))
+  @targetName("OR")
+  def ||(func: Table[P] => Expression): Where[P, T] = union("||", func(table))
 
-  def xor(func: TableQuery[P] => ExpressionSyntax): Where[P, T] = union("XOR", func(tableQuery))
+  def xor(func: Table[P] => Expression): Where[P, T] = union("XOR", func(table))
 
-  def &&(func: TableQuery[P] => ExpressionSyntax): Where[P, T] = union("&&", func(tableQuery))
+  @targetName("AND")
+  def &&(func: Table[P] => Expression): Where[P, T] = union("&&", func(table))
 
-  def groupBy[A](func: T => Column[A]): GroupBy[P, T] =
+  def groupBy[A](func: T => Column[A]): GroupBy[P, T, A] =
     GroupBy(
-      tableQuery = tableQuery,
-      statement  = statement ++ s" GROUP BY ${ func(columns).label }",
-      columns    = columns,
-      params     = params
+      table   = table,
+      query   = statement,
+      columns = columns,
+      column  = func(columns),
+      params  = params
     )

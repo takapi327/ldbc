@@ -7,15 +7,16 @@
 package ldbc.query.builder.statement
 
 import scala.deriving.Mirror
+import scala.annotation.targetName
 
-import ldbc.core.interpreter.Tuples as CoreTuples
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
+import ldbc.dsl.*
+import ldbc.query.builder.*
+import ldbc.query.builder.interpreter.Tuples
 
 /**
  * A model for constructing UPDATE statements in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
  * @param columns
  *   Column name list
@@ -26,15 +27,20 @@ import ldbc.query.builder.TableQuery
  *   Base trait for all products
  */
 case class Update[P <: Product](
-  tableQuery: TableQuery[P],
-  columns:    List[String],
-  params:     Seq[Parameter.DynamicBinder]
-) extends Command,
-          Command.LimitProvider:
+  table:   Table[P],
+  columns: List[String],
+  params:  List[Parameter.DynamicBinder],
+  other:   Option[String] = None
+) extends SQL:
 
   private val values = columns.map(column => s"$column = ?")
 
-  override def statement: String = s"UPDATE ${ tableQuery.table._name } SET ${ values.mkString(", ") }"
+  override def statement: String =
+    s"UPDATE ${ table._name } SET ${ values.mkString(", ") }" ++ other.fold("")(str => s" $str")
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    Update(table, columns, params ++ sql.params, Some(sql.statement))
 
   /**
    * A method that sets additional values to be updated in the query model that updates specific columns defined in the
@@ -57,13 +63,13 @@ case class Update[P <: Product](
    */
   inline def set[Tag <: Singleton, T](tag: Tag, value: T)(using
     mirror: Mirror.ProductOf[P],
-    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
-    type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
     this.copy(
-      columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
+      columns = columns :+ table.selectDynamic[Tag](tag).name,
       params  = params :+ param
     )
 
@@ -72,29 +78,29 @@ case class Update[P <: Product](
    * table.
    *
    * @param tag
-   *   A type with a single instance. Here, Column is passed.
+   * A type with a single instance. Here, Column is passed.
    * @param value
-   *   A value of type T to be inserted into the specified column.
+   * A value of type T to be inserted into the specified column.
    * @param mirror
-   *   product isomorphism map
+   * product isomorphism map
    * @param index
-   *   Position of the specified type in tuple X
+   * Position of the specified type in tuple X
    * @param check
-   *   A value to verify that the specified type matches the type of the specified column that the Table has.
+   * A value to verify that the specified type matches the type of the specified column that the Table has.
    * @tparam Tag
-   *   Type with a single instance
+   * Type with a single instance
    * @tparam T
-   *   Scala types that match SQL DataType
+   * Scala types that match SQL DataType
    */
   inline def set[Tag <: Singleton, T](tag: Tag, value: Option[T])(using
     mirror: Mirror.ProductOf[P],
-    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    check:  Option[T] =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check:  Option[T] =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
-    type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
     this.copy(
-      columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
+      columns = columns :+ table.selectDynamic[Tag](tag).name,
       params  = params :+ param
     )
 
@@ -121,14 +127,14 @@ case class Update[P <: Product](
    */
   inline def set[Tag <: Singleton, T](tag: Tag, value: T, bool: Boolean)(using
     mirror: Mirror.ProductOf[P],
-    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
     if bool then
-      type Param = Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+      type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
       val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
       this.copy(
-        columns = columns :+ tableQuery.table.selectDynamic[Tag](tag).label,
+        columns = columns :+ table.selectDynamic[Tag](tag).name,
         params  = params :+ param
       )
     else this
@@ -139,10 +145,11 @@ case class Update[P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[P] => ExpressionSyntax): Command.Where =
-    val expressionSyntax = func(tableQuery)
-    Command.Where(
-      _statement       = statement,
-      expressionSyntax = expressionSyntax,
-      params           = params ++ expressionSyntax.parameter
+  def where(func: Table[P] => Expression): Where[P, table.Columns] =
+    val expression = func(table)
+    Where(
+      table     = table,
+      statement = statement ++ s" WHERE ${ expression.statement }",
+      columns   = table.*,
+      params    = params ++ expression.parameter
     )

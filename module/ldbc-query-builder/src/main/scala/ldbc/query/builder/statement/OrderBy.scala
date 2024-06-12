@@ -6,19 +6,20 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.Column
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
+import scala.annotation.targetName
+
+import ldbc.dsl.*
+import ldbc.query.builder.*
 
 /**
  * A model for constructing ORDER BY statements in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
- * @param statement
- *   SQL statement string
- * @param columns
- *   Union-type column list
+ * @param query
+ *   Query string
+ * @param order
+ *   Order query string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
@@ -28,68 +29,52 @@ import ldbc.query.builder.TableQuery
  *   Union type of column
  */
 private[ldbc] case class OrderBy[P <: Product, T](
-  tableQuery: TableQuery[P],
-  statement:  String,
-  columns:    T,
-  params:     Seq[Parameter.DynamicBinder]
-) extends Query[T],
-          LimitProvider[T]
+  table:  Table[P],
+  query:  String,
+  order:  String,
+  params: List[Parameter.DynamicBinder]
+) extends QueryProvider[T],
+          LimitProvider[T]:
+
+  override def statement: String = query ++ s" ORDER BY $order"
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    OrderBy[P, T](table, query ++ sql.statement, order, params ++ sql.params)
 
 object OrderBy:
 
-  /**
-   * Trait to indicate the order of the order.
-   */
-  trait Order:
+  enum Order[T](val name: String, val column: Column[T]):
+    case Asc(v: Column[T])  extends Order[T]("ASC", v)
+    case Desc(v: Column[T]) extends Order[T]("DESC", v)
 
-    /** Sort Order Type */
-    def name: String
-
-    /** Trait for representing SQL Column */
-    def column: Column[?]
-
-    /** SQL query string */
-    def statement: String = column.alias.fold(s"${ column.label } $name")(as => s"$as.${ column.label } $name")
-
-    override def toString: String = statement
-
-  case class Asc(column: Column[?]) extends Order:
-    override def name: String = "ASC"
-  case class Desc(column: Column[?]) extends Order:
-    override def name: String = "DESC"
+    val statement: String = column.alias.fold(s"${ column.name } $name")(as => s"$as.${ column.name } $name")
 
 /**
  * Transparent Trait to provide orderBy method.
  *
  * @tparam P
  *   Base trait for all products
- * @tparam T
- *   Union type of column
  */
 private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
-  self: Query[T] =>
+  self: SQL =>
 
-  /**
-   * Trait for generating SQL table information.
-   */
-  def tableQuery: TableQuery[P]
+  /** Trait for generating SQL table information. */
+  def table: Table[P]
 
   /**
    * A method for setting the ORDER BY condition in a statement.
-   *
-   * @param func
-   *   Function to construct an expression using the columns that Table has.
    */
-  def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](
-    func: TableQuery[P] => A
+  def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](
+    func: Table[P] => A
   ): OrderBy[P, T] =
-    val order = func(tableQuery) match
-      case v: Tuple         => v.toList.mkString(", ")
-      case v: OrderBy.Order => v.statement
-      case v: Column[?]     => v.alias.fold(v.label)(name => s"$name.${ v.label }")
+    val order = func(table) match
+      case tuple: Tuple            => tuple.toList.mkString(", ")
+      case order: OrderBy.Order[?] => order.statement
+      case column: Column[?]       => column.toString
     OrderBy(
-      tableQuery = tableQuery,
-      statement  = self.statement ++ s" ORDER BY $order",
-      columns    = self.columns,
-      params     = self.params
+      table  = table,
+      query  = statement,
+      order  = order,
+      params = params
     )

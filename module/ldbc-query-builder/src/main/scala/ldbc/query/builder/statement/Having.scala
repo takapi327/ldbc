@@ -6,18 +6,18 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
+import scala.annotation.targetName
+
+import ldbc.dsl.*
+import ldbc.query.builder.*
 
 /**
  * A model for constructing HAVING statements in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
- * @param statement
- *   SQL statement string
- * @param columns
- *   Union-type column list
+ * @param query
+ *   Query string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
@@ -27,10 +27,16 @@ import ldbc.query.builder.TableQuery
  *   Union type of column
  */
 private[ldbc] case class Having[P <: Product, T](
-  tableQuery: TableQuery[P],
-  statement:  String,
-  columns:    T,
-  params:     Seq[Parameter.DynamicBinder]
-) extends Query[T],
+  table:      Table[P],
+  query:      String,
+  params:     List[Parameter.DynamicBinder],
+  expression: Expression
+) extends QueryProvider[T],
           OrderByProvider[P, T],
-          LimitProvider[T]
+          LimitProvider[T]:
+
+  override def statement: String = query ++ s" HAVING ${ expression.statement }"
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    Having[P, T](table, query ++ sql.statement, params ++ sql.params, expression)

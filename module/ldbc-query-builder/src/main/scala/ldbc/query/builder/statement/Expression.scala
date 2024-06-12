@@ -4,10 +4,11 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.statement
+package ldbc.query.builder.statement
 
 import ldbc.dsl.*
-import ldbc.dsl.interpreter.Extract
+import ldbc.query.builder.*
+import ldbc.query.builder.interpreter.Extract
 
 /**
  * Trait for the syntax of expressions available in MySQL.

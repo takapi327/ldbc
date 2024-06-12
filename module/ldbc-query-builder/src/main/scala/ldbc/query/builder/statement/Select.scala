@@ -6,14 +6,15 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.core.*
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
+import scala.annotation.targetName
+
+import ldbc.dsl.*
+import ldbc.query.builder.*
 
 /**
  * A model for constructing SELECT statements in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
  * @param statement
  *   SQL statement string
@@ -28,13 +29,17 @@ import ldbc.query.builder.TableQuery
  *   Union type of column
  */
 private[ldbc] case class Select[P <: Product, T](
-  tableQuery: TableQuery[P],
-  statement:  String,
-  columns:    T,
-  params:     Seq[Parameter.DynamicBinder]
-) extends Query[T],
+  table:     Table[P],
+  statement: String,
+  columns:   T,
+  params:    List[Parameter.DynamicBinder]
+) extends QueryProvider[T],
           OrderByProvider[P, T],
           LimitProvider[T]:
+
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    Select[P, T](table, statement ++ sql.statement, columns, params ++ sql.params)
 
   /**
    * A method for setting the WHERE condition in a SELECT statement.
@@ -42,19 +47,20 @@ private[ldbc] case class Select[P <: Product, T](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: TableQuery[P] => ExpressionSyntax): Where[P, T] =
-    val expressionSyntax = func(tableQuery)
+  def where(func: Table[P] => Expression): Where[P, T] =
+    val expression = func(table)
     Where[P, T](
-      tableQuery = tableQuery,
-      statement  = statement ++ s" WHERE ${ expressionSyntax.statement }",
-      columns    = columns,
-      params     = params ++ expressionSyntax.parameter
+      table     = table,
+      statement = statement ++ s" WHERE ${ expression.statement }",
+      columns   = columns,
+      params    = params ++ expression.parameter
     )
 
-  def groupBy[A](func: T => Column[A]): GroupBy[P, T] =
+  def groupBy[A](func: T => Column[A]): GroupBy[P, T, A] =
     GroupBy(
-      tableQuery = tableQuery,
-      statement  = statement ++ s" GROUP BY ${ func(columns).label }",
-      columns    = columns,
-      params     = params
+      table   = table,
+      query   = statement,
+      columns = columns,
+      column  = func(columns),
+      params  = params
     )

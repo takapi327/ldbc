@@ -4,11 +4,12 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.statement
+package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
 import ldbc.dsl.*
+import ldbc.query.builder.*
 
 /**
  * A model for constructing OFFSET statements in MySQL.
@@ -24,7 +25,7 @@ import ldbc.dsl.*
 private[ldbc] case class Offset[T](
   query:  String,
   params: List[Parameter.DynamicBinder]
-) extends Query.Provider[T]:
+) extends QueryProvider[T]:
 
   override def statement: String = query ++ " OFFSET ?"
 

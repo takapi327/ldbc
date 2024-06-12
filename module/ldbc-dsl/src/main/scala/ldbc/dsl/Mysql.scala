@@ -15,7 +15,6 @@ import cats.syntax.all.*
 import cats.effect.Temporal
 
 import ldbc.sql.*
-import ldbc.dsl.statement.Query
 
 /**
  * A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,

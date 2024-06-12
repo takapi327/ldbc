@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl
+package ldbc.query.builder
 
 import scala.language.dynamics
 import scala.deriving.Mirror
@@ -12,8 +12,9 @@ import scala.compiletime.*
 import scala.compiletime.ops.int.*
 import scala.annotation.targetName
 
-import ldbc.dsl.interpreter.*
-import ldbc.dsl.statement.*
+import ldbc.dsl.*
+import ldbc.query.builder.statement.*
+import ldbc.query.builder.interpreter.*
 
 /**
  * Trait for generating SQL table information.

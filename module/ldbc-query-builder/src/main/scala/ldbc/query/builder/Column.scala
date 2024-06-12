@@ -4,13 +4,14 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl
+package ldbc.query.builder
 
 import scala.annotation.targetName
 
-import ldbc.dsl.statement.*
-import ldbc.dsl.statement.Expression.*
-import ldbc.dsl.interpreter.Extract
+import ldbc.dsl.*
+import ldbc.query.builder.statement.*
+import ldbc.query.builder.statement.Expression.*
+import ldbc.query.builder.interpreter.Extract
 
 /**
  * Trait for representing SQL Column
