@@ -27,18 +27,18 @@ trait Table[P <: Product] extends Dynamic:
   def _name: String
 
   def _alias: Option[String]
-  
+
   def label: String = _alias match
     case Some(alias) if alias == _name => _name
-    case Some(alias) => s"${_name} AS $alias"
-    case None => _name
+    case Some(alias)                   => s"${ _name } AS $alias"
+    case None                          => _name
 
   type Columns <: Tuple
   @targetName("all")
   def * : Columns
 
   def as(name: String): Table[P]
-  
+
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
   )(using
@@ -71,7 +71,7 @@ trait Table[P <: Product] extends Dynamic:
     on: Table[P] *: Tuple1[Table[O]] => Expression
   ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table[O]]] =
     val main = _alias.fold(as(_name))(_ => this)
-    val sub = other._alias.fold(other.as(other._name))(_ => other)
+    val sub  = other._alias.fold(other.as(other._name))(_ => other)
     val joins: Table[P] *: Tuple1[Table[O]] = main *: Tuple(sub)
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table[O]]](
       main,
@@ -94,7 +94,7 @@ trait Table[P <: Product] extends Dynamic:
     on: Table[P] *: Tuple1[Table[O]] => Expression
   ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table.Opt[O]]] =
     val main = _alias.fold(as(_name))(_ => this)
-    val sub = other._alias.fold(other.as(other._name))(_ => other)
+    val sub  = other._alias.fold(other.as(other._name))(_ => other)
     val joins: Table[P] *: Tuple1[Table[O]] = main *: Tuple(sub)
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table.Opt[O]]](
       main,
@@ -117,7 +117,7 @@ trait Table[P <: Product] extends Dynamic:
     on: Table[P] *: Tuple1[Table[O]] => Expression
   ): Join[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]] =
     val main = _alias.fold(as(_name))(_ => this)
-    val sub = other._alias.fold(other.as(other._name))(_ => other)
+    val sub  = other._alias.fold(other.as(other._name))(_ => other)
     val joins: Table[P] *: Tuple1[Table[O]] = main *: Tuple(sub)
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]](
       main,
@@ -235,7 +235,8 @@ object Table:
 
   def apply[P <: Product](using t: Table[P]): Table[P] = t
 
-  private[ldbc] case class Impl[P <: Product, T <: Tuple](_name: String, _alias: Option[String], columns: T) extends Table[P]:
+  private[ldbc] case class Impl[P <: Product, T <: Tuple](_name: String, _alias: Option[String], columns: T)
+    extends Table[P]:
     override type Columns = T
     @targetName("all")
     override def * : Columns = columns
@@ -274,7 +275,7 @@ object Table:
   inline def derived[P <: Product](using m: Mirror.ProductOf[P]): Table[P] =
     val labels = constValueTuple[m.MirroredElemLabels]
     Impl[P, Tuple.Map[m.MirroredElemTypes, Column]](
-      _name = constValue[m.MirroredLabel],
-      _alias = None,
+      _name   = constValue[m.MirroredLabel],
+      _alias  = None,
       columns = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)
     )

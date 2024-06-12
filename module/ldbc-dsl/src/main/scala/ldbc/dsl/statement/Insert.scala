@@ -48,12 +48,14 @@ private[ldbc] trait Insert[P <: Product] extends SQL:
         for
           prepareStatement <- connection.prepareStatement(statement)
           result <- params.zipWithIndex.traverse {
-            case (param, index) => param.bind[F](prepareStatement, index + 1)
-          } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+                      case (param, index) => param.bind[F](prepareStatement, index + 1)
+                    } >> prepareStatement.executeUpdate() <* prepareStatement.close()
         yield result
     )
 
-  def returning[F[_]: cats.effect.Temporal, T <: String | Int | Long](using reader: ResultSetReader[F, T]): Executor[F, T] =
+  def returning[F[_]: cats.effect.Temporal, T <: String | Int | Long](using
+    reader: ResultSetReader[F, T]
+  ): Executor[F, T] =
     given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
 
     Executor.Impl[F, T](
@@ -63,8 +65,8 @@ private[ldbc] trait Insert[P <: Product] extends SQL:
         for
           prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
           resultSet <- params.zipWithIndex.traverse {
-            case (param, index) => param.bind[F](prepareStatement, index + 1)
-          } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+                         case (param, index) => param.bind[F](prepareStatement, index + 1)
+                       } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
           result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
         yield result
     )

@@ -42,7 +42,7 @@ trait Query[F[_], T]:
 object Query:
 
   trait Provider[T] extends SQL:
-    
+
     inline def query[F[_]: Temporal]: Query[F, Tuples.InverseColumnMap[T]] =
       given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[T]] = Kleisli { resultSet =>
         ResultSetReader
@@ -56,7 +56,10 @@ object Query:
       }
       Impl[F, Tuples.InverseColumnMap[T]](statement, params)
 
-    inline def query[F[_]: Temporal, P <: Product](using mirror: Mirror.ProductOf[P], check: Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes): Query[F, P] =
+    inline def query[F[_]: Temporal, P <: Product](using
+      mirror: Mirror.ProductOf[P],
+      check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
+    ): Query[F, P] =
       given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
         ResultSetReader
           .fold[F, Tuples.InverseColumnMap[T]]

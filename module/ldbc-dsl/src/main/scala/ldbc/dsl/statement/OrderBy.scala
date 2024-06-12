@@ -66,7 +66,9 @@ private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
   /**
    * A method for setting the ORDER BY condition in a statement.
    */
-  def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](func: Table[P] => A): OrderBy[P, T] =
+  def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](
+    func: Table[P] => A
+  ): OrderBy[P, T] =
     val order = func(table) match
       case tuple: Tuple            => tuple.toList.mkString(", ")
       case order: OrderBy.Order[?] => order.statement
