@@ -6,6 +6,8 @@
 
 package ldbc.dsl.statement
 
+import scala.deriving.Mirror
+
 import cats.*
 import cats.data.Kleisli
 import cats.syntax.all.*
@@ -14,6 +16,7 @@ import cats.effect.Temporal
 
 import ldbc.sql.{ Parameter, ResultSet }
 import ldbc.dsl.*
+import ldbc.dsl.interpreter.Tuples
 
 /**
  * Trait for determining what type of search system statements are retrieved from the database.
@@ -37,6 +40,34 @@ trait Query[F[_], T]:
   def unsafe: Executor[F, T]
 
 object Query:
+
+  trait Provider[T] extends SQL:
+    
+    inline def query[F[_]: Temporal]: Query[F, Tuples.InverseColumnMap[T]] =
+      given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[T]] = Kleisli { resultSet =>
+        ResultSetReader
+          .fold[F, Tuples.InverseColumnMap[T]]
+          .toList
+          .zipWithIndex
+          .traverse {
+            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+          }
+          .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[T]])
+      }
+      Impl[F, Tuples.InverseColumnMap[T]](statement, params)
+
+    inline def query[F[_]: Temporal, P <: Product](using mirror: Mirror.ProductOf[P], check: Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes): Query[F, P] =
+      given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
+        ResultSetReader
+          .fold[F, Tuples.InverseColumnMap[T]]
+          .toList
+          .zipWithIndex
+          .traverse {
+            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+          }
+          .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
+      }
+      Impl[F, P](statement, params)
 
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,

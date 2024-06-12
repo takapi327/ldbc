@@ -16,8 +16,6 @@ import ldbc.sql.*
 import ldbc.dsl.interpreter.*
 import ldbc.dsl.statement.*
 
-import scala.Tuple.Elem
-
 /**
  * Trait for generating SQL table information.
  *

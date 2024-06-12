@@ -20,11 +20,13 @@ import ldbc.dsl.SQL
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
+ * @tparam T
+ *   Union type of column
  */
-private[ldbc] case class Offset(
+private[ldbc] case class Offset[T](
   query:  String,
   params: List[Parameter.DynamicBinder]
-) extends SQL:
+) extends Query.Provider[T]:
 
   override def statement: String = query ++ " OFFSET ?"
 

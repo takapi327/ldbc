@@ -34,9 +34,9 @@ private[ldbc] case class Select[P <: Product, T](
   statement: String,
   columns:   T,
   params:    List[Parameter.DynamicBinder]
-) extends SQL,
-          OrderByProvider[P],
-          LimitProvider:
+) extends Query.Provider[T],
+          OrderByProvider[P, T],
+          LimitProvider[T]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =

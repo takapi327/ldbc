@@ -24,18 +24,20 @@ import ldbc.dsl.*
  *   only.
  * @tparam P
  *   Base trait for all products
+ * @tparam T
+ *   Union type of column
  */
-private[ldbc] case class Having[P <: Product](
+private[ldbc] case class Having[P <: Product, T](
   table:      Table[P],
   query:      String,
   params:     List[Parameter.DynamicBinder],
   expression: Expression
-) extends SQL,
-          OrderByProvider[P],
-          LimitProvider:
+) extends Query.Provider[T],
+          OrderByProvider[P, T],
+          LimitProvider[T]:
 
   override def statement: String = query ++ s" HAVING ${ expression.statement }"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Having[P](table, query ++ sql.statement, params ++ sql.params, expression)
+    Having[P, T](table, query ++ sql.statement, params ++ sql.params, expression)

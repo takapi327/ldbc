@@ -26,20 +26,22 @@ import ldbc.dsl.*
  *   only.
  * @tparam P
  *   Base trait for all products
+ * @tparam T
+ *   Union type of column
  */
-private[ldbc] case class OrderBy[P <: Product](
+private[ldbc] case class OrderBy[P <: Product, T](
   table:  Table[P],
   query:  String,
   order:  String,
   params: List[Parameter.DynamicBinder]
-) extends SQL,
-          LimitProvider:
+) extends Query.Provider[T],
+          LimitProvider[T]:
 
   override def statement: String = query ++ s" ORDER BY $order"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    OrderBy[P](table, query ++ sql.statement, order, params ++ sql.params)
+    OrderBy[P, T](table, query ++ sql.statement, order, params ++ sql.params)
 
 object OrderBy:
 
@@ -55,7 +57,7 @@ object OrderBy:
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] transparent trait OrderByProvider[P <: Product]:
+private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
   self: SQL =>
 
   /** Trait for generating SQL table information. */
@@ -64,7 +66,7 @@ private[ldbc] transparent trait OrderByProvider[P <: Product]:
   /**
    * A method for setting the ORDER BY condition in a statement.
    */
-  def orderBy[T <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](func: Table[P] => T): OrderBy[P] =
+  def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](func: Table[P] => A): OrderBy[P, T] =
     val order = func(table) match
       case tuple: Tuple            => tuple.toList.mkString(", ")
       case order: OrderBy.Order[?] => order.statement

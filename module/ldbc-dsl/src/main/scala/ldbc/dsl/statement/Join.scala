@@ -127,11 +127,11 @@ object Join:
     joinStatements: List[String]
   ) extends Join[JOINS, SELECTS]
 
-  private[ldbc] case class JoinOrderBy(
+  private[ldbc] case class JoinOrderBy[T](
     statement: String,
     params:    List[Parameter.DynamicBinder]
-  ) extends SQL,
-            LimitProvider:
+  ) extends Query.Provider[T],
+            LimitProvider[T]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -144,7 +144,7 @@ object Join:
 
     def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](
       func: SELECTS => A
-    ): JoinOrderBy =
+    ): JoinOrderBy[SELECTS] =
       val order = func(selects) match
         case v: Tuple            => v.toList.mkString(", ")
         case v: OrderBy.Order[?] => v.statement
@@ -158,9 +158,9 @@ object Join:
     selects:   SELECTS,
     statement: String,
     params:    List[Parameter.DynamicBinder]
-  ) extends SQL,
+  ) extends Query.Provider[SELECTS],
             JoinOrderByProvider[SELECTS],
-            LimitProvider:
+            LimitProvider[SELECTS]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -171,9 +171,9 @@ object Join:
     statement: String,
     columns:   T,
     params:    List[Parameter.DynamicBinder]
-  ) extends SQL,
+  ) extends Query.Provider[T],
             JoinOrderByProvider[SELECTS],
-            LimitProvider:
+            LimitProvider[T]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -197,9 +197,9 @@ object Join:
     statement: String,
     columns:   T,
     params:    List[Parameter.DynamicBinder]
-  ) extends SQL,
+  ) extends Query.Provider[T],
             JoinOrderByProvider[SELECTS],
-            LimitProvider:
+            LimitProvider[T]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -248,9 +248,9 @@ object Join:
     fromStatement: String,
     columns:       T,
     params:        List[Parameter.DynamicBinder]
-  ) extends SQL,
+  ) extends Query.Provider[T],
             JoinOrderByProvider[SELECTS],
-            LimitProvider:
+            LimitProvider[T]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =

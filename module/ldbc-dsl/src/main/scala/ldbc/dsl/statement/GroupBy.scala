@@ -37,9 +37,9 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
   column:  Column[B],
   query:   String,
   params:  List[Parameter.DynamicBinder]
-) extends SQL,
-          OrderByProvider[P],
-          LimitProvider:
+) extends Query.Provider[A],
+          OrderByProvider[P, A],
+          LimitProvider[A]:
 
   override def statement: String = query ++ s" GROUP BY ${ column.name }"
 
@@ -47,9 +47,9 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
   override def ++(sql: SQL): SQL =
     GroupBy[P, A, B](table, columns, column, query ++ sql.statement, params ++ sql.params)
 
-  def having(func: A => Expression): Having[P] =
+  def having(func: A => Expression): Having[P, A] =
     val expression = func(columns)
-    Having(
+    Having[P, A](
       table      = table,
       query      = query,
       params     = params ++ expression.parameter,
