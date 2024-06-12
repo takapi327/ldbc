@@ -18,10 +18,10 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.core.*
-import ldbc.query.builder.TableQuery
 import ldbc.sql.DataSource
-import ldbc.dsl.query.builder.syntax.io.*
 import ldbc.dsl.logging.LogHandler
+import ldbc.query.builder.TableQuery
+import ldbc.query.builder.syntax.io.*
 
 import benchmark.City
 
