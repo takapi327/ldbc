@@ -55,12 +55,6 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
 
-lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
-  .module("query-builder", "Project to build type-safe queries")
-  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
-  .dependsOn(core, sql)
-
 lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("dsl", "Projects that provide a way to connect to the database")
@@ -71,7 +65,13 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0"  % Test
     )
   )
-  .dependsOn(queryBuilder)
+  .dependsOn(sql)
+
+lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("query-builder", "Project to build type-safe queries")
+  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
+  .dependsOn(core, dsl)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(description := "Project to generate SchemaSPY documentation")
@@ -171,7 +171,7 @@ lazy val tests = crossProject(JVMPlatform)
       mysql            % Test
     )
   )
-  .dependsOn(jdbcConnector, connector, dsl)
+  .dependsOn(jdbcConnector, connector, queryBuilder)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
