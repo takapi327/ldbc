@@ -20,7 +20,7 @@ import cats.effect.unsafe.implicits.global
 import ldbc.core.*
 import ldbc.query.builder.TableQuery
 import ldbc.sql.DataSource
-import ldbc.dsl.io.*
+import ldbc.dsl.query.builder.syntax.io.*
 import ldbc.dsl.logging.LogHandler
 
 @BenchmarkMode(Array(Mode.Throughput))

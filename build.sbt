@@ -186,7 +186,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, dsl.jvm)
+  .dependsOn(jdbcConnector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
