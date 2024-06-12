@@ -18,7 +18,7 @@ import ldbc.core.*
 import ldbc.sql.Connection
 import ldbc.query.builder.TableQuery
 import ldbc.connector.SSL
-import ldbc.dsl.io.*
+import ldbc.query.builder.syntax.io.*
 import ldbc.dsl.logging.LogHandler
 
 class LdbcDDLTest extends DDLTest:
