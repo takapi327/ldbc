@@ -13,7 +13,7 @@ import scala.annotation.targetName
 import ldbc.core.*
 import ldbc.core.builder.TableQueryBuilder
 import ldbc.core.interpreter.Tuples as CoreTuples
-import ldbc.sql.*
+import ldbc.dsl.Parameter
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.Tuples
 

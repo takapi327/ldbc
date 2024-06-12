@@ -8,8 +8,8 @@ package ldbc.query.builder.statement
 
 import scala.deriving.Mirror
 
-import ldbc.sql.*
 import ldbc.core.interpreter.Tuples as CoreTuples
+import ldbc.dsl.Parameter
 import ldbc.query.builder.TableQuery
 
 /**

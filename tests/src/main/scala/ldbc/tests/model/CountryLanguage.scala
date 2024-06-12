@@ -10,8 +10,8 @@ import cats.effect.IO
 
 import ldbc.core.*
 import ldbc.core.model.*
-import ldbc.sql.*
-import ldbc.dsl.ResultSetReader
+import ldbc.sql.PreparedStatement
+import ldbc.dsl.*
 
 case class CountryLanguage(
   countryCode: String,

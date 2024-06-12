@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.syntax
+package ldbc.query.builder.syntax
 
 import scala.deriving.Mirror
 

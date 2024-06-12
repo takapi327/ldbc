@@ -4,11 +4,13 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.sql
+package ldbc.dsl
 
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneId, ZonedDateTime }
 
 import scala.compiletime.*
+
+import ldbc.sql.PreparedStatement
 
 /**
  * Trait for setting Scala and Java values to PreparedStatement.

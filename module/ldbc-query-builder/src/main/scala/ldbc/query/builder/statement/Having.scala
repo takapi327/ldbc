@@ -6,7 +6,7 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.sql.Parameter
+import ldbc.dsl.Parameter
 import ldbc.query.builder.TableQuery
 
 /**

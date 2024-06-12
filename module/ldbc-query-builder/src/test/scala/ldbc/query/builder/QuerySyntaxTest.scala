@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.syntax
+package ldbc.query.builder
 
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -16,7 +16,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |
         |import ldbc.core.*
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -42,7 +42,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |
         |import ldbc.core.*
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -71,7 +71,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -97,7 +97,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |
         |import ldbc.core.*
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -123,7 +123,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |
         |import ldbc.core.*
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -152,7 +152,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -180,7 +180,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -206,7 +206,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |
         |import ldbc.core.*
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -235,7 +235,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -263,7 +263,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -304,7 +304,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |
         |import ldbc.core.*
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -346,7 +346,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -406,7 +406,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |
@@ -466,7 +466,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.core.*
         |import ldbc.sql.Connection
-        |import ldbc.dsl.io.*
+        |import ldbc.query.builder.syntax.io.*
         |import ldbc.dsl.logging.LogHandler
         |import ldbc.query.builder.TableQuery
         |

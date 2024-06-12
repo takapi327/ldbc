@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl
+package ldbc.query.builder.syntax
 
 import cats.data.Kleisli
 import cats.implicits.*
@@ -12,8 +12,10 @@ import cats.effect.Sync
 
 import ldbc.sql.*
 
+import ldbc.dsl.Parameter
 import ldbc.dsl.util.FactoryCompat
 import ldbc.dsl.logging.*
+import ldbc.dsl.ResultSetConsumer
 
 /**
  * Trait provides a connection method to the database.
