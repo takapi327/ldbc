@@ -70,7 +70,7 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
-  .dependsOn(core, dsl)
+  .dependsOn(dsl)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(description := "Project to generate SchemaSPY documentation")
