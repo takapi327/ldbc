@@ -61,7 +61,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-effect"       % "3.5.4",
-      "org.typelevel" %%% "munit-cats-effect" % "2.0.0"  % Test
+      "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
   )
   .dependsOn(sql)
