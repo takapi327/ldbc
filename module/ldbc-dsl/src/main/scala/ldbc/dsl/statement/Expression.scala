@@ -6,8 +6,6 @@
 
 package ldbc.dsl.statement
 
-import ldbc.sql.Parameter
-
 import ldbc.dsl.*
 import ldbc.dsl.interpreter.Extract
 

@@ -9,8 +9,6 @@ package ldbc.dsl.statement
 import scala.deriving.Mirror
 import scala.annotation.targetName
 
-import ldbc.sql.Parameter
-
 import ldbc.dsl.*
 import ldbc.dsl.interpreter.*
 

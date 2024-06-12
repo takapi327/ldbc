@@ -8,8 +8,6 @@ package ldbc.dsl.statement
 
 import scala.annotation.targetName
 
-import ldbc.sql.Parameter
-
 import ldbc.dsl.*
 
 /**

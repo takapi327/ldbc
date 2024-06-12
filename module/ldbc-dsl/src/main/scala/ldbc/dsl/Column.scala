@@ -8,8 +8,6 @@ package ldbc.dsl
 
 import scala.annotation.targetName
 
-import ldbc.sql.Parameter
-
 import ldbc.dsl.statement.*
 import ldbc.dsl.statement.Expression.*
 import ldbc.dsl.interpreter.Extract

@@ -12,7 +12,6 @@ import scala.compiletime.*
 import scala.compiletime.ops.int.*
 import scala.annotation.targetName
 
-import ldbc.sql.*
 import ldbc.dsl.interpreter.*
 import ldbc.dsl.statement.*
 

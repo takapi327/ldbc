@@ -8,9 +8,7 @@ package ldbc.dsl.statement
 
 import scala.annotation.targetName
 
-import ldbc.sql.Parameter
-
-import ldbc.dsl.SQL
+import ldbc.dsl.*
 
 /**
  * A model for constructing OFFSET statements in MySQL.
