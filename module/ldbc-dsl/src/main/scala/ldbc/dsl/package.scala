@@ -12,8 +12,6 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import ldbc.sql.Parameter
-
 import ldbc.dsl.syntax.*
 
 package object dsl:

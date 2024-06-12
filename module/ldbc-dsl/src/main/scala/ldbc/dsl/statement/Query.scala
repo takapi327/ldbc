@@ -12,7 +12,7 @@ import cats.syntax.all.*
 
 import cats.effect.Temporal
 
-import ldbc.sql.{ Parameter, ResultSet }
+import ldbc.sql.ResultSet
 import ldbc.dsl.*
 
 /**

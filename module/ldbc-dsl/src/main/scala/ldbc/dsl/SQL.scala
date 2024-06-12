@@ -10,8 +10,6 @@ import scala.annotation.targetName
 
 import cats.kernel.Semigroup
 
-import ldbc.sql.*
-
 /**
  * A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,
  * etc.

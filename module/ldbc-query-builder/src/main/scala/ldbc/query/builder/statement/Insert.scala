@@ -7,7 +7,7 @@
 package ldbc.query.builder.statement
 
 import ldbc.core.Column
-import ldbc.sql.*
+import ldbc.dsl.Parameter
 import ldbc.query.builder.TableQuery
 import ldbc.query.builder.interpreter.Tuples
 

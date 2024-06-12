@@ -12,6 +12,7 @@ import cats.effect.Sync
 
 import ldbc.sql.*
 
+import ldbc.dsl.Parameter
 import ldbc.dsl.util.FactoryCompat
 import ldbc.dsl.logging.*
 import ldbc.dsl.ResultSetConsumer
