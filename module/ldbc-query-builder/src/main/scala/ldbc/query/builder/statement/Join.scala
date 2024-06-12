@@ -11,7 +11,7 @@ import scala.deriving.Mirror
 
 import ldbc.core.*
 import ldbc.core.interpreter.{ ExtractOption, Tuples as CoreTuples }
-import ldbc.sql.*
+import ldbc.dsl.Parameter
 import ldbc.query.builder.interpreter.Tuples
 import ldbc.query.builder.{ TableQuery, ColumnQuery }
 

@@ -11,7 +11,7 @@ import scala.annotation.targetName
 import ldbc.core.*
 import ldbc.core.attribute.Attribute
 import ldbc.core.interpreter.Extract
-import ldbc.sql.*
+import ldbc.dsl.*
 import ldbc.query.builder.statement.{ ExpressionSyntax, OrderBy, Query }
 import ldbc.query.builder.statement.ExpressionSyntax.*
 

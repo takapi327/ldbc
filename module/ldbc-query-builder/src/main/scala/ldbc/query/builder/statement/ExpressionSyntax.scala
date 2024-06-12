@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import ldbc.core.Column
 import ldbc.core.interpreter.Extract
-import ldbc.sql.Parameter
+import ldbc.dsl.Parameter
 import ldbc.query.builder.ColumnQuery
 
 /**
