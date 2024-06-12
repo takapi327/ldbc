@@ -8,9 +8,11 @@ package ldbc.query.builder
 
 import cats.effect.*
 
+import ldbc.dsl.SyncSyntax as DslSyntax
+
 package object syntax:
 
-  private trait SyncSyntax[F[_]: Sync] extends QuerySyntax[F], CommandSyntax[F], ConnectionSyntax[F]
+  private trait SyncSyntax[F[_]: Sync] extends QuerySyntax[F], CommandSyntax[F], ConnectionSyntax[F], DslSyntax[F]
 
   /**
    * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports

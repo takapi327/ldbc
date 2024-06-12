@@ -18,7 +18,7 @@ import ldbc.dsl.syntax.*
 
 package object dsl:
 
-  private trait SyncSyntax[F[_]: Sync] extends StringContextSyntax[F]:
+  private[ldbc] trait SyncSyntax[F[_]: Sync] extends StringContextSyntax[F]:
 
     /**
      * Function for setting parameters to be used as static strings.
