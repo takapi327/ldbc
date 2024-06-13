@@ -11,5 +11,5 @@ import ldbc.dsl.SQL
 package object statement:
 
   trait Command extends SQL
-  
+
   trait Query extends SQL
