@@ -27,7 +27,7 @@ import ldbc.sql.*
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.DynamicBinder]) extends SQL, Command[F]:
+case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.DynamicBinder]) extends SQL:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
@@ -50,7 +50,13 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
     }
     Query.Impl[F, P](statement, params)
 
-  override def update: Executor[F, Int] =
+  /**
+   * A method to execute an update operation against the MySQL server.
+   *
+   * @return
+   * The number of rows updated
+   */
+  def update: Executor[F, Int] =
     Executor.Impl[F, Int](
       statement,
       params,
@@ -63,7 +69,15 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
         yield result
     )
 
-  override def returning[T <: String | Int | Long](using reader: ResultSetReader[F, T]): Executor[F, T] =
+  /**
+   * A method to execute an insert operation against the MySQL server.
+   *
+   * @tparam T
+   * The type of the primary key
+   * @return
+   * The primary key value
+   */
+  def returning[T <: String | Int | Long](using reader: ResultSetReader[F, T]): Executor[F, T] =
     given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
 
     Executor.Impl[F, T](

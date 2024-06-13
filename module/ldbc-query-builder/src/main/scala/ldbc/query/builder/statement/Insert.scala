@@ -8,10 +8,8 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import cats.data.Kleisli
 import cats.syntax.all.*
 
-import ldbc.sql.*
 import ldbc.dsl.*
 import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.*
@@ -22,7 +20,7 @@ import ldbc.query.builder.interpreter.*
  * @tparam P
  *   Base trait for all products
  */
-private[ldbc] trait Insert[P <: Product] extends SQL:
+private[ldbc] trait Insert[P <: Product] extends Command:
   self =>
 
   /** A model for generating queries from Table information. */
@@ -40,37 +38,6 @@ private[ldbc] trait Insert[P <: Product] extends SQL:
       self.params
     )
 
-  def update[F[_]: cats.effect.Temporal]: Executor[F, Int] =
-    Executor.Impl[F, Int](
-      statement,
-      params,
-      connection =>
-        for
-          prepareStatement <- connection.prepareStatement(statement)
-          result <- params.zipWithIndex.traverse {
-                      case (param, index) => param.bind[F](prepareStatement, index + 1)
-                    } >> prepareStatement.executeUpdate() <* prepareStatement.close()
-        yield result
-    )
-
-  def returning[F[_]: cats.effect.Temporal, T <: String | Int | Long](using
-    reader: ResultSetReader[F, T]
-  ): Executor[F, T] =
-    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
-
-    Executor.Impl[F, T](
-      statement,
-      params,
-      connection =>
-        for
-          prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
-          resultSet <- params.zipWithIndex.traverse {
-                         case (param, index) => param.bind[F](prepareStatement, index + 1)
-                       } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
-          result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
-        yield result
-    )
-
 object Insert:
 
   private[ldbc] case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder])
@@ -86,7 +53,7 @@ object Insert:
 case class DuplicateKeyUpdateInsert(
   statement: String,
   params:    List[Parameter.DynamicBinder]
-) extends SQL:
+) extends Command:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =

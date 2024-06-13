@@ -24,21 +24,57 @@ import ldbc.query.builder.interpreter.*
  */
 trait Table[P <: Product] extends Dynamic:
 
+  /**
+   * The name of the table.
+   */
   def _name: String
 
+  /**
+   * An alias for the table.
+   */
   def _alias: Option[String]
 
+  /**
+   * A method to get the table name.
+   */
   def label: String = _alias match
     case Some(alias) if alias == _name => _name
     case Some(alias)                   => s"${ _name } AS $alias"
     case None                          => _name
 
+  /**
+   * A type that represents all columns defined in the table.
+   */
   type Columns <: Tuple
+
+  /**
+   * A method to get all columns defined in the table.
+   */
   @targetName("all")
   def * : Columns
 
+  /**
+   * Function for setting alias names for tables.
+   *
+   * @param name
+   *   Alias name
+   * @return
+   *   Table with alias name
+   */
   def as(name: String): Table[P]
 
+  /**
+   * A method to get a specific column defined in the table.
+   *
+   * @param tag
+   *   A type with a single instance. Here, Column is passed.
+   * @param mirror
+   *   product isomorphism map
+   * @param index
+   *   Position of the specified type in tuple X
+   * @tparam Tag
+   *   Type with a single instance
+   */
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
   )(using
@@ -49,6 +85,21 @@ trait Table[P <: Product] extends Dynamic:
       .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
     _alias.fold(column)(alias => column.as(alias))
 
+  /**
+   * A method to perform a simple Select.
+   * 
+   * {{{
+   *   Table[Person].select(person => (person.id, person.name)
+   *   // SELECT id, name FROM person
+   * }}}
+   *
+   * @param func
+   *   Function to retrieve columns from Table.
+   * @tparam T
+   *   Type of value to be obtained
+   * @return
+   *   Select model
+   */
   def select[T](func: Table[P] => T): Select[P, T] =
     val columns = func(this)
     val str = columns match
@@ -59,6 +110,11 @@ trait Table[P <: Product] extends Dynamic:
 
   /**
    * A method to perform a simple Join.
+   * 
+   * {{{
+   *   Table[Person].join(Table[City])((person, city) => person.cityId == city.id)
+   *   // ... person JOIN city ON person.cityId = city.id
+   * }}}
    *
    * @param other
    *   [[Table]] to do a Join.
@@ -82,6 +138,11 @@ trait Table[P <: Product] extends Dynamic:
 
   /**
    * Method to perform Left Join.
+   * 
+   * {{{
+   *   Table[Person].leftJoin(Table[City])((person, city) => person.cityId == city.id)
+   *   // ... person LEFT JOIN city ON person.cityId = city.id
+   * }}}
    *
    * @param other
    *   [[Table]] to do a Join.
@@ -105,6 +166,11 @@ trait Table[P <: Product] extends Dynamic:
 
   /**
    * Method to perform Right Join.
+   * 
+   * {{{
+   *   Table[Person].rightJoin(Table[City])((person, city) => person.cityId == city.id)
+   *   // ... person RIGHT JOIN city ON person.cityId = city.id
+   * }}}
    *
    * @param other
    *   [[Table]] to do a Join.

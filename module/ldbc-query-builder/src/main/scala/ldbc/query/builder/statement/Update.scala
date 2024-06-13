@@ -31,7 +31,7 @@ case class Update[P <: Product](
   columns: List[String],
   params:  List[Parameter.DynamicBinder],
   other:   Option[String] = None
-) extends SQL:
+) extends Command:
 
   private val values = columns.map(column => s"$column = ?")
 

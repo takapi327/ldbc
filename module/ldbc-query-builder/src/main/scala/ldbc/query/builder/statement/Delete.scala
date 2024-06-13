@@ -26,7 +26,7 @@ case class Delete[P <: Product, T](
   columns: T,
   other:   Option[String]                = None,
   params:  List[Parameter.DynamicBinder] = List.empty
-) extends SQL,
+) extends Command,
           LimitProvider[T]:
 
   @targetName("combine")
