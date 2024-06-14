@@ -53,11 +53,12 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
   )(using
     Tuples.IsTableOpt[SELECTS] =:= true
   ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table[P]]]] =
+    val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
-      joins ++ Tuple(other),
-      selects ++ Tuple(other),
-      joinStatements :+ s"${ Join.JoinType.JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(other)).statement }"
+      joins ++ Tuple(sub),
+      selects ++ Tuple(sub),
+      joinStatements :+ s"${ Join.JoinType.JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
   /**
@@ -75,11 +76,12 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
   )(using
     Tuples.IsTableOpt[SELECTS] =:= true
   ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table.Opt[P]]]] =
+    val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
-      joins ++ Tuple(other),
-      selects ++ Tuple(Table.Opt(other.*)),
-      joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(other)).statement }"
+      joins ++ Tuple(sub),
+      selects ++ Tuple(Table.Opt(sub._alias, sub.*)),
+      joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
   /**
@@ -97,11 +99,12 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
   )(using
     Tuples.IsTableOpt[SELECTS] =:= true
   ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[Tuples.ToTableOpt[SELECTS], Tuple1[Table[P]]]] =
+    val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
-      joins ++ Tuple(other),
-      Tuples.toTableOpt[SELECTS](selects) ++ Tuple(other),
-      joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(other)).statement }"
+      joins ++ Tuple(sub),
+      Tuples.toTableOpt[SELECTS](selects) ++ Tuple(sub),
+      joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
   def select[C](func: SELECTS => C)(using Tuples.IsColumn[C] =:= true): Join.JoinSelect[SELECTS, C] =
