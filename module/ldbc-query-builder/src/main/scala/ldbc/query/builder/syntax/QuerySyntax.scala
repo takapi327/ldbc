@@ -39,7 +39,10 @@ trait QuerySyntax[F[_]: Temporal]:
       }
       DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params)
 
-    inline def query[P <: Product](using mirror: Mirror.ProductOf[P], check: Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes): DslQuery[F, P] =
+    inline def query[P <: Product](using
+      mirror: Mirror.ProductOf[P],
+      check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
+    ): DslQuery[F, P] =
       given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
         ResultSetReader
           .fold[F, mirror.MirroredElemTypes]

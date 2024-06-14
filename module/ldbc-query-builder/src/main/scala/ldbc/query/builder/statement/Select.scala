@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 import ldbc.query.builder.*
 
 /**

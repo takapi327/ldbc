@@ -26,8 +26,8 @@ trait CommandSyntax[F[_]: Temporal]:
           for
             prepareStatement <- connection.prepareStatement(command.statement)
             result <- command.params.zipWithIndex.traverse {
-              case (param, index) => param.bind[F](prepareStatement, index + 1)
-            } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+                        case (param, index) => param.bind[F](prepareStatement, index + 1)
+                      } >> prepareStatement.executeUpdate() <* prepareStatement.close()
           yield result
       )
 
@@ -41,8 +41,8 @@ trait CommandSyntax[F[_]: Temporal]:
           for
             prepareStatement <- connection.prepareStatement(command.statement, Statement.RETURN_GENERATED_KEYS)
             resultSet <- command.params.zipWithIndex.traverse {
-              case (param, index) => param.bind[F](prepareStatement, index + 1)
-            } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+                           case (param, index) => param.bind[F](prepareStatement, index + 1)
+                         } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
             result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
           yield result
       )
