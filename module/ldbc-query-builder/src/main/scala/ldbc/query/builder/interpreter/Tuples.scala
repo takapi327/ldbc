@@ -71,8 +71,8 @@ object Tuples:
     case Table.Opt[t] *: ts         => Table.Opt[t] *: ToTableOpt[ts]
 
   def toTableOpt[T <: Tuple](tuple: T)(using IsTableOpt[T] =:= true): ToTableOpt[T] =
-    val list = tuple.toList.asInstanceOf[List[Table[?] | Table.Opt[?]]].map {
-      case table: Table[p]   => Table.Opt[p](table.*)
+    val list = tuple.toList.map {
+      case table: Table[p]   => Table.Opt[p](table._alias, table.*)
       case opt: Table.Opt[p] => opt
     }
     Tuple.fromArray(list.toArray).asInstanceOf[ToTableOpt[T]]
