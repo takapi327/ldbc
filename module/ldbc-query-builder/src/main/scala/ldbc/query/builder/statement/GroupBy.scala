@@ -44,13 +44,13 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    GroupBy[P, A, B](table, columns, column, query ++ sql.statement, params ++ sql.params)
+    GroupBy[P, A, B](table, columns, column, statement ++ sql.statement, params ++ sql.params)
 
   def having(func: A => Expression): Having[P, A] =
     val expression = func(columns)
     Having[P, A](
       table      = table,
-      query      = query,
+      query      = statement,
       params     = params ++ expression.parameter,
       expression = expression
     )
