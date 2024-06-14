@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.*
+import ldbc.dsl.{Parameter, SQL}
 import ldbc.query.builder.*
 
 /**
@@ -31,7 +31,7 @@ private[ldbc] case class Having[P <: Product, T](
   query:      String,
   params:     List[Parameter.DynamicBinder],
   expression: Expression
-) extends QueryProvider[T],
+) extends Query[T],
           OrderByProvider[P, T],
           LimitProvider[T]:
 

@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.*
+import ldbc.dsl.{Parameter, SQL}
 import ldbc.query.builder.*
 
 /**
@@ -36,7 +36,7 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
   column:  Column[B],
   query:   String,
   params:  List[Parameter.DynamicBinder]
-) extends QueryProvider[A],
+) extends Query[A],
           OrderByProvider[P, A],
           LimitProvider[A]:
 

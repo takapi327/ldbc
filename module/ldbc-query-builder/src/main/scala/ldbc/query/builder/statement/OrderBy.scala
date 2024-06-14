@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.*
+import ldbc.dsl.{Parameter, SQL}
 import ldbc.query.builder.*
 
 /**
@@ -33,7 +33,7 @@ private[ldbc] case class OrderBy[P <: Product, T](
   query:  String,
   order:  String,
   params: List[Parameter.DynamicBinder]
-) extends QueryProvider[T],
+) extends Query[T],
           LimitProvider[T]:
 
   override def statement: String = query ++ s" ORDER BY $order"

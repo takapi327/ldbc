@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.*
+import ldbc.dsl.{Parameter, SQL}
 import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.Tuples
 
@@ -129,7 +129,7 @@ object Join:
   private[ldbc] case class JoinOrderBy[T](
     statement: String,
     params:    List[Parameter.DynamicBinder]
-  ) extends QueryProvider[T],
+  ) extends Query[T],
             LimitProvider[T]:
 
     @targetName("combine")
@@ -157,7 +157,7 @@ object Join:
     selects:   SELECTS,
     statement: String,
     params:    List[Parameter.DynamicBinder]
-  ) extends QueryProvider[SELECTS],
+  ) extends Query[SELECTS],
             JoinOrderByProvider[SELECTS],
             LimitProvider[SELECTS]:
 
@@ -170,7 +170,7 @@ object Join:
     statement: String,
     columns:   T,
     params:    List[Parameter.DynamicBinder]
-  ) extends QueryProvider[T],
+  ) extends Query[T],
             JoinOrderByProvider[SELECTS],
             LimitProvider[T]:
 
@@ -196,7 +196,7 @@ object Join:
     statement: String,
     columns:   T,
     params:    List[Parameter.DynamicBinder]
-  ) extends QueryProvider[T],
+  ) extends Query[T],
             JoinOrderByProvider[SELECTS],
             LimitProvider[T]:
 
@@ -247,7 +247,7 @@ object Join:
     fromStatement: String,
     columns:       T,
     params:        List[Parameter.DynamicBinder]
-  ) extends QueryProvider[T],
+  ) extends Query[T],
             JoinOrderByProvider[SELECTS],
             LimitProvider[T]:
 

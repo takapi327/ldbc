@@ -12,4 +12,4 @@ package object statement:
 
   trait Command extends SQL
 
-  trait Query extends SQL
+  trait Query[T] extends SQL
