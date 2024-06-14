@@ -33,7 +33,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.10.0",
-      "org.scalatest" %%% "scalatest"   % "3.2.17" % Test,
+      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
       "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
     )
   )
@@ -69,7 +69,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
-  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test)
+  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .dependsOn(dsl)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
@@ -83,7 +83,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
-      "org.scalatest"          %%% "scalatest"                % "3.2.17" % Test,
+      "org.scalatest"          %%% "scalatest"                % "3.2.18" % Test,
       "org.specs2"             %%% "specs2-core"              % "4.20.5" % Test
     )
   )
