@@ -90,5 +90,5 @@ object Codec extends TwiddleSyntax[Codec]:
    */
   given InvariantSemigroupalCodec: InvariantSemigroupal[Codec] =
     new InvariantSemigroupal[Codec]:
-      override def imap[A, B](fa:    Codec[A])(f:  A => B)(g: B => A): Codec[B] = fa.imap(f)(g)
-      override def product[A, B](fa: Codec[A], fb: Codec[B]): Codec[(A, B)] = fa product fb
+      override def imap[A, B](fa:    Codec[A])(f:  A => B)(g: B => A): Codec[B]      = fa.imap(f)(g)
+      override def product[A, B](fa: Codec[A], fb: Codec[B]):          Codec[(A, B)] = fa product fb
