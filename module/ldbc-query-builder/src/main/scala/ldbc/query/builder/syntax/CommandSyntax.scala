@@ -6,84 +6,43 @@
 
 package ldbc.query.builder.syntax
 
-import scala.deriving.Mirror
-
 import cats.data.Kleisli
 import cats.implicits.*
-import cats.effect.Sync
 
-import ldbc.core.attribute.AutoInc
-import ldbc.core.interpreter.Tuples as CoreTuples
-import ldbc.sql.{ Connection, Statement, ResultSet }
-import ldbc.query.builder.statement.{ Command, Insert }
+import cats.effect.Temporal
+
+import ldbc.sql.{ Statement, ResultSet }
 import ldbc.dsl.*
-import ldbc.dsl.logging.*
+import ldbc.query.builder.statement.Command
 
-trait CommandSyntax[F[_]: Sync]:
+trait CommandSyntax[F[_]: Temporal]:
 
   extension (command: Command)
-    def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
-      (for
-        statement <- connection.prepareStatement(command.statement)
-        result <- command.params.zipWithIndex.traverse {
-                    case (param, index) => param.bind(statement, index + 1)
-                  } >> statement.executeUpdate() <* statement.close()
-      yield result)
-        .onError(ex =>
-          logHandler.run(LogEvent.ExecFailure(command.statement, command.params.map(_.parameter).toList, ex))
-        )
-        <* logHandler.run(LogEvent.Success(command.statement, command.params.map(_.parameter).toList))
-    }
+    def update: Executor[F, Int] =
+      Executor.Impl[F, Int](
+        command.statement,
+        command.params,
+        connection =>
+          for
+            prepareStatement <- connection.prepareStatement(command.statement)
+            result <- command.params.zipWithIndex.traverse {
+              case (param, index) => param.bind[F](prepareStatement, index + 1)
+            } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+          yield result
+      )
 
-  implicit class InsertOps[P <: Product](insert: Insert[P]):
-    def update(using logHandler: LogHandler[F]): Kleisli[F, Connection[F], Int] = Kleisli { connection =>
-      (for
-        statement <- connection.prepareStatement(insert.statement)
-        result <- insert.params.zipWithIndex.traverse {
-                    case (param, index) => param.bind(statement, index + 1)
-                  } >> statement.executeUpdate() <* statement.close()
-      yield result)
-        .onError(ex =>
-          logHandler.run(LogEvent.ExecFailure(insert.statement, insert.params.map(_.parameter).toList, ex))
-        )
-        <* logHandler.run(LogEvent.Success(insert.statement, insert.params.map(_.parameter).toList))
-    }
+    def returning[T <: String | Int | Long](using reader: ResultSetReader[F, T]): Executor[F, T] =
+      given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
 
-    def returning[Tag <: Singleton](tag: Tag)(using
-      mirror: Mirror.ProductOf[P],
-      index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-      reader: ResultSetReader[
-        F,
-        Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-      ],
-      logHandler: LogHandler[F]
-    ): Kleisli[F, Connection[F], Tuple.Elem[
-      mirror.MirroredElemTypes,
-      CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]
-    ]] =
-      Kleisli { connection =>
-        val column = insert.tableQuery.selectDynamic[Tag](tag)
-        require(
-          column.attributes.contains(AutoInc()),
-          s"Auto Increment is not set on the ${ column.label } column of the ${ insert.tableQuery.table._name } table."
-        )
-        given Kleisli[
-          F,
-          ResultSet[F],
-          Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-        ] = Kleisli { resultSet => reader.read(resultSet, 1) }
-        (for
-          statement <- connection.prepareStatement(insert.statement, Statement.RETURN_GENERATED_KEYS)
-          resultSet <- insert.params.zipWithIndex.traverse {
-                         case (param, index) => param.bind(statement, index + 1)
-                       } >> statement.executeUpdate() >> statement.getGeneratedKeys()
-          result <- summon[ResultSetConsumer[
-                      F,
-                      Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-                    ]].consume(resultSet) <* statement.close()
-        yield result)
-          .onError(ex =>
-            logHandler.run(LogEvent.ExecFailure(insert.statement, insert.params.map(_.parameter).toList, ex))
-          )
-          <* logHandler.run(LogEvent.Success(insert.statement, insert.params.map(_.parameter).toList))
-      }
+      Executor.Impl[F, T](
+        command.statement,
+        command.params,
+        connection =>
+          for
+            prepareStatement <- connection.prepareStatement(command.statement, Statement.RETURN_GENERATED_KEYS)
+            resultSet <- command.params.zipWithIndex.traverse {
+              case (param, index) => param.bind[F](prepareStatement, index + 1)
+            } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+            result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
+          yield result
+      )
