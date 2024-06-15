@@ -11,7 +11,7 @@ import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDa
 import scala.compiletime.*
 
 import cats.{ Functor, Monad }
-import cats.implicits.*
+import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
 

@@ -8,7 +8,7 @@ package ldbc.dsl
 
 import cats.*
 import cats.data.Kleisli
-import cats.implicits.*
+import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
 
