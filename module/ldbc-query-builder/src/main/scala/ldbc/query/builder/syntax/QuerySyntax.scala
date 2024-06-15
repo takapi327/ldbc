@@ -9,7 +9,7 @@ package ldbc.query.builder.syntax
 import scala.deriving.Mirror
 
 import cats.data.Kleisli
-import cats.implicits.*
+import cats.syntax.all.*
 import cats.effect.Sync
 
 import ldbc.sql.*
