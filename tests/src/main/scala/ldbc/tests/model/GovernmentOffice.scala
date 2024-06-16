@@ -8,21 +8,11 @@ package ldbc.tests.model
 
 import java.time.LocalDate
 
-import ldbc.core.*
+import ldbc.query.builder.Table
 
 case class GovernmentOffice(
   id:                Int,
   cityId:            Int,
   name:              String,
   establishmentDate: Option[LocalDate]
-)
-
-object GovernmentOffice:
-
-  val table: Table[GovernmentOffice] = Table[GovernmentOffice]("government_office")(
-    column("ID", INT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("CityID", INT),
-    column("Name", CHAR(35).DEFAULT("")),
-    column("EstablishmentDate", DATE)
-  )
-    .keySet(v => CONSTRAINT("government_office_ibfk_1", FOREIGN_KEY(v.cityId, REFERENCE(City.table, City.table.id))))
+) derives Table

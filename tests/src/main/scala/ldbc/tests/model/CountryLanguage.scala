@@ -8,24 +8,23 @@ package ldbc.tests.model
 
 import cats.effect.IO
 
-import ldbc.core.*
-import ldbc.core.model.*
 import ldbc.sql.PreparedStatement
 import ldbc.dsl.*
+import ldbc.query.builder.Table
 
 case class CountryLanguage(
   countryCode: String,
   language:    String,
   isOfficial:  CountryLanguage.IsOfficial,
   percentage:  BigDecimal
-)
+) derives Table
 
 object CountryLanguage:
 
-  enum IsOfficial extends Enum:
+  enum IsOfficial:
     case T, F
 
-  object IsOfficial extends EnumDataType[IsOfficial]
+  object IsOfficial
 
   given Parameter[IsOfficial] with
     override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: IsOfficial): F[Unit] =
@@ -33,15 +32,3 @@ object CountryLanguage:
 
   given ResultSetReader[IO, IsOfficial] =
     ResultSetReader.mapping[IO, String, IsOfficial](str => IsOfficial.valueOf(str))
-
-  val table: Table[CountryLanguage] = Table[CountryLanguage]("countrylanguage")(
-    column("CountryCode", CHAR(3).DEFAULT("")),
-    column("Language", CHAR(30).DEFAULT("")),
-    column("IsOfficial", ENUM(using IsOfficial).DEFAULT(IsOfficial.F)),
-    column("Percentage", DECIMAL(4, 1).DEFAULT(0.0))
-  )
-    .keySet(v => PRIMARY_KEY(v.countryCode, v.language))
-    .keySet(v => INDEX_KEY(v.countryCode))
-    .keySet(v =>
-      CONSTRAINT("countryLanguage_ibfk_1", FOREIGN_KEY(v.countryCode, REFERENCE(Country.table, Country.table.code)))
-    )
