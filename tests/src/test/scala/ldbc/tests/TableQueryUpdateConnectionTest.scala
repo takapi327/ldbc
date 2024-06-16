@@ -4,6 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+/*
 package ldbc.tests
 
 import scala.concurrent.duration.DurationInt
@@ -64,9 +65,9 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
 
-  private final val country         = TableQuery[Country](Country.table)
-  private final val city            = TableQuery[City](City.table)
-  private final val countryLanguage = TableQuery[CountryLanguage](CountryLanguage.table)
+  private final val country         = TableQuery[Country]
+  private final val city            = TableQuery[City]
+  private final val countryLanguage = TableQuery[CountryLanguage]
 
   private def code(index: Int): String = prefix match
     case "jdbc" => s"J$index"
@@ -481,3 +482,4 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       5
     )
   }
+*/

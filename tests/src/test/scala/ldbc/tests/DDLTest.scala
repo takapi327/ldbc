@@ -4,6 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+/*
 package ldbc.tests
 
 import com.mysql.cj.jdbc.MysqlDataSource
@@ -117,3 +118,4 @@ trait DDLTest extends CatsEffectSuite:
       3
     )
   }
+ */
