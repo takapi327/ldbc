@@ -290,7 +290,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  //test("The retrieved data matches the specified value.") {
+  // test("The retrieved data matches the specified value.") {
   //  assertIO(
   //    connection.use { conn =>
   //      city
@@ -302,9 +302,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   //    },
   //    Some(("JPN", 248))
   //  )
-  //}
+  // }
 
-  //test("The retrieved data matches the specified value.") {
+  // test("The retrieved data matches the specified value.") {
   //  case class CountryCodeGroup(countryCode: String, length: Int)
   //  assertIO(
   //    connection.use { conn =>
@@ -318,7 +318,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   //    },
   //    232
   //  )
-  //}
+  // }
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."

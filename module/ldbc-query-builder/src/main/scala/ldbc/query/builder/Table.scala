@@ -112,7 +112,7 @@ trait Table[P <: Product] extends Dynamic:
     Select(this, statement, columns, Nil)
 
   def selectAll: Select[P, Tuple.Map[Columns, Column]] =
-    val statement = s"SELECT ${*.toList.distinct.mkString(", ")} FROM $label"
+    val statement = s"SELECT ${ *.toList.distinct.mkString(", ") } FROM $label"
     Select[P, Tuple.Map[Columns, Column]](this, statement, *, Nil)
 
   /**
@@ -307,14 +307,17 @@ trait Table[P <: Product] extends Dynamic:
 object Table:
 
   def apply[P <: Product](using t: Table[P]): Table[P] = t
-  def apply[P <: Product](name: String)(using t: Table[P]): Table[P] = t.setName(name)
+  def apply[P <: Product](name:    String)(using t: Table[P]): Table[P] = t.setName(name)
 
-  private[ldbc] case class Impl[P <: Product, T <: Tuple](_name: String, _alias: Option[String], columns: Tuple.Map[T, Column])
-    extends Table[P]:
+  private[ldbc] case class Impl[P <: Product, T <: Tuple](
+    _name:   String,
+    _alias:  Option[String],
+    columns: Tuple.Map[T, Column]
+  ) extends Table[P]:
     override type Columns = T
     @targetName("all")
     override def * : Tuple.Map[Columns, Column] = columns
-    override def as(name: String): Table[P] = this.copy(_alias = Some(name))
+    override def as(name:      String): Table[P] = this.copy(_alias = Some(name))
     override def setName(name: String): Table[P] = this.copy(_name = name)
 
   private[ldbc] case class Opt[P](alias: Option[String], columns: Tuple) extends Dynamic:

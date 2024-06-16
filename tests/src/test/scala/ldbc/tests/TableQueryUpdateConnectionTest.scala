@@ -482,4 +482,4 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       5
     )
   }
-*/
+ */
