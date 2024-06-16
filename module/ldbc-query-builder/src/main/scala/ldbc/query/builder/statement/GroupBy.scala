@@ -20,7 +20,7 @@ import ldbc.query.builder.*
  *   Union-type column list
  * @param column
  *   Trait for representing SQL Column
- * @param query
+ * @param _query
  *   Query string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
@@ -34,13 +34,13 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
   table:   Table[P],
   columns: A,
   column:  Column[B],
-  query:   String,
+  _query:   String,
   params:  List[Parameter.DynamicBinder]
 ) extends Query[A],
           OrderByProvider[P, A],
           LimitProvider[A]:
 
-  override def statement: String = query ++ s" GROUP BY ${ column.name }"
+  override def statement: String = _query ++ s" GROUP BY ${ column.name }"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =

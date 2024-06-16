@@ -15,6 +15,7 @@ import scala.annotation.targetName
 import ldbc.dsl.*
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.*
+import ldbc.query.builder.formatter.Naming
 
 /**
  * Trait for generating SQL table information.
@@ -51,7 +52,7 @@ trait Table[P <: Product] extends Dynamic:
    * A method to get all columns defined in the table.
    */
   @targetName("all")
-  def * : Columns
+  def * : Tuple.Map[Columns, Column]
 
   /**
    * Function for setting alias names for tables.
@@ -62,6 +63,8 @@ trait Table[P <: Product] extends Dynamic:
    *   Table with alias name
    */
   def as(name: String): Table[P]
+
+  def setName(name: String): Table[P]
 
   /**
    * A method to get a specific column defined in the table.
@@ -107,6 +110,10 @@ trait Table[P <: Product] extends Dynamic:
       case v        => v
     val statement = s"SELECT $str FROM $label"
     Select(this, statement, columns, Nil)
+
+  def selectAll: Select[P, Tuple.Map[Columns, Column]] =
+    val statement = s"SELECT ${*.toList.distinct.mkString(", ")} FROM $label"
+    Select[P, Tuple.Map[Columns, Column]](this, statement, *, Nil)
 
   /**
    * A method to perform a simple Join.
@@ -160,7 +167,7 @@ trait Table[P <: Product] extends Dynamic:
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table.Opt[O]]](
       main,
       joins,
-      main *: Tuple(Table.Opt(sub.*)),
+      main *: Tuple(Table.Opt(sub._alias, sub.*)),
       List(s"${ Join.JoinType.LEFT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -188,7 +195,7 @@ trait Table[P <: Product] extends Dynamic:
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]](
       main,
       joins,
-      Table.Opt(main.*) *: Tuple(sub),
+      Table.Opt(main._alias, main.*) *: Tuple(sub),
       List(s"${ Join.JoinType.RIGHT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -295,20 +302,22 @@ trait Table[P <: Product] extends Dynamic:
   /**
    * Method to construct a query to delete a table.
    */
-  def delete: Delete[P, Columns] = Delete[P, Columns](this, *)
+  def delete: Delete[P, Tuple.Map[Columns, Column]] = Delete[P, Tuple.Map[Columns, Column]](this, *)
 
 object Table:
 
   def apply[P <: Product](using t: Table[P]): Table[P] = t
+  def apply[P <: Product](name: String)(using t: Table[P]): Table[P] = t.setName(name)
 
-  private[ldbc] case class Impl[P <: Product, T <: Tuple](_name: String, _alias: Option[String], columns: T)
+  private[ldbc] case class Impl[P <: Product, T <: Tuple](_name: String, _alias: Option[String], columns: Tuple.Map[T, Column])
     extends Table[P]:
     override type Columns = T
     @targetName("all")
-    override def * : Columns = columns
+    override def * : Tuple.Map[Columns, Column] = columns
     override def as(name: String): Table[P] = this.copy(_alias = Some(name))
+    override def setName(name: String): Table[P] = this.copy(_name = name)
 
-  private[ldbc] case class Opt[P](columns: Tuple) extends Dynamic:
+  private[ldbc] case class Opt[P](alias: Option[String], columns: Tuple) extends Dynamic:
 
     transparent inline def selectDynamic[Tag <: Singleton](
       tag: Tag
@@ -318,11 +327,12 @@ object Table:
     ): Column[
       Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
     ] =
-      columns
+      val column = columns
         .productElement(index.value)
         .asInstanceOf[Column[
           Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
         ]]
+      alias.fold(column)(alias => column.as(alias))
 
   private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](
     inline nt: NT,
@@ -340,8 +350,8 @@ object Table:
 
   inline def derived[P <: Product](using m: Mirror.ProductOf[P]): Table[P] =
     val labels = constValueTuple[m.MirroredElemLabels]
-    Impl[P, Tuple.Map[m.MirroredElemTypes, Column]](
-      _name   = constValue[m.MirroredLabel],
+    Impl[P, m.MirroredElemTypes](
+      _name   = Naming.SNAKE.format(constValue[m.MirroredLabel]),
       _alias  = None,
       columns = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)
     )

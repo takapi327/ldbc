@@ -145,7 +145,7 @@ case class Update[P <: Product](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: Table[P] => Expression): Where[P, table.Columns] =
+  def where(func: Table[P] => Expression): Where[P, Tuple.Map[table.Columns, Column]] =
     val expression = func(table)
     Where(
       table     = table,

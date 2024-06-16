@@ -59,7 +59,7 @@ private[ldbc] case class Select[P <: Product, T](
   def groupBy[A](func: T => Column[A]): GroupBy[P, T, A] =
     GroupBy(
       table   = table,
-      query   = statement,
+      _query  = statement,
       columns = columns,
       column  = func(columns),
       params  = params
