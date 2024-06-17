@@ -23,7 +23,7 @@ import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]: Temporal]:
 
-  implicit class QueryOps[T](query: Query[T])(using Tuples.IsColumn[T] =:= true):
+  extension [T](query: ldbc.query.builder.statement.Query[T])
 
     @scala.annotation.targetName("simpleQuery")
     inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
@@ -33,13 +33,13 @@ trait QuerySyntax[F[_]: Temporal]:
           .toList
           .zipWithIndex
           .traverse {
-            case (reader, index) => reader.asInstanceOf[ResultSetReader[F, Any]].read(resultSet, index + 1)
+            case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
           }
           .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[T]])
       }
       DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params)
 
-    inline def query[P <: Product](using
+    inline def queryTo[P <: Product](using
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
     ): DslQuery[F, P] =
