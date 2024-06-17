@@ -6,9 +6,11 @@
 
 package benchmark
 
+import ldbc.query.builder.Table
+
 case class Model1(
   c1: Int
-)
+) derives Table
 
 case class Model5(
   c1: Int,
@@ -16,7 +18,7 @@ case class Model5(
   c3: Int,
   c4: Int,
   c5: Int
-)
+) derives Table
 
 case class Model10(
   c1:  Int,
@@ -29,7 +31,7 @@ case class Model10(
   c8:  Int,
   c9:  Int,
   c10: Int
-)
+) derives Table
 
 case class Model20(
   c1:  Int,
@@ -52,7 +54,7 @@ case class Model20(
   c18: Int,
   c19: Int,
   c20: Int
-)
+) derives Table
 
 case class Model25(
   c1:  Int,
@@ -80,7 +82,7 @@ case class Model25(
   c23: Int,
   c24: Int,
   c25: Int
-)
+) derives Table
 
 case class City(
   id:          Int,
@@ -88,4 +90,4 @@ case class City(
   countryCode: String,
   district:    String,
   population:  Int
-)
+) derives Table

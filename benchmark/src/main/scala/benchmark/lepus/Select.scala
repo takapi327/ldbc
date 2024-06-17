@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.ldbc
+package benchmark.lepus
 
 import java.util.concurrent.TimeUnit
 
@@ -35,9 +35,6 @@ class Select:
   @volatile
   var noLog: LogHandler[IO] = uninitialized
 
-  @volatile
-  var query: Table[City] = uninitialized
-
   @Setup
   def setup(): Unit =
     val ds = new MysqlDataSource()
@@ -50,8 +47,6 @@ class Select:
 
     noLog = _ => IO.unit
 
-    query = Table[City]
-
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
@@ -60,7 +55,7 @@ class Select:
     given LogHandler[IO] = noLog
     (for
       connection <- dataSource.getConnection
-      result <- query
+      result <- Table[City]
                   .select(city => (city.id, city.name, city.countryCode))
                   .limit(len)
                   .query
