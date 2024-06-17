@@ -17,23 +17,38 @@ import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
 
+sealed trait MySQLTable[P <: Product]:
+  
+  /**
+   * Type of scala types.
+   */
+  type ElemTypes <: Tuple
+
+  /**
+   * An alias for the table.
+   */
+  def _alias: Option[String]
+
+  /**
+   * A method to get all columns defined in the table.
+   */
+  @targetName("all")
+  def * : Tuple.Map[ElemTypes, Column]
+
 /**
  * Trait for generating SQL table information.
  *
  * @tparam P
  *   A class that implements a [[Product]] that is one-to-one with the table definition.
  */
-trait Table[P <: Product] extends Dynamic:
+trait Table[P <: Product] extends MySQLTable[P], Dynamic:
+
+  type ElemLabels <: Tuple
 
   /**
    * The name of the table.
    */
   def _name: String
-
-  /**
-   * An alias for the table.
-   */
-  def _alias: Option[String]
 
   /**
    * A method to get the table name.
@@ -42,17 +57,6 @@ trait Table[P <: Product] extends Dynamic:
     case Some(alias) if alias == _name => _name
     case Some(alias)                   => s"${ _name } AS $alias"
     case None                          => _name
-
-  /**
-   * A type that represents all columns defined in the table.
-   */
-  type Columns <: Tuple
-
-  /**
-   * A method to get all columns defined in the table.
-   */
-  @targetName("all")
-  def * : Tuple.Map[Columns, Column]
 
   /**
    * Function for setting alias names for tables.
@@ -64,6 +68,14 @@ trait Table[P <: Product] extends Dynamic:
    */
   def as(name: String): Table[P]
 
+  /**
+   * Function for setting table names.
+   *
+   * @param name
+   *   Table name
+   * @return
+   *   Table with table name
+   */
   def setName(name: String): Table[P]
 
   /**
@@ -92,7 +104,7 @@ trait Table[P <: Product] extends Dynamic:
    * A method to perform a simple Select.
    * 
    * {{{
-   *   Table[Person].select(person => (person.id, person.name)
+   *   Table[Person].select(person => (person.id, person.name))
    *   // SELECT id, name FROM person
    * }}}
    *
@@ -111,9 +123,17 @@ trait Table[P <: Product] extends Dynamic:
     val statement = s"SELECT $str FROM $label"
     Select(this, statement, columns, Nil)
 
-  def selectAll: Select[P, Tuple.Map[Columns, Column]] =
-    val statement = s"SELECT ${ *.toList.distinct.mkString(", ") } FROM $label"
-    Select[P, Tuple.Map[Columns, Column]](this, statement, *, Nil)
+  /**
+   * A method to perform a simple Select.
+   *
+   * {{{
+   *   Table[Person].selectAll
+   *   // SELECT id, name, age FROM person
+   * }}}
+   */
+  def selectAll(using mirror: Mirror.ProductOf[P]): Select[P, Tuple.Map[mirror.MirroredElemTypes, Column]] =
+    val statement = s"SELECT ${*.toList.distinct.mkString(", ")} FROM $label"
+    Select[P, Tuple.Map[mirror.MirroredElemTypes, Column]](this, statement, *.asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]], Nil)
 
   /**
    * A method to perform a simple Join.
@@ -160,14 +180,14 @@ trait Table[P <: Product] extends Dynamic:
    */
   def leftJoin[O <: Product](other: Table[O])(
     on: Table[P] *: Tuple1[Table[O]] => Expression
-  ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table.Opt[O]]] =
-    val main = _alias.fold(as(_name))(_ => this)
-    val sub  = other._alias.fold(other.as(other._name))(_ => other)
+  ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[TableOpt[O]]] =
+    val main: Table[P] = _alias.fold(as(_name))(_ => this)
+    val sub: Table[O] = other._alias.fold(other.as(other._name))(_ => other)
     val joins: Table[P] *: Tuple1[Table[O]] = main *: Tuple(sub)
-    Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[Table.Opt[O]]](
+    Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[TableOpt[O]]](
       main,
       joins,
-      main *: Tuple(Table.Opt(sub._alias, sub.*)),
+      main *: Tuple(TableOpt.Impl(sub._alias, sub.*)),
       List(s"${ Join.JoinType.LEFT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -188,14 +208,14 @@ trait Table[P <: Product] extends Dynamic:
    */
   def rightJoin[O <: Product](other: Table[O])(
     on: Table[P] *: Tuple1[Table[O]] => Expression
-  ): Join[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]] =
+  ): Join[Table[P] *: Tuple1[Table[O]], TableOpt[P] *: Tuple1[Table[O]]] =
     val main = _alias.fold(as(_name))(_ => this)
     val sub  = other._alias.fold(other.as(other._name))(_ => other)
     val joins: Table[P] *: Tuple1[Table[O]] = main *: Tuple(sub)
-    Join.Impl[Table[P] *: Tuple1[Table[O]], Table.Opt[P] *: Tuple1[Table[O]]](
+    Join.Impl[Table[P] *: Tuple1[Table[O]], TableOpt[P] *: Tuple1[Table[O]]](
       main,
       joins,
-      Table.Opt(main._alias, main.*) *: Tuple(sub),
+      TableOpt.Impl(main._alias, main.*) *: Tuple(sub),
       List(s"${ Join.JoinType.RIGHT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -213,19 +233,10 @@ trait Table[P <: Product] extends Dynamic:
   inline def insert(using mirror: Mirror.ProductOf[P])(
     values: mirror.MirroredElemTypes*
   ): Insert[P] =
-    val parameterBinders = values
-      .flatMap(
-        _.zip(Parameter.fold[mirror.MirroredElemTypes])
-          .map[ParamBind](
-            [t] =>
-              (x: t) =>
-                val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
-                Parameter.DynamicBinder[t](value)(using parameter)
-          )
-          .toList
-      )
-      .toList
-      .asInstanceOf[List[Parameter.DynamicBinder]]
+    val parameterBinders = values.flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
+      .map {
+        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+      }.toList
     new MultiInsert[P, Tuple](this, values.toList, parameterBinders)
 
   /**
@@ -241,6 +252,40 @@ trait Table[P <: Product] extends Dynamic:
   ): SelectInsert[P, T] =
     val parameter: Parameter.MapToTuple[Column.Extract[T]] = Parameter.fold[Column.Extract[T]]
     SelectInsert[P, T](this, func(this), parameter)
+
+  /**
+   * A method to build a query model that inserts data from the model into all columns defined in the table.
+   *
+   * @param value
+   *   A class that implements a [[Product]] that is one-to-one with the table definition.
+   * @param mirror
+   *   product isomorphism map
+   */
+  @targetName("insertProduct")
+  inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[P] =
+    val tuples = Tuple.fromProductTyped(value)
+    val parameterBinders = tuples.zip(Parameter.fold[mirror.MirroredElemTypes]).toList
+      .map {
+        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+      }
+    new SingleInsert[P, Tuple](this, tuples, parameterBinders)
+
+  /**
+   * A method to build a query model that inserts data from multiple models into all columns defined in a table.
+   *
+   * @param values
+   * A class that implements a [[Product]] that is one-to-one with the table definition.
+   * @param mirror
+   * product isomorphism map
+   */
+  @targetName("insertProducts")
+  inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[P] =
+    val tuples = values.map(Tuple.fromProductTyped)
+    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
+      .map {
+        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+      }
+    new MultiInsert[P, Tuple](this, tuples, parameterBinders)
 
   /**
    * A method to build a query model that updates specified columns defined in a table.
@@ -302,59 +347,66 @@ trait Table[P <: Product] extends Dynamic:
   /**
    * Method to construct a query to delete a table.
    */
-  def delete: Delete[P, Tuple.Map[Columns, Column]] = Delete[P, Tuple.Map[Columns, Column]](this, *)
+  def delete: Delete[P, Tuple.Map[ElemTypes, Column]] = Delete[P, Tuple.Map[ElemTypes, Column]](this, *)
 
 object Table:
 
   def apply[P <: Product](using t: Table[P]): Table[P] = t
   def apply[P <: Product](name:    String)(using t: Table[P]): Table[P] = t.setName(name)
 
-  private[ldbc] case class Impl[P <: Product, T <: Tuple](
+  private[ldbc] case class Impl[P <: Product, ElemLabels0 <: Tuple, ElemTypes0 <: Tuple](
     _name:   String,
     _alias:  Option[String],
-    columns: Tuple.Map[T, Column]
+    columns: Tuple.Map[ElemTypes0, Column]
   ) extends Table[P]:
-    override type Columns = T
+    override type ElemLabels = ElemLabels0
+    override type ElemTypes = ElemTypes0
     @targetName("all")
-    override def * : Tuple.Map[Columns, Column] = columns
+    override def * : Tuple.Map[ElemTypes, Column] = columns
     override def as(name:      String): Table[P] = this.copy(_alias = Some(name))
     override def setName(name: String): Table[P] = this.copy(_name = name)
-
-  private[ldbc] case class Opt[P](alias: Option[String], columns: Tuple) extends Dynamic:
-
-    transparent inline def selectDynamic[Tag <: Singleton](
-      tag: Tag
-    )(using
-      mirror: Mirror.ProductOf[P],
-      index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    ): Column[
-      Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
-    ] =
-      val column = columns
-        .productElement(index.value)
-        .asInstanceOf[Column[
-          Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
-        ]]
-      alias.fold(column)(alias => column.as(alias))
 
   private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](
     inline nt: NT,
     inline xs: List[Column[?]]
-  ): Tuple.Map[T, Column] =
+  )(using naming: Naming): Tuple.Map[T, Column] =
     inline nt match
       case nt1: (e *: ts) =>
         inline nt1.head match
           case h: String =>
-            val c = Column.Impl[Tuple.Elem[T, I]](h, None)
+            val name = naming.format(h)
+            val c = Column.Impl[Tuple.Elem[T, I]](name, None)
             buildColumns[ts, T, I + 1](nt1.tail, xs :+ c)
           case n: (name, _) =>
             error("stat " + constValue[name] + " should be a constant string")
       case _: EmptyTuple => Tuple.fromArray(xs.toArray).asInstanceOf[Tuple.Map[T, Column]]
 
-  inline def derived[P <: Product](using m: Mirror.ProductOf[P]): Table[P] =
+  inline def derived[P <: Product](using m: Mirror.ProductOf[P], naming: Naming = Naming.SNAKE): Table[P] =
     val labels = constValueTuple[m.MirroredElemLabels]
-    Impl[P, m.MirroredElemTypes](
-      _name   = Naming.SNAKE.format(constValue[m.MirroredLabel]),
+    Impl[P, m.MirroredElemLabels, m.MirroredElemTypes](
+      _name   = naming.format(constValue[m.MirroredLabel]),
       _alias  = None,
       columns = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)
     )
+
+private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
+
+  transparent inline def selectDynamic[Tag <: Singleton](
+    tag: Tag
+  )(using
+    mirror: Mirror.ProductOf[P],
+    index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+  ): Column[
+    Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+  ] =
+    val column = *
+      .productElement(index.value)
+      .asInstanceOf[Column[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]]
+    _alias.fold(column)(alias => column.as(alias))
+
+object TableOpt:
+
+  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](_alias: Option[String], columns: Tuple.Map[ElemTypes0, Column]) extends TableOpt[P]:
+    override type ElemTypes = ElemTypes0
+    @targetName("all")
+    override def * : Tuple.Map[ElemTypes, Column] = columns
