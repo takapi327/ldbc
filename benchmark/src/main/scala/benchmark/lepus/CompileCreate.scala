@@ -4,8 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-/*
-package benchmark.ldbc
+package benchmark.lepus
 
 import java.util.concurrent.TimeUnit
 
@@ -43,4 +42,3 @@ class CompileCreate:
 
   @Benchmark
   def createTableN = compiler.compile(source)
- */
