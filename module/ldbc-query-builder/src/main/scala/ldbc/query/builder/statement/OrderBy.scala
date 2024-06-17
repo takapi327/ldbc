@@ -30,7 +30,7 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class OrderBy[P <: Product, T](
   table:  Table[P],
-  _query:  String,
+  _query: String,
   order:  String,
   params: List[Parameter.DynamicBinder]
 ) extends Query[T],
@@ -74,7 +74,7 @@ private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
       case column: Column[?]       => column.toString
     OrderBy(
       table  = table,
-      _query  = statement,
+      _query = statement,
       order  = order,
       params = params
     )

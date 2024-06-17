@@ -28,7 +28,7 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class Having[P <: Product, T](
   table:      Table[P],
-  _query:      String,
+  _query:     String,
   params:     List[Parameter.DynamicBinder],
   expression: Expression
 ) extends Query[T],

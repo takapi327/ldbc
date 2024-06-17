@@ -23,7 +23,7 @@ import ldbc.query.builder.*
  *   Union type of column
  */
 private[ldbc] case class Offset[T](
-                                    _query:  String,
+  _query: String,
   params: List[Parameter.DynamicBinder]
 ) extends Query[T]:
 

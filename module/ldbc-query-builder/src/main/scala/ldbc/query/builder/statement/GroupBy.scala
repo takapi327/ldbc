@@ -50,7 +50,7 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
     val expression = func(columns)
     Having[P, A](
       table      = table,
-      _query      = statement,
+      _query     = statement,
       params     = params ++ expression.parameter,
       expression = expression
     )
