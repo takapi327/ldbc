@@ -24,19 +24,19 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
   self =>
 
   /** The table on which the Join is based. */
-  def main: Table[?]
+  private[ldbc] def main: Table[?]
 
   /** Tuple of the table that did the join. */
-  def joins: JOINS
+  private[ldbc] def joins: JOINS
 
   /** Tuple for building Select statements, etc. on joined tables. */
-  def selects: SELECTS
+  private[ldbc] def selects: SELECTS
 
   /** Join's Statement List. */
-  def joinStatements: List[String]
+  private[ldbc] def joinStatements: List[String]
 
   /** Statement of Join. */
-  def statement: String = s"FROM ${ main.label } ${ joinStatements.mkString(" ") }"
+  private[ldbc] def statement: String = s"FROM ${ main.label } ${ joinStatements.mkString(" ") }"
 
   /**
    * A method to perform a simple Join.
@@ -50,9 +50,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
    */
   def join[P <: Product](other: Table[P])(
     on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
-  )(using
-    Tuples.IsTableOpt[SELECTS] =:= true
-  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table[P]]]] =
+  )(using Tuples.IsTableOpt[SELECTS] =:= true): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table[P]]]] =
     val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
@@ -73,14 +71,12 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
    */
   def leftJoin[P <: Product](other: Table[P])(
     on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
-  )(using
-    Tuples.IsTableOpt[SELECTS] =:= true
-  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table.Opt[P]]]] =
+  )(using Tuples.IsTableOpt[SELECTS] =:= true): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[P]]]] =
     val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
       joins ++ Tuple(sub),
-      selects ++ Tuple(Table.Opt(sub._alias, sub.*)),
+      selects ++ Tuple(TableOpt.Impl(sub._alias, sub.*)),
       joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
@@ -96,9 +92,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
    */
   def rightJoin[P <: Product](other: Table[P])(
     on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
-  )(using
-    Tuples.IsTableOpt[SELECTS] =:= true
-  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[Tuples.ToTableOpt[SELECTS], Tuple1[Table[P]]]] =
+  )(using Tuples.IsTableOpt[SELECTS] =:= true): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[Tuples.ToTableOpt[SELECTS], Tuple1[Table[P]]]] =
     val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
