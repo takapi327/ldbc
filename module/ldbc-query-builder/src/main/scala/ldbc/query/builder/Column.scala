@@ -30,6 +30,8 @@ sealed trait Column[T]:
   /** Functions for setting aliases on columns */
   def as(name: String): Column[T]
 
+  def count: Column.Count = Column.Count(name)
+
   def asc:  OrderBy.Order[T] = OrderBy.Order.Asc(this)
   def desc: OrderBy.Order[T] = OrderBy.Order.Desc(this)
 
@@ -601,3 +603,9 @@ object Column:
     extends Column[T]:
     override def name: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
+
+  private[ldbc] case class Count(_name: String) extends Column[Int]:
+    override def name: String = s"COUNT($_name)"
+    override def alias: Option[String] = None
+    override def as(name: String): Column[Int] = this.copy(name)
+    override def toString: String = name
