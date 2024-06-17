@@ -52,27 +52,22 @@ object Tuples:
 
   type IsTableOpt[T] <: Boolean = T match
     case EmptyTuple                 => false
-    case Table[p]                   => true
-    case Table.Opt[p]               => true
-    case Table[p] *: EmptyTuple     => true
-    case Table.Opt[p] *: EmptyTuple => true
-    case Table[p] *: ts             => IsTableOpt[ts]
-    case Table.Opt[p] *: ts         => IsTableOpt[ts]
+    case MySQLTable[p] => true
+    case MySQLTable[p] *: EmptyTuple => true
+    case MySQLTable[p] *: ts => IsTableOpt[ts]
     case _                          => false
 
   type ToColumn[T] = T match
-    case Tuple => MapToColumn[T]
-    case _     => Column[T]
+    case t *: EmptyTuple => Column[t]
+    case t *: ts => MapToColumn[t *: ts]
+    case _ => Column[T]
 
   type ToTableOpt[T <: Tuple] <: Tuple = T match
-    case Table[t] *: EmptyTuple     => Table.Opt[t] *: EmptyTuple
-    case Table.Opt[t] *: EmptyTuple => Table.Opt[t] *: EmptyTuple
-    case Table[t] *: ts             => Table.Opt[t] *: ToTableOpt[ts]
-    case Table.Opt[t] *: ts         => Table.Opt[t] *: ToTableOpt[ts]
+    case MySQLTable[p] *: EmptyTuple => TableOpt[p] *: EmptyTuple
+    case MySQLTable[p] *: ts => TableOpt[p] *: ToTableOpt[ts]
 
-  def toTableOpt[T <: Tuple](tuple: T)(using IsTableOpt[T] =:= true): ToTableOpt[T] =
+  def toTableOpt[T <: Tuple](tuple: T)(using Tuples.IsTableOpt[T] =:= true): ToTableOpt[T] =
     val list = tuple.toList.map {
-      case table: Table[p]   => Table.Opt[p](table._alias, table.*)
-      case opt: Table.Opt[p] => opt
+      case table: MySQLTable[p] => TableOpt.Impl[p, table.ElemTypes](table._alias, table.*)
     }
     Tuple.fromArray(list.toArray).asInstanceOf[ToTableOpt[T]]
