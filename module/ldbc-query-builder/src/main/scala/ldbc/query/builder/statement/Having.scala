@@ -16,7 +16,7 @@ import ldbc.query.builder.*
  *
  * @param table
  *   Trait for generating SQL table information.
- * @param query
+ * @param _query
  *   Query string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
@@ -28,15 +28,15 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class Having[P <: Product, T](
   table:      Table[P],
-  query:      String,
+  _query:      String,
   params:     List[Parameter.DynamicBinder],
   expression: Expression
 ) extends Query[T],
           OrderByProvider[P, T],
           LimitProvider[T]:
 
-  override def statement: String = query ++ s" HAVING ${ expression.statement }"
+  override def statement: String = _query ++ s" HAVING ${ expression.statement }"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Having[P, T](table, query ++ sql.statement, params ++ sql.params, expression)
+    Having[P, T](table, _query ++ sql.statement, params ++ sql.params, expression)

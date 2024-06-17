@@ -14,7 +14,7 @@ import ldbc.query.builder.*
 /**
  * A model for constructing OFFSET statements in MySQL.
  *
- * @param query
+ * @param _query
  *   Query string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
@@ -23,11 +23,11 @@ import ldbc.query.builder.*
  *   Union type of column
  */
 private[ldbc] case class Offset[T](
-  query:  String,
+                                    _query:  String,
   params: List[Parameter.DynamicBinder]
 ) extends Query[T]:
 
-  override def statement: String = query ++ " OFFSET ?"
+  override def statement: String = _query ++ " OFFSET ?"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =

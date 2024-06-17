@@ -4,6 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+/*
 package benchmark.ldbc
 
 import java.util.concurrent.TimeUnit
@@ -101,3 +102,4 @@ class RuntimeCreate:
     column("c24", INT),
     column("c25", INT)
   )
+ */

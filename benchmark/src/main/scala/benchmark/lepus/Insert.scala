@@ -17,10 +17,9 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
-import ldbc.core.*
 import ldbc.sql.DataSource
 import ldbc.dsl.logging.LogHandler
-import ldbc.query.builder.TableQuery
+import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -35,7 +34,7 @@ class Insert:
   var noLog: LogHandler[IO] = uninitialized
 
   @volatile
-  var query: TableQuery[Test] = uninitialized
+  var query: Table[Test] = uninitialized
 
   @volatile
   var records: List[(Int, String)] = List.empty
@@ -54,7 +53,7 @@ class Insert:
 
     noLog = _ => IO.unit
 
-    query = TableQuery[Test](Test.table)
+    query = Table[Test]
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
@@ -71,11 +70,4 @@ class Insert:
                   .rollback(connection)
     yield result).unsafeRunSync()
 
-case class Test(id: Option[Int], c1: Int, c2: String)
-object Test:
-
-  val table = Table[Test]("test")(
-    column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("c1", INT),
-    column("c2", VARCHAR(255))
-  )
+case class Test(id: Option[Int], c1: Int, c2: String) derives Table

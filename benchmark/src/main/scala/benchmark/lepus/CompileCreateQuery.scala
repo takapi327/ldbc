@@ -30,17 +30,10 @@ class CompileCreateQuery:
   def setup(): Unit =
     compiler = new Compiler
 
-    val columns = (1 to size).map(i => s"column(\"c$i\", INT)").mkString(",\n")
-
     source = s"""
-         |import cats.effect.IO
-         |import ldbc.core.*
-         |import ldbc.query.builder.TableQuery
+         |import ldbc.query.builder.Table
          |import benchmark.Model$size
-         |val table = Table[Model$size](\"model$size\")(
-         |  $columns
-         |)
-         |val tableQuery = TableQuery[Model$size](table)
+         |val tableQuery = Table[Model$size]
          |
          |val query = tableQuery.select(v => (${ (1 to size).map(i => s"v.c$i").mkString(", ") }))
          |  .limit(5000)

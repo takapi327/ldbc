@@ -16,7 +16,7 @@ import ldbc.query.builder.*
  *
  * @param table
  *   Trait for generating SQL table information.
- * @param query
+ * @param _query
  *   Query string
  * @param order
  *   Order query string
@@ -30,17 +30,17 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class OrderBy[P <: Product, T](
   table:  Table[P],
-  query:  String,
+  _query:  String,
   order:  String,
   params: List[Parameter.DynamicBinder]
 ) extends Query[T],
           LimitProvider[T]:
 
-  override def statement: String = query ++ s" ORDER BY $order"
+  override def statement: String = _query ++ s" ORDER BY $order"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    OrderBy[P, T](table, query ++ sql.statement, order, params ++ sql.params)
+    OrderBy[P, T](table, _query ++ sql.statement, order, params ++ sql.params)
 
 object OrderBy:
 
@@ -74,7 +74,7 @@ private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
       case column: Column[?]       => column.toString
     OrderBy(
       table  = table,
-      query  = statement,
+      _query  = statement,
       order  = order,
       params = params
     )

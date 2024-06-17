@@ -17,10 +17,9 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
-import ldbc.core.*
 import ldbc.sql.DataSource
 import ldbc.dsl.logging.LogHandler
-import ldbc.query.builder.TableQuery
+import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
 import benchmark.City
@@ -37,7 +36,7 @@ class Select:
   var noLog: LogHandler[IO] = uninitialized
 
   @volatile
-  var query: TableQuery[City] = uninitialized
+  var query: Table[City] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -51,7 +50,7 @@ class Select:
 
     noLog = _ => IO.unit
 
-    query = TableQuery[City](City.table)
+    query = Table[City]
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
@@ -64,17 +63,8 @@ class Select:
       result <- query
                   .select(city => (city.id, city.name, city.countryCode))
                   .limit(len)
-                  .toList
+                  .query
+                  .to[List]
                   .readOnly(connection)
     yield result)
       .unsafeRunSync()
-
-object City:
-
-  val table = Table[City]("city")(
-    column("ID", INT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("Name", CHAR(35).DEFAULT("")),
-    column("CountryCode", CHAR(3).DEFAULT("")),
-    column("District", CHAR(20).DEFAULT("")),
-    column("Population", INT.DEFAULT(0))
-  )
