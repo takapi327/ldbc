@@ -8,7 +8,6 @@ package ldbc.tests
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
-import cats.data.Kleisli
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -17,9 +16,7 @@ import org.typelevel.otel4s.trace.Tracer
 
 import munit.*
 
-//import ldbc.core.*
 import ldbc.sql.*
-//import ldbc.query.builder.TableQuery
 import ldbc.connector.SSL
 import ldbc.dsl.Executor
 import ldbc.dsl.logging.LogHandler
@@ -64,17 +61,17 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
 
-  private final val country          = Table[Country]
-  private final val city             = Table[City]
-  private final val countryLanguage  = Table[CountryLanguage]
-  private final val governmentOffice = Table[GovernmentOffice]
+  private final val country          = Table[Country]("country")
+  private final val city             = Table[City]("city")
+  private final val countryLanguage  = Table[CountryLanguage]("countrylanguage")
+  private final val governmentOffice = Table[GovernmentOffice]("government_office")
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
   ) {
     assertIO(
       connection.use { conn =>
-        country.selectAll.query[Country].to[List].readOnly(conn).map(_.length)
+        country.selectAll.queryTo[Country].to[List].readOnly(conn).map(_.length)
       },
       239
     )
@@ -85,7 +82,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        city.selectAll.query[City].to[List].readOnly(conn).map(_.length)
+        city.selectAll.queryTo[City].to[List].readOnly(conn).map(_.length)
       },
       4079
     )
@@ -96,7 +93,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.query[CountryLanguage].to[List].readOnly(conn).map(_.length)
+        countryLanguage.selectAll.queryTo[CountryLanguage].to[List].readOnly(conn).map(_.length)
       },
       984
     )
@@ -107,7 +104,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.query[CountryLanguage].to[List].readOnly(conn).map(_.length)
+        countryLanguage.selectAll.queryTo[CountryLanguage].to[List].readOnly(conn).map(_.length)
       },
       984
     )
@@ -118,7 +115,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        governmentOffice.selectAll.query[GovernmentOffice].to[List].readOnly(conn).map(_.length)
+        governmentOffice.selectAll.queryTo[GovernmentOffice].to[List].readOnly(conn).map(_.length)
       },
       2
     )
@@ -144,7 +141,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         country.selectAll
           .where(_.code _equals "JPN")
-          .query[Country]
+          .queryTo[Country]
           .to[Option]
           .readOnly(conn)
       },
@@ -175,7 +172,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         city.selectAll
           .where(_.id _equals 1532)
-          .query[City]
+          .queryTo[City]
           .to[Option]
           .readOnly(conn)
       },
@@ -189,7 +186,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
         countryLanguage.selectAll
           .where(_.countryCode _equals "JPN")
           .and(_.language _equals "Japanese")
-          .query[CountryLanguage]
+          .queryTo[CountryLanguage]
           .to[Option]
           .readOnly(conn)
       },
@@ -220,7 +217,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
           .select((city, country) => (city.name, country.name))
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
-          .query[CountryCity]
+          .queryTo[CountryCity]
           .to[Option]
           .readOnly(conn)
       },
@@ -251,7 +248,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
           .select((city, country) => (city.name, country.name))
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
-          .query[CountryCity]
+          .queryTo[CountryCity]
           .to[Option]
           .readOnly(conn)
       },
@@ -282,7 +279,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
           .select((city, country) => (city.name, country.name))
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
-          .query[CountryCity]
+          .queryTo[CountryCity]
           .to[Option]
           .readOnly(conn)
       },
@@ -290,35 +287,35 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  // test("The retrieved data matches the specified value.") {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      city
-  //        .select(v => (v.countryCode, v.id.count))
-  //        .where(_.countryCode _equals "JPN")
-  //        .query
-  //        .to[Option]
-  //        .readOnly(conn)
-  //    },
-  //    Some(("JPN", 248))
-  //  )
-  // }
+  test("The retrieved data matches the specified value.") {
+   assertIO(
+     connection.use { conn =>
+       city
+         .select(v => (v.countryCode, v.id.count))
+         .where(_.countryCode _equals "JPN")
+         .query
+         .to[Option]
+         .readOnly(conn)
+     },
+     Some(("JPN", 248))
+   )
+  }
 
-  // test("The retrieved data matches the specified value.") {
-  //  case class CountryCodeGroup(countryCode: String, length: Int)
-  //  assertIO(
-  //    connection.use { conn =>
-  //      city
-  //        .select(v => (v.countryCode, v.id.count))
-  //        .groupBy(_._1)
-  //        .query[CountryCodeGroup]
-  //        .to[List]
-  //        .readOnly(conn)
-  //        .map(_.length)
-  //    },
-  //    232
-  //  )
-  // }
+  test("The retrieved data matches the specified value.") {
+   case class CountryCodeGroup(countryCode: String, length: Int)
+   assertIO(
+     connection.use { conn =>
+       city
+         .select(v => (v.countryCode, v.id.count))
+         .groupBy(_._1)
+         .queryTo[CountryCodeGroup]
+         .to[List]
+         .readOnly(conn)
+         .map(_.length)
+     },
+     232
+   )
+  }
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
