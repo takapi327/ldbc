@@ -25,7 +25,7 @@ import ldbc.query.builder.*
 private[ldbc] case class Limit[T](
   query:  String,
   params: List[Parameter.DynamicBinder]
-) extends Query[T]:
+) extends Query[T], Command:
 
   override def statement: String = query ++ " LIMIT ?"
 

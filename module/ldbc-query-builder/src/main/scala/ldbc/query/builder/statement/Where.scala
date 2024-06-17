@@ -34,6 +34,7 @@ private[ldbc] case class Where[P <: Product, T](
   columns:   T,
   params:    List[Parameter.DynamicBinder]
 ) extends Query[T],
+          Command,
           OrderByProvider[P, T],
           LimitProvider[T]:
 
