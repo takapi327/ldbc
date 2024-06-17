@@ -605,7 +605,7 @@ object Column:
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
 
   private[ldbc] case class Count(_name: String) extends Column[Int]:
-    override def name: String = s"COUNT($_name)"
+    override def name:  String         = s"COUNT($_name)"
     override def alias: Option[String] = None
     override def as(name: String): Column[Int] = this.copy(name)
     override def toString: String = name

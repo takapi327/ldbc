@@ -278,7 +278,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         (for
-          cityOpt <- city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").queryTo[City].to[Option]
+          cityOpt <-
+            city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").queryTo[City].to[Option]
           result <- cityOpt match
                       case None => Executor.pure[IO, Int](0)
                       case Some(cityModel) =>

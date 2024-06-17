@@ -18,7 +18,7 @@ import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
 
 sealed trait MySQLTable[P <: Product]:
-  
+
   /**
    * Type of scala types.
    */
@@ -132,8 +132,13 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    * }}}
    */
   def selectAll(using mirror: Mirror.ProductOf[P]): Select[P, Tuple.Map[mirror.MirroredElemTypes, Column]] =
-    val statement = s"SELECT ${*.toList.distinct.mkString(", ")} FROM $label"
-    Select[P, Tuple.Map[mirror.MirroredElemTypes, Column]](this, statement, *.asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]], Nil)
+    val statement = s"SELECT ${ *.toList.distinct.mkString(", ") } FROM $label"
+    Select[P, Tuple.Map[mirror.MirroredElemTypes, Column]](
+      this,
+      statement,
+      *.asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]],
+      Nil
+    )
 
   /**
    * A method to perform a simple Join.
@@ -181,8 +186,8 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   def leftJoin[O <: Product](other: Table[O])(
     on: Table[P] *: Tuple1[Table[O]] => Expression
   ): Join[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[TableOpt[O]]] =
-    val main: Table[P] = _alias.fold(as(_name))(_ => this)
-    val sub: Table[O] = other._alias.fold(other.as(other._name))(_ => other)
+    val main:  Table[P]                     = _alias.fold(as(_name))(_ => this)
+    val sub:   Table[O]                     = other._alias.fold(other.as(other._name))(_ => other)
     val joins: Table[P] *: Tuple1[Table[O]] = main *: Tuple(sub)
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[TableOpt[O]]](
       main,
@@ -233,10 +238,12 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   inline def insert(using mirror: Mirror.ProductOf[P])(
     values: mirror.MirroredElemTypes*
   ): Insert[P] =
-    val parameterBinders = values.flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
+    val parameterBinders = values
+      .flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
-      }.toList
+      }
+      .toList
     new MultiInsert[P, Tuple](this, values.toList, parameterBinders)
 
   /**
@@ -264,7 +271,9 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   @targetName("insertProduct")
   inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[P] =
     val tuples = Tuple.fromProductTyped(value)
-    val parameterBinders = tuples.zip(Parameter.fold[mirror.MirroredElemTypes]).toList
+    val parameterBinders = tuples
+      .zip(Parameter.fold[mirror.MirroredElemTypes])
+      .toList
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
@@ -281,7 +290,8 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   @targetName("insertProducts")
   inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[P] =
     val tuples = values.map(Tuple.fromProductTyped)
-    val parameterBinders = tuples.flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
+    val parameterBinders = tuples
+      .flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
@@ -360,7 +370,7 @@ object Table:
     columns: Tuple.Map[ElemTypes0, Column]
   ) extends Table[P]:
     override type ElemLabels = ElemLabels0
-    override type ElemTypes = ElemTypes0
+    override type ElemTypes  = ElemTypes0
     @targetName("all")
     override def * : Tuple.Map[ElemTypes, Column] = columns
     override def as(name:      String): Table[P] = this.copy(_alias = Some(name))
@@ -375,7 +385,7 @@ object Table:
         inline nt1.head match
           case h: String =>
             val name = naming.format(h)
-            val c = Column.Impl[Tuple.Elem[T, I]](name, None)
+            val c    = Column.Impl[Tuple.Elem[T, I]](name, None)
             buildColumns[ts, T, I + 1](nt1.tail, xs :+ c)
           case n: (name, _) =>
             error("stat " + constValue[name] + " should be a constant string")
@@ -395,18 +405,22 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
     tag: Tag
   )(using
     mirror: Mirror.ProductOf[P],
-    index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Column[
     Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
   ] =
-    val column = *
-      .productElement(index.value)
-      .asInstanceOf[Column[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]]
+    val column = *.productElement(index.value)
+      .asInstanceOf[Column[
+        Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+      ]]
     _alias.fold(column)(alias => column.as(alias))
 
 object TableOpt:
 
-  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](_alias: Option[String], columns: Tuple.Map[ElemTypes0, Column]) extends TableOpt[P]:
+  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](
+    _alias:  Option[String],
+    columns: Tuple.Map[ElemTypes0, Column]
+  ) extends TableOpt[P]:
     override type ElemTypes = ElemTypes0
     @targetName("all")
     override def * : Tuple.Map[ElemTypes, Column] = columns

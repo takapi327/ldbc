@@ -288,33 +288,33 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The retrieved data matches the specified value.") {
-   assertIO(
-     connection.use { conn =>
-       city
-         .select(v => (v.countryCode, v.id.count))
-         .where(_.countryCode _equals "JPN")
-         .query
-         .to[Option]
-         .readOnly(conn)
-     },
-     Some(("JPN", 248))
-   )
+    assertIO(
+      connection.use { conn =>
+        city
+          .select(v => (v.countryCode, v.id.count))
+          .where(_.countryCode _equals "JPN")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(("JPN", 248))
+    )
   }
 
   test("The retrieved data matches the specified value.") {
-   case class CountryCodeGroup(countryCode: String, length: Int)
-   assertIO(
-     connection.use { conn =>
-       city
-         .select(v => (v.countryCode, v.id.count))
-         .groupBy(_._1)
-         .queryTo[CountryCodeGroup]
-         .to[List]
-         .readOnly(conn)
-         .map(_.length)
-     },
-     232
-   )
+    case class CountryCodeGroup(countryCode: String, length: Int)
+    assertIO(
+      connection.use { conn =>
+        city
+          .select(v => (v.countryCode, v.id.count))
+          .groupBy(_._1)
+          .queryTo[CountryCodeGroup]
+          .to[List]
+          .readOnly(conn)
+          .map(_.length)
+      },
+      232
+    )
   }
 
   test(

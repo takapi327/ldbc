@@ -50,7 +50,9 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
    */
   def join[P <: Product](other: Table[P])(
     on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
-  )(using Tuples.IsTableOpt[SELECTS] =:= true): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table[P]]]] =
+  )(using
+    Tuples.IsTableOpt[SELECTS] =:= true
+  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table[P]]]] =
     val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
@@ -71,7 +73,9 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
    */
   def leftJoin[P <: Product](other: Table[P])(
     on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
-  )(using Tuples.IsTableOpt[SELECTS] =:= true): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[P]]]] =
+  )(using
+    Tuples.IsTableOpt[SELECTS] =:= true
+  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[P]]]] =
     val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
@@ -92,7 +96,9 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
    */
   def rightJoin[P <: Product](other: Table[P])(
     on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
-  )(using Tuples.IsTableOpt[SELECTS] =:= true): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[Tuples.ToTableOpt[SELECTS], Tuple1[Table[P]]]] =
+  )(using
+    Tuples.IsTableOpt[SELECTS] =:= true
+  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[Tuples.ToTableOpt[SELECTS], Tuple1[Table[P]]]] =
     val sub = other._alias.fold(other.as(other._name))(_ => other)
     Join.Impl(
       main,
