@@ -16,23 +16,25 @@ import ldbc.query.builder.*
  *
  * @param table
  *   Trait for generating SQL table information.
+ * @param columns
+ *   Union-type column list
+ * @param statement
+ *   SQL statement string
  * @tparam P
  *   Base trait for all products
  * @tparam T
  *   Union type of column
  */
-case class Delete[P <: Product, T](
+private[ldbc] case class Delete[P <: Product, T](
   table:   Table[P],
   columns: T,
-  other:   Option[String]                = None,
+  statement:  String,
   params:  List[Parameter.DynamicBinder] = List.empty
 ) extends Command,
           LimitProvider[T]:
 
   @targetName("combine")
-  override def ++(sql: SQL): SQL = Delete[P, T](table, columns, Some(sql.statement), params ++ sql.params)
-
-  override def statement: String = s"DELETE FROM ${ table._name }" ++ other.fold("")(s => s" $s")
+  override def ++(sql: SQL): SQL = Delete[P, T](table, columns, statement ++ sql.statement, params ++ sql.params)
 
   /**
    * A method for setting the WHERE condition in a DELETE statement.
