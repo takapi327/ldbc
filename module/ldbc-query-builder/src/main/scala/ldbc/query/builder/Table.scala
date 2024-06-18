@@ -374,10 +374,10 @@ object Table:
   def apply[P <: Product](name:    String)(using t: Table[P]): Table[P] = t.setName(name)
 
   private[ldbc] case class Impl[P <: Product, ElemLabels0 <: Tuple, ElemTypes0 <: Tuple](
-    _name:   String,
-    _alias:  Option[String],
+    _name:       String,
+    _alias:      Option[String],
     columnNames: List[String],
-    columns: Tuple.Map[ElemTypes0, Column]
+    columns:     Tuple.Map[ElemTypes0, Column]
   ) extends Table[P]:
     override type ElemLabels = ElemLabels0
     override type ElemTypes  = ElemTypes0
@@ -398,7 +398,9 @@ object Table:
             stringOf(value) +: listOfLabels[ts]
           case None =>
             error(
-              "Types of field labels must be literal string types.\n" + "Found:    " + constValue[t] + "\nRequired: (a literal string type)",
+              "Types of field labels must be literal string types.\n" + "Found:    " + constValue[
+                t
+              ] + "\nRequired: (a literal string type)"
             )
         }
     }
@@ -421,10 +423,10 @@ object Table:
   inline def derived[P <: Product](using m: Mirror.ProductOf[P], naming: Naming = Naming.SNAKE): Table[P] =
     val labels = constValueTuple[m.MirroredElemLabels]
     Impl[P, m.MirroredElemLabels, m.MirroredElemTypes](
-      _name   = naming.format(constValue[m.MirroredLabel]),
-      _alias  = None,
+      _name       = naming.format(constValue[m.MirroredLabel]),
+      _alias      = None,
       columnNames = listOfLabels[m.MirroredElemLabels].map(naming.format),
-      columns = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)
+      columns     = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)
     )
 
 private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
