@@ -39,7 +39,7 @@ private[ldbc] case class Limit[T](
    */
   def offset(length: Long): Parameter[Long] ?=> Offset[T] =
     Offset(
-      _query = statement,
+      statement = statement ++ " OFFSET ?",
       params = params :+ Parameter.DynamicBinder(length)
     )
 
