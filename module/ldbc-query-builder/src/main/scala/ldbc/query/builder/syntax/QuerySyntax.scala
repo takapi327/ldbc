@@ -8,7 +8,7 @@ package ldbc.query.builder.syntax
 
 import scala.deriving.Mirror
 
-import ldbc.dsl.{Query as DslQuery, *}
+import ldbc.dsl.{ Query as DslQuery, * }
 
 import ldbc.query.builder.statement.Query
 import ldbc.query.builder.interpreter.Tuples

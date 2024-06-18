@@ -15,9 +15,9 @@ import cats.effect.*
 
 import ldbc.sql.*
 
-import ldbc.dsl.{Query as DslQuery, SyncSyntax as DslSyntax, *}
+import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 
-import ldbc.query.builder.statement.{Query, Command}
+import ldbc.query.builder.statement.{ Query, Command }
 import ldbc.query.builder.interpreter.Tuples
 
 package object syntax:
@@ -40,9 +40,9 @@ package object syntax:
         DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params)
 
       inline def queryTo[P <: Product](using
-                                       mirror: Mirror.ProductOf[P],
-                                       check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
-                                      ): DslQuery[F, P] =
+        mirror: Mirror.ProductOf[P],
+        check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
+      ): DslQuery[F, P] =
         given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
           ResultSetReader
             .fold[F, mirror.MirroredElemTypes]
@@ -65,8 +65,8 @@ package object syntax:
             for
               prepareStatement <- connection.prepareStatement(command.statement)
               result <- command.params.zipWithIndex.traverse {
-                case (param, index) => param.bind[F](prepareStatement, index + 1)
-              } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+                          case (param, index) => param.bind[F](prepareStatement, index + 1)
+                        } >> prepareStatement.executeUpdate() <* prepareStatement.close()
             yield result
         )
 
@@ -80,8 +80,8 @@ package object syntax:
             for
               prepareStatement <- connection.prepareStatement(command.statement, Statement.RETURN_GENERATED_KEYS)
               resultSet <- command.params.zipWithIndex.traverse {
-                case (param, index) => param.bind[F](prepareStatement, index + 1)
-              } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+                             case (param, index) => param.bind[F](prepareStatement, index + 1)
+                           } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
               result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
             yield result
         )
