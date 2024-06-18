@@ -29,6 +29,8 @@ import ldbc.query.builder.*
  *   Base trait for all products
  * @tparam A
  *   Union type of column
+ * @tparam B
+ *   Scala types possessed by columns used in GroupBy clauses
  */
 private[ldbc] case class GroupBy[P <: Product, A, B](
   table:   Table[P],
@@ -50,7 +52,6 @@ private[ldbc] case class GroupBy[P <: Product, A, B](
     val expression = func(columns)
     Having[P, A](
       table      = table,
-      _query     = statement,
-      params     = params ++ expression.parameter,
-      expression = expression
+      statement  = statement ++ s" HAVING ${ expression.statement }",
+      params     = params ++ expression.parameter
     )
