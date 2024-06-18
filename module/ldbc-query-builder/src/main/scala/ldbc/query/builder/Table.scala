@@ -223,9 +223,6 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       List(s"${ Join.JoinType.RIGHT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
-  /** Type alias for ParameterBinder. Mainly for use with Tuple.map. */
-  private type ParamBind[A] = Parameter.Binder
-
   /**
    * A method to build a query model that inserts data into all columns defined in the table.
    *
@@ -336,21 +333,17 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    *   product isomorphism map
    */
   inline def update(value: P)(using mirror: Mirror.ProductOf[P]): Update[P] =
-    val params = Tuple
+    val parameterBinders = Tuple
       .fromProductTyped(value)
       .zip(Parameter.fold[mirror.MirroredElemTypes])
-      .map[ParamBind](
-        [t] =>
-          (x: t) =>
-            val (value, parameter) = x.asInstanceOf[(t, Parameter[t])]
-            Parameter.DynamicBinder[t](value)(using parameter)
-      )
       .toList
-      .asInstanceOf[List[Parameter.DynamicBinder]]
+      .map {
+        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+      }
     new Update[P](
       table   = this,
       columns = *.toList.map(_.asInstanceOf[Column[?]].name),
-      params  = params
+      params  = parameterBinders
     )
 
   /**
