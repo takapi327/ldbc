@@ -72,7 +72,7 @@ trait NumericCodecs:
     "0.3.0"
   )
   def tinyint(size: Int): Codec[Byte] = Codec.simple(_.toString, safe(Type.tinyint)(_.toByte), Type.tinyint(size))
-  val tinyint: Codec[Byte] = Codec.simple(_.toString, safe(Type.tinyint)(_.toByte), Type.tinyint)
+  val tinyint:            Codec[Byte] = Codec.simple(_.toString, safe(Type.tinyint)(_.toByte), Type.tinyint)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -87,7 +87,7 @@ trait NumericCodecs:
     "0.3.0"
   )
   def smallint(size: Int): Codec[Short] = Codec.simple(_.toString, safe(Type.smallint)(_.toShort), Type.smallint(size))
-  val smallint: Codec[Short] = Codec.simple(_.toString, safe(Type.smallint)(_.toShort), Type.smallint)
+  val smallint:            Codec[Short] = Codec.simple(_.toString, safe(Type.smallint)(_.toShort), Type.smallint)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
@@ -118,21 +118,21 @@ trait NumericCodecs:
     "0.3.0"
   )
   def int(size: Int): Codec[Int] = Codec.simple(_.toString, safe(Type.int)(_.toInt), Type.int(size))
-  val int: Codec[Int] = Codec.simple(_.toString, safe(Type.int)(_.toInt), Type.int)
+  val int:            Codec[Int] = Codec.simple(_.toString, safe(Type.int)(_.toInt), Type.int)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
   def uint(size: Int): Codec[Long] = Codec.simple(_.toString, safe(Type.uint)(intUnsignedRange), Type.uint(size))
-  val uint: Codec[Long] = Codec.simple(_.toString, safe(Type.uint)(intUnsignedRange), Type.uint)
+  val uint:            Codec[Long] = Codec.simple(_.toString, safe(Type.uint)(intUnsignedRange), Type.uint)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
   def bigint(size: Int): Codec[Long] = Codec.simple(_.toString, safe(Type.bigint)(_.toLong), Type.bigint(size))
-  val bigint: Codec[Long] = Codec.simple(_.toString, safe(Type.bigint)(_.toLong), Type.bigint)
+  val bigint:            Codec[Long] = Codec.simple(_.toString, safe(Type.bigint)(_.toLong), Type.bigint)
 
   @deprecated(
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
