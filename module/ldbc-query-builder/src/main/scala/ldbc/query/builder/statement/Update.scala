@@ -73,19 +73,19 @@ case class Update[P <: Product](
    * table.
    *
    * @param tag
-   * A type with a single instance. Here, Column is passed.
+   *   A type with a single instance. Here, Column is passed.
    * @param value
-   * A value of type T to be inserted into the specified column.
+   *   A value of type T to be inserted into the specified column.
    * @param mirror
-   * product isomorphism map
+   *   product isomorphism map
    * @param index
-   * Position of the specified type in tuple X
+   *   Position of the specified type in tuple X
    * @param check
-   * A value to verify that the specified type matches the type of the specified column that the Table has.
+   *   A value to verify that the specified type matches the type of the specified column that the Table has.
    * @tparam Tag
-   * Type with a single instance
+   *   Type with a single instance
    * @tparam T
-   * Scala types that match SQL DataType
+   *   Scala types that match SQL DataType
    */
   inline def set[Tag <: Singleton, T](tag: Tag, value: Option[T])(using
     mirror: Mirror.ProductOf[P],

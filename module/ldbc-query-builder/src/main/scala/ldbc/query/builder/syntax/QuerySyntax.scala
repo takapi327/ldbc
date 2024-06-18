@@ -33,7 +33,7 @@ trait QuerySyntax[F[_]]:
      * A method to convert a query to a [[ldbc.dsl.Query]].
      *
      * {{{
-     *   Table[User].selectAll.query[User]
+     *   Table[User].selectAll.queryTo[User]
      * }}}
      *
      * @return
