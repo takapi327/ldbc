@@ -14,33 +14,23 @@ import ldbc.query.builder.*
 /**
  * A model for constructing ORDER BY statements in MySQL.
  *
- * @param table
- *   Trait for generating SQL table information.
- * @param _query
- *   Query string
- * @param order
- *   Order query string
+ * @param statement
+ *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam P
- *   Base trait for all products
  * @tparam T
  *   Union type of column
  */
-private[ldbc] case class OrderBy[P <: Product, T](
-  table:  Table[P],
-  _query: String,
-  order:  String,
+private[ldbc] case class OrderBy[T](
+  statement: String,
   params: List[Parameter.DynamicBinder]
 ) extends Query[T],
           LimitProvider[T]:
 
-  override def statement: String = _query ++ s" ORDER BY $order"
-
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    OrderBy[P, T](table, _query ++ sql.statement, order, params ++ sql.params)
+    OrderBy[T](statement ++ sql.statement, params ++ sql.params)
 
 object OrderBy:
 
@@ -67,14 +57,12 @@ private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
    */
   def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](
     func: Table[P] => A
-  ): OrderBy[P, T] =
+  ): OrderBy[T] =
     val order = func(table) match
       case tuple: Tuple            => tuple.toList.mkString(", ")
       case order: OrderBy.Order[?] => order.statement
       case column: Column[?]       => column.toString
     OrderBy(
-      table  = table,
-      _query = statement,
-      order  = order,
+      statement = statement ++ s" ORDER BY $order",
       params = params
     )
