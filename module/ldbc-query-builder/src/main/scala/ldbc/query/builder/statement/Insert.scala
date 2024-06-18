@@ -50,7 +50,7 @@ object Insert:
 /**
  * Insert trait that provides a method to update in case of duplicate keys.
  */
-case class DuplicateKeyUpdateInsert(
+private[ldbc] case class DuplicateKeyUpdateInsert(
   statement: String,
   params:    List[Parameter.DynamicBinder]
 ) extends Command:
@@ -64,28 +64,23 @@ case class DuplicateKeyUpdateInsert(
  *
  * @param table
  *   Trait for generating SQL table information.
- * @param tuple
- *   Tuple type value of the property with type parameter P.
+ * @param statement
+ *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
  * @tparam P
  *   Base trait for all products
- * @tparam T
- *   Tuple type of the property with type parameter P
  */
-case class SingleInsert[P <: Product, T <: Tuple](
+private[ldbc] case class SingleInsert[P <: Product](
   table:  Table[P],
-  tuple:  T,
+  statement: String,
   params: List[Parameter.DynamicBinder]
 ) extends Insert[P]:
 
-  override def statement: String =
-    s"INSERT INTO ${ table._name } (${ table.*.toList.mkString(", ") }) VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })"
-
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    SingleInsert(table, tuple, params ++ sql.params)
+    SingleInsert(table, statement ++ sql.statement, params ++ sql.params)
 
 /**
  * A model for constructing INSERT statements that insert multiple values in MySQL.
@@ -102,7 +97,7 @@ case class SingleInsert[P <: Product, T <: Tuple](
  * @tparam T
  *   Tuple type of the property with type parameter P
  */
-case class MultiInsert[P <: Product, T <: Tuple](
+private[ldbc] case class MultiInsert[P <: Product, T <: Tuple](
   table:  Table[P],
   tuples: List[T],
   params: List[Parameter.DynamicBinder]
@@ -129,7 +124,7 @@ case class MultiInsert[P <: Product, T <: Tuple](
  * @tparam T
  *   Tuple type of the property with type parameter P
  */
-case class SelectInsert[P <: Product, T](
+private[ldbc] case class SelectInsert[P <: Product, T](
   table:     Table[P],
   columns:   T,
   parameter: Parameter.MapToTuple[Column.Extract[T]]

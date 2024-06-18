@@ -273,7 +273,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
-    new SingleInsert[P, Tuple](this, tuples, parameterBinders)
+    new SingleInsert[P](this, s"INSERT INTO ${ _name } (${ *.toList.mkString(", ") }) VALUES(${ tuples.toArray.map(_ => "?").mkString(", ") })", parameterBinders)
 
   /**
    * A method to build a query model that inserts data from multiple models into all columns defined in a table.
