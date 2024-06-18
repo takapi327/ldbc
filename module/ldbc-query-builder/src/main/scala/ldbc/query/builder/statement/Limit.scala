@@ -14,8 +14,8 @@ import ldbc.query.builder.*
 /**
  * A model for constructing LIMIT statements in MySQL.
  *
- * @param _query
- *   Query string
+ * @param statement
+ *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
@@ -23,12 +23,10 @@ import ldbc.query.builder.*
  *   Union type of column
  */
 private[ldbc] case class Limit[T](
-  _query: String,
+                                   statement: String,
   params: List[Parameter.DynamicBinder]
 ) extends Query[T],
           Command:
-
-  override def statement: String = _query ++ " LIMIT ?"
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
@@ -54,6 +52,6 @@ private[ldbc] transparent trait LimitProvider[T]:
    */
   def limit(length: Long): Parameter[Long] ?=> Limit[T] =
     Limit(
-      _query = statement,
+      statement = statement ++ " LIMIT ?",
       params = params :+ Parameter.DynamicBinder(length)
     )
