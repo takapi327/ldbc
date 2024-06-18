@@ -417,7 +417,8 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
 
 object TableOpt:
 
-  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](columns: Tuple.Map[ElemTypes0, Column]) extends TableOpt[P]:
+  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](columns: Tuple.Map[ElemTypes0, Column])
+    extends TableOpt[P]:
     override type ElemTypes = ElemTypes0
     @targetName("all")
     override def * : Tuple.Map[ElemTypes, Column] = columns
