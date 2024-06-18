@@ -18,8 +18,8 @@ import ldbc.query.builder.interpreter.Tuples
  *
  * @param table
  *   Trait for generating SQL table information.
- * @param columns
- *   Column name list
+ * @param statement
+ *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
@@ -28,19 +28,13 @@ import ldbc.query.builder.interpreter.Tuples
  */
 case class Update[P <: Product](
   table:   Table[P],
-  columns: List[String],
+  statement: String,
   params:  List[Parameter.DynamicBinder],
-  other:   Option[String] = None
 ) extends Command:
-
-  private val values = columns.map(column => s"$column = ?")
-
-  override def statement: String =
-    s"UPDATE ${ table._name } SET ${ values.mkString(", ") }" ++ other.fold("")(str => s" $str")
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Update(table, columns, params ++ sql.params, Some(sql.statement))
+    Update(table, statement ++ sql.statement, params ++ sql.params)
 
   /**
    * A method that sets additional values to be updated in the query model that updates specific columns defined in the
@@ -68,8 +62,9 @@ case class Update[P <: Product](
   ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
+    val statement = this.statement ++ s", ${ table.selectDynamic[Tag](tag).name } = ?"
     this.copy(
-      columns = columns :+ table.selectDynamic[Tag](tag).name,
+      statement = statement,
       params  = params :+ param
     )
 
@@ -99,8 +94,9 @@ case class Update[P <: Product](
   ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
+    val statement = this.statement ++ s", ${ table.selectDynamic[Tag](tag).name } = ?"
     this.copy(
-      columns = columns :+ table.selectDynamic[Tag](tag).name,
+      statement = statement,
       params  = params :+ param
     )
 
@@ -133,9 +129,10 @@ case class Update[P <: Product](
     if bool then
       type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
       val param = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
+      val statement = this.statement ++ s", ${table.selectDynamic[Tag](tag).name} = ?"
       this.copy(
-        columns = columns :+ table.selectDynamic[Tag](tag).name,
-        params  = params :+ param
+        statement = statement,
+        params = params :+ param
       )
     else this
 

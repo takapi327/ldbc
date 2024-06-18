@@ -320,10 +320,11 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   ): Update[P] =
     type PARAM = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
     val params = List(Parameter.DynamicBinder[PARAM](check(value))(using Parameter.infer[PARAM]))
-    new Update[P](
+    val statement = s"UPDATE ${ _name } SET ${ selectDynamic[Tag](tag).name } = ?"
+    Update[P](
       table   = this,
-      columns = List(selectDynamic[Tag](tag).name),
-      params  = params
+      params  = params,
+      statement = statement
     )
 
   /**
@@ -342,10 +343,11 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
-    new Update[P](
-      table   = this,
-      columns = *.toList.map(_.asInstanceOf[Column[?]].name),
-      params  = parameterBinders
+    val statement = s"UPDATE ${_name} SET ${ *.toList.map(column => s"${column.asInstanceOf[Column[?]].name} = ?").mkString(", ") }"
+    Update[P](
+      table = this,
+      statement = statement,
+      params = parameterBinders,
     )
 
   /**
