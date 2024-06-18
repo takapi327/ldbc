@@ -18,39 +18,32 @@ import ldbc.query.builder.*
  *   Trait for generating SQL table information.
  * @param columns
  *   Union-type column list
- * @param column
- *   Trait for representing SQL Column
- * @param _query
- *   Query string
+ * @param statement
+ *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
  * @tparam P
  *   Base trait for all products
- * @tparam A
+ * @tparam T
  *   Union type of column
- * @tparam B
- *   Scala types possessed by columns used in GroupBy clauses
  */
-private[ldbc] case class GroupBy[P <: Product, A, B](
+private[ldbc] case class GroupBy[P <: Product, T](
   table:   Table[P],
-  columns: A,
-  column:  Column[B],
-  _query:  String,
+  columns: T,
+  statement:  String,
   params:  List[Parameter.DynamicBinder]
-) extends Query[A],
-          OrderByProvider[P, A],
-          LimitProvider[A]:
-
-  override def statement: String = _query ++ s" GROUP BY ${ column.name }"
+) extends Query[T],
+          OrderByProvider[P, T],
+          LimitProvider[T]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    GroupBy[P, A, B](table, columns, column, statement ++ sql.statement, params ++ sql.params)
+    GroupBy[P, T](table, columns, statement ++ sql.statement, params ++ sql.params)
 
-  def having(func: A => Expression): Having[P, A] =
+  def having(func: T => Expression): Having[P, T] =
     val expression = func(columns)
-    Having[P, A](
+    Having[P, T](
       table      = table,
       statement  = statement ++ s" HAVING ${ expression.statement }",
       params     = params ++ expression.parameter

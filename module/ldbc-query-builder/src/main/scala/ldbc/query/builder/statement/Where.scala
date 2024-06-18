@@ -70,11 +70,10 @@ private[ldbc] case class Where[P <: Product, T](
   @targetName("AND")
   def &&(func: Table[P] => Expression): Where[P, T] = union("&&", func(table))
 
-  def groupBy[A](func: T => Column[A]): GroupBy[P, T, A] =
+  def groupBy[A](func: T => Column[A]): GroupBy[P, T] =
     GroupBy(
       table   = table,
-      _query  = statement,
+      statement  = statement ++ s" GROUP BY ${ func(columns).name }",
       columns = columns,
-      column  = func(columns),
       params  = params
     )
