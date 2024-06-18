@@ -361,7 +361,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
 
 object Table:
 
-  def apply[P <: Product](using t: Table[P]): Table[P] = t
+  def apply[P <: Product](using t: Table[P]):                  Table[P] = t
   def apply[P <: Product](name:    String)(using t: Table[P]): Table[P] = t.setName(name)
 
   private[ldbc] case class Impl[P <: Product, ElemLabels0 <: Tuple, ElemTypes0 <: Tuple](
@@ -372,9 +372,9 @@ object Table:
     override type ElemLabels = ElemLabels0
     override type ElemTypes  = ElemTypes0
     @targetName("all")
-    override def * : Tuple.Map[ElemTypes, Column] = columns
-    override def as(name:      String): Table[P] = this.copy(_alias = Some(name))
-    override def setName(name: String): Table[P] = this.copy(_name = name)
+    override def *                    : Tuple.Map[ElemTypes, Column] = columns
+    override def as(name:      String): Table[P]                     = this.copy(_alias = Some(name))
+    override def setName(name: String): Table[P]                     = this.copy(_name = name)
 
   private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](
     inline nt: NT,
