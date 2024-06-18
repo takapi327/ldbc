@@ -410,11 +410,10 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
   ): Column[
     Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
   ] =
-    val column = *.productElement(index.value)
+    *.productElement(index.value)
       .asInstanceOf[Column[
         Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
       ]]
-    _alias.fold(column)(alias => column.as(alias))
 
 object TableOpt:
 
