@@ -368,6 +368,16 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   def delete: Delete[P, Tuple.Map[ElemTypes, Column]] =
     Delete[P, Tuple.Map[ElemTypes, Column]](this, *, s"DELETE FROM ${ _name }")
 
+  /**
+   * Method to construct a query to drop a table.
+   */
+  def dropTable: Command = Command.Pure(s"DROP TABLE `${ _name }`", List.empty)
+
+  /**
+   * Method to construct a query to truncate a table.
+   */
+  def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE `${ _name }`", List.empty)
+
 object Table:
 
   def apply[P <: Product](using t: Table[P]):                  Table[P] = t

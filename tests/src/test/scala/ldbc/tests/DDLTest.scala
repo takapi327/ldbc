@@ -4,7 +4,6 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-/*
 package ldbc.tests
 
 import com.mysql.cj.jdbc.MysqlDataSource
@@ -15,16 +14,14 @@ import org.typelevel.otel4s.trace.Tracer
 
 import munit.*
 
-import ldbc.core.*
 import ldbc.sql.Connection
-import ldbc.query.builder.TableQuery
 import ldbc.connector.SSL
-import ldbc.query.builder.syntax.io.*
 import ldbc.dsl.logging.LogHandler
+import ldbc.query.builder.Table
+import ldbc.query.builder.syntax.io.*
 
 class LdbcDDLTest extends DDLTest:
 
-  override def prefix: "jdbc" | "ldbc" = "ldbc"
   override def connection: Resource[IO, Connection[IO]] =
     ldbc.connector.Connection[IO](
       host     = "127.0.0.1",
@@ -44,7 +41,6 @@ class JdbcDDLTest extends DDLTest:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  override def prefix: "jdbc" | "ldbc" = "jdbc"
   override def connection: Resource[IO, Connection[IO]] =
     Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
 
@@ -53,48 +49,48 @@ trait DDLTest extends CatsEffectSuite:
   given Tracer[IO]     = Tracer.noop[IO]
   given LogHandler[IO] = LogHandler.noop[IO]
 
-  def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
 
   final case class User(
     id:   Long,
     name: String,
     age:  Option[Int]
-  )
+  ) derives Table
 
-  private final val table = Table[User](s"${ prefix }_user")(
-    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("name", VARCHAR(255)),
-    column("age", INT)
-  )
-
-  final val tableQuery = TableQuery[User](table)
+  final val tableQuery = Table[User]
 
   override def beforeAll(): Unit =
     connection
       .use { conn =>
-        tableQuery.createTable.update.autoCommit(conn) *> IO.unit
+        sql"""
+          CREATE TABLE `user` (
+            `id` BIGINT NOT NULL AUTO_INCREMENT,
+            `name` VARCHAR(255) NOT NULL,
+            `age` INT,
+            PRIMARY KEY (`id`)
+          )
+        """.update.commit(conn) *> IO.unit
       }
       .unsafeRunSync()
 
   override def afterAll(): Unit =
     connection
       .use { conn =>
-        tableQuery.dropTable.update.autoCommit(conn) *> IO.unit
+        tableQuery.dropTable.update.commit(conn) *> IO.unit
       }
       .unsafeRunSync()
 
   override def afterEach(context: AfterEach): Unit =
     connection
       .use { conn =>
-        tableQuery.truncateTable.update.autoCommit(conn) *> IO.unit
+        tableQuery.truncateTable.update.commit(conn) *> IO.unit
       }
       .unsafeRunSync()
 
   test("When the table is created, the number of records is 0.") {
     assertIO(
       connection.use { conn =>
-        tableQuery.select(_.id.count).unsafe.readOnly(conn).map(_._1)
+        tableQuery.select(_.id.count).query.unsafe.readOnly(conn).map(_._1)
       },
       0
     )
@@ -113,9 +109,8 @@ trait DDLTest extends CatsEffectSuite:
             )
           )
           .update
-          .autoCommit(conn)
+          .commit(conn)
       },
       3
     )
   }
- */

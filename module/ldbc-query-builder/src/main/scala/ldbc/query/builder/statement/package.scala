@@ -6,10 +6,16 @@
 
 package ldbc.query.builder
 
-import ldbc.dsl.SQL
+import scala.annotation.targetName
+
+import ldbc.dsl.*
 
 package object statement:
 
   trait Command extends SQL
+  object Command:
+    case class Pure(statement: String, params: List[Parameter.DynamicBinder]) extends Command:
+      @targetName("combine")
+      override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
   trait Query[T] extends SQL
