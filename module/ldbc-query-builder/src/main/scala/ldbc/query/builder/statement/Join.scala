@@ -80,7 +80,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
     Join.Impl(
       main,
       joins ++ Tuple(sub),
-      selects ++ Tuple(TableOpt.Impl(sub._alias, sub.*)),
+      selects ++ Tuple(TableOpt.Impl(sub.*)),
       joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 

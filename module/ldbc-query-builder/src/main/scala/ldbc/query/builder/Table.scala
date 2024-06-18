@@ -25,11 +25,6 @@ sealed trait MySQLTable[P <: Product]:
   type ElemTypes <: Tuple
 
   /**
-   * An alias for the table.
-   */
-  def _alias: Option[String]
-
-  /**
    * A method to get all columns defined in the table.
    */
   @targetName("all")
@@ -49,6 +44,11 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    * The name of the table.
    */
   def _name: String
+
+  /**
+   * An alias for the table.
+   */
+  def _alias: Option[String]
 
   /**
    * A method to get the table name.
@@ -191,7 +191,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[TableOpt[O]]](
       main,
       joins,
-      main *: Tuple(TableOpt.Impl(sub._alias, sub.*)),
+      main *: Tuple(TableOpt.Impl(sub.*)),
       List(s"${ Join.JoinType.LEFT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -219,7 +219,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     Join.Impl[Table[P] *: Tuple1[Table[O]], TableOpt[P] *: Tuple1[Table[O]]](
       main,
       joins,
-      TableOpt.Impl(main._alias, main.*) *: Tuple(sub),
+      TableOpt.Impl(main.*) *: Tuple(sub),
       List(s"${ Join.JoinType.RIGHT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -417,10 +417,7 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
 
 object TableOpt:
 
-  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](
-    _alias:  Option[String],
-    columns: Tuple.Map[ElemTypes0, Column]
-  ) extends TableOpt[P]:
+  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](columns: Tuple.Map[ElemTypes0, Column]) extends TableOpt[P]:
     override type ElemTypes = ElemTypes0
     @targetName("all")
     override def * : Tuple.Map[ElemTypes, Column] = columns

@@ -68,6 +68,6 @@ object Tuples:
 
   def toTableOpt[T <: Tuple](tuple: T)(using Tuples.IsTableOpt[T] =:= true): ToTableOpt[T] =
     val list = tuple.toList.map {
-      case table: MySQLTable[p] => TableOpt.Impl[p, table.ElemTypes](table._alias, table.*)
+      case table: MySQLTable[p] => TableOpt.Impl[p, table.ElemTypes](table.*)
     }
     Tuple.fromArray(list.toArray).asInstanceOf[ToTableOpt[T]]
