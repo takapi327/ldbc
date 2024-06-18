@@ -17,8 +17,28 @@ trait QuerySyntax[F[_]]:
 
   extension [T](query: Query[T])
 
+    /**
+     * A method to convert a query to a [[ldbc.dsl.Query]].
+     * 
+     * {{{
+     *   Table[User].select(v => (v.name, v.age)).query
+     * }}}
+     *
+     * @return
+     *   A [[ldbc.dsl.Query]] instance
+     */
     inline def query: DslQuery[F, Tuples.InverseColumnMap[T]]
 
+    /**
+     * A method to convert a query to a [[ldbc.dsl.Query]].
+     *
+     * {{{
+     *   Table[User].selectAll.query[User]
+     * }}}
+     *
+     * @return
+     *   A [[ldbc.dsl.Query]] instance
+     */
     inline def queryTo[P <: Product](using
       mirror: Mirror.ProductOf[P],
       check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes

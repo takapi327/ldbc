@@ -33,10 +33,30 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
   override def ++(sql: SQL): SQL =
     Mysql[F](statement ++ sql.statement, params ++ sql.params)
 
+  /**
+   * A method to convert a query to a [[ldbc.dsl.Query]].
+   * 
+   * {{{
+   *   sql"SELECT `name` FROM user".query[String]
+   * }}}
+   *
+   * @return
+   * A [[ldbc.dsl.Query]] instance
+   */
   def query[T](using reader: ResultSetReader[F, T]): Query[F, T] =
     given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
     Query.Impl[F, T](statement, params)
 
+  /**
+   * A method to convert a query to a [[ldbc.dsl.Query]].
+   *
+   * {{{
+   *   sql"SELECT `name`, `age` FROM user".query[User]
+   * }}}
+   * 
+   * @return
+   * A [[ldbc.dsl.Query]] instance
+   */
   inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Query[F, P] =
     given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
       ResultSetReader
@@ -52,6 +72,10 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
 
   /**
    * A method to execute an update operation against the MySQL server.
+   * 
+   * {{{
+   *   sql"UPDATE user SET `name` = ${"Alice"} WHERE `id` = ${1L}".update
+   * }}}
    *
    * @return
    * The number of rows updated
@@ -71,6 +95,10 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
 
   /**
    * A method to execute an insert operation against the MySQL server.
+   * 
+   * {{{
+   *   sql"INSERT INTO user (`name`, `age`) VALUES (${("Alice", 20)})".returning[Long]
+   * }}}
    *
    * @tparam T
    * The type of the primary key
