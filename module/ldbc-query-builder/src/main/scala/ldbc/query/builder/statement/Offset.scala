@@ -24,7 +24,7 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class Offset[T](
   statement: String,
-  params: List[Parameter.DynamicBinder]
+  params:    List[Parameter.DynamicBinder]
 ) extends Query[T]:
 
   @targetName("combine")

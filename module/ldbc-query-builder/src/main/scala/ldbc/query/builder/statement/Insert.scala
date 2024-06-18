@@ -40,14 +40,15 @@ private[ldbc] trait Insert[P <: Product] extends Command:
 
 object Insert:
 
-  case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder]) extends Insert[P]:
+  case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder])
+    extends Insert[P]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
       this.copy(
-        table = table,
+        table     = table,
         statement = statement ++ sql.statement,
-        params = params ++ sql.params
+        params    = params ++ sql.params
       )
 
 /**

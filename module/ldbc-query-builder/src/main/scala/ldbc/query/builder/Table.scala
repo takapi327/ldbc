@@ -240,7 +240,8 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
       .toList
-    val statement = s"INSERT INTO ${_name} (${*.toList.mkString(", ")}) VALUES${values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })").mkString(", ")}"
+    val statement = s"INSERT INTO ${ _name } (${ *.toList
+        .mkString(", ") }) VALUES${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })").mkString(", ") }"
     Insert.Impl[P](this, statement, parameterBinders)
 
   /**
@@ -274,7 +275,11 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
-    Insert.Impl[P](this, s"INSERT INTO ${ _name } (${ *.toList.mkString(", ") }) VALUES(${ tuples.toArray.map(_ => "?").mkString(", ") })", parameterBinders)
+    Insert.Impl[P](
+      this,
+      s"INSERT INTO ${ _name } (${ *.toList.mkString(", ") }) VALUES(${ tuples.toArray.map(_ => "?").mkString(", ") })",
+      parameterBinders
+    )
 
   /**
    * A method to build a query model that inserts data from multiple models into all columns defined in a table.
@@ -292,7 +297,8 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
-    val statement = s"INSERT INTO ${_name} (${*.toList.mkString(", ")}) VALUES${tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })").mkString(", ")}"
+    val statement = s"INSERT INTO ${ _name } (${ *.toList
+        .mkString(", ") }) VALUES${ tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })").mkString(", ") }"
     Insert.Impl[P](this, statement, parameterBinders)
 
   /**
@@ -319,11 +325,11 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
     type PARAM = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    val params = List(Parameter.DynamicBinder[PARAM](check(value))(using Parameter.infer[PARAM]))
+    val params    = List(Parameter.DynamicBinder[PARAM](check(value))(using Parameter.infer[PARAM]))
     val statement = s"UPDATE ${ _name } SET ${ selectDynamic[Tag](tag).name } = ?"
     Update[P](
-      table   = this,
-      params  = params,
+      table     = this,
+      params    = params,
       statement = statement
     )
 
@@ -343,11 +349,12 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
-    val statement = s"UPDATE ${_name} SET ${ *.toList.map(column => s"${column.asInstanceOf[Column[?]].name} = ?").mkString(", ") }"
+    val statement =
+      s"UPDATE ${ _name } SET ${ *.toList.map(column => s"${ column.asInstanceOf[Column[?]].name } = ?").mkString(", ") }"
     Update[P](
-      table = this,
+      table     = this,
       statement = statement,
-      params = parameterBinders,
+      params    = parameterBinders
     )
 
   /**

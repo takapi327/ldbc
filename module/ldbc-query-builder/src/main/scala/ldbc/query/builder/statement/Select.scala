@@ -58,8 +58,8 @@ private[ldbc] case class Select[P <: Product, T](
 
   def groupBy[A](func: T => Column[A]): GroupBy[P, T] =
     GroupBy(
-      table   = table,
-      statement  = statement ++ s" GROUP BY ${ func(columns).name }",
-      columns = columns,
-      params  = params
+      table     = table,
+      statement = statement ++ s" GROUP BY ${ func(columns).name }",
+      columns   = columns,
+      params    = params
     )

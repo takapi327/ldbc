@@ -23,8 +23,8 @@ import ldbc.query.builder.*
  *   Union type of column
  */
 private[ldbc] case class Limit[T](
-                                   statement: String,
-  params: List[Parameter.DynamicBinder]
+  statement: String,
+  params:    List[Parameter.DynamicBinder]
 ) extends Query[T],
           Command:
 
@@ -38,7 +38,7 @@ private[ldbc] case class Limit[T](
   def offset(length: Long): Parameter[Long] ?=> Offset[T] =
     Offset(
       statement = statement ++ " OFFSET ?",
-      params = params :+ Parameter.DynamicBinder(length)
+      params    = params :+ Parameter.DynamicBinder(length)
     )
 
 /**
@@ -53,5 +53,5 @@ private[ldbc] transparent trait LimitProvider[T]:
   def limit(length: Long): Parameter[Long] ?=> Limit[T] =
     Limit(
       statement = statement ++ " LIMIT ?",
-      params = params :+ Parameter.DynamicBinder(length)
+      params    = params :+ Parameter.DynamicBinder(length)
     )

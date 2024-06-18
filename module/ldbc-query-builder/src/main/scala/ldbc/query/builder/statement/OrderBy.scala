@@ -24,7 +24,7 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class OrderBy[T](
   statement: String,
-  params: List[Parameter.DynamicBinder]
+  params:    List[Parameter.DynamicBinder]
 ) extends Query[T],
           LimitProvider[T]:
 
@@ -64,5 +64,5 @@ private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
       case column: Column[?]       => column.toString
     OrderBy(
       statement = statement ++ s" ORDER BY $order",
-      params = params
+      params    = params
     )

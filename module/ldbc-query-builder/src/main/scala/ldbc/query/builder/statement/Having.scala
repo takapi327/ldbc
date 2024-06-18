@@ -27,9 +27,9 @@ import ldbc.query.builder.*
  *   Union type of column
  */
 private[ldbc] case class Having[P <: Product, T](
-  table:      Table[P],
-  statement:     String,
-  params:     List[Parameter.DynamicBinder],
+  table:     Table[P],
+  statement: String,
+  params:    List[Parameter.DynamicBinder]
 ) extends Query[T],
           OrderByProvider[P, T],
           LimitProvider[T]:

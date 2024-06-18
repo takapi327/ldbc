@@ -29,10 +29,10 @@ import ldbc.query.builder.*
  *   Union type of column
  */
 private[ldbc] case class GroupBy[P <: Product, T](
-  table:   Table[P],
-  columns: T,
-  statement:  String,
-  params:  List[Parameter.DynamicBinder]
+  table:     Table[P],
+  columns:   T,
+  statement: String,
+  params:    List[Parameter.DynamicBinder]
 ) extends Query[T],
           OrderByProvider[P, T],
           LimitProvider[T]:
@@ -44,7 +44,7 @@ private[ldbc] case class GroupBy[P <: Product, T](
   def having(func: T => Expression): Having[P, T] =
     val expression = func(columns)
     Having[P, T](
-      table      = table,
-      statement  = statement ++ s" HAVING ${ expression.statement }",
-      params     = params ++ expression.parameter
+      table     = table,
+      statement = statement ++ s" HAVING ${ expression.statement }",
+      params    = params ++ expression.parameter
     )

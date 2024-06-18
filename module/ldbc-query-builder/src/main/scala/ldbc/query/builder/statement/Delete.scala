@@ -26,10 +26,10 @@ import ldbc.query.builder.*
  *   Union type of column
  */
 private[ldbc] case class Delete[P <: Product, T](
-  table:   Table[P],
-  columns: T,
-  statement:  String,
-  params:  List[Parameter.DynamicBinder] = List.empty
+  table:     Table[P],
+  columns:   T,
+  statement: String,
+  params:    List[Parameter.DynamicBinder] = List.empty
 ) extends Command,
           LimitProvider[T]:
 
