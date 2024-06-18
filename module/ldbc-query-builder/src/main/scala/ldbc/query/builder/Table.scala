@@ -59,6 +59,11 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     case None                          => _name
 
   /**
+   * A method to get the column names defined in the table.
+   */
+  def columnNames: List[String]
+
+  /**
    * Function for setting alias names for tables.
    *
    * @param name
@@ -350,7 +355,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
     val statement =
-      s"UPDATE ${ _name } SET ${ *.toList.map(column => s"${ column.asInstanceOf[Column[?]].name } = ?").mkString(", ") }"
+      s"UPDATE ${ _name } SET ${ columnNames.map(name => s"$name = ?").mkString(", ") }"
     Update[P](
       table     = this,
       statement = statement,
@@ -371,6 +376,7 @@ object Table:
   private[ldbc] case class Impl[P <: Product, ElemLabels0 <: Tuple, ElemTypes0 <: Tuple](
     _name:   String,
     _alias:  Option[String],
+    columnNames: List[String],
     columns: Tuple.Map[ElemTypes0, Column]
   ) extends Table[P]:
     override type ElemLabels = ElemLabels0
@@ -381,6 +387,21 @@ object Table:
       val aliasColumns = columns.map([t] => (t: t) => t.asInstanceOf[Column[t]].as(name))
       this.copy(_alias = Some(name), columns = aliasColumns)
     override def setName(name: String): Table[P] = this.copy(_name = name)
+
+  private inline def listOfLabels[T <: Tuple]: List[String] =
+    inline erasedValue[T] match {
+      case _: EmptyTuple => List.empty
+      case _: (t *: ts) =>
+        val stringOf = summonInline[t <:< String]
+        inline constValueOpt[t] match {
+          case Some(value) =>
+            stringOf(value) +: listOfLabels[ts]
+          case None =>
+            error(
+              "Types of field labels must be literal string types.\n" + "Found:    " + constValue[t] + "\nRequired: (a literal string type)",
+            )
+        }
+    }
 
   private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](
     inline nt: NT,
@@ -402,6 +423,7 @@ object Table:
     Impl[P, m.MirroredElemLabels, m.MirroredElemTypes](
       _name   = naming.format(constValue[m.MirroredLabel]),
       _alias  = None,
+      columnNames = listOfLabels[m.MirroredElemLabels].map(naming.format),
       columns = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)
     )
 
