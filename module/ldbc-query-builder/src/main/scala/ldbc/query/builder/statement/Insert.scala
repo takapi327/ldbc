@@ -87,30 +87,23 @@ private[ldbc] case class SingleInsert[P <: Product](
  *
  * @param table
  *   Trait for generating SQL table information.
- * @param tuples
- *   Tuple type value of the property with type parameter P.
+ * @param statement
+ *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
  * @tparam P
  *   Base trait for all products
- * @tparam T
- *   Tuple type of the property with type parameter P
  */
-private[ldbc] case class MultiInsert[P <: Product, T <: Tuple](
+private[ldbc] case class MultiInsert[P <: Product](
   table:  Table[P],
-  tuples: List[T],
+  statement: String,
   params: List[Parameter.DynamicBinder]
 ) extends Insert[P]:
 
-  private val values = tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })")
-
-  override def statement: String =
-    s"INSERT INTO ${ table._name } (${ table.*.toList.mkString(", ") }) VALUES${ values.mkString(", ") }"
-
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    MultiInsert(table, tuples, params ++ sql.params)
+    MultiInsert(table, statement ++ sql.statement, params ++ sql.params)
 
 /**
  * A model for constructing INSERT statements that insert values into specified columns in MySQL.
