@@ -241,7 +241,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       }
       .toList
     val statement = s"INSERT INTO ${_name} (${*.toList.mkString(", ")}) VALUES${values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })").mkString(", ")}"
-    new MultiInsert[P](this, statement, parameterBinders)
+    Insert.Impl[P](this, statement, parameterBinders)
 
   /**
    * A method to build a query model that inserts data into specified columns defined in a table.
@@ -274,7 +274,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
       .map {
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
-    new SingleInsert[P](this, s"INSERT INTO ${ _name } (${ *.toList.mkString(", ") }) VALUES(${ tuples.toArray.map(_ => "?").mkString(", ") })", parameterBinders)
+    Insert.Impl[P](this, s"INSERT INTO ${ _name } (${ *.toList.mkString(", ") }) VALUES(${ tuples.toArray.map(_ => "?").mkString(", ") })", parameterBinders)
 
   /**
    * A method to build a query model that inserts data from multiple models into all columns defined in a table.
@@ -293,7 +293,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
         case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
       }
     val statement = s"INSERT INTO ${_name} (${*.toList.mkString(", ")}) VALUES${tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })").mkString(", ")}"
-    new MultiInsert[P](this, statement, parameterBinders)
+    Insert.Impl[P](this, statement, parameterBinders)
 
   /**
    * A method to build a query model that updates specified columns defined in a table.

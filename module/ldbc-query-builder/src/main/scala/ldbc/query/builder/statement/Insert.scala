@@ -40,12 +40,15 @@ private[ldbc] trait Insert[P <: Product] extends Command:
 
 object Insert:
 
-  private[ldbc] case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder])
-    extends Insert[P]:
+  case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder]) extends Insert[P]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
-      Impl(table, statement ++ sql.statement, params ++ sql.params)
+      this.copy(
+        table = table,
+        statement = statement ++ sql.statement,
+        params = params ++ sql.params
+      )
 
 /**
  * Insert trait that provides a method to update in case of duplicate keys.
@@ -60,52 +63,6 @@ private[ldbc] case class DuplicateKeyUpdateInsert(
     DuplicateKeyUpdateInsert(statement ++ sql.statement, params ++ sql.params)
 
 /**
- * A model for constructing INSERT statements that insert single values in MySQL.
- *
- * @param table
- *   Trait for generating SQL table information.
- * @param statement
- *   SQL statement string
- * @param params
- *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
- *   only.
- * @tparam P
- *   Base trait for all products
- */
-private[ldbc] case class SingleInsert[P <: Product](
-  table:  Table[P],
-  statement: String,
-  params: List[Parameter.DynamicBinder]
-) extends Insert[P]:
-
-  @targetName("combine")
-  override def ++(sql: SQL): SQL =
-    SingleInsert(table, statement ++ sql.statement, params ++ sql.params)
-
-/**
- * A model for constructing INSERT statements that insert multiple values in MySQL.
- *
- * @param table
- *   Trait for generating SQL table information.
- * @param statement
- *   SQL statement string
- * @param params
- *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
- *   only.
- * @tparam P
- *   Base trait for all products
- */
-private[ldbc] case class MultiInsert[P <: Product](
-  table:  Table[P],
-  statement: String,
-  params: List[Parameter.DynamicBinder]
-) extends Insert[P]:
-
-  @targetName("combine")
-  override def ++(sql: SQL): SQL =
-    MultiInsert(table, statement ++ sql.statement, params ++ sql.params)
-
-/**
  * A model for constructing INSERT statements that insert values into specified columns in MySQL.
  *
  * @param columns
@@ -117,11 +74,11 @@ private[ldbc] case class MultiInsert[P <: Product](
  * @tparam T
  *   Tuple type of the property with type parameter P
  */
-private[ldbc] case class SelectInsert[P <: Product, T](
+case class SelectInsert[P <: Product, T](
   table:     Table[P],
   columns:   T,
   parameter: Parameter.MapToTuple[Column.Extract[T]]
-):
+)(using Tuples.IsColumn[T] =:= true):
 
   private val columnStatement = columns match
     case v: Tuple => v.toArray.distinct.mkString(", ")
