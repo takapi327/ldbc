@@ -120,9 +120,9 @@ The connection process to the database can be carried out using the connections 
 ```scala
 val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
   (for
-    result1 <- sql"SELECT 1".toList[Int]
-    result2 <- sql"SELECT 2".headOption[Int]
-    result3 <- sql"SELECT 3".unsafe[Int]
+    result1 <- sql"SELECT 1".query[Int].to[List]
+    result2 <- sql"SELECT 2".query[Int].to[Option]
+    result3 <- sql"SELECT 3".query[Int].unsafe
   yield (result1, result2, result3)).readOnly(conn)
 }
 ```
