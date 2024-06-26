@@ -6,7 +6,7 @@
 
 package ldbc.schema
 
-import ldbc.query.builder.{Table, Column}
+import ldbc.query.builder.{ Table, Column }
 import ldbc.query.builder.interpreter.Tuples
 
 import ldbc.schema.attribute.*
@@ -44,9 +44,9 @@ private[ldbc] trait Alias:
     PrimaryKey(None, keyPart.toList, None)
 
   def PRIMARY_KEY(
-                   indexType: Index.Type,
-                   keyPart: Column[?]*
-                 ): PrimaryKey & Index =
+    indexType: Index.Type,
+    keyPart:   Column[?]*
+  ): PrimaryKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -54,9 +54,9 @@ private[ldbc] trait Alias:
     PrimaryKey(Some(indexType), keyPart.toList, None)
 
   def PRIMARY_KEY(
-                   keyPart: List[Column[?]],
-                   indexOption: Index.IndexOption
-                 ): PrimaryKey & Index =
+    keyPart:     List[Column[?]],
+    indexOption: Index.IndexOption
+  ): PrimaryKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -64,10 +64,10 @@ private[ldbc] trait Alias:
     PrimaryKey(None, keyPart, Some(indexOption))
 
   def PRIMARY_KEY(
-                   indexType: Index.Type,
-                   indexOption: Index.IndexOption,
-                   keyPart: Column[?]*
-                 ): PrimaryKey & Index =
+    indexType:   Index.Type,
+    indexOption: Index.IndexOption,
+    keyPart:     Column[?]*
+  ): PrimaryKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -87,9 +87,9 @@ private[ldbc] trait Alias:
     UniqueKey(None, None, keyPart.toList, None)
 
   def UNIQUE_KEY(
-                  indexName: String,
-                  keyPart: Column[?]*
-                ): UniqueKey & Index =
+    indexName: String,
+    keyPart:   Column[?]*
+  ): UniqueKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -97,10 +97,10 @@ private[ldbc] trait Alias:
     UniqueKey(Some(indexName), None, keyPart.toList, None)
 
   def UNIQUE_KEY(
-                  indexName: String,
-                  indexType: Index.Type,
-                  keyPart: Column[?]*
-                ): UniqueKey & Index =
+    indexName: String,
+    indexType: Index.Type,
+    keyPart:   Column[?]*
+  ): UniqueKey & Index =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -108,18 +108,18 @@ private[ldbc] trait Alias:
     UniqueKey(Some(indexName), Some(indexType), keyPart.toList, None)
 
   def UNIQUE_KEY(
-                  indexName: String,
-                  indexType: Index.Type,
-                  indexOption: Index.IndexOption,
-                  keyPart: Column[?]*
-                ): UniqueKey & Index = UniqueKey(Some(indexName), Some(indexType), keyPart.toList, Some(indexOption))
+    indexName:   String,
+    indexType:   Index.Type,
+    indexOption: Index.IndexOption,
+    keyPart:     Column[?]*
+  ): UniqueKey & Index = UniqueKey(Some(indexName), Some(indexType), keyPart.toList, Some(indexOption))
 
   def UNIQUE_KEY(
-                  indexName: Option[String],
-                  indexType: Option[Index.Type],
-                  indexOption: Option[Index.IndexOption],
-                  keyPart: Column[?]*
-                ): UniqueKey & Index = UniqueKey(indexName, indexType, keyPart.toList, indexOption)
+    indexName:   Option[String],
+    indexType:   Option[Index.Type],
+    indexOption: Option[Index.IndexOption],
+    keyPart:     Column[?]*
+  ): UniqueKey & Index = UniqueKey(indexName, indexType, keyPart.toList, indexOption)
 
   def INDEX_KEY(keyPart: Column[?]*): IndexKey =
     require(
@@ -129,11 +129,11 @@ private[ldbc] trait Alias:
     IndexKey(None, None, keyPart.toList, None)
 
   def INDEX_KEY(
-                 indexName: Option[String],
-                 indexType: Option[Index.Type],
-                 indexOption: Option[Index.IndexOption],
-                 keyPart: Column[?]*
-               ): IndexKey =
+    indexName:   Option[String],
+    indexType:   Option[Index.Type],
+    indexOption: Option[Index.IndexOption],
+    keyPart:     Column[?]*
+  ): IndexKey =
     require(
       keyPart.nonEmpty,
       "At least one column must always be specified."
@@ -143,49 +143,49 @@ private[ldbc] trait Alias:
   def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey[?]): Constraint = Constraint(None, key)
 
   def CONSTRAINT(
-                  symbol: String,
-                  key: PrimaryKey | UniqueKey | ForeignKey[?]
-                ): Constraint = Constraint(Some(symbol), key)
+    symbol: String,
+    key:    PrimaryKey | UniqueKey | ForeignKey[?]
+  ): Constraint = Constraint(Some(symbol), key)
 
   def FOREIGN_KEY[T](
-                      column: Column[T],
-                      reference: Reference[Column[T] *: EmptyTuple]
-                    ): ForeignKey[Column[T] *: EmptyTuple] = ForeignKey[Column[T] *: EmptyTuple](None, column *: EmptyTuple, reference)
+    column:    Column[T],
+    reference: Reference[Column[T] *: EmptyTuple]
+  ): ForeignKey[Column[T] *: EmptyTuple] = ForeignKey[Column[T] *: EmptyTuple](None, column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T](
-                      name: String,
-                      column: Column[T],
-                      reference: Reference[Column[T] *: EmptyTuple]
-                    ): ForeignKey[Column[T] *: EmptyTuple] =
+    name:      String,
+    column:    Column[T],
+    reference: Reference[Column[T] *: EmptyTuple]
+  ): ForeignKey[Column[T] *: EmptyTuple] =
     ForeignKey[Column[T] *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T <: Tuple](
-                               columns: T,
-                               reference: Reference[T]
-                             )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+    columns:   T,
+    reference: Reference[T]
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](None, columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
-                               name: String,
-                               columns: T,
-                               reference: Reference[T]
-                             )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+    name:      String,
+    columns:   T,
+    reference: Reference[T]
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](Some(name), columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
-                               name: Option[String],
-                               columns: T,
-                               reference: Reference[T]
-                             )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+    name:      Option[String],
+    columns:   T,
+    reference: Reference[T]
+  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](name, columns, reference)
 
   def REFERENCE[T](
-                    table: Table[?],
-                    column: Column[T]
-                  ): Reference[Column[T] *: EmptyTuple] = Reference[Column[T] *: EmptyTuple](table, column *: EmptyTuple, None, None)
+    table:  Table[?],
+    column: Column[T]
+  ): Reference[Column[T] *: EmptyTuple] = Reference[Column[T] *: EmptyTuple](table, column *: EmptyTuple, None, None)
 
   def REFERENCE[T <: Tuple](
-                             table: Table[?],
-                             columns: T
-                           )(using Tuples.IsColumn[T] =:= true): Reference[T] =
+    table:   Table[?],
+    columns: T
+  )(using Tuples.IsColumn[T] =:= true): Reference[T] =
     Reference[T](table, columns, None, None)

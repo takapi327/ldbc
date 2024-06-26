@@ -77,7 +77,7 @@ sealed trait DataType[T]:
   def toOption: DataType[Option[ExtractOption[T]]] =
     new DataType[Option[ExtractOption[T]]]:
       override def typeName:    String          = self.typeName
-      override def sqlType:    Int        = self.sqlType
+      override def sqlType:     Int             = self.sqlType
       override def queryString: String          = self.queryString
       override def isOptional:  Boolean         = true
       override def default:     Option[Default] = self.default
@@ -166,10 +166,10 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Bit[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]](
-                                                                                                    length:     Option[Int],
-                                                                                                    isOptional: Boolean,
-                                                                                                    default:    Option[Default] = None
-                                                                                                  ) extends IntegerType[T]:
+    length:     Option[Int],
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
     override def typeName: String = buildTypeName("BIT")
 
@@ -204,12 +204,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Tinyint[T <: Byte | Short | Option[Byte | Short]](
-                                                                              length:     Option[Int],
-                                                                              isOptional: Boolean,
-                                                                              isUnSigned: Boolean         = false,
-                                                                              isZerofill: Boolean         = false,
-                                                                              default:    Option[Default] = None
-                                                                            ) extends IntegerType[T]:
+    length:     Option[Int],
+    isOptional: Boolean,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
     override def typeName: String = buildTypeName("TINYINT")
 
@@ -268,12 +268,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Smallint[T <: Short | Int | Option[Short | Int]](
-                                                                             length:     Option[Int],
-                                                                             isOptional: Boolean,
-                                                                             isUnSigned: Boolean         = false,
-                                                                             isZerofill: Boolean         = false,
-                                                                             default:    Option[Default] = None
-                                                                           ) extends IntegerType[T]:
+    length:     Option[Int],
+    isOptional: Boolean,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
     override def typeName: String = buildTypeName("SMALLINT")
 
@@ -332,12 +332,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Mediumint[T <: Int | Option[Int]](
-                                                              length:     Option[Int],
-                                                              isOptional: Boolean,
-                                                              isUnSigned: Boolean         = false,
-                                                              isZerofill: Boolean         = false,
-                                                              default:    Option[Default] = None
-                                                            ) extends IntegerType[T]:
+    length:     Option[Int],
+    isOptional: Boolean,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
     override def typeName: String = buildTypeName("MEDIUMINT")
 
@@ -396,12 +396,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Integer[T <: Int | Long | Option[Int | Long]](
-                                                                          length:     Option[Int],
-                                                                          isOptional: Boolean,
-                                                                          isUnSigned: Boolean         = false,
-                                                                          isZerofill: Boolean         = false,
-                                                                          default:    Option[Default] = None
-                                                                        ) extends IntegerType[T]:
+    length:     Option[Int],
+    isOptional: Boolean,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
     override def typeName: String = buildTypeName("INT")
 
@@ -460,12 +460,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Bigint[T <: Long | BigInt | Option[Long | BigInt]](
-                                                                               length:     Option[Int],
-                                                                               isOptional: Boolean,
-                                                                               isUnSigned: Boolean         = false,
-                                                                               isZerofill: Boolean         = false,
-                                                                               default:    Option[Default] = None
-                                                                             ) extends IntegerType[T]:
+    length:     Option[Int],
+    isOptional: Boolean,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends IntegerType[T]:
 
     override def typeName: String = buildTypeName("BIGINT")
 
@@ -526,13 +526,13 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Decimal[T <: BigDecimal | Option[BigDecimal]](
-                                                                          accuracy:   Int,
-                                                                          scale:      Int,
-                                                                          isOptional: Boolean,
-                                                                          isUnSigned: Boolean         = false,
-                                                                          isZerofill: Boolean         = false,
-                                                                          default:    Option[Default] = None
-                                                                        ) extends DataType[T]:
+    accuracy:   Int,
+    scale:      Int,
+    isOptional: Boolean,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = s"DECIMAL($accuracy, $scale)"
 
@@ -591,12 +591,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class CFloat[T <: Double | Float | Option[Double | Float]](
-                                                                                 accuracy:   Int,
-                                                                                 isOptional: Boolean,
-                                                                                 isUnSigned: Boolean         = false,
-                                                                                 isZerofill: Boolean         = false,
-                                                                                 default:    Option[Default] = None
-                                                                               ) extends DataType[T]:
+    accuracy:   Int,
+    isOptional: Boolean,
+    isUnSigned: Boolean         = false,
+    isZerofill: Boolean         = false,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = s"FLOAT($accuracy)"
 
@@ -657,12 +657,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class CChar[T <: String | Option[String]](
-                                                                length:     Int,
-                                                                isOptional: Boolean,
-                                                                default:    Option[Default]    = None,
-                                                                character:  Option[Character]  = None,
-                                                                collate:    Option[Collate[T]] = None
-                                                              ) extends StringType[T]:
+    length:     Int,
+    isOptional: Boolean,
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None
+  ) extends StringType[T]:
 
     override def typeName: String = s"CHAR($length)"
 
@@ -716,12 +716,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Varchar[T <: String | Option[String]](
-                                                                  length:     Int,
-                                                                  isOptional: Boolean,
-                                                                  default:    Option[Default]    = None,
-                                                                  character:  Option[Character]  = None,
-                                                                  collate:    Option[Collate[T]] = None
-                                                                ) extends StringType[T]:
+    length:     Int,
+    isOptional: Boolean,
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None
+  ) extends StringType[T]:
 
     override def typeName: String = s"VARCHAR($length)"
 
@@ -775,12 +775,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Binary[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                           length:     Int,
-                                                                           isOptional: Boolean,
-                                                                           default:    Option[Default]    = None,
-                                                                           character:  Option[Character]  = None,
-                                                                           collate:    Option[Collate[T]] = None
-                                                                         ) extends StringType[T]:
+    length:     Int,
+    isOptional: Boolean,
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None
+  ) extends StringType[T]:
 
     override def typeName: String = s"BINARY($length)"
 
@@ -834,12 +834,12 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Varbinary[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                              length:     Int,
-                                                                              isOptional: Boolean,
-                                                                              default:    Option[Default]    = None,
-                                                                              character:  Option[Character]  = None,
-                                                                              collate:    Option[Collate[T]] = None
-                                                                            ) extends StringType[T]:
+    length:     Int,
+    isOptional: Boolean,
+    default:    Option[Default]    = None,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None
+  ) extends StringType[T]:
 
     override def typeName: String = s"VARBINARY($length)"
 
@@ -887,9 +887,9 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Tinyblob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                             isOptional: Boolean,
-                                                                             default:    Option[Default] = None
-                                                                           ) extends DataType[T]:
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "TINYBLOB"
 
@@ -921,10 +921,10 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Blob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                         length:     Option[Long],
-                                                                         isOptional: Boolean,
-                                                                         default:    Option[Default] = None
-                                                                       ) extends DataType[T]:
+    length:     Option[Long],
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = length.fold("BLOB")(n => s"BLOB($n)")
 
@@ -954,9 +954,9 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Mediumblob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                               isOptional: Boolean,
-                                                                               default:    Option[Default] = None
-                                                                             ) extends DataType[T]:
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "MEDIUMBLOB"
 
@@ -986,9 +986,9 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class LongBlob[T <: Array[Byte] | Option[Array[Byte]]](
-                                                                             isOptional: Boolean,
-                                                                             default:    Option[Default] = None
-                                                                           ) extends DataType[T]:
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "LONGBLOB"
 
@@ -1022,11 +1022,11 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class TinyText[T <: String | Option[String]](
-                                                                   isOptional: Boolean,
-                                                                   character:  Option[Character]  = None,
-                                                                   collate:    Option[Collate[T]] = None,
-                                                                   default:    Option[Default]    = None
-                                                                 ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
+  ) extends StringType[T]:
 
     override def typeName: String = "TINYTEXT"
 
@@ -1079,11 +1079,11 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Text[T <: String | Option[String]](
-                                                               isOptional: Boolean,
-                                                               character:  Option[Character]  = None,
-                                                               collate:    Option[Collate[T]] = None,
-                                                               default:    Option[Default]    = None
-                                                             ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
+  ) extends StringType[T]:
 
     override def typeName: String = "TEXT"
 
@@ -1136,11 +1136,11 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class MediumText[T <: String | Option[String]](
-                                                                     isOptional: Boolean,
-                                                                     character:  Option[Character]  = None,
-                                                                     collate:    Option[Collate[T]] = None,
-                                                                     default:    Option[Default]    = None
-                                                                   ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
+  ) extends StringType[T]:
 
     override def typeName: String = "MEDIUMTEXT"
 
@@ -1193,11 +1193,11 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class LongText[T <: String | Option[String]](
-                                                                   isOptional: Boolean,
-                                                                   character:  Option[Character]  = None,
-                                                                   collate:    Option[Collate[T]] = None,
-                                                                   default:    Option[Default]    = None
-                                                                 ) extends StringType[T]:
+    isOptional: Boolean,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
+  ) extends StringType[T]:
 
     override def typeName: String = "LONGTEXT"
 
@@ -1246,11 +1246,11 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Enum[T <: EnumModel | Option[EnumModel]](
-                                                                     isOptional: Boolean,
-                                                                     character:  Option[Character]  = None,
-                                                                     collate:    Option[Collate[T]] = None,
-                                                                     default:    Option[Default]    = None
-                                                                   )(using enumDataType: EnumDataType[?])
+    isOptional: Boolean,
+    character:  Option[Character]  = None,
+    collate:    Option[Collate[T]] = None,
+    default:    Option[Default]    = None
+  )(using enumDataType: EnumDataType[?])
     extends DataType[T]:
 
     override def typeName: String = s"ENUM(${ enumDataType.values.map(v => s"'$v'").mkString(",") })"
@@ -1302,9 +1302,9 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Date[T <: String | LocalDate | Option[String | LocalDate]](
-                                                                                       isOptional: Boolean,
-                                                                                       default:    Option[Default] = None
-                                                                                     ) extends DataType[T]:
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "DATE"
 
@@ -1324,8 +1324,8 @@ object DataType:
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: String =>
           inline if constValue[
-            Matches[v.type, """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"""]
-          ]
+              Matches[v.type, """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"""]
+            ]
           then this.copy(default = Some(Default.Value(value)))
           else
             error(
@@ -1355,10 +1355,10 @@ object DataType:
   private[ldbc] case class DateTime[
     T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
   ](
-     fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
-     isOptional: Boolean,
-     default:    Option[Default] = None
-   ) extends DataType[T]:
+    fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "DATETIME"
 
@@ -1379,11 +1379,11 @@ object DataType:
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: String =>
           inline if constValue[
-            Matches[
-              v.type,
-              """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5]\d):([0-5]\d)$"""
+              Matches[
+                v.type,
+                """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5]\d):([0-5]\d)$"""
+              ]
             ]
-          ]
           then this.copy(default = Some(Default.Value(value)))
           else
             error(
@@ -1418,10 +1418,10 @@ object DataType:
     T <: String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
-     fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
-     isOptional: Boolean,
-     default:    Option[Default] = None
-   ) extends DataType[T]:
+    fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "TIMESTAMP"
 
@@ -1442,11 +1442,11 @@ object DataType:
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: String =>
           inline if constValue[
-            Matches[
-              v.type,
-              """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5]\d):([0-5]\d)$"""
+              Matches[
+                v.type,
+                """^(1000|100[0-9]|[1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01]) (0[0-9]|1[0-9]|2[0-3]):([0-5]\d):([0-5]\d)$"""
+              ]
             ]
-          ]
           then this.copy(default = Some(Default.Value(value)))
           else
             error(
@@ -1479,10 +1479,10 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Time[T <: String | LocalTime | Option[String | LocalTime]](
-                                                                                       fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
-                                                                                       isOptional: Boolean,
-                                                                                       default:    Option[Default] = None
-                                                                                     ) extends DataType[T]:
+    fsp:        Option[0 | 1 | 2 | 3 | 4 | 5 | 6],
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "TIME"
 
@@ -1503,8 +1503,8 @@ object DataType:
           this.copy(default = Some(value.asInstanceOf[Option[?]].fold(Default.Null)(Default.Value(_))))
         case v: String =>
           inline if constValue[
-            Matches[v.type, """^(-?8[0-3][0-8]|-?[0-7][0-9]{2}|0?[0-9]{1,2}):([0-5]\d):([0-5]\d)$"""]
-          ]
+              Matches[v.type, """^(-?8[0-3][0-8]|-?[0-7][0-9]{2}|0?[0-9]{1,2}):([0-5]\d):([0-5]\d)$"""]
+            ]
           then this.copy(default = Some(Default.Value(value)))
           else
             error(
@@ -1527,10 +1527,10 @@ object DataType:
    *   Scala types that match SQL DataType
    */
   private[ldbc] case class Year[T <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]](
-                                                                                                                     digit:      Option[4],
-                                                                                                                     isOptional: Boolean,
-                                                                                                                     default:    Option[Default] = None
-                                                                                                                   ) extends DataType[T]:
+    digit:      Option[4],
+    isOptional: Boolean,
+    default:    Option[Default] = None
+  ) extends DataType[T]:
 
     override def typeName: String = "YEAR"
 
@@ -1612,9 +1612,9 @@ object DataType:
      *   Scala types that match SQL DataType
      */
     case class Bool[T <: Boolean | Option[Boolean]](
-                                                     isOptional: Boolean,
-                                                     default:    Option[Default] = None
-                                                   ) extends Alias[T]:
+      isOptional: Boolean,
+      default:    Option[Default] = None
+    ) extends Alias[T]:
 
       override def typeName: String = "BOOLEAN"
 

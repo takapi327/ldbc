@@ -276,13 +276,13 @@ object Collate:
   type COLLATION_TYPE = Byte | Array[Byte] | String | Enum | Option[Byte | Array[Byte] | String | Enum]
 
   def apply[T <: COLLATION_TYPE](
-                                  _name:     String,
-                                  _charset:  Character,
-                                  _id:       Int,
-                                  _default:  Boolean,
-                                  _compiled: Boolean,
-                                  _sortLen:  Int
-                                ): Collate[T] = new Collate[T]:
+    _name:     String,
+    _charset:  Character,
+    _id:       Int,
+    _default:  Boolean,
+    _compiled: Boolean,
+    _sortLen:  Int
+  ): Collate[T] = new Collate[T]:
     override def name:     String    = _name
     override def charset:  Character = _charset
     override def id:       Int       = _id

@@ -30,11 +30,11 @@ import ldbc.query.builder.interpreter.Tuples
  *   Reference action on update
  */
 case class Reference[T <: Tuple](
-                                  table:    Table[?],
-                                  keyPart:  T,
-                                  onDelete: Option[Reference.ReferenceOption],
-                                  onUpdate: Option[Reference.ReferenceOption]
-                                )(using Tuples.IsColumn[T] =:= true):
+  table:    Table[?],
+  keyPart:  T,
+  onDelete: Option[Reference.ReferenceOption],
+  onUpdate: Option[Reference.ReferenceOption]
+)(using Tuples.IsColumn[T] =:= true):
 
   private val label: String = "REFERENCES"
 

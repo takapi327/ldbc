@@ -87,9 +87,9 @@ trait DataTypes:
     Bigint(None, isOptional[T])
 
   inline def DECIMAL[T <: BigDecimal | Option[BigDecimal]](
-                                                            inline accuracy: Int = 10,
-                                                            inline scale:    Int = 0
-                                                          ): Decimal[T] =
+    inline accuracy: Int = 10,
+    inline scale:    Int = 0
+  ): Decimal[T] =
     inline if accuracy < 0 then error("The value of accuracy for DECIMAL must be an integer.")
     inline if scale < 0 then error("The DECIMAL scale value must be an integer.")
     inline if accuracy > 65 then error("The maximum number of digits for DECIMAL is 65.")
@@ -119,7 +119,7 @@ trait DataTypes:
 
   inline def VARBINARY[T <: Array[Byte] | Option[Array[Byte]]](inline length: Int): Varbinary[T] =
     inline if length < 0 || length > Int.MaxValue then
-    error(s"The length of the VARBINARY must be in the range 0 to ${ Int.MaxValue }.")
+      error(s"The length of the VARBINARY must be in the range 0 to ${ Int.MaxValue }.")
     else Varbinary(length, isOptional[T])
 
   inline def TINYBLOB[T <: Array[Byte] | Option[Array[Byte]]](): Tinyblob[T] = Tinyblob(isOptional[T])
@@ -127,7 +127,7 @@ trait DataTypes:
   inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](): Blob[T] = Blob(None, isOptional[T])
   inline def BLOB[T <: Array[Byte] | Option[Array[Byte]]](inline length: Long): Blob[T] =
     inline if length < 0 || length > 4294967295L then
-    error("The length of the BLOB must be in the range 0 to 4294967295.")
+      error("The length of the BLOB must be in the range 0 to 4294967295.")
     else Blob(Some(length), isOptional[T])
 
   inline def MEDIUMBLOB[T <: Array[Byte] | Option[Array[Byte]]](): Mediumblob[T] = Mediumblob(isOptional[T])
@@ -156,8 +156,8 @@ trait DataTypes:
   inline def DATETIME[
     T <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
   ](
-     inline fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6
-   ): DateTime[T] = DateTime(Some(fsp), isOptional[T])
+    inline fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  ): DateTime[T] = DateTime(Some(fsp), isOptional[T])
 
   inline def TIMESTAMP[
     T <: String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
@@ -178,8 +178,8 @@ trait DataTypes:
     "Ldbc-Core 0.1.0"
   )
   inline def YEAR[T <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]](
-                                                                                                       digit: 4
-                                                                                                     ): Year[T] =
+    digit: 4
+  ): Year[T] =
     Year(Some(digit), isOptional[T])
 
   inline def YEAR[T <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]]: Year[T] =
