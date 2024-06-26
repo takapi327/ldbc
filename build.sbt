@@ -72,6 +72,22 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .dependsOn(dsl)
 
+lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("schema", "Type safety schema construction project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-core"  % "2.10.0",
+      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test
+    )
+  )
+  .platformsSettings(JSPlatform, NativePlatform)(
+    libraryDependencies ++= Seq(
+      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+    )
+  )
+  .dependsOn(queryBuilder)
+
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(description := "Project to generate SchemaSPY documentation")
   .settings(libraryDependencies += schemaspy)
@@ -212,6 +228,7 @@ lazy val docs = (project in file("docs"))
     sql.jvm,
     dsl.jvm,
     queryBuilder.jvm,
+    schema.jvm,
     schemaSpy,
     codegen.jvm,
     hikari
@@ -224,11 +241,12 @@ lazy val ldbc = tlCrossRootProject
   .aggregate(
     core,
     sql,
-    queryBuilder,
-    dsl,
-    codegen,
     jdbcConnector,
     connector,
+    dsl,
+    queryBuilder,
+    schema,
+    codegen,
     plugin,
     tests,
     docs,
