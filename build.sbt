@@ -77,8 +77,8 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("schema", "Type safety schema construction project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"  % "2.10.0",
-      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test
+      "org.typelevel" %%% "cats-core" % "2.10.0",
+      "org.scalatest" %%% "scalatest" % "3.2.18" % Test
     )
   )
   .platformsSettings(JSPlatform, NativePlatform)(
