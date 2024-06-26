@@ -1573,7 +1573,7 @@ object DataType:
     /**
      * Extra attribute of column
      */
-    def attributes: Seq[Attribute[T]]
+    def attributes: List[Attribute[T]]
 
   private[ldbc] object Alias:
 
@@ -1596,7 +1596,7 @@ object DataType:
 
       override def default: Option[Default] = None
 
-      override def attributes: Seq[Attribute[T]] = Seq(
+      override def attributes: List[Attribute[T]] = List(
         AUTO_INCREMENT,
         UNIQUE_KEY
       )
@@ -1622,7 +1622,7 @@ object DataType:
 
       override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
 
-      override def attributes: Seq[Attribute[T]] = Seq.empty
+      override def attributes: List[Attribute[T]] = List.empty
 
       /**
        * Method for setting Default value to DataType in SQL.

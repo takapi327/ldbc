@@ -19,7 +19,7 @@ import ldbc.query.builder.interpreter.Extract
  * @tparam T
  *   Scala types that match SQL DataType
  */
-sealed trait Column[T]:
+trait Column[T]:
 
   /** Column Field Name */
   def name: String
