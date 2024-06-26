@@ -131,37 +131,43 @@ val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
 
 ldbc provides not only plain queries but also type-safe database connections using the query builder.
 
-The first step is to create a schema for use by the query builder.
-
-ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+The first step is to set up dependencies.
 
 ```scala
+libraryDependencies += "io.github.takapi327" %% "ldbc-query-builder" % "${version}"
+```
+
+For Cross-Platform projects (JVM, JS, and/or Native):
+
+```scala
+libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "${version}"
+```
+
+ldbc uses classes to construct queries.
+
+```scala
+import ldbc.query.builder.Table
+
 case class User(
   id: Long,
   name: String,
   age: Option[Int],
-)
-
-val table = Table[User]("user")(                     // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)              
+) derives Table
 ```
 
-The next step is to build a TableQuery using the schema you have created.
+The next step is to create a Table using the classes you have created.
 
 ```scala
-import ldbc.query.builder.TableQuery
+import ldbc.query.builder.Table
 
-val userQuery = TableQuery[User](table)
+val userTable = Table[User]
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
 val result: IO[List[User]] = connection.use { conn =>
-  userQuery.selectAll.toList[User].readOnly(conn)
+  userTable.selectAll.query[User].to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
 ```
