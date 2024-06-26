@@ -12,28 +12,21 @@ import ldbc.dsl.{ Parameter, SQL }
 import ldbc.query.builder.*
 
 /**
- * A model for constructing HAVING statements in MySQL.
+ * A model for constructing OFFSET statements in MySQL.
  *
- * @param table
- *   Trait for generating SQL table information.
  * @param statement
  *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
- * @tparam P
- *   Base trait for all products
  * @tparam T
  *   Union type of column
  */
-private[ldbc] case class Having[P <: Product, T](
-  table:     Table[P],
+private[ldbc] case class Offset[T](
   statement: String,
   params:    List[Parameter.DynamicBinder]
-) extends Query[T],
-          OrderByProvider[P, T],
-          LimitProvider[T]:
+) extends Query[T]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Having[P, T](table, statement ++ sql.statement, params ++ sql.params)
+    Offset(statement ++ sql.statement, params ++ sql.params)

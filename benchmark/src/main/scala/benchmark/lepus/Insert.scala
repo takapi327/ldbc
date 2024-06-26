@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.ldbc
+package benchmark.lepus
 
 import java.util.concurrent.TimeUnit
 
@@ -17,18 +17,15 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
-import ldbc.core.*
 import ldbc.sql.DataSource
 import ldbc.dsl.logging.LogHandler
-import ldbc.query.builder.TableQuery
+import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
-
-import benchmark.City
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
-class Select:
+class Insert:
 
   @volatile
   var dataSource: DataSource[IO] = uninitialized
@@ -37,10 +34,13 @@ class Select:
   var noLog: LogHandler[IO] = uninitialized
 
   @volatile
-  var query: TableQuery[City] = uninitialized
+  var query: Table[Test] = uninitialized
+
+  @volatile
+  var records: List[(Int, String)] = List.empty
 
   @Setup
-  def setup(): Unit =
+  def setupDataSource(): Unit =
     val ds = new MysqlDataSource()
     ds.setServerName("127.0.0.1")
     ds.setPortNumber(13306)
@@ -49,32 +49,25 @@ class Select:
     ds.setPassword("password")
     dataSource = jdbc.connector.MysqlDataSource[IO](ds)
 
+    records = (1 to len).map(num => (num, s"record$num")).toList
+
     noLog = _ => IO.unit
 
-    query = TableQuery[City](City.table)
+    query = Table[Test]
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
-  def selectN: List[(Int, String, String)] =
+  def insertN: Unit =
     given LogHandler[IO] = noLog
     (for
       connection <- dataSource.getConnection
       result <- query
-                  .select(city => (city.id, city.name, city.countryCode))
-                  .limit(len)
-                  .toList
-                  .readOnly(connection)
-    yield result)
-      .unsafeRunSync()
+                  .insertInto(test => (test.c1, test.c2))
+                  .values(records)
+                  .update
+                  .rollback(connection)
+    yield result).unsafeRunSync()
 
-object City:
-
-  val table = Table[City]("city")(
-    column("ID", INT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("Name", CHAR(35).DEFAULT("")),
-    column("CountryCode", CHAR(3).DEFAULT("")),
-    column("District", CHAR(20).DEFAULT("")),
-    column("Population", INT.DEFAULT(0))
-  )
+case class Test(id: Option[Int], c1: Int, c2: String) derives Table

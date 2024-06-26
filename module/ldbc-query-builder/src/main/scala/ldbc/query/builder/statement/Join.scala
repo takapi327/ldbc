@@ -6,14 +6,11 @@
 
 package ldbc.query.builder.statement
 
-import scala.language.dynamics
-import scala.deriving.Mirror
+import scala.annotation.targetName
 
-import ldbc.core.*
-import ldbc.core.interpreter.{ ExtractOption, Tuples as CoreTuples }
-import ldbc.dsl.Parameter
+import ldbc.dsl.{ Parameter, SQL }
+import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.Tuples
-import ldbc.query.builder.{ TableQuery, ColumnQuery }
 
 /**
  * Trait to build a Join.
@@ -27,98 +24,90 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
   self =>
 
   /** The table on which the Join is based. */
-  def main: TableQuery[?]
+  private[ldbc] def main: Table[?]
 
   /** Tuple of the table that did the join. */
-  def joins: JOINS
+  private[ldbc] def joins: JOINS
 
   /** Tuple for building Select statements, etc. on joined tables. */
-  def selects: SELECTS
+  private[ldbc] def selects: SELECTS
 
   /** Join's Statement List. */
-  def joinStatements: Seq[String]
+  private[ldbc] def joinStatements: List[String]
 
   /** Statement of Join. */
-  def statement: String = s"FROM ${ main.table._name } ${ joinStatements.mkString(" ") }"
+  private[ldbc] def statement: String = s"FROM ${ main.label } ${ joinStatements.mkString(" ") }"
 
   /**
    * A method to perform a simple Join.
    *
    * @param other
-   *   [[TableQuery]] to do a Join.
+   *   [[Table]] to do a Join.
    * @param on
    *   Comparison function that performs a Join.
    * @tparam P
    *   Base trait for all products
    */
-  def join[P <: Product](other: TableQuery[P])(
-    on: Tuple.Concat[JOINS, Tuple1[TableQuery[P]]] => ExpressionSyntax
+  def join[P <: Product](other: Table[P])(
+    on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
   )(using
-    Tuples.IsTableQueryOpt[SELECTS] =:= true
-  ): Join[Tuple.Concat[JOINS, Tuple1[TableQuery[P]]], Tuple.Concat[SELECTS, Tuple1[TableQuery[P]]]] =
-    val joinTable: TableQuery[P] = TableQuery(
-      other.table.alias.fold(other.table.as(other.table._name))(_ => other.table)
-    )
-    Join(
+    Tuples.IsTableOpt[SELECTS] =:= true
+  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[Table[P]]]] =
+    val sub = other._alias.fold(other.as(other._name))(_ => other)
+    Join.Impl(
       main,
-      joins ++ Tuple(joinTable),
-      selects ++ Tuple(joinTable),
-      joinStatements :+ s"${ Join.JoinType.JOIN.statement } ${ other.table._name } ON ${ on(joins ++ Tuple(joinTable)).statement }"
+      joins ++ Tuple(sub),
+      selects ++ Tuple(sub),
+      joinStatements :+ s"${ Join.JoinType.JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
   /**
    * Method to perform Left Join.
    *
    * @param other
-   *   [[TableQuery]] to do a Join.
+   *   [[Table]] to do a Join.
    * @param on
    *   Comparison function that performs a Join.
    * @tparam P
    *   Base trait for all products
    */
-  def leftJoin[P <: Product](other: TableQuery[P])(
-    on: Tuple.Concat[JOINS, Tuple1[TableQuery[P]]] => ExpressionSyntax
+  def leftJoin[P <: Product](other: Table[P])(
+    on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
   )(using
-    Tuples.IsTableQueryOpt[SELECTS] =:= true
-  ): Join[Tuple.Concat[JOINS, Tuple1[TableQuery[P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[P]]]] =
-    val joinTable: TableQuery[P] = TableQuery(
-      other.table.alias.fold(other.table.as(other.table._name))(_ => other.table)
-    )
-    Join(
+    Tuples.IsTableOpt[SELECTS] =:= true
+  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[SELECTS, Tuple1[TableOpt[P]]]] =
+    val sub = other._alias.fold(other.as(other._name))(_ => other)
+    Join.Impl(
       main,
-      joins ++ Tuple(joinTable),
-      selects ++ Tuple(TableOpt(joinTable.table)),
-      joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.table._name } ON ${ on(joins ++ Tuple(joinTable)).statement }"
+      joins ++ Tuple(sub),
+      selects ++ Tuple(TableOpt.Impl(sub.*)),
+      joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
   /**
    * Method to perform Right Join.
    *
    * @param other
-   *   [[TableQuery]] to do a Join.
+   *   [[Table]] to do a Join.
    * @param on
    *   Comparison function that performs a Join.
    * @tparam P
    *   Base trait for all products
    */
-  def rightJoin[P <: Product](other: TableQuery[P])(
-    on: Tuple.Concat[JOINS, Tuple1[TableQuery[P]]] => ExpressionSyntax
+  def rightJoin[P <: Product](other: Table[P])(
+    on: Tuple.Concat[JOINS, Tuple1[Table[P]]] => Expression
   )(using
-    Tuples.IsTableQueryOpt[SELECTS] =:= true
-  ): Join[Tuple.Concat[JOINS, Tuple1[TableQuery[P]]], Tuple.Concat[Tuples.ToTableOpt[SELECTS], Tuple1[
-    TableQuery[P]
-  ]]] =
-    val joinTable: TableQuery[P] = TableQuery(
-      other.table.alias.fold(other.table.as(other.table._name))(_ => other.table)
-    )
-    Join(
+    Tuples.IsTableOpt[SELECTS] =:= true
+  ): Join[Tuple.Concat[JOINS, Tuple1[Table[P]]], Tuple.Concat[Tuples.ToTableOpt[SELECTS], Tuple1[Table[P]]]] =
+    val sub = other._alias.fold(other.as(other._name))(_ => other)
+    Join.Impl(
       main,
-      joins ++ Tuple(joinTable),
-      Tuples.toTableOpt[SELECTS](selects) ++ Tuple(joinTable),
-      joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.table._name } ON ${ on(joins ++ Tuple(joinTable)).statement }"
+      joins ++ Tuple(sub),
+      Tuples.toTableOpt[SELECTS](selects) ++ Tuple(sub),
+      joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
-  def select[C](func: SELECTS => C)(using Tuples.IsColumnQuery[C] =:= true): Join.JoinSelect[SELECTS, C] =
+  def select[C](func: SELECTS => C)(using Tuples.IsColumn[C] =:= true): Join.JoinSelect[SELECTS, C] =
     Join.JoinSelect[SELECTS, C](
       selects       = selects,
       fromStatement = statement,
@@ -133,151 +122,166 @@ object Join:
     case LEFT_JOIN  extends JoinType("LEFT JOIN")
     case RIGHT_JOIN extends JoinType("RIGHT JOIN")
 
-  private[ldbc] def apply[JOINS <: Tuple, SELECTS <: Tuple](
-    _main:         TableQuery[?],
-    joinQueries:   JOINS,
-    selectQueries: SELECTS,
-    statements:    Seq[String]
-  ): Join[JOINS, SELECTS] =
-    new Join[JOINS, SELECTS]:
-      override def main:           TableQuery[?] = _main
-      override val joins:          JOINS         = joinQueries
-      override def selects:        SELECTS       = selectQueries
-      override val joinStatements: Seq[String]   = statements
+  private[ldbc] case class Impl[JOINS <: Tuple, SELECTS <: Tuple](
+    main:           Table[?],
+    joins:          JOINS,
+    selects:        SELECTS,
+    joinStatements: List[String]
+  ) extends Join[JOINS, SELECTS]
 
-  private[ldbc] case class JoinSelect[SELECTS <: Tuple, T](
-    selects:       SELECTS,
-    fromStatement: String,
-    columns:       T,
-    params:        Seq[Parameter.DynamicBinder]
+  private[ldbc] case class JoinOrderBy[T](
+    statement: String,
+    params:    List[Parameter.DynamicBinder]
   ) extends Query[T],
-            JoinOrderByProvider[SELECTS, T],
             LimitProvider[T]:
 
-    private val str = columns match
-      case v: Tuple => v.toArray.distinct.mkString(", ")
-      case v        => v
-    override def statement: String = s"SELECT $str $fromStatement"
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
+      JoinOrderBy(statement ++ sql.statement, params ++ sql.params)
 
-    def where(func: SELECTS => ExpressionSyntax): JoinWhere[SELECTS, T] =
-      val expressionSyntax = func(selects)
-      JoinWhere(
-        selects   = selects,
-        statement = statement ++ s" WHERE ${ expressionSyntax.statement }",
-        columns   = columns,
-        params    = expressionSyntax.parameter
+  private[ldbc] transparent trait JoinOrderByProvider[SELECTS <: Tuple]:
+    self: SQL =>
+
+    def selects: SELECTS
+
+    def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](
+      func: SELECTS => A
+    ): JoinOrderBy[SELECTS] =
+      val order = func(selects) match
+        case v: Tuple            => v.toList.mkString(", ")
+        case v: OrderBy.Order[?] => v.statement
+        case v: Column[?]        => v.alias.fold(v.name)(as => s"$as.${ v.name }")
+      JoinOrderBy(
+        statement = self.statement ++ s" ORDER BY $order",
+        params    = self.params
       )
 
-    def groupBy[A](func: T => Column[A]): JoinGroupBy[SELECTS, T] =
+  private[ldbc] case class JoinHaving[SELECTS <: Tuple](
+    selects:   SELECTS,
+    statement: String,
+    params:    List[Parameter.DynamicBinder]
+  ) extends Query[SELECTS],
+            JoinOrderByProvider[SELECTS],
+            LimitProvider[SELECTS]:
+
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
+      JoinHaving(selects, statement ++ sql.statement, params ++ sql.params)
+
+  private[ldbc] case class JoinGroupBy[SELECTS <: Tuple, T](
+    selects:   SELECTS,
+    statement: String,
+    columns:   T,
+    params:    List[Parameter.DynamicBinder]
+  ) extends Query[T],
+            JoinOrderByProvider[SELECTS],
+            LimitProvider[T]:
+
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
       JoinGroupBy(
         selects   = selects,
-        statement = statement ++ s" GROUP BY ${ func(columns).label }",
+        statement = statement ++ sql.statement,
         columns   = columns,
-        params    = params
+        params    = params ++ sql.params
+      )
+
+    def having[A](func: T => Expression): JoinHaving[SELECTS] =
+      val expression = func(columns)
+      JoinHaving(
+        selects   = selects,
+        statement = statement ++ s" HAVING ${ expression.statement }",
+        params    = params ++ expression.parameter
       )
 
   private[ldbc] case class JoinWhere[SELECTS <: Tuple, T](
     selects:   SELECTS,
     statement: String,
     columns:   T,
-    params:    Seq[Parameter.DynamicBinder]
+    params:    List[Parameter.DynamicBinder]
   ) extends Query[T],
-            JoinOrderByProvider[SELECTS, T],
+            JoinOrderByProvider[SELECTS],
             LimitProvider[T]:
 
-    private def union(label: String, expressionSyntax: ExpressionSyntax): JoinWhere[SELECTS, T] =
-      JoinWhere[SELECTS, T](
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
+      JoinWhere(
         selects   = selects,
-        statement = statement ++ s" $label ${ expressionSyntax.statement }",
+        statement = statement ++ sql.statement,
         columns   = columns,
-        params    = params ++ expressionSyntax.parameter
+        params    = params ++ sql.params
       )
 
-    def and(func: SELECTS => ExpressionSyntax): JoinWhere[SELECTS, T] =
+    private def union(label: String, expression: Expression): JoinWhere[SELECTS, T] =
+      JoinWhere[SELECTS, T](
+        selects   = selects,
+        statement = statement ++ s" $label ${ expression.statement }",
+        columns   = columns,
+        params    = params ++ expression.parameter
+      )
+
+    def and(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
       union("AND", func(selects))
-    def or(func: SELECTS => ExpressionSyntax): JoinWhere[SELECTS, T] =
+
+    def or(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
       union("OR", func(selects))
-    def ||(func: SELECTS => ExpressionSyntax): JoinWhere[SELECTS, T] =
+
+    @targetName("OR")
+    def ||(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
       union("||", func(selects))
-    def xor(func: SELECTS => ExpressionSyntax): JoinWhere[SELECTS, T] =
+
+    def xor(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
       union("XOR", func(selects))
-    def &&(func: SELECTS => ExpressionSyntax): JoinWhere[SELECTS, T] =
+
+    @targetName("AND")
+    def &&(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
       union("&&", func(selects))
 
     def groupBy[A](func: T => Column[A]): JoinGroupBy[SELECTS, T] =
       JoinGroupBy(
         selects   = selects,
-        statement = statement ++ s" GROUP BY ${ func(columns).label }",
+        statement = statement ++ s" GROUP BY ${ func(columns).name }",
         columns   = columns,
         params    = params
       )
 
-  private[ldbc] case class JoinOrderBy[T](
-    statement: String,
-    columns:   T,
-    params:    Seq[Parameter.DynamicBinder]
+  private[ldbc] case class JoinSelect[SELECTS <: Tuple, T](
+    selects:       SELECTS,
+    fromStatement: String,
+    columns:       T,
+    params:        List[Parameter.DynamicBinder]
   ) extends Query[T],
-            LimitProvider[T]
-
-  private[ldbc] transparent trait JoinOrderByProvider[SELECTS <: Tuple, T]:
-    self: Query[T] =>
-
-    def selects: SELECTS
-
-    def orderBy[A <: OrderBy.Order | OrderBy.Order *: NonEmptyTuple | Column[?]](
-      func: SELECTS => A
-    ): JoinOrderBy[T] =
-      val order = func(selects) match
-        case v: Tuple         => v.toList.mkString(", ")
-        case v: OrderBy.Order => v.statement
-        case v: Column[?]     => v.alias.fold(v.label)(name => s"$name.${ v.label }")
-      JoinOrderBy(
-        statement = self.statement ++ s" ORDER BY $order",
-        columns   = self.columns,
-        params    = self.params
-      )
-
-  private[ldbc] case class JoinHaving[SELECTS <: Tuple, T](
-    selects:   SELECTS,
-    statement: String,
-    columns:   T,
-    params:    Seq[Parameter.DynamicBinder]
-  ) extends Query[T],
-            JoinOrderByProvider[SELECTS, T],
-            LimitProvider[T]
-
-  private[ldbc] case class JoinGroupBy[SELECTS <: Tuple, T](
-    selects:   SELECTS,
-    statement: String,
-    columns:   T,
-    params:    Seq[Parameter.DynamicBinder]
-  ) extends Query[T],
-            JoinOrderByProvider[SELECTS, T],
+            JoinOrderByProvider[SELECTS],
             LimitProvider[T]:
 
-    def having[A](func: T => ExpressionSyntax): JoinHaving[SELECTS, T] =
-      val expressionSyntax = func(columns)
-      JoinHaving(
-        selects   = selects,
-        statement = statement ++ s" HAVING ${ expressionSyntax.statement }",
-        columns   = columns,
-        params    = params ++ expressionSyntax.parameter
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
+      JoinSelect(
+        selects       = selects,
+        fromStatement = fromStatement,
+        columns       = columns,
+        params        = params ++ sql.params
       )
 
-case class TableOpt[P <: Product](table: Table[P]) extends Dynamic:
+    private val str = columns match
+      case v: Tuple => v.toArray.distinct.mkString(", ")
+      case v        => v
 
-  transparent inline def selectDynamic[Tag <: Singleton](tag: Tag)(using
-    mirror: Mirror.ProductOf[P],
-    index:  ValueOf[CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): ColumnQuery[Option[
-    ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
-  ]] =
-    val column = table.selectDynamic[Tag](tag)
-    ColumnQuery[Option[
-      ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, CoreTuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
-    ]](
-      _label      = column.label,
-      _dataType   = column.dataType.toOption,
-      _attributes = Seq.empty,
-      _alias      = column.alias
-    )
+    override def statement: String = s"SELECT $str $fromStatement"
+
+    def where(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
+      val expression = func(selects)
+      JoinWhere(
+        selects   = selects,
+        statement = statement ++ s" WHERE ${ expression.statement }",
+        columns   = columns,
+        params    = expression.parameter
+      )
+
+    def groupBy[A](func: T => Column[A]): JoinGroupBy[SELECTS, T] =
+      JoinGroupBy(
+        selects   = selects,
+        statement = statement ++ s" GROUP BY ${ func(columns).name }",
+        columns   = columns,
+        params    = params
+      )

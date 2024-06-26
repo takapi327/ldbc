@@ -6,18 +6,20 @@
 
 package ldbc.query.builder.statement
 
-import ldbc.dsl.Parameter
-import ldbc.query.builder.TableQuery
+import scala.annotation.targetName
+
+import ldbc.dsl.{ Parameter, SQL }
+import ldbc.query.builder.*
 
 /**
  * A model for constructing GROUP BY statements in MySQL.
  *
- * @param tableQuery
+ * @param table
  *   Trait for generating SQL table information.
- * @param statement
- *   SQL statement string
  * @param columns
  *   Union-type column list
+ * @param statement
+ *   SQL statement string
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
@@ -27,19 +29,22 @@ import ldbc.query.builder.TableQuery
  *   Union type of column
  */
 private[ldbc] case class GroupBy[P <: Product, T](
-  tableQuery: TableQuery[P],
-  statement:  String,
-  columns:    T,
-  params:     Seq[Parameter.DynamicBinder]
+  table:     Table[P],
+  columns:   T,
+  statement: String,
+  params:    List[Parameter.DynamicBinder]
 ) extends Query[T],
           OrderByProvider[P, T],
           LimitProvider[T]:
 
-  def having(func: T => ExpressionSyntax): Having[P, T] =
-    val expressionSyntax = func(columns)
-    Having(
-      tableQuery = tableQuery,
-      statement  = statement ++ s" HAVING ${ expressionSyntax.statement }",
-      columns    = columns,
-      params     = params ++ expressionSyntax.parameter
+  @targetName("combine")
+  override def ++(sql: SQL): SQL =
+    GroupBy[P, T](table, columns, statement ++ sql.statement, params ++ sql.params)
+
+  def having(func: T => Expression): Having[P, T] =
+    val expression = func(columns)
+    Having[P, T](
+      table     = table,
+      statement = statement ++ s" HAVING ${ expression.statement }",
+      params    = params ++ expression.parameter
     )

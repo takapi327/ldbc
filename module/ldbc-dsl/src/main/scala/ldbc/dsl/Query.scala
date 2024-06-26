@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.statement
+package ldbc.dsl
 
 import cats.*
 import cats.data.Kleisli
@@ -13,7 +13,6 @@ import cats.syntax.all.*
 import cats.effect.Temporal
 
 import ldbc.sql.ResultSet
-import ldbc.dsl.*
 
 /**
  * Trait for determining what type of search system statements are retrieved from the database.
@@ -23,7 +22,7 @@ import ldbc.dsl.*
  * @tparam T
  *   Column Tuples
  */
-trait Query[F[_], T](using Kleisli[F, ResultSet[F], T]):
+trait Query[F[_], T]:
 
   /**
    * Functions for safely retrieving data from a database in an array or Option type.
