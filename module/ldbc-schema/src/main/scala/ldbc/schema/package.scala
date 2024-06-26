@@ -15,4 +15,4 @@ package ldbc
  *   import ldbc.schema.*
  * }}}
  */
-package object schema extends Alias
+package object schema extends Alias, DataTypes
