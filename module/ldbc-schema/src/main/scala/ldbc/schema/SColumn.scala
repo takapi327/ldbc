@@ -25,9 +25,9 @@ import ldbc.schema.attribute.Attribute
  *   Scala types that match SQL DataType
  */
 case class SColumn[T](
-  name: String,
-  alias: Option[String],
-  dataType: DataType[T],
+  name:       String,
+  alias:      Option[String],
+  dataType:   DataType[T],
   attributes: List[Attribute[T]]
 ) extends Column[T]:
 
@@ -43,13 +43,13 @@ case class SColumn[T](
     val str = s"`$name` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
     alias.fold(str)(name => s"$name.$str")
 
-  override def toString: String = alias.fold(s"`$name`")(name => s"$name.`${this.name}`")
+  override def toString: String = alias.fold(s"`$name`")(name => s"$name.`${ this.name }`")
 
 object SColumn:
 
   def apply[T](
-     name: String,
-     dataType: DataType[T]
+    name:     String,
+    dataType: DataType[T]
   ): SColumn[T] =
     val attributes: List[Attribute[T]] = dataType match
       case data: DataType.Alias[T] => data.attributes
@@ -57,15 +57,15 @@ object SColumn:
     SColumn[T](name, None, dataType, attributes)
 
   def apply[T](
-                name: String,
-                dataType: DataType[T],
-                attributes: Attribute[T]*
-              ):  SColumn[T] =
+    name:       String,
+    dataType:   DataType[T],
+    attributes: Attribute[T]*
+  ): SColumn[T] =
     SColumn[T](name, None, dataType, attributes.toList)
 
   private[ldbc] def apply[T](
-                              name: String,
-                              dataType: DataType[T],
-                              attributes: Seq[Attribute[T]],
-                              alias: Option[String]
-                            ): SColumn[T] = SColumn[T](name, alias, dataType, attributes.toList)
+    name:       String,
+    dataType:   DataType[T],
+    attributes: Seq[Attribute[T]],
+    alias:      Option[String]
+  ): SColumn[T] = SColumn[T](name, alias, dataType, attributes.toList)
