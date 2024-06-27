@@ -16,10 +16,10 @@ class ColumnImplTest extends AnyFlatSpec:
 
   it should "The query string of the Column model generated with only label and DataType matches the specified string." in {
     column[Long]("id", BIGINT(64)).queryString === "`id` BIGINT(64) NOT NULL" &&
-      column[String](
-        "name",
-        VARCHAR(255).CHARACTER_SET(Character.ascii)
-      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
+    column[String](
+      "name",
+      VARCHAR(255).CHARACTER_SET(Character.ascii)
+    ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL"
   }
 
   it should "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
@@ -28,17 +28,17 @@ class ColumnImplTest extends AnyFlatSpec:
       BIGINT(64),
       COMMENT("identifier")
     ).queryString === "`id` BIGINT(64) NOT NULL COMMENT 'identifier'" &&
-      column[String](
-        "name",
-        VARCHAR(255).CHARACTER_SET(Character.ascii),
-        COMMENT("name")
-      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'" &&
-      column[String](
-        "name",
-        VARCHAR(255).CHARACTER_SET(Character.ascii).COLLATE(Collate.ascii_bin),
-        COMMENT("name")
-      ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'" &&
-      column[BigInt]("id", SERIAL).queryString === "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY"
+    column[String](
+      "name",
+      VARCHAR(255).CHARACTER_SET(Character.ascii),
+      COMMENT("name")
+    ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'" &&
+    column[String](
+      "name",
+      VARCHAR(255).CHARACTER_SET(Character.ascii).COLLATE(Collate.ascii_bin),
+      COMMENT("name")
+    ).queryString === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'" &&
+    column[BigInt]("id", SERIAL).queryString === "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY"
   }
 
   it should "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {
