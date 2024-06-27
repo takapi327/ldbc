@@ -27,16 +27,19 @@ class AliasTest extends AnyFlatSpec, Matchers:
     )
 
     p1.queryString === "PRIMARY KEY" &&
-      p2.queryString === "PRIMARY KEY (`p1`)" &&
-      p3.queryString === "PRIMARY KEY (`p1`, `p2`)" &&
-      p4.queryString === "PRIMARY KEY (`p1`, `p2`) USING BTREE" &&
-      p5.queryString === "PRIMARY KEY (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1"
+    p2.queryString === "PRIMARY KEY (`p1`)" &&
+    p3.queryString === "PRIMARY KEY (`p1`, `p2`)" &&
+    p4.queryString === "PRIMARY KEY (`p1`, `p2`) USING BTREE" &&
+    p5.queryString === "PRIMARY KEY (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1"
   }
 
   it should "PRIMARY_KEY call failed" in {
     an[IllegalArgumentException] must be thrownBy PRIMARY_KEY()
     an[IllegalArgumentException] must be thrownBy PRIMARY_KEY(Index.Type.BTREE)
-    an[IllegalArgumentException] must be thrownBy PRIMARY_KEY(Index.Type.BTREE, Index.IndexOption(Some(1), None, None, None, None, None))
+    an[IllegalArgumentException] must be thrownBy PRIMARY_KEY(
+      Index.Type.BTREE,
+      Index.IndexOption(Some(1), None, None, None, None, None)
+    )
   }
 
   it should "UNIQUE_KEY call succeeds" in {
@@ -55,12 +58,12 @@ class AliasTest extends AnyFlatSpec, Matchers:
     val p7 = UNIQUE_KEY(None, None, None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
 
     p1.queryString === "UNIQUE KEY" &&
-      p2.queryString === "UNIQUE KEY (`p1`)" &&
-      p3.queryString === "UNIQUE KEY (`p1`, `p2`)" &&
-      p4.queryString === "UNIQUE KEY `index` (`p1`, `p2`)" &&
-      p5.queryString === "UNIQUE KEY `index` (`p1`, `p2`) USING BTREE" &&
-      p6.queryString === "UNIQUE KEY `index` (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1" &&
-      p7.queryString === "UNIQUE KEY (`p1`, `p2`)"
+    p2.queryString === "UNIQUE KEY (`p1`)" &&
+    p3.queryString === "UNIQUE KEY (`p1`, `p2`)" &&
+    p4.queryString === "UNIQUE KEY `index` (`p1`, `p2`)" &&
+    p5.queryString === "UNIQUE KEY `index` (`p1`, `p2`) USING BTREE" &&
+    p6.queryString === "UNIQUE KEY `index` (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1" &&
+    p7.queryString === "UNIQUE KEY (`p1`, `p2`)"
   }
 
   it should "UNIQUE_KEY call failed" in {
@@ -85,11 +88,11 @@ class AliasTest extends AnyFlatSpec, Matchers:
     )
 
     p1.queryString === "INDEX (`p1`)" &&
-      p2.queryString === "INDEX (`p1`, `p2`)" &&
-      p3.queryString === "INDEX (`p1`, `p2`)" &&
-      p4.queryString === "INDEX `index` (`p1`, `p2`)" &&
-      p5.queryString === "INDEX `index` (`p1`, `p2`) USING BTREE" &&
-      p6.queryString === "INDEX `index` (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1"
+    p2.queryString === "INDEX (`p1`, `p2`)" &&
+    p3.queryString === "INDEX (`p1`, `p2`)" &&
+    p4.queryString === "INDEX `index` (`p1`, `p2`)" &&
+    p5.queryString === "INDEX `index` (`p1`, `p2`) USING BTREE" &&
+    p6.queryString === "INDEX `index` (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1"
   }
 
   it should "INDEX_KEY call failed" in {
@@ -112,5 +115,5 @@ class AliasTest extends AnyFlatSpec, Matchers:
     )
 
     p1.queryString === "FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)" &&
-      p2.queryString === "FOREIGN KEY (`test_id`, `test_status`) REFERENCES `test` (`id`, `status`)"
+    p2.queryString === "FOREIGN KEY (`test_id`, `test_status`) REFERENCES `test` (`id`, `status`)"
   }
