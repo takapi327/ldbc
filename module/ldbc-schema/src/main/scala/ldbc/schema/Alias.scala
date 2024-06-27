@@ -6,7 +6,7 @@
 
 package ldbc.schema
 
-import ldbc.query.builder.{ Table, Column }
+import ldbc.query.builder.{ Column, Table }
 import ldbc.query.builder.interpreter.Tuples
 
 import ldbc.schema.attribute.*

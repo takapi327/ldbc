@@ -60,7 +60,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
   def setOption(option: Character | Collate[String]): TableImpl[P, ElemLabels0, ElemTypes0] =
     this.copy(options = options :+ option)
 
-object TableImpl extends Dynamic:
+object Table extends Dynamic:
 
   /**
    * Methods for static Table construction using Dynamic.
