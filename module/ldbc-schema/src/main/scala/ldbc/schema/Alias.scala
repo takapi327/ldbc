@@ -6,12 +6,25 @@
 
 package ldbc.schema
 
-import ldbc.query.builder.{ Column, Table }
 import ldbc.query.builder.interpreter.Tuples
 
 import ldbc.schema.attribute.*
 
 private[ldbc] trait Alias:
+
+  type Table[P <: Product] = ldbc.query.builder.Table[P]
+  type Column[T]          = ldbc.query.builder.Column[T]
+
+  def column[T](
+                 label: String,
+                 dataType: DataType[T]
+               ): Column[T] = Column[T](label, dataType)
+
+  def column[T](
+                 label: String,
+                 dataType: DataType[T],
+                 attributes: Attribute[T]*
+               ): Column[T] = Column[T](label, dataType, attributes *)
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 
