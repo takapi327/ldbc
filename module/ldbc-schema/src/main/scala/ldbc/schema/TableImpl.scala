@@ -81,7 +81,9 @@ object Table:
   def apply[P <: Product](using
     mirror:    Mirror.ProductOf[P],
     converter: ColumnTupleConverter[mirror.MirroredElemTypes, Column]
-  )(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, Column]): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
+  )(name: String)(
+    columns: ColumnTuples[mirror.MirroredElemTypes, Column]
+  ): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
     fromTupleMap[P](name, ColumnTupleConverter.convert(columns))
 
   /**

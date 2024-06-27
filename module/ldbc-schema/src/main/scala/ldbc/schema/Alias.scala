@@ -13,18 +13,18 @@ import ldbc.schema.attribute.*
 private[ldbc] trait Alias:
 
   type Table[P <: Product] = ldbc.query.builder.Table[P]
-  type Column[T]          = ldbc.query.builder.Column[T]
+  type Column[T]           = ldbc.query.builder.Column[T]
 
   def column[T](
-                 label: String,
-                 dataType: DataType[T]
-               ): Column[T] = Column[T](label, dataType)
+    label:    String,
+    dataType: DataType[T]
+  ): Column[T] = Column[T](label, dataType)
 
   def column[T](
-                 label: String,
-                 dataType: DataType[T],
-                 attributes: Attribute[T]*
-               ): Column[T] = Column[T](label, dataType, attributes *)
+    label:      String,
+    dataType:   DataType[T],
+    attributes: Attribute[T]*
+  ): Column[T] = Column[T](label, dataType, attributes*)
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 
