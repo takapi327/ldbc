@@ -10,21 +10,21 @@ import scala.annotation.targetName
 import scala.language.dynamics
 import scala.deriving.Mirror
 
-import ldbc.query.builder.{Table, Column}
+import ldbc.query.builder.{ Table, Column }
 
 import ldbc.schema.interpreter.*
 
 private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes0 <: Tuple](
-                                                  _name: String,
-                                                  _alias: Option[String],
-                                                  columns:     Tuple.Map[ElemTypes0, Column],
-                                                  columnNames: List[String],
-                                                  keyDefinitions: List[Key],
-                                                  options: List[Character | Collate[String]]
-                                                ) extends Table[P]:
+  _name:          String,
+  _alias:         Option[String],
+  columns:        Tuple.Map[ElemTypes0, Column],
+  columnNames:    List[String],
+  keyDefinitions: List[Key],
+  options:        List[Character | Collate[String]]
+) extends Table[P]:
 
   override type ElemLabels = ElemLabels0
-  override type ElemTypes = ElemTypes0
+  override type ElemTypes  = ElemTypes0
 
   @targetName("all")
   override def * : Tuple.Map[ElemTypes, Column] = columns
@@ -39,7 +39,8 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def keySet(func: TableImpl[P, ElemLabels0, ElemTypes0] => Key): TableImpl[P, ElemLabels0, ElemTypes0] = this.copy(keyDefinitions = List(func(this)))
+  def keySet(func: TableImpl[P, ElemLabels0, ElemTypes0] => Key): TableImpl[P, ElemLabels0, ElemTypes0] =
+    this.copy(keyDefinitions = List(func(this)))
 
   /**
    * Methods for setting multiple key information for a table.
@@ -47,7 +48,8 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def keySets(func: TableImpl[P, ElemLabels0, ElemTypes0] => List[Key]): TableImpl[P, ElemLabels0, ElemTypes0] = this.copy(keyDefinitions = func(this))
+  def keySets(func: TableImpl[P, ElemLabels0, ElemTypes0] => List[Key]): TableImpl[P, ElemLabels0, ElemTypes0] =
+    this.copy(keyDefinitions = func(this))
 
   /**
    * Methods for setting additional information for the table.
@@ -55,7 +57,8 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param option
    *   Additional information to be given to the table.
    */
-  def setOption(option: Character | Collate[String]): TableImpl[P, ElemLabels0, ElemTypes0] = this.copy(options = options :+ option)
+  def setOption(option: Character | Collate[String]): TableImpl[P, ElemLabels0, ElemTypes0] =
+    this.copy(options = options :+ option)
 
 object TableImpl extends Dynamic:
 
@@ -76,9 +79,9 @@ object TableImpl extends Dynamic:
    *   A class that implements a [[Product]] that is one-to-one with the table definition.
    */
   def applyDynamic[P <: Product](using
-                                 mirror:    Mirror.ProductOf[P],
-                                 converter: ColumnTupleConverter[mirror.MirroredElemTypes, Column]
-                                )(nameApply: "apply")(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, Column]): Table[P] =
+    mirror:    Mirror.ProductOf[P],
+    converter: ColumnTupleConverter[mirror.MirroredElemTypes, Column]
+  )(nameApply: "apply")(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, Column]): Table[P] =
     fromTupleMap[P](name, ColumnTupleConverter.convert(columns))
 
   /**
@@ -94,18 +97,18 @@ object TableImpl extends Dynamic:
    *   A class that implements a [[Product]] that is one-to-one with the table definition.
    */
   private def fromTupleMap[P <: Product](using
-                                         mirror: Mirror.ProductOf[P]
-                                        )(
-                                          name:    String,
-                                          columns: Tuple.Map[mirror.MirroredElemTypes, Column]
-                                        ): Table[P] =
+    mirror: Mirror.ProductOf[P]
+  )(
+    name:    String,
+    columns: Tuple.Map[mirror.MirroredElemTypes, Column]
+  ): Table[P] =
     TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes](
-      _name = name,
-      _alias = None,
+      _name   = name,
+      _alias  = None,
       columns = columns,
       columnNames = columns.toList.map {
         case column: Column[?] => column.name
       },
       keyDefinitions = List.empty,
-      options = List.empty
+      options        = List.empty
     )

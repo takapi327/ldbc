@@ -29,8 +29,8 @@ object ColumnTupleConverter:
   given [T1, T2, F[_]]: ColumnTupleConverter[(T1, T2), F] = identity
 
   given [T1, T2, TN <: NonEmptyTuple, F[_]](using
-                                            converter: ColumnTupleConverter[T2 *: TN, F]
-                                           ): ColumnTupleConverter[T1 *: T2 *: TN, F] =
+    converter: ColumnTupleConverter[T2 *: TN, F]
+  ): ColumnTupleConverter[T1 *: T2 *: TN, F] =
     (columns: F[T1] *: ColumnTuples[T2 *: TN, F]) => columns.head *: converter(columns.tail)
 
   /**
@@ -46,6 +46,6 @@ object ColumnTupleConverter:
    *   The effect type
    */
   def convert[Types <: Tuple, F[_]](columnTuples: ColumnTuples[Types, F])(using
-                                                                          converter: ColumnTupleConverter[Types, F]
+    converter: ColumnTupleConverter[Types, F]
   ): Tuple.Map[Types, F] =
     converter(columnTuples)
