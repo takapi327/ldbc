@@ -24,14 +24,14 @@ import ldbc.schema.attribute.Attribute
  * @tparam T
  *   Scala types that match SQL DataType
  */
-case class SColumn[T](
+case class ColumnImpl[T](
   name:       String,
   alias:      Option[String],
   dataType:   DataType[T],
   attributes: List[Attribute[T]]
 ) extends Column[T]:
 
-  override def as(name: String): Column[T] = SColumn[T](this.name, Some(name), dataType, attributes)
+  override def as(name: String): Column[T] = ColumnImpl[T](this.name, Some(name), dataType, attributes)
 
   /**
    * Define SQL query string for each Column
@@ -45,27 +45,27 @@ case class SColumn[T](
 
   override def toString: String = alias.fold(s"`$name`")(name => s"$name.`${ this.name }`")
 
-object SColumn:
+object Column:
 
   def apply[T](
     name:     String,
     dataType: DataType[T]
-  ): SColumn[T] =
+  ): ColumnImpl[T] =
     val attributes: List[Attribute[T]] = dataType match
       case data: DataType.Alias[T] => data.attributes
       case _                       => List.empty
-    SColumn[T](name, None, dataType, attributes)
+    ColumnImpl[T](name, None, dataType, attributes)
 
   def apply[T](
     name:       String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  ): SColumn[T] =
-    SColumn[T](name, None, dataType, attributes.toList)
+  ): ColumnImpl[T] =
+    ColumnImpl[T](name, None, dataType, attributes.toList)
 
   private[ldbc] def apply[T](
     name:       String,
     dataType:   DataType[T],
     attributes: Seq[Attribute[T]],
     alias:      Option[String]
-  ): SColumn[T] = SColumn[T](name, alias, dataType, attributes.toList)
+  ): ColumnImpl[T] = ColumnImpl[T](name, alias, dataType, attributes.toList)
