@@ -18,13 +18,13 @@ private[ldbc] trait Alias:
   def column[T](
     label:    String,
     dataType: DataType[T]
-  ): Column[T] = Column[T](label, dataType)
+  ): ColumnImpl[T] = Column[T](label, dataType)
 
   def column[T](
     label:      String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  ): Column[T] = Column[T](label, dataType, attributes*)
+  ): ColumnImpl[T] = Column[T](label, dataType, attributes*)
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 
