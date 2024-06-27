@@ -6,6 +6,9 @@
 
 package ldbc.schema
 
+import java.time.*
+import java.time.Year as JYear
+
 import ldbc.query.builder.interpreter.Tuples
 
 import ldbc.schema.attribute.*
@@ -202,3 +205,51 @@ private[ldbc] trait Alias:
     columns: T
   )(using Tuples.IsColumn[T] =:= true): Reference[T] =
     Reference[T](table, columns, None, None)
+
+  type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
+
+  type TINYINT[T <: Byte | Short | Option[Byte | Short]] = DataType.Tinyint[T]
+
+  type SMALLINT[T <: Short | Int | Option[Short | Int]] = DataType.Smallint[T]
+
+  type MEDIUMINT[T <: Int | Option[Int]] = DataType.Mediumint[T]
+
+  type INTEGER[T <: Int | Long | Option[Int | Long]] = DataType.Integer[T]
+
+  type BIGINT[T <: Long | BigInt | Option[Long | BigInt]] = DataType.Bigint[T]
+
+  type DECIMAL[T <: BigDecimal | Option[BigDecimal]] = DataType.Decimal[T]
+
+  type FLOAT[T <: Double | Float | Option[Double | Float]] = DataType.CFloat[T]
+
+  type CHAR[T <: String | Option[String]] = DataType.CChar[T]
+
+  type VARCHAR[T <: String | Option[String]] = DataType.Varchar[T]
+
+  type BINARY[T <: Array[Byte] | Option[Array[Byte]]] = DataType.Binary[T]
+
+  type TINYBLOB[T <: Array[Byte] | Option[Array[Byte]]] = DataType.Tinyblob[T]
+
+  type BLOB[T <: Array[Byte] | Option[Array[Byte]]] = DataType.Blob[T]
+
+  type MEDIUMBLOB[T <: Array[Byte] | Option[Array[Byte]]] = DataType.Mediumblob[T]
+
+  type LONGBLOB[T <: Array[Byte] | Option[Array[Byte]]] = DataType.LongBlob[T]
+
+  type TINYTEXT[T <: String | Option[String]] = DataType.TinyText[T]
+
+  type TEXT[T <: String | Option[String]] = DataType.Text[T]
+
+  type MEDIUMTEXT[T <: String | Option[String]] = DataType.MediumText[T]
+
+  type LONGTEXT[T <: String | Option[String]] = DataType.LongText[T]
+
+  type DATE[T <: LocalDate | Option[LocalDate]] = DataType.Date[T]
+
+  type DATETIME[T <: Instant | LocalDateTime | Option[Instant | LocalDateTime]] = DataType.DateTime[T]
+
+  type TIMESTAMP[T <: Instant | LocalDateTime | Option[Instant | LocalDateTime]] = DataType.TimeStamp[T]
+
+  type TIME[T <: LocalTime | Option[LocalTime]] = DataType.Time[T]
+
+  type YEAR[T <: Instant | LocalDate | JYear | Option[Instant | LocalDate | JYear]] = DataType.Year[T]
