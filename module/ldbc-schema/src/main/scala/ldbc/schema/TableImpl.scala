@@ -60,7 +60,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
   def setOption(option: Character | Collate[String]): TableImpl[P, ElemLabels0, ElemTypes0] =
     this.copy(options = options :+ option)
 
-object Table extends Dynamic:
+object Table:
 
   /**
    * Methods for static Table construction using Dynamic.
@@ -78,10 +78,10 @@ object Table extends Dynamic:
    * @tparam P
    *   A class that implements a [[Product]] that is one-to-one with the table definition.
    */
-  def applyDynamic[P <: Product](using
+  def apply[P <: Product](using
     mirror:    Mirror.ProductOf[P],
     converter: ColumnTupleConverter[mirror.MirroredElemTypes, Column]
-  )(nameApply: "apply")(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, Column]): Table[P] =
+  )(name: String)(columns: ColumnTuples[mirror.MirroredElemTypes, Column]): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
     fromTupleMap[P](name, ColumnTupleConverter.convert(columns))
 
   /**
@@ -101,7 +101,7 @@ object Table extends Dynamic:
   )(
     name:    String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
-  ): Table[P] =
+  ): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
     TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes](
       _name   = name,
       _alias  = None,
