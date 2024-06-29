@@ -20,7 +20,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
   columns:        Tuple.Map[ElemTypes0, Column],
   columnNames:    List[String],
   keyDefinitions: List[Key],
-  options:        List[Character | Collate[String]]
+  options:        List[TableOption | Character | Collate[String]]
 ) extends Table[P]:
 
   override type ElemLabels = ElemLabels0
@@ -57,8 +57,17 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param option
    *   Additional information to be given to the table.
    */
-  def setOption(option: Character | Collate[String]): TableImpl[P, ElemLabels0, ElemTypes0] =
+  def setOption(option: TableOption | Character | Collate[String]): TableImpl[P, ElemLabels0, ElemTypes0] =
     this.copy(options = options :+ option)
+
+  /**
+   * Methods for setting multiple additional information for a table.
+   *
+   * @param options
+   *   Additional information to be given to the table.
+   */
+  def setOptions(options: List[TableOption]): TableImpl[P, ElemLabels0, ElemTypes0] =
+    this.copy(options = this.options ++ options)
 
 object Table:
 
