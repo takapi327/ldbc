@@ -6,7 +6,7 @@
 
 package ldbc.schema.syntax
 
-import ldbc.schema.{Constraint, ForeignKey, TableImpl}
+import ldbc.schema.{ Constraint, ForeignKey, TableImpl }
 
 /**
  * Trait that provides for sorting an array of tables.
