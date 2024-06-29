@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations.*
 
-import ldbc.core.*
+import ldbc.schema.*
 
 import benchmark.*
 
