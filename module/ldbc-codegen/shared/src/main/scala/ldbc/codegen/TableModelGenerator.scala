@@ -115,7 +115,7 @@ private[ldbc] object TableModelGenerator:
          |object $className$objectExtends:
          |
          |  ${ objects.mkString("\n  ") }
-         |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
+         |  val table: Table[$className] = Table[$className]("${ statement.tableName }")(
          |    ${ columns.mkString(",\n    ") }
          |  )
          |  ${ keyDefinitions.mkString("\n  ") }
