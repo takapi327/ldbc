@@ -61,7 +61,7 @@ private[ldbc] object DatabaseModelGenerator:
       s"""
          |package $packageName.${ statement.name }
          |
-         |import ldbc.core.*
+         |import ldbc.schema.*
          |
          |case class ${ className }Database(
          |  schemaMeta: Option[String] = None,

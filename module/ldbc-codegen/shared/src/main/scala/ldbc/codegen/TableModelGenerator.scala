@@ -106,7 +106,7 @@ private[ldbc] object TableModelGenerator:
       s"""
          |package ${ if database.nonEmpty then s"$packageName.$database" else packageName }
          |
-         |import ldbc.core.*
+         |import ldbc.schema.*
          |
          |case class $className(
          |  ${ properties.mkString(",\n  ") }
