@@ -6,7 +6,7 @@
 
 package ldbc.codegen.parser
 
-import ldbc.core.TableOption
+import ldbc.schema.TableOption
 import ldbc.codegen.model.*
 
 /**

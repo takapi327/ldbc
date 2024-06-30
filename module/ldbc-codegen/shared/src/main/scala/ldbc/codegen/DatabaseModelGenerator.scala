@@ -11,7 +11,7 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.codegen.formatter.Naming
+import ldbc.query.builder.formatter.Naming
 import ldbc.codegen.model.*
 
 private[ldbc] object DatabaseModelGenerator:
@@ -61,7 +61,7 @@ private[ldbc] object DatabaseModelGenerator:
       s"""
          |package $packageName.${ statement.name }
          |
-         |import ldbc.core.*
+         |import ldbc.schema.*
          |
          |case class ${ className }Database(
          |  schemaMeta: Option[String] = None,

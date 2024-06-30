@@ -8,11 +8,11 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://en.wikipedia.org/wiki/MIT_License)
 [![Scala Version](https://img.shields.io/badge/scala-v3.3.x-red)](https://github.com/lampepfl/dotty)
 [![Typelevel Affiliate Project](https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg)](https://typelevel.org/projects/affiliate/)
-[![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-core_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-core_3)
-[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-core_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.3.0-beta4/jar)
-[![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
-[![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
-[![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-core/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
+[![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
+[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-beta4/jar)
+[![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
+[![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
+[![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
 
 ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
 
@@ -29,18 +29,19 @@ Please drop a :star: if this project interests you. I need encouragement.
 
 ldbc is available on the JVM, Scala.js, and ScalaNative
 
-|  Module / Platform   | JVM | Scala Native | Scala.js |  
-|:--------------------:|:---:|:------------:|:--------:|
-|     `ldbc-core`      |  ✅  |      ✅       |    ✅     |
-|      `ldbc-sql`      |  ✅  |      ✅       |    ✅     |
+| Module / Platform    | JVM | Scala Native | Scala.js |  
+|----------------------|:---:|:------------:|:--------:|
+| `ldbc-core`          |  ✅  |      ✅       |    ✅     |
+| `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
+| `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
-|      `ldbc-dsl`      |  ✅  |      ✅       |    ✅     | 
-|   `ldbc-schemaSpy`   |  ✅  |      ❌       |    ❌     | 
-|    `ldbc-codegen`    |  ✅  |      ✅       |    ✅     |
-|    `ldbc-hikari`     |  ✅  |      ❌       |    ❌     | 
-|    `ldbc-plugin`     |  ✅  |      ❌       |    ❌     | 
-|   `ldbc-connector`   |  ✅  |      ✅       |    ✅     | 
-|   `jdbc-connector`   |  ✅  |      ❌       |    ❌     | 
+| `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
+| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
+| `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
+| `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
 ## Quick Start
 
@@ -161,6 +162,51 @@ The next step is to create a Table using the classes you have created.
 import ldbc.query.builder.Table
 
 val userTable = Table[User]
+```
+
+Finally, you can use the query builder to create a query.
+
+```scala
+val result: IO[List[User]] = connection.use { conn =>
+  userTable.selectAll.query[User].to[List].readOnly(conn)
+  // "SELECT `id`, `name`, `age` FROM user"
+}
+```
+
+#### Using the schema
+
+ldbc also allows type-safe construction of schema information for tables.
+
+The first step is to set up dependencies.
+
+```scala
+libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "${version}"
+```
+
+For Cross-Platform projects (JVM, JS, and/or Native):
+
+```scala
+libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "${version}"
+```
+
+The next step is to create a schema for use by the query builder.
+
+ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+
+```scala
+import ldbc.schema.*
+
+case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
+  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
+  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
+)                                                    // )
 ```
 
 Finally, you can use the query builder to create a query.

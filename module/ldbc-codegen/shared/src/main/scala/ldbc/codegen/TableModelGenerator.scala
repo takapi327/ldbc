@@ -11,7 +11,7 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.codegen.formatter.Naming
+import ldbc.query.builder.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
 import ldbc.codegen.builder.ColumnCodeBuilder
@@ -106,7 +106,7 @@ private[ldbc] object TableModelGenerator:
       s"""
          |package ${ if database.nonEmpty then s"$packageName.$database" else packageName }
          |
-         |import ldbc.core.*
+         |import ldbc.schema.*
          |
          |case class $className(
          |  ${ properties.mkString(",\n  ") }
@@ -115,7 +115,7 @@ private[ldbc] object TableModelGenerator:
          |object $className$objectExtends:
          |
          |  ${ objects.mkString("\n  ") }
-         |  val table: TABLE[$className] = Table[$className]("${ statement.tableName }")(
+         |  val table: Table[$className] = Table[$className]("${ statement.tableName }")(
          |    ${ columns.mkString(",\n    ") }
          |  )
          |  ${ keyDefinitions.mkString("\n  ") }

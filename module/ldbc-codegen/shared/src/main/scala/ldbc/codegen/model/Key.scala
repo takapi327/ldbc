@@ -6,7 +6,7 @@
 
 package ldbc.codegen.model
 
-import ldbc.codegen.formatter.Naming
+import ldbc.query.builder.formatter.Naming
 
 trait Key:
   def toCode(tableName: String, classNameFormatter: Naming, propertyFormatter: Naming): String

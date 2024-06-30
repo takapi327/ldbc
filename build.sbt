@@ -72,6 +72,12 @@ lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .dependsOn(dsl)
 
+lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("schema", "Type safety schema construction project")
+  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
+  .dependsOn(queryBuilder)
+
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(description := "Project to generate SchemaSPY documentation")
   .settings(libraryDependencies += schemaspy)
@@ -96,7 +102,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
-  .dependsOn(core)
+  .dependsOn(schema)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -185,7 +191,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, core.jvm, queryBuilder.jvm)
+  .dependsOn(jdbcConnector.jvm, schema.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
@@ -212,6 +218,7 @@ lazy val docs = (project in file("docs"))
     sql.jvm,
     dsl.jvm,
     queryBuilder.jvm,
+    schema.jvm,
     schemaSpy,
     codegen.jvm,
     hikari
@@ -224,11 +231,12 @@ lazy val ldbc = tlCrossRootProject
   .aggregate(
     core,
     sql,
-    queryBuilder,
-    dsl,
-    codegen,
     jdbcConnector,
     connector,
+    dsl,
+    queryBuilder,
+    schema,
+    codegen,
     plugin,
     tests,
     docs,
