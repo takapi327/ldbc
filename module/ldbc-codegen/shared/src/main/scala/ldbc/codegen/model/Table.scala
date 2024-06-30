@@ -6,7 +6,7 @@
 
 package ldbc.codegen.model
 
-import ldbc.core.TableOption
+import ldbc.schema.TableOption
 
 object Table:
 
