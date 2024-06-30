@@ -8,7 +8,7 @@ package ldbc.codegen.builder
 
 import org.specs2.mutable.Specification
 
-import ldbc.codegen.formatter.Naming
+import ldbc.query.builder.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.model.ColumnDefinition.*
 

@@ -7,7 +7,7 @@
 package ldbc.codegen.builder
 
 import ldbc.codegen.model.DataType
-import ldbc.codegen.formatter.Naming
+import ldbc.query.builder.formatter.Naming
 
 /**
  * DataType model for constructing code strings.
