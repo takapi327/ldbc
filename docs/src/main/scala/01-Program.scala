@@ -25,8 +25,7 @@ import ldbc.dsl.logging.LogHandler
     host     = "127.0.0.1",
     port     = 3306,
     user     = "ldbc",
-    password = Some("password"),
-    ssl      = SSL.None
+    password = Some("password")
   )
   // #connection
 
