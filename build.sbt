@@ -214,14 +214,8 @@ lazy val docs = (project in file("docs"))
   )
   .settings(commonSettings)
   .dependsOn(
-    core.jvm,
-    sql.jvm,
-    dsl.jvm,
-    queryBuilder.jvm,
-    schema.jvm,
-    schemaSpy,
-    codegen.jvm,
-    hikari
+    connector.jvm,
+    schema.jvm
   )
   .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin, NoPublishPlugin)
 
