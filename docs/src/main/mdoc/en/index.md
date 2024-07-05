@@ -61,7 +61,7 @@ Mapping models in LDBC to table definitions is very easy.
 The mapping between the properties a model has and the data types defined for its columns is also very simple. The developer simply defines the corresponding columns in the same order as the properties the model has.
 
 ```scala mdoc:silent
-import ldbc.core.*
+import ldbc.schema.*
 
 case class User(
   id: Long,

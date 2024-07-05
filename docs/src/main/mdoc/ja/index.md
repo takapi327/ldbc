@@ -1,4 +1,15 @@
 @@@ index
+ * [Migration Notes](./01-Migration-Notes.md)
+ * [Connection](./02-Connection.md)
+ * [Connecting to a Database](./03-Connecting-to-a-Database.md)
+ * [Parameterized Queries](./04-Parameterized-Queries.md)
+ * [Selecting Data](./05-Selecting-Data.md)
+ * [Updating Data](./06-Updating-Data.md)
+ * [Error Handling](./07-Error-Handling.md)
+ * [Logging](./08-Logging.md)
+ * [Custom Data Type](./09-Custom-Data-Type.md)
+ * [Query Builder](./10-Query-Builder.md)
+ * [Schema](./11-Schema.md)
  * [Table Definitions](./01-Table-Definitions.md)
  * [Custom Data Type](./02-Custom-Data-Type.md)
  * [Type-safe Query Builder](./03-Type-safe-Query-Builder.md)
@@ -7,7 +18,7 @@
  * [Generating SchemaSPY Documentation](./06-Generating-SchemaSPY-Documentation.md)
  * [Schema Code Generation](./07-Schema-Code-Generation.md)
  * [Performance](./08-Perdormance.md)
- * [Connector](./09-Connector.md)
+ * [Connector OLD](./09-Connector.md)
 @@@
 
 # ldbc (Lepus Database Connectivity)
