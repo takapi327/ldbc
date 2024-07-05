@@ -29,7 +29,7 @@ import ldbc.dsl.logging.LogHandler
   // #connection
   def connection = Connection[IO](
     host     = "127.0.0.1",
-    port     = 3306,
+    port     = 13306,
     user     = "ldbc",
     password = Some("password")
   )

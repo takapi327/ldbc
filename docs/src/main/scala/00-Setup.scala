@@ -17,23 +17,25 @@ import ldbc.dsl.logging.LogHandler
   given LogHandler[IO] = LogHandler.noop[IO]
   // #given
 
+  // #setup
   val createDatabase: Executor[IO, Int] =
     sql"CREATE DATABASE IF NOT EXISTS todo".update
   
   val createTable: Executor[IO, Int] =
     sql"""
-         CREATE TABLE `task` (
+         CREATE TABLE IF NOT EXISTS `task` (
            `id` INT NOT NULL AUTO_INCREMENT,
            `name` VARCHAR(255) NOT NULL,
            `done` BOOLEAN NOT NULL DEFAULT FALSE,
            PRIMARY KEY (`id`)
          )
        """.update
+  // #setup
 
   // #connection
   def connection = Connection[IO](
     host     = "127.0.0.1",
-    port     = 3306,
+    port     = 13306,
     user     = "ldbc",
     password = Some("password")
   )
@@ -41,6 +43,8 @@ import ldbc.dsl.logging.LogHandler
 
   // #run
   connection.use { conn =>
-    (createDatabase *> conn.setSchema("todo") *> createTable).transaction(conn)
+    createDatabase.commit(conn) *>
+      conn.setSchema("todo") *>
+      createTable.commit(conn)
   }.unsafeRunSync()
   // #run
