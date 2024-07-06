@@ -112,12 +112,11 @@ class TransactionTest extends CatsEffectSuite:
       password = Some("password"),
       ssl      = SSL.Trusted
     )
-    interceptIO[SQLNonTransientException](connection.use {
-      conn =>
-        for
-          _ <- conn.setAutoCommit(true)
-          _ <- conn.commit()
-        yield true
+    interceptIO[SQLNonTransientException](connection.use { conn =>
+      for
+        _ <- conn.setAutoCommit(true)
+        _ <- conn.commit()
+      yield true
     })
   }
 
@@ -147,12 +146,11 @@ class TransactionTest extends CatsEffectSuite:
       password = Some("password"),
       ssl      = SSL.Trusted
     )
-    interceptIO[SQLNonTransientException](connection.use {
-      conn =>
-        for
-          _ <- conn.setAutoCommit(true)
-          _ <- conn.rollback()
-        yield true
+    interceptIO[SQLNonTransientException](connection.use { conn =>
+      for
+        _ <- conn.setAutoCommit(true)
+        _ <- conn.rollback()
+      yield true
     })
   }
 
