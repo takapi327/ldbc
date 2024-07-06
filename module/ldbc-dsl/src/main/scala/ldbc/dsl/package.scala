@@ -176,6 +176,11 @@ package object dsl:
     def orderByOpt(s1: Option[SQL], s2: Option[SQL], ss: Option[SQL]*): SQL =
       orderByOpt((s1 :: s2 :: ss.toList).flatten)
 
+    type ExecutorIO[T] = ldbc.dsl.Executor[F, T]
+    export ldbc.dsl.Executor
+
+    export ldbc.dsl.logging.LogHandler
+
   /**
    * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
    * might look something like this.
