@@ -19,13 +19,13 @@ import org.typelevel.otel4s.Attribute
  * corresponds to the order in which commands were added to the batch.
  */
 class BatchUpdateException(
-  message:          String,
-  updateCounts:     List[Long],
-  sqlState:         Option[String] = None,
-  vendorCode:       Option[Int]    = None,
-  sql:              Option[String] = None,
-  detail:           Option[String] = None,
-  hint:             Option[String] = None,
+  message:      String,
+  updateCounts: List[Long],
+  sqlState:     Option[String] = None,
+  vendorCode:   Option[Int]    = None,
+  sql:          Option[String] = None,
+  detail:       Option[String] = None,
+  hint:         Option[String] = None
 ) extends SQLException(message, sqlState, vendorCode, sql, detail, hint):
 
   /**

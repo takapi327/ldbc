@@ -18,10 +18,10 @@ package ldbc.connector.exception
  *</UL>
  */
 class SQLFeatureNotSupportedException(
-  message:          String,
-  sqlState:         Option[String] = None,
-  vendorCode:       Option[Int]    = None,
-  sql:              Option[String] = None,
-  detail:           Option[String] = None,
-  hint:             Option[String] = None,
+  message:    String,
+  sqlState:   Option[String] = None,
+  vendorCode: Option[Int]    = None,
+  sql:        Option[String] = None,
+  detail:     Option[String] = None,
+  hint:       Option[String] = None
 ) extends SQLNonTransientException(message, sqlState, vendorCode, sql, detail, hint)

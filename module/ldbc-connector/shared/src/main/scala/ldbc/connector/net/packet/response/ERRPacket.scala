@@ -55,7 +55,11 @@ case class ERRPacket(
 
   override def toString: String = "ERR_Packet"
 
-  def toException(sql: Option[String], detail: Option[String], params: ListMap[Int, Parameter] = ListMap.empty): SQLException =
+  def toException(
+    sql:    Option[String],
+    detail: Option[String],
+    params: ListMap[Int, Parameter] = ListMap.empty
+  ): SQLException =
     sqlState match
       case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION) =>
         SQLTransientConnectionException(

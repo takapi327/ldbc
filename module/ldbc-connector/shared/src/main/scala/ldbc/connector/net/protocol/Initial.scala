@@ -50,7 +50,7 @@ object Initial:
                                  ev.raiseError[InitialPacket](
                                    new SQLException(
                                      message = err.message,
-                                     detail = Some(s"Failed to decode initial packet: ${ payload.toBitVector.toHex }")
+                                     detail  = Some(s"Failed to decode initial packet: ${ payload.toBitVector.toHex }")
                                    )
                                  ),
                                result => ev.pure(result.value)

@@ -20,13 +20,13 @@ import ldbc.connector.exception.UnknownPacketException
  *   the packet that originated the unknown packet
  */
 case class UnknownPacket(
-  status:           Int,
-  detail:           Option[String] = None,
+  status: Int,
+  detail: Option[String] = None
 ) extends ResponsePacket:
   override def toString: String = "Unknown Packet"
 
   def toException(message: String): UnknownPacketException =
     UnknownPacketException(
-      message          = message,
-      detail           = detail,
+      message = message,
+      detail  = detail
     )

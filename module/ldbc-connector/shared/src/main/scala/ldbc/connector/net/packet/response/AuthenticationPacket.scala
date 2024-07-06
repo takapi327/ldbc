@@ -30,8 +30,8 @@ object AuthenticationPacket:
       case unknown =>
         Decoder.pure(
           UnknownPacket(
-            status           = unknown,
-            detail           = Some(s"Unknown status: $unknown")
+            status = unknown,
+            detail = Some(s"Unknown status: $unknown")
           )
         )
     }

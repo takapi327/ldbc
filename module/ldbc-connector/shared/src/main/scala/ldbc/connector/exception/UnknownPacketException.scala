@@ -7,6 +7,6 @@
 package ldbc.connector.exception
 
 case class UnknownPacketException(
-  message:          String,
-  detail:           Option[String] = None
+  message: String,
+  detail:  Option[String] = None
 ) extends SQLException(message = message, detail = detail)

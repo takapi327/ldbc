@@ -14,10 +14,10 @@ package ldbc.connector.exception
  * <P> This exception does not correspond to a standard SQLState.
  */
 class SQLTimeoutException(
-  message:          String,
-  sqlState:         Option[String] = None,
-  vendorCode:       Option[Int]    = None,
-  sql:              Option[String] = None,
-  detail:           Option[String] = None,
-  hint:             Option[String] = None,
+  message:    String,
+  sqlState:   Option[String] = None,
+  vendorCode: Option[Int]    = None,
+  sql:        Option[String] = None,
+  detail:     Option[String] = None,
+  hint:       Option[String] = None
 ) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint)
