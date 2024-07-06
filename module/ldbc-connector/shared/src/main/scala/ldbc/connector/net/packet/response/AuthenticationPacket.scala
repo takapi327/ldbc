@@ -31,8 +31,7 @@ object AuthenticationPacket:
         Decoder.pure(
           UnknownPacket(
             status           = unknown,
-            detail           = Some(s"Unknown status: $unknown"),
-            originatedPacket = Some("Authentication Packet")
+            detail           = Some(s"Unknown status: $unknown")
           )
         )
     }

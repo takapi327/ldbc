@@ -22,7 +22,6 @@ import ldbc.connector.exception.UnknownPacketException
 case class UnknownPacket(
   status:           Int,
   detail:           Option[String] = None,
-  originatedPacket: Option[String] = None
 ) extends ResponsePacket:
   override def toString: String = "Unknown Packet"
 
@@ -30,5 +29,4 @@ case class UnknownPacket(
     UnknownPacketException(
       message          = message,
       detail           = detail,
-      originatedPacket = originatedPacket
     )

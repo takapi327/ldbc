@@ -233,7 +233,7 @@ object Protocol:
     ): F[Vector[P]] =
       socket.receive(decoder).flatMap {
         case _: EOFPacket     => ev.pure(acc)
-        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query"))
+        case error: ERRPacket => ev.raiseError(error.toException)
         case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
       }
 
@@ -243,7 +243,7 @@ object Protocol:
         receive(ColumnsNumberPacket.decoder(initialPacket.capabilityFlags)).flatMap {
           case _: OKPacket => ev.pure(Map.empty)
           case error: ERRPacket =>
-            ev.raiseError(error.toException("Failed to execute query", SELECT_SERVER_VARIABLES_QUERY))
+            ev.raiseError(error.toException(Some(SELECT_SERVER_VARIABLES_QUERY), None))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-

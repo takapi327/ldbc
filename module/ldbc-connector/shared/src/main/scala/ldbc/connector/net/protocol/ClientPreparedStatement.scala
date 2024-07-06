@@ -91,7 +91,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                   resultSetCurrentCursor,
                   resultSetCurrentRow
                 )
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+            case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None, params))
             case result: ColumnsNumberPacket =>
               for
                 columnDefinitions <-
@@ -140,7 +140,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           ) *>
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+            case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None, params))
             case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
           }
       } <* params.set(ListMap.empty)
@@ -189,7 +189,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                         .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                         .flatMap {
                           case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                          case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
                           case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                         }
                 )

@@ -358,7 +358,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
     for
       result <- protocol.resetSequenceId *> protocol.send(ComStmtPreparePacket(sql)) *>
                   protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                    case error: ERRPacket           => ev.raiseError(error.toException("Failed to execute query", sql))
+                    case error: ERRPacket           => ev.raiseError(error.toException(Some(sql), None))
                     case ok: ComStmtPrepareOkPacket => ev.pure(ok)
                   }
       _ <- protocol.repeatProcess(
@@ -404,7 +404,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
     for
       result <- protocol.resetSequenceId *> protocol.send(ComStmtPreparePacket(sql)) *>
                   protocol.receive(ComStmtPrepareOkPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-                    case error: ERRPacket           => ev.raiseError(error.toException("Failed to execute query", sql))
+                    case error: ERRPacket           => ev.raiseError(error.toException(Some(sql), None))
                     case ok: ComStmtPrepareOkPacket => ev.pure(ok)
                   }
       _ <- protocol.repeatProcess(
