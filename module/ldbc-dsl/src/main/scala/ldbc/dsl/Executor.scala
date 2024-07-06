@@ -115,9 +115,7 @@ object Executor:
           (ff.execute(connection), fa.execute(connection)).mapN(_(_))
 
     override def raiseError[A](e: Throwable): Executor[F, A] =
-      new Executor[F, A]:
-        override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
-          ApplicativeError[F, Throwable].raiseError(e)
+      Executor.raiseError(e)
 
     override def handleErrorWith[A](fa: Executor[F, A])(f: Throwable => Executor[F, A]): Executor[F, A] =
       new Executor[F, A]:
