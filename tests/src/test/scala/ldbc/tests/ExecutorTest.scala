@@ -19,7 +19,7 @@ import ldbc.dsl.io.*
 
 class ExecutorTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
+  given Tracer[IO]     = Tracer.noop[IO]
   given LogHandler[IO] = LogHandler.noop[IO]
 
   private val connection = Connection[IO](
@@ -114,7 +114,7 @@ class ExecutorTest extends CatsEffectSuite:
       Right(1)
     )
   }
-  
+
   test("Executor#attempt#Left") {
     val program: Executor[IO, Int] = Executor.raiseError[IO, Int](new Exception("error"))
     assertIOBoolean(

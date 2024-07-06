@@ -108,12 +108,12 @@ object Executor:
       new Executor[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
           Monad[F].tailRecM(a)(a => f(a).execute(connection))
-      
+
     override def ap[A, B](ff: Executor[F, A => B])(fa: Executor[F, A]): Executor[F, B] =
       new Executor[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
           (ff.execute(connection), fa.execute(connection)).mapN(_(_))
-    
+
     override def raiseError[A](e: Throwable): Executor[F, A] =
       new Executor[F, A]:
         override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
