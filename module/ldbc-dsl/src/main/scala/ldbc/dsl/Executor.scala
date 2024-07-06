@@ -6,7 +6,7 @@
 
 package ldbc.dsl
 
-import cats.{ Functor, Monad, ApplicativeError }
+import cats.{ Functor, Monad, MonadError }
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -88,7 +88,7 @@ object Executor:
   def raiseError[F[_]: Temporal, A](e: Throwable): Executor[F, A] =
     new Executor[F, A]:
       override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
-        ApplicativeError[F, Throwable].raiseError(e)
+        MonadError[F, Throwable].raiseError(e)
 
   given [F[_]: Temporal]: Functor[[T] =>> Executor[F, T]] with
     override def map[A, B](fa: Executor[F, A])(f: A => B): Executor[F, B] =
@@ -96,7 +96,7 @@ object Executor:
         override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[B] =
           fa.execute(connection).map(f)
 
-  given [F[_]: Temporal]: Monad[[T] =>> Executor[F, T]] with ApplicativeError[[T] =>> Executor[F, T], Throwable] with
+  given [F[_]: Temporal]: MonadError[[T] =>> Executor[F, T], Throwable] with
     override def pure[A](x: A): Executor[F, A] = Executor.pure(x)
 
     override def flatMap[A, B](fa: Executor[F, A])(f: A => Executor[F, B]): Executor[F, B] =
@@ -107,7 +107,7 @@ object Executor:
     override def tailRecM[A, B](a: A)(f: A => Executor[F, Either[A, B]]): Executor[F, B] =
       new Executor[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
-          Monad[F].tailRecM(a)(a => f(a).execute(connection))
+          MonadError[F, Throwable].tailRecM(a)(a => f(a).execute(connection))
 
     override def ap[A, B](ff: Executor[F, A => B])(fa: Executor[F, A]): Executor[F, B] =
       new Executor[F, B]:
