@@ -24,5 +24,4 @@ class SQLFeatureNotSupportedException(
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLNonTransientException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)
+) extends SQLNonTransientException(message, sqlState, vendorCode, sql, detail, hint)

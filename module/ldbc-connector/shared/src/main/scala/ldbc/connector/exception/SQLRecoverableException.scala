@@ -21,5 +21,4 @@ class SQLRecoverableException(
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)
+) extends SQLException(message, sqlState, vendorCode, sql, detail, hint)

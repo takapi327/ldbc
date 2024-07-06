@@ -6,6 +6,10 @@
 
 package ldbc.connector.exception
 
+import scala.collection.immutable.ListMap
+
+import ldbc.connector.data.Parameter
+
 /**
  * The subclass of {@link SQLException} thrown when an instance where a retry
  * of the same operation would fail unless the cause of the <code>SQLException</code>
@@ -18,5 +22,5 @@ class SQLNonTransientException(
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)
+  params:          ListMap[Int, Parameter] = ListMap.empty,
+) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, params)

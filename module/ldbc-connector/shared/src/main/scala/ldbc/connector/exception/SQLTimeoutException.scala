@@ -20,5 +20,4 @@ class SQLTimeoutException(
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)
+) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint)

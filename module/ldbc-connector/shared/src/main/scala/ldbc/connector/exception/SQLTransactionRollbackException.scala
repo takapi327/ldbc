@@ -6,6 +6,10 @@
 
 package ldbc.connector.exception
 
+import scala.collection.immutable.ListMap
+
+import ldbc.connector.data.Parameter
+
 /**
  * The subclass of {@link SQLException} thrown when the SQLState class value
  * is '<i>40</i>', or under vendor-specified conditions. This indicates that the
@@ -19,5 +23,5 @@ class SQLTransactionRollbackException(
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)
+  params:          ListMap[Int, Parameter] = ListMap.empty,
+) extends SQLTransientException(message, sqlState, vendorCode, sql, detail, hint, params)

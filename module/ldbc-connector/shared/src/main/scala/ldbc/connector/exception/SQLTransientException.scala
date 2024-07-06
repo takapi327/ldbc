@@ -6,6 +6,10 @@
 
 package ldbc.connector.exception
 
+import scala.collection.immutable.ListMap
+
+import ldbc.connector.data.Parameter
+
 /**
  * The subclass of {@link SQLException} is thrown in situations where a
  * previously failed operation might be able to succeed when the operation is
@@ -18,5 +22,5 @@ class SQLTransientException(
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)
+  params:          ListMap[Int, Parameter] = ListMap.empty,
+) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, params)

@@ -26,14 +26,7 @@ class BatchUpdateException(
   sql:              Option[String] = None,
   detail:           Option[String] = None,
   hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket):
-
-  override def getMessage: String =
-    s"Message: $message, Update Counts: [${ updateCounts.mkString(",") }]${ sqlState
-        .fold("")(s => s", SQLState: $s") }${ vendorCode.fold("")(c => s", Vendor Code: $c") }${ sql
-        .fold("")(s => s", SQL: $s") }${ detail.fold("")(d => s", Detail: $d") }${ hint
-        .fold("")(h => s", Hint: $h") }${ originatedPacket.fold("")(p => s", Point of Origin: $p") }"
+) extends SQLException(message, sqlState, vendorCode, sql, detail, hint):
 
   /**
    * Summarize error information into attributes.
@@ -49,6 +42,5 @@ class BatchUpdateException(
     sql.foreach(a => builder += Attribute("error.sql", a))
     detail.foreach(a => builder += Attribute("error.detail", a))
     hint.foreach(a => builder += Attribute("error.hint", a))
-    originatedPacket.foreach(packet => builder += Attribute("error.originatedPacket", packet))
 
     builder.result()
