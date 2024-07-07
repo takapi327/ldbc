@@ -6,17 +6,21 @@
 
 package ldbc.connector.exception
 
+import scala.collection.immutable.ListMap
+
+import ldbc.connector.data.Parameter
+
 /**
  * The subclass of {@link SQLException} is thrown in situations where a
  * previously failed operation might be able to succeed when the operation is
  * retried without any intervention by application-level functionality.
  */
 class SQLTransientException(
-  message:          String,
-  sqlState:         Option[String] = None,
-  vendorCode:       Option[Int]    = None,
-  sql:              Option[String] = None,
-  detail:           Option[String] = None,
-  hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
-) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, originatedPacket)
+  message:    String,
+  sqlState:   Option[String]          = None,
+  vendorCode: Option[Int]             = None,
+  sql:        Option[String]          = None,
+  detail:     Option[String]          = None,
+  hint:       Option[String]          = None,
+  params:     ListMap[Int, Parameter] = ListMap.empty
+) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, params)

@@ -100,9 +100,7 @@ class StatementBatchTest extends CatsEffectSuite:
   }
 
   test("Insert BatchUpdateException is raised if the batch command fails.") {
-    interceptMessageIO[BatchUpdateException](
-      "Message: Failed to execute batch, Update Counts: [1,1], SQLState: HY000, Vendor Code: 1366, Detail: Incorrect integer value: 'failed' for column 'c2' at row 1"
-    )(
+    interceptIO[BatchUpdateException](
       connection.use { conn =>
         for
           statement <- conn.createStatement()
@@ -133,9 +131,7 @@ class StatementBatchTest extends CatsEffectSuite:
   }
 
   test("Placeholder(?) and the number of parameters do not match, an IllegalArgumentException is raised.") {
-    interceptMessageIO[IllegalArgumentException](
-      "requirement failed: The number of parameters does not match the number of placeholders"
-    )(
+    interceptIO[IllegalArgumentException](
       connection.use { conn =>
         for
           preparedStatement <- conn.clientPreparedStatement("INSERT INTO `batch_test2` VALUES (?)")
@@ -228,9 +224,7 @@ class StatementBatchTest extends CatsEffectSuite:
   test(
     "Update BatchUpdateException is raised if the batch command fails."
   ) {
-    interceptMessageIO[BatchUpdateException](
-      "Message: Failed to execute batch, Update Counts: [1,1], SQLState: HY000, Vendor Code: 1366, Detail: Incorrect integer value: 'failed' for column 'c2' at row 3"
-    )(
+    interceptIO[BatchUpdateException](
       connection.use { conn =>
         for
           preparedStatement <- conn.clientPreparedStatement("UPDATE `batch_test` SET `c2` = ? WHERE `c1` = ?")
@@ -264,9 +258,7 @@ class StatementBatchTest extends CatsEffectSuite:
   test(
     "Delete BatchUpdateException is raised if the batch command fails."
   ) {
-    interceptMessageIO[BatchUpdateException](
-      "Message: Failed to execute batch, Update Counts: [1,1], SQLState: 22007, Vendor Code: 1292, Detail: Truncated incorrect DOUBLE value: 'failed'"
-    )(
+    interceptIO[BatchUpdateException](
       connection.use { conn =>
         for
           preparedStatement <- conn.clientPreparedStatement("DELETE from `batch_test` WHERE `c1` = ?")

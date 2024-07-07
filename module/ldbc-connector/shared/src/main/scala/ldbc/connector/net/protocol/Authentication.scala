@@ -39,7 +39,18 @@ trait Authentication[F[_]]:
       case "mysql_native_password" => Right(MysqlNativePasswordPlugin())
       case "sha256_password"       => Right(Sha256PasswordPlugin())
       case "caching_sha2_password" => Right(CachingSha2PasswordPlugin(version))
-      case _ => Left(new SQLInvalidAuthorizationSpecException(s"Unknown authentication plugin: $pluginName"))
+      case unknown =>
+        Left(
+          new SQLInvalidAuthorizationSpecException(
+            s"Unknown authentication plugin: $pluginName",
+            detail = Some(
+              "This error may be due to lack of support on the ldbc side or a newly added plugin on the MySQL side."
+            ),
+            hint = Some(
+              "Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=feature_request.md&title="
+            )
+          )
+        )
 
   /**
    * Start the authentication process.

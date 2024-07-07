@@ -67,7 +67,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
                             )
               _ <- currentResultSet.set(Some(resultSet))
             yield resultSet
-          case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+          case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -112,7 +112,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket =>
               lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+            case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
             case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
           }
       )

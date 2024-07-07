@@ -63,7 +63,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       protocol.send(ComQueryPacket("SELECT USER()", protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
         case _: OKPacket      => ev.pure("")
-        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", "SELECT USER()"))
+        case error: ERRPacket => ev.raiseError(error.toException(Some("SELECT USER()"), None))
         case result: ColumnsNumberPacket =>
           for
             columnDefinitions <-
@@ -116,8 +116,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         case error: ERRPacket =>
           ev.raiseError(
             error.toException(
-              "Failed to execute query",
-              "SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD"
+              Some("SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD"),
+              None
             )
           )
         case result: ColumnsNumberPacket =>

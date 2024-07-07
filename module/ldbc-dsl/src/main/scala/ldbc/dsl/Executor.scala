@@ -6,7 +6,7 @@
 
 package ldbc.dsl
 
-import cats.{ Functor, Monad }
+import cats.{ Functor, Monad, MonadError }
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -85,13 +85,18 @@ object Executor:
       override def rollback(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
       override def transaction(connection:           Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
 
+  def raiseError[F[_]: Temporal, A](e: Throwable): Executor[F, A] =
+    new Executor[F, A]:
+      override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
+        MonadError[F, Throwable].raiseError(e)
+
   given [F[_]: Temporal]: Functor[[T] =>> Executor[F, T]] with
     override def map[A, B](fa: Executor[F, A])(f: A => B): Executor[F, B] =
       new Executor[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[B] =
           fa.execute(connection).map(f)
 
-  given [F[_]: Temporal]: Monad[[T] =>> Executor[F, T]] with
+  given [F[_]: Temporal]: MonadError[[T] =>> Executor[F, T], Throwable] with
     override def pure[A](x: A): Executor[F, A] = Executor.pure(x)
 
     override def flatMap[A, B](fa: Executor[F, A])(f: A => Executor[F, B]): Executor[F, B] =
@@ -100,7 +105,19 @@ object Executor:
           fa.execute(connection).flatMap(a => f(a).execute(connection))
 
     override def tailRecM[A, B](a: A)(f: A => Executor[F, Either[A, B]]): Executor[F, B] =
-      f(a).flatMap {
-        case Right(b) => pure(b)
-        case Left(a)  => tailRecM(a)(f)
-      }
+      new Executor[F, B]:
+        override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
+          MonadError[F, Throwable].tailRecM(a)(a => f(a).execute(connection))
+
+    override def ap[A, B](ff: Executor[F, A => B])(fa: Executor[F, A]): Executor[F, B] =
+      new Executor[F, B]:
+        override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
+          (ff.execute(connection), fa.execute(connection)).mapN(_(_))
+
+    override def raiseError[A](e: Throwable): Executor[F, A] =
+      Executor.raiseError(e)
+
+    override def handleErrorWith[A](fa: Executor[F, A])(f: Throwable => Executor[F, A]): Executor[F, A] =
+      new Executor[F, A]:
+        override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
+          fa.execute(connection).handleErrorWith(e => f(e).execute(connection))
