@@ -1,5 +1,3 @@
-import scala.language.implicitConversions
-
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -20,15 +18,15 @@ import ldbc.dsl.logging.LogHandler
   // #given
 
   // #customType
-  enum TaskStatus(val code: Short, val name: String):
-    case Pending extends TaskStatus(1, "Pending")
-    case Done   extends TaskStatus(2, "Done")
+  enum TaskStatus(val done: Boolean, val name: String):
+    case Pending extends TaskStatus(false, "Pending")
+    case Done   extends TaskStatus(true, "Done")
   // #customType
 
   // #customParameter
   given Parameter[TaskStatus] with
     override def bind[F[_]](statement: PreparedStatement[F], index: Int, status: TaskStatus): F[Unit] =
-      statement.setShort(index, status.code)
+      statement.setBoolean(index, status.done)
   // #customParameter
 
   // #program1
@@ -38,9 +36,9 @@ import ldbc.dsl.logging.LogHandler
 
   // #customReader
   given ResultSetReader[IO, TaskStatus] =
-    ResultSetReader.mapping[IO, Short, TaskStatus] {
-      case TaskStatus.Pending.code => TaskStatus.Pending
-      case TaskStatus.Done.code    => TaskStatus.Done
+    ResultSetReader.mapping[IO, Boolean, TaskStatus] {
+      case true  => TaskStatus.Done
+      case false => TaskStatus.Pending
     }
   // #customReader
 

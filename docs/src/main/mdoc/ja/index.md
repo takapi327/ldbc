@@ -14,7 +14,6 @@
  * [Schema Code Generation](./13-Schema-Code-Generation.md)
  * [Performance](./14-Perdormance.md)
  * [Connector OLD](./15-Connector.md)
- * [Custom Data Type](./02-Custom-Data-Type.md)
 @@@
 
 # ldbc (Lepus Database Connectivity)

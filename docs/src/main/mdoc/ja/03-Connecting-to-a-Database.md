@@ -18,7 +18,6 @@ ldbcを使う前に、いくつかのシンボルをインポートする必要�
 
 ```scala
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
 ```
 
 Catsも連れてこよう。

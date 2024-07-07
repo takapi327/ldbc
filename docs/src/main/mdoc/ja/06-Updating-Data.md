@@ -28,6 +28,10 @@ services:
 
 @@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setup }
 
+**Scala CLIで実行**
+
+このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
+
 ```shell
 scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala
 ```
