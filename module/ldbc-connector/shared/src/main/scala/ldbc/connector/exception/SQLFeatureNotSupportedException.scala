@@ -25,3 +25,12 @@ class SQLFeatureNotSupportedException(
   detail:     Option[String] = None,
   hint:       Option[String] = None
 ) extends SQLNonTransientException(message, sqlState, vendorCode, sql, detail, hint)
+
+object SQLFeatureNotSupportedException:
+
+  def submitIssues(message: String, detail: Option[String]): SQLFeatureNotSupportedException =
+    new SQLFeatureNotSupportedException(
+      message, 
+      detail = detail,
+      hint = Some("Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=")
+    )
