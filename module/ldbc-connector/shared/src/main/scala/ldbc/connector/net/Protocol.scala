@@ -296,13 +296,21 @@ object Protocol:
                 password,
                 scrambleBuff.getOrElse(initialPacket.scrambleBuff)
               ) *> readUntilOk(plugin, password)
-            case _ => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected authentication method"))
+            case unknown => ev.raiseError(new SQLInvalidAuthorizationSpecException(
+              s"Unexpected authentication method: $unknown",
+              detail = Some("This error may be due to lack of support on the ldbc side or a newly added plugin on the MySQL side."),
+              hint = Some("Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=")
+            ))
         case more: AuthMoreDataPacket        => readUntilOk(plugin, password)
         case packet: AuthSwitchRequestPacket => changeAuthenticationMethod(packet, password)
         case _: OKPacket                     => ev.unit
-        case error: ERRPacket                => ev.raiseError(error.toException("Connection error"))
+        case error: ERRPacket                => ev.raiseError(error.toException(s"Check that the ${hostInfo.host}:${hostInfo.port} server is running or that the authentication information, etc. used for the connection is correct."))
         case unknown: UnknownPacket          => ev.raiseError(unknown.toException("Error during database operation"))
-        case _ => ev.raiseError(new SQLInvalidAuthorizationSpecException("Unexpected packet"))
+        case unknown => ev.raiseError(new SQLInvalidAuthorizationSpecException(
+          "Unexpected packets processed",
+          detail = Some("This error may be due to a lack of support on the ldbc side or a change in behaviour on the MySQL side."),
+          hint = Some("Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=")
+        ))
       }
 
     /**
@@ -524,4 +532,8 @@ object Protocol:
           capabilitiesFlags,
           sequenceIdRef
         )
-      case None => throw new SQLException("Initial packet is not set")
+      case None => throw new SQLException(
+        "Initial packet is not set",
+        detail = Some("This error may be due to a lack of support on the ldbc side or a change in behaviour on the MySQL side."),
+        hint = Some("Report Issues here: https://github.com/takapi327/ldbc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=")
+      )
