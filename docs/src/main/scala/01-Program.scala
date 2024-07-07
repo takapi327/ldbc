@@ -1,5 +1,3 @@
-import cats.syntax.all.*
-
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
@@ -7,7 +5,6 @@ import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.*
 import ldbc.dsl.Executor
-import ldbc.dsl.io.*
 import ldbc.dsl.logging.LogHandler
 
 @main def program1(): Unit =
@@ -31,7 +28,7 @@ import ldbc.dsl.logging.LogHandler
 
   // #run
   connection.use { conn =>
-    program.readOnly(conn)
+    program.readOnly(conn).map(println(_))
   }.unsafeRunSync()
   // 1
   // #run

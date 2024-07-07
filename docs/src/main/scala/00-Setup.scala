@@ -1,5 +1,3 @@
-import cats.syntax.all.*
-
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
@@ -45,6 +43,6 @@ import ldbc.dsl.logging.LogHandler
   connection.use { conn =>
     createDatabase.commit(conn) *>
       conn.setSchema("todo") *>
-      createTable.commit(conn)
+      createTable.commit(conn).map(println(_))
   }.unsafeRunSync()
   // #run

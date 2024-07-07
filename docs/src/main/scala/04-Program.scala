@@ -1,5 +1,3 @@
-import cats.syntax.all.*
-
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
@@ -33,7 +31,7 @@ import ldbc.dsl.logging.LogHandler
 
   // #run
   connection.use { conn =>
-    program.commit(conn)
+    program.commit(conn).map(println(_))
   }.unsafeRunSync()
-  // (List(1), Some(2), 3)
+  // 1
   // #run
