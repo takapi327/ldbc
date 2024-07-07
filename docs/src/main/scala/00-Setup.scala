@@ -18,7 +18,7 @@ import ldbc.dsl.logging.LogHandler
   // #setup
   val createDatabase: Executor[IO, Int] =
     sql"CREATE DATABASE IF NOT EXISTS todo".update
-  
+
   val createTable: Executor[IO, Int] =
     sql"""
          CREATE TABLE IF NOT EXISTS `task` (
@@ -40,9 +40,11 @@ import ldbc.dsl.logging.LogHandler
   // #connection
 
   // #run
-  connection.use { conn =>
-    createDatabase.commit(conn) *>
-      conn.setSchema("todo") *>
-      createTable.commit(conn).map(println(_))
-  }.unsafeRunSync()
+  connection
+    .use { conn =>
+      createDatabase.commit(conn) *>
+        conn.setSchema("todo") *>
+        createTable.commit(conn).map(println(_))
+    }
+    .unsafeRunSync()
   // #run

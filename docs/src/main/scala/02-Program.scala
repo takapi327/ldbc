@@ -14,11 +14,11 @@ import ldbc.dsl.logging.LogHandler
   given Tracer[IO]     = Tracer.noop[IO]
   given LogHandler[IO] = LogHandler.noop[IO]
   // #given
-  
+
   // #program
   val program: Executor[IO, Option[Int]] = sql"SELECT 2".query[Int].to[Option]
   // #program
-  
+
   // #connection
   def connection = Connection[IO](
     host     = "127.0.0.1",
@@ -29,8 +29,10 @@ import ldbc.dsl.logging.LogHandler
   // #connection
 
   // #run
-  connection.use { conn =>
-    program.readOnly(conn).map(println(_))
-  }.unsafeRunSync()
+  connection
+    .use { conn =>
+      program.readOnly(conn).map(println(_))
+    }
+    .unsafeRunSync()
   // Some(2)
   // #run

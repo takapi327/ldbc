@@ -1,3 +1,5 @@
+import scala.language.implicitConversions
+
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -20,7 +22,7 @@ import ldbc.dsl.logging.LogHandler
   // #customType
   enum TaskStatus(val done: Boolean, val name: String):
     case Pending extends TaskStatus(false, "Pending")
-    case Done   extends TaskStatus(true, "Done")
+    case Done    extends TaskStatus(true, "Done")
   // #customType
 
   // #customParameter
@@ -31,7 +33,7 @@ import ldbc.dsl.logging.LogHandler
 
   // #program1
   val program1: Executor[IO, Int] =
-    sql"INSERT INTO task (name, done) VALUES (${"task 1"}, ${TaskStatus.Done})".update
+    sql"INSERT INTO task (name, done) VALUES (${ "task 1" }, ${ TaskStatus.Done })".update
   // #program1
 
   // #customReader
@@ -57,8 +59,10 @@ import ldbc.dsl.logging.LogHandler
   // #connection
 
   // #run
-  connection.use { conn =>
-    program1.commit(conn) *> program2.readOnly(conn).map(println(_))
-  }.unsafeRunSync()
+  connection
+    .use { conn =>
+      program1.commit(conn) *> program2.readOnly(conn).map(println(_))
+    }
+    .unsafeRunSync()
   // ("task 1", Done)
   // #run

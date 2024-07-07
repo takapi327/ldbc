@@ -30,8 +30,10 @@ import ldbc.dsl.logging.LogHandler
   // #connection
 
   // #run
-  connection.use { conn =>
-    program.commit(conn).map(println(_))
-  }.unsafeRunSync()
+  connection
+    .use { conn =>
+      program.commit(conn).map(println(_))
+    }
+    .unsafeRunSync()
   // 1
   // #run
