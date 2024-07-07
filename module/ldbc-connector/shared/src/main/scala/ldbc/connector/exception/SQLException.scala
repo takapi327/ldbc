@@ -120,7 +120,7 @@ class SQLException(
   protected def sections: List[String] =
     List(header, statement, args)
 
-  final override def getMessage =
+  final override def getMessage: String =
     sections.combineAll.linesIterator
       .map("🔥  " + _)
       .mkString("\n", "\n", s"\n\n${ getClass.getName }: $message")
