@@ -8,7 +8,7 @@ package ldbc.connector
 
 import ldbc.sql.Savepoint
 
-import ldbc.connector.exception.SQLException
+import ldbc.connector.exception.SQLFeatureNotSupportedException
 
 /**
  * Represents SQL SAVEPOINTS in MySQL.
