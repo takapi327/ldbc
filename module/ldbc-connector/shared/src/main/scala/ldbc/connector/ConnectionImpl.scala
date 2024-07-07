@@ -58,12 +58,12 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
 
   override def commit(): F[Unit] = isAutoCommit.get.flatMap { autoCommit =>
     if !autoCommit then createStatement().flatMap(_.executeQuery("COMMIT")).void
-    else ev.raiseError(new SQLNonTransientException("Can't call commit when autocommit=true"))
+    else ev.raiseError(new SQLNonTransientException("Can't call commit when autocommit=true", hint = Some("Use setAutoCommit(false) to disable autocommit.")))
   }
 
   override def rollback(): F[Unit] = isAutoCommit.get.flatMap { autoCommit =>
     if !autoCommit then createStatement().flatMap(_.executeQuery("ROLLBACK")).void
-    else ev.raiseError(new SQLNonTransientException("Can't call rollback when autocommit=true"))
+    else ev.raiseError(new SQLNonTransientException("Can't call rollback when autocommit=true", hint = Some("Use setAutoCommit(false) to disable autocommit.")))
   }
 
   override def close(): F[Unit] = getAutoCommit().flatMap { autoCommit =>
@@ -117,7 +117,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
       case Connection.TRANSACTION_SERIALIZABLE =>
         createStatement().flatMap(_.executeQuery("SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE")).void
       case unknown =>
-        ev.raiseError(new SQLFeatureNotSupportedException(s"Unknown transaction isolation level $unknown"))
+        ev.raiseError(SQLFeatureNotSupportedException.submitIssues(s"Unknown transaction isolation level $unknown", Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE")))
 
   override def getTransactionIsolation(): F[Int] =
     for
@@ -129,8 +129,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
       case Some("READ-COMMITTED")   => Connection.TRANSACTION_READ_COMMITTED
       case Some("REPEATABLE-READ")  => Connection.TRANSACTION_REPEATABLE_READ
       case Some("SERIALIZABLE")     => Connection.TRANSACTION_SERIALIZABLE
-      case Some(unknown) => throw new SQLFeatureNotSupportedException(s"Unknown transaction isolation level $unknown")
-      case None          => throw new SQLFeatureNotSupportedException("Unknown transaction isolation level")
+      case Some(unknown) => throw SQLFeatureNotSupportedException.submitIssues(s"Unknown transaction isolation level $unknown", Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE"))
+      case None          => throw SQLFeatureNotSupportedException.submitIssues("Unknown transaction isolation level", Some("Expected READ-UNCOMMITTED, READ-COMMITTED, REPEATABLE-READ, or SERIALIZABLE"))
 
   override def createStatement(resultSetType: Int, resultSetConcurrency: Int): F[Statement[F]] =
     for
