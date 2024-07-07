@@ -180,6 +180,13 @@ package object dsl:
     export ldbc.dsl.Executor
 
     export ldbc.dsl.logging.LogHandler
+    export ldbc.dsl.Parameter
+    
+    type ResultSetReaderIO[T] = ldbc.dsl.ResultSetReader[F, T]
+    export ldbc.dsl.ResultSetReader
+    
+    type PreparedStatementIO = ldbc.sql.PreparedStatement[F]
+    export ldbc.sql.PreparedStatement
 
   /**
    * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
