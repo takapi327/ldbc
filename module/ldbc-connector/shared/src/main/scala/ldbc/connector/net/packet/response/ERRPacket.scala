@@ -7,6 +7,8 @@
 package ldbc.connector.net.packet
 package response
 
+import scala.collection.immutable.ListMap
+
 import scodec.*
 import scodec.codecs.*
 
@@ -53,90 +55,103 @@ case class ERRPacket(
 
   override def toString: String = "ERR_Packet"
 
-  def toException(message: String, sql: Option[String]): SQLException =
+  def toException(
+    sql:    Option[String],
+    detail: Option[String],
+    params: ListMap[Int, Parameter] = ListMap.empty
+  ): SQLException =
     sqlState match
       case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION) =>
         SQLTransientConnectionException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail,
+          params     = params
         )
       case Some(SQLState.DATA_EXCEPTION) =>
         SQLDataException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail,
+          params     = params
         )
       case Some(SQLState.INVALID_AUTHORIZATION_SPEC_EXCEPTION) =>
         SQLInvalidAuthorizationSpecException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail,
+          params     = params
         )
       case Some(SQLState.INTEGRITY_CONSTRAINT_VIOLATION_EXCEPTION) =>
         SQLIntegrityConstraintViolationException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail,
+          params     = params
         )
       case Some(SQLState.TRANSACTION_ROLLBACK_EXCEPTION) =>
         SQLTransactionRollbackException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail,
+          params     = params
         )
       case Some(SQLState.SYNTAX_ERROR_EXCEPTION) =>
         SQLSyntaxErrorException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail
         )
       case Some(SQLState.FEATURE_NOT_SUPPORTED_EXCEPTION) =>
         SQLFeatureNotSupportedException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail
         )
       case Some(_) =>
         SQLException(
-          message    = message,
+          message    = errorMessage,
           sqlState   = sqlState,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail,
+          params     = params
         )
       case None =>
         SQLException(
-          message    = message,
+          message    = errorMessage,
           vendorCode = Some(errorCode),
           sql        = sql,
-          detail     = Some(errorMessage)
+          detail     = detail,
+          params     = params
         )
 
-  def toException(message: String): SQLException = toException(message, None)
+  def toException: SQLException = toException(None, None)
 
-  def toException(message: String, sql: String): SQLException = toException(message, Some(sql))
+  def toException(message: String): SQLException = toException(None, Some(message))
+
+  def toException(message: String, sql: String): SQLException = toException(Some(sql), Some(message))
 
   def toException(message: String, updateCounts: Vector[Long]): SQLException = BatchUpdateException(
-    message      = message,
+    message      = errorMessage,
     updateCounts = updateCounts.toList,
     sqlState     = sqlState,
     vendorCode   = Some(errorCode),
-    detail       = Some(errorMessage)
+    detail       = Some(message)
   )
 
 object ERRPacket:

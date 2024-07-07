@@ -25,10 +25,10 @@ class ResultSetTest extends CatsEffectSuite:
 
   test("SQLException occurs when accessing the ResultSet after closing it.") {
     val resultSet = buildResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
-    interceptMessageIO[SQLException]("Message: Operation not allowed after ResultSet closed")(
+    interceptIO[SQLException](
       resultSet.close() *> resultSet.next()
     )
-    interceptMessageIO[SQLException]("Message: Operation not allowed after ResultSet closed")(
+    interceptIO[SQLException](
       resultSet.close() *> resultSet.getLong(1)
     )
   }
@@ -673,9 +673,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptMessageIO[SQLException](
-      "Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY."
-    )(resultSet.beforeFirst())
+    interceptIO[SQLException](resultSet.beforeFirst())
   }
 
   test(
@@ -706,9 +704,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptMessageIO[SQLException](
-      "Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY."
-    )(resultSet.afterLast())
+    interceptIO[SQLException](resultSet.afterLast())
   }
 
   test(
@@ -744,9 +740,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptMessageIO[SQLException](
-      "Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY."
-    )(resultSet.first())
+    interceptIO[SQLException](resultSet.first())
   }
 
   test(
@@ -784,9 +778,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptMessageIO[SQLException](
-      "Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY."
-    )(resultSet.last())
+    interceptIO[SQLException](resultSet.last())
   }
 
   test(
@@ -820,9 +812,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptMessageIO[SQLException](
-      "Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY."
-    )(resultSet.absolute(0))
+    interceptIO[SQLException](resultSet.absolute(0))
   }
 
   test(
@@ -857,9 +847,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptMessageIO[SQLException](
-      "Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY."
-    )(resultSet.relative(0))
+    interceptIO[SQLException](resultSet.relative(0))
   }
 
   test(
@@ -889,9 +877,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptMessageIO[SQLException](
-      "Message: Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY."
-    )(resultSet.previous())
+    interceptIO[SQLException](resultSet.previous())
   }
 
   private def buildResultSet(

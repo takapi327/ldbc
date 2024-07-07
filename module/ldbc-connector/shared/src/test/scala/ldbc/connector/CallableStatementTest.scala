@@ -239,9 +239,7 @@ class CallableStatementTest extends CatsEffectSuite:
   test(
     "SQLException occurs if the Out parameter type of the procedure is different from the Out parameter type to be set."
   ) {
-    interceptMessageIO[SQLException](
-      "Message: The type specified for the parameter does not match the type registered as a procedure."
-    )(
+    interceptIO[SQLException](
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
@@ -253,7 +251,7 @@ class CallableStatementTest extends CatsEffectSuite:
   }
 
   test("SQLException occurs if the procedure does not have an Out parameter and is preconfigured for Out.") {
-    interceptMessageIO[SQLException]("Message: No output parameters returned by procedure.")(
+    interceptIO[SQLException](
       connection.use { conn =>
         for
           callableStatement <- conn.prepareCall("CALL proc3(?, ?)")

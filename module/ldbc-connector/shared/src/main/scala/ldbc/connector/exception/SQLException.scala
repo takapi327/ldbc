@@ -6,7 +6,14 @@
 
 package ldbc.connector.exception
 
+import scala.collection.immutable.ListMap
+
+import cats.syntax.all.*
+
 import org.typelevel.otel4s.Attribute
+
+import ldbc.connector.data.Parameter
+import ldbc.connector.util.Pretty
 
 /**
  * <P>An exception that provides information on a database access
@@ -30,19 +37,14 @@ import org.typelevel.otel4s.Attribute
  * </UL>
  */
 class SQLException(
-  message:          String,
-  sqlState:         Option[String] = None,
-  vendorCode:       Option[Int]    = None,
-  sql:              Option[String] = None,
-  detail:           Option[String] = None,
-  hint:             Option[String] = None,
-  originatedPacket: Option[String] = None
+  message:    String,
+  sqlState:   Option[String]          = None,
+  vendorCode: Option[Int]             = None,
+  sql:        Option[String]          = None,
+  detail:     Option[String]          = None,
+  hint:       Option[String]          = None,
+  params:     ListMap[Int, Parameter] = ListMap.empty
 ) extends Exception:
-
-  override def getMessage: String =
-    s"Message: $message${ sqlState.fold("")(s => s", SQLState: $s") }${ vendorCode.fold("")(c => s", Vendor Code: $c") }${ sql
-        .fold("")(s => s", SQL: $s") }${ detail.fold("")(d => s", Detail: $d") }${ hint
-        .fold("")(h => s", Hint: $h") }${ originatedPacket.fold("")(p => s", Point of Origin: $p") }"
 
   /**
    * Summarize error information into attributes.
@@ -57,6 +59,68 @@ class SQLException(
     sql.foreach(a => builder += Attribute("error.sql", a))
     detail.foreach(a => builder += Attribute("error.detail", a))
     hint.foreach(a => builder += Attribute("error.hint", a))
-    originatedPacket.foreach(packet => builder += Attribute("error.originatedPacket", packet))
+
+    params.foreach {
+      case (i, p) =>
+        builder += Attribute(s"error.parameter.$i.type", p.columnDataType.name)
+        builder += Attribute(s"error.parameter.$i.value", p.toString)
+    }
 
     builder.result()
+
+  protected def width = 80 // wrap here
+
+  def labeled(label: String, s: String): String =
+    if s.isEmpty then ""
+    else
+      "\n|" +
+        label + Console.CYAN + Pretty.wrap(
+          width - label.length,
+          s,
+          s"${ Console.RESET }\n${ Console.CYAN }" + label.map(_ => ' ')
+        ) + Console.RESET
+
+  protected def title: String =
+    s"MySQL ERROR${ vendorCode.fold("")(code => s" code $code") }${ sqlState.fold("")(state => s" ($state)") }"
+
+  protected def header: String =
+    s"""|
+          |$title
+          |${ labeled("  Problem: ", message) }${ labeled("  Detail: ", detail.orEmpty) }${ labeled(
+         "     Hint: ",
+         hint.orEmpty
+       ) }
+          |
+          |""".stripMargin
+
+  protected def statement: String =
+    sql.foldMap { sql =>
+      s"""|The statement under consideration is
+          |
+          |  ${ Console.GREEN }$sql${ Console.RESET }
+          |
+          |""".stripMargin
+    }
+
+  protected def args: String =
+
+    def formatValue(s: String) =
+      s"${ Console.GREEN }$s${ Console.RESET }"
+
+    if params.isEmpty then ""
+    else
+      s"""|and the arguments were
+          |
+          |  ${ params
+           .map { case (i, p) => f"$$$i ${ p.columnDataType.name }%-10s ${ formatValue(p.toString) }" }
+           .mkString("\n|  ") }
+          |
+          |""".stripMargin
+
+  protected def sections: List[String] =
+    List(header, statement, args)
+
+  final override def getMessage: String =
+    sections.combineAll.linesIterator
+      .map("🔥  " + _)
+      .mkString("\n", "\n", s"\n\n${ getClass.getName }: $message")

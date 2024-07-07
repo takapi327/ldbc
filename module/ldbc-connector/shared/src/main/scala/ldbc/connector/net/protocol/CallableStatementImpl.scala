@@ -132,7 +132,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
             ) *>
               sendQuery(buildQuery(sql, params)).flatMap {
                 case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
-                case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
                 case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
               }
           }
@@ -160,7 +160,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               ) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
                   case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
-                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                  case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
                   case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                 }
             }
@@ -212,7 +212,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                   sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
                     .flatMap {
                       case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                      case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
                       case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                     }
                 case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
@@ -318,7 +318,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                   (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
                 sendQuery(sql).flatMap {
                   case _: OKPacket      => ev.unit
-                  case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+                  case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
                   case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
                 }
               }
@@ -562,7 +562,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
   private def receiveUntilOkPacket(resultSets: Vector[ResultSetImpl[F]]): F[Vector[ResultSetImpl[F]]] =
     protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
       case _: OKPacket      => resultSets.pure[F]
-      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+      case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
       case result: ColumnsNumberPacket =>
         for
           columnDefinitions <-
@@ -610,7 +610,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
             resultSetCurrentCursor,
             resultSetCurrentRow
           )
-      case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+      case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
       case result: ColumnsNumberPacket =>
         for
           columnDefinitions <-
@@ -684,7 +684,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
             sendQuery(sql).flatMap {
               case _: OKPacket      => ev.unit
-              case error: ERRPacket => ev.raiseError(error.toException("Failed to execute query", sql))
+              case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
               case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
             }
           }
