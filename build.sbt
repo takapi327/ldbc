@@ -217,7 +217,7 @@ lazy val docs = (project in file("docs"))
     connector.jvm,
     schema.jvm
   )
-  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin, NoPublishPlugin)
+  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
