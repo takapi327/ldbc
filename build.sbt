@@ -197,6 +197,7 @@ lazy val benchmark = (project in file("benchmark"))
 lazy val docs = (project in file("docs"))
   .settings(
     description   := "Documentation for ldbc",
+    scalacOptions := Seq("-feature"),
     mdocIn        := baseDirectory.value / "src" / "main" / "mdoc",
     paradoxTheme  := Some(builtinParadoxTheme("generic")),
     paradoxProperties ++= Map(
