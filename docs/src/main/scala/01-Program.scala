@@ -4,8 +4,7 @@ import cats.effect.unsafe.implicits.global
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.*
-import ldbc.dsl.Executor
-import ldbc.dsl.logging.LogHandler
+import ldbc.dsl.io.*
 
 @main def program1(): Unit =
   // #given
