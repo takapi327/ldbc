@@ -40,9 +40,11 @@ services:
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
+@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
 ```
+@@@
 
 ldbcでは、クラスを使用してクエリを構築します。
 

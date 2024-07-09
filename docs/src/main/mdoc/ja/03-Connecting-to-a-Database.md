@@ -55,9 +55,11 @@ Executorは、データベースへの接続方法、接続の受け渡し方法
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
+@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-Program.scala
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
 ```
+@@@
 
 ## 2つめのプログラム
 
@@ -75,9 +77,11 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-P
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
+@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
 ```
+@@@
 
 ## 3つめのプログラム
 
@@ -93,9 +97,11 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-P
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
+@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
 ```
+@@@
 
 ## 4つめのプログラム
 
@@ -111,6 +117,8 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-P
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
+@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
 ```
+@@@
