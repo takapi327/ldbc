@@ -11,3 +11,5 @@ target/
 .vscode/
 metals.sbt
 
+# for Scala CLI
+**/.scala-build/
