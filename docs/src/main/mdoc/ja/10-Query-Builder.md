@@ -34,7 +34,6 @@ services:
 
 次に、データベースの初期化を行います。以下のコードを使用して、データベースに接続し必要なテーブルを作成します。
 
-@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setup }
 
 **Scala CLIで実行**
 

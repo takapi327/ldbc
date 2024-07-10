@@ -4,11 +4,76 @@
 
 ## セットアップ
 
-まず、`build.sbt`に依存関係を追加します。
+まず、データベースを起動します。以下のコードを使用して、データベースを起動します。
 
 @@@ vars
-```scala
-libraryDependencies += "$org$" %% "ldbc-dsl" % "$version$"
+```yaml
+version: '3'
+services:
+  mysql:
+    image: mysql:"$mysqlVersion$"
+    container_name: ldbc
+    environment:
+      MYSQL_USER: 'ldbc'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+    ports:
+      - 13306:3306
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+```
+@@@
+
+
+次に、データベースの初期化を行います。
+
+以下コードのようにデータベースの作成を行います。
+
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setupDatabase }
+
+次に、テーブルの作成を行います。
+
+ここでは「ユーザー（user）」、「注文（order）」、「製品（product）」の3つのテーブルを使用した各ユーザーが複数の注文を行い、各注文が特定の製品に関連付けられている状況をシミュレートします。
+
+**ユーザー（user）**
+
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setupUser }
+
+**注文（order）**
+
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setupProduct }
+
+**製品（product）**
+
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setupOrder }
+
+それぞれのテーブルにデータを挿入します。
+
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #insertUser }
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #insertProduct }
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #insertOrder }
+
+そしてデータベースに接続するためのコネクタを作成する。コネクタは、データベースへの接続を管理するためのリソースである。コネクタは、データベースへの接続を開始し、クエリを実行し、接続を閉じるためのリソースを提供する。
+
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #connection }
+
+最後に、データベースに接続して値を返すプログラムを書く。このプログラムは、データベースに接続し、クエリを実行し、結果を取得する。
+
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setupTable }
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #insertData }
+@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #run }
+
+**Scala CLIで実行**
+
+このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
+
+@@@ vars
+```shell
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:$version$ --dependency io.github.takapi327::ldbc-connector:$version$
 ```
 @@@
 
