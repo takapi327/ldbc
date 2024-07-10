@@ -48,35 +48,45 @@ For people that want to skip the explanations and see it action, this is the pla
 
 ### Dependency Configuration
 
+@@@ vars
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "${version}"
+libraryDependencies += "$org$" %% "ldbc-dsl" % "$version$"
 ```
+@@@
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
+@@@ vars
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "${version}"
+libraryDependencies += "$org$" %%% "ldbc-dsl" % "$version$"
 ```
+@@@
 
 The dependency package used depends on whether the database connection is made via a connector using the Java API or a connector provided by ldbc.
 
 **Use jdbc connector**
 
+@@@ vars
 ```scala
-libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "${version}"
+libraryDependencies += "$org$" %% "jdbc-connector" % "$version$"
 ```
+@@@
 
 **Use ldbc connector**
 
+@@@ vars
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "${version}"
+libraryDependencies += "$org$" %% "ldbc-connector" % "$version$"
 ```
+@@@
 
 For Cross-Platform projects (JVM, JS, and/or Native)
 
+@@@ vars
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "${version}"
+libraryDependencies += "$org$" %%% "ldbc-connector" % "$version$"
 ```
+@@@
 
 ### Usage
 
@@ -172,15 +182,19 @@ ldbc also allows type-safe construction of schema information for tables.
 
 The first step is to set up dependencies.
 
+@@@ vars
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "${version}"
+libraryDependencies += "$org$" %% "ldbc-schema" % "$version$"
 ```
+@@@
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
+@@@ vars
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "${version}"
+libraryDependencies += "$org$" %%% "ldbc-schema" % "$version$"
 ```
+@@@
 
 The next step is to create a schema for use by the query builder.
 
