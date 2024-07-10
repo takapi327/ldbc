@@ -16,7 +16,6 @@ import munit.*
 
 import ldbc.sql.Connection
 import ldbc.connector.SSL
-import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
@@ -47,7 +46,6 @@ class JdbcDDLTest extends DDLTest:
 trait DDLTest extends CatsEffectSuite:
 
   given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
 
   def connection: Resource[IO, Connection[IO]]
 

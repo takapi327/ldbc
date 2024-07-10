@@ -21,7 +21,6 @@ import munit.CatsEffectSuite
 import ldbc.sql.Connection
 import ldbc.connector.SSL
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Resource[IO, Connection[IO]] =
@@ -48,7 +47,6 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 trait SQLStringContextQueryTest extends CatsEffectSuite:
 
   given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
 
   def connection: Resource[IO, Connection[IO]]
 

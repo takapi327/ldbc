@@ -19,7 +19,6 @@ import munit.CatsEffectSuite
 import ldbc.sql.Connection
 import ldbc.connector.SSL
 import ldbc.dsl.io.*
-import ldbc.dsl.logging.LogHandler
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
@@ -50,7 +49,6 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
   given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
 
   def prefix: "jdbc" | "ldbc"
 

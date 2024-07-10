@@ -20,8 +20,6 @@ import munit.*
 
 import ldbc.sql.*
 import ldbc.connector.SSL
-import ldbc.dsl.Executor
-import ldbc.dsl.logging.LogHandler
 import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
@@ -58,7 +56,6 @@ class JdbcTableQueryUpdateConnectionTest extends TableQueryUpdateConnectionTest:
 trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
 
   def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
