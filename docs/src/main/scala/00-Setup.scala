@@ -110,10 +110,10 @@ import ldbc.dsl.io.*
   )
   // #connection
 
-  // #setupTables
+  // #setupTable
   val setUpTables =
     createUser *> createProduct *> createOrder
-  // #setupTables
+  // #setupTable
 
   // #insertData
   val insertData =
