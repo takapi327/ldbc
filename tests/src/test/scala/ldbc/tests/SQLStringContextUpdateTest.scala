@@ -48,7 +48,7 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
-  given Tracer[IO]     = Tracer.noop[IO]
+  given Tracer[IO] = Tracer.noop[IO]
 
   def prefix: "jdbc" | "ldbc"
 

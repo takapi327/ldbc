@@ -53,7 +53,7 @@ class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
 trait TableQuerySelectConnectionTest extends CatsEffectSuite:
 
-  given Tracer[IO]     = Tracer.noop[IO]
+  given Tracer[IO] = Tracer.noop[IO]
 
   def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]

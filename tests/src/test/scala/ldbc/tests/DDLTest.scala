@@ -45,7 +45,7 @@ class JdbcDDLTest extends DDLTest:
 
 trait DDLTest extends CatsEffectSuite:
 
-  given Tracer[IO]     = Tracer.noop[IO]
+  given Tracer[IO] = Tracer.noop[IO]
 
   def connection: Resource[IO, Connection[IO]]
 
