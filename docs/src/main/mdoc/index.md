@@ -18,10 +18,6 @@ ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effec
 
 ldbc is a [Typelevel](http://typelevel.org/) project. This means we embrace pure, typeful, functional programming, and provide a safe and friendly environment for teaching, learning, and contributing as described in the Scala [Code of Conduct](http://scala-lang.org/conduct.html).
 
-ldbc is Created under the influence of [tapir](https://github.com/softwaremill/tapir), a declarative, type-safe web endpoint library. Using tapir, you can build type-safe endpoints and also generate OpenAPI documentation from the endpoints you build.
-
-ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.
-
 Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
 
 ## Modules availability
@@ -141,37 +137,43 @@ val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
 
 ldbc provides not only plain queries but also type-safe database connections using the query builder.
 
-The first step is to create a schema for use by the query builder.
-
-ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+The first step is to set up dependencies.
 
 ```scala
+libraryDependencies += "io.github.takapi327" %% "ldbc-query-builder" % "${version}"
+```
+
+For Cross-Platform projects (JVM, JS, and/or Native):
+
+```scala
+libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "${version}"
+```
+
+ldbc uses classes to construct queries.
+
+```scala
+import ldbc.query.builder.Table
+
 case class User(
   id: Long,
   name: String,
   age: Option[Int],
-)
-
-val table = Table[User]("user")(                     // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)              
+) derives Table
 ```
 
-The next step is to build a TableQuery using the schema you have created.
+The next step is to create a Table using the classes you have created.
 
 ```scala
-import ldbc.query.builder.TableQuery
+import ldbc.query.builder.Table
 
-val userQuery = TableQuery[User](table)
+val userTable = Table[User]
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
 val result: IO[List[User]] = connection.use { conn =>
-  userQuery.selectAll.toList[User].readOnly(conn)
+  userTable.selectAll.query[User].to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
 ```
@@ -182,19 +184,15 @@ ldbc also allows type-safe construction of schema information for tables.
 
 The first step is to set up dependencies.
 
-@@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-schema" % "$version$"
+libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "${version}"
 ```
-@@@
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
-@@@ vars
 ```scala
-libraryDependencies += "$org$" %%% "ldbc-schema" % "$version$"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "${version}"
 ```
-@@@
 
 The next step is to create a schema for use by the query builder.
 
@@ -231,54 +229,6 @@ Full documentation can be found at Currently available in English and Japanese.
 
 - [English](/ldbc/en/index.html)
 - [Japanese](/ldbc/ja/index.html)
-
-## Features/Roadmap
-
-Creating a MySQL connector project written in pure Scala3.
-
-JVM, JS and Native platforms are all supported.
-
-> [!IMPORTANT]
-> **ldbc** is currently focused on developing connectors written in pure Scala3 to work with JVM, JS and Native.
-> In the future, we also plan to rewrite existing functions based on a pure Scala3 connector.
-
-### Enhanced functionality and improved stability of the MySQL connector written in pure Scala3
-
-Most of the jdbc functionality used in other packages of ldbc at the moment could be implemented.
-
-However, not all jdbc APIs could be supported. Nor can we guarantee that it is proven and stable enough to operate in a production environment.
-
-We will continue to develop features and improve the stability of the ldbc connector to achieve the same level of stability and reliability as the jdbc connector.
-
-#### Connection pooling implementation
-
-- [ ] Failover Countermeasures
-
-#### Performance Verification
-
-- [ ] Comparison with JDBC
-- [ ] Comparison with other MySQL Scala libraries
-- [ ] Verification of operation in AWS and other infrastructure environments
-
-#### Other
-
-- [ ] Additional streaming implementation
-- [ ] Integration with java.sql API
-- [ ] etc...
-
-### Redesign of query builders and schema definitions
-
-Initially, ldbc was inspired by tapir to create a development system that could centralise Scala models, sql schemas and documentation by managing a single resource at the database level.
-
-In addition, database connection, query construction and document generation were to be used in combination with retrofitted packages, as the aim was to be able to integrate with other database systems.
-
-As a result, we feel that it has become difficult for users to use because of the various configurations required to build it.
-
-What users originally wanted from a database connectivity library was something simpler, easier and more intuitive to use.
-
-Initially, ldbc aimed to create documentation from the schema, so building the schema and query builder was not as simple as it could have been, as it required a complete description of the database data types and so on.
-
-It was therefore decided to redesign it to make it simpler and easier to use.
 
 ## Contributing
 
