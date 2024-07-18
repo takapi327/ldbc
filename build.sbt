@@ -4,6 +4,8 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
+import laika.ast.Path.Root
+
 import ScalaVersions.*
 import JavaVersions.*
 import BuildSettings.*
@@ -201,7 +203,12 @@ lazy val docs = (project in file("docs"))
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
       "MYSQL_VERSION" -> mysqlVersion
-    )
+    ),
+    laikaTheme := tlSiteHelium
+      .value
+      .site
+      .internalCSS(Root / "css" / "site.css")
+      .build
   )
   .settings(commonSettings)
   .dependsOn(
