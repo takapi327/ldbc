@@ -8,15 +8,11 @@ import ScalaVersions.*
 
 object Dependencies {
 
-  val cats       = "org.typelevel" %% "cats-core"   % "2.10.0"
   val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.4"
 
   val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
 
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
-
-  val circeYaml    = "io.circe" %% "circe-yaml"    % "0.15.2"
-  val circeGeneric = "io.circe" %% "circe-generic" % "0.14.9"
 
   val mysqlVersion = "8.4.0"
   val mysql        = "com.mysql" % "mysql-connector-j" % mysqlVersion
@@ -36,8 +32,4 @@ object Dependencies {
     "specs2-core",
     "specs2-junit"
   ).map("org.specs2" %% _ % specs2Version % Test)
-
-  val scalaTest = "org.scalatest" %% "scalatest" % "3.2.18" % Test
-
-  val mockito = "org.mockito" % "mockito-inline" % "5.2.0" % Test
 }
