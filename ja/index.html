@@ -1,132 +1,283 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="no-js" lang="en">
 
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="Typelevel Laika + Helium Theme" />
-  <title>ldbc</title>
-  
-  <meta name="author" content="ldbc contributors"/>
-  
-  <meta name="author" content="Takahiko Tominaga"/>
-  
-  
-  <meta name="description" content="Documentation for ldbc"/>
-  
-  
-  
-  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
-  
-  
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
-  
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
-  
-  <link rel="stylesheet" type="text/css" href="../helium/site/icofont.min.css" />
-    <link rel="stylesheet" type="text/css" href="../helium/site/laika-helium.css" />
-    <link rel="stylesheet" type="text/css" href="../css/site.css" />
-  <script src="../helium/site/laika-helium.js"></script>
-  
-  
-  <script> /* for avoiding page load transitions */ </script>
+<title>LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../ja/index.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
 </head>
 
 <body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
 
-<header id="top-bar" class="light-default dark-default">
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../ja/index.html" class="active">
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
+</ul>
+</div>
 
-  <div class="row">
-    <a id="nav-icon">
-      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
-    </a>
-    
-    
-  </div>
+</nav>
+</div>
 
-  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+<div class="off-canvas-content" data-off-canvas-content>
 
-  <div class="row links">
-    
-    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-  <g class="svg-shape">
-    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
-  </g>
-</svg></span></a>
-    
-    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
-    
-    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <g class="svg-shape">
-    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
-  </g>
-</svg></span></a>
-    
-  </div>  
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../ja/index.html" class="active">LDBC</a></div>
 
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
 </header>
 
-<nav id="sidebar">
+<div class="expanded row">
 
-  <div class="row">
-    
-    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-  <g class="svg-shape">
-    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
-  </g>
-</svg></span></a>
-    
-    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
-    
-    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <g class="svg-shape">
-    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
-  </g>
-</svg></span></a>
-    
-  </div>
-
-  
-  <ul class="nav-list">
-    <li class="level1 active nav-leaf"><a href="#">ldbc</a></li>
-    <li class="level1 nav-header">Tutorial</li>
-    <li class="level2 nav-leaf"><a href="tutorial/">Intro</a></li>
-    <li class="level1 nav-header">Reference</li>
-    <li class="level2 nav-leaf"><a href="reference/">Intro</a></li>
-  </ul>
-  
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../ja/index.html" class="active">
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
+</ul>
+</div>
 
 </nav>
+</div>
 
-<div id="container">
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
 
-  
-<nav id="page-nav">
-  <p class="header"><a href="#">ldbc</a></p>
+<span id="version-warning"></span>
 
-  <ul class="nav-list">
-  </ul>
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+</div>
+</div>
 
-  <p class="footer"></p>
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#ldbc" name="ldbc" class="anchor"><span class="anchor-link"></span></a>LDBC</h1>
+<p><strong>LDBC</strong>は1.0以前のソフトウェアであり、現在も活発に開発中であることに注意してください。新しいバージョンは以前のバージョンとバイナリ互換性がなくなってしまう可能性があります。</p>
+<h2><a href="#はじめに" name="はじめに" class="anchor"><span class="anchor-link"></span></a>はじめに</h2>
+<p>私たちのアプリケーション開発では大抵の場合データベースを使用します。<br>Scalaでデータベースアクセスを行う場合JDBCを使用する方法がありますが、ScalaにはこのJDBCをラップしたライブラリがいくつか存在しています。</p>
+<ul>
+  <li>関数型DSL (Slick, quill, zio-sql)</li>
+  <li>SQL文字列インターポレーター (Anorm, doobie)</li>
+</ul>
+<p>LDBCも同じくJDBCをラップしたライブラリであり、LDBCはそれぞれの側面を組み合わせたScala 3ライブラリで、型安全でリファクタブルなSQLインターフェイスを提供し、MySQLのデータベース上でのSQL式を表現できます。</p>
+<p>また、LDBCのコンセプトは、LDBCを使用することで単一リソースを管理することでScalaのモデルやsqlのスキーマ、ドキュメントを一元化できる開発を行えることです。</p>
+<p>このコンセプトは宣言的でタイプセーフなWebエンドポイントライブラリである<a href="https://github.com/softwaremill/tapir">tapir</a>から影響を受けました。<br>tapirを使用することで、型安全なエンドポイントを構築することができ、構築したエンドポイントからOpenAPIドキュメントを生成することもできます。</p>
+<p>LDBCはデータベース層でScalaを使用して、同じように型安全な構築を可能にし、構築されたものを使用してドキュメントの生成を行えるようにします。</p>
+<h2><a href="#なぜldbcなのか-" name="なぜldbcなのか-" class="anchor"><span class="anchor-link"></span></a>なぜLDBCなのか？</h2>
+<p>データベースを利用したアプリケーション開発では、様々な変更を継続的に行う必要があります。</p>
+<p>例えば、データベースに構築されたテーブルのどの情報をアプリケーションで扱うべきか、データ検索にはどのようなクエリが最適か、などである。</p>
+<p>テーブル定義にカラムを1つ追加するだけでも、SQLファイルの修正、対応するモデルへのプロパティの追加、データベースへの反映、ドキュメントの更新などが必要になります。</p>
+<p>他にも考慮すべきこと、修正すべきことなどたくさんあります。</p>
+<p>日々の開発の中で全てをメンテナンスし続けるのはとても大変なことであり、メンテナンス漏れだって起こるかもしれません。</p>
+<p>テーブル情報をアプリケーション・モデルにマッピングすることなく、プレーンなSQLでデータを取得し、データを取得する際には指定された型で取得するというアプローチは非常に良い方法だと思います。</p>
+<p>この方法であれば、データベース固有のモデルを構築する必要がなく、開発者はデータを取得したいときに、取得したい種類のデータを使って自由にデータを扱うことができるからです。<br>また、プレーンなクエリを扱うことで、どのようなクエリが実行されるかを瞬時に把握できる点も非常に優れていると思います。</p>
+<p>しかし、この方法ではテーブル情報のアプケーションでの管理がなくなっただけでドキュメントの更新などを解消することはできません。</p>
+<p>LDBCは、これらの問題のいくつかを解決するために開発されています。</p>
+<ul>
+  <li>型安全性：コンパイル時の保証、開発時の補完、読み取り時の情報</li>
+  <li>宣言型：テーブル定義の形（&ldquo;What&rdquo;）とデータベース接続（&ldquo;How&rdquo;）を分離する。</li>
+  <li>SchemaSPYの統合：テーブル記述からドキュメントを生成する</li>
+  <li>フレームワークではなくライブラリ: あなたのスタックに統合できる</li>
+</ul>
+<p>LDBCを使用するとデータベースの情報をアプリケーションで管理しなければいけませんが、型安全性とクエリの構築、ドキュメントの管理を一元化することができます。</p>
+<p>LDBCでのモデルをテーブル定義にマッピングするのはとても簡単です。</p>
+<p>モデルが持つプロパティと、そのカラムのために定義されるデータ型の間のマッピングも非常にシンプルです。開発者は、モデルが持つプロパティと同じ順序で、対応するカラムを定義するだけです。</p>
+<pre class="prettyprint"><code class="language-scala">import ldbc.core.*
+
+case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),
+)
+</code></pre>
+<p>また、間違った型を組み合わせようとするとコンパイルエラーになります。</p>
+<p>例えば、Userが持つString型のnameプロパティに関連するカラムにINT型のカラムを渡すとエラーになります。</p>
+<pre class="prettyprint"><code class="language-shell">[error] -- [E007] Type Mismatch Error:
+[error] 169 |    column(&quot;name&quot;, INT),
+[error]     |                   ^^^
+[error]     |Found:    ldbc.core.DataType.Integer[T]
+[error]     |Required: ldbc.core.DataType[String]
+[error]     |
+[error]     |where:    T is a type variable with constraint &lt;: Int | Long | Option[Int | Long]
+</code></pre>
+<p>これらのアドオンの詳細については、<a href="/ldbc/ja/01-Table-Definitions.html">テーブル定義</a> を参照してください。</p>
+<h2><a href="#クイックスタート" name="クイックスタート" class="anchor"><span class="anchor-link"></span></a>クイックスタート</h2>
+<p>現在のバージョンは <strong>Scala 3.3.1</strong> に対応した <strong>0.2.1</strong> です。</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
+
+  // まずはこの1つから
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-core&quot; % &quot;0.2.1&quot;,
+
+  // そして、必要に応じてこれらを加える
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot;           % &quot;0.2.1&quot;, // プレーンクエリー データベース接続
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.2.1&quot;, // 型安全なクエリ構築
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-schemaspy&quot;     % &quot;0.2.1&quot;, // SchemaSPYドキュメント生成
+)
+</code></pre>
+<p>sbtプラグインの使い方については、こちらの<a href="/ldbc/ja/07-Schema-Code-Generation.html">documentation</a>を参照してください。</p>
+<h2><a href="#todo" name="todo" class="anchor"><span class="anchor-link"></span></a>TODO</h2>
+<ul>
+  <li>JSONデータタイプのサポート</li>
+  <li>SETデータタイプのサポート</li>
+  <li>Geometryデータタイプのサポート</li>
+  <li>CHECK制約のサポート</li>
+  <li>MySQL以外のデータベースサポート</li>
+  <li>ストリーミングのサポート</li>
+  <li>ZIOモジュールのサポート</li>
+  <li>他データベースライブラリとの統合</li>
+  <li>テストキット</li>
+  <li>etc&hellip;</li>
+</ul>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.1/docs/target/mdoc/ja/index.md">here</a>.
+</div>
+
+<div class="nav-next">
+<p><strong>Next:</strong> <a href="../ja/01-Table-Definitions.html">テーブル定義</a></p>
+</div>
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/index.html#ldbc" class="header">LDBC</a>
+  <ul>
+    <li><a href="../ja/index.html#はじめに" class="header">はじめに</a></li>
+    <li><a href="../ja/index.html#なぜldbcなのか-" class="header">なぜLDBCなのか？</a></li>
+    <li><a href="../ja/index.html#クイックスタート" class="header">クイックスタート</a></li>
+    <li><a href="../ja/index.html#todo" class="header">TODO</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
 </nav>
+</div>
+</div>
 
-
-  <main class="content">
-
-    <h1 id="日本語" class="title">日本語</h1>
-
-    
-<hr class="footer-rule"/>
-<footer>
-  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
-</footer>
-
-
-  </main>
+</section>
+</div>
 
 </div>
 
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2024</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
 </body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.1', 'https://takapi327.github.io/ldbc/')});</script>
+
 
 </html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>Schema Code Generation · LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../en/07-Schema-Code-Generation.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../en/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/01-Table-Definitions.html" class="page">Table Definitions</a></li>
+  <li><a href="../en/02-Custom-Data-Type.html" class="page">Custom Data Type</a></li>
+  <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
+  <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
+  <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/07-Schema-Code-Generation.html" class="active page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../en/index.html">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../en/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/01-Table-Definitions.html" class="page">Table Definitions</a></li>
+  <li><a href="../en/02-Custom-Data-Type.html" class="page">Custom Data Type</a></li>
+  <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
+  <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
+  <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/07-Schema-Code-Generation.html" class="active page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+<div class="nav-breadcrumbs">
+<ul>
+  <li><a href="../en/index.html">LDBC</a></li>
+  <li>Schema Code Generation</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#schema-code-generation" name="schema-code-generation" class="anchor"><span class="anchor-link"></span></a>Schema Code Generation</h1>
+<p>This chapter describes how to automatically generate LDBC table definitions from SQL files.</p>
+<p>The following dependencies must be set up for the project</p>
+<pre class="prettyprint"><code class="language-scala 3">addSbtPlugin(&quot;io.github.takapi327&quot; % &quot;ldbc-plugin&quot; % &quot;0.2.1&quot;)
+</code></pre>
+<h2><a href="#generation" name="generation" class="anchor"><span class="anchor-link"></span></a>Generation</h2>
+<p>Enable the plugin for the project.</p>
+<pre class="prettyprint"><code class="language-sbt">lazy val root = (project in file(&quot;.&quot;))
+  .enablePlugins(Ldbc)
+</code></pre>
+<p>Specify the SQL file to be analyzed as an array.</p>
+<pre class="prettyprint"><code class="language-sbt">Compile / parseFiles := List(baseDirectory.value / &quot;test.sql&quot;)
+</code></pre>
+<p><strong>List of keys that can be set by enabling the plugin</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Key </th>
+      <th>Details </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>parseFiles </td>
+      <td>List of SQL files to be analyzed </td>
+    </tr>
+    <tr>
+      <td>parseDirectories </td>
+      <td>Specify SQL files to be parsed by directory </td>
+    </tr>
+    <tr>
+      <td>excludeFiles </td>
+      <td>List of file names to exclude from analysis </td>
+    </tr>
+    <tr>
+      <td>customYamlFiles </td>
+      <td>List of yaml files for customizing Scala types and column data types </td>
+    </tr>
+    <tr>
+      <td>classNameFormat </td>
+      <td>Value specifying the format of the class name </td>
+    </tr>
+    <tr>
+      <td>propertyNameFormat </td>
+      <td>Value specifying the format of the property name in the Scala model </td>
+    </tr>
+    <tr>
+      <td>ldbcPackage </td>
+      <td>Value specifying the package name of the generated file </td>
+    </tr>
+  </tbody>
+</table>
+<p>The SQL file to be parsed must always begin with a database Create or Use statement, and LDBC parses the file one file at a time, generating table definitions and storing the list of tables in the database model. This is because it is necessary to tell which database the table belongs to.</p>
+<pre class="prettyprint"><code class="language-mysql">CREATE DATABASE `location`;
+
+USE `location`;
+
+DROP TABLE IF EXISTS `country`;
+CREATE TABLE country (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `code` INT NOT NULL
+);
+</code></pre>
+<p>The SQL file to be analyzed should contain only Create/Use statements for the database or Create/Drop statements for table definitions.</p>
+<h2><a href="#generation-code" name="generation-code" class="anchor"><span class="anchor-link"></span></a>Generation Code</h2>
+<p>When the sbt project is started and compiled, model classes generated based on the SQL file to be analyzed and table definitions are generated under the target of the sbt project.</p>
+<pre class="prettyprint"><code class="language-shell">sbt compile
+</code></pre>
+<p>The code generated from the above SQL file will look like this.</p>
+<pre class="prettyprint"><code class="language-scala 3">package ldbc.generated.location
+
+import ldbc.core.*
+
+case class Country(
+  id: Long,
+  name: String,
+  code: Int
+)
+
+object Country:
+  val table = Table[Country](&quot;country&quot;)(
+    column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+    column(&quot;name&quot;, VARCHAR(255)),
+    column(&quot;code&quot;, INT)
+  )
+</code></pre>
+<p>If the SQL file has been modified or the cache has been removed by running the clean command, Compile will generate the code again. If the SQL file has been modified or the cache has been removed by executing the clean command, the code will be generated again by executing Compile. If you want to generate code again without using the cache, execute the command <code>generateBySchema</code>. This command will always generate code without using the cache.</p>
+<pre class="prettyprint"><code class="language-shell">sbt generateBySchema
+</code></pre>
+<h2><a href="#customize" name="customize" class="anchor"><span class="anchor-link"></span></a>Customize</h2>
+<p>There may be times when you want to convert the type of code generated from an SQL file to something else. This can be done by passing <code>customYamlFiles</code> with the yml files to be customized.</p>
+<pre class="prettyprint"><code class="language-sbt">Compile / customYamlFiles := List(
+  baseDirectory.value / &quot;custom.yml&quot;
+)
+</code></pre>
+<p>The format of the yml file should be as follows</p>
+<pre class="prettyprint"><code class="language-yaml">database:
+  name: &#39;{Database Name}&#39;
+  tables:
+    - name: &#39;{table name}&#39;
+      columns: # Optional
+        - name: &#39;{column name}&#39;
+          type: &#39;{Scala type you want to change}&#39;
+      class: # Optional
+        extends:
+          - &#39;{Package paths such as trait that you want model classes to inherit}&#39; // package.trait.name
+      object: # Optional
+        extends:
+          - &#39;{The package path, such as trait, that you want the object to inherit.}&#39;
+    - name: &#39;{table name}&#39;
+      ...
+</code></pre>
+<p>The <code>database</code> must be the name of the database listed in the SQL file to be analyzed. The table name must be the name of a table belonging to the database listed in the SQL file to be analyzed.</p>
+<p>In the <code>columns</code> field, enter the name of the column to be retyped and the Scala type to be changed as a string. You can set multiple values for <code>columns</code>, but the column name listed in name must be in the target table. Also, the Scala type to be converted must be one that is supported by the column&rsquo;s Data type. If you want to specify an unsupported type, you must pass a trait, abstract class, etc. that is configured to do implicit type conversion for <code>object</code>.</p>
+<p>See <a href="/ldbc/en/01-Table-Definitions.html">here</a> for types supported by the Data type and <a href="/ldbc/en/02-Custom-Data-Type.html">here</a>.</p>
+<p>To convert an Int type to the user&rsquo;s own type, CountryCode, implement the following <code>CustomMapping</code>trait.</p>
+<pre class="prettyprint"><code class="language-scala 3">trait CountryCode:
+  val code: Int
+object Japan extends CountryCode:
+  override val code: Int = 1
+
+trait CustomMapping: // Any name
+  given Conversion[INT[Int], CountryCode] = DataType.mappingp[INT[Int], CountryCode]
+</code></pre>
+<p>Set the <code>CustomMapping</code>trait that you have implemented in the yml file for customization, and convert the target column type to CountryCode.</p>
+<pre class="prettyprint"><code class="language-yaml">database:
+  name: &#39;location&#39;
+  tables:
+    - name: &#39;country&#39;
+      columns:
+        - name: &#39;code&#39;
+          type: &#39;Country.CountryCode&#39; // CustomMapping is mixed in with the Country object so that it can be retrieved from there.
+      object:
+        extends:
+          - &#39;{package.name.}CustomMapping&#39;
+</code></pre>
+<p>The code generated by the above configuration will be as follows, allowing users to generate model and table definitions with their own types.</p>
+<pre class="prettyprint"><code class="language-scala 3">case class Country(
+  id: Long,
+  name: String,
+  code: Country.CountryCode
+)
+
+object Country extends /*{package.name.}*/CustomMapping:
+  val table = Table[Country](&quot;country&quot;)(
+    column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+    column(&quot;name&quot;, VARCHAR(255)),
+    column(&quot;code&quot;, INT)
+  )
+</code></pre>
+<p>The database model is also automatically generated from SQL files.</p>
+<pre class="prettyprint"><code class="language-scala 3">package ldbc.generated.location
+
+import ldbc.core.*
+
+case class LocationDatabase(
+  schemaMeta: Option[String] = None,
+  catalog: Option[String] = Some(&quot;def&quot;),
+  host: String = &quot;127.0.0.1&quot;,
+  port: Int = 3306
+) extends Database:
+
+  override val databaseType: Database.Type = Database.Type.MySQL
+
+  override val name: String = &quot;location&quot;
+
+  override val schema: String = &quot;location&quot;
+
+  override val character: Option[Character] = None
+
+  override val collate: Option[Collate] = None
+
+  override val tables = Set(
+    Country.table
+  )
+</code></pre>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.1/docs/target/mdoc/en/07-Schema-Code-Generation.md">here</a>.
+</div>
+
+<div class="nav-next">
+<p><strong>Next:</strong> <a href="../en/08-Perdormance.html">Performance</a></p>
+</div>
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/07-Schema-Code-Generation.html#schema-code-generation" class="header">Schema Code Generation</a>
+  <ul>
+    <li><a href="../en/07-Schema-Code-Generation.html#generation" class="header">Generation</a></li>
+    <li><a href="../en/07-Schema-Code-Generation.html#generation-code" class="header">Generation Code</a></li>
+    <li><a href="../en/07-Schema-Code-Generation.html#customize" class="header">Customize</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2024</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.1', 'https://takapi327.github.io/ldbc/')});</script>
+
+
+</html>
