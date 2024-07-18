@@ -1,18 +1,29 @@
+{%
+laika.title = ldbc
+laika.metadata {
+  language = en
+  isRootPath = true
+}
+%}
+
 # ldbc (Lepus Database Connectivity)
 
-<div align="center">
-  <img alt="LDBC" src="./img/lepus_logo.png">
-</div>
+@:image(img/lepus_logo.png) {
+  alt = "ldbc (Lepus Database Connectivity)"
+  style = "center-logo"
+}
 
 [![Continuous Integration](https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/takapi327/ldbc/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://en.wikipedia.org/wiki/MIT_License)
 [![Scala Version](https://img.shields.io/badge/scala-v3.3.x-red)](https://github.com/lampepfl/dotty)
 [![Typelevel Affiliate Project](https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg)](https://typelevel.org/projects/affiliate/)
-[![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
-[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-beta4/jar)
+[![javadoc](https://javadoc.io/badge2/@ORGANIZATION@/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/@ORGANIZATION@/ldbc-dsl_3)
+[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/@ORGANIZATION@/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/@ORGANIZATION@/ldbc-dsl_3/0.3.0-beta4/jar)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
+
+========================================================================================
 
 ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
 
@@ -28,14 +39,14 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 |----------------------|:---:|:------------:|:--------:|
 | `ldbc-core`          |  ✅  |      ✅       |    ✅     |
 | `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     |
 | `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
+| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     |
 | `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     |
 | `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
 ## Quick Start
@@ -46,7 +57,7 @@ For people that want to skip the explanations and see it action, this is the pla
 
 @@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-dsl" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@"
 ```
 @@@
 
@@ -54,7 +65,7 @@ For Cross-Platform projects (JVM, JS, and/or Native):
 
 @@@ vars
 ```scala
-libraryDependencies += "$org$" %%% "ldbc-dsl" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-dsl" % "@VERSION@"
 ```
 @@@
 
@@ -64,7 +75,7 @@ The dependency package used depends on whether the database connection is made v
 
 @@@ vars
 ```scala
-libraryDependencies += "$org$" %% "jdbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@"
 ```
 @@@
 
@@ -72,7 +83,7 @@ libraryDependencies += "$org$" %% "jdbc-connector" % "$version$"
 
 @@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 ```
 @@@
 
@@ -80,7 +91,7 @@ For Cross-Platform projects (JVM, JS, and/or Native)
 
 @@@ vars
 ```scala
-libraryDependencies += "$org$" %%% "ldbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 ```
 @@@
 
@@ -88,7 +99,6 @@ libraryDependencies += "$org$" %%% "ldbc-connector" % "$version$"
 
 The difference in usage is that there are differences in the way connections are built between jdbc and ldbc.
 
-> [!CAUTION]
 > **ldbc** is currently under active development. Please note that current functionality may therefore be deprecated or changed in the future.
 
 **jdbc connector**
@@ -96,7 +106,7 @@ The difference in usage is that there are differences in the way connections are
 ```scala
 val ds = new com.mysql.cj.jdbc.MysqlDataSource()
 ds.setServerName("127.0.0.1")
-ds.setPortNumber(13306)
+ds.setPortNumber(3306)
 ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
@@ -185,13 +195,13 @@ ldbc also allows type-safe construction of schema information for tables.
 The first step is to set up dependencies.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-schema" % "@VERSION@"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-schema" % "@VERSION@"
 ```
 
 The next step is to create a schema for use by the query builder.
@@ -227,8 +237,8 @@ val result: IO[List[User]] = connection.use { conn =>
 
 Full documentation can be found at Currently available in English and Japanese.
 
-- [English](/ldbc/en/index.html)
-- [Japanese](/ldbc/ja/index.html)
+- [English](en/index.md)
+- [Japanese](ja/index.md)
 
 ## Contributing
 

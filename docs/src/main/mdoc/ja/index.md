@@ -1,20 +1,7 @@
-@@@ index
- * [Migration Notes](./01-Migration-Notes.md)
- * [Connection](./02-Connection.md)
- * [Connecting to a Database](./03-Connecting-to-a-Database.md)
- * [Parameterized Queries](./04-Parameterized-Queries.md)
- * [Selecting Data](./05-Selecting-Data.md)
- * [Updating Data](./06-Updating-Data.md)
- * [Error Handling](./07-Error-Handling.md)
- * [Logging](./08-Logging.md)
- * [Custom Data Type](./09-Custom-Data-Type.md)
- * [Query Builder](./10-Query-Builder.md)
- * [Schema](./11-Schema.md)
- * [Generating SchemaSPY Documentation](./12-Generating-SchemaSPY-Documentation.md)
- * [Schema Code Generation](./13-Schema-Code-Generation.md)
- * [Performance](./14-Perdormance.md)
- * [Connector OLD](./15-Connector.md)
-@@@
+{%
+laika.title = ldbc
+laika.metadata.language = ja
+%}
 
 # ldbc (Lepus Database Connectivity)
 

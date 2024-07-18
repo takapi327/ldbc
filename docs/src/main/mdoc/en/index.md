@@ -1,14 +1,7 @@
-@@@ index
- * [Table Definitions](./01-Table-Definitions.md)
- * [Custom Data Type](./02-Custom-Data-Type.md)
- * [Type-safe Query Builder](./03-Type-safe-Query-Builder.md)
- * [Database Connection](./04-Database-Connection.md)
- * [Plain SQL Queries](./05-Plain-SQL-Queries.md)
- * [Generating SchemaSPY Documentation](./06-Generating-SchemaSPY-Documentation.md)
- * [Schema Code Generation](./07-Schema-Code-Generation.md)
- * [Performance](./08-Perdormance.md)
- * [Connector](./09-Connector.md)
-@@@
+{%
+  laika.title = ldbc
+  laika.metadata.language = en
+%}
 
 # LDBC
 

@@ -4,6 +4,8 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
+import laika.ast.Path.Root
+
 import ScalaVersions.*
 import JavaVersions.*
 import BuildSettings.*
@@ -23,6 +25,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
+ThisBuild / tlSitePublishBranch                 := None
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
@@ -46,9 +49,6 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
-  .settings(
-    libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0"
-  )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
@@ -96,7 +96,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jvmSettings(
     libraryDependencies ++= Seq(
       "io.circe" %%% "circe-generic" % "0.14.9",
-      "io.circe" %%% "circe-yaml"    % "0.15.2"
+      "io.circe" %%% "circe-yaml"    % "0.15.3"
     )
   )
   .platformsSettings(JSPlatform, NativePlatform)(
@@ -196,28 +196,24 @@ lazy val benchmark = (project in file("benchmark"))
 
 lazy val docs = (project in file("docs"))
   .settings(
-    description   := "Documentation for ldbc",
-    scalacOptions := Seq("-feature"),
-    mdocIn        := baseDirectory.value / "src" / "main" / "mdoc",
-    paradoxTheme  := Some(builtinParadoxTheme("generic")),
-    paradoxProperties ++= Map(
-      "org"          -> organization.value,
-      "scalaVersion" -> scalaVersion.value,
-      "version"      -> version.value.takeWhile(_ != '+'),
-      "mysqlVersion" -> mysqlVersion
+    description              := "Documentation for ldbc",
+    mdocIn                   := (Compile / sourceDirectory).value / "mdoc",
+    tlSiteIsTypelevelProject := Some(TypelevelProject.Affiliate),
+    mdocVariables ++= Map(
+      "ORGANIZATION"  -> organization.value,
+      "SCALA_VERSION" -> scalaVersion.value,
+      "MYSQL_VERSION" -> mysqlVersion
     ),
-    Compile / paradox / sourceDirectory := mdocOut.value,
-    Compile / paradoxRoots              := List("index.html", "en/index.html", "ja/index.html"),
-    makeSite                            := makeSite.dependsOn(mdoc.toTask("")).value,
-    git.remoteRepo                      := "git@github.com:takapi327/ldbc.git",
-    ghpagesNoJekyll                     := true
+    laikaTheme := tlSiteHelium.value.site
+      .internalCSS(Root / "css" / "site.css")
+      .build
   )
   .settings(commonSettings)
   .dependsOn(
     connector.jvm,
     schema.jvm
   )
-  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin, AutomateHeaderPlugin, NoPublishPlugin)
+  .enablePlugins(AutomateHeaderPlugin, TypelevelSitePlugin, NoPublishPlugin)
 
 lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
