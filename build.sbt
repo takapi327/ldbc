@@ -47,9 +47,6 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
-  .settings(
-    libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0"
-  )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
@@ -97,7 +94,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jvmSettings(
     libraryDependencies ++= Seq(
       "io.circe" %%% "circe-generic" % "0.14.9",
-      "io.circe" %%% "circe-yaml"    % "0.15.2"
+      "io.circe" %%% "circe-yaml"    % "0.15.3"
     )
   )
   .platformsSettings(JSPlatform, NativePlatform)(
