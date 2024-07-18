@@ -196,14 +196,14 @@ lazy val benchmark = (project in file("benchmark"))
 
 lazy val docs = (project in file("docs"))
   .settings(
-    description   := "Documentation for ldbc",
-    mdocIn        := (Compile / sourceDirectory).value / "mdoc",
+    description               := "Documentation for ldbc",
+    mdocIn                    := (Compile / sourceDirectory).value / "mdoc",
     Laika / sourceDirectories := Seq((Compile / sourceDirectory).value / "mdoc"),
-    tlSiteIsTypelevelProject := Some(TypelevelProject.Affiliate),
+    tlSiteIsTypelevelProject  := Some(TypelevelProject.Affiliate),
     mdocVariables ++= Map(
-      "ORGANIZATION" -> organization.value,
+      "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION"  -> mysqlVersion,
+      "MYSQL_VERSION" -> mysqlVersion
     )
   )
   .settings(commonSettings)
