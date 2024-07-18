@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>Table Definitions · LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../en/01-Table-Definitions.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../en/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/01-Table-Definitions.html" class="active page">Table Definitions</a></li>
+  <li><a href="../en/02-Custom-Data-Type.html" class="page">Custom Data Type</a></li>
+  <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
+  <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
+  <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../en/index.html">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../en/index.html" >
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/01-Table-Definitions.html" class="active page">Table Definitions</a></li>
+  <li><a href="../en/02-Custom-Data-Type.html" class="page">Custom Data Type</a></li>
+  <li><a href="../en/03-Type-safe-Query-Builder.html" class="page">Type-safe Query Construction</a></li>
+  <li><a href="../en/04-Database-Connection.html" class="page">Database Connection</a></li>
+  <li><a href="../en/05-Plain-SQL-Queries.html" class="page">Plain SQL Queries</a></li>
+  <li><a href="../en/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPY Document Generation</a></li>
+  <li><a href="../en/07-Schema-Code-Generation.html" class="page">Schema Code Generation</a></li>
+  <li><a href="../en/08-Perdormance.html" class="page">Performance</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+<div class="nav-breadcrumbs">
+<ul>
+  <li><a href="../en/index.html">LDBC</a></li>
+  <li>Table Definitions</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#table-definitions" name="table-definitions" class="anchor"><span class="anchor-link"></span></a>Table Definitions</h1>
+<p>This chapter describes how to work with database schemas in Scala code, especially how to manually write a schema, which is useful when starting to write an application without an existing database. If you already have a schema in your database, you can skip this step using the <a href="/ldbc/en/07-Schema-Code-Generation.html">code generator</a>.</p>
+<p>The following code example assumes the following import</p>
+<pre class="prettyprint"><code class="language-scala 3">import ldbc.core.*
+import ldbc.core.attribute.*
+</code></pre>
+<p>LDBC maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in the order of definition. Table definitions are very similar to the structure of a Create statement. This makes the construction of table definitions intuitive for the user.</p>
+<p>LDBC uses this table definition for a variety of purposes Generating type-safe queries, generating documents, etc.</p>
+<pre class="prettyprint"><code class="language-scala 3">case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val table = Table[User](&quot;user&quot;)(                     // CREATE TABLE `user` (
+  column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  column(&quot;name&quot;, VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
+)                                                    // );
+</code></pre>
+<p>All columns are defined by the column method. Each column has a column name, data type, and attributes. The following primitive types are supported by default and are ready to use</p>
+<ul>
+  <li>Numeric types: <code>Byte</code>, <code>Short</code>, <code>Int</code>, <code>Long</code>, <code>Float</code>, <code>Double</code>, <code>BigDecimal</code>, <code>BigInt</code></li>
+  <li>LOB types: <code>java.sql.Blob</code>, <code>java.sql.Clob</code>, <code>Array[Byte]</code></li>
+  <li>Date types: <code>java.sql.Date</code>, <code>java.sql.Time</code>, <code>java.sql.Timestamp</code></li>
+  <li>String</li>
+  <li>Boolean</li>
+  <li>java.time.*</li>
+</ul>
+<p>Nullable columns are represented by Option[T], where T is one of the supported primitive types; note that any column that is not of type Option is Not Null.</p>
+<h2><a href="#data-type" name="data-type" class="anchor"><span class="anchor-link"></span></a>Data Type</h2>
+<p>The mapping of the Scala type of a property that a model has to the data type that a column has requires that the defined data type supports the Scala type. Attempting to assign an unsupported type will result in a compile error.</p>
+<p>The following table shows the Scala types supported by the data types.</p>
+<table>
+  <thead>
+    <tr>
+      <th>Data Type </th>
+      <th>Scala Type </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BIT </td>
+      <td>Byte, Short, Int, Long </td>
+    </tr>
+    <tr>
+      <td>TINYINT </td>
+      <td>Byte, Short </td>
+    </tr>
+    <tr>
+      <td>SMALLINT </td>
+      <td>Short, Int </td>
+    </tr>
+    <tr>
+      <td>MEDIUMINT </td>
+      <td>Int </td>
+    </tr>
+    <tr>
+      <td>INT </td>
+      <td>Int, Long </td>
+    </tr>
+    <tr>
+      <td>BIGINT </td>
+      <td>Long, BigInt </td>
+    </tr>
+    <tr>
+      <td>DECIMAL </td>
+      <td>BigDecimal </td>
+    </tr>
+    <tr>
+      <td>FLOAT </td>
+      <td>Float </td>
+    </tr>
+    <tr>
+      <td>DOUBLE </td>
+      <td>Double </td>
+    </tr>
+    <tr>
+      <td>CHAR </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>VARCHAR </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>BINARY </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>VARBINARY </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>TINYBLOB </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>BLOB </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>MEDIUMBLOB </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>LONGBLOB </td>
+      <td>Array[Byte] </td>
+    </tr>
+    <tr>
+      <td>TINYTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>TEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>MEDIUMTEXT </td>
+      <td>String </td>
+    </tr>
+    <tr>
+      <td>DATE </td>
+      <td>java.time.LocalDate </td>
+    </tr>
+    <tr>
+      <td>DATETIME </td>
+      <td>java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime </td>
+    </tr>
+    <tr>
+      <td>TIMESTAMP </td>
+      <td>java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime </td>
+    </tr>
+    <tr>
+      <td>TIME </td>
+      <td>java.time.LocalTime </td>
+    </tr>
+    <tr>
+      <td>YEAR </td>
+      <td>java.time.Instant, java.time.LocalDate, java.time.Year </td>
+    </tr>
+    <tr>
+      <td>BOOLEAN </td>
+      <td>Boolean </td>
+    </tr>
+  </tbody>
+</table>
+<p><strong>Points to keep in mind when dealing with integer types</strong></p>
+<p>It should be noted that the range of data that can be handled, depending on whether it is signed or unsigned, does not fit within the Scala types.</p>
+<table>
+  <thead>
+    <tr>
+      <th>Data Type </th>
+      <th>signed range </th>
+      <th>unsigned range </th>
+      <th>Scala Type </th>
+      <th>range </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TINYINT </td>
+      <td>-128 ~ 127 </td>
+      <td>0 ~ 255 </td>
+      <td>Byte<br>Short </td>
+      <td>-128 ~ 127<br>-32768～32767 </td>
+    </tr>
+    <tr>
+      <td>SMALLINT </td>
+      <td>-32768 ~ 32767 </td>
+      <td>0 ~ 65535 </td>
+      <td>Short<br>Int </td>
+      <td>-32768～32767<br>-2147483648～2147483647 </td>
+    </tr>
+    <tr>
+      <td>MEDIUMINT </td>
+      <td>-8388608 ~ 8388607 </td>
+      <td>0 ~ 16777215 </td>
+      <td>Int </td>
+      <td>-2147483648～2147483647 </td>
+    </tr>
+    <tr>
+      <td>INT </td>
+      <td>-2147483648	~ 2147483647 </td>
+      <td>0 ~ 4294967295 </td>
+      <td>Int<br>Long </td>
+      <td>-2147483648～2147483647<br>-9223372036854775808～9223372036854775807 </td>
+    </tr>
+    <tr>
+      <td>BIGINT </td>
+      <td>-9223372036854775808 ~ 9223372036854775807 </td>
+      <td>0 ~ 18446744073709551615 </td>
+      <td>Long<br>BigInt </td>
+      <td>-9223372036854775808～9223372036854775807<br>&hellip; </td>
+    </tr>
+  </tbody>
+</table>
+<p>To work with user-defined proprietary or unsupported types, see <a href="/ldbc/en/02-Custom-Data-Type.html">Custom Types</a>.</p>
+<h2><a href="#attribute" name="attribute" class="anchor"><span class="anchor-link"></span></a>Attribute</h2>
+<p>Various attributes can be assigned to columns.</p>
+<ul>
+  <li><code>AUTO_INCREMENT</code>  Mark columns as auto-increment keys when creating DDL statements and documenting SchemaSPY.  MySQL cannot return columns that are not AutoInc when inserting data. Therefore, if necessary, LDBC will check to see if the return column is properly marked as AutoInc.</li>
+  <li><code>PRIMARY_KEY</code>  Mark columns as primary keys when creating DDL statements and SchemaSPY documents.</li>
+  <li><code>UNIQUE_KEY</code>  Mark columns as unique keys when creating DDL statements and SchemaSPY documents.</li>
+  <li><code>COMMENT</code>  Set comments on columns when creating DDL statements and SchemaSPY documents.</li>
+</ul>
+<h2><a href="#key-settings" name="key-settings" class="anchor"><span class="anchor-link"></span></a>Key Settings</h2>
+<p>MySQL allows you to set various keys for tables, such as Unique keys, Index keys, foreign keys, etc. Let&rsquo;s look at how to set these keys in a table definition built with LDBC.</p>
+<h3><a href="#primary-key" name="primary-key" class="anchor"><span class="anchor-link"></span></a>PRIMARY KEY</h3>
+<p>A primary key is an item that uniquely identifies data in MySQL. When a primary key constraint is set on a column, the column can only contain values that do not duplicate the values of other data. It also cannot contain NULLs. As a result, only one piece of data in the table can be identified by searching for a value in a column with a primary key constraint.</p>
+<p>LDBC allows this primary key constraint to be set in two ways.</p>
+<ol>
+  <li>set as an attribute of column method</li>
+  <li>set by keySet method of table</li>
+</ol>
+<p><strong>Set as an attribute of the column method</strong></p>
+<p>It is very easy to set a column method as an attribute by simply passing <code>PRIMARY_KEY</code> as the third or later argument of the column method. This allows you to set the <code>id</code> column as the primary key in the following cases</p>
+<pre class="prettyprint"><code class="language-scala 3">column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+</code></pre>
+<p><strong>Set by keySet method of table</strong></p>
+<p>LDBC table definitions have a method called <code>keySet</code>, where you can set a column as a primary key by passing <code>PRIMARY_KEY</code> as the column to be set as the primary key.</p>
+<pre class="prettyprint"><code class="language-scala 3">val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table =&gt; PRIMARY_KEY(table.id))
+
+// CREATE TABLE `user` (
+//   ...,
+//   PRIMARY KEY (`id`)
+// )
+</code></pre>
+<p>The <code>PRIMARY_KEY</code> method accepts the following parameters in addition to columns</p>
+<ul>
+  <li><code>Index Type</code> ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH</li>
+  <li><code>Index Option</code> ldbc.core.Index.IndexOption</li>
+</ul>
+<h4><a href="#compound-key-primary-key-" name="compound-key-primary-key-" class="anchor"><span class="anchor-link"></span></a>Compound key (primary key)</h4>
+<p>Not only one column, but also multiple columns can be set as a combined primary key. You can set multiple columns as primary keys by simply passing multiple columns to <code>PRIMARY_KEY</code> as primary keys.</p>
+<pre class="prettyprint"><code class="language-scala 3">val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table =&gt; PRIMARY_KEY(table.id, table.name))
+
+// CREATE TABLE `user` (
+//   ...,
+//   PRIMARY KEY (`id`, `name`)
+// )
+</code></pre>
+<p>Compound keys can only be set with <code>PRIMARY_KEY</code> in the <code>keySet</code> method. If multiple keys are set as attributes of the column method as shown below, each will be set as a primary key, not as a compound key.</p>
+<p>LDBC does not allow multiple <code>PRIMARY_KEY</code>s in a table definition to cause a compile error. However, if the table definition is used in query generation, document generation, etc., an error will occur. This is due to the restriction that only one PRIMARY KEY can be set per table.</p>
+<pre class="prettyprint"><code class="language-scala 3">val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
+  column(&quot;name&quot;, VARCHAR(255), PRIMARY_KEY),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))
+)
+
+// CREATE TABLE `user` (
+//   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+// )
+</code></pre>
+<h3><a href="#unique-key" name="unique-key" class="anchor"><span class="anchor-link"></span></a>UNIQUE KEY</h3>
+<p>A unique key is an item that uniquely identifies data in MySQL. When a column has a uniqueness constraint, it can only contain values that do not duplicate the values of other data.</p>
+<p>LDBC allows this uniqueness constraint to be set in two ways.</p>
+<ol>
+  <li>set as an attribute of column method</li>
+  <li>set by keySet method of table</li>
+</ol>
+<p><strong>Set as an attribute of the column method</strong></p>
+<p>It is very easy to set a column method as an attribute by simply passing <code>UNIQUE_KEY</code> as the third or later argument of the column method. This allows you to set the <code>id</code> column as a unique key in the following cases</p>
+<pre class="prettyprint"><code class="language-scala 3">column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, UNIQUE_KEY)
+</code></pre>
+<p><strong>Set by keySet method of table</strong></p>
+<p>LDBC table definitions have a method called <code>keySet</code>, where you can set a column as a unique key by passing the column you want to set as a unique key to <code>UNIQUE_KEY</code>.</p>
+<pre class="prettyprint"><code class="language-scala 3">val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table =&gt; UNIQUE_KEY(table.id))
+
+// CREATE TABLE `user` (
+//   ...,
+//   UNIQUE KEY (`id`)
+// )
+</code></pre>
+<p>The <code>UNIQUE_KEY</code> method accepts the following parameters in addition to columns</p>
+<ul>
+  <li><code>Index Name</code> String</li>
+  <li><code>Index Type</code> ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH</li>
+  <li><code>Index Option</code> ldbc.core.Index.IndexOption</li>
+</ul>
+<h4><a href="#compound-key-unique-key-" name="compound-key-unique-key-" class="anchor"><span class="anchor-link"></span></a>Compound key (unique key)</h4>
+<p>You can set not only one column but also multiple columns as a unique key as a combined unique key. You can set multiple columns as unique keys by simply passing <code>UNIQUE_KEY</code> with the columns you want to set as unique keys.</p>
+<pre class="prettyprint"><code class="language-scala 3">val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table =&gt; UNIQUE_KEY(table.id, table.name))
+
+// CREATE TABLE `user` (
+//   ...,
+//   UNIQUE KEY (`id`, `name`)
+// )
+</code></pre>
+<p>Compound keys can only be set with <code>UNIQUE_KEY</code> in the <code>keySet</code> method. If you set multiple keys as attributes in the column method, each will be set as a unique key, not as a compound key.</p>
+<h3><a href="#index-key" name="index-key" class="anchor"><span class="anchor-link"></span></a>INDEX KEY</h3>
+<p>An index key is an &ldquo;index&rdquo; in MySQL to efficiently retrieve the desired record.</p>
+<p>LDBC allows this index to be set in two ways.</p>
+<ol>
+  <li>set as an attribute of column method</li>
+  <li>set by keySet method of table</li>
+</ol>
+<p><strong>Set as an attribute of the column method</strong></p>
+<p>It is very easy to set a column method as an attribute, just pass <code>INDEX_KEY</code> as the third argument or later of the column method. This allows you to set the <code>id</code> column as an index in the following cases</p>
+<pre class="prettyprint"><code class="language-scala 3">column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, INDEX_KEY)
+</code></pre>
+<p><strong>Set by keySet method of table</strong></p>
+<p>LDBC table definitions have a method called <code>keySet</code>, where you can set a column as an index key by passing the column you want to set as an index to <code>INDEX_KEY</code>.</p>
+<pre class="prettyprint"><code class="language-scala 3">val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table =&gt; INDEX_KEY(table.id))
+
+// CREATE TABLE `user` (
+//   ...,
+//   INDEX KEY (`id`)
+// )
+</code></pre>
+<p>The <code>INDEX_KEY</code> method accepts the following parameters in addition to columns</p>
+<ul>
+  <li><code>Index Name</code> String</li>
+  <li><code>Index Type</code> ldbc.core.Index.Type.BTREE or ldbc.core.Index.Type.HASH</li>
+  <li><code>Index Option</code> ldbc.core.Index.IndexOption</li>
+</ul>
+<h4><a href="#compound-key-index-key-" name="compound-key-index-key-" class="anchor"><span class="anchor-link"></span></a>Compound key (index key)</h4>
+<p>You can set not only one column but also multiple columns as index keys as a combined index key. You can set up a composite index by simply passing multiple columns as index keys to <code>INDEX_KEY</code>.</p>
+<pre class="prettyprint"><code class="language-scala 3">val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None))
+)
+  .keySet(table =&gt; INDEX_KEY(table.id, table.name))
+
+// CREATE TABLE `user` (
+//   ...,
+//   INDEX KEY (`id`, `name`)
+// )
+</code></pre>
+<p>Compound keys can only be set with <code>INDEX_KEY</code> in the <code>keySet</code> method. If you set multiple columns as attributes of the <code>column</code> method, they will each be set as an index key, not as a composite index.</p>
+<h3><a href="#foreign-key" name="foreign-key" class="anchor"><span class="anchor-link"></span></a>FOREIGN KEY</h3>
+<p>A foreign key is a data integrity constraint (referential integrity constraint) in MySQL. A column set to a foreign key can only have values that exist in the columns of the referenced table.</p>
+<p>In LDBC, this foreign key constraint can be set by using the keySet method of table.</p>
+<pre class="prettyprint"><code class="language-scala 3">val post = Table[Post](&quot;post&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
+  column(&quot;name&quot;, VARCHAR(255))
+)
+
+val user = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),
+  column(&quot;post_id&quot;, BIGINT[Long])
+)
+  .keySet(table =&gt; FOREIGN_KEY(table.postId, REFERENCE(post, post.id)))
+
+// CREATE TABLE `user` (
+//   ...,
+//   FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`)
+// )
+</code></pre>
+<p>The <code>FOREIGN_KEY</code> method accepts the following parameters in addition to column and reference values.</p>
+<ul>
+  <li><code>Index Name</code> String</li>
+</ul>
+<p>Foreign key constraints can be used to set the behavior of the parent table on delete and update. The <code>REFERENCE</code> method provides the <code>onDelete</code> and <code>onUpdate</code> methods, which can be used to set the respective behavior.</p>
+<p>Values that can be set can be obtained from <code>ldbc.core.Reference.ReferenceOption</code>.</p>
+<pre class="prettyprint"><code class="language-scala 3">val user = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),
+  column(&quot;post_id&quot;, BIGINT[Long])
+)
+  .keySet(table =&gt; FOREIGN_KEY(table.postId, REFERENCE(post, post.id).onDelete(Reference.ReferenceOption.RESTRICT)))
+
+// CREATE TABLE `user` (
+//   ...,
+//   FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`) ON DELETE RESTRICT
+// )
+</code></pre>
+<p>The values that can be set are as follows</p>
+<ul>
+  <li><code>RESTRICT</code>: Deny delete or update operations on parent tables.</li>
+  <li><code>CASCADE</code>: Deletes or updates rows from the parent table and automatically deletes or updates matching rows in the child tables.</li>
+  <li><code>SET_NULL</code>: Deletes or updates rows from the parent table and sets foreign key columns in the child table to NULL.</li>
+  <li><code>NO_ACTION</code>: Standard SQL keywords. In MySQL, equivalent to RESTRICT.</li>
+  <li><code>SET_DEFAULT</code>: This action is recognized by the MySQL parser, but both InnoDB and NDB will reject table definitions containing an ON DELETE SET DEFAULT or ON UPDATE SET DEFAULT clause.</li>
+</ul>
+<h4><a href="#compound-key-foreign-key-" name="compound-key-foreign-key-" class="anchor"><span class="anchor-link"></span></a>Compound key (foreign key)</h4>
+<p>Not only one column, but also multiple columns can be combined as a foreign key. Simply pass multiple columns to <code>FOREIGN_KEY</code> to be set as foreign keys as a compound foreign key.</p>
+<pre class="prettyprint"><code class="language-scala 3">val post = Table[Post](&quot;post&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;category&quot;, SMALLINT[Short])
+)
+
+val user = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),
+  column(&quot;post_id&quot;, BIGINT[Long]),
+  column(&quot;post_category&quot;, SMALLINT[Short])
+)
+  .keySet(table =&gt; FOREIGN_KEY((table.postId, table.postCategory), REFERENCE(post, (post.id, post.category))))
+
+// CREATE TABLE `user` (
+//   ...,
+//   FOREIGN KEY (`post_id`, `post_category`)  REFERENCES `post` (`id`, `category`)
+// )
+</code></pre>
+<h3><a href="#constraint-name" name="constraint-name" class="anchor"><span class="anchor-link"></span></a>Constraint Name</h3>
+<p>MySQL allows you to give arbitrary names to constraints by using CONSTRAINT. The constraint name must be unique on a per-database basis.</p>
+<p>LDBC provides the CONSTRAINT method, so the process of setting constraints such as key constraints can be set by simply passing the process to the CONSTRAINT method.</p>
+<pre class="prettyprint"><code class="language-scala 3">val user = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT[Long], AUTO_INCREMENT),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),
+  column(&quot;post_id&quot;, BIGINT[Long])
+)
+  .keySet(table =&gt; CONSTRAINT(&quot;fk_post_id&quot;, FOREIGN_KEY(table.postId, REFERENCE(post, post.id))))
+
+// CREATE TABLE `user` (
+//   ...,
+//   CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`)
+// )
+</code></pre>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.1/docs/target/mdoc/en/01-Table-Definitions.md">here</a>.
+</div>
+
+<div class="nav-next">
+<p><strong>Next:</strong> <a href="../en/02-Custom-Data-Type.html">Custom Data Type</a></p>
+</div>
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../en/01-Table-Definitions.html#table-definitions" class="header">Table Definitions</a>
+  <ul>
+    <li><a href="../en/01-Table-Definitions.html#data-type" class="header">Data Type</a></li>
+    <li><a href="../en/01-Table-Definitions.html#attribute" class="header">Attribute</a></li>
+    <li><a href="../en/01-Table-Definitions.html#key-settings" class="header">Key Settings</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2024</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.1', 'https://takapi327.github.io/ldbc/')});</script>
+
+
+</html>

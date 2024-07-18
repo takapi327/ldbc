@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/index.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script type="text/javascript" src="js/warnOldVersion.js"></script>
+<script type="text/javascript" src="js/groups.js"></script>
+<script type="text/javascript" src="js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="index.html" class="active">
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="index.html" class="active">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="index.html" class="active">
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#ldbc" name="ldbc" class="anchor"><span class="anchor-link"></span></a>LDBC</h1>
+<div align="center">
+  <img alt="LDBC" src="./img/lepus_logo.png">
+</div>
+<div align="center">
+  <a href="https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.2.1/jar">
+    <img alt="Maven Central Version" src="https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue">
+  </a>
+  <a href="https://en.wikipedia.org/wiki/MIT_License">
+    <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green">
+  </a>
+  <a href="https://github.com/lampepfl/dotty">
+    <img alt="Scala Version" src="https://img.shields.io/badge/scala-v3.3.x-red">
+  </a>
+  <a href="https://typelevel.org/projects/affiliate/">
+    <img alt="Typelevel Affiliate Project" src="https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg">
+  </a>
+</div>
+<p>ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.</p>
+<p>ldbc is Created under the influence of <a href="https://github.com/softwaremill/tapir">tapir</a>, a declarative, type-safe web endpoint library. Using tapir, you can build type-safe endpoints and also generate OpenAPI documentation from the endpoints you build.</p>
+<p>ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.</p>
+<p>Note that <strong>ldbc</strong> is pre-1.0 software and is still undergoing active development. New versions are <strong>not</strong> binary compatible with prior versions, although in most cases user code will be source compatible.</p>
+<h2><a href="#documentation" name="documentation" class="anchor"><span class="anchor-link"></span></a>Documentation</h2>
+<ul>
+  <li><a href="/ldbc/en/index.html">English</a></li>
+  <li><a href="/ldbc/ja/index.html">Japanese</a></li>
+</ul>
+<h2><a href="#contributing" name="contributing" class="anchor"><span class="anchor-link"></span></a>Contributing</h2>
+<p>All suggestions welcome :)!</p>
+<p>If you’d like to contribute, see the list of <a href="https://github.com/takapi327/ldbc/issues">issues</a> and pick one! Or report your own. If you have an idea you’d like to discuss, that’s always a good option.</p>
+<p>If you have any questions about why or how it works, feel free to ask on github. This probably means that the documentation, scaladocs, and code are unclear and can be improved for the benefit of all.</p>
+<h3><a href="#testing-locally" name="testing-locally" class="anchor"><span class="anchor-link"></span></a>Testing locally</h3>
+<p>If you want to build and run the tests for yourself, you&rsquo;ll need a local MySQL database. The easiest way to do this is to run <code>docker-compose up</code> from the project root.</p>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.1/docs/target/mdoc/index.md">here</a>.
+</div>
+
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="index.html#ldbc" class="header">LDBC</a>
+  <ul>
+    <li><a href="index.html#documentation" class="header">Documentation</a></li>
+    <li><a href="index.html#contributing" class="header">Contributing</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2024</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="js/magellan.js"></script>
+
+<style type="text/css">@import "lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.1', 'https://takapi327.github.io/ldbc/')});</script>
+
+
+</html>

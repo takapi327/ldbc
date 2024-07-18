@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+
+<head>
+<title>LDBC</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content='Documentation for ldbc'/>
+<link rel="canonical" href="https://takapi327.github.io/ldbc/../ja/index.html"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:100normal,100italic,300normal,300italic,400normal,400italic,500normal,500italic,700normal,700italic,900normal,900italicc" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../lib/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../js/page.js"></script>
+<script type="text/javascript" src="../js/warnOldVersion.js"></script>
+<script type="text/javascript" src="../js/groups.js"></script>
+<script type="text/javascript" src="../js/snippets.js"></script>
+<link rel="stylesheet" type="text/css" href="../lib/foundation/dist/foundation.min.css"/>
+<link rel="stylesheet" type="text/css" href="../css/page.css"/>
+
+<!--
+<link rel="shortcut icon" href="../images/favicon.ico" />
+-->
+</head>
+
+<body>
+<div class="off-canvas-wrapper">
+<div class="off-canvas-wrapper-inner" data-off-canvas-wrapper>
+
+<div class="off-canvas position-left" id="off-canvas-menu" data-off-canvas>
+<nav class="off-canvas-nav">
+<div class="nav-home">
+<a href="../ja/index.html" class="active">
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="off-canvas-content" data-off-canvas-content>
+
+<header class="site-header expanded row">
+<div class="small-12 column">
+<a href="#" class="off-canvas-toggle hide-for-medium" data-toggle="off-canvas-menu"><svg class="svg-icon svg-icon-menu" version="1.1" id="Menu" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 20 20" enable-background="new 0 0 20 20" xml:space="preserve"> <path class="svg-icon-menu-path" fill="#53CDEC" d="M16.4,9H3.6C3.048,9,3,9.447,3,10c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,9.447,16.952,9,16.4,9z M16.4,13
+H3.6C3.048,13,3,13.447,3,14c0,0.553,0.048,1,0.6,1H16.4c0.552,0,0.6-0.447,0.6-1C17,13.447,16.952,13,16.4,13z M3.6,7H16.4
+C16.952,7,17,6.553,17,6c0-0.553-0.048-1-0.6-1H3.6C3.048,5,3,5.447,3,6C3,6.553,3.048,7,3.6,7z"/></svg>
+</a>
+<div class="title"><a href="../ja/index.html" class="active">LDBC</a></div>
+
+<!--
+<a href="https://www.example.com" class="logo show-for-medium">logo</a>
+-->
+</div>
+</header>
+
+<div class="expanded row">
+
+<div class="medium-3 large-2 show-for-medium column">
+<nav class="site-nav">
+<div class="nav-home">
+<a href="../ja/index.html" class="active">
+<span class="home-icon">⌂</span>LDBC
+</a>
+<div class="version-number">
+0.2.1
+</div>
+</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/01-Table-Definitions.html" class="page">テーブル定義</a></li>
+  <li><a href="../ja/02-Custom-Data-Type.html" class="page">カスタム データ型</a></li>
+  <li><a href="../ja/03-Type-safe-Query-Builder.html" class="page">型安全なクエリ構築</a></li>
+  <li><a href="../ja/04-Database-Connection.html" class="page">データベース接続</a></li>
+  <li><a href="../ja/05-Plain-SQL-Queries.html" class="page">プレーンなSQLクエリ</a></li>
+  <li><a href="../ja/06-Generating-SchemaSPY-Documentation.html" class="page">SchemaSPYドキュメントの生成</a></li>
+  <li><a href="../ja/07-Schema-Code-Generation.html" class="page">スキーマコード生成</a></li>
+  <li><a href="../ja/08-Perdormance.html" class="page">パフォーマンス</a></li>
+</ul>
+</div>
+
+</nav>
+</div>
+
+<div class="small-12 medium-9 large-10 column">
+<section class="site-content">
+
+<span id="version-warning"></span>
+
+<div class="page-header row">
+<div class="medium-12 show-for-medium column">
+</div>
+</div>
+
+<div class="page-content row">
+<div class="small-12 large-9 column" id="docs">
+<h1><a href="#ldbc" name="ldbc" class="anchor"><span class="anchor-link"></span></a>LDBC</h1>
+<p><strong>LDBC</strong>は1.0以前のソフトウェアであり、現在も活発に開発中であることに注意してください。新しいバージョンは以前のバージョンとバイナリ互換性がなくなってしまう可能性があります。</p>
+<h2><a href="#はじめに" name="はじめに" class="anchor"><span class="anchor-link"></span></a>はじめに</h2>
+<p>私たちのアプリケーション開発では大抵の場合データベースを使用します。<br>Scalaでデータベースアクセスを行う場合JDBCを使用する方法がありますが、ScalaにはこのJDBCをラップしたライブラリがいくつか存在しています。</p>
+<ul>
+  <li>関数型DSL (Slick, quill, zio-sql)</li>
+  <li>SQL文字列インターポレーター (Anorm, doobie)</li>
+</ul>
+<p>LDBCも同じくJDBCをラップしたライブラリであり、LDBCはそれぞれの側面を組み合わせたScala 3ライブラリで、型安全でリファクタブルなSQLインターフェイスを提供し、MySQLのデータベース上でのSQL式を表現できます。</p>
+<p>また、LDBCのコンセプトは、LDBCを使用することで単一リソースを管理することでScalaのモデルやsqlのスキーマ、ドキュメントを一元化できる開発を行えることです。</p>
+<p>このコンセプトは宣言的でタイプセーフなWebエンドポイントライブラリである<a href="https://github.com/softwaremill/tapir">tapir</a>から影響を受けました。<br>tapirを使用することで、型安全なエンドポイントを構築することができ、構築したエンドポイントからOpenAPIドキュメントを生成することもできます。</p>
+<p>LDBCはデータベース層でScalaを使用して、同じように型安全な構築を可能にし、構築されたものを使用してドキュメントの生成を行えるようにします。</p>
+<h2><a href="#なぜldbcなのか-" name="なぜldbcなのか-" class="anchor"><span class="anchor-link"></span></a>なぜLDBCなのか？</h2>
+<p>データベースを利用したアプリケーション開発では、様々な変更を継続的に行う必要があります。</p>
+<p>例えば、データベースに構築されたテーブルのどの情報をアプリケーションで扱うべきか、データ検索にはどのようなクエリが最適か、などである。</p>
+<p>テーブル定義にカラムを1つ追加するだけでも、SQLファイルの修正、対応するモデルへのプロパティの追加、データベースへの反映、ドキュメントの更新などが必要になります。</p>
+<p>他にも考慮すべきこと、修正すべきことなどたくさんあります。</p>
+<p>日々の開発の中で全てをメンテナンスし続けるのはとても大変なことであり、メンテナンス漏れだって起こるかもしれません。</p>
+<p>テーブル情報をアプリケーション・モデルにマッピングすることなく、プレーンなSQLでデータを取得し、データを取得する際には指定された型で取得するというアプローチは非常に良い方法だと思います。</p>
+<p>この方法であれば、データベース固有のモデルを構築する必要がなく、開発者はデータを取得したいときに、取得したい種類のデータを使って自由にデータを扱うことができるからです。<br>また、プレーンなクエリを扱うことで、どのようなクエリが実行されるかを瞬時に把握できる点も非常に優れていると思います。</p>
+<p>しかし、この方法ではテーブル情報のアプケーションでの管理がなくなっただけでドキュメントの更新などを解消することはできません。</p>
+<p>LDBCは、これらの問題のいくつかを解決するために開発されています。</p>
+<ul>
+  <li>型安全性：コンパイル時の保証、開発時の補完、読み取り時の情報</li>
+  <li>宣言型：テーブル定義の形（&ldquo;What&rdquo;）とデータベース接続（&ldquo;How&rdquo;）を分離する。</li>
+  <li>SchemaSPYの統合：テーブル記述からドキュメントを生成する</li>
+  <li>フレームワークではなくライブラリ: あなたのスタックに統合できる</li>
+</ul>
+<p>LDBCを使用するとデータベースの情報をアプリケーションで管理しなければいけませんが、型安全性とクエリの構築、ドキュメントの管理を一元化することができます。</p>
+<p>LDBCでのモデルをテーブル定義にマッピングするのはとても簡単です。</p>
+<p>モデルが持つプロパティと、そのカラムのために定義されるデータ型の間のマッピングも非常にシンプルです。開発者は、モデルが持つプロパティと同じ順序で、対応するカラムを定義するだけです。</p>
+<pre class="prettyprint"><code class="language-scala">import ldbc.core.*
+
+case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+
+val table = Table[User](&quot;user&quot;)(
+  column(&quot;id&quot;, BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+  column(&quot;name&quot;, VARCHAR(255)),
+  column(&quot;age&quot;, INT.UNSIGNED.DEFAULT(None)),
+)
+</code></pre>
+<p>また、間違った型を組み合わせようとするとコンパイルエラーになります。</p>
+<p>例えば、Userが持つString型のnameプロパティに関連するカラムにINT型のカラムを渡すとエラーになります。</p>
+<pre class="prettyprint"><code class="language-shell">[error] -- [E007] Type Mismatch Error:
+[error] 169 |    column(&quot;name&quot;, INT),
+[error]     |                   ^^^
+[error]     |Found:    ldbc.core.DataType.Integer[T]
+[error]     |Required: ldbc.core.DataType[String]
+[error]     |
+[error]     |where:    T is a type variable with constraint &lt;: Int | Long | Option[Int | Long]
+</code></pre>
+<p>これらのアドオンの詳細については、<a href="/ldbc/ja/01-Table-Definitions.html">テーブル定義</a> を参照してください。</p>
+<h2><a href="#クイックスタート" name="クイックスタート" class="anchor"><span class="anchor-link"></span></a>クイックスタート</h2>
+<p>現在のバージョンは <strong>Scala 3.3.1</strong> に対応した <strong>0.2.1</strong> です。</p>
+<pre class="prettyprint"><code class="language-scala">libraryDependencies ++= Seq(
+
+  // まずはこの1つから
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-core&quot; % &quot;0.2.1&quot;,
+
+  // そして、必要に応じてこれらを加える
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-dsl&quot;           % &quot;0.2.1&quot;, // プレーンクエリー データベース接続
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-query-builder&quot; % &quot;0.2.1&quot;, // 型安全なクエリ構築
+  &quot;io.github.takapi327&quot; %% &quot;ldbc-schemaspy&quot;     % &quot;0.2.1&quot;, // SchemaSPYドキュメント生成
+)
+</code></pre>
+<p>sbtプラグインの使い方については、こちらの<a href="/ldbc/ja/07-Schema-Code-Generation.html">documentation</a>を参照してください。</p>
+<h2><a href="#todo" name="todo" class="anchor"><span class="anchor-link"></span></a>TODO</h2>
+<ul>
+  <li>JSONデータタイプのサポート</li>
+  <li>SETデータタイプのサポート</li>
+  <li>Geometryデータタイプのサポート</li>
+  <li>CHECK制約のサポート</li>
+  <li>MySQL以外のデータベースサポート</li>
+  <li>ストリーミングのサポート</li>
+  <li>ZIOモジュールのサポート</li>
+  <li>他データベースライブラリとの統合</li>
+  <li>テストキット</li>
+  <li>etc&hellip;</li>
+</ul>
+<div class="source-github">
+The source code for this page can be found <a href="https://github.com/takapi327/ldbc/tree/v0.2.1/docs/target/mdoc/ja/index.md">here</a>.
+</div>
+
+<div class="nav-next">
+<p><strong>Next:</strong> <a href="../ja/01-Table-Definitions.html">テーブル定義</a></p>
+</div>
+</div>
+<div class="large-3 show-for-large column" data-sticky-container>
+<nav class="sidebar sticky" data-sticky data-anchor="docs" data-sticky-on="large">
+<div class="page-nav">
+<div class="nav-title">On this page:</div>
+<div class="nav-toc">
+<ul>
+  <li><a href="../ja/index.html#ldbc" class="header">LDBC</a>
+  <ul>
+    <li><a href="../ja/index.html#はじめに" class="header">はじめに</a></li>
+    <li><a href="../ja/index.html#なぜldbcなのか-" class="header">なぜLDBCなのか？</a></li>
+    <li><a href="../ja/index.html#クイックスタート" class="header">クイックスタート</a></li>
+    <li><a href="../ja/index.html#todo" class="header">TODO</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+</nav>
+</div>
+</div>
+
+</section>
+</div>
+
+</div>
+
+<footer class="site-footer">
+
+<section class="site-footer-nav">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 medium-4 large-3 text-center column">
+<div class="nav-links">
+<ul>
+<!-- <li><a href="https://www.example.com/products/">Products</a> -->
+</ul>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+
+<section class="site-footer-base">
+<div class="expanded row">
+<div class="small-12 large-offset-2 large-10 column">
+<div class="row site-footer-content">
+
+<div class="small-12 text-center large-9 column">
+
+<!--
+<div class="copyright">
+<span class="text">&copy; 2024</span>
+<a href="https://www.example.com" class="logo">logo</a>
+</div>
+-->
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</footer>
+
+</div>
+</div>
+</div>
+</body>
+
+<script type="text/javascript" src="../lib/foundation/dist/foundation.min.js"></script>
+<script type="text/javascript">jQuery(document).foundation();</script>
+<script type="text/javascript" src="../js/magellan.js"></script>
+
+<style type="text/css">@import "../lib/prettify/prettify.css";</style>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">jQuery(function(){window.prettyPrint && prettyPrint()});</script>
+<script type="text/javascript">jQuery(function(jq){initOldVersionWarnings(jq, '0.2.1', 'https://takapi327.github.io/ldbc/')});</script>
+
+
+</html>
