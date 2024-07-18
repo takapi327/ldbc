@@ -1,24 +1,33 @@
+{%
+laika.title = ldbc
+laika.metadata {
+  language = en
+  isRootPath = true
+}
+%}
+
 # ldbc (Lepus Database Connectivity)
 
-<div align="center">
-  <img alt="LDBC" src="./img/lepus_logo.png">
-</div>
+@:image(img/lepus_logo.png) {
+  alt = "ldbc (Lepus Database Connectivity)"
+  style = "center-logo"
+}
 
 [![Continuous Integration](https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/takapi327/ldbc/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](https://en.wikipedia.org/wiki/MIT_License)
 [![Scala Version](https://img.shields.io/badge/scala-v3.3.x-red)](https://github.com/lampepfl/dotty)
 [![Typelevel Affiliate Project](https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg)](https://typelevel.org/projects/affiliate/)
-[![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
-[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-beta4/jar)
+[![javadoc](https://javadoc.io/badge2/@ORGANIZATION@/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/@ORGANIZATION@/ldbc-dsl_3)
+[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/@ORGANIZATION@/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/@ORGANIZATION@/ldbc-dsl_3/0.3.0-beta4/jar)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
 
+========================================================================================
+
 ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
 
-ldbc is Created under the influence of [tapir](https://github.com/softwaremill/tapir), a declarative, type-safe web endpoint library. Using tapir, you can build type-safe endpoints and also generate OpenAPI documentation from the endpoints you build.
-
-ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.
+ldbc is a [Typelevel](http://typelevel.org/) project. This means we embrace pure, typeful, functional programming, and provide a safe and friendly environment for teaching, learning, and contributing as described in the Scala [Code of Conduct](http://scala-lang.org/conduct.html).
 
 Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
 
@@ -30,14 +39,14 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 |----------------------|:---:|:------------:|:--------:|
 | `ldbc-core`          |  ✅  |      ✅       |    ✅     |
 | `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     |
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     |
 | `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
+| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     |
 | `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     |
 | `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
 ## Quick Start
@@ -47,13 +56,13 @@ For people that want to skip the explanations and see it action, this is the pla
 ### Dependency Configuration
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-dsl" % "@VERSION@"
 ```
 
 The dependency package used depends on whether the database connection is made via a connector using the Java API or a connector provided by ldbc.
@@ -61,26 +70,25 @@ The dependency package used depends on whether the database connection is made v
 **Use jdbc connector**
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@"
 ```
 
 **Use ldbc connector**
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native)
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 ```
 
 ### Usage
 
 The difference in usage is that there are differences in the way connections are built between jdbc and ldbc.
 
-> [!CAUTION]
 > **ldbc** is currently under active development. Please note that current functionality may therefore be deprecated or changed in the future.
 
 **jdbc connector**
@@ -88,7 +96,7 @@ The difference in usage is that there are differences in the way connections are
 ```scala
 val ds = new com.mysql.cj.jdbc.MysqlDataSource()
 ds.setServerName("127.0.0.1")
-ds.setPortNumber(13306)
+ds.setPortNumber(3306)
 ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
@@ -171,13 +179,13 @@ ldbc also allows type-safe construction of schema information for tables.
 The first step is to set up dependencies.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-schema" % "@VERSION@"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "${version}"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-schema" % "@VERSION@"
 ```
 
 The next step is to create a schema for use by the query builder.
@@ -213,56 +221,8 @@ val result: IO[List[User]] = connection.use { conn =>
 
 Full documentation can be found at Currently available in English and Japanese.
 
-- [English](/ldbc/en/index.html)
-- [Japanese](/ldbc/ja/index.html)
-
-## Features/Roadmap
-
-Creating a MySQL connector project written in pure Scala3.
-
-JVM, JS and Native platforms are all supported.
-
-> [!IMPORTANT]
-> **ldbc** is currently focused on developing connectors written in pure Scala3 to work with JVM, JS and Native.
-> In the future, we also plan to rewrite existing functions based on a pure Scala3 connector.
-
-### Enhanced functionality and improved stability of the MySQL connector written in pure Scala3
-
-Most of the jdbc functionality used in other packages of ldbc at the moment could be implemented.
-
-However, not all jdbc APIs could be supported. Nor can we guarantee that it is proven and stable enough to operate in a production environment.
-
-We will continue to develop features and improve the stability of the ldbc connector to achieve the same level of stability and reliability as the jdbc connector.
-
-#### Connection pooling implementation
-
-- [ ] Failover Countermeasures
-
-#### Performance Verification
-
-- [ ] Comparison with JDBC
-- [ ] Comparison with other MySQL Scala libraries
-- [ ] Verification of operation in AWS and other infrastructure environments
-
-#### Other
-
-- [ ] Additional streaming implementation
-- [ ] Integration with java.sql API
-- [ ] etc...
-
-### Redesign of query builders and schema definitions
-
-Initially, ldbc was inspired by tapir to create a development system that could centralise Scala models, sql schemas and documentation by managing a single resource at the database level.
-
-In addition, database connection, query construction and document generation were to be used in combination with retrofitted packages, as the aim was to be able to integrate with other database systems.
-
-As a result, we feel that it has become difficult for users to use because of the various configurations required to build it.
-
-What users originally wanted from a database connectivity library was something simpler, easier and more intuitive to use.
-
-Initially, ldbc aimed to create documentation from the schema, so building the schema and query builder was not as simple as it could have been, as it required a complete description of the database data types and so on.
-
-It was therefore decided to redesign it to make it simpler and easier to use.
+- [English](en/index.md)
+- [Japanese](ja/index.md)
 
 ## Contributing
 
