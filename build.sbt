@@ -197,33 +197,21 @@ lazy val benchmark = (project in file("benchmark"))
 lazy val docs = (project in file("docs"))
   .settings(
     description   := "Documentation for ldbc",
-    scalacOptions := Nil,
-    mdocIn        := baseDirectory.value / "src" / "main" / "mdoc",
-    paradoxTheme  := Some(builtinParadoxTheme("generic")),
-    paradoxProperties ++= Map(
-      "org"          -> organization.value,
-      "scalaVersion" -> scalaVersion.value,
-      "version"      -> version.value.takeWhile(_ != '+'),
-      "mysqlVersion" -> mysqlVersion
-    ),
-    Compile / paradox / sourceDirectory := mdocOut.value,
-    Compile / paradoxRoots              := List("index.html", "en/index.html", "ja/index.html"),
-    makeSite                            := makeSite.dependsOn(mdoc.toTask("")).value,
-    git.remoteRepo                      := "git@github.com:takapi327/ldbc.git",
-    ghpagesNoJekyll                     := true
+    mdocIn        := (Compile / sourceDirectory).value / "mdoc",
+    Laika / sourceDirectories := Seq((Compile / sourceDirectory).value / "mdoc"),
+    tlSiteIsTypelevelProject := Some(TypelevelProject.Affiliate),
+    mdocVariables ++= Map(
+      "ORGANIZATION" -> organization.value,
+      "SCALA_VERSION" -> scalaVersion.value,
+      "MYSQL_VERSION"  -> mysqlVersion,
+    )
   )
   .settings(commonSettings)
   .dependsOn(
-    core.jvm,
-    sql.jvm,
-    dsl.jvm,
-    queryBuilder.jvm,
-    schema.jvm,
-    schemaSpy,
-    codegen.jvm,
-    hikari
+    connector.jvm,
+    schema.jvm
   )
-  .enablePlugins(MdocPlugin, SitePreviewPlugin, ParadoxSitePlugin, GhpagesPlugin, NoPublishPlugin)
+  .enablePlugins(AutomateHeaderPlugin, TypelevelSitePlugin, NoPublishPlugin)
 
 lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
