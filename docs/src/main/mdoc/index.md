@@ -10,7 +10,7 @@ laika.metadata {
 
 @:image(img/lepus_logo.png) {
   alt = "ldbc (Lepus Database Connectivity)"
-  style = "small-image"
+  style = "center-logo"
 }
 
 [![Continuous Integration](https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/takapi327/ldbc/actions/workflows/ci.yml)
