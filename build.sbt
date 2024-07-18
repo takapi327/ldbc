@@ -204,9 +204,7 @@ lazy val docs = (project in file("docs"))
       "SCALA_VERSION" -> scalaVersion.value,
       "MYSQL_VERSION" -> mysqlVersion
     ),
-    laikaTheme := tlSiteHelium
-      .value
-      .site
+    laikaTheme := tlSiteHelium.value.site
       .internalCSS(Root / "css" / "site.css")
       .build
   )
