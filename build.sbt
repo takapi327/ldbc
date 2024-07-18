@@ -194,9 +194,9 @@ lazy val benchmark = (project in file("benchmark"))
 
 lazy val docs = (project in file("docs"))
   .settings(
-    description               := "Documentation for ldbc",
-    mdocIn                    := (Compile / sourceDirectory).value / "mdoc",
-    tlSiteIsTypelevelProject  := Some(TypelevelProject.Affiliate),
+    description              := "Documentation for ldbc",
+    mdocIn                   := (Compile / sourceDirectory).value / "mdoc",
+    tlSiteIsTypelevelProject := Some(TypelevelProject.Affiliate),
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
