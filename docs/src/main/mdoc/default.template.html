@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="${?laika.site.metadata.language}">
+
+@:include(helium.site.templates.head)
+
+<body>
+
+@:include(helium.site.templates.topNav)
+
+<nav id="sidebar">
+
+  <div class="row">
+    @:for(helium.site.topNavigation.phoneLinks)
+    ${_}
+    @:@
+  </div>
+
+  @:if(laika.metadata.isRootPath)
+  @:navigationTree {
+    entries = ${helium.site.mainNavigation.prependLinks} [
+      { target = "/", excludeRoot = true, depth = 1 }
+    ] ${helium.site.mainNavigation.appendLinks}
+  }
+  @:else
+  @:navigationTree {
+    entries = ${helium.site.mainNavigation.prependLinks} [
+      { target = /${laika.metadata.language}/, excludeRoot = true, excludeSections = ${helium.site.mainNavigation.excludeSections}, depth = ${helium.site.mainNavigation.depth} },
+    ] ${helium.site.mainNavigation.appendLinks}
+  }
+  @:@
+
+</nav>
+
+<div id="container">
+
+  @:include(helium.site.templates.pageNav)
+
+  <main class="content">
+
+    ${cursor.currentDocument.content}
+
+    @:include(helium.site.templates.footer)
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

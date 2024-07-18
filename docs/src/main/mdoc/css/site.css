@@ -1,0 +1,7 @@
+.center-logo {
+  text-align: center;
+}
+
+table td:not(:has(code)) {
+  text-align: center;
+}
