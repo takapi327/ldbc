@@ -44,9 +44,8 @@ ldbcは、型付けされた純粋な関数型プログラミングに興味が�
 
 ## クイックスタート
 
-現在のバージョンは **Scala $scalaVersion$** に対応した **$version$** です。
+現在のバージョンは **Scala @SCALA_VERSION@** に対応した **@VERSION@** です。
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
 
@@ -62,9 +61,6 @@ libraryDependencies ++= Seq(
   "$org$" %% "ldbc-schema"        % "$version$", // データベーススキーマの構築
 )
 ```
-@@@
-
-sbtプラグインの使い方については、こちらの[documentation](/ldbc/ja/07-Schema-Code-Generation.html)を参照してください。
 
 ## TODO
 
