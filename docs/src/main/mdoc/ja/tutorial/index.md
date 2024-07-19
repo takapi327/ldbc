@@ -10,5 +10,5 @@ This section contains instructions and examples to get you started. It's written
 ## Table of Contents
 
 @:navigationTree {
-  entries = [ { target = "/en/tutorial", depth = 2 } ]
+  entries = [ { target = "/ja/tutorial", depth = 2 } ]
 }
