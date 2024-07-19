@@ -1,3 +1,8 @@
+{%
+  laika.title = コネクション
+  laika.metadata.language = ja
+%}
+
 # コネクション
 
 この章では、データベースに接続するためのコネクション構築方法について説明します。
@@ -12,14 +17,12 @@ ldbcはjdbcとldbc独自のコネクタのどちらかを使ってデータベ�
 
 jdbcコネクタを使用する場合、MySQLのコネクタも追加する必要があります。
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
-  "$org$" %% "jdbc-connector" % "$version$",
-  "com.mysql" % "mysql-connector-j" % "$mysqlVersion$"
+  "$org$" %% "jdbc-connector" % "@VERSION@",
+  "com.mysql" % "mysql-connector-j" % "@MYSQL_VERSION@"
 )
 ```
-@@@
 
 次に、`MysqlDataSource`を使用してデータソースを作成します。
 
@@ -51,11 +54,9 @@ val connection: Resource[IO, Connection[IO]] =
 
 まず、`build.sbt`に依存関係を追加します。
 
-@@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-connector" % "$version$"
+libraryDependencies += "$org$" %% "ldbc-connector" % "@VERSION@"
 ```
-@@@
 
 次に、Tracerを提供します。ldbcコネクタはTracerを使用してテレメトリデータの収集を行います。 これらは、アプリケーショントレースを記録するために使用されます。
 

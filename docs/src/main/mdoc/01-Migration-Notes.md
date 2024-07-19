@@ -46,45 +46,35 @@ Scala MySQL コネクタに、JDBC と ldbc の接続切り替えのサポート
 
 まず、共通の依存関係を設定する。
 
-@@@ vars
 ```scala 3
-libraryDependencies += "$org$" %% "ldbc-dsl" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@"
 ```
-@@@
 
 クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）
 
-@@@ vars
 ```scala 3
-libraryDependencies += "$org$" %%% "ldbc-dsl" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-dsl" % "@VERSION@"
 ```
-@@@
 
 使用される依存パッケージは、データベース接続が Java API を使用するコネクタを介して行われるか、または ldbc によって提供されるコネクタを介して行われるかによって異なります。
 
 **jdbcコネクタの使用**
 
-@@@ vars
 ```scala 3
-libraryDependencies += "$org$" %% "jdbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@"
 ```
-@@@
 
 **ldbcコネクタの使用**
 
-@@@ vars
 ```scala 3
-libraryDependencies += "$org$" %% "ldbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 ```
-@@@
 
 クロスプラットフォームプロジェクトでは（JVM、JS、ネイティブ）
 
-@@@ vars
 ```scala 3
-libraryDependencies += "$org$" %%% "ldbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 ```
-@@@
 
 ##### 使用方法
 
