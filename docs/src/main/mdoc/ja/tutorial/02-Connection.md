@@ -13,15 +13,13 @@ ldbcはjdbcとldbc独自のコネクタのどちらかを使ってデータベ�
 
 ## Use jdbc connector
 
-まず、`build.sbt`に依存関係を追加します。
+まず、依存関係を追加します。
 
 jdbcコネクタを使用する場合、MySQLのコネクタも追加する必要があります。
 
 ```scala
-libraryDependencies ++= Seq(
-  "$org$" %% "jdbc-connector" % "@VERSION@",
-  "com.mysql" % "mysql-connector-j" % "@MYSQL_VERSION@"
-)
+//> dep "@ORGANIZATION@::jdbc-connector:@VERSION@"
+//> dep "com.mysql":"mysql-connector-j":"@MYSQL_VERSION@"
 ```
 
 次に、`MysqlDataSource`を使用してデータソースを作成します。
@@ -52,10 +50,10 @@ val connection: Resource[IO, Connection[IO]] =
 
 ## Use ldbc connector
 
-まず、`build.sbt`に依存関係を追加します。
+まず、依存関係を追加します。
 
 ```scala
-libraryDependencies += "$org$" %% "ldbc-connector" % "@VERSION@"
+//> dep "@ORGANIZATION@::ldbc-connector:@VERSION@"
 ```
 
 次に、Tracerを提供します。ldbcコネクタはTracerを使用してテレメトリデータの収集を行います。 これらは、アプリケーショントレースを記録するために使用されます。
@@ -81,15 +79,15 @@ val connection: Resource[IO, Connection[IO]] =
 
 コネクションを設定するためのパラメータは以下の通りです。
 
-| プロパティ                    | 詳細                                                           | 必須 |
-|--------------------------|--------------------------------------------------------------|----|
-| host                     | データベースホスト情報                                                  | ✅  |
-| port                     | データベースポート情報                                                  | ✅  |
-| user                     | データベースユーザー情報                                                 | ✅  |
-| password                 | データベースパスワード情報 (default: None)                                | ❌  |
-| database                 | データベース名情報 (default: None)                                    | ❌  |
-| debug                    | デバッグ情報を表示するかどうか  (default: false)                            | ✅  |
-| ssl                      | SSLの設定 (default: SSL.None)                                   | ✅  |
-| socketOptions            | TCP/ UDP ソケットのソケットオプションを指定する (default: defaultSocketOptions) | ✅  |
-| readTimeout              | タイムアウト時間を指定する (default: Duration.Inf)                        | ✅  |
-| allowPublicKeyRetrieval  | 公開鍵を取得するかどうか (default: false)                                | ✅  |
+| プロパティ                     | 詳細                                                             | 必須 |
+|---------------------------|----------------------------------------------------------------|----|
+| `host`                    | `データベースホスト情報`                                                  | ✅  |
+| `port`                    | `データベースポート情報`                                                  | ✅  |
+| `user`                    | `データベースユーザー情報`                                                 | ✅  |
+| `password`                | `データベースパスワード情報 (default: None)`                                | ❌  |
+| `database`                | `データベース名情報 (default: None)`                                    | ❌  |
+| `debug`                   | `デバッグ情報を表示するかどうか  (default: false)`                            | ✅  |
+| `ssl`                     | `SSLの設定 (default: SSL.None)`                                   | ✅  |
+| `socketOptions`           | `TCP/ UDP ソケットのソケットオプションを指定する (default: defaultSocketOptions)` | ✅  |
+| `readTimeout`             | `タイムアウト時間を指定する (default: Duration.Inf)`                        | ✅  |
+| `allowPublicKeyRetrieval` | `公開鍵を取得するかどうか (default: false)`                                | ✅  |
