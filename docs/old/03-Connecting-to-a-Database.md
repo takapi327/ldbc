@@ -6,12 +6,11 @@
 
 まず、データベースを起動します。以下のコードを使用して、データベースを起動します。
 
-@@@ vars
 ```yaml
 version: '3'
 services:
   mysql:
-    image: mysql:"$mysqlVersion$"
+    image: mysql@MYSQL_VERSION@
     container_name: ldbc
     environment:
       MYSQL_USER: 'ldbc'
@@ -26,13 +25,12 @@ services:
       timeout: 20s
       retries: 10
 ```
-@@@
 
 次に、データベースの初期化を行います。
 
 以下コードのようにデータベースの作成を行います。
 
-@@snip [00-Setup.scala](/docs/src/main/scala/00-Setup.scala) { #setupDatabase }
+@:include(/docs/src/main/scala/00-Setup.scala) { #setupDatabase }
 
 次に、テーブルの作成を行います。
 
@@ -70,11 +68,9 @@ services:
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
-@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:$version$ --dependency io.github.takapi327::ldbc-connector:$version$
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
-@@@
 
 ## 最初のプログラム
 
@@ -119,11 +115,9 @@ Executorは、データベースへの接続方法、接続の受け渡し方法
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
-@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
-@@@
 
 ## 2つめのプログラム
 
@@ -141,11 +135,9 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-P
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
-@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
-@@@
 
 ## 3つめのプログラム
 
@@ -161,11 +153,9 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-P
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
-@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
-@@@
 
 ## 4つめのプログラム
 
@@ -181,8 +171,6 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-P
 
 このプログラムは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
 
-@@@ vars
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:${version} --dependency io.github.takapi327::ldbc-connector:${version}
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
-@@@
