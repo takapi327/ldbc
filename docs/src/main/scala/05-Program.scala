@@ -24,33 +24,34 @@ import ldbc.dsl.io.*
   // #given
 
   // #customType
-  enum TaskStatus(val done: Boolean, val name: String):
-    case Pending extends TaskStatus(false, "Pending")
-    case Done    extends TaskStatus(true, "Done")
+  enum Status:
+    case Active, InActive
   // #customType
 
   // #customParameter
-  given Parameter[TaskStatus] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, status: TaskStatus): F[Unit] =
-      statement.setBoolean(index, status.done)
+  given Parameter[Status] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, status: Status): F[Unit] =
+      status match
+        case Status.Active   => statement.setBoolean(index, true)
+        case Status.InActive => statement.setBoolean(index, false)
   // #customParameter
 
   // #program1
   val program1: Executor[IO, Int] =
-    sql"INSERT INTO task (name, done) VALUES (${ "task 1" }, ${ TaskStatus.Done })".update
+    sql"INSERT INTO user (name, email, status) VALUES (${ "user 1" }, ${ "user@example.com" }, ${ Status.Active })".update
   // #program1
 
   // #customReader
-  given ResultSetReader[IO, TaskStatus] =
-    ResultSetReader.mapping[IO, Boolean, TaskStatus] {
-      case true  => TaskStatus.Done
-      case false => TaskStatus.Pending
+  given ResultSetReader[IO, Status] =
+    ResultSetReader.mapping[IO, Boolean, Status] {
+      case true  => Status.Active
+      case false => Status.InActive
     }
   // #customReader
 
   // #program2
-  val program2: Executor[IO, (String, TaskStatus)] =
-    sql"SELECT name, done FROM task WHERE id = 1".query[(String, TaskStatus)].unsafe
+  val program2: Executor[IO, (String, String, Status)] =
+    sql"SELECT name, email, status FROM user WHERE id = 1".query[(String, String, Status)].unsafe
   // #program2
 
   // #connection
@@ -58,7 +59,8 @@ import ldbc.dsl.io.*
     host     = "127.0.0.1",
     port     = 13306,
     user     = "ldbc",
-    password = Some("password")
+    password = Some("password"),
+    ssl      = SSL.Trusted
   )
   // #connection
 
@@ -68,5 +70,4 @@ import ldbc.dsl.io.*
       program1.commit(conn) *> program2.readOnly(conn).map(println(_))
     }
     .unsafeRunSync()
-  // ("task 1", Done)
   // #run
