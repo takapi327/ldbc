@@ -33,13 +33,13 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     onLoadMessage :=
       s"""
-         |${scala.Console.RED}WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.
+         |${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.
          |
-         |${scala.Console.RED}${organization.value} %% ${name.value} % ${version.value}
+         |${ scala.Console.RED }${ organization.value } %% ${ name.value } % ${ version.value }
          |
-         |         ${scala.Console.RED}↓↓↓↓↓
+         |         ${ scala.Console.RED }↓↓↓↓↓
          |
-         |${scala.Console.RED}${organization.value} %% ldbc-schema % ${version.value}
+         |${ scala.Console.RED }${ organization.value } %% ldbc-schema % ${ version.value }
          |
          |""".stripMargin,
     libraryDependencies ++= Seq(
@@ -89,7 +89,7 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
     description := "Project to generate SchemaSPY documentation",
-    onLoadMessage := s"${scala.Console.RED}WARNING: This project is deprecated and will be removed in future versions.${scala.Console.RESET}",
+    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
     libraryDependencies += schemaspy
   )
   .dependsOn(core.jvm)
