@@ -50,15 +50,15 @@ ldbcは、型付けされた純粋な関数型プログラミングに興味が�
 libraryDependencies ++= Seq(
 
   // まずはこの1つから
-  "$org$" %% "ldbc-dsl" % "$version$",
+  "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@",
   
   // 使用するコネクタを選択
-  "$org$" %% "jdbc-connector" % "$version$", // Javaコネクタ (対応プラットフォーム: JVM)
-  "$org$" %% "ldbc-connector" % "$version$", // Scalaコネクタ (対応プラットフォーム: JVM, JS, Native)
+  "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@", // Javaコネクタ (対応プラットフォーム: JVM)
+  "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@", // Scalaコネクタ (対応プラットフォーム: JVM, JS, Native)
 
   // そして、必要に応じてこれらを加える
-  "$org$" %% "ldbc-query-builder" % "$version$", // 型安全なクエリ構築
-  "$org$" %% "ldbc-schema"        % "$version$", // データベーススキーマの構築
+  "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@", // 型安全なクエリ構築
+  "@ORGANIZATION@" %% "ldbc-schema"        % "@VERSION@", // データベーススキーマの構築
 )
 ```
 
