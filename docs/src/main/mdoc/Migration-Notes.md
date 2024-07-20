@@ -1,21 +1,24 @@
 {%
   laika.title = Migration Notes
-  laika.metadata.language = en
+  laika.metadata {
+    language = en
+    isRootPath = true
+  }
 %}
 
-# 移行ノート
+# Migration Notes
 
 ## Upgrading to 0.3.x from 0.2.x
 
 ### Packages
 
-**パッケージ名の変更**
+**Change package name**
 
 | 0.2.x     | 0.3.x       |
 |-----------|-------------|
 | ldbc-core | ldbc-schema |
 
-**新規パッケージ**
+**New packages**
 
 新たに2種類のパッケージが追加されました。
 
