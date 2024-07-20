@@ -19,8 +19,7 @@ import ldbc.dsl.io.*
 
 class ExecutorTest extends CatsEffectSuite:
 
-  given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
+  given Tracer[IO] = Tracer.noop[IO]
 
   private val connection = Connection[IO](
     host     = "127.0.0.1",
