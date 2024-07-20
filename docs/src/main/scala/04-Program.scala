@@ -21,7 +21,7 @@ import ldbc.dsl.io.*
 
   // #program
   val program: Executor[IO, Int] =
-    sql"INSERT INTO task (name, done) VALUES ('task 1', false)".update
+    sql"INSERT INTO user (name, email) VALUES ('Carol', 'carol@example.com')".update
   // #program
 
   // #connection
@@ -29,7 +29,8 @@ import ldbc.dsl.io.*
     host     = "127.0.0.1",
     port     = 13306,
     user     = "ldbc",
-    password = Some("password")
+    password = Some("password"),
+    ssl      = SSL.Trusted
   )
   // #connection
 

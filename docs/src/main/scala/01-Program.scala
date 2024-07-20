@@ -27,7 +27,8 @@ import ldbc.dsl.io.*
     host     = "127.0.0.1",
     port     = 13306,
     user     = "ldbc",
-    password = Some("password")
+    password = Some("password"),
+    ssl      = SSL.Trusted
   )
   // #connection
 
