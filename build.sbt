@@ -31,6 +31,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .default("core", "ldbc core project")
   .settings(
+    onLoadMessage := s"${scala.Console.RED}WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.${scala.Console.RESET}",
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.10.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
@@ -76,8 +77,11 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .dependsOn(queryBuilder)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
-  .settings(description := "Project to generate SchemaSPY documentation")
-  .settings(libraryDependencies += schemaspy)
+  .settings(
+    description := "Project to generate SchemaSPY documentation",
+    onLoadMessage := s"${scala.Console.RED}WARNING: This project is deprecated and will be removed in future versions.${scala.Console.RESET}",
+    libraryDependencies += schemaspy
+  )
   .dependsOn(core.jvm)
 
 lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
