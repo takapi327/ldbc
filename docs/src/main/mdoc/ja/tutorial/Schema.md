@@ -1,6 +1,17 @@
+{%
+  laika.title = スキーマ
+  laika.metadata.language = ja
+%}
+
 # スキーマ
 
-この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator](/ldbc/ja/07-Schema-Code-Generation.html) を使ってこの作業を省略することもできます。
+この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、Code Generatorを使ってこの作業を省略することもできます。
+
+プロジェクトに以下の依存関係を設定する必要があります。
+
+```scala
+//> using dep "@ORGANIZATION@::ldbc-schema:@VERSION@"
+```
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -15,16 +26,16 @@ ldbc は、このテーブル定義をさまざまな目的で使用します。
 
 ```scala 3
 case class User(
-  id: Long,
-  name: String,
-  age: Option[Int],
+  id:    Int,
+  name:  String,
+  email: String,
 )
 
-val table = Table[User]("user")(                     // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)                                                    // );
+val table = Table[User]("user")(                  // CREATE TABLE `user` (
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  column("name", VARCHAR(50)),                    //   `name` VARCHAR(50) NOT NULL,
+  column("email", VARCHAR(100)),                  //   `email` VARCHAR(100) NOT NULL,
+)                                                 // );
 ```
 
 すべてのカラムはcolumnメソッドで定義されます。各カラムにはカラム名、データ型、属性があります。以下のプリミティブ型が標準でサポートされており、すぐに使用できます。
@@ -36,7 +47,7 @@ val table = Table[User]("user")(                     // CREATE TABLE `user` (
 - Boolean
 - java.time.*
 
-Null可能な列はOption[T]で表現され、Tはサポートされるプリミティブ型の1つです。Option型でない列はすべてNot Nullであることに注意してください。
+Null可能な列は`Option[T]`で表現され、Tはサポートされるプリミティブ型の1つです。Option型でない列はすべてNot Nullであることに注意してください。
 
 ## データ型
 
@@ -44,48 +55,48 @@ Null可能な列はOption[T]で表現され、Tはサポートされるプリミ
 
 データ型がサポートするScalaの型は以下の表の通りです。
 
-| Data Type  | Scala Type                                                                                    |
-|------------|-----------------------------------------------------------------------------------------------|
-| BIT        | Byte, Short, Int, Long                                                                        |
-| TINYINT    | Byte, Short                                                                                   |
-| SMALLINT   | Short, Int                                                                                    |
-| MEDIUMINT  | Int                                                                                           |
-| INT        | Int, Long                                                                                     |
-| BIGINT     | Long, BigInt                                                                                  |
-| DECIMAL    | BigDecimal                                                                                    |
-| FLOAT      | Float                                                                                         |
-| DOUBLE     | Double                                                                                        |
-| CHAR       | String                                                                                        |
-| VARCHAR    | String                                                                                        |
-| BINARY     | Array[Byte]                                                                                   |
-| VARBINARY  | Array[Byte]                                                                                   |
-| TINYBLOB   | Array[Byte]                                                                                   |
-| BLOB       | Array[Byte]                                                                                   |
-| MEDIUMBLOB | Array[Byte]                                                                                   |
-| LONGBLOB   | Array[Byte]                                                                                   |
-| TINYTEXT   | String                                                                                        |
-| TEXT       | String                                                                                        |
-| MEDIUMTEXT | String                                                                                        |
-| DATE       | java.time.LocalDate                                                                           |
-| DATETIME   | java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime                              |
-| TIMESTAMP  | java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime |
-| TIME       | java.time.LocalTime                                                                           |
-| YEAR       | java.time.Instant, java.time.LocalDate, java.time.Year                                        |
-| BOOLEAN    | Boolean                                                                                       |
+| Data Type    | Scala Type                                                                                      |
+|--------------|-------------------------------------------------------------------------------------------------|
+| `BIT`        | `Byte, Short, Int, Long`                                                                        |
+| `TINYINT`    | `Byte, Short`                                                                                   |
+| `SMALLINT`   | `Short, Int`                                                                                    |
+| `MEDIUMINT`  | `Int`                                                                                           |
+| `INT`        | `Int, Long`                                                                                     |
+| `BIGINT`     | `Long, BigInt`                                                                                  |
+| `DECIMAL`    | `BigDecimal`                                                                                    |
+| `FLOAT`      | `Float`                                                                                         |
+| `DOUBLE`     | `Double`                                                                                        |
+| `CHAR`       | `String`                                                                                        |
+| `VARCHAR`    | `String`                                                                                        |
+| `BINARY`     | `Array[Byte]`                                                                                   |
+| `VARBINARY`  | `Array[Byte]`                                                                                   |
+| `TINYBLOB`   | `Array[Byte]`                                                                                   |
+| `BLOB`       | `Array[Byte]`                                                                                   |
+| `MEDIUMBLOB` | `Array[Byte]`                                                                                   |
+| `LONGBLOB`   | `Array[Byte]`                                                                                   |
+| `TINYTEXT`   | `String`                                                                                        |
+| `TEXT`       | `String`                                                                                        |
+| `MEDIUMTEXT` | `String`                                                                                        |
+| `DATE`       | `java.time.LocalDate`                                                                           |
+| `DATETIME`   | `java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime`                              |
+| `TIMESTAMP`  | `java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime` |
+| `TIME`       | `java.time.LocalTime`                                                                           |
+| `YEAR`       | `java.time.Instant, java.time.LocalDate, java.time.Year`                                        |
+| `BOOLEA`     | `Boolean`                                                                                       |
 
 **整数型を扱う際の注意点**
 
 符号あり、符号なしに応じて、扱えるデータの範囲がScalaの型に収まらないことに注意する必要があります。
 
-| Data Type | signed range                               | unsigned range           | Scala Type     | range                                                              |
-|-----------|--------------------------------------------|--------------------------|----------------|--------------------------------------------------------------------|
-| TINYINT   | -128 ~ 127                                 | 0 ~ 255                  | Byte<br>Short  | -128 ~ 127<br>-32768～32767                                         |
-| SMALLINT  | -32768 ~ 32767                             | 0 ~ 65535                | Short<br>Int   | -32768～32767<br>-2147483648～2147483647                             |
-| MEDIUMINT | -8388608 ~ 8388607                         | 0 ~ 16777215             | Int            | -2147483648～2147483647                                             |
-| INT       | -2147483648	~ 2147483647                   | 0 ~ 4294967295           | Int<br>Long    | -2147483648～2147483647<br>-9223372036854775808～9223372036854775807 |
-| BIGINT    | -9223372036854775808 ~ 9223372036854775807 | 0 ~ 18446744073709551615 | Long<br>BigInt | -9223372036854775808～9223372036854775807<br>...                    |
+| Data Type   | Signed Range                                 | Unsigned Range             | Scala Type       | Range                                                                |
+|-------------|----------------------------------------------|----------------------------|------------------|----------------------------------------------------------------------|
+| `TINYINT`   | `-128 ~ 127`                                 | `0 ~ 255`                  | `Byte<br>Short`  | `-128 ~ 127<br>-32768～32767`                                         |
+| `SMALLINT`  | `-32768 ~ 32767`                             | `0 ~ 65535`                | `Short<br>Int`   | `-32768～32767<br>-2147483648～2147483647`                             |
+| `MEDIUMINT` | `-8388608 ~ 8388607`                         | `0 ~ 16777215`             | `Int`            | `-2147483648～2147483647`                                             |
+| `INT`       | `-2147483648	~ 2147483647`                   | `0 ~ 4294967295`           | `Int<br>Long`    | `-2147483648～2147483647<br>-9223372036854775808～9223372036854775807` |
+| `BIGINT`    | `-9223372036854775808 ~ 9223372036854775807` | `0 ~ 18446744073709551615` | `Long<br>BigInt` | `-9223372036854775808～9223372036854775807<br>...`                    |
 
-ユーザー定義の独自型やサポートされていない型を扱う場合は、[カスタム型](/ldbc/ja/02-Custom-Data-Type.html) を参照してください。
+ユーザー定義の独自型やサポートされていない型を扱う場合は、カスタムデータ型を参照してください。
 
 ## 属性
 
@@ -128,9 +139,9 @@ ldbcのテーブル定義には `keySet`というメソッドが生えており�
 
 ```scala 3
 val table = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None))
+  column("id", INT, AUTO_INCREMENT),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
   .keySet(table => PRIMARY_KEY(table.id))
 
@@ -151,9 +162,9 @@ val table = Table[User]("user")(
 
 ```scala 3
 val table = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None))
+  column("id", INT, AUTO_INCREMENT),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
   .keySet(table => PRIMARY_KEY(table.id, table.name))
 
@@ -169,9 +180,9 @@ ldbcではテーブル定義に複数`PRIMARY_KEY`を設定したとしてもコ
 
 ```scala 3
 val table = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(255), PRIMARY_KEY),
-  column("age", INT.UNSIGNED.DEFAULT(None))
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(50), PRIMARY_KEY),
+  column("email", VARCHAR(100))
 )
 
 // CREATE TABLE `user` (
@@ -202,9 +213,9 @@ ldbcのテーブル定義には `keySet`というメソッドが生えており�
 
 ```scala 3
 val table = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None))
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
   .keySet(table => UNIQUE_KEY(table.id))
 
@@ -226,9 +237,9 @@ val table = Table[User]("user")(
 
 ```scala 3
 val table = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None))
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
   .keySet(table => UNIQUE_KEY(table.id, table.name))
 
@@ -263,9 +274,9 @@ ldbcのテーブル定義には `keySet`というメソッドが生えており�
 
 ```scala 3
 val table = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None))
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
   .keySet(table => INDEX_KEY(table.id))
 
@@ -287,9 +298,9 @@ val table = Table[User]("user")(
 
 ```scala 3
 val table = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None))
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
   .keySet(table => INDEX_KEY(table.id, table.name))
 
@@ -308,22 +319,22 @@ val table = Table[User]("user")(
 ldbcではこの外部キー制約をtableのkeySetメソッドを使用する方法で設定することができます。
 
 ```scala 3
-val post = Table[Post]("post")(
-  column("id", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(255))
-)
-
 val user = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None)),
-  column("post_id", BIGINT[Long])
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
-  .keySet(table => FOREIGN_KEY(table.postId, REFERENCE(post, post.id)))
 
-// CREATE TABLE `user` (
+val order = Table[Order]("order")(
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("user_id", VARCHAR(50))
+  ...
+)
+  .keySet(table => FOREIGN_KEY(table.userId, REFERENCE(user, user.id)))
+
+// CREATE TABLE `order` (
 //   ...,
-//   FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`)
+//   FOREIGN KEY (user_id) REFERENCES `user` (id),
 // )
 ```
 
@@ -336,17 +347,16 @@ val user = Table[User]("user")(
 設定することのできる値は`ldbc.schema.Reference.ReferenceOption`から取得することができます。
 
 ```scala 3
-val user = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None)),
-  column("post_id", BIGINT[Long])
+val order = Table[Order]("order")(
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("user_id", VARCHAR(50))
+  ...
 )
-  .keySet(table => FOREIGN_KEY(table.postId, REFERENCE(post, post.id).onDelete(Reference.ReferenceOption.RESTRICT)))
+  .keySet(table => FOREIGN_KEY(table.userId, REFERENCE(user, user.id).onDelete(Reference.ReferenceOption.RESTRICT)))
 
-// CREATE TABLE `user` (
+// CREATE TABLE `order` (
 //   ...,
-//   FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`) ON DELETE RESTRICT
+//   FOREIGN KEY (`user_id`)  REFERENCES `user` (`id`) ON DELETE RESTRICT
 // )
 ```
 
@@ -363,24 +373,23 @@ val user = Table[User]("user")(
 1つのカラムだけではなく、複数のカラムを外部キーとして組み合わせて設定することもできます。`FOREIGN_KEY`に外部キーとして設定したいカラムを複数渡すだけで複合外部キーとして設定することができます。
 
 ```scala 3
-val post = Table[Post]("post")(
-  column("id", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(255)),
-  column("category", SMALLINT[Short])
+val user = Table[User]("user")(
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(50)),
+  column("email", VARCHAR(100))
 )
 
-val user = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None)),
-  column("post_id", BIGINT[Long]),
-  column("post_category", SMALLINT[Short])
+val order = Table[Order]("order")(
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("user_id", VARCHAR(50))
+  column("user_email", VARCHAR(100))
+  ...
 )
-  .keySet(table => FOREIGN_KEY((table.postId, table.postCategory), REFERENCE(post, (post.id, post.category))))
+  .keySet(table => FOREIGN_KEY((table.userId, table.userEmail), REFERENCE(user, (user.id, user.email))))
 
 // CREATE TABLE `user` (
 //   ...,
-//   FOREIGN KEY (`post_id`, `post_category`)  REFERENCES `post` (`id`, `category`)
+//   FOREIGN KEY (`user_id`, `user_email`)  REFERENCES `user` (`id`, `email`)
 // )
 ```
 
@@ -391,17 +400,16 @@ MySQLではCONSTRAINTを使用することで制約に対して任意の名前�
 ldbcではCONSTRAINTメソッドが提供されているのでキー制約などの制約を設定する処理をCONSTRAINTメソッドに渡すだけで設定することができます。
 
 ```scala 3
-val user = Table[User]("user")(
-  column("id", BIGINT[Long], AUTO_INCREMENT),
-  column("name", VARCHAR(255)),
-  column("age", INT.UNSIGNED.DEFAULT(None)),
-  column("post_id", BIGINT[Long])
+val order = Table[Order]("order")(
+  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("user_id", VARCHAR(50))
+  ...
 )
-  .keySet(table => CONSTRAINT("fk_post_id", FOREIGN_KEY(table.postId, REFERENCE(post, post.id))))
+  .keySet(table => CONSTRAINT("fk_user_id", FOREIGN_KEY(table.userId, REFERENCE(user, user.id))))
 
-// CREATE TABLE `user` (
+// CREATE TABLE `order` (
 //   ...,
-//   CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`)  REFERENCES `post` (`id`)
+//   CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`)  REFERENCES `user` (`id`)
 // )
 ```
 
@@ -411,9 +419,9 @@ val user = Table[User]("user")(
 
 ```scala 3
 case class User(
-  id: Long,
-  name: User.Name,
-  age: Option[Int],
+  id:    Int,
+  name:  User.Name,
+  email: String,
 )
 
 object User:
@@ -423,21 +431,21 @@ object User:
   given Conversion[VARCHAR[String], DataType[Name]] = DataType.mapping[VARCHAR[String], Name]
 
   val table = Table[User]("user")(
-    column("id", BIGINT[Long], AUTO_INCREMENT),
-    column("name", VARCHAR(255)),
-    column("age", INT.UNSIGNED.DEFAULT(None))
+    column("id", INT, AUTO_INCREMENT),
+    column("name", VARCHAR(50)),
+    column("email", VARCHAR(100))
   )
 ```
 
-LDBCでは複数のカラムをモデルが持つ1つのプロパティに統合することはできません。LDBCの目的はモデルとテーブルを1対1でマッピングを行い、データベースのテーブル定義を型安全に構築することにあるからです。
+ldbcでは複数のカラムをモデルが持つ1つのプロパティに統合することはできません。ldbcの目的はモデルとテーブルを1対1でマッピングを行い、データベースのテーブル定義を型安全に構築することにあるからです。
 
 そのためテーブル定義とモデルで異なった数のプロパティを持つようなことは許可していません。以下のような実装はコンパイルエラーとなります。
 
 ```scala 3
 case class User(
-  id: Long,
-  name: User.Name,
-  age: Option[Int],
+  id:    Int,
+  name:  User.Name,
+  email: String,
 )
 
 object User:
@@ -445,10 +453,10 @@ object User:
   case class Name(firstName: String, lastName: String)
 
   val table = Table[User]("user")(
-    column("id", BIGINT[Long], AUTO_INCREMENT),
-    column("first_name", VARCHAR(255)),
-    column("last_name", VARCHAR(255)),
-    column("age", INT.UNSIGNED.DEFAULT(None))
+    column("id", INT, AUTO_INCREMENT),
+    column("first_name", VARCHAR(50)),
+    column("last_name", VARCHAR(50)),
+    column("email", VARCHAR(100))
   )
 ```
 
@@ -456,10 +464,10 @@ object User:
 
 ```scala 3
 case class User(
-  id: Long,
+  id:        Int,
   firstName: String, 
-  lastName: String,
-  age: Option[Int],
+  lastName:  String,
+  email:     String,
 ):
   
   val name: User.Name = User.Name(firstName, lastName)
@@ -469,9 +477,9 @@ object User:
   case class Name(firstName: String, lastName: String)
 
   val table = Table[User]("user")(
-    column("id", BIGINT[Long], AUTO_INCREMENT),
-    column("first_name", VARCHAR(255)),
-    column("last_name", VARCHAR(255)),
-    column("age", INT.UNSIGNED.DEFAULT(None))
+    column("id", INT, AUTO_INCREMENT),
+    column("first_name", VARCHAR(50)),
+    column("last_name", VARCHAR(50)),
+    column("email", VARCHAR(100))
   )
 ```
