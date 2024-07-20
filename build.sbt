@@ -31,7 +31,17 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .default("core", "ldbc core project")
   .settings(
-    onLoadMessage := s"${scala.Console.RED}WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.${scala.Console.RESET}",
+    onLoadMessage :=
+      s"""
+         |${scala.Console.RED}WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.
+         |
+         |${scala.Console.RED}${organization.value} %% ${name.value} % ${version.value}
+         |
+         |         ${scala.Console.RED}↓↓↓↓↓
+         |
+         |${scala.Console.RED}${organization.value} %% ldbc-schema % ${version.value}
+         |
+         |""".stripMargin,
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.10.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
