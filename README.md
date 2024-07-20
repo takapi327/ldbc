@@ -16,9 +16,9 @@
 
 ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
 
-ldbc is Created under the influence of [tapir](https://github.com/softwaremill/tapir), a declarative, type-safe web endpoint library. Using tapir, you can build type-safe endpoints and also generate OpenAPI documentation from the endpoints you build.
+ldbc is a [Typelevel](http://typelevel.org/) project. This means we embrace pure, typeful, functional programming, and provide a safe and friendly environment for teaching, learning, and contributing as described in the Scala [Code of Conduct](http://scala-lang.org/conduct.html).
 
-ldbc allows the same type-safe construction with Scala at the database layer and document generation using the constructed one.
+Note that **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
 
 > [!NOTE]
 > **ldbc** is pre-1.0 software and is still undergoing active development. New versions are **not** binary compatible with prior versions, although in most cases user code will be source compatible.
@@ -50,13 +50,13 @@ For people that want to skip the explanations and see it action, this is the pla
 ### Dependency Configuration
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "latest"
 ```
 
 The dependency package used depends on whether the database connection is made via a connector using the Java API or a connector provided by ldbc.
@@ -64,19 +64,19 @@ The dependency package used depends on whether the database connection is made v
 **Use jdbc connector**
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "latest"
 ```
 
 **Use ldbc connector**
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native)
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "latest"
 ```
 
 ### Usage
@@ -135,13 +135,13 @@ ldbc provides not only plain queries but also type-safe database connections usi
 The first step is to set up dependencies.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-query-builder" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-query-builder" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "latest"
 ```
 
 ldbc uses classes to construct queries.
@@ -180,13 +180,13 @@ ldbc also allows type-safe construction of schema information for tables.
 The first step is to set up dependencies.
 
 ```scala
-libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "${version}"
+libraryDependencies += "io.github.takapi327" %% "ldbc-schema" % "latest"
 ```
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
 ```scala
-libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "${version}"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "latest"
 ```
 
 The next step is to create a schema for use by the query builder.
@@ -222,8 +222,8 @@ val result: IO[List[User]] = connection.use { conn =>
 
 Full documentation can be found at Currently available in English and Japanese.
 
-- [English](https://takapi327.github.io/ldbc/en/index.html)
-- [Japanese](https://takapi327.github.io/ldbc/ja/index.html)
+- [English](https://takapi327.github.io/ldbc/en/)
+- [Japanese](https://takapi327.github.io/ldbc/ja/)
 
 ## Features/Roadmap
 
