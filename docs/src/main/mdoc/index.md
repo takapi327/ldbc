@@ -55,45 +55,35 @@ For people that want to skip the explanations and see it action, this is the pla
 
 ### Dependency Configuration
 
-@@@ vars
 ```scala
 libraryDependencies += "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@"
 ```
-@@@
 
 For Cross-Platform projects (JVM, JS, and/or Native):
 
-@@@ vars
 ```scala
 libraryDependencies += "@ORGANIZATION@" %%% "ldbc-dsl" % "@VERSION@"
 ```
-@@@
 
 The dependency package used depends on whether the database connection is made via a connector using the Java API or a connector provided by ldbc.
 
 **Use jdbc connector**
 
-@@@ vars
 ```scala
 libraryDependencies += "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@"
 ```
-@@@
 
 **Use ldbc connector**
 
-@@@ vars
 ```scala
 libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 ```
-@@@
 
 For Cross-Platform projects (JVM, JS, and/or Native)
 
-@@@ vars
 ```scala
 libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 ```
-@@@
 
 ### Usage
 
