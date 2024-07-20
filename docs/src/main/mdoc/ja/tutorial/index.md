@@ -1,13 +1,13 @@
 {%
-  laika.title = Intro
+  laika.title = はじめに
   laika.metadata.language = ja
 %}
 
-# Tutorial
+# チュートリアル
 
-This section contains instructions and examples to get you started. It's written in tutorial style, intended to be read start to finish.
+このセクションは、あなたが始めるための説明と例を含んでいます。チュートリアル形式で書かれており、最初から最後まで読むことを想定しています。
 
-## Table of Contents
+## 目次
 
 @:navigationTree {
   entries = [ { target = "/ja/tutorial", depth = 2 } ]
