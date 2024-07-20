@@ -1,63 +1,52 @@
+{%
+  laika.title = パラメータ
+  laika.metadata.language = ja
+%}
+
 # パラメータ化されたクエリ
 
 この章では、パラメータ化されたクエリを構築する方法を学びます。
-
-使用するテーブルは以下の通りです。
-
-```sql
-CREATE TABLE country (
-  code       character(3)  NOT NULL,
-  name       text          NOT NULL,
-  population integer       NOT NULL,
-  gnp        numeric(10,2)
-  -- more columns, but we won't use them here
-)
-```
-
-```scala
-case class Country(code: String, name: String, population: Int, gnp: Option[Double])
-```
 
 ## パラメータの追加
 
 まずは、パラメーターを持たないクエリを作成します。
 
 ```scala
-sql"SELECT code, name, population, gnp FROM country".query[Country].to[List]
+sql"SELECT name, email FROM user".query[(String, String)].to[List]
 ```
 
-次にクエリをメソッドに組み込んで、ユーザーが指定する国コードと一致するデータのみを選択するパラメーターを追加してみましょう。文字列の補間を行うのと同じように、code引数を$codeとしてSQL文に挿入します。
+次にクエリをメソッドに組み込んで、ユーザーが指定する`id`と一致するデータのみを選択するパラメーターを追加してみましょう。文字列の補間を行うのと同じように、`id`引数を`$id`としてSQL文に挿入します。
 
 ```scala
-val code = "JPN"
+val id = 1
 
-sql"SELECT code, name, population, gnp FROM country WHERE code = $code".query[Country].to[List]
+sql"SELECT name, email FROM user WHERE id = $id".query[(String, String)].to[List]
 ```
 
 コネクションを使用してクエリを実行すると問題なく動作します。
 
 ```scala
 connection.use { conn =>
-  sql"SELECT code, name, population, gnp FROM country WHERE code = $code"
-    .query[Country]
+  sql"SELECT name, email FROM user WHERE id = $id"
+    .query[(String, String)]
     .to[List]
     .readOnly(conn)
 }
 ```
 
-ここでは何が起こっているのでしょうか？文字列リテラルをSQL文字列にドロップしているだけのように見えますが、実際にはPreparedStatementを構築しており、code値は最終的にsetStringの呼び出しによって設定されます
+ここでは何が起こっているのでしょうか？文字列リテラルをSQL文字列にドロップしているだけのように見えますが、実際には`PreparedStatement`を構築しており、`id`値は最終的に`setInt`の呼び出しによって設定されます。
 
 ## 複数のパラメータ
 
 複数のパラメータも同じように機能する。驚きはない。
 
 ```scala
-val code = "JPN"
-val population = 100000000
+val id = 1
+val email = "alice@example.com"
 
 connection.use { conn =>
-  sql"SELECT code, name, population, gnp FROM country WHERE code = $code AND population > $population"
-    .query[Country]
+  sql"SELECT name, email FROM user WHERE id = $id AND email > $email"
+    .query[(String, String)]
     .to[List]
     .readOnly(conn)
 }
@@ -68,17 +57,17 @@ connection.use { conn =>
 SQLリテラルを扱う際によくあるイラつきは、一連の引数をIN句にインライン化したいという欲求ですが、SQLはこの概念をサポートしていません（JDBCも何もサポートしていません）。
 
 ```scala
-val codes = NonEmptyList.of("JPN", "USA", "FRA")
+val ids = NonEmptyList.of(1, 2, 3)
 
 connection.use { conn =>
-    sql"SELECT code, name, population, gnp FROM country WHERE" ++ in("code", codes)
-        .query[Country]
-        .to[List]
-        .readOnly(conn)
+  sql"SELECT name, email FROM user WHERE" ++ in("id", ids)
+    .query[(String, String)]
+    .to[List]
+    .readOnly(conn)
 }
 ```
 
-IN句は空であってはならないので、コードはNonEmptyListであることに注意。
+IN句は空であってはならないので、`ids`は`NonEmptyList`であることに注意。
 
 このクエリーを実行すると、望ましい結果が得られる
 
@@ -101,23 +90,23 @@ ldbcでは他にもいくつかの便利な関数が用意されています。
 例えば受け取った値に応じて取得するカラムを変更する場合、以下のように記述できます。
 
 ```scala
-val column = "code"
+val column = "name"
 
-sql"SELECT $column FROM country".query[String].to[List]
+sql"SELECT $column FROM user".query[String].to[List]
 ```
 
-動的なパラメーターはPreparedStatementによって処理が行われるため、クエリ文字列自体は`?`で置き換えられます。
+動的なパラメーターは`PreparedStatement`によって処理が行われるため、クエリ文字列自体は`?`で置き換えられます。
 
-そのため、このクエリは`SELECT ? FROM country`として実行されます。
+そのため、このクエリは`SELECT ? FROM user`として実行されます。
 
 これではログに出力されるクエリがわかりにくいため、`$column`は静的な値として扱いたい場合は、`$column`を`${sc(column)}`とすることで、クエリ文字列に直接埋め込まれるようになります。
 
 ```scala
-val column = "code"
+val column = "name"
 
-sql"SELECT ${sc(column)} FROM country".query[String].to[List]
+sql"SELECT ${sc(column)} FROM user".query[String].to[List]
 ```
 
-このクエリは`SELECT code FROM country`として実行されます。
+このクエリは`SELECT name FROM user`として実行されます。
 
 > `sc(...)`は渡された文字列のエスケープを行わないことに注意してください。ユーザから与えられたデータを渡すことは、インジェクションのリスクになります。
