@@ -8,12 +8,16 @@ package benchmark.connector.jdbc
 
 import java.util.concurrent.TimeUnit
 
-import scala.util.Using
 import scala.compiletime.uninitialized
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
+
+import cats.effect.*
+import cats.effect.unsafe.implicits.global
+
+import ldbc.sql.Connection
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -21,7 +25,7 @@ import org.openjdk.jmh.annotations.*
 class Insert:
 
   @volatile
-  var dataSource: MysqlDataSource = uninitialized
+  var connection: Resource[IO, Connection[IO]] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -31,12 +35,16 @@ class Insert:
 
   @Setup
   def setupDataSource(): Unit =
-    dataSource = new MysqlDataSource()
-    dataSource.setServerName("127.0.0.1")
-    dataSource.setPortNumber(13306)
-    dataSource.setDatabaseName("world")
-    dataSource.setUser("ldbc")
-    dataSource.setPassword("password")
+    val ds = new MysqlDataSource()
+    ds.setServerName("127.0.0.1")
+    ds.setPortNumber(13306)
+    ds.setDatabaseName("benchmark")
+    ds.setUser("ldbc")
+    ds.setPassword("password")
+
+    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+
+    connection = Resource.make(datasource.getConnection)(_.close())
 
     values = (1 to len).map(_ => "(?, ?)").mkString(",")
 
@@ -46,36 +54,34 @@ class Insert:
   var len: Int = uninitialized
 
   @Benchmark
-  def insertN: Unit =
-    Using
-      .Manager { use =>
-        val connection = use(dataSource.getConnection)
-        connection.setAutoCommit(false)
-        val statement = use(connection.prepareStatement(s"INSERT INTO test (c1, c2) VALUES $values"))
-        records.zipWithIndex.foreach {
-          case ((id, value), index) =>
-            statement.setInt(index * 2 + 1, id)
-            statement.setString(index * 2 + 2, value)
+  def insertN(): Unit =
+    connection.use { conn =>
+      for
+        statement <- conn.prepareStatement(s"INSERT INTO insert_test (c1, c2) VALUES $values")
+        _ <- records.zipWithIndex.foldLeft(IO.unit) {
+          case (acc, ((id, value), index)) =>
+            acc *>
+              statement.setInt(index * 2 + 1, id) *>
+              statement.setString(index * 2 + 2, value)
         }
-        statement.executeUpdate()
-        connection.rollback()
-      }
-      .getOrElse(throw new RuntimeException("Error during database operation"))
+        _ <- statement.executeUpdate()
+      yield ()
+    }.unsafeRunSync()
 
-  @Benchmark
-  def batchN: Unit =
-    Using
-      .Manager { use =>
-        val connection = use(dataSource.getConnection)
-        connection.setAutoCommit(false)
-        val statement = use(connection.prepareStatement("INSERT INTO test (c1, c2) VALUES (?, ?)"))
-        records.foreach {
-          case (id, value) =>
-            statement.setInt(1, id)
-            statement.setString(2, value)
-            statement.addBatch()
-        }
-        statement.executeBatch()
-        connection.rollback()
-      }
-      .getOrElse(throw new RuntimeException("Error during database operation"))
+  //@Benchmark
+  //def batchN: Unit =
+  //  Using
+  //    .Manager { use =>
+  //      val connection = use(dataSource.getConnection)
+  //      connection.setAutoCommit(false)
+  //      val statement = use(connection.prepareStatement("INSERT INTO insert_test (c1, c2) VALUES (?, ?)"))
+  //      records.foreach {
+  //        case (id, value) =>
+  //          statement.setInt(1, id)
+  //          statement.setString(2, value)
+  //          statement.addBatch()
+  //      }
+  //      statement.executeBatch()
+  //      connection.rollback()
+  //    }
+  //    .getOrElse(throw new RuntimeException("Error during database operation"))
