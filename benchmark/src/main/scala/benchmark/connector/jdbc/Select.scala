@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.jdbc
+package benchmark.connector.jdbc
 
 import java.util.concurrent.TimeUnit
 
