@@ -6,7 +6,7 @@
 
 package ldbc.connector.net.protocol
 
-import scala.collection.immutable.{ListMap,SortedMap}
+import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
 import cats.syntax.all.*

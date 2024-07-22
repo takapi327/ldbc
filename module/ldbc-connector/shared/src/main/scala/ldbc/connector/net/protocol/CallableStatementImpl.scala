@@ -8,7 +8,7 @@ package ldbc.connector.net.protocol
 
 import java.time.*
 
-import scala.collection.immutable.{ListMap,SortedMap}
+import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
 import cats.syntax.all.*

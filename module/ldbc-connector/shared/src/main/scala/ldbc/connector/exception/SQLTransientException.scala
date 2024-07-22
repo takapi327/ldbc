@@ -17,10 +17,10 @@ import ldbc.connector.data.Parameter
  */
 class SQLTransientException(
   message:    String,
-  sqlState:   Option[String]          = None,
-  vendorCode: Option[Int]             = None,
-  sql:        Option[String]          = None,
-  detail:     Option[String]          = None,
-  hint:       Option[String]          = None,
+  sqlState:   Option[String]            = None,
+  vendorCode: Option[Int]               = None,
+  sql:        Option[String]            = None,
+  detail:     Option[String]            = None,
+  hint:       Option[String]            = None,
   params:     SortedMap[Int, Parameter] = SortedMap.empty
 ) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, params)

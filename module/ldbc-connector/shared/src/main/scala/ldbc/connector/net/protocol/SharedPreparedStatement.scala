@@ -93,19 +93,19 @@ private[ldbc] trait SharedPreparedStatement[F[_]: Temporal]
 
   protected def buildQuery(original: String, params: SortedMap[Int, Parameter]): String =
 
-    val result = new StringBuilder(original.length * 2)
+    val result    = new StringBuilder(original.length * 2)
     var lastIndex = 0
 
-    params.foreach { case (offset, param) =>
-      val index = original.indexOf('?', lastIndex)
-      if index >= 0 then
-        result.append(original.substring(lastIndex, index))
-        result.append(new String(param.sql))
-        lastIndex = index + 1
+    params.foreach {
+      case (offset, param) =>
+        val index = original.indexOf('?', lastIndex)
+        if index >= 0 then
+          result.append(original.substring(lastIndex, index))
+          result.append(new String(param.sql))
+          lastIndex = index + 1
     }
 
-    if lastIndex < original.length then
-      result.append(original.substring(lastIndex))
+    if lastIndex < original.length then result.append(original.substring(lastIndex))
 
     result.toString
 

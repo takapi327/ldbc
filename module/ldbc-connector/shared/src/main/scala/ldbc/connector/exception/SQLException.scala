@@ -38,11 +38,11 @@ import ldbc.connector.util.Pretty
  */
 class SQLException(
   message:    String,
-  sqlState:   Option[String]          = None,
-  vendorCode: Option[Int]             = None,
-  sql:        Option[String]          = None,
-  detail:     Option[String]          = None,
-  hint:       Option[String]          = None,
+  sqlState:   Option[String]            = None,
+  vendorCode: Option[Int]               = None,
+  sql:        Option[String]            = None,
+  detail:     Option[String]            = None,
+  hint:       Option[String]            = None,
   params:     SortedMap[Int, Parameter] = SortedMap.empty
 ) extends Exception:
 
