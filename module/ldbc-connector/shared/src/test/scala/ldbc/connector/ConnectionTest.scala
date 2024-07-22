@@ -1053,6 +1053,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield values
       },
       Vector(
+        "Table Catalog: benchmark",
         "Table Catalog: connector_test",
         "Table Catalog: information_schema",
         "Table Catalog: mysql",
