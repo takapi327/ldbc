@@ -38,12 +38,12 @@ class Insert:
   @Setup
   def setup(): Unit =
     connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("benchmark"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
     values = (1 to len).map(_ => "(?, ?)").mkString(",")
@@ -55,15 +55,17 @@ class Insert:
 
   @Benchmark
   def insertN(): Unit =
-    connection.use { conn =>
-      for
-        statement <- conn.prepareStatement(s"INSERT INTO insert_test (c1, c2) VALUES $values")
-        _ <- records.zipWithIndex.foldLeft(IO.unit) {
-          case (acc, ((id, value), index)) =>
-            acc *>
-              statement.setInt(index * 2 + 1, id) *>
-              statement.setString(index * 2 + 2, value)
-        }
-        _ <- statement.executeUpdate()
-      yield ()
-    }.unsafeRunSync()
+    connection
+      .use { conn =>
+        for
+          statement <- conn.prepareStatement(s"INSERT INTO insert_test (c1, c2) VALUES $values")
+          _ <- records.zipWithIndex.foldLeft(IO.unit) {
+                 case (acc, ((id, value), index)) =>
+                   acc *>
+                     statement.setInt(index * 2 + 1, id) *>
+                     statement.setString(index * 2 + 2, value)
+               }
+          _ <- statement.executeUpdate()
+        yield ()
+      }
+      .unsafeRunSync()
