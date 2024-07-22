@@ -69,3 +69,21 @@ class Insert:
         yield ()
       }
       .unsafeRunSync()
+
+  @Benchmark
+  def batchN(): Unit =
+    connection
+      .use { conn =>
+        for
+          statement <- conn.prepareStatement(s"INSERT INTO insert_test (c1, c2) VALUES (?, ?)")
+          _ <- records.foldLeft(IO.unit) {
+                 case (acc, (id, value)) =>
+                   acc *>
+                     statement.setInt(1, id) *>
+                     statement.setString(2, value) *>
+                     statement.addBatch()
+               }
+          _ <- statement.executeBatch()
+        yield ()
+      }
+      .unsafeRunSync()
