@@ -6,7 +6,7 @@
 
 package ldbc.connector.exception
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.SortedMap
 
 import cats.syntax.all.*
 
@@ -43,7 +43,7 @@ class SQLException(
   sql:        Option[String]          = None,
   detail:     Option[String]          = None,
   hint:       Option[String]          = None,
-  params:     ListMap[Int, Parameter] = ListMap.empty
+  params:     SortedMap[Int, Parameter] = SortedMap.empty
 ) extends Exception:
 
   /**

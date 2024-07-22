@@ -6,7 +6,7 @@
 
 package ldbc.connector.net.protocol
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.{ListMap,SortedMap}
 
 import cats.*
 import cats.syntax.all.*
@@ -44,7 +44,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
   serverVariables:      Map[String, String],
   statementId:          Long,
   sql:                  String,
-  params:               Ref[F, ListMap[Int, Parameter]],
+  params:               Ref[F, SortedMap[Int, Parameter]],
   batchedArgs:          Ref[F, Vector[String]],
   connectionClosed:     Ref[F, Boolean],
   statementClosed:      Ref[F, Boolean],
@@ -92,7 +92,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
             BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
             Vector.empty
           )
-        _                      <- params.set(ListMap.empty)
+        _                      <- params.set(SortedMap.empty)
         lastColumnReadNullable <- Ref[F].of(true)
         resultSetCurrentCursor <- Ref[F].of(0)
         resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](resultSetRow.headOption)
@@ -128,7 +128,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
             case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None, params))
             case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
           }
-      } <* params.set(ListMap.empty)
+      } <* params.set(SortedMap.empty)
     }
 
   override def execute(): F[Boolean] =
@@ -142,7 +142,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
   override def addBatch(): F[Unit] =
     checkClosed() *> checkNullOrEmptyQuery(sql) *> params.get.flatMap { params =>
       batchedArgs.update(_ :+ buildBatchQuery(sql, params))
-    } *> params.set(ListMap.empty)
+    } *> params.set(SortedMap.empty)
 
   override def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)
 
@@ -179,7 +179,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                         }
                 )
               }
-          } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
+          } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
         case q if q.startsWith("update") || q.startsWith("delete") =>
           protocol.resetSequenceId *>
             protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
@@ -225,7 +225,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
             } <*
             protocol.resetSequenceId <*
             protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_OFF) <*
-            params.set(ListMap.empty) <*
+            params.set(SortedMap.empty) <*
             batchedArgs.set(Vector.empty)
         case _ =>
           ev.raiseError(
