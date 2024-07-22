@@ -68,20 +68,18 @@ class Insert:
       yield ()
     }.unsafeRunSync()
 
-  //@Benchmark
-  //def batchN: Unit =
-  //  Using
-  //    .Manager { use =>
-  //      val connection = use(dataSource.getConnection)
-  //      connection.setAutoCommit(false)
-  //      val statement = use(connection.prepareStatement("INSERT INTO insert_test (c1, c2) VALUES (?, ?)"))
-  //      records.foreach {
-  //        case (id, value) =>
-  //          statement.setInt(1, id)
-  //          statement.setString(2, value)
-  //          statement.addBatch()
-  //      }
-  //      statement.executeBatch()
-  //      connection.rollback()
-  //    }
-  //    .getOrElse(throw new RuntimeException("Error during database operation"))
+  @Benchmark
+  def batchN(): Unit =
+    connection.use { conn =>
+      for
+        statement <- conn.prepareStatement(s"INSERT INTO insert_test (c1, c2) VALUES (?, ?)")
+        _ <- records.foldLeft(IO.unit) {
+          case (acc, (id, value)) =>
+            acc *>
+              statement.setInt(1, id) *>
+              statement.setString(2, value) *>
+              statement.addBatch()
+        }
+        _ <- statement.executeBatch()
+      yield ()
+    }.unsafeRunSync()
