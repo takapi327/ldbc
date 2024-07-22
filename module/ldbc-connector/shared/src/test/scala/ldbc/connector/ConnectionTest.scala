@@ -593,7 +593,7 @@ class ConnectionTest extends CatsEffectSuite:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
-      "8.0.33"
+      "8.4.0"
     )
   }
 

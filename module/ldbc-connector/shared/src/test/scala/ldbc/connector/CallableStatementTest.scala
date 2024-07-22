@@ -38,7 +38,7 @@ class CallableStatementTest extends CatsEffectSuite:
           value             <- resultSet.getString(1)
         yield Option(value)
       },
-      Some("8.0.33")
+      Some("8.4.0")
     )
   }
 
@@ -53,7 +53,7 @@ class CallableStatementTest extends CatsEffectSuite:
                      case None     => IO.raiseError(new Exception("No result set"))
         yield Option(value)
       },
-      Some("8.0.33")
+      Some("8.4.0")
     )
   }
 
