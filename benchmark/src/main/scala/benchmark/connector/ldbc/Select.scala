@@ -34,12 +34,12 @@ class Select:
   @Setup
   def setupDataSource(): Unit =
     connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
       database = Some("benchmark"),
-      ssl = SSL.Trusted
+      ssl      = SSL.Trusted
     )
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
@@ -51,14 +51,14 @@ class Select:
       .use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM insert_test LIMIT ?")
-          _ <- statement.setInt(1, len)
+          _         <- statement.setInt(1, len)
           resultSet <- statement.executeQuery()
           records <- Monad[IO].whileM[List, (Long, String)](resultSet.next()) {
-            for
-              c1 <- resultSet.getLong(1)
-              c2 <- resultSet.getString(2)
-            yield (c1, c2)
-          }
+                       for
+                         c1 <- resultSet.getLong(1)
+                         c2 <- resultSet.getString(2)
+                       yield (c1, c2)
+                     }
         yield records
       }
       .unsafeRunSync()
