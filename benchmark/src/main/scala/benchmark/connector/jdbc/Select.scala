@@ -8,12 +8,18 @@ package benchmark.connector.jdbc
 
 import java.util.concurrent.TimeUnit
 
-import scala.util.Using
 import scala.compiletime.uninitialized
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
+
+import cats.*
+
+import cats.effect.*
+import cats.effect.unsafe.implicits.global
+
+import ldbc.sql.Connection
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -21,35 +27,38 @@ import org.openjdk.jmh.annotations.*
 class Select:
 
   @volatile
-  var dataSource: MysqlDataSource = uninitialized
+  var connection: Resource[IO, Connection[IO]] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
-    dataSource = new MysqlDataSource()
-    dataSource.setServerName("127.0.0.1")
-    dataSource.setPortNumber(13306)
-    dataSource.setDatabaseName("world")
-    dataSource.setUser("ldbc")
-    dataSource.setPassword("password")
+    val ds = new MysqlDataSource()
+    ds.setServerName("127.0.0.1")
+    ds.setPortNumber(13306)
+    ds.setDatabaseName("benchmark")
+    ds.setUser("ldbc")
+    ds.setPassword("password")
+
+    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+
+    connection = Resource.make(datasource.getConnection)(_.close())
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
-  def selectN: List[(Int, String, String)] =
-    Using
-      .Manager { use =>
-        val connection = use(dataSource.getConnection)
-        val statement  = use(connection.prepareStatement("SELECT ID, Name, CountryCode FROM city LIMIT ?"))
-        statement.setInt(1, len)
-        val resultSet = use(statement.executeQuery())
-        val records   = List.newBuilder[(Int, String, String)]
-        while resultSet.next() do {
-          val code   = resultSet.getInt(1)
-          val name   = resultSet.getString(2)
-          val region = resultSet.getString(3)
-          records += ((code, name, region))
+  def selectN: List[(Long, String)] =
+    connection
+      .use { conn =>
+          for
+            statement <- conn.prepareStatement("SELECT * FROM insert_test LIMIT ?")
+            _ <- statement.setInt(1, len)
+            resultSet <- statement.executeQuery()
+            records <- Monad[IO].whileM[List, (Long, String)](resultSet.next()) {
+              for
+                c1 <- resultSet.getLong(1)
+                c2 <- resultSet.getString(2)
+              yield (c1, c2)
+            }
+          yield records
         }
-        records.result()
-      }
-      .getOrElse(throw new RuntimeException("Error during database operation"))
+      .unsafeRunSync()
