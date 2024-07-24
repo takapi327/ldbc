@@ -43,68 +43,68 @@ object Parameter:
 
   val none: Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NULL
-    override def sql:            String    = "NULL"
+    override def sql:            String         = "NULL"
     override def encode:         BitVector      = BitVector.empty
 
   def boolean(value: Boolean): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_TINY
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode:         BitVector      = uint8L.encode(if value then 1 else 0).require
 
   def byte(value: Byte): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_TINY
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode:         BitVector      = uint8L.encode(value).require
 
   def short(value: Short): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_SHORT
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode:         BitVector      = uint16L.encode(value).require
 
   def int(value: Int): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONG
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode:         BitVector      = uint32L.encode(value).require
 
   def long(value: Long): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode:         BitVector      = int64L.encode(value).require
 
   def bigInt(value: BigInt): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode: BitVector =
       val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def float(value: Float): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_FLOAT
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode:         BitVector      = floatL.encode(value).require
 
   def double(value: Double): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_DOUBLE
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode:         BitVector      = doubleL.encode(value).require
 
   def bigDecimal(value: BigDecimal): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_NEWDECIMAL
-    override def sql:            String    = value.toString
+    override def sql:            String         = value.toString
     override def encode: BitVector =
       val bytes = value.toString.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def string(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def sql:            String    = ("'" + value + "'")
+    override def sql:            String         = ("'" + value + "'")
     override def encode: BitVector =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
 
   def bytes(value: Array[Byte]): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VAR_STRING
-    override def sql:            String    = ("0x" + BitVector.view(value).toHex)
+    override def sql:            String         = ("0x" + BitVector.view(value).toHex)
     override def encode: BitVector =
       BitVector(value.length) |+| BitVector(copyOf(value, value.length))
 
@@ -141,7 +141,7 @@ object Parameter:
 
   def date(value: LocalDate): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_DATE
-    override def sql:            String    = ("'" + localDateFormatter.format(value) + "'")
+    override def sql:            String         = ("'" + localDateFormatter.format(value) + "'")
     override def encode: BitVector =
       val year  = value.getYear
       val month = value.getMonthValue
@@ -201,12 +201,12 @@ object Parameter:
 
   def year(value: Year): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_SHORT
-    override def sql:            String    = ("'" + value.toString + "'")
+    override def sql:            String         = ("'" + value.toString + "'")
     override def encode:         BitVector      = uint16L.encode(value.getValue).require
 
   def parameter(value: String): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_STRING
-    override def sql:            String    = value
+    override def sql:            String         = value
     override def encode: BitVector =
       val bytes = value.getBytes
       BitVector(bytes.length) |+| BitVector(copyOf(bytes, bytes.length))
