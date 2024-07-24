@@ -7,7 +7,7 @@
 package ldbc.connector.net.packet
 package response
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.SortedMap
 
 import scodec.*
 import scodec.codecs.*
@@ -58,7 +58,7 @@ case class ERRPacket(
   def toException(
     sql:    Option[String],
     detail: Option[String],
-    params: ListMap[Int, Parameter] = ListMap.empty
+    params: SortedMap[Int, Parameter] = SortedMap.empty
   ): SQLException =
     sqlState match
       case Some(SQLState.TRANSIENT_CONNECTION_EXCEPTION) =>

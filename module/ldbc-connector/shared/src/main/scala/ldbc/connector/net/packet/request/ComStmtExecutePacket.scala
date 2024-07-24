@@ -7,7 +7,7 @@
 package ldbc.connector.net.packet
 package request
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.SortedMap
 
 import cats.syntax.all.*
 
@@ -31,7 +31,7 @@ import ldbc.connector.data.*
  */
 case class ComStmtExecutePacket(
   statementId: Long,
-  params:      ListMap[Int, Parameter]
+  params:      SortedMap[Int, Parameter]
 ) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =

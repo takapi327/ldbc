@@ -6,7 +6,7 @@
 
 package ldbc.connector.exception
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.SortedMap
 
 import ldbc.connector.data.Parameter
 
@@ -17,10 +17,10 @@ import ldbc.connector.data.Parameter
  */
 class SQLNonTransientException(
   message:    String,
-  sqlState:   Option[String]          = None,
-  vendorCode: Option[Int]             = None,
-  sql:        Option[String]          = None,
-  detail:     Option[String]          = None,
-  hint:       Option[String]          = None,
-  params:     ListMap[Int, Parameter] = ListMap.empty
+  sqlState:   Option[String]            = None,
+  vendorCode: Option[Int]               = None,
+  sql:        Option[String]            = None,
+  detail:     Option[String]            = None,
+  hint:       Option[String]            = None,
+  params:     SortedMap[Int, Parameter] = SortedMap.empty
 ) extends SQLException(message, sqlState, vendorCode, sql, detail, hint, params)
