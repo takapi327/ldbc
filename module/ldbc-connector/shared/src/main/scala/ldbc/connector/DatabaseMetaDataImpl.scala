@@ -6,7 +6,7 @@
 
 package ldbc.connector
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
 import cats.syntax.all.*
@@ -1690,7 +1690,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
    */
   protected def prepareMetaDataSafeStatement(sql: String): F[PreparedStatement[F]] =
     for
-      params            <- Ref[F].of(ListMap.empty[Int, Parameter])
+      params            <- Ref[F].of(SortedMap.empty[Int, Parameter])
       batchedArgs       <- Ref[F].of(Vector.empty[String])
       currentResultSet  <- Ref[F].of[Option[ResultSet[F]]](None)
       updateCount       <- Ref[F].of(-1L)
