@@ -314,8 +314,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               queryBuf.append("=")
 
               params.get.flatMap { params =>
-                val sql =
-                  (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+                val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
                 sendQuery(sql).flatMap {
                   case _: OKPacket      => ev.unit
                   case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
@@ -680,8 +679,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
           queryBuf.append("=")
 
           acc *> params.get.flatMap { params =>
-            val sql =
-              (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+            val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
             sendQuery(sql).flatMap {
               case _: OKPacket      => ev.unit
               case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))

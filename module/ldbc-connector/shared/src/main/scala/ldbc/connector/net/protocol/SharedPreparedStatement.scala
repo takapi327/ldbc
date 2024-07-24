@@ -101,7 +101,7 @@ private[ldbc] trait SharedPreparedStatement[F[_]: Temporal]
         val index = original.indexOf('?', lastIndex)
         if index >= 0 then
           result.append(original.substring(lastIndex, index))
-          result.append(new String(param.sql))
+          result.append(param.sql)
           lastIndex = index + 1
     }
 
