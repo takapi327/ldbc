@@ -41,6 +41,7 @@ class Insert:
     ds.setDatabaseName("benchmark")
     ds.setUser("ldbc")
     ds.setPassword("password")
+    ds.setRewriteBatchedStatements(true)
 
     val datasource = jdbc.connector.MysqlDataSource[IO](ds)
 
