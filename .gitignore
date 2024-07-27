@@ -11,5 +11,5 @@ target/
 .vscode/
 metals.sbt
 
-**/benchmark/*.json
-**/benchmark/*.svg
+**/benchmark/**/*.json
+**/benchmark/**/*.svg
