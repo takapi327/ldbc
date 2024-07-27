@@ -1,10 +1,16 @@
-FROM python:3.9
+FROM continuumio/miniconda3
 
-WORKDIR /app
+RUN mkdir -p /opt/workspace && \
+  conda install -y --quiet \
+  numpy  \
+  pandas \
+  matplotlib \
+  seaborn \
+  jupyter && \
+  conda clean -i -t -y
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /opt/workspace
 
-COPY plot_benchmark.py .
+EXPOSE 8888
 
-ENTRYPOINT ["python", "plot_benchmark.py"]
+CMD [ "jupyter", "notebook", "--notebook-dir=/opt/workspace", "--ip=*", "--port=8888", "--no-browser" ]
