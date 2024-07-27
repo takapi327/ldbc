@@ -50,7 +50,7 @@ class Select:
     connection
       .use { conn =>
         for
-          statement <- conn.prepareStatement("SELECT * FROM insert_test LIMIT ?")
+          statement <- conn.prepareStatement("SELECT * FROM jdbc_test LIMIT ?")
           _         <- statement.setInt(1, len)
           resultSet <- statement.executeQuery()
           records <- Monad[IO].whileM[List, (Long, String)](resultSet.next()) {

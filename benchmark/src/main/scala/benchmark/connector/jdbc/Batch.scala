@@ -22,7 +22,7 @@ import ldbc.sql.Connection
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
-class Insert:
+class Batch:
 
   @volatile
   var connection: Resource[IO, Connection[IO]] = uninitialized
@@ -41,6 +41,7 @@ class Insert:
     ds.setDatabaseName("benchmark")
     ds.setUser("ldbc")
     ds.setPassword("password")
+    ds.setRewriteBatchedStatements(true)
 
     val datasource = jdbc.connector.MysqlDataSource[IO](ds)
 
@@ -54,18 +55,19 @@ class Insert:
   var len: Int = uninitialized
 
   @Benchmark
-  def insertN(): Unit =
+  def batchN(): Unit =
     connection
       .use { conn =>
         for
-          statement <- conn.prepareStatement(s"INSERT INTO jdbc_test (c1, c2) VALUES $values")
-          _ <- records.zipWithIndex.foldLeft(IO.unit) {
-                 case (acc, ((id, value), index)) =>
-                   acc *>
-                     statement.setInt(index * 2 + 1, id) *>
-                     statement.setString(index * 2 + 2, value)
-               }
-          _ <- statement.executeUpdate()
+          statement <- conn.prepareStatement(s"INSERT INTO jdbc_test (c1, c2) VALUES (?, ?)")
+          _ <- records.foldLeft(IO.unit) {
+            case (acc, (id, value)) =>
+              acc *>
+                statement.setInt(1, id) *>
+                statement.setString(2, value) *>
+                statement.addBatch()
+          }
+          _ <- statement.executeBatch()
         yield ()
       }
       .unsafeRunSync()

@@ -58,7 +58,7 @@ class Insert:
     connection
       .use { conn =>
         for
-          statement <- conn.prepareStatement(s"INSERT INTO insert_test (c1, c2) VALUES $values")
+          statement <- conn.prepareStatement(s"INSERT INTO ldbc_test (c1, c2) VALUES $values")
           _ <- records.zipWithIndex.foldLeft(IO.unit) {
                  case (acc, ((id, value), index)) =>
                    acc *>
@@ -66,24 +66,6 @@ class Insert:
                      statement.setString(index * 2 + 2, value)
                }
           _ <- statement.executeUpdate()
-        yield ()
-      }
-      .unsafeRunSync()
-
-  @Benchmark
-  def batchN(): Unit =
-    connection
-      .use { conn =>
-        for
-          statement <- conn.prepareStatement(s"INSERT INTO insert_test (c1, c2) VALUES (?, ?)")
-          _ <- records.foldLeft(IO.unit) {
-                 case (acc, (id, value)) =>
-                   acc *>
-                     statement.setInt(1, id) *>
-                     statement.setString(2, value) *>
-                     statement.addBatch()
-               }
-          _ <- statement.executeBatch()
         yield ()
       }
       .unsafeRunSync()
