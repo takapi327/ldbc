@@ -9,12 +9,28 @@ data_file = sys.argv[2]
 output = sys.argv[3]
 
 target_names = {
-    'ldbc': 'Insert (ldbc)',
-    'jdbc': 'Insert (jdbc)',
+    'ldbc': 'ldbc',
+    'jdbc': 'jdbc',
 }
 
 plot_config = {
     'Insert': {
+        'xlabel': 'Record size',
+        'ylabel': 'Throughput (ops/s)',
+        'xmin': 0,
+        'ymin': 20,
+        'xstep': 1000,
+        'ystep': 10,
+    },
+    'Batch': {
+        'xlabel': 'Record size',
+        'ylabel': 'Throughput (ops/s)',
+        'xmin': 0,
+        'ymin': 20,
+        'xstep': 1000,
+        'ystep': 10,
+    },
+    'Select': {
         'xlabel': 'Record size',
         'ylabel': 'Throughput (ops/s)',
         'xmin': 0,
