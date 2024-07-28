@@ -9,8 +9,10 @@ data_file = sys.argv[2]
 output = sys.argv[3]
 
 target_names = {
-    'ldbc': 'ldbc',
-    'jdbc': 'jdbc',
+    'jdbc_Insert_statement': 'jdbc: statement',
+    'jdbc_Insert_prepareStatement': 'jdbc: prepareStatement',
+    'ldbc_Insert_statement': 'ldbc: statement',
+    'ldbc_Insert_prepareStatement': 'ldbc: prepareStatement',
 }
 
 plot_config = {
