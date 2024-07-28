@@ -54,17 +54,28 @@ class Insert:
   var len: Int = uninitialized
 
   @Benchmark
-  def insertN(): Unit =
+  def statement(): Unit =
     connection
       .use { conn =>
         for
-          statement <- conn.prepareStatement(s"INSERT INTO jdbc_test (c1, c2) VALUES $values")
+          statement <- conn.createStatement()
+          _ <- statement.executeUpdate(s"INSERT INTO jdbc_statement_test (c1, c2) VALUES ${records.map { case (v1, v2) => s"($v1, '$v2')" }.mkString(", ")}")
+        yield ()
+      }
+      .unsafeRunSync()
+
+  @Benchmark
+  def prepareStatement(): Unit =
+    connection
+      .use { conn =>
+        for
+          statement <- conn.prepareStatement(s"INSERT INTO jdbc_prepare_statement_test (c1, c2) VALUES $values")
           _ <- records.zipWithIndex.foldLeft(IO.unit) {
-                 case (acc, ((id, value), index)) =>
-                   acc *>
-                     statement.setInt(index * 2 + 1, id) *>
-                     statement.setString(index * 2 + 2, value)
-               }
+            case (acc, ((id, value), index)) =>
+              acc *>
+                statement.setInt(index * 2 + 1, id) *>
+                statement.setString(index * 2 + 2, value)
+          }
           _ <- statement.executeUpdate()
         yield ()
       }
