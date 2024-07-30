@@ -144,7 +144,7 @@ object Protocol:
     socket:                  PacketSocket[F],
     useSSL:                  Boolean = false,
     allowPublicKeyRetrieval: Boolean = false,
-    capabilityFlags:         List[CapabilitiesFlags],
+    capabilityFlags:         Set[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte]
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends Protocol[F]:
@@ -510,7 +510,7 @@ object Protocol:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval: Boolean = false,
     readTimeout:             Duration,
-    capabilitiesFlags:       List[CapabilitiesFlags]
+    capabilitiesFlags:       Set[CapabilitiesFlags]
   ): Resource[F, Protocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
@@ -535,7 +535,7 @@ object Protocol:
     hostInfo:                HostInfo,
     sslOptions:              Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval: Boolean = false,
-    capabilitiesFlags:       List[CapabilitiesFlags],
+    capabilitiesFlags:       Set[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte],
     initialPacketRef:        Ref[F, Option[InitialPacket]]
   )(using ev: MonadError[F, Throwable]): F[Protocol[F]] =

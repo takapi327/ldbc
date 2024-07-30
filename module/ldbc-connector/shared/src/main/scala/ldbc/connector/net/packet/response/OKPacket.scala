@@ -69,7 +69,7 @@ object OKPacket:
 
   val STATUS = 0x00
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[OKPacket] =
+  def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[OKPacket] =
     val hasClientProtocol41Flag   = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
     val hasClientTransactionsFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_TRANSACTIONS)
     val hasClientSessionTrackFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_SESSION_TRACK)

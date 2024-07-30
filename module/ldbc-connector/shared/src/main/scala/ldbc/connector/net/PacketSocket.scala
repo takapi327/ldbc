@@ -100,7 +100,7 @@ object PacketSocket:
     sequenceIdRef:     Ref[F, Byte],
     initialPacketRef:  Ref[F, Option[InitialPacket]],
     readTimeout:       Duration,
-    capabilitiesFlags: List[CapabilitiesFlags]
+    capabilitiesFlags: Set[CapabilitiesFlags]
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
       fromBitVectorSocket(_, debug, sequenceIdRef)

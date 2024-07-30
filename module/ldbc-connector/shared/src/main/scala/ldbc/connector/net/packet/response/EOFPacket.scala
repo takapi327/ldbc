@@ -44,7 +44,7 @@ object EOFPacket:
 
   val STATUS = 0xfe
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[EOFPacket] =
+  def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[EOFPacket] =
     val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
     for
       status      <- uint4

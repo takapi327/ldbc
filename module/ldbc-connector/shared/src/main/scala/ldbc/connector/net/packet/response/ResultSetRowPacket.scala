@@ -47,7 +47,7 @@ object ResultSetRowPacket:
       .map(_.decodeUtf8Lenient.some)
 
   def decoder(
-    capabilityFlags: Seq[CapabilitiesFlags],
+    capabilityFlags: Set[CapabilitiesFlags],
     columns:         Vector[ColumnDefinitionPacket]
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
     uint8.flatMap {
