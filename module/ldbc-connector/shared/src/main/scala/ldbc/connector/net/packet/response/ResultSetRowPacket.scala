@@ -41,8 +41,8 @@ object ResultSetRowPacket:
       override val values: Array[Option[String]] = _values
 
   private def decodeValue(length: Int): Decoder[Option[String]] =
-    if length == NULL then Decoder.pure(None)
-    else bytes(length).asDecoder.map(_.decodeUtf8Lenient.some)
+    bytes(length).asDecoder
+      .map(_.decodeUtf8Lenient.some)
 
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags],
@@ -58,19 +58,18 @@ object ResultSetRowPacket:
           if index >= columns.length then Decoder.pure(ResultSetRowPacket(buffer))
           else
             val valueDecoder =
-              if index == 0 then decodeValue(length)
-              else
-                remainingLength match
-                  case Some(length) => decodeValue(length)
-                  case None         => lengthEncodedIntDecoder.flatMap(length => decodeValue(length.toInt))
+              length match
+                case NULL if index == 0 => Decoder.pure(None)
+                case _ if index == 0    => decodeValue(length)
+                case _ =>
+                  lengthEncodedIntDecoder.flatMap {
+                    case NULL  => Decoder.pure(None)
+                    case value => decodeValue(value.toInt)
+                  }
 
             valueDecoder.flatMap { value =>
               buffer(index) = value
-              if index == 0 then decodeRow(index + 1, None)
-              else
-                lengthEncodedIntDecoder.flatMap { nextLength =>
-                  decodeRow(index + 1, Some(nextLength.toInt))
-                }
+              decodeRow(index + 1, None)
             }
 
         decodeRow(0, Some(length))
