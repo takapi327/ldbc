@@ -30,7 +30,7 @@ object SSLNegotiation:
 
   def negotiateSSL[F[_]](
     socket:          Socket[F],
-    capabilityFlags: List[CapabilitiesFlags],
+    capabilityFlags: Set[CapabilitiesFlags],
     sslOptions:      SSLNegotiation.Options[F],
     sequenceIdRef:   Ref[F, Byte]
   ): Resource[F, Socket[F]] =

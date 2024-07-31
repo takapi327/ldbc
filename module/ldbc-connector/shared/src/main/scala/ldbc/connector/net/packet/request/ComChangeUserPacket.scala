@@ -32,7 +32,7 @@ import ldbc.connector.data.*
  *   The hashed password of the user
  */
 case class ComChangeUserPacket(
-  capabilitiesFlags: Seq[CapabilitiesFlags],
+  capabilitiesFlags: Set[CapabilitiesFlags],
   user:              String,
   database:          Option[String],
   characterSet:      Int,

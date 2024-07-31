@@ -71,11 +71,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                 result.size,
                 ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
               )
-            resultSetRow <-
-              protocol.readUntilEOF[ResultSetRowPacket](
-                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-                Vector.empty
-              )
+            resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
+                              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                            )
           yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.getOrElse("")
       }
 
@@ -127,11 +125,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                 result.size,
                 ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
               )
-            resultSetRow <-
-              protocol.readUntilEOF[ResultSetRowPacket](
-                ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-                Vector.empty
-              )
+            resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
+                              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                            )
           yield resultSetRow
             .flatMap(_.values.flatten)
             .filterNot(DatabaseMetaDataImpl.SQL2003_KEYWORDS.contains)
@@ -542,7 +538,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
             override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
         },
-        dbList.map(name => ResultSetRowPacket(List(Some(name)))).toVector,
+        dbList.map(name => ResultSetRowPacket(Array(Some(name)))).toVector,
         serverVariables,
         protocol.initialPacket.serverVersion,
         isResultSetClosed,
@@ -571,7 +567,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       ),
       TableType.values
         .filterNot(_ == TableType.UNKNOWN)
-        .map(tableType => ResultSetRowPacket(List(Some(tableType.name))))
+        .map(tableType => ResultSetRowPacket(Array(Some(tableType.name))))
         .toVector,
       serverVariables,
       protocol.initialPacket.serverVersion,
@@ -935,7 +931,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         decoded.flatten.map {
           case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
             ResultSetRowPacket(
-              List(
+              Array(
                 Some(scope.toString),
                 Some(columnName),
                 Some(dataType.toString),
@@ -1433,7 +1429,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
             override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
         },
-        dbList.map(name => ResultSetRowPacket(List(Some("def"), Some(name)))).toVector,
+        dbList.map(name => ResultSetRowPacket(Array(Some("def"), Some(name)))).toVector,
         serverVariables,
         protocol.initialPacket.serverVersion,
         isResultSetClosed,
@@ -1809,10 +1805,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
       + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) "
 
-  private def getTypeInfo(mysqlTypeName: String): List[Option[String]] =
+  private def getTypeInfo(mysqlTypeName: String): Array[Option[String]] =
     val mysqlType = MysqlType.getByName(mysqlTypeName)
 
-    List(
+    Array(
       Some(mysqlTypeName), // TYPE_NAME
       if mysqlType == MysqlType.YEAR && !yearIsDateType then Some(SMALLINT.toString)
       else Some(mysqlType.jdbcType.toString), // DATA_TYPE
@@ -1825,9 +1821,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           MysqlType.TEXT | MysqlType.MEDIUMTEXT | MysqlType.LONGTEXT | MysqlType.JSON | MysqlType.BINARY |
           MysqlType.VARBINARY | MysqlType.CHAR | MysqlType.VARCHAR | MysqlType.ENUM | MysqlType.SET | MysqlType.DATE |
           MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.UNKNOWN =>
-          List(Some("'"), Some("'"))
-        case _ => List(Some(""), Some(""))
-    ) ++ List(
+          Array(Some("'"), Some("'"))
+        case _ => Array(Some(""), Some(""))
+    ) ++ Array(
       Some(mysqlType.createParams),                   // CREATE_PARAMS
       Some(DatabaseMetaData.typeNullable.toString),   // NULLABLE
       Some("true"),                                   // CASE_SENSITIVE
@@ -1849,11 +1845,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       // MINIMUM_SCALE, MAXIMUM_SCALE
       mysqlType match
         case MysqlType.DECIMAL | MysqlType.DECIMAL_UNSIGNED | MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED =>
-          List(Some("-308"), Some("308"))
+          Array(Some("-308"), Some("308"))
         case MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED =>
-          List(Some("-38"), Some("38"))
-        case _ => List(Some("0"), Some("0"))
-    ) ++ List(
+          Array(Some("-38"), Some("38"))
+        case _ => Array(Some("0"), Some("0"))
+    ) ++ Array(
       Some("0"), // SQL_DATA_TYPE
       Some("0"), // SQL_DATETIME_SUB
       Some("10") // NUM_PREC_RADIX

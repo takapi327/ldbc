@@ -32,7 +32,7 @@ object Connection:
   private val defaultSocketOptions: List[SocketOption] =
     List(SocketOption.noDelay(true))
 
-  private val defaultCapabilityFlags: List[CapabilitiesFlags] = List(
+  private val defaultCapabilityFlags: Set[CapabilitiesFlags] = Set(
     CapabilitiesFlags.CLIENT_LONG_PASSWORD,
     CapabilitiesFlags.CLIENT_FOUND_ROWS,
     CapabilitiesFlags.CLIENT_LONG_FLAG,
@@ -97,8 +97,8 @@ object Connection:
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
   ): Resource[F, LdbcConnection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
-      (if database.isDefined then List(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else List.empty) ++
-      (if sslOptions.isDefined then List(CapabilitiesFlags.CLIENT_SSL) else List.empty)
+      (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
+      (if sslOptions.isDefined then Set(CapabilitiesFlags.CLIENT_SSL) else Set.empty)
     val hostInfo = HostInfo(host, port, user, password, database)
     for
       given Exchange[F] <- Resource.eval(Exchange[F])

@@ -26,7 +26,7 @@ trait GenericResponsePackets extends ResponsePacket
 
 object GenericResponsePackets:
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[GenericResponsePackets] =
+  def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[GenericResponsePackets] =
     uint8L.flatMap { status =>
       (status: @switch) match
         case OKPacket.STATUS  => OKPacket.decoder(capabilityFlags)

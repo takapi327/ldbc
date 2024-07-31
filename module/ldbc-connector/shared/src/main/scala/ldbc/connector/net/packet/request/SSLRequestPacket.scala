@@ -26,7 +26,7 @@ import ldbc.connector.data.*
  * @param capabilityFlags
  *  The capability flags of the client.
  */
-case class SSLRequestPacket(sequenceId: Byte, capabilityFlags: List[CapabilitiesFlags]) extends RequestPacket:
+case class SSLRequestPacket(sequenceId: Byte, capabilityFlags: Set[CapabilitiesFlags]) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] = SSLRequestPacket.encoder.encode(this)
 

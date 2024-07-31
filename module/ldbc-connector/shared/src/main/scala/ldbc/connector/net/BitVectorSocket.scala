@@ -82,7 +82,7 @@ object BitVectorSocket:
     initialPacketRef:  Ref[F, Option[InitialPacket]],
     sslOptions:        Option[SSLNegotiation.Options[F]],
     readTimeout:       Duration,
-    capabilitiesFlags: List[CapabilitiesFlags]
+    capabilitiesFlags: Set[CapabilitiesFlags]
   ): Resource[F, BitVectorSocket[F]] =
     for
       socket        <- sockets

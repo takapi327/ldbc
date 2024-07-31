@@ -46,7 +46,7 @@ case class ComStmtPrepareOkPacket(
 
 object ComStmtPrepareOkPacket:
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[ComStmtPrepareOkPacket | ERRPacket] =
+  def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[ComStmtPrepareOkPacket | ERRPacket] =
     uint8L.flatMap { status =>
       (status: @switch) match
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)

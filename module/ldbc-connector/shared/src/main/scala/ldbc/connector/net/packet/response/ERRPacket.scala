@@ -158,7 +158,7 @@ object ERRPacket:
 
   val STATUS = 0xff
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[ERRPacket] =
+  def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[ERRPacket] =
     val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
     for
       errorCode      <- uint16L

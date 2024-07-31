@@ -40,7 +40,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_LONG),
         column("c3", ColumnDataType.MYSQL_TYPE_LONG)
       ),
-      Vector(ResultSetRowPacket(List(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Int, Int, Int)](resultSet.next()) {
@@ -60,7 +60,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_LONGLONG),
         column("c3", ColumnDataType.MYSQL_TYPE_LONGLONG)
       ),
-      Vector(ResultSetRowPacket(List(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Long, Long, Long)](resultSet.next()) {
@@ -80,7 +80,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
         column("c3", ColumnDataType.MYSQL_TYPE_DOUBLE)
       ),
-      Vector(ResultSetRowPacket(List(Some("1.1"), Some("2.2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Double, Double, Double)](resultSet.next()) {
@@ -100,7 +100,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_STRING),
         column("c3", ColumnDataType.MYSQL_TYPE_STRING)
       ),
-      Vector(ResultSetRowPacket(List(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Option[String], Option[String], Option[String])](resultSet.next()) {
@@ -120,7 +120,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_TINY),
         column("c3", ColumnDataType.MYSQL_TYPE_TINY)
       ),
-      Vector(ResultSetRowPacket(List(Some("1"), Some("0"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1"), Some("0"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Boolean, Boolean, Boolean)](resultSet.next()) {
@@ -140,7 +140,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_TINY),
         column("c3", ColumnDataType.MYSQL_TYPE_TINY)
       ),
-      Vector(ResultSetRowPacket(List(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Byte, Byte, Byte)](resultSet.next()) {
@@ -160,7 +160,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_SHORT),
         column("c3", ColumnDataType.MYSQL_TYPE_SHORT)
       ),
-      Vector(ResultSetRowPacket(List(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Short, Short, Short)](resultSet.next()) {
@@ -180,7 +180,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_FLOAT),
         column("c3", ColumnDataType.MYSQL_TYPE_FLOAT)
       ),
-      Vector(ResultSetRowPacket(List(Some("1.1"), Some("2.2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Float, Float, Float)](resultSet.next()) {
@@ -200,7 +200,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_DECIMAL),
         column("c3", ColumnDataType.MYSQL_TYPE_DECIMAL)
       ),
-      Vector(ResultSetRowPacket(List(Some("1.1"), Some("2.2"), None))),
+      Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
     val records =
@@ -221,7 +221,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_DATE),
         column("c3", ColumnDataType.MYSQL_TYPE_DATE)
       ),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01"), Some("2023-01-02"), None))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01"), Some("2023-01-02"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Option[LocalDate], Option[LocalDate], Option[LocalDate])](resultSet.next()) {
@@ -241,7 +241,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_TIME),
         column("c3", ColumnDataType.MYSQL_TYPE_TIME)
       ),
-      Vector(ResultSetRowPacket(List(Some("12:34:56"), Some("12:34:57"), None))),
+      Vector(ResultSetRowPacket(Array(Some("12:34:56"), Some("12:34:57"), None))),
       Version(0, 0, 0)
     )
     val records = Monad[IO].whileM[List, (Option[LocalTime], Option[LocalTime], Option[LocalTime])](resultSet.next()) {
@@ -261,7 +261,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
         column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
       ),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
     val records =
@@ -285,7 +285,7 @@ class ResultSetTest extends CatsEffectSuite:
         column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
         column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
       ),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
     val records =
@@ -310,10 +310,10 @@ class ResultSetTest extends CatsEffectSuite:
         column("c3", ColumnDataType.MYSQL_TYPE_LONG)
       ),
       Vector(
-        ResultSetRowPacket(List(Some("1"), Some("2"), None)),
-        ResultSetRowPacket(List(Some("3"), Some("4"), None)),
-        ResultSetRowPacket(List(Some("5"), Some("6"), None)),
-        ResultSetRowPacket(List(Some("7"), Some("8"), None))
+        ResultSetRowPacket(Array(Some("1"), Some("2"), None)),
+        ResultSetRowPacket(Array(Some("3"), Some("4"), None)),
+        ResultSetRowPacket(Array(Some("5"), Some("6"), None)),
+        ResultSetRowPacket(Array(Some("7"), Some("8"), None))
       ),
       Version(0, 0, 0)
     )
@@ -604,7 +604,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assertIO(resultSet.isBeforeFirst(), true)
@@ -616,7 +616,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assertIO(resultSet.isAfterLast(), false)
@@ -628,7 +628,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assertIO(resultSet.isFirst(), false)
@@ -640,7 +640,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assertIO(resultSet.isLast(), false)
@@ -652,7 +652,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -681,7 +681,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -712,7 +712,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -749,8 +749,8 @@ class ResultSetTest extends CatsEffectSuite:
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(
-        ResultSetRowPacket(List(Some("2023-01-01 12:34:56"))),
-        ResultSetRowPacket(List(Some("2023-01-01 12:34:56")))
+        ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"))),
+        ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))
       ),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -786,7 +786,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
+      Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -820,7 +820,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
+      Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -855,7 +855,7 @@ class ResultSetTest extends CatsEffectSuite:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(List(Some("1"))), ResultSetRowPacket(List(Some("2")))),
+      Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY

@@ -32,7 +32,7 @@ import ldbc.connector.data.CapabilitiesFlags
  *   Database used for login
  */
 case class HandshakeResponse320Packet(
-  capabilitiesFlags: List[CapabilitiesFlags],
+  capabilitiesFlags: Set[CapabilitiesFlags],
   user:              String,
   hashedPassword:    Array[Byte],
   pluginName:        String,
