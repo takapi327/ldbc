@@ -17,7 +17,7 @@ import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.data.ColumnDataType.*
 import ldbc.connector.data.Formatter.*
 
-case class BinaryProtocolResultSetRowPacket(values: List[Option[String]]) extends ResultSetRowPacket:
+case class BinaryProtocolResultSetRowPacket(values: Array[Option[String]]) extends ResultSetRowPacket:
 
   override def toString: String = "Binary Protocol ResultSet Row"
 
@@ -60,5 +60,5 @@ object BinaryProtocolResultSetRowPacket:
                         val isColumnNull = (nullBitmapBytes((index + 2) / 8) & (1 << ((index + 2) % 8))) != 0
                         decodeValue(column, isColumnNull)
                     }
-        yield BinaryProtocolResultSetRowPacket(values.toList)
+        yield BinaryProtocolResultSetRowPacket(values.toArray)
     }

@@ -267,7 +267,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
 
                           override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
                         ),
-                        Vector(ResultSetRowPacket(List(Some(lastInsertId.toString)))),
+                        Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
                         serverVariables,
                         protocol.initialPacket.serverVersion,
                         isResultSetClosed,
