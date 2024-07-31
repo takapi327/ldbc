@@ -17,22 +17,22 @@ import scala.math.pow
 opaque type ServerStatusFlags = Int
 
 object ServerStatusFlags:
-  
-  val SERVER_STATUS_IN_TRANS: ServerStatusFlags             = 1 << 0
-  val SERVER_STATUS_AUTOCOMMIT: ServerStatusFlags           = 1 << 1
-  val SERVER_MORE_RESULTS_EXISTS: ServerStatusFlags         = 1 << 3
-  val SERVER_STATUS_NO_GOOD_INDEX_USED: ServerStatusFlags   = 1 << 4
-  val SERVER_STATUS_NO_INDEX_USED: ServerStatusFlags        = 1 << 5
-  val SERVER_STATUS_CURSOR_EXISTS: ServerStatusFlags        = 1 << 6
-  val SERVER_STATUS_LAST_ROW_SENT: ServerStatusFlags        = 1 << 7
-  val SERVER_STATUS_DB_DROPPED: ServerStatusFlags           = 1 << 8
+
+  val SERVER_STATUS_IN_TRANS:             ServerStatusFlags = 1 << 0
+  val SERVER_STATUS_AUTOCOMMIT:           ServerStatusFlags = 1 << 1
+  val SERVER_MORE_RESULTS_EXISTS:         ServerStatusFlags = 1 << 3
+  val SERVER_STATUS_NO_GOOD_INDEX_USED:   ServerStatusFlags = 1 << 4
+  val SERVER_STATUS_NO_INDEX_USED:        ServerStatusFlags = 1 << 5
+  val SERVER_STATUS_CURSOR_EXISTS:        ServerStatusFlags = 1 << 6
+  val SERVER_STATUS_LAST_ROW_SENT:        ServerStatusFlags = 1 << 7
+  val SERVER_STATUS_DB_DROPPED:           ServerStatusFlags = 1 << 8
   val SERVER_STATUS_NO_BACKSLASH_ESCAPES: ServerStatusFlags = 1 << 9
-  val SERVER_STATUS_METADATA_CHANGED: ServerStatusFlags     = 1 << 10
-  val SERVER_QUERY_WAS_SLOW: ServerStatusFlags              = 1 << 11
-  val SERVER_PS_OUT_PARAMS: ServerStatusFlags               = 1 << 12
-  val SERVER_STATUS_IN_TRANS_READONLY: ServerStatusFlags    = 1 << 13
-  val SERVER_SESSION_STATE_CHANGED: ServerStatusFlags       = 1 << 14
-  
+  val SERVER_STATUS_METADATA_CHANGED:     ServerStatusFlags = 1 << 10
+  val SERVER_QUERY_WAS_SLOW:              ServerStatusFlags = 1 << 11
+  val SERVER_PS_OUT_PARAMS:               ServerStatusFlags = 1 << 12
+  val SERVER_STATUS_IN_TRANS_READONLY:    ServerStatusFlags = 1 << 13
+  val SERVER_SESSION_STATE_CHANGED:       ServerStatusFlags = 1 << 14
+
   val values: Set[ServerStatusFlags] = Set(
     SERVER_STATUS_IN_TRANS,
     SERVER_STATUS_AUTOCOMMIT,
