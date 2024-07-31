@@ -20,6 +20,8 @@ import scala.math.pow
  * The intersection of the two determines what optional parts of the protocol will be used.
  * 
  * see: https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__capabilities__flags.html
+ *
+ * ※ There is a 32-bit limit, but the Long type is used because Scala's Int type is out of range.
  */
 opaque type CapabilitiesFlags = Long
 
