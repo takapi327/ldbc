@@ -33,7 +33,7 @@ case class InitialPacket(
   protocolVersion: Int,
   serverVersion:   Version,
   threadId:        Int,
-  capabilityFlags: Seq[CapabilitiesFlags],
+  capabilityFlags: Set[CapabilitiesFlags],
   characterSet:    Int,
   statusFlags:     Seq[ServerStatusFlags],
   scrambleBuff:    Array[Byte],

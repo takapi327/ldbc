@@ -46,7 +46,7 @@ object BinaryProtocolResultSetRowPacket:
           throw new RuntimeException(s"Unsupported column type: ${ column.columnType }")
 
   def decoder(
-    capabilityFlags: Seq[CapabilitiesFlags],
+    capabilityFlags: Set[CapabilitiesFlags],
     columns:         Vector[ColumnDefinitionPacket]
   ): Decoder[BinaryProtocolResultSetRowPacket | EOFPacket | ERRPacket] =
     uint8L.flatMap {

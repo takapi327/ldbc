@@ -17,7 +17,7 @@ import ldbc.connector.data.CapabilitiesFlags
  */
 trait HandshakeResponsePacket extends RequestPacket:
 
-  def capabilitiesFlags: Seq[CapabilitiesFlags]
+  def capabilitiesFlags: Set[CapabilitiesFlags]
   def user:              String
   def hashedPassword:    Array[Byte]
   def pluginName:        String
@@ -32,7 +32,7 @@ trait HandshakeResponsePacket extends RequestPacket:
 object HandshakeResponsePacket:
 
   def apply(
-    capabilitiesFlags: List[CapabilitiesFlags],
+    capabilitiesFlags: Set[CapabilitiesFlags],
     user:              String,
     hashedPassword:    Array[Byte],
     pluginName:        String,
