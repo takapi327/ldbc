@@ -35,7 +35,7 @@ case class InitialPacket(
   threadId:        Int,
   capabilityFlags: Set[CapabilitiesFlags],
   characterSet:    Int,
-  statusFlags:     Seq[ServerStatusFlags],
+  statusFlags:     Set[ServerStatusFlags],
   scrambleBuff:    Array[Byte],
   authPlugin:      String
 ) extends ResponsePacket:

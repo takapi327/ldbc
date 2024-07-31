@@ -56,7 +56,7 @@ case class OKPacket(
   status:           Int,
   affectedRows:     Long,
   lastInsertId:     Long,
-  statusFlags:      Seq[ServerStatusFlags],
+  statusFlags:      Set[ServerStatusFlags],
   warnings:         Option[Int],
   info:             Option[String],
   sessionStateInfo: Option[String],
@@ -78,7 +78,7 @@ object OKPacket:
       lastInsertId <- lengthEncodedIntDecoder
       statusFlags <-
         (if hasClientProtocol41Flag || hasClientTransactionsFlag then uint16L.map(int => ServerStatusFlags(int.toLong))
-         else provide(Nil))
+         else provide(Set.empty[ServerStatusFlags]))
       warnings <- if hasClientProtocol41Flag then uint16L.map(_.some) else provide(None)
       info     <- if hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
       sessionStateInfo <- (if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then
