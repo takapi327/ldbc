@@ -233,7 +233,7 @@ object Protocol:
 
       def loop(): F[Unit] =
         socket.receive(decoder).flatMap {
-          case _: EOFPacket => ev.unit
+          case _: EOFPacket     => ev.unit
           case error: ERRPacket => ev.raiseError(error.toException)
           case row =>
             buffer += row.asInstanceOf[P]
@@ -242,11 +242,11 @@ object Protocol:
 
       loop().as(buffer.toVector)
 
-      //socket.receive(decoder).flatMap {
+      // socket.receive(decoder).flatMap {
       //  case _: EOFPacket     => ev.pure(acc)
       //  case error: ERRPacket => ev.raiseError(error.toException)
       //  case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
-      //}
+      // }
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
@@ -262,7 +262,9 @@ object Protocol:
                   result.size,
                   ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
                 )
-              resultSetRow <- readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions))
+              resultSetRow <- readUntilEOF[ResultSetRowPacket](
+                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions)
+                              )
             yield columnDefinitions
               .zip(resultSetRow.flatMap(_.values))
               .map {

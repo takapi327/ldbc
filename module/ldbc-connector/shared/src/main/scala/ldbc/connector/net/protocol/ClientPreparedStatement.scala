@@ -99,7 +99,9 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                     result.size,
                     ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
                   )
-                resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions))
+                resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
+                                  ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                                )
                 lastColumnReadNullable <- Ref[F].of(true)
                 resultSetCurrentCursor <- Ref[F].of(0)
                 resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)

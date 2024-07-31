@@ -71,7 +71,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                 result.size,
                 ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
               )
-            resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions))
+            resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
+                              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                            )
           yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.getOrElse("")
       }
 
@@ -123,7 +125,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                 result.size,
                 ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
               )
-            resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions))
+            resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
+                              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                            )
           yield resultSetRow
             .flatMap(_.values.flatten)
             .filterNot(DatabaseMetaDataImpl.SQL2003_KEYWORDS.contains)
