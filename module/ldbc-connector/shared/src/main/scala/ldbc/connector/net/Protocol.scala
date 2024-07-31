@@ -242,12 +242,6 @@ object Protocol:
 
       loop().as(buffer.toVector)
 
-      // socket.receive(decoder).flatMap {
-      //  case _: EOFPacket     => ev.pure(acc)
-      //  case error: ERRPacket => ev.raiseError(error.toException)
-      //  case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
-      // }
-
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
         send(ComQueryPacket(SELECT_SERVER_VARIABLES_QUERY, initialPacket.capabilityFlags, ListMap.empty)) *>
