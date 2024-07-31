@@ -89,8 +89,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           )
         resultSetRow <-
           protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
-            BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-            Vector.empty
+            BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
           )
         _                      <- params.set(SortedMap.empty)
         lastColumnReadNullable <- Ref[F].of(true)
