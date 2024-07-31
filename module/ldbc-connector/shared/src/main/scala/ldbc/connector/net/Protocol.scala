@@ -9,6 +9,7 @@ package ldbc.connector.net
 import java.nio.charset.StandardCharsets
 
 import scala.concurrent.duration.*
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.ListMap
 
 import cats.*
@@ -119,14 +120,12 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    *
    * @param decoder
    *   the decoder to decode the response packet
-   * @param acc
-   *   the accumulator
    * @tparam P
    *   the type of the response packet
    * @return
    *   a vector of the response packets
    */
-  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket], acc: Vector[P]): F[Vector[P]]
+  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]]
 
   /**
    * Returns the server variables.
@@ -228,14 +227,26 @@ object Protocol:
       read(times, Vector.empty[P])
 
     override def readUntilEOF[P <: ResponsePacket](
-      decoder: Decoder[P | EOFPacket | ERRPacket],
-      acc:     Vector[P]
+      decoder: Decoder[P | EOFPacket | ERRPacket]
     ): F[Vector[P]] =
-      socket.receive(decoder).flatMap {
-        case _: EOFPacket     => ev.pure(acc)
-        case error: ERRPacket => ev.raiseError(error.toException)
-        case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
-      }
+      val buffer = new ArrayBuffer[P]()
+
+      def loop(): F[Unit] =
+        socket.receive(decoder).flatMap {
+          case _: EOFPacket => ev.unit
+          case error: ERRPacket => ev.raiseError(error.toException)
+          case row =>
+            buffer += row.asInstanceOf[P]
+            loop()
+        }
+
+      loop().as(buffer.toVector)
+
+      //socket.receive(decoder).flatMap {
+      //  case _: EOFPacket     => ev.pure(acc)
+      //  case error: ERRPacket => ev.raiseError(error.toException)
+      //  case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
+      //}
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
@@ -251,11 +262,7 @@ object Protocol:
                   result.size,
                   ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
                 )
-              resultSetRow <-
-                readUntilEOF[ResultSetRowPacket](
-                  ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
-                  Vector.empty
-                )
+              resultSetRow <- readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions))
             yield columnDefinitions
               .zip(resultSetRow.flatMap(_.values))
               .map {

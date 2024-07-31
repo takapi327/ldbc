@@ -570,10 +570,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
             )
           resultSetRow <-
-            protocol.readUntilEOF[ResultSetRowPacket](
-              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-              Vector.empty
-            )
+            protocol.readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions))
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
@@ -617,11 +614,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               result.size,
               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
             )
-          resultSetRow <-
-            protocol.readUntilEOF[ResultSetRowPacket](
-              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-              Vector.empty
-            )
+          resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions))
           lastColumnReadNullable <- Ref[F].of(true)
           resultSetCurrentCursor <- Ref[F].of(0)
           resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
