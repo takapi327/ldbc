@@ -7,8 +7,6 @@
 package ldbc.connector.net.packet
 package response
 
-import scala.collection.mutable.ArrayBuffer
-
 import cats.syntax.all.*
 
 import scodec.*
@@ -30,21 +28,21 @@ trait ResultSetRowPacket extends ResponsePacket:
   /**
    * The values of the row.
    */
-  def values: List[Option[String]]
+  def values: Array[Option[String]]
 
-  override def toString: String = s"ProtocolText::ResultSetRow"
+  override def toString: String = "ProtocolText::ResultSetRow"
 
 object ResultSetRowPacket:
 
   private val NULL = 0xfb
 
-  def apply(_values: List[Option[String]]): ResultSetRowPacket =
+  def apply(_values: Array[Option[String]]): ResultSetRowPacket =
     new ResultSetRowPacket:
-      override val values: List[Option[String]] = _values
+      override val values: Array[Option[String]] = _values
 
   private def decodeValue(length: Int): Decoder[Option[String]] =
-    bytes(length).asDecoder
-      .map(_.decodeUtf8Lenient.some)
+    if length == NULL then Decoder.pure(None)
+    else bytes(length).asDecoder.map(_.decodeUtf8Lenient.some)
 
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags],
@@ -54,24 +52,28 @@ object ResultSetRowPacket:
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case length =>
-        columns.zipWithIndex
-          .foldLeft(Decoder.pure(ArrayBuffer.empty[Option[String]])) {
-            case (acc, (column, index)) =>
-              acc.flatMap { buffer =>
-                val valueDecoder = length match
-                  case NULL if index == 0 => Decoder.pure(None)
-                  case _ if index == 0    => decodeValue(length)
-                  case _ =>
-                    lengthEncodedIntDecoder.flatMap {
-                      case NULL  => Decoder.pure(None)
-                      case value => decodeValue(value.toInt)
-                    }
+        val buffer = new Array[Option[String]](columns.length)
 
-                valueDecoder.map { value =>
-                  buffer.append(value)
-                  buffer
+        def decodeRow(index: Int, remainingLength: Option[Int]): Decoder[ResultSetRowPacket] =
+          if index >= columns.length then
+            Decoder.pure(ResultSetRowPacket(buffer))
+          else
+            val valueDecoder = if index == 0 then
+              decodeValue(length)
+            else
+              remainingLength match
+                case Some(length) => decodeValue(length)
+                case None => lengthEncodedIntDecoder.flatMap(length => decodeValue(length.toInt))
+
+            valueDecoder.flatMap { value =>
+              buffer(index) = value
+              if index == 0 then
+                decodeRow(index + 1, None)
+              else
+                lengthEncodedIntDecoder.flatMap { nextLength =>
+                  decodeRow(index + 1, Some(nextLength.toInt))
                 }
-              }
-          }
-          .map(array => ResultSetRowPacket(array.toList))
+            }
+
+        decodeRow(0, Some(length))
     }
