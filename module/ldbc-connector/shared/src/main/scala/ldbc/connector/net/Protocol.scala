@@ -229,18 +229,17 @@ object Protocol:
     override def readUntilEOF[P <: ResponsePacket](
       decoder: Decoder[P | EOFPacket | ERRPacket]
     ): F[Vector[P]] =
-      val buffer = new ArrayBuffer[P]()
 
-      def loop(): F[Unit] =
+      def loop(buffer: ArrayBuffer[P]): F[ArrayBuffer[P]] =
         socket.receive(decoder).flatMap {
-          case _: EOFPacket     => ev.unit
+          case _: EOFPacket     => ev.pure(buffer)
           case error: ERRPacket => ev.raiseError(error.toException)
           case row =>
-            buffer += row.asInstanceOf[P]
-            loop()
+            buffer append row.asInstanceOf[P]
+            loop(buffer)
         }
 
-      loop().as(buffer.toVector)
+      loop(new ArrayBuffer[P]()).map(_.toVector)
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
