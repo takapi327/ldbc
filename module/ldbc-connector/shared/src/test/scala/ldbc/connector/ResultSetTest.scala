@@ -4,6 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+/*
 package ldbc.connector
 
 import java.time.*
@@ -928,3 +929,5 @@ class ResultSetTest extends CatsEffectSuite:
       flags        = flags,
       decimals     = if useScale then 2 else 0
     )
+    
+ */

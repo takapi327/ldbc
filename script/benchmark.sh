@@ -35,7 +35,7 @@ run() {
     mkdir -p "script/${OUT_DIR}/${TARGET}"
     OUTPUT="script/${OUT_DIR}/${TARGET}/${FEATURE}.json"
 
-    $sbt "${PROJECT} / clean"
+    #$sbt "${PROJECT} / clean"
     $sbt "${PROJECT} / Jmh / run $OPTIONS connector[.]${TARGET}[.]${FEATURE}[.] -rf json -rff ../${OUTPUT}"
     OUTPUTS+=("$OUTPUT")
 }
@@ -43,7 +43,7 @@ run() {
 to_json_rows() {
     jq -s '[ .[] | {
         benchmark:.benchmark,
-        target: .benchmark | split(".")[2],
+        target: (.benchmark | split(".") | .[2] + "_" + .[4]),
         feature: .benchmark | split(".")[3],
         index: .params.len | tonumber,
         score: (.primaryMetric.rawData[] | .[])
@@ -124,6 +124,9 @@ run_feature() {
 
     CHART_INPUT="script/${OUT_DIR}/${PREFIX}${FEATURE}${SUFFIX}.json"
     CHART_OUTPUT="docs/src/main/mdoc/img/${PREFIX}${FEATURE}${SUFFIX}.svg"
+
+    OUTPUTS+=("script/${OUT_DIR}/jdbc/${FEATURE}.json")
+    #OUTPUTS+=("script/${OUT_DIR}/ldbc/${FEATURE}.json")
 
     for output in ${OUTPUTS[@]}; do
         jq '.[]' "${output}"

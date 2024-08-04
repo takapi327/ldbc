@@ -48,18 +48,23 @@ object PacketSocket:
   ): PacketSocket[F] = new PacketSocket[F]:
 
     private def debug(msg: => String): F[Unit] =
-      sequenceIdRef.get
-        .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
+      Concurrent[F].whenA(debugEnabled) {
+        sequenceIdRef.get.flatMap(id => Console[F].println(s"[$id] $msg"))
+      }
+      //sequenceIdRef.get
+      //  .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       (for
+        start <- Concurrent[F].pure(System.nanoTime())
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
         payload <- bvs.read(payloadSize)
         response = decoder.decodeValue(payload).require
+        end <- Concurrent[F].pure(System.nanoTime())
         _ <-
           debug(
-            s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$response${ AnsiColor.RESET }"
+            s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$response${ AnsiColor.RESET } Time: ${ end - start } nanos"
           )
         _ <- sequenceIdRef.update(_ => ((header.toByteArray(3) + 1) % 256).toByte)
       yield response).onError {

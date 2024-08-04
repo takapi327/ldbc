@@ -55,11 +55,27 @@ class Batch:
   var len: Int = uninitialized
 
   @Benchmark
-  def batchN(): Unit =
+  def statement(): Unit =
     connection
       .use { conn =>
         for
-          statement <- conn.prepareStatement(s"INSERT INTO jdbc_test (c1, c2) VALUES (?, ?)")
+          statement <- conn.createStatement()
+          _ <- records.foldLeft(IO.unit) {
+            case (acc, (id, value)) =>
+              acc *>
+                statement.addBatch(s"INSERT INTO jdbc_statement_test (c1, c2) VALUES ${records.map { case (v1, v2) => s"($v1, '$v2')" }.mkString(", ")}")
+          }
+          _ <- statement.executeBatch()
+        yield ()
+      }
+      .unsafeRunSync()
+
+  @Benchmark
+  def prepareStatement(): Unit =
+    connection
+      .use { conn =>
+        for
+          statement <- conn.prepareStatement(s"INSERT INTO jdbc_prepare_statement_test (c1, c2) VALUES (?, ?)")
           _ <- records.foldLeft(IO.unit) {
                  case (acc, (id, value)) =>
                    acc *>
