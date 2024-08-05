@@ -29,7 +29,24 @@ import ldbc.connector.*
 @State(Scope.Benchmark)
 class Select:
 
-  type BenchmarkType = (Long, Short, Int, Int, Int, Long, Float, Double, BigDecimal, String, String, Boolean, LocalDate, LocalTime, LocalDateTime, LocalDateTime)
+  type BenchmarkType = (
+    Long,
+    Short,
+    Int,
+    Int,
+    Int,
+    Long,
+    Float,
+    Double,
+    BigDecimal,
+    String,
+    String,
+    Boolean,
+    LocalDate,
+    LocalTime,
+    LocalDateTime,
+    LocalDateTime
+  )
 
   given Tracer[IO] = Tracer.noop[IO]
 
@@ -57,17 +74,17 @@ class Select:
         for
           // 処理時間の計測を入れる
           statement <- conn.createStatement()
-          //start <- IO(System.nanoTime())
+          // start <- IO(System.nanoTime())
           resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
-          //end <- IO(System.nanoTime())
-          //_ <- IO.println("============") *> IO(println(s"statement: ${end - start} nanos"))
+          // end <- IO(System.nanoTime())
+          // _ <- IO.println("============") *> IO(println(s"statement: ${end - start} nanos"))
           records <- consume(resultSet)
         yield records
       }
       .unsafeRunSync()
 
-  //@Benchmark
-  //def prepareStatement: List[BenchmarkType] =
+  // @Benchmark
+  // def prepareStatement: List[BenchmarkType] =
   //  connection
   //    .use { conn =>
   //      for
@@ -85,15 +102,15 @@ class Select:
         case false => Monad[IO].pure(acc)
         case true =>
           for
-            c1 <- resultSet.getLong(1)
-            c2 <- resultSet.getShort(2)
-            c3 <- resultSet.getInt(3)
-            c4 <- resultSet.getInt(4)
-            c5 <- resultSet.getInt(5)
-            c6 <- resultSet.getLong(6)
-            c7 <- resultSet.getFloat(7)
-            c8 <- resultSet.getDouble(8)
-            c9 <- resultSet.getBigDecimal(9)
+            c1  <- resultSet.getLong(1)
+            c2  <- resultSet.getShort(2)
+            c3  <- resultSet.getInt(3)
+            c4  <- resultSet.getInt(4)
+            c5  <- resultSet.getInt(5)
+            c6  <- resultSet.getLong(6)
+            c7  <- resultSet.getFloat(7)
+            c8  <- resultSet.getDouble(8)
+            c9  <- resultSet.getBigDecimal(9)
             c10 <- resultSet.getString(10)
             c11 <- resultSet.getString(11)
             c12 <- resultSet.getBoolean(12)
@@ -101,8 +118,7 @@ class Select:
             c14 <- resultSet.getTime(14)
             c15 <- resultSet.getTimestamp(15)
             c16 <- resultSet.getTimestamp(16)
-          yield
-            acc <+> Vector((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16))
+          yield acc <+> Vector((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16))
       }
 
     loop(Vector.empty).map(_.toList)

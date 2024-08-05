@@ -54,10 +54,10 @@ object EOFPacket:
         yield EOFPacket(status, warnings, statusFlags)
       else
         Decoder.pure(EOFPacket(status, 0, 0))
-        //provide(EOFPacket(status, None, None))
+        // provide(EOFPacket(status, None, None))
     }
-    //for
+    // for
     //  status      <- uint4
     //  warnings    <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
     //  statusFlags <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
-    //yield EOFPacket(status, warnings, statusFlags)
+    // yield EOFPacket(status, warnings, statusFlags)

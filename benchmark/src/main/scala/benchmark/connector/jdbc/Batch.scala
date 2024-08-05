@@ -61,10 +61,12 @@ class Batch:
         for
           statement <- conn.createStatement()
           _ <- records.foldLeft(IO.unit) {
-            case (acc, (id, value)) =>
-              acc *>
-                statement.addBatch(s"INSERT INTO jdbc_statement_test (c1, c2) VALUES ${records.map { case (v1, v2) => s"($v1, '$v2')" }.mkString(", ")}")
-          }
+                 case (acc, (id, value)) =>
+                   acc *>
+                     statement.addBatch(s"INSERT INTO jdbc_statement_test (c1, c2) VALUES ${ records
+                         .map { case (v1, v2) => s"($v1, '$v2')" }
+                         .mkString(", ") }")
+               }
           _ <- statement.executeBatch()
         yield ()
       }
