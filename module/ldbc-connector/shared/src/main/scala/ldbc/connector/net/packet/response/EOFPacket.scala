@@ -34,8 +34,8 @@ import ldbc.connector.data.CapabilitiesFlags
  */
 case class EOFPacket(
   status:      Int,
-  warnings:    Option[Int],
-  statusFlags: Option[Int]
+  warnings:    Int,
+  statusFlags: Int
 ) extends GenericResponsePackets:
 
   override def toString: String = "EOF_Packet"
@@ -46,8 +46,11 @@ object EOFPacket:
 
   def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[EOFPacket] =
     val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    for
-      status      <- uint4
-      warnings    <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
-      statusFlags <- if hasClientProtocol41Flag then uint4.map(_.some) else provide(None)
-    yield EOFPacket(status, warnings, statusFlags)
+    uint4.flatMap { status =>
+      if hasClientProtocol41Flag then
+        for
+          warnings    <- uint4
+          statusFlags <- uint4
+        yield EOFPacket(status, warnings, statusFlags)
+      else Decoder.pure(EOFPacket(status, 0, 0))
+    }
