@@ -48,11 +48,9 @@ object PacketSocket:
   ): PacketSocket[F] = new PacketSocket[F]:
 
     private def debug(msg: => String): F[Unit] =
-    Concurrent[F].whenA(debugEnabled) {
-      sequenceIdRef.get.flatMap(id => Console[F].println(s"[$id] $msg"))
-    }
-    // sequenceIdRef.get
-    //  .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
+      Concurrent[F].whenA(debugEnabled) {
+        sequenceIdRef.get.flatMap(id => Console[F].println(s"[$id] $msg"))
+      }
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       (for
