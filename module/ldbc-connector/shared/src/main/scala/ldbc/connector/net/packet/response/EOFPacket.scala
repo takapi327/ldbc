@@ -52,6 +52,5 @@ object EOFPacket:
           warnings    <- uint4
           statusFlags <- uint4
         yield EOFPacket(status, warnings, statusFlags)
-      else
-        Decoder.pure(EOFPacket(status, 0, 0))
+      else Decoder.pure(EOFPacket(status, 0, 0))
     }
