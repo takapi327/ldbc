@@ -157,9 +157,7 @@ package object dsl:
 
     /** Returns `s1, s2, ... sn`. */
     def comma[M[_]: Reducible](ss: M[SQL]): Mysql[F] =
-      ss.toNonEmptyList.foldLeft(sql"") { (acc, sql) =>
-        acc ++ sql ++ sql","
-      }
+      ss.reduceLeftTo(s => sql"" ++ s)((s1, s2) => s1 ++ sql"," ++ s2)
 
     /** Returns `ORDER BY s1, s2, ... sn`. */
     def orderBy(s1: SQL, ss: SQL*): SQL =
