@@ -30,7 +30,7 @@ import ldbc.sql.*
 case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.DynamicBinder]) extends SQL:
 
   @targetName("combine")
-  override def ++(sql: SQL): SQL =
+  override def ++(sql: SQL): Mysql[F] =
     Mysql[F](statement ++ sql.statement, params ++ sql.params)
 
   /**
