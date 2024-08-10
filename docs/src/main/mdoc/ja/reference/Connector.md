@@ -31,19 +31,15 @@ ldbcコネクタは一番低レイヤーのAPIとなります。
 
 **JVM**
 
-@@@ vars
 ```scala 3
-libraryDependencies += "$org$" %% "ldbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 ```
-@@@
 
 **JS/Native**
 
-@@@ vars
 ```scala 3
-libraryDependencies += "$org$" %%% "ldbc-connector" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 ```
-@@@
 
 **サポートバージョン**
 
