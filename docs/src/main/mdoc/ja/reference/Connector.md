@@ -564,7 +564,7 @@ ldbcではこれらのコマンドを使用するためのAPIを提供してい�
 | `COM_RESET_CONNECTION` | `セッションの状態をリセットする`                    | ✅    |
 | `COM_SET_OPTION`       | `現在の接続のオプションを設定する`                   | ✅    |
 
-### COM_QUIT
+### COM QUIT
 
 `COM_QUIT`はクライアントが接続を閉じることをサーバーに要求していることを伝えるためのコマンドです。
 
@@ -579,7 +579,7 @@ connection.use { conn =>
 }
 ```
 
-### COM_INIT_DB
+### COM INIT DB
 
 `COM_INIT_DB`は接続のデフォルト・スキーマを変更するためのコマンドです。
 
@@ -591,7 +591,7 @@ connection.use { conn =>
 }
 ```
 
-### COM_STATISTICS
+### COM STATISTICS
 
 `COM_STATISTICS`は内部ステータスの文字列を可読形式で取得するためのコマンドです。
 
@@ -614,7 +614,7 @@ connection.use { conn =>
 - `openTables` : 現在オープンしているテーブルの数
 - `queriesPerSecondAvg` : 秒間のクエリの平均数
 
-### COM_PING
+### COM PING
 
 `COM_PING`はサーバーが生きているかチェックするためのコマンドです。
 
@@ -627,7 +627,7 @@ connection.use { conn =>
 }
 ```
 
-### COM_CHANGE_USER
+### COM CHANGE USER
 
 `COM_CHANGE_USER`は現在の接続のユーザーを変更するためのコマンドです。
 また、以下の接続状態をリセットします。
@@ -645,7 +645,7 @@ connection.use { conn =>
 }
 ```
 
-### COM_RESET_CONNECTION
+### COM RESET CONNECTION
 
 `COM_RESET_CONNECTION`はセッションの状態をリセットするためのコマンドです。
 
@@ -662,7 +662,7 @@ connection.use { conn =>
 }
 ```
 
-### COM_SET_OPTION
+### COM SET OPTION
 
 `COM_SET_OPTION`は現在の接続のオプションを設定するためのコマンドです。
 
