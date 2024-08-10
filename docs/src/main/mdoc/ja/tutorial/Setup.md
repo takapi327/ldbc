@@ -12,7 +12,6 @@
 まず、Dockerを使用してデータベースを起動します。以下のコードを使用して、データベースを起動します。
 
 ```yaml
-version: '3'
 services:
   mysql:
     image: mysql:@MYSQL_VERSION@
@@ -108,14 +107,14 @@ brew install Virtuslab/scala-cli/scala-cli
 scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
 
-次に、ldbcを依存関係に持つ新しいプロジェクトを作成します。
+### 最初のプログラム
+
+はじめに、ldbcを依存関係に持つ新しいプロジェクトを作成します。
 
 ```scala
 //> using scala "@SCALA_VERSION@"
 //> using dep "@ORGANIZATION@::ldbc-dsl:@VERSION@"
 ```
-
-### 最初のプログラム
 
 ldbcを使う前に、いくつかのシンボルをインポートする必要がある。ここでは便宜上、パッケージのインポートを使用する。これにより、高レベルAPIで作業する際に最もよく使用されるシンボルを得ることができる。
 

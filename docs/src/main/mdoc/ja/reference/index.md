@@ -5,10 +5,10 @@
 
 # Reference
 
-This section contains detailed discussions of ldbc's core abstractions and machinery.
+このセクションでは、ldbcのコア抽象化と機械の詳細について説明します。
 
 ## Table of Contents
 
 @:navigationTree {
-  entries = [ { target = "/en/reference", depth = 2 } ]
+  entries = [ { target = "/ja/reference", depth = 2 } ]
 }

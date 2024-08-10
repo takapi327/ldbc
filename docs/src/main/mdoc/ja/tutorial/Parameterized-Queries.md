@@ -60,7 +60,7 @@ SQLリテラルを扱う際によくあるイラつきは、一連の引数をIN
 val ids = NonEmptyList.of(1, 2, 3)
 
 connection.use { conn =>
-  sql"SELECT name, email FROM user WHERE" ++ in("id", ids)
+  (sql"SELECT name, email FROM user WHERE" ++ in("id", ids))
     .query[(String, String)]
     .to[List]
     .readOnly(conn)
