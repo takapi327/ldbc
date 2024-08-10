@@ -7,7 +7,7 @@
 
 このセクションでは、ldbcのコア抽象化と機械の詳細について説明します。
 
-## Table of Contents
+## 目次
 
 @:navigationTree {
   entries = [ { target = "/ja/reference", depth = 2 } ]
