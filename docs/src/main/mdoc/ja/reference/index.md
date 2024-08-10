@@ -1,5 +1,5 @@
 {%
-  laika.title = Intro
+  laika.title = はじめに
   laika.metadata.language = ja
 %}
 
