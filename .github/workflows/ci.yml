@@ -76,7 +76,7 @@ jobs:
         run: docker compose up -d
 
       - name: Install brew formulae (ubuntu)
-        if: (matrix.project == 'skunkNative') && startsWith(matrix.os, 'ubuntu')
+        if: (matrix.project == 'ldbcNative') && startsWith(matrix.os, 'ubuntu')
         run: /home/linuxbrew/.linuxbrew/bin/brew install 
 
       - name: Check that workflows are up to date
