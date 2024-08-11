@@ -150,7 +150,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(
-    Test / nativeBrewFormulas ++= Set("s2n")
+    Test / nativeBrewFormulas += "s2n"
   )
   .dependsOn(sql)
 
