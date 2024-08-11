@@ -18,7 +18,8 @@ ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
 ThisBuild / crossScalaVersions         := Seq(scala3, scala34)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ settings2n
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
@@ -146,6 +147,10 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(
+    Test / nativeBrewFormulas += "s2n"
   )
   .dependsOn(sql)
 
