@@ -45,7 +45,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.12.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
+      "org.specs2"    %%% "specs2-core" % "5.5.3"  % Test
     )
   )
   .platformsSettings(JSPlatform, NativePlatform)(
@@ -101,7 +101,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
       "org.scalatest"          %%% "scalatest"                % "3.2.18" % Test,
-      "org.specs2"             %%% "specs2-core"              % "4.20.5" % Test
+      "org.specs2"             %%% "specs2-core"              % "5.5.3"  % Test
     )
   )
   .jvmSettings(
