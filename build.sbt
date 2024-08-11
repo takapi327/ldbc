@@ -150,6 +150,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
   .nativeSettings(
+    libraryDependencies += "com.armanbilge" %%% "epollcat" % "0.1.6",
     Test / nativeBrewFormulas += "s2n"
   )
   .dependsOn(sql)
