@@ -41,10 +41,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - name: Install sbt
-        if: contains(runner.os, 'macos')
-        run: brew install sbt
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -79,23 +75,9 @@ jobs:
       - name: Start up MySQL on Docker
         run: docker compose up -d
 
-      - name: Install dependencies
-        if: matrix.project == 'ldbcNative'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake libssl-dev libcrypto++-dev
-
-      - name: Clone s2n repository
-        if: matrix.project == 'ldbcNative'
-        run: 'git clone https://github.com/aws/s2n-tls.git'
-
-      - name: Build and install s2n
-        if: matrix.project == 'ldbcNative'
-        run: |
-          cd s2n-tls
-          cmake . -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local
-          cmake --build build
-          sudo cmake --install build
+      - name: Install brew formulae (ubuntu)
+        if: (matrix.project == 'skunkNative') && startsWith(matrix.os, 'ubuntu')
+        run: /home/linuxbrew/.linuxbrew/bin/brew install 
 
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
@@ -151,10 +133,6 @@ jobs:
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        if: contains(runner.os, 'macos')
-        run: brew install sbt
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -279,10 +257,6 @@ jobs:
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        if: contains(runner.os, 'macos')
-        run: brew install sbt
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -354,10 +328,6 @@ jobs:
         java: [temurin@11, temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        if: contains(runner.os, 'macos')
-        run: brew install sbt
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
