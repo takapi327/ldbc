@@ -12,13 +12,11 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import munit.CatsEffectSuite
-
 import ldbc.sql.Connection as SQLConnection
 
 import ldbc.connector.exception.*
 
-class TransactionTest extends CatsEffectSuite:
+class TransactionTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 

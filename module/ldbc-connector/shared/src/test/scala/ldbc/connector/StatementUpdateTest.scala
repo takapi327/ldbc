@@ -10,11 +10,9 @@ import org.typelevel.otel4s.trace.Tracer
 
 import cats.effect.*
 
-import munit.CatsEffectSuite
-
 import ldbc.sql.Statement
 
-class StatementUpdateTest extends CatsEffectSuite:
+class StatementUpdateTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 

@@ -14,11 +14,9 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import munit.CatsEffectSuite
-
 import ldbc.connector.data.MysqlType
 
-class ServerPreparedStatementQueryTest extends CatsEffectSuite:
+class ServerPreparedStatementQueryTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 

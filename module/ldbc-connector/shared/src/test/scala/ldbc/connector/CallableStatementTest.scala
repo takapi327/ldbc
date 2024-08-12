@@ -9,14 +9,12 @@ package ldbc.connector
 import cats.*
 import cats.effect.*
 
-import munit.CatsEffectSuite
-
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.Types
 import ldbc.connector.exception.SQLException
 
-class CallableStatementTest extends CatsEffectSuite:
+class CallableStatementTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 
