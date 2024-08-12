@@ -18,7 +18,8 @@ ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
 ThisBuild / crossScalaVersions         := Seq(scala3, scala34)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ settings2n
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
@@ -107,7 +108,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jvmSettings(
     libraryDependencies ++= Seq(
       "io.circe" %%% "circe-generic" % "0.14.9",
-      "io.circe" %%% "circe-yaml"    % "0.15.3"
+      "io.circe" %%% "circe-yaml"    % "0.16.0"
     )
   )
   .platformsSettings(JSPlatform, NativePlatform)(
@@ -139,13 +140,17 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.8.0",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.8.1",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(
+    Test / nativeBrewFormulas += "s2n"
   )
   .dependsOn(sql)
 
