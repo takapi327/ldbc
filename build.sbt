@@ -197,6 +197,7 @@ lazy val tests = crossProject(JVMPlatform)
 
 lazy val benchmark = (project in file("benchmark"))
   .settings(description := "Projects for Benchmark Measurement")
+  .settings(scalacOptions ++= additionalSettings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
   .settings(
