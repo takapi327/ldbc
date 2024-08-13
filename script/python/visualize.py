@@ -13,6 +13,10 @@ target_names = {
     'jdbc_prepareStatement': 'jdbc: prepareStatement',
     'ldbc_statement': 'ldbc: statement',
     'ldbc_prepareStatement': 'ldbc: prepareStatement',
+    'ldbc_querySelectN': 'ldbc (query builder)',
+    'ldbc_dslSelectN': 'ldbc (plain sql)',
+    'doobie_selectN': 'doobie',
+    'slick_selectN': 'slick',
 }
 
 plot_config = {
