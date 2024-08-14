@@ -40,7 +40,7 @@ private[ldbc] case class ResultSetImpl(
   private final var isClosed:               Boolean                    = false
   private final var lastColumnReadNullable: Boolean                    = false
   private final var currentCursor:          Int                        = 0
-  private final var currentRow:             Option[ResultSetRowPacket] = None
+  private final var currentRow:             Option[ResultSetRowPacket] = records.headOption
 
   def next(): Boolean =
     checkClose {
