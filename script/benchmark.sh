@@ -19,26 +19,26 @@ SUFFIX=''
 file_path() {
     PROJECT=$1
     TARGET=$2
-    TYPE=$3
+    KIND=$3
     FEATURE=$4
 
-    echo "${PROJECT}/src/main/scala/benchmark/${TYPE}/${TARGET}/${FEATURE}.scala"
+    echo "${PROJECT}/src/main/scala/benchmark/${KIND}/${TARGET}/${FEATURE}.scala"
 }
 
 run() {
     PROJECT=$1
     TARGET=$2
-    TYPE=$3
+    KIND=$3
     FEATURE=$4
 
-    FILE=$(file_path "$PROJECT" "$TARGET" "$TYPE" "$FEATURE")
+    FILE=$(file_path "$PROJECT" "$TARGET" "$KIND" "$FEATURE")
     [ -r "$FILE" ] || return 0
 
-    mkdir -p "script/${OUT_DIR}/${TYPE}/${TARGET}"
-    OUTPUT="script/${OUT_DIR}/${TYPE}/${TARGET}/${FEATURE}.json"
+    mkdir -p "script/${OUT_DIR}/${KIND}/${TARGET}"
+    OUTPUT="script/${OUT_DIR}/${KIND}/${TARGET}/${FEATURE}.json"
 
     $sbt "${PROJECT} / clean"
-    $sbt "${PROJECT} / Jmh / run $OPTIONS ${TYPE}[.]${TARGET}[.]${FEATURE}[.] -rf json -rff ../${OUTPUT}"
+    $sbt "${PROJECT} / Jmh / run $OPTIONS ${KIND}[.]${TARGET}[.]${FEATURE}[.] -rf json -rff ../${OUTPUT}"
     OUTPUTS+=("$OUTPUT")
 }
 
@@ -76,6 +76,12 @@ do
         continue
     }
 
+    [ "$1" = '-k' ] && [ -n "$2" ] && {
+        KINDS+=("$2")
+        shift; shift
+        continue
+    }
+
     [ "$1" = '-t' ] && [ -n "$2" ] && {
         TARGETS+=("$2")
         shift; shift
@@ -103,8 +109,8 @@ do
     break
 done
 
-[ ${#TYPES[@]} = 0 ] && {
-    TYPES=(
+[ ${#KINDS[@]} = 0 ] && {
+    KINDS=(
         'connector'
         'wrapper'
     )
@@ -130,23 +136,23 @@ done
 EXCLUDE=('doobie' 'slick')
 
 run_feature() {
-    TYPE="$1"
+    KIND="$1"
     FEATURE="$2"
-    # If TYPE is connector, only jdbc and ldbc are targeted.
-    [ "$TYPE" = "connector" ] && TARGETS=(${TARGETS[@]/doobie/})
-    [ "$TYPE" = "connector" ] && TARGETS=(${TARGETS[@]/slick/})
+    # If KIND is connector, only jdbc and ldbc are targeted.
+    [ "$KIND" = "connector" ] && TARGETS=(${TARGETS[@]/doobie/})
+    [ "$KIND" = "connector" ] && TARGETS=(${TARGETS[@]/slick/})
 
     for target in ${TARGETS[@]}; do
-        run "benchmark" "$target" "${TYPE}" "${FEATURE}"
+        run "benchmark" "$target" "${KIND}" "${FEATURE}"
     done
 
-    CHART_INPUT="script/${OUT_DIR}/${TYPE}/${PREFIX}${FEATURE}${SUFFIX}.json"
-    CHART_OUTPUT="docs/src/main/mdoc/img/${TYPE}/${PREFIX}${FEATURE}${SUFFIX}.svg"
+    CHART_INPUT="script/${OUT_DIR}/${KIND}/${PREFIX}${FEATURE}${SUFFIX}.json"
+    CHART_OUTPUT="docs/src/main/mdoc/img/${KIND}/${PREFIX}${FEATURE}${SUFFIX}.svg"
 
-    #OUTPUTS+=("script/${OUT_DIR}/${TYPE}/jdbc/${FEATURE}.json")
-    #OUTPUTS+=("script/${OUT_DIR}/${TYPE}/ldbc/${FEATURE}.json")
-    #OUTPUTS+=("script/${OUT_DIR}/${TYPE}/doobie/${FEATURE}.json")
-    #OUTPUTS+=("script/${OUT_DIR}/${TYPE}/slick/${FEATURE}.json")
+    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/jdbc/${FEATURE}.json")
+    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/ldbc/${FEATURE}.json")
+    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/doobie/${FEATURE}.json")
+    #OUTPUTS+=("script/${OUT_DIR}/${KIND}/slick/${FEATURE}.json")
 
     for output in ${OUTPUTS[@]}; do
         jq '.[]' "${output}"
@@ -157,13 +163,13 @@ run_feature() {
     OUTPUTS=()
 }
 
-run_type() {
-  TYPE="$1"
+run_kind() {
+  KIND="$1"
   for feature in ${FEATURES[@]}; do
-      run_feature "$TYPE" "$feature"
+      run_feature "$KIND" "$feature"
   done
 }
 
-for type in ${TYPES[@]}; do
-    run_type "$type"
+for kind in ${KINDS[@]}; do
+    run_kind "$kind"
 done
