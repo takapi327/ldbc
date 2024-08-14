@@ -1318,7 +1318,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row has a
    *         single <code>String</code> column that is a table type
    */
-  def getTableTypes(): F[ResultSet]
+  def getTableTypes(): ResultSet
 
   /**
    * Retrieves a description of table columns available in
@@ -1988,7 +1988,7 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which each row is an SQL
    *         type description
    */
-  def getTypeInfo(): F[ResultSet]
+  def getTypeInfo(): ResultSet
 
   /**
    * Retrieves a description of the given table's indices and statistics. They are
@@ -2251,7 +2251,7 @@ trait DatabaseMetaData[F[_]]:
    *        STRUCT, or DISTINCT) to include; <code>null</code> returns all types
    * @return <code>ResultSet</code> object in which each row describes a UDT
    */
-  def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): F[ResultSet] =
+  def getUDTs(catalog: String, schemaPattern: String, typeNamePattern: String, types: Array[Int]): ResultSet =
     getUDTs(Some(catalog), Some(schemaPattern), Some(typeNamePattern), types)
 
   def getUDTs(
@@ -2259,7 +2259,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:   Option[String],
     typeNamePattern: Option[String],
     types:           Array[Int]
-  ): F[ResultSet]
+  ): ResultSet
 
   /**
    * Retrieves the connection that produced this metadata object.
@@ -2345,14 +2345,14 @@ trait DatabaseMetaData[F[_]]:
    * @return a <code>ResultSet</code> object in which a row gives information
    *         about the designated UDT
    */
-  def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): F[ResultSet] =
+  def getSuperTypes(catalog: String, schemaPattern: String, typeNamePattern: String): ResultSet =
     getSuperTypes(Some(catalog), Some(schemaPattern), Some(typeNamePattern))
 
   def getSuperTypes(
     catalog:         Option[String],
     schemaPattern:   Option[String],
     typeNamePattern: Option[String]
-  ): F[ResultSet]
+  ): ResultSet
 
   /**
    * Retrieves a description of the table hierarchies defined in a particular
@@ -2385,14 +2385,14 @@ trait DatabaseMetaData[F[_]]:
    *        name
    * @return a <code>ResultSet</code> object in which each row is a type description
    */
-  def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): F[ResultSet] =
+  def getSuperTables(catalog: String, schemaPattern: String, tableNamePattern: String): ResultSet =
     getSuperTables(Some(catalog), Some(schemaPattern), Some(tableNamePattern))
 
   def getSuperTables(
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): F[ResultSet]
+  ): ResultSet
 
   /**
    * Retrieves a description of the given attribute of the given type
@@ -2474,7 +2474,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        String,
     typeNamePattern:      String,
     attributeNamePattern: String
-  ): F[ResultSet] =
+  ): ResultSet =
     getAttributes(Some(catalog), Some(schemaPattern), Some(typeNamePattern), Some(attributeNamePattern))
 
   def getAttributes(
@@ -2482,7 +2482,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:        Option[String],
     typeNamePattern:      Option[String],
     attributeNamePattern: Option[String]
-  ): F[ResultSet]
+  ): ResultSet
 
   /**
    * Retrieves whether this database supports the given result set holdability.
@@ -2629,7 +2629,7 @@ trait DatabaseMetaData[F[_]]:
    * @return      A <code>ResultSet</code> object; each row is a supported client info
    * property
    */
-  def getClientInfoProperties(): F[ResultSet]
+  def getClientInfoProperties(): ResultSet
 
   /**
    * Retrieves a description of the  system and user functions available
@@ -2854,7 +2854,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:     String,
     tableNamePattern:  String,
     columnNamePattern: String
-  ): F[ResultSet] =
+  ): ResultSet =
     getPseudoColumns(Some(catalog), Some(schemaPattern), Some(tableNamePattern), Some(columnNamePattern))
 
   def getPseudoColumns(
@@ -2862,7 +2862,7 @@ trait DatabaseMetaData[F[_]]:
     schemaPattern:     Option[String],
     tableNamePattern:  Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet]
+  ): ResultSet
 
   /**
    * Retrieves whether a generated key will always be returned if the column
