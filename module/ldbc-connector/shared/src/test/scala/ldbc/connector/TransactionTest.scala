@@ -6,8 +6,6 @@
 
 package ldbc.connector
 
-import cats.Monad
-
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
@@ -237,8 +235,11 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 1L)
         resultSet <- query.executeQuery()
-        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
-      yield decoded.contains(1L)
+      yield
+        val builder = List.newBuilder[Long]
+        while resultSet.next() do
+          builder += resultSet.getLong(1)
+        builder.result().contains(1L)
     })
   }
 
@@ -261,7 +262,10 @@ class TransactionTest extends CatsEffectSuite:
         query     <- conn.clientPreparedStatement("SELECT * FROM `transaction_test` WHERE `c1` = ?")
         _         <- query.setLong(1, 2L)
         resultSet <- query.executeQuery()
-        decoded   <- Monad[IO].whileM[List, Long](resultSet.next())(resultSet.getLong(1))
-      yield decoded.isEmpty
+      yield
+        val builder = List.newBuilder[Long]
+        while resultSet.next() do
+          builder += resultSet.getLong(1)
+        builder.result().isEmpty
     })
   }
