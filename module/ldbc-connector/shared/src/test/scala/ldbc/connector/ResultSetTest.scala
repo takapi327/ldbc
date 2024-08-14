@@ -603,10 +603,13 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     assert(resultSet.isBeforeFirst())
-    assert({
-      resultSet.next()
-      resultSet.isBeforeFirst()
-    })
+    assertEquals(
+      {
+        resultSet.next()
+        resultSet.isBeforeFirst()
+      },
+      false
+    )
   }
 
   test(
@@ -704,21 +707,20 @@ class ResultSetTest extends CatsEffectSuite:
     )
     assertEquals(resultSet.isAfterLast(), false)
     assertEquals(resultSet.isLast(), false)
-    assertEquals(
+    assert(
       {
         while resultSet.next() do ()
         resultSet.isAfterLast()
-      },
-      false
+      }
     )
-    assert(resultSet.isLast())
-    assert(resultSet.isAfterLast())
-    assertEquals(resultSet.isLast(), false)
     assert({
       resultSet.afterLast()
       resultSet.isAfterLast()
     })
-    assertEquals(resultSet.isLast(), false)
+    assert({
+      resultSet.last()
+      resultSet.isLast()
+    })
   }
 
   test(
@@ -749,7 +751,7 @@ class ResultSetTest extends CatsEffectSuite:
         while resultSet.next() do ()
         resultSet.getRow()
       },
-      1
+      0
     )
     assertEquals(
       {
@@ -914,51 +916,15 @@ class ResultSetTest extends CatsEffectSuite:
     assertEquals(resultSet.getRow(), 0)
     assertEquals(resultSet.relative(0), false)
     assertEquals(resultSet.getRow(), 0)
-    assertEquals(
-      {
-        resultSet.relative(0)
-        resultSet.getInt(1)
-      },
-      1
-    )
+    assertEquals(resultSet.getInt(1), 1)
     assertEquals(resultSet.relative(1), true)
-    assertEquals(
-      {
-        resultSet.relative(1)
-        resultSet.getRow()
-      },
-      1
-    )
-    assertEquals(
-      {
-        resultSet.relative(1)
-        resultSet.getInt(1)
-      },
-      1
-    )
+    assertEquals(resultSet.getRow(), 1)
+    assertEquals(resultSet.getInt(1), 1)
     assertEquals(resultSet.relative(2), false)
-    assertEquals(
-      {
-        resultSet.relative(2)
-        resultSet.getRow()
-      },
-      0
-    )
+    assertEquals(resultSet.getRow(), 0)
     assertEquals(resultSet.relative(-1), false)
-    assertEquals(
-      {
-        resultSet.relative(-1)
-        resultSet.getRow()
-      },
-      0
-    )
-    assertEquals(
-      {
-        resultSet.relative(-1)
-        resultSet.getInt(1)
-      },
-      1
-    )
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.getInt(1), 1)
   }
 
   test(
