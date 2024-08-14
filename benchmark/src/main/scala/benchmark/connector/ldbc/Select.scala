@@ -74,23 +74,23 @@ class Select:
         for
           statement <- conn.createStatement()
           resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
-          records <- consume(resultSet)
+          records   <- consume(resultSet)
         yield records
       }
       .unsafeRunSync()
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-   connection
-     .use { conn =>
-       for
-         statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
-         _ <- statement.setInt(1, len)
-         resultSet <- statement.executeQuery()
-         records <- consume(resultSet)
-       yield records
-     }
-     .unsafeRunSync()
+    connection
+      .use { conn =>
+        for
+          statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+          _         <- statement.setInt(1, len)
+          resultSet <- statement.executeQuery()
+          records   <- consume(resultSet)
+        yield records
+      }
+      .unsafeRunSync()
 
   private def consume(resultSet: ResultSet[IO]): IO[List[BenchmarkType]] =
     def loop(acc: Vector[BenchmarkType]): IO[Vector[BenchmarkType]] =

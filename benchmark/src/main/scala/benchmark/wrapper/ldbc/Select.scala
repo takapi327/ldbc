@@ -54,20 +54,24 @@ class Select:
 
   @Benchmark
   def querySelectN: List[(Int, String, String)] =
-    connection.use { conn =>
-      query
-        .select(city => (city.id, city.name, city.countryCode))
-        .limit(len)
-        .query
-        .to[List]
-        .readOnly(conn)
-    }.unsafeRunSync()
+    connection
+      .use { conn =>
+        query
+          .select(city => (city.id, city.name, city.countryCode))
+          .limit(len)
+          .query
+          .to[List]
+          .readOnly(conn)
+      }
+      .unsafeRunSync()
 
   @Benchmark
   def dslSelectN: List[(Int, String, String)] =
-    connection.use { conn =>
-      sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
-        .query[(Int, String, String)]
-        .to[List]
-        .readOnly(conn)
-    }.unsafeRunSync()
+    connection
+      .use { conn =>
+        sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
+          .query[(Int, String, String)]
+          .to[List]
+          .readOnly(conn)
+      }
+      .unsafeRunSync()

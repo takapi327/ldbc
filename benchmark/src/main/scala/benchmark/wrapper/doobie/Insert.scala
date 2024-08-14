@@ -52,16 +52,20 @@ class Insert:
 
   @Benchmark
   def insertN: Unit =
-    transactor.use { xa =>
-      (sql"INSERT INTO test (c1, c2)" ++ values(records)).update.run
-        .transact(xa)
-    }.unsafeRunSync()
+    transactor
+      .use { xa =>
+        (sql"INSERT INTO test (c1, c2)" ++ values(records)).update.run
+          .transact(xa)
+      }
+      .unsafeRunSync()
 
   @Benchmark
   def batchN: Unit =
-    transactor.use { xa =>
-      val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
-      Update[(Int, String)](sql)
-        .updateMany(records)
-        .transact(xa)
-    }.unsafeRunSync()
+    transactor
+      .use { xa =>
+        val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
+        Update[(Int, String)](sql)
+          .updateMany(records)
+          .transact(xa)
+      }
+      .unsafeRunSync()

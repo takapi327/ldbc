@@ -63,10 +63,10 @@ class Insert:
 
   @Benchmark
   def batchN: Unit =
-   Await.result(
-     db.run(query ++= records),
-     Duration.Inf
-   )
+    Await.result(
+      db.run(query ++= records),
+      Duration.Inf
+    )
 
 case class Test(id: Option[Int], c1: Int, c2: String)
 class TestTable(tag: Tag) extends Table[Test](tag, "test"):

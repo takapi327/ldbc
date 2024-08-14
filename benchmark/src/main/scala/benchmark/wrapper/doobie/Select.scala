@@ -44,9 +44,11 @@ class Select:
 
   @Benchmark
   def selectN: List[(Int, String, String)] =
-    transactor.use { xa =>
-      sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
-        .query[(Int, String, String)]
-        .to[List]
-        .transact(xa)
-    }.unsafeRunSync()
+    transactor
+      .use { xa =>
+        sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
+          .query[(Int, String, String)]
+          .to[List]
+          .transact(xa)
+      }
+      .unsafeRunSync()
