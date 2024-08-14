@@ -258,7 +258,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     catalog:              Option[String],
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getProcedures(
@@ -274,7 +274,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String],
     columnNamePattern:    Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getProcedureColumns(
@@ -291,7 +291,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     schemaPattern:    Option[String],
     tableNamePattern: Option[String],
     types:            Array[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getTables(
@@ -303,18 +303,18 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
       )
       .map(ResultSetImpl.apply)
 
-  override def getSchemas(): F[ResultSet[F]] = Sync[F].blocking(metaData.getSchemas()).map(ResultSetImpl.apply)
+  override def getSchemas(): F[ResultSet] = Sync[F].blocking(metaData.getSchemas()).map(ResultSetImpl.apply)
 
-  override def getCatalogs(): F[ResultSet[F]] = Sync[F].blocking(metaData.getCatalogs).map(ResultSetImpl.apply)
+  override def getCatalogs(): F[ResultSet] = Sync[F].blocking(metaData.getCatalogs).map(ResultSetImpl.apply)
 
-  override def getTableTypes(): F[ResultSet[F]] = Sync[F].blocking(metaData.getTableTypes).map(ResultSetImpl.apply)
+  override def getTableTypes(): F[ResultSet] = Sync[F].blocking(metaData.getTableTypes).map(ResultSetImpl.apply)
 
   override def getColumns(
     catalog:           Option[String],
     schemaPattern:     Option[String],
     tableName:         Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getColumns(catalog.orNull, schemaPattern.orNull, tableName.orNull, columnNamePattern.orNull)
@@ -326,7 +326,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     schema:            Option[String],
     table:             Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getColumnPrivileges(catalog.orNull, schema.orNull, table.orNull, columnNamePattern.orNull)
@@ -337,7 +337,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(metaData.getTablePrivileges(catalog.orNull, schemaPattern.orNull, tableNamePattern.orNull))
       .map(ResultSetImpl.apply)
@@ -348,7 +348,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     table:    String,
     scope:    Option[Int],
     nullable: Option[Boolean]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getBestRowIdentifier(
@@ -365,16 +365,16 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     catalog: Option[String],
     schema:  Option[String],
     table:   String
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F].blocking(metaData.getVersionColumns(catalog.orNull, schema.orNull, table)).map(ResultSetImpl.apply)
 
-  override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
+  override def getPrimaryKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
     Sync[F].blocking(metaData.getPrimaryKeys(catalog.orNull, schema.orNull, table)).map(ResultSetImpl.apply)
 
-  override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
+  override def getImportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
     Sync[F].blocking(metaData.getImportedKeys(catalog.orNull, schema.orNull, table)).map(ResultSetImpl.apply)
 
-  override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet[F]] =
+  override def getExportedKeys(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
     Sync[F].blocking(metaData.getExportedKeys(catalog.orNull, schema.orNull, table)).map(ResultSetImpl.apply)
 
   override def getCrossReference(
@@ -384,7 +384,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     foreignCatalog: Option[String],
     foreignSchema:  Option[String],
     foreignTable:   Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getCrossReference(
@@ -398,7 +398,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
       )
       .map(ResultSetImpl.apply)
 
-  override def getTypeInfo(): F[ResultSet[F]] = Sync[F].blocking(metaData.getTypeInfo).map(ResultSetImpl.apply)
+  override def getTypeInfo(): F[ResultSet] = Sync[F].blocking(metaData.getTypeInfo).map(ResultSetImpl.apply)
 
   override def getIndexInfo(
     catalog:     Option[String],
@@ -406,7 +406,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     table:       Option[String],
     unique:      Boolean,
     approximate: Boolean
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getIndexInfo(
@@ -449,7 +449,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     schemaPattern:   Option[String],
     typeNamePattern: Option[String],
     types:           Array[Int]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getUDTs(
@@ -475,7 +475,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     catalog:         Option[String],
     schemaPattern:   Option[String],
     typeNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getSuperTypes(
@@ -490,7 +490,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     catalog:          Option[String],
     schemaPattern:    Option[String],
     tableNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getSuperTables(
@@ -506,7 +506,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     schemaPattern:        Option[String],
     typeNamePattern:      Option[String],
     attributeNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getAttributes(
@@ -544,21 +544,21 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     case java.sql.RowIdLifetime.ROWID_VALID_TRANSACTION => RowIdLifetime.ROWID_VALID_TRANSACTION
     case java.sql.RowIdLifetime.ROWID_VALID_FOREVER     => RowIdLifetime.ROWID_VALID_FOREVER
 
-  override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet[F]] =
+  override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet] =
     Sync[F].blocking(metaData.getSchemas(catalog.orNull, schemaPattern.orNull)).map(ResultSetImpl.apply)
 
   override def supportsStoredFunctionsUsingCallSyntax(): Boolean = metaData.supportsStoredFunctionsUsingCallSyntax
 
   override def autoCommitFailureClosesAllResultSets(): Boolean = metaData.autoCommitFailureClosesAllResultSets
 
-  override def getClientInfoProperties(): F[ResultSet[F]] =
+  override def getClientInfoProperties(): F[ResultSet] =
     Sync[F].blocking(metaData.getClientInfoProperties).map(ResultSetImpl.apply)
 
   override def getFunctions(
     catalog:             Option[String],
     schemaPattern:       Option[String],
     functionNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getFunctions(
@@ -574,7 +574,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     schemaPattern:       Option[String],
     functionNamePattern: Option[String],
     columnNamePattern:   Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getFunctionColumns(
@@ -591,7 +591,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
     schemaPattern:     Option[String],
     tableNamePattern:  Option[String],
     columnNamePattern: Option[String]
-  ): F[ResultSet[F]] =
+  ): F[ResultSet] =
     Sync[F]
       .blocking(
         metaData.getPseudoColumns(

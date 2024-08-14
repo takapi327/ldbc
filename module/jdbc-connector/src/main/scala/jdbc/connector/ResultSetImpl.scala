@@ -10,122 +10,114 @@ import java.time.*
 
 import cats.syntax.all.*
 
-import cats.effect.Sync
-
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
-private[jdbc] case class ResultSetImpl[F[_]: Sync](resultSet: java.sql.ResultSet) extends ResultSet[F]:
-  override def next(): F[Boolean] = Sync[F].blocking(resultSet.next())
+private[jdbc] case class ResultSetImpl(resultSet: java.sql.ResultSet) extends ResultSet:
+  override def next(): Boolean = resultSet.next()
 
-  override def close(): F[Unit] = Sync[F].blocking(resultSet.close())
+  override def close(): Unit = resultSet.close()
 
-  override def wasNull(): F[Boolean] = Sync[F].blocking(resultSet.wasNull())
+  override def wasNull(): Boolean = resultSet.wasNull()
 
-  override def getString(columnIndex: Int): F[String] = Sync[F].blocking(resultSet.getString(columnIndex))
+  override def getString(columnIndex: Int): String = resultSet.getString(columnIndex)
 
-  override def getString(columnLabel: String): F[String] = Sync[F].blocking(resultSet.getString(columnLabel))
+  override def getString(columnLabel: String): String = resultSet.getString(columnLabel)
 
-  override def getBoolean(columnIndex: Int): F[Boolean] = Sync[F].blocking(resultSet.getBoolean(columnIndex))
+  override def getBoolean(columnIndex: Int): Boolean = resultSet.getBoolean(columnIndex)
 
-  override def getBoolean(columnLabel: String): F[Boolean] = Sync[F].blocking(resultSet.getBoolean(columnLabel))
+  override def getBoolean(columnLabel: String): Boolean = resultSet.getBoolean(columnLabel)
 
-  override def getByte(columnIndex: Int): F[Byte] = Sync[F].blocking(resultSet.getByte(columnIndex))
+  override def getByte(columnIndex: Int): Byte = resultSet.getByte(columnIndex)
 
-  override def getByte(columnLabel: String): F[Byte] = Sync[F].blocking(resultSet.getByte(columnLabel))
+  override def getByte(columnLabel: String): Byte = resultSet.getByte(columnLabel)
 
-  override def getBytes(columnIndex: Int): F[Array[Byte]] = Sync[F].blocking(resultSet.getBytes(columnIndex))
+  override def getBytes(columnIndex: Int): Array[Byte] = resultSet.getBytes(columnIndex)
 
-  override def getBytes(columnLabel: String): F[Array[Byte]] = Sync[F].blocking(resultSet.getBytes(columnLabel))
+  override def getBytes(columnLabel: String): Array[Byte] = resultSet.getBytes(columnLabel)
 
-  override def getShort(columnIndex: Int): F[Short] = Sync[F].blocking(resultSet.getShort(columnIndex))
+  override def getShort(columnIndex: Int): Short = resultSet.getShort(columnIndex)
 
-  override def getShort(columnLabel: String): F[Short] = Sync[F].blocking(resultSet.getShort(columnLabel))
+  override def getShort(columnLabel: String): Short = resultSet.getShort(columnLabel)
 
-  override def getInt(columnIndex: Int): F[Int] = Sync[F].blocking(resultSet.getInt(columnIndex))
+  override def getInt(columnIndex: Int): Int = resultSet.getInt(columnIndex)
 
-  override def getInt(columnLabel: String): F[Int] = Sync[F].blocking(resultSet.getInt(columnLabel))
+  override def getInt(columnLabel: String): Int = resultSet.getInt(columnLabel)
 
-  override def getLong(columnIndex: Int): F[Long] = Sync[F].blocking(resultSet.getLong(columnIndex))
+  override def getLong(columnIndex: Int): Long = resultSet.getLong(columnIndex)
 
-  override def getLong(columnLabel: String): F[Long] = Sync[F].blocking(resultSet.getLong(columnLabel))
+  override def getLong(columnLabel: String): Long = resultSet.getLong(columnLabel)
 
-  override def getFloat(columnIndex: Int): F[Float] = Sync[F].blocking(resultSet.getFloat(columnIndex))
+  override def getFloat(columnIndex: Int): Float = resultSet.getFloat(columnIndex)
 
-  override def getFloat(columnLabel: String): F[Float] = Sync[F].blocking(resultSet.getFloat(columnLabel))
+  override def getFloat(columnLabel: String): Float = resultSet.getFloat(columnLabel)
 
-  override def getDouble(columnIndex: Int): F[Double] = Sync[F].blocking(resultSet.getDouble(columnIndex))
+  override def getDouble(columnIndex: Int): Double = resultSet.getDouble(columnIndex)
 
-  override def getDouble(columnLabel: String): F[Double] = Sync[F].blocking(resultSet.getDouble(columnLabel))
+  override def getDouble(columnLabel: String): Double = resultSet.getDouble(columnLabel)
 
-  override def getDate(columnIndex: Int): F[LocalDate] =
-    Sync[F].blocking(resultSet.getDate(columnIndex)).map {
+  override def getDate(columnIndex: Int): LocalDate =
+    resultSet.getDate(columnIndex) match
       case null => null
       case date => date.toLocalDate
-    }
 
-  override def getDate(columnLabel: String): F[LocalDate] =
-    Sync[F].blocking(resultSet.getDate(columnLabel)).map {
+  override def getDate(columnLabel: String): LocalDate =
+    resultSet.getDate(columnLabel) match
       case null => null
       case date => date.toLocalDate
-    }
 
-  override def getTime(columnIndex: Int): F[LocalTime] =
-    Sync[F].blocking(resultSet.getTime(columnIndex)).map {
+  override def getTime(columnIndex: Int): LocalTime =
+    resultSet.getTime(columnIndex) match
       case null => null
       case time => time.toLocalTime
-    }
 
-  override def getTime(columnLabel: String): F[LocalTime] =
-    Sync[F].blocking(resultSet.getTime(columnLabel)).map {
+  override def getTime(columnLabel: String): LocalTime =
+    resultSet.getTime(columnLabel) match
       case null => null
       case time => time.toLocalTime
-    }
 
-  override def getTimestamp(columnIndex: Int): F[LocalDateTime] =
-    Sync[F].blocking(resultSet.getTimestamp(columnIndex)).map {
+  override def getTimestamp(columnIndex: Int): LocalDateTime =
+    resultSet.getTimestamp(columnIndex) match
       case null      => null
       case timestamp => timestamp.toLocalDateTime
-    }
 
-  override def getTimestamp(columnLabel: String): F[LocalDateTime] =
-    Sync[F].blocking(resultSet.getTimestamp(columnLabel)).map {
+  override def getTimestamp(columnLabel: String): LocalDateTime =
+    resultSet.getTimestamp(columnLabel) match
       case null      => null
       case timestamp => timestamp.toLocalDateTime
-    }
 
-  override def getMetaData(): F[ResultSetMetaData] =
-    Sync[F].blocking(resultSet.getMetaData).map(ResultSetMetaDataImpl.apply)
+  override def getMetaData(): ResultSetMetaData =
+    ResultSetMetaDataImpl(resultSet.getMetaData)
 
-  override def getBigDecimal(columnIndex: Int): F[BigDecimal] =
-    Sync[F].blocking(resultSet.getBigDecimal(columnIndex))
+  override def getBigDecimal(columnIndex: Int): BigDecimal =
+    resultSet.getBigDecimal(columnIndex)
 
-  override def getBigDecimal(columnLabel: String): F[BigDecimal] =
-    Sync[F].blocking(resultSet.getBigDecimal(columnLabel))
+  override def getBigDecimal(columnLabel: String): BigDecimal =
+    resultSet.getBigDecimal(columnLabel)
 
-  override def isBeforeFirst(): F[Boolean] = Sync[F].blocking(resultSet.isBeforeFirst)
+  override def isBeforeFirst(): Boolean = resultSet.isBeforeFirst
 
-  override def isAfterLast(): F[Boolean] = Sync[F].blocking(resultSet.isAfterLast)
+  override def isAfterLast(): Boolean = resultSet.isAfterLast
 
-  override def isFirst(): F[Boolean] = Sync[F].blocking(resultSet.first())
+  override def isFirst(): Boolean = resultSet.first()
 
-  override def isLast(): F[Boolean] = Sync[F].blocking(resultSet.isLast)
+  override def isLast(): Boolean = resultSet.isLast
 
-  override def beforeFirst(): F[Unit] = Sync[F].blocking(resultSet.beforeFirst())
+  override def beforeFirst(): Unit = resultSet.beforeFirst()
 
-  override def afterLast(): F[Unit] = Sync[F].blocking(resultSet.afterLast())
+  override def afterLast(): Unit = resultSet.afterLast()
 
-  override def first(): F[Boolean] = Sync[F].blocking(resultSet.first())
+  override def first(): Boolean = resultSet.first()
 
-  override def last(): F[Boolean] = Sync[F].blocking(resultSet.last())
+  override def last(): Boolean = resultSet.last()
 
-  override def getRow(): F[Int] = Sync[F].blocking(resultSet.getRow)
+  override def getRow(): Int = resultSet.getRow
 
-  override def absolute(row: Int): F[Boolean] = Sync[F].blocking(resultSet.absolute(row))
+  override def absolute(row: Int): Boolean = resultSet.absolute(row)
 
-  override def relative(rows: Int): F[Boolean] = Sync[F].blocking(resultSet.relative(rows))
+  override def relative(rows: Int): Boolean = resultSet.relative(rows)
 
-  override def previous(): F[Boolean] = Sync[F].blocking(resultSet.previous())
+  override def previous(): Boolean = resultSet.previous()
 
-  override def getType(): F[Int] = Sync[F].blocking(resultSet.getType)
+  override def getType(): Int = resultSet.getType
 
-  override def getConcurrency(): F[Int] = Sync[F].blocking(resultSet.getConcurrency)
+  override def getConcurrency(): Int = resultSet.getConcurrency
