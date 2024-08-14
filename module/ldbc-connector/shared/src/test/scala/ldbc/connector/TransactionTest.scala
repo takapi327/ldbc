@@ -237,8 +237,7 @@ class TransactionTest extends CatsEffectSuite:
         resultSet <- query.executeQuery()
       yield
         val builder = List.newBuilder[Long]
-        while resultSet.next() do
-          builder += resultSet.getLong(1)
+        while resultSet.next() do builder += resultSet.getLong(1)
         builder.result().contains(1L)
     })
   }
@@ -264,8 +263,7 @@ class TransactionTest extends CatsEffectSuite:
         resultSet <- query.executeQuery()
       yield
         val builder = List.newBuilder[Long]
-        while resultSet.next() do
-          builder += resultSet.getLong(1)
+        while resultSet.next() do builder += resultSet.getLong(1)
         builder.result().isEmpty
     })
   }

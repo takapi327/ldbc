@@ -46,8 +46,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `bit`, `bit_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Byte, Byte)]
-          while resultSet.next() do
-            builder += ((resultSet.getByte(1), resultSet.getByte(2)))
+          while resultSet.next() do builder += ((resultSet.getByte(1), resultSet.getByte(2)))
           builder.result()
       },
       List((1.toByte, 0.toByte))
@@ -62,8 +61,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `tinyint`, `tinyint_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Byte, Byte)]
-          while resultSet.next() do
-            builder += ((resultSet.getByte(1), resultSet.getByte(2)))
+          while resultSet.next() do builder += ((resultSet.getByte(1), resultSet.getByte(2)))
           builder.result()
       },
       List((127.toByte, 0.toByte))
@@ -80,8 +78,7 @@ class StatementQueryTest extends CatsEffectSuite:
                        )
         yield
           val builder = List.newBuilder[(Short, Short)]
-          while resultSet.next() do
-            builder += ((resultSet.getShort(1), resultSet.getShort(2)))
+          while resultSet.next() do builder += ((resultSet.getShort(1), resultSet.getShort(2)))
           builder.result()
       },
       List((255.toShort, 0.toShort))
@@ -96,8 +93,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `smallint`, `smallint_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Short, Short)]
-          while resultSet.next() do
-            builder += ((resultSet.getShort(1), resultSet.getShort(2)))
+          while resultSet.next() do builder += ((resultSet.getShort(1), resultSet.getShort(2)))
           builder.result()
       },
       List((32767.toShort, 0.toShort))
@@ -114,8 +110,7 @@ class StatementQueryTest extends CatsEffectSuite:
                        )
         yield
           val builder = List.newBuilder[(Int, Int)]
-          while resultSet.next() do
-            builder += ((resultSet.getInt(1), resultSet.getInt(2)))
+          while resultSet.next() do builder += ((resultSet.getInt(1), resultSet.getInt(2)))
           builder.result()
       },
       List((65535, 0))
@@ -130,8 +125,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `mediumint`, `mediumint_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Int, Int)]
-          while resultSet.next() do
-            builder += ((resultSet.getInt(1), resultSet.getInt(2)))
+          while resultSet.next() do builder += ((resultSet.getInt(1), resultSet.getInt(2)))
           builder.result()
       },
       List((8388607, 0))
@@ -146,8 +140,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `int`, `int_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Int, Int)]
-          while resultSet.next() do
-            builder += ((resultSet.getInt(1), resultSet.getInt(2)))
+          while resultSet.next() do builder += ((resultSet.getInt(1), resultSet.getInt(2)))
           builder.result()
       },
       List((2147483647, 0))
@@ -163,8 +156,7 @@ class StatementQueryTest extends CatsEffectSuite:
             statement.executeQuery("SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Long, Long)]
-          while resultSet.next() do
-            builder += ((resultSet.getLong(1), resultSet.getLong(2)))
+          while resultSet.next() do builder += ((resultSet.getLong(1), resultSet.getLong(2)))
           builder.result()
       },
       List((4294967295L, 0L))
@@ -179,8 +171,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `bigint`, `bigint_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Long, Long)]
-          while resultSet.next() do
-            builder += ((resultSet.getLong(1), resultSet.getLong(2)))
+          while resultSet.next() do builder += ((resultSet.getLong(1), resultSet.getLong(2)))
           builder.result()
       },
       List((9223372036854775807L, 0L))
@@ -196,8 +187,7 @@ class StatementQueryTest extends CatsEffectSuite:
             statement.executeQuery("SELECT `bigint_unsigned`, `bigint_unsigned_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("18446744073709551615", null))
@@ -212,8 +202,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `float`, `float_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Float, Float)]
-          while resultSet.next() do
-            builder += ((resultSet.getFloat(1), resultSet.getFloat(2)))
+          while resultSet.next() do builder += ((resultSet.getFloat(1), resultSet.getFloat(2)))
           builder.result()
       },
       List((3.40282e38f, 0f))
@@ -228,8 +217,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `double`, `double_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Double, Double)]
-          while resultSet.next() do
-            builder += ((resultSet.getDouble(1), resultSet.getDouble(2)))
+          while resultSet.next() do builder += ((resultSet.getDouble(1), resultSet.getDouble(2)))
           builder.result()
       },
       List((1.7976931348623157e308, 0.toDouble))
@@ -244,8 +232,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `decimal`, `decimal_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(BigDecimal, BigDecimal)]
-          while resultSet.next() do
-            builder += ((resultSet.getBigDecimal(1), resultSet.getBigDecimal(2)))
+          while resultSet.next() do builder += ((resultSet.getBigDecimal(1), resultSet.getBigDecimal(2)))
           builder.result()
       },
       List((BigDecimal.decimal(9999999.99), null))
@@ -260,8 +247,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `date`, `date_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(LocalDate, LocalDate)]
-          while resultSet.next() do
-            builder += ((resultSet.getDate(1), resultSet.getDate(2)))
+          while resultSet.next() do builder += ((resultSet.getDate(1), resultSet.getDate(2)))
           builder.result()
       },
       List((LocalDate.of(2020, 1, 1), null))
@@ -276,8 +262,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `time`, `time_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(LocalTime, LocalTime)]
-          while resultSet.next() do
-            builder += ((resultSet.getTime(1), resultSet.getTime(2)))
+          while resultSet.next() do builder += ((resultSet.getTime(1), resultSet.getTime(2)))
           builder.result()
       },
       List((LocalTime.of(12, 34, 56), null))
@@ -292,8 +277,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `datetime`, `datetime_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(LocalDateTime, LocalDateTime)]
-          while resultSet.next() do
-            builder += ((resultSet.getTimestamp(1), resultSet.getTimestamp(2)))
+          while resultSet.next() do builder += ((resultSet.getTimestamp(1), resultSet.getTimestamp(2)))
           builder.result()
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), null))
@@ -308,8 +292,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `timestamp`, `timestamp_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(LocalDateTime, LocalDateTime)]
-          while resultSet.next() do
-            builder += ((resultSet.getTimestamp(1), resultSet.getTimestamp(2)))
+          while resultSet.next() do builder += ((resultSet.getTimestamp(1), resultSet.getTimestamp(2)))
           builder.result()
       },
       List((LocalDateTime.of(2020, 1, 1, 12, 34, 56), null))
@@ -324,8 +307,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `year`, `year_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(Short, Short)]
-          while resultSet.next() do
-            builder += ((resultSet.getShort(1), resultSet.getShort(2)))
+          while resultSet.next() do builder += ((resultSet.getShort(1), resultSet.getShort(2)))
           builder.result()
       },
       List((2020.toShort, 0.toShort))
@@ -340,8 +322,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `char`, `char_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("char", null))
@@ -356,8 +337,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `varchar`, `varchar_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("varchar", null))
@@ -372,8 +352,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `binary`, `binary_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, Array[Byte])]
-          while resultSet.next() do
-            builder += ((resultSet.getBytes(1).mkString(":"), resultSet.getBytes(2)))
+          while resultSet.next() do builder += ((resultSet.getBytes(1).mkString(":"), resultSet.getBytes(2)))
           builder.result()
       },
       List((Array[Byte](98, 105, 110, 97, 114, 121, 0, 0, 0, 0).mkString(":"), null))
@@ -388,8 +367,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `varbinary`, `varbinary_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("varbinary", null))
@@ -404,8 +382,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `tinyblob`, `tinyblob_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("tinyblob", null))
@@ -420,8 +397,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `blob`, `blob_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("blob", null))
@@ -437,8 +413,7 @@ class StatementQueryTest extends CatsEffectSuite:
             statement.executeQuery("SELECT `mediumblob`, `mediumblob_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("mediumblob", null))
@@ -453,8 +428,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `longblob`, `longblob_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("longblob", null))
@@ -469,8 +443,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `tinytext`, `tinytext_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("tinytext", null))
@@ -485,8 +458,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `text`, `text_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("text", null))
@@ -502,8 +474,7 @@ class StatementQueryTest extends CatsEffectSuite:
             statement.executeQuery("SELECT `mediumtext`, `mediumtext_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("mediumtext", null))
@@ -518,8 +489,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `longtext`, `longtext_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("longtext", null))
@@ -534,8 +504,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `enum`, `enum_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("a", null))
@@ -550,8 +519,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `set`, `set_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("a,b", null))
@@ -566,8 +534,7 @@ class StatementQueryTest extends CatsEffectSuite:
           resultSet <- statement.executeQuery("SELECT `json`, `json_null` FROM `connector_test`.`all_types`")
         yield
           val builder = List.newBuilder[(String, String)]
-          while resultSet.next() do
-            builder += ((resultSet.getString(1), resultSet.getString(2)))
+          while resultSet.next() do builder += ((resultSet.getString(1), resultSet.getString(2)))
           builder.result()
       },
       List(("{\"a\": 1}", null))

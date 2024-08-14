@@ -138,8 +138,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
 
   override def getTransactionIsolation(): F[Int] =
     for
-      statement            <- createStatement()
-      result               <- statement.executeQuery("SELECT @@session.transaction_isolation")
+      statement <- createStatement()
+      result    <- statement.executeQuery("SELECT @@session.transaction_isolation")
     yield Option(result.getString(1)) match
       case Some("READ-UNCOMMITTED") => Connection.TRANSACTION_READ_UNCOMMITTED
       case Some("READ-COMMITTED")   => Connection.TRANSACTION_READ_COMMITTED

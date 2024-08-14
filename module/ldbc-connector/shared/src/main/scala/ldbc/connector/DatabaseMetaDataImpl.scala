@@ -522,12 +522,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   override def getCatalogs(): F[ResultSet] =
     (if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then ev.pure(List.empty[String])
      else getDatabases(None)).map { dbList =>
-      //for
+      // for
       //  isResultSetClosed      <- Ref[F].of(false)
       //  lastColumnReadNullable <- Ref[F].of(true)
       //  resultSetCurrentCursor <- Ref[F].of(0)
       //  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      //yield ResultSetImpl(
+      // yield ResultSetImpl(
       //  Vector("TABLE_CAT").map { value =>
       //    new ColumnDefinitionPacket:
       //      override def table: String = ""
@@ -545,14 +545,14 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       //  lastColumnReadNullable,
       //  resultSetCurrentCursor,
       //  resultSetCurrentRow
-      //)
+      // )
       ResultSetImpl(
         Vector("TABLE_CAT").map { value =>
           new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = value
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
         dbList.map(name => ResultSetRowPacket(Array(Some(name)))).toVector,
         serverVariables,
@@ -561,12 +561,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     }
 
   override def getTableTypes(): ResultSet =
-    //for
+    // for
     //  isResultSetClosed      <- Ref[F].of(false)
     //  lastColumnReadNullable <- Ref[F].of(true)
     //  resultSetCurrentCursor <- Ref[F].of(0)
     //  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-    //yield ResultSetImpl(
+    // yield ResultSetImpl(
     //  Vector(
     //    new ColumnDefinitionPacket:
     //      override def table: String = ""
@@ -587,14 +587,14 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     //  lastColumnReadNullable,
     //  resultSetCurrentCursor,
     //  resultSetCurrentRow
-    //)
+    // )
     ResultSetImpl(
       Vector(
         new ColumnDefinitionPacket:
-          override def table: String = ""
-          override def name: String = "TABLE_TYPE"
-          override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+          override def table:      String                     = ""
+          override def name:       String                     = "TABLE_TYPE"
+          override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
       ),
       TableType.values
         .filterNot(_ == TableType.UNKNOWN)
@@ -903,12 +903,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         while resultSet.next() do
           resultSet.getString("Key") match
             case key if key.startsWith("PRI") =>
-              val field = resultSet.getString("Field")
+              val field  = resultSet.getString("Field")
               val `type` = resultSet.getString("Type")
               (Option(field), Option(`type`)) match
                 case (Some(columnName), Some(value)) =>
                   val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
-                  val mysqlType = MysqlType.getByName(typeName.toUpperCase)
+                  val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
                   val dataType =
                     if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
                     else mysqlType.jdbcType
@@ -1374,12 +1374,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       serverVariables,
       protocol.initialPacket.serverVersion
     )
-    //for
+    // for
     //  isResultSetClosed      <- Ref[F].of(false)
     //  lastColumnReadNullable <- Ref[F].of(true)
     //  resultSetCurrentCursor <- Ref[F].of(0)
     //  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-    //yield
+    // yield
     //  val types = Vector(
     //    ResultSetRowPacket(getTypeInfo("BIT")),
     //    ResultSetRowPacket(getTypeInfo("TINYINT")),
@@ -1449,20 +1449,20 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     //      new ColumnDefinitionPacket:
     //        override def table: String = ""
 //
-    //        override def name: String = value
+  //        override def name: String = value
 //
-    //        override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+  //        override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
 //
-    //        override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-    //    },
-    //    types,
-    //    serverVariables,
-    //    protocol.initialPacket.serverVersion,
-    //    isResultSetClosed,
-    //    lastColumnReadNullable,
-    //    resultSetCurrentCursor,
-    //    resultSetCurrentRow
-    //  )
+  //        override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+  //    },
+  //    types,
+  //    serverVariables,
+  //    protocol.initialPacket.serverVersion,
+  //    isResultSetClosed,
+  //    lastColumnReadNullable,
+  //    resultSetCurrentCursor,
+  //    resultSetCurrentRow
+  //  )
 
   override def getIndexInfo(
     catalog:     Option[String],
@@ -1596,14 +1596,14 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       ResultSetImpl(
         Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
           new ColumnDefinitionPacket:
-            override def table: String = ""
-            override def name: String = value
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+            override def table:      String                     = ""
+            override def name:       String                     = value
+            override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+            override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
         dbList.map(name => ResultSetRowPacket(Array(Some("def"), Some(name)))).toVector,
         serverVariables,
-        protocol.initialPacket.serverVersion,
+        protocol.initialPacket.serverVersion
       )
     }
 
@@ -1937,12 +1937,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     for
       prepareStatement <- prepareMetaDataSafeStatement(sqlBuf.toString)
       resultSet        <- prepareStatement.executeQuery()
-      //decoded          <- Monad[F].whileM[Vector, String](resultSet.next())(resultSet.getString(1))
+    // decoded          <- Monad[F].whileM[Vector, String](resultSet.next())(resultSet.getString(1))
     yield
-      //decoded.toList
+      // decoded.toList
       val builder = List.newBuilder[String]
-      while resultSet.next() do
-        builder += resultSet.getString(1)
+      while resultSet.next() do builder += resultSet.getString(1)
       builder.result()
 
   private def parseTypeColumn(`type`: String): (Int, Int, String, Boolean) =
@@ -2032,14 +2031,14 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     ResultSetImpl(
       fields.map { value =>
         new ColumnDefinitionPacket:
-          override def table: String = ""
-          override def name: String = value
-          override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+          override def table:      String                     = ""
+          override def name:       String                     = value
+          override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
       },
       Vector.empty,
       serverVariables,
-      protocol.initialPacket.serverVersion,
+      protocol.initialPacket.serverVersion
     )
 
   private def getFunctionConstant(constant: FunctionConstant): Int =

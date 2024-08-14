@@ -1046,8 +1046,7 @@ class ConnectionTest extends CatsEffectSuite:
           resultSet <- metaData.getCatalogs()
         yield
           val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            builder += s"Table Catalog: ${resultSet.getString("TABLE_CAT")}"
+          while resultSet.next() do builder += s"Table Catalog: ${ resultSet.getString("TABLE_CAT") }"
           builder.result()
       },
       Vector(
@@ -1076,12 +1075,11 @@ class ConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         for
-          metaData  <- conn.getMetaData()
+          metaData <- conn.getMetaData()
           resultSet = metaData.getTableTypes()
         yield
           val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            builder +=  s"Table Type: ${resultSet.getString("TABLE_TYPE")}"
+          while resultSet.next() do builder += s"Table Type: ${ resultSet.getString("TABLE_TYPE") }"
           builder.result()
       },
       Vector(
@@ -1137,7 +1135,7 @@ class ConnectionTest extends CatsEffectSuite:
             val sourceDataType    = resultSet.getShort("SOURCE_DATA_TYPE")
             val isAutoincrement   = resultSet.getString("IS_AUTOINCREMENT")
             val isGeneratedcolumn = resultSet.getString("IS_GENERATEDCOLUMN")
-            builder +=  s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
+            builder += s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
           builder.result()
       },
       Vector(
@@ -1653,7 +1651,7 @@ class ConnectionTest extends CatsEffectSuite:
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
-            val functionCat = resultSet.getString("FUNCTION_CAT")
+            val functionCat     = resultSet.getString("FUNCTION_CAT")
             val functionSchem   = resultSet.getString("FUNCTION_SCHEM")
             val functionName    = resultSet.getString("FUNCTION_NAME")
             val columnName      = resultSet.getString("COLUMN_NAME")
