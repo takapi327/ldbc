@@ -17,6 +17,10 @@ target_names = {
     'ldbc_dslSelectN': 'ldbc (plain sql)',
     'doobie_selectN': 'doobie',
     'slick_selectN': 'slick',
+    'ldbc_queryInsertN': 'ldbc (query builder)',
+    'ldbc_dslInsertN': 'ldbc (plain sql)',
+    'doobie_insertN': 'doobie',
+    'slick_insertN': 'slick',
 }
 
 plot_config = {
