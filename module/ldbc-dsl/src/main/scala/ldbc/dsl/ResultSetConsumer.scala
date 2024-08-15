@@ -47,7 +47,7 @@ object ResultSetConsumer:
 
   given [F[_]: Monad, T](using func: ResultSet => T): ResultSetConsumer[F, Option[T]] with
     override def consume(resultSet: ResultSet): F[Option[T]] =
-      Monad[F].pure(func(resultSet).some)
+      Monad[F].pure(Option(func(resultSet)))
 
   given [F[_]: Monad, T, G[_]](using
     func:          ResultSet => T,
