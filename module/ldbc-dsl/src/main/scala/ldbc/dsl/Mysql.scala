@@ -9,7 +9,6 @@ package ldbc.dsl
 import scala.annotation.targetName
 import scala.deriving.Mirror
 
-import cats.data.Kleisli
 import cats.syntax.all.*
 
 import cats.effect.Temporal
@@ -43,8 +42,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * A [[ldbc.dsl.Query]] instance
    */
-  def query[T](using reader: ResultSetReader[F, T]): Query[F, T] =
-    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+  def query[T](using reader: ResultSetReader[T]): Query[F, T] =
+    given (ResultSet => T) = resultSet => reader.read(resultSet, 1)
     Query.Impl[F, T](statement, params)
 
   /**
@@ -58,16 +57,19 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * A [[ldbc.dsl.Query]] instance
    */
   inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Query[F, P] =
-    given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
-      ResultSetReader
-        .fold[F, mirror.MirroredElemTypes]
-        .toList
-        .zipWithIndex
-        .traverse {
-          case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
-        }
-        .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
-    }
+    given (ResultSet => P) = resultSet =>
+      mirror.fromProduct(
+        Tuple.fromArray(
+          ResultSetReader
+            .fold[mirror.MirroredElemTypes]
+            .toArray
+            .zipWithIndex
+            .map {
+              case (reader: ResultSetReader[?], index) => reader.read(resultSet, index + 1)
+            }
+        )
+      )
+
     Query.Impl[F, P](statement, params)
 
   /**
@@ -105,8 +107,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * The primary key value
    */
-  def returning[T <: String | Int | Long](using reader: ResultSetReader[F, T]): Executor[F, T] =
-    given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+  def returning[T <: String | Int | Long](using reader: ResultSetReader[T]): Executor[F, T] =
+    given (ResultSet => T) = resultSet => reader.read(resultSet, 1)
 
     Executor.Impl[F, T](
       statement,
