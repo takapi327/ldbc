@@ -8,7 +8,6 @@ package ldbc.query.builder
 
 import scala.deriving.Mirror
 
-import cats.data.Kleisli
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -27,32 +26,35 @@ package object syntax:
     extension [T](query: Query[T])
 
       inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
-        given Kleisli[F, ResultSet[F], Tuples.InverseColumnMap[T]] = Kleisli { resultSet =>
-          ResultSetReader
-            .fold[F, Tuples.InverseColumnMap[T]]
-            .toList
-            .zipWithIndex
-            .traverse {
-              case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
-            }
-            .map(list => Tuple.fromArray(list.toArray).asInstanceOf[Tuples.InverseColumnMap[T]])
-        }
+        given (ResultSet => Tuples.InverseColumnMap[T]) = resultSet =>
+          Tuple.fromArray(
+              ResultSetReader
+                .fold[Tuples.InverseColumnMap[T]]
+                .toArray
+                .zipWithIndex
+                .map {
+                  case (reader: ResultSetReader[?], index) => reader.read(resultSet, index + 1)
+                }
+          ).asInstanceOf[Tuples.InverseColumnMap[T]]
+
         DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params)
 
       inline def queryTo[P <: Product](using
         mirror: Mirror.ProductOf[P],
         check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
       ): DslQuery[F, P] =
-        given Kleisli[F, ResultSet[F], P] = Kleisli { resultSet =>
-          ResultSetReader
-            .fold[F, mirror.MirroredElemTypes]
-            .toList
-            .zipWithIndex
-            .traverse {
-              case (reader: ResultSetReader[F, Any], index) => reader.read(resultSet, index + 1)
-            }
-            .map(list => mirror.fromProduct(Tuple.fromArray(list.toArray)))
-        }
+        given (ResultSet => P) = resultSet =>
+          mirror.fromProduct(
+            Tuple.fromArray(
+              ResultSetReader
+                .fold[mirror.MirroredElemTypes]
+                .toArray
+                .zipWithIndex
+                .map {
+                  case (reader: ResultSetReader[Any], index) => reader.read(resultSet, index + 1)
+                }
+            )
+          )
 
         DslQuery.Impl[F, P](query.statement, query.params)
 
@@ -70,8 +72,8 @@ package object syntax:
             yield result
         )
 
-      def returning[T <: String | Int | Long](using reader: ResultSetReader[F, T]): Executor[F, T] =
-        given Kleisli[F, ResultSet[F], T] = Kleisli(resultSet => reader.read(resultSet, 1))
+      def returning[T <: String | Int | Long](using reader: ResultSetReader[T]): Executor[F, T] =
+        given (ResultSet => T) = resultSet => reader.read(resultSet, 1)
 
         Executor.Impl[F, T](
           command.statement,
