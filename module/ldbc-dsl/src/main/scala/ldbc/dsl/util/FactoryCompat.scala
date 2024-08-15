@@ -20,7 +20,7 @@ object FactoryCompat:
 
   given [A]: FactoryCompat[A, Option[A]] = new FactoryCompat[A, Option[A]]:
     override def newBuilder: mutable.Builder[A, Option[A]] = new mutable.Builder[A, Option[A]]:
-      private var value: Option[A] = None
+      private var value:   Option[A] = None
       def addOne(elem: A): this.type = { value = Some(elem); this }
-      def clear(): Unit = { value = None }
-      def result(): Option[A] = value
+      def clear():         Unit      = { value = None }
+      def result():        Option[A] = value
