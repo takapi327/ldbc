@@ -53,7 +53,7 @@ package object syntax:
                 .toArray
                 .zipWithIndex
                 .map {
-                  case (reader: ResultSetReader[Any], index) => reader.read(resultSet, index + 1)
+                  case (reader: ResultSetReader[?], index) => reader.read(resultSet, index + 1)
                 }
             )
           )
