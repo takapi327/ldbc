@@ -26,7 +26,7 @@ package object syntax:
     extension [T](query: Query[T])
 
       inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
-        given (ResultSet => Tuples.InverseColumnMap[T]) = resultSet =>
+        given ResultSetConsumer.Read[Tuples.InverseColumnMap[T]] = resultSet =>
           Tuple
             .fromArray(
               ResultSetReader
@@ -45,7 +45,7 @@ package object syntax:
         mirror: Mirror.ProductOf[P],
         check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
       ): DslQuery[F, P] =
-        given (ResultSet => P) = resultSet =>
+        given ResultSetConsumer.Read[P] = resultSet =>
           mirror.fromProduct(
             Tuple.fromArray(
               ResultSetReader
@@ -75,7 +75,7 @@ package object syntax:
         )
 
       def returning[T <: String | Int | Long](using reader: ResultSetReader[T]): Executor[F, T] =
-        given (ResultSet => T) = resultSet => reader.read(resultSet, 1)
+        given ResultSetConsumer.Read[T] = resultSet => reader.read(resultSet, 1)
 
         Executor.Impl[F, T](
           command.statement,

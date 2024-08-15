@@ -35,6 +35,8 @@ trait ResultSetConsumer[F[_], T]:
 
 object ResultSetConsumer:
 
+  type Read[T] = ResultSet => T
+
   given [F[_]: Monad, T](using
     consumer: ResultSetConsumer[F, Option[T]],
     error:    MonadError[F, Throwable]
@@ -45,15 +47,15 @@ object ResultSetConsumer:
         case None        => error.raiseError(new NoSuchElementException(""))
       }
 
-  given [F[_]: Monad, T](using func: ResultSet => T): ResultSetConsumer[F, Option[T]] with
+  given [F[_]: Monad, T](using read: Read[T]): ResultSetConsumer[F, Option[T]] with
     override def consume(resultSet: ResultSet): F[Option[T]] =
-      Monad[F].pure(Option(func(resultSet)))
+      Monad[F].pure(Option(read(resultSet)))
 
   given [F[_]: Monad, T, G[_]](using
-    func:          ResultSet => T,
+    read:          Read[T],
     factoryCompat: FactoryCompat[T, G[T]]
   ): ResultSetConsumer[F, G[T]] with
     override def consume(resultSet: ResultSet): F[G[T]] =
       val builder = factoryCompat.newBuilder
-      while resultSet.next() do builder += func(resultSet)
+      while resultSet.next() do builder += read(resultSet)
       Monad[F].pure(builder.result())

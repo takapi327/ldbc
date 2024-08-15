@@ -11,7 +11,6 @@ import cats.syntax.all.*
 
 import cats.effect.Temporal
 
-import ldbc.sql.ResultSet
 import ldbc.dsl.util.FactoryCompat
 
 /**
@@ -40,7 +39,7 @@ object Query:
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
     params:    List[Parameter.DynamicBinder]
-  )(using ResultSet => T)
+  )(using ResultSetConsumer.Read[T])
     extends Query[F, T]:
 
     override def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]] =

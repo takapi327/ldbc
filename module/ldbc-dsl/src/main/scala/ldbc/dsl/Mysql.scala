@@ -43,7 +43,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * A [[ldbc.dsl.Query]] instance
    */
   def query[T](using reader: ResultSetReader[T]): Query[F, T] =
-    given (ResultSet => T) = resultSet => reader.read(resultSet, 1)
+    given ResultSetConsumer.Read[T] = resultSet => reader.read(resultSet, 1)
     Query.Impl[F, T](statement, params)
 
   /**
@@ -57,7 +57,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * A [[ldbc.dsl.Query]] instance
    */
   inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Query[F, P] =
-    given (ResultSet => P) = resultSet =>
+    given ResultSetConsumer.Read[P] = resultSet =>
       mirror.fromProduct(
         Tuple.fromArray(
           ResultSetReader
@@ -103,12 +103,12 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * }}}
    *
    * @tparam T
-   * The type of the primary key
+   *   The type of the primary key
    * @return
-   * The primary key value
+   *   The primary key value
    */
   def returning[T <: String | Int | Long](using reader: ResultSetReader[T]): Executor[F, T] =
-    given (ResultSet => T) = resultSet => reader.read(resultSet, 1)
+    given ResultSetConsumer.Read[T] = resultSet => reader.read(resultSet, 1)
 
     Executor.Impl[F, T](
       statement,
