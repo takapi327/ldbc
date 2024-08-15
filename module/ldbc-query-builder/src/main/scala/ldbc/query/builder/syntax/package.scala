@@ -27,7 +27,8 @@ package object syntax:
 
       inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
         given (ResultSet => Tuples.InverseColumnMap[T]) = resultSet =>
-          Tuple.fromArray(
+          Tuple
+            .fromArray(
               ResultSetReader
                 .fold[Tuples.InverseColumnMap[T]]
                 .toArray
@@ -35,7 +36,8 @@ package object syntax:
                 .map {
                   case (reader: ResultSetReader[?], index) => reader.read(resultSet, index + 1)
                 }
-          ).asInstanceOf[Tuples.InverseColumnMap[T]]
+            )
+            .asInstanceOf[Tuples.InverseColumnMap[T]]
 
         DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params)
 

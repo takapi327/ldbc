@@ -36,13 +36,13 @@ trait ResultSetConsumer[F[_], T]:
 object ResultSetConsumer:
 
   given [F[_]: Monad, T](using
-                         consumer: ResultSetConsumer[F, Option[T]],
-                         error:    MonadError[F, Throwable]
-                        ): ResultSetConsumer[F, T] with
+    consumer: ResultSetConsumer[F, Option[T]],
+    error:    MonadError[F, Throwable]
+  ): ResultSetConsumer[F, T] with
     override def consume(resultSet: ResultSet): F[T] =
       consumer.consume(resultSet).flatMap {
         case Some(value) => error.pure(value)
-        case None => error.raiseError(new NoSuchElementException(""))
+        case None        => error.raiseError(new NoSuchElementException(""))
       }
 
   given [F[_]: Monad, T](using func: ResultSet => T): ResultSetConsumer[F, Option[T]] with
@@ -50,11 +50,10 @@ object ResultSetConsumer:
       Monad[F].pure(func(resultSet).some)
 
   given [F[_]: Monad, T, G[_]](using
-    func: ResultSet => T,
-    factoryCompat:   FactoryCompat[T, G[T]]
+    func:          ResultSet => T,
+    factoryCompat: FactoryCompat[T, G[T]]
   ): ResultSetConsumer[F, G[T]] with
     override def consume(resultSet: ResultSet): F[G[T]] =
       val builder = factoryCompat.newBuilder
-      while resultSet.next() do
-        builder += func(resultSet)
+      while resultSet.next() do builder += func(resultSet)
       Monad[F].pure(builder.result())

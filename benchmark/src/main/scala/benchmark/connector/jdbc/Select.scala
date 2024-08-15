@@ -107,7 +107,7 @@ class Select:
       val c14 = resultSet.getTime(14)
       val c15 = resultSet.getTimestamp(15)
       val c16 = resultSet.getTimestamp(16)
-      
+
       builder += ((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16))
-      
+
     builder.result()

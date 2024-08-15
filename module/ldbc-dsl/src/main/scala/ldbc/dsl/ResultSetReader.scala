@@ -104,12 +104,12 @@ object ResultSetReader:
 
     override def read(resultSet: ResultSet, columnLabel: String): Option[A] =
       val result = reader.read(resultSet, columnLabel)
-      val bool = resultSet.wasNull()
+      val bool   = resultSet.wasNull()
       if bool then None else Some(result)
 
     override def read(resultSet: ResultSet, index: Int): Option[A] =
       val result = reader.read(resultSet, index)
-      val bool = resultSet.wasNull()
+      val bool   = resultSet.wasNull()
       if bool then None else Some(result)
 
   type MapToTuple[T <: Tuple] <: Tuple = T match
