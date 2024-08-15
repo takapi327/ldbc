@@ -49,7 +49,7 @@ object ResultSetConsumer:
 
   given [F[_]: Monad, T](using read: Read[T]): ResultSetConsumer[F, Option[T]] with
     override def consume(resultSet: ResultSet): F[Option[T]] =
-      Monad[F].pure(Option(read(resultSet)))
+      if resultSet.next() then Monad[F].pure(read(resultSet).some) else Monad[F].pure(None)
 
   given [F[_]: Monad, T, G[_]](using
     read:          Read[T],
