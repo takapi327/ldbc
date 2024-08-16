@@ -232,10 +232,10 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           lastInsertId <- lastInsertId.get
           resultSet = ResultSetImpl(
                         Vector(new ColumnDefinitionPacket:
-                          override def table: String = ""
-                          override def name: String = "GENERATED_KEYS"
-                          override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
-                          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+                          override def table:      String                     = ""
+                          override def name:       String                     = "GENERATED_KEYS"
+                          override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
+                          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
                         ),
                         Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
                         serverVariables,
