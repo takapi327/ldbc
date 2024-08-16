@@ -522,30 +522,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   override def getCatalogs(): F[ResultSet] =
     (if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then ev.pure(List.empty[String])
      else getDatabases(None)).map { dbList =>
-      // for
-      //  isResultSetClosed      <- Ref[F].of(false)
-      //  lastColumnReadNullable <- Ref[F].of(true)
-      //  resultSetCurrentCursor <- Ref[F].of(0)
-      //  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-      // yield ResultSetImpl(
-      //  Vector("TABLE_CAT").map { value =>
-      //    new ColumnDefinitionPacket:
-      //      override def table: String = ""
-//
-      //      override def name: String = value
-//
-      //      override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-//
-      //      override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-      //  },
-      //  dbList.map(name => ResultSetRowPacket(Array(Some(name)))).toVector,
-      //  serverVariables,
-      //  protocol.initialPacket.serverVersion,
-      //  isResultSetClosed,
-      //  lastColumnReadNullable,
-      //  resultSetCurrentCursor,
-      //  resultSetCurrentRow
-      // )
       ResultSetImpl(
         Vector("TABLE_CAT").map { value =>
           new ColumnDefinitionPacket:
@@ -561,33 +537,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     }
 
   override def getTableTypes(): ResultSet =
-    // for
-    //  isResultSetClosed      <- Ref[F].of(false)
-    //  lastColumnReadNullable <- Ref[F].of(true)
-    //  resultSetCurrentCursor <- Ref[F].of(0)
-    //  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-    // yield ResultSetImpl(
-    //  Vector(
-    //    new ColumnDefinitionPacket:
-    //      override def table: String = ""
-//
-    //      override def name: String = "TABLE_TYPE"
-//
-    //      override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-//
-    //      override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-    //  ),
-    //  TableType.values
-    //    .filterNot(_ == TableType.UNKNOWN)
-    //    .map(tableType => ResultSetRowPacket(Array(Some(tableType.name))))
-    //    .toVector,
-    //  serverVariables,
-    //  protocol.initialPacket.serverVersion,
-    //  isResultSetClosed,
-    //  lastColumnReadNullable,
-    //  resultSetCurrentCursor,
-    //  resultSetCurrentRow
-    // )
     ResultSetImpl(
       Vector(
         new ColumnDefinitionPacket:
@@ -969,87 +918,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           protocol.initialPacket.serverVersion
         )
       } <* preparedStatement.close()
-      /*
-      for
-        resultSet <- preparedStatement.executeQuery()
-        decoded <- Monad[F].whileM[Vector, Option[(Int, String, Int, String, Int, Int, Int, Int)]](resultSet.next()) {
-                     resultSet.getString("Key").flatMap {
-                       case key if key.startsWith("PRI") =>
-                         for
-                           field  <- resultSet.getString("Field")
-                           `type` <- resultSet.getString("Type")
-                         yield (Option(field), Option(`type`)) match
-                           case (Some(columnName), Some(value)) =>
-                             val (size, decimals, typeName, hasLength) = parseTypeColumn(value)
-                             val mysqlType                             = MysqlType.getByName(typeName.toUpperCase)
-                             val dataType =
-                               if mysqlType == MysqlType.YEAR && !yearIsDateType then SMALLINT
-                               else mysqlType.jdbcType
-                             val columnSize = if hasLength then size + decimals else mysqlType.precision.toInt
-                             Some(
-                               (
-                                 DatabaseMetaData.bestRowSession,
-                                 columnName,
-                                 dataType,
-                                 typeName,
-                                 columnSize,
-                                 DatabaseMetaDataImpl.maxBufferSize,
-                                 decimals,
-                                 DatabaseMetaData.bestRowNotPseudo
-                               )
-                             )
-                           case _ => None
-                       case _ => ev.pure(None)
-                     }
-                   }
-        isResultSetClosed      <- Ref[F].of(false)
-        lastColumnReadNullable <- Ref[F].of(true)
-        resultSetCurrentCursor <- Ref[F].of(0)
-        resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-        _                      <- preparedStatement.close()
-      yield ResultSetImpl(
-        Vector(
-          "SCOPE",
-          "COLUMN_NAME",
-          "DATA_TYPE",
-          "TYPE_NAME",
-          "COLUMN_SIZE",
-          "BUFFER_LENGTH",
-          "DECIMAL_DIGITS",
-          "PSEUDO_COLUMN"
-        ).map { value =>
-          new ColumnDefinitionPacket:
-            override def table: String = ""
-
-            override def name: String = value
-
-            override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-
-            override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-        },
-        decoded.flatten.map {
-          case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
-            ResultSetRowPacket(
-              Array(
-                Some(scope.toString),
-                Some(columnName),
-                Some(dataType.toString),
-                Some(typeName),
-                Some(columnSize.toString),
-                Some(bufferLength.toString),
-                Some(decimalDigits.toString),
-                Some(pseudoColumn.toString)
-              )
-            )
-        },
-        serverVariables,
-        protocol.initialPacket.serverVersion,
-        isResultSetClosed,
-        lastColumnReadNullable,
-        resultSetCurrentCursor,
-        resultSetCurrentRow
-      )
-       */
     }
 
   override def getVersionColumns(catalog: Option[String], schema: Option[String], table: String): F[ResultSet] =
@@ -1374,95 +1242,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       serverVariables,
       protocol.initialPacket.serverVersion
     )
-    // for
-    //  isResultSetClosed      <- Ref[F].of(false)
-    //  lastColumnReadNullable <- Ref[F].of(true)
-    //  resultSetCurrentCursor <- Ref[F].of(0)
-    //  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-    // yield
-    //  val types = Vector(
-    //    ResultSetRowPacket(getTypeInfo("BIT")),
-    //    ResultSetRowPacket(getTypeInfo("TINYINT")),
-    //    ResultSetRowPacket(getTypeInfo("TINYINT UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("BIGINT")),
-    //    ResultSetRowPacket(getTypeInfo("BIGINT UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("LONG VARBINARY")),
-    //    ResultSetRowPacket(getTypeInfo("MEDIUMBLOB")),
-    //    ResultSetRowPacket(getTypeInfo("LONGBLOB")),
-    //    ResultSetRowPacket(getTypeInfo("BLOB")),
-    //    ResultSetRowPacket(getTypeInfo("VARBINARY")),
-    //    ResultSetRowPacket(getTypeInfo("TINYBLOB")),
-    //    ResultSetRowPacket(getTypeInfo("BINARY")),
-    //    ResultSetRowPacket(getTypeInfo("LONG VARCHAR")),
-    //    ResultSetRowPacket(getTypeInfo("MEDIUMTEXT")),
-    //    ResultSetRowPacket(getTypeInfo("LONGTEXT")),
-    //    ResultSetRowPacket(getTypeInfo("TEXT")),
-    //    ResultSetRowPacket(getTypeInfo("CHAR")),
-    //    ResultSetRowPacket(getTypeInfo("ENUM")),
-    //    ResultSetRowPacket(getTypeInfo("SET")),
-    //    ResultSetRowPacket(getTypeInfo("DECIMAL")),
-    //    ResultSetRowPacket(getTypeInfo("NUMERIC")),
-    //    ResultSetRowPacket(getTypeInfo("INTEGER")),
-    //    ResultSetRowPacket(getTypeInfo("INT")),
-    //    ResultSetRowPacket(getTypeInfo("MEDIUMINT")),
-    //    ResultSetRowPacket(getTypeInfo("INTEGER UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("INT UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("MEDIUMINT UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("SMALLINT")),
-    //    ResultSetRowPacket(getTypeInfo("SMALLINT UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("YEAR")),
-    //    ResultSetRowPacket(getTypeInfo("FLOAT")),
-    //    ResultSetRowPacket(getTypeInfo("DOUBLE")),
-    //    ResultSetRowPacket(getTypeInfo("DOUBLE PRECISION")),
-    //    ResultSetRowPacket(getTypeInfo("REAL")),
-    //    ResultSetRowPacket(getTypeInfo("DOUBLE UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("DOUBLE PRECISION UNSIGNED")),
-    //    ResultSetRowPacket(getTypeInfo("VARCHAR")),
-    //    ResultSetRowPacket(getTypeInfo("TINYTEXT")),
-    //    ResultSetRowPacket(getTypeInfo("BOOL")),
-    //    ResultSetRowPacket(getTypeInfo("DATE")),
-    //    ResultSetRowPacket(getTypeInfo("TIME")),
-    //    ResultSetRowPacket(getTypeInfo("DATETIME")),
-    //    ResultSetRowPacket(getTypeInfo("TIMESTAMP"))
-    //  )
-    //  ResultSetImpl(
-    //    Vector(
-    //      "TYPE_NAME",
-    //      "DATA_TYPE",
-    //      "PRECISION",
-    //      "LITERAL_PREFIX",
-    //      "LITERAL_SUFFIX",
-    //      "CREATE_PARAMS",
-    //      "NULLABLE",
-    //      "CASE_SENSITIVE",
-    //      "SEARCHABLE",
-    //      "UNSIGNED_ATTRIBUTE",
-    //      "FIXED_PREC_SCALE",
-    //      "AUTO_INCREMENT",
-    //      "LOCAL_TYPE_NAME",
-    //      "MINIMUM_SCALE",
-    //      "MAXIMUM_SCALE",
-    //      "SQL_DATA_TYPE",
-    //      "SQL_DATETIME_SUB",
-    //      "NUM_PREC_RADIX"
-    //    ).map { value =>
-    //      new ColumnDefinitionPacket:
-    //        override def table: String = ""
-//
-  //        override def name: String = value
-//
-  //        override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-//
-  //        override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-  //    },
-  //    types,
-  //    serverVariables,
-  //    protocol.initialPacket.serverVersion,
-  //    isResultSetClosed,
-  //    lastColumnReadNullable,
-  //    resultSetCurrentCursor,
-  //    resultSetCurrentRow
-  //  )
 
   override def getIndexInfo(
     catalog:     Option[String],
@@ -1937,9 +1716,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     for
       prepareStatement <- prepareMetaDataSafeStatement(sqlBuf.toString)
       resultSet        <- prepareStatement.executeQuery()
-    // decoded          <- Monad[F].whileM[Vector, String](resultSet.next())(resultSet.getString(1))
     yield
-      // decoded.toList
       val builder = List.newBuilder[String]
       while resultSet.next() do builder += resultSet.getString(1)
       builder.result()
