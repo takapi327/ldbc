@@ -8,11 +8,6 @@ package ldbc.connector
 
 import java.time.*
 
-//import cats.*
-//import cats.syntax.all.*
-
-//import cats.effect.Ref
-
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
 import ldbc.connector.util.Version
@@ -29,10 +24,6 @@ private[ldbc] case class ResultSetImpl(
   records:         Vector[ResultSetRowPacket],
   serverVariables: Map[String, String],
   version:         Version,
-  // isClosed:               Ref[F, Boolean],
-  // lastColumnReadNullable: Ref[F, Boolean],
-  // currentCursor:          Ref[F, Int],
-  // currentRow:             Ref[F, Option[ResultSetRowPacket]],
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
 ) extends ResultSet:
@@ -470,38 +461,22 @@ private[ldbc] object ResultSetImpl:
     records:         Vector[ResultSetRowPacket],
     serverVariables: Map[String, String],
     version:         Version
-    // isClosed:               Ref[F, Boolean],
-    // lastColumnReadNullable: Ref[F, Boolean],
-    // currentCursor:          Ref[F, Int],
-    // currentRow:             Ref[F, Option[ResultSetRowPacket]]
   ): ResultSetImpl =
     ResultSetImpl(
       columns,
       records,
       serverVariables,
       version,
-      // isClosed,
-      // lastColumnReadNullable,
-      // currentCursor,
-      // currentRow,
       ResultSet.TYPE_FORWARD_ONLY
     )
 
   def empty(
     serverVariables: Map[String, String],
     version:         Version
-    // isClosed:               Ref[F, Boolean],
-    // lastColumnReadNullable: Ref[F, Boolean],
-    // currentCursor:          Ref[F, Int],
-    // currentRow:             Ref[F, Option[ResultSetRowPacket]]
   ): ResultSetImpl =
     this.apply(
       Vector.empty,
       Vector.empty,
       serverVariables,
       version
-      // isClosed,
-      // lastColumnReadNullable,
-      // currentCursor,
-      // currentRow
     )

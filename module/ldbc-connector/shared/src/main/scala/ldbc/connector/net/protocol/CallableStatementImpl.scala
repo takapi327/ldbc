@@ -554,18 +554,11 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
             protocol.readUntilEOF[ResultSetRowPacket](
               ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
             )
-          // lastColumnReadNullable <- Ref[F].of(true)
-          // resultSetCurrentCursor <- Ref[F].of(0)
-          // resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
           resultSet = ResultSetImpl(
                         columnDefinitions,
                         resultSetRow,
                         serverVariables,
                         protocol.initialPacket.serverVersion,
-                        // resultSetClosed,
-                        // lastColumnReadNullable,
-                        // resultSetCurrentCursor,
-                        // resultSetCurrentRow,
                         resultSetType,
                         resultSetConcurrency
                       )
