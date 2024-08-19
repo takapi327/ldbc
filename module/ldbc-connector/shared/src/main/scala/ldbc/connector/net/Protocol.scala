@@ -9,6 +9,7 @@ package ldbc.connector.net
 import java.nio.charset.StandardCharsets
 
 import scala.concurrent.duration.*
+import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.ListMap
 
 import cats.*
@@ -119,14 +120,12 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    *
    * @param decoder
    *   the decoder to decode the response packet
-   * @param acc
-   *   the accumulator
    * @tparam P
    *   the type of the response packet
    * @return
    *   a vector of the response packets
    */
-  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket], acc: Vector[P]): F[Vector[P]]
+  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]]
 
   /**
    * Returns the server variables.
@@ -144,7 +143,7 @@ object Protocol:
     socket:                  PacketSocket[F],
     useSSL:                  Boolean = false,
     allowPublicKeyRetrieval: Boolean = false,
-    capabilityFlags:         List[CapabilitiesFlags],
+    capabilityFlags:         Set[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte]
   )(using ev: MonadError[F, Throwable], ex: Exchange[F])
     extends Protocol[F]:
@@ -228,14 +227,19 @@ object Protocol:
       read(times, Vector.empty[P])
 
     override def readUntilEOF[P <: ResponsePacket](
-      decoder: Decoder[P | EOFPacket | ERRPacket],
-      acc:     Vector[P]
+      decoder: Decoder[P | EOFPacket | ERRPacket]
     ): F[Vector[P]] =
-      socket.receive(decoder).flatMap {
-        case _: EOFPacket     => ev.pure(acc)
-        case error: ERRPacket => ev.raiseError(error.toException)
-        case row              => readUntilEOF(decoder, acc :+ row.asInstanceOf[P])
-      }
+
+      def loop(buffer: ArrayBuffer[P]): F[ArrayBuffer[P]] =
+        socket.receive(decoder).flatMap {
+          case _: EOFPacket     => ev.pure(buffer)
+          case error: ERRPacket => ev.raiseError(error.toException)
+          case row =>
+            buffer append row.asInstanceOf[P]
+            loop(buffer)
+        }
+
+      loop(new ArrayBuffer[P]()).map(_.toVector)
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
@@ -251,11 +255,9 @@ object Protocol:
                   result.size,
                   ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
                 )
-              resultSetRow <-
-                readUntilEOF[ResultSetRowPacket](
-                  ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions),
-                  Vector.empty
-                )
+              resultSetRow <- readUntilEOF[ResultSetRowPacket](
+                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions)
+                              )
             yield columnDefinitions
               .zip(resultSetRow.flatMap(_.values))
               .map {
@@ -510,7 +512,7 @@ object Protocol:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval: Boolean = false,
     readTimeout:             Duration,
-    capabilitiesFlags:       List[CapabilitiesFlags]
+    capabilitiesFlags:       Set[CapabilitiesFlags]
   ): Resource[F, Protocol[F]] =
     for
       sequenceIdRef    <- Resource.eval(Ref[F].of[Byte](0x01))
@@ -535,7 +537,7 @@ object Protocol:
     hostInfo:                HostInfo,
     sslOptions:              Option[SSLNegotiation.Options[F]],
     allowPublicKeyRetrieval: Boolean = false,
-    capabilitiesFlags:       List[CapabilitiesFlags],
+    capabilitiesFlags:       Set[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte],
     initialPacketRef:        Ref[F, Option[InitialPacket]]
   )(using ev: MonadError[F, Throwable]): F[Protocol[F]] =

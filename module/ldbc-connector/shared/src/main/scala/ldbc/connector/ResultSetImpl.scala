@@ -383,7 +383,7 @@ private[ldbc] case class ResultSetImpl[F[_]](
   def decode[T](codec: Codec[T]): F[List[T]] =
     checkClose {
       ev.point(
-        records.flatMap(row => codec.decode(0, row.values).toOption).toList
+        records.flatMap(row => codec.decode(0, row.values.toList).toOption).toList
       )
     }
 

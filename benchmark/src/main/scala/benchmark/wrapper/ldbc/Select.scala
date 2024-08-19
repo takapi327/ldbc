@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.lepus
+package benchmark.wrapper.ldbc
 
 import java.util.concurrent.TimeUnit
 
@@ -14,11 +14,10 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
+import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.DataSource
-import ldbc.dsl.logging.LogHandler
+import ldbc.sql.Connection
 import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
@@ -30,10 +29,10 @@ import benchmark.City
 class Select:
 
   @volatile
-  var dataSource: DataSource[IO] = uninitialized
+  var connection: Resource[IO, Connection[IO]] = uninitialized
 
   @volatile
-  var noLog: LogHandler[IO] = uninitialized
+  var query: Table[City] = uninitialized
 
   @Setup
   def setup(): Unit =
@@ -43,23 +42,36 @@ class Select:
     ds.setDatabaseName("world")
     ds.setUser("ldbc")
     ds.setPassword("password")
-    dataSource = jdbc.connector.MysqlDataSource[IO](ds)
 
-    noLog = _ => IO.unit
+    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+
+    connection = Resource.make(datasource.getConnection)(_.close())
+
+    query = Table[City]("city")
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
-  def selectN: List[(Int, String, String)] =
-    given LogHandler[IO] = noLog
-    (for
-      connection <- dataSource.getConnection
-      result <- Table[City]
-                  .select(city => (city.id, city.name, city.countryCode))
-                  .limit(len)
-                  .query
-                  .to[List]
-                  .readOnly(connection)
-    yield result)
+  def querySelectN: List[(Int, String, String)] =
+    connection
+      .use { conn =>
+        query
+          .select(city => (city.id, city.name, city.countryCode))
+          .limit(len)
+          .query
+          .to[List]
+          .readOnly(conn)
+      }
+      .unsafeRunSync()
+
+  @Benchmark
+  def dslSelectN: List[(Int, String, String)] =
+    connection
+      .use { conn =>
+        sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
+          .query[(Int, String, String)]
+          .to[List]
+          .readOnly(conn)
+      }
       .unsafeRunSync()

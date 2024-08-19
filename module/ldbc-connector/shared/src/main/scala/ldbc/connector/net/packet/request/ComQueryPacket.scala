@@ -29,7 +29,7 @@ import ldbc.connector.data.*
  * @param capabilityFlags
  *   The capabilities of the client
  */
-case class ComQueryPacket(sql: String, capabilityFlags: Seq[CapabilitiesFlags], params: ListMap[ColumnDataType, Any])
+case class ComQueryPacket(sql: String, capabilityFlags: Set[CapabilitiesFlags], params: ListMap[ColumnDataType, Any])
   extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] = ComQueryPacket.encoder.encode(this)

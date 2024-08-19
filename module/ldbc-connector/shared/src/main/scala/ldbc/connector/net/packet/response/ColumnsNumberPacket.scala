@@ -26,7 +26,7 @@ case class ColumnsNumberPacket(size: Int) extends ResponsePacket:
 
 object ColumnsNumberPacket:
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[ColumnsNumberPacket | OKPacket | ERRPacket] =
+  def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[ColumnsNumberPacket | OKPacket | ERRPacket] =
     uint8.flatMap { status =>
       (status: @switch) match
         case OKPacket.STATUS  => OKPacket.decoder(capabilityFlags)

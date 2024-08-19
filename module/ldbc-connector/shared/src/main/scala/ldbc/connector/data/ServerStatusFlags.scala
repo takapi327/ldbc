@@ -14,63 +14,71 @@ import scala.math.pow
  * @param code
  *  The numeric value of the bit-field.
  */
-enum ServerStatusFlags(val code: Long):
-  case SERVER_STATUS_IN_TRANS             extends ServerStatusFlags(1L << 0)
-  case SERVER_STATUS_AUTOCOMMIT           extends ServerStatusFlags(1L << 1)
-  case SERVER_MORE_RESULTS_EXISTS         extends ServerStatusFlags(1L << 3)
-  case SERVER_STATUS_NO_GOOD_INDEX_USED   extends ServerStatusFlags(1L << 4)
-  case SERVER_STATUS_NO_INDEX_USED        extends ServerStatusFlags(1L << 5)
-  case SERVER_STATUS_CURSOR_EXISTS        extends ServerStatusFlags(1L << 6)
-  case SERVER_STATUS_LAST_ROW_SENT        extends ServerStatusFlags(1L << 7)
-  case SERVER_STATUS_DB_DROPPED           extends ServerStatusFlags(1L << 8)
-  case SERVER_STATUS_NO_BACKSLASH_ESCAPES extends ServerStatusFlags(1L << 9)
-  case SERVER_STATUS_METADATA_CHANGED     extends ServerStatusFlags(1L << 10)
-  case SERVER_QUERY_WAS_SLOW              extends ServerStatusFlags(1L << 11)
-  case SERVER_PS_OUT_PARAMS               extends ServerStatusFlags(1L << 12)
-  case SERVER_STATUS_IN_TRANS_READONLY    extends ServerStatusFlags(1L << 13)
-  case SERVER_SESSION_STATE_CHANGED       extends ServerStatusFlags(1L << 14)
+opaque type ServerStatusFlags = Int
 
 object ServerStatusFlags:
 
+  val SERVER_STATUS_IN_TRANS:             ServerStatusFlags = 1 << 0
+  val SERVER_STATUS_AUTOCOMMIT:           ServerStatusFlags = 1 << 1
+  val SERVER_MORE_RESULTS_EXISTS:         ServerStatusFlags = 1 << 3
+  val SERVER_STATUS_NO_GOOD_INDEX_USED:   ServerStatusFlags = 1 << 4
+  val SERVER_STATUS_NO_INDEX_USED:        ServerStatusFlags = 1 << 5
+  val SERVER_STATUS_CURSOR_EXISTS:        ServerStatusFlags = 1 << 6
+  val SERVER_STATUS_LAST_ROW_SENT:        ServerStatusFlags = 1 << 7
+  val SERVER_STATUS_DB_DROPPED:           ServerStatusFlags = 1 << 8
+  val SERVER_STATUS_NO_BACKSLASH_ESCAPES: ServerStatusFlags = 1 << 9
+  val SERVER_STATUS_METADATA_CHANGED:     ServerStatusFlags = 1 << 10
+  val SERVER_QUERY_WAS_SLOW:              ServerStatusFlags = 1 << 11
+  val SERVER_PS_OUT_PARAMS:               ServerStatusFlags = 1 << 12
+  val SERVER_STATUS_IN_TRANS_READONLY:    ServerStatusFlags = 1 << 13
+  val SERVER_SESSION_STATE_CHANGED:       ServerStatusFlags = 1 << 14
+
+  val values: Set[ServerStatusFlags] = Set(
+    SERVER_STATUS_IN_TRANS,
+    SERVER_STATUS_AUTOCOMMIT,
+    SERVER_MORE_RESULTS_EXISTS,
+    SERVER_STATUS_NO_GOOD_INDEX_USED,
+    SERVER_STATUS_NO_INDEX_USED,
+    SERVER_STATUS_CURSOR_EXISTS,
+    SERVER_STATUS_LAST_ROW_SENT,
+    SERVER_STATUS_DB_DROPPED,
+    SERVER_STATUS_NO_BACKSLASH_ESCAPES,
+    SERVER_STATUS_METADATA_CHANGED,
+    SERVER_QUERY_WAS_SLOW,
+    SERVER_PS_OUT_PARAMS,
+    SERVER_STATUS_IN_TRANS_READONLY,
+    SERVER_SESSION_STATE_CHANGED
+  )
+
   /** Get bitset objects from numeric bitset. */
-  def apply(bitset: Long): Seq[ServerStatusFlags] =
-    toEnumSeq(bitset)
+  def apply(bitset: Long): Set[ServerStatusFlags] =
+    toEnumSet(bitset)
 
   /** Get bitset objects from numeric bitsets. */
-  def apply(bitset: Seq[Short]): Seq[ServerStatusFlags] =
-    bitset.flatMap(b => toEnumSeq(toCode(b)))
+  def apply(bitset: Set[Short]): Set[ServerStatusFlags] =
+    bitset.flatMap(b => toEnumSet(toCode(b)))
 
   /** Convert bitNum to BitFlag numbers */
   def toCode(bitNum: Short): Long =
     pow(2, bitNum.toDouble).toLong
 
   /** Calculate bitset as numeric */
-  def toBitset(bitset: Seq[ServerStatusFlags]): Long =
-    bitset.foldLeft(0L)((code, cur) => code | cur.code)
+  def toBitset(bitset: Set[ServerStatusFlags]): Long =
+    bitset.foldLeft(0L)((code, cur) => code | cur)
 
   /** Calculate bitset as bit flags */
-  def toEnumSeq(bitset: Long): Seq[ServerStatusFlags] =
-    ServerStatusFlags.values.filter(p => (p.code & bitset) == p.code).toSeq
+  def toEnumSet(bitset: Long): Set[ServerStatusFlags] =
+    ServerStatusFlags.values.filter(p => (bitset & p) == p).toSet
 
   /** Check to whether has a bit flag. */
-  def hasBitFlag(bitset: Seq[ServerStatusFlags], flag: ServerStatusFlags): Boolean =
-    (toBitset(bitset) & flag.code) == flag.code
+  def hasBitFlag(bitset: Set[ServerStatusFlags], flag: ServerStatusFlags): Boolean =
+    (toBitset(bitset) & flag) == flag
 
-  def hasBitFlag(bitset: Seq[ServerStatusFlags], code: Long): Boolean = (toBitset(bitset) & code) == code
-
-  def hasBitFlag(bitset: Long, flag: ServerStatusFlags): Boolean = (bitset & flag.code) == flag.code
-
-  def hasBitFlag(bitset: Long, code: Long): Boolean = (bitset & code) == code
+  def hasBitFlag(bitset: Long, flag: ServerStatusFlags): Boolean = (bitset & flag) == flag
 
   /** Set a specified bit flag. */
-  def setBitFlag(bitset: Seq[ServerStatusFlags], flag: ServerStatusFlags): Seq[ServerStatusFlags] = apply(
-    toBitset(bitset) | flag.code
+  def setBitFlag(bitset: Set[ServerStatusFlags], flag: ServerStatusFlags): Set[ServerStatusFlags] = apply(
+    toBitset(bitset) | flag
   )
 
-  def setBitFlag(bitset: Seq[ServerStatusFlags], code: Long): Seq[ServerStatusFlags] = apply(
-    toBitset(bitset) | code
-  )
-
-  def setBitFlag(bitset: Long, flag: ServerStatusFlags): Long = bitset | flag.code
-
-  def setBitFlag(bitset: Long, code: Long): Long = bitset | code
+  def setBitFlag(bitset: Long, flag: ServerStatusFlags): Long = bitset | flag
