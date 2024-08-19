@@ -39,7 +39,7 @@ class Insert:
     val ds = new MysqlDataSource()
     ds.setServerName("127.0.0.1")
     ds.setPortNumber(13306)
-    ds.setDatabaseName("world")
+    ds.setDatabaseName("benchmark")
     ds.setUser("ldbc")
     ds.setPassword("password")
 
@@ -47,25 +47,25 @@ class Insert:
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
-  @Param(Array("10", "100", "1000", "2000", "4000"))
+  @Param(Array("10", "100", "1000", "2000"))
   var len: Int = uninitialized
 
   @Benchmark
   def insertN: Unit =
     transactor
       .use { xa =>
-        (sql"INSERT INTO test (c1, c2)" ++ values(records)).update.run
+        (sql"INSERT INTO `doobie_wrapper_test` (c1, c2)" ++ values(records)).update.run
           .transact(xa)
       }
       .unsafeRunSync()
 
-  @Benchmark
-  def batchN: Unit =
-    transactor
-      .use { xa =>
-        val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
-        Update[(Int, String)](sql)
-          .updateMany(records)
-          .transact(xa)
-      }
-      .unsafeRunSync()
+  //@Benchmark
+  //def batchN: Unit =
+  //  transactor
+  //    .use { xa =>
+  //      val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
+  //      Update[(Int, String)](sql)
+  //        .updateMany(records)
+  //        .transact(xa)
+  //    }
+  //    .unsafeRunSync()
