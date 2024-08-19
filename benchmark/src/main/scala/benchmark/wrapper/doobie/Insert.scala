@@ -4,17 +4,19 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.doobie
+package benchmark.wrapper.doobie
 
 import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 
+import com.mysql.cj.jdbc.MysqlDataSource
+
 import org.openjdk.jmh.annotations.*
 
 import cats.data.NonEmptyList
 
-import cats.effect.IO
+import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import doobie.*
@@ -27,23 +29,21 @@ import doobie.util.fragments.values
 class Insert:
 
   @volatile
-  var xa: Transactor[IO] = uninitialized
+  var transactor: Resource[IO, Transactor[IO]] = uninitialized
 
   @volatile
   var records: NonEmptyList[(Int, String)] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
-    xa = Transactor.after.set(
-      Transactor.fromDriverManager[IO](
-        "com.mysql.cj.jdbc.Driver",
-        "jdbc:mysql://127.0.0.1:13306/world",
-        "ldbc",
-        "password",
-        None
-      ),
-      HC.rollback
-    )
+    val ds = new MysqlDataSource()
+    ds.setServerName("127.0.0.1")
+    ds.setPortNumber(13306)
+    ds.setDatabaseName("world")
+    ds.setUser("ldbc")
+    ds.setPassword("password")
+
+    transactor = ExecutionContexts.fixedThreadPool[IO](1).map(ce => Transactor.fromDataSource[IO](ds, ce))
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
@@ -52,14 +52,20 @@ class Insert:
 
   @Benchmark
   def insertN: Unit =
-    (sql"INSERT INTO test (c1, c2)" ++ values(records)).update.run
-      .transact(xa)
+    transactor
+      .use { xa =>
+        (sql"INSERT INTO test (c1, c2)" ++ values(records)).update.run
+          .transact(xa)
+      }
       .unsafeRunSync()
 
   @Benchmark
   def batchN: Unit =
-    val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
-    Update[(Int, String)](sql)
-      .updateMany(records)
-      .transact(xa)
+    transactor
+      .use { xa =>
+        val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
+        Update[(Int, String)](sql)
+          .updateMany(records)
+          .transact(xa)
+      }
       .unsafeRunSync()

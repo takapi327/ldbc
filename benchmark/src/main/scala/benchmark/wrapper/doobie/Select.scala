@@ -4,15 +4,17 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.doobie
+package benchmark.wrapper.doobie
 
 import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 
+import com.mysql.cj.jdbc.MysqlDataSource
+
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
+import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import doobie.*
@@ -24,25 +26,29 @@ import doobie.implicits.*
 class Select:
 
   @volatile
-  var xa: Transactor[IO] = uninitialized
+  var transactor: Resource[IO, Transactor[IO]] = uninitialized
 
   @Setup
   def setup(): Unit =
-    xa = Transactor.fromDriverManager[IO](
-      "com.mysql.cj.jdbc.Driver",
-      "jdbc:mysql://127.0.0.1:13306/world",
-      "ldbc",
-      "password",
-      None
-    )
+    val ds = new MysqlDataSource()
+    ds.setServerName("127.0.0.1")
+    ds.setPortNumber(13306)
+    ds.setDatabaseName("world")
+    ds.setUser("ldbc")
+    ds.setPassword("password")
+
+    transactor = ExecutionContexts.fixedThreadPool[IO](1).map(ce => Transactor.fromDataSource[IO](ds, ce))
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
   def selectN: List[(Int, String, String)] =
-    sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
-      .query[(Int, String, String)]
-      .to[List]
-      .transact(xa)
+    transactor
+      .use { xa =>
+        sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
+          .query[(Int, String, String)]
+          .to[List]
+          .transact(xa)
+      }
       .unsafeRunSync()

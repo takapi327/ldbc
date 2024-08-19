@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.lepus
+package benchmark.wrapper.ldbc
 
 import java.util.concurrent.TimeUnit
 
@@ -14,11 +14,12 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
 
-import cats.effect.IO
+import cats.data.NonEmptyList
+
+import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.DataSource
-import ldbc.dsl.logging.LogHandler
+import ldbc.sql.Connection
 import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
@@ -28,10 +29,7 @@ import ldbc.query.builder.syntax.io.*
 class Insert:
 
   @volatile
-  var dataSource: DataSource[IO] = uninitialized
-
-  @volatile
-  var noLog: LogHandler[IO] = uninitialized
+  var connection: Resource[IO, Connection[IO]] = uninitialized
 
   @volatile
   var query: Table[Test] = uninitialized
@@ -47,11 +45,12 @@ class Insert:
     ds.setDatabaseName("world")
     ds.setUser("ldbc")
     ds.setPassword("password")
-    dataSource = jdbc.connector.MysqlDataSource[IO](ds)
+
+    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+
+    connection = Resource.make(datasource.getConnection)(_.close())
 
     records = (1 to len).map(num => (num, s"record$num")).toList
-
-    noLog = _ => IO.unit
 
     query = Table[Test]
 
@@ -59,15 +58,24 @@ class Insert:
   var len: Int = uninitialized
 
   @Benchmark
-  def insertN: Unit =
-    given LogHandler[IO] = noLog
-    (for
-      connection <- dataSource.getConnection
-      result <- query
-                  .insertInto(test => (test.c1, test.c2))
-                  .values(records)
-                  .update
-                  .rollback(connection)
-    yield result).unsafeRunSync()
+  def queryInsertN: Unit =
+    connection
+      .use { conn =>
+        query
+          .insertInto(test => (test.c1, test.c2))
+          .values(records)
+          .update
+          .commit(conn)
+      }
+      .unsafeRunSync()
+
+  @Benchmark
+  def dslInsertN: Unit =
+    connection
+      .use { conn =>
+        (sql"INSERT INTO test (c1, c2)" ++ values(NonEmptyList.fromListUnsafe(records))).update
+          .commit(conn)
+      }
+      .unsafeRunSync()
 
 case class Test(id: Option[Int], c1: Int, c2: String) derives Table
