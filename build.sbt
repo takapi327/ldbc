@@ -44,14 +44,14 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
          |
          |""".stripMargin,
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.10.0",
+      "org.typelevel" %%% "cats-core"   % "2.12.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
+      "org.specs2"    %%% "specs2-core" % "5.5.3"  % Test
     )
   )
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+      "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )
 
@@ -60,7 +60,7 @@ lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("sql", "JDBC API wrapped project with Effect System")
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+      "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )
 
@@ -102,7 +102,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
       "org.scalatest"          %%% "scalatest"                % "3.2.18" % Test,
-      "org.specs2"             %%% "specs2-core"              % "4.20.5" % Test
+      "org.specs2"             %%% "specs2-core"              % "5.5.3"  % Test
     )
   )
   .jvmSettings(
@@ -137,8 +137,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "cats-effect"       % "3.5.4",
       "co.fs2"        %%% "fs2-core"          % "3.10-365636d",
       "co.fs2"        %%% "fs2-io"            % "3.10-365636d",
-      "org.scodec"    %%% "scodec-bits"       % "1.1.38",
-      "org.scodec"    %%% "scodec-core"       % "2.2.2",
+      "org.scodec"    %%% "scodec-bits"       % "1.2.0",
+      "org.scodec"    %%% "scodec-core"       % "2.3.1",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
       "org.typelevel" %%% "otel4s-core-trace" % "0.8.1",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
