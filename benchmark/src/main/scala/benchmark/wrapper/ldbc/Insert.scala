@@ -55,7 +55,9 @@ class Insert:
     connection = Resource.make(datasource.getConnection)(_.close())
 
     queryRecords = (1 to len).map(num => (num, s"record$num")).toList
-    dslRecords = comma(NonEmptyList.fromListUnsafe((1 to len).map(num => parentheses(p"$num, ${ "record" + num }")).toList))
+    dslRecords = comma(
+      NonEmptyList.fromListUnsafe((1 to len).map(num => parentheses(p"$num, ${ "record" + num }")).toList)
+    )
 
     query = Table[Test]("ldbc_wrapper_query_test")
 

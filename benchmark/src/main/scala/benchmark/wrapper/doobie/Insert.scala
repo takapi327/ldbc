@@ -59,8 +59,8 @@ class Insert:
       }
       .unsafeRunSync()
 
-  //@Benchmark
-  //def batchN: Unit =
+  // @Benchmark
+  // def batchN: Unit =
   //  transactor
   //    .use { xa =>
   //      val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"

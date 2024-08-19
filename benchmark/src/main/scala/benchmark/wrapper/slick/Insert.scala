@@ -61,8 +61,8 @@ class Insert:
       Duration.Inf
     )
 
-  //@Benchmark
-  //def batchN: Unit =
+  // @Benchmark
+  // def batchN: Unit =
   //  Await.result(
   //    db.run(query ++= records),
   //    Duration.Inf
