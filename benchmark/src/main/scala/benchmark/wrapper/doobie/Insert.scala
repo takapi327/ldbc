@@ -58,14 +58,3 @@ class Insert:
           .transact(xa)
       }
       .unsafeRunSync()
-
-  // @Benchmark
-  // def batchN: Unit =
-  //  transactor
-  //    .use { xa =>
-  //      val sql = "INSERT INTO test (c1, c2) VALUES (?, ?)"
-  //      Update[(Int, String)](sql)
-  //        .updateMany(records)
-  //        .transact(xa)
-  //    }
-  //    .unsafeRunSync()

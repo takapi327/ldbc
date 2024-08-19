@@ -61,13 +61,6 @@ class Insert:
       Duration.Inf
     )
 
-  // @Benchmark
-  // def batchN: Unit =
-  //  Await.result(
-  //    db.run(query ++= records),
-  //    Duration.Inf
-  //  )
-
 case class Test(id: Option[Int], c1: Int, c2: String)
 class TestTable(tag: Tag) extends Table[Test](tag, "slick_wrapper_test"):
   def id = column[Int]("c0", O.AutoInc, O.PrimaryKey)
