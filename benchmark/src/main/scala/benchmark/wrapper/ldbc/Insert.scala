@@ -20,6 +20,7 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.Connection
+import ldbc.dsl.SQL
 import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
@@ -35,14 +36,17 @@ class Insert:
   var query: Table[Test] = uninitialized
 
   @volatile
-  var records: List[(Int, String)] = List.empty
+  var queryRecords: List[(Int, String)] = List.empty
+
+  @volatile
+  var dslRecords: SQL = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
     val ds = new MysqlDataSource()
     ds.setServerName("127.0.0.1")
     ds.setPortNumber(13306)
-    ds.setDatabaseName("world")
+    ds.setDatabaseName("benchmark")
     ds.setUser("ldbc")
     ds.setPassword("password")
 
@@ -50,11 +54,14 @@ class Insert:
 
     connection = Resource.make(datasource.getConnection)(_.close())
 
-    records = (1 to len).map(num => (num, s"record$num")).toList
+    queryRecords = (1 to len).map(num => (num, s"record$num")).toList
+    dslRecords = comma(
+      NonEmptyList.fromListUnsafe((1 to len).map(num => parentheses(p"$num, ${ "record" + num }")).toList)
+    )
 
-    query = Table[Test]
+    query = Table[Test]("ldbc_wrapper_query_test")
 
-  @Param(Array("10", "100", "1000", "2000", "4000"))
+  @Param(Array("10", "100", "1000", "2000"))
   var len: Int = uninitialized
 
   @Benchmark
@@ -63,7 +70,7 @@ class Insert:
       .use { conn =>
         query
           .insertInto(test => (test.c1, test.c2))
-          .values(records)
+          .values(queryRecords)
           .update
           .commit(conn)
       }
@@ -73,9 +80,9 @@ class Insert:
   def dslInsertN: Unit =
     connection
       .use { conn =>
-        (sql"INSERT INTO test (c1, c2)" ++ values(NonEmptyList.fromListUnsafe(records))).update
+        (sql"INSERT INTO `ldbc_wrapper_dsl_test` (`c1`, `c2`) VALUES" ++ dslRecords).update
           .commit(conn)
       }
       .unsafeRunSync()
 
-case class Test(id: Option[Int], c1: Int, c2: String) derives Table
+case class Test(c0: Option[Int], c1: Int, c2: String) derives Table

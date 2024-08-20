@@ -6,8 +6,6 @@
 
 package ldbc.tests.model
 
-import cats.effect.IO
-
 import ldbc.sql.PreparedStatement
 import ldbc.dsl.*
 import ldbc.query.builder.Table
@@ -47,5 +45,5 @@ object Country:
     override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Continent): F[Unit] =
       statement.setString(index, value.toString)
 
-  given ResultSetReader[IO, Continent] =
-    ResultSetReader.mapping[IO, String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
+  given ResultSetReader[Continent] =
+    ResultSetReader.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))

@@ -7,12 +7,11 @@
 package ldbc.dsl
 
 import cats.*
-import cats.data.Kleisli
 import cats.syntax.all.*
 
 import cats.effect.Temporal
 
-import ldbc.sql.ResultSet
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for determining what type of search system statements are retrieved from the database.
@@ -27,7 +26,7 @@ trait Query[F[_], T]:
   /**
    * Functions for safely retrieving data from a database in an array or Option type.
    */
-  def to[G[_]: Traverse: Alternative]: Executor[F, G[T]]
+  def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]]
 
   /**
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
@@ -40,10 +39,10 @@ object Query:
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
     params:    List[Parameter.DynamicBinder]
-  )(using Kleisli[F, ResultSet[F], T])
+  )(using ResultSetConsumer.Read[T])
     extends Query[F, T]:
 
-    override def to[G[_]: Traverse: Alternative]: Executor[F, G[T]] =
+    override def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]] =
       Executor.Impl[F, G[T]](
         statement,
         params,
