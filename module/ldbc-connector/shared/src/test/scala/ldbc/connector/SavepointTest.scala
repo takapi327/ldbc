@@ -79,8 +79,7 @@ class SavepointTest extends FTestPlatform:
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
           _          <- conn.setAutoCommit(true)
-          decoded    <- resultSet.getInt(1)
-        yield decoded
+        yield resultSet.getInt(1)
       },
       1
     )
@@ -105,8 +104,7 @@ class SavepointTest extends FTestPlatform:
           _          <- statement3.setLong(2, 2L)
           resultSet  <- statement3.executeQuery()
           _          <- conn.setAutoCommit(true)
-          decoded    <- resultSet.getInt(1)
-        yield decoded
+        yield resultSet.getInt(1)
       },
       2
     )

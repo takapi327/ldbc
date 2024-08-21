@@ -4,13 +4,15 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package benchmark.slick
+package benchmark.wrapper.slick
 
 import java.util.concurrent.TimeUnit
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.compiletime.uninitialized
+
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import org.openjdk.jmh.annotations.*
 
@@ -31,17 +33,23 @@ class Select:
 
   @Setup
   def setup(): Unit =
-    db = Database.forURL(
-      url      = "jdbc:mysql://127.0.0.1:13306/world",
-      user     = "ldbc",
-      password = "password",
-      driver   = "com.mysql.cj.jdbc.Driver"
-    )
+    val ds = new MysqlDataSource()
+    ds.setServerName("127.0.0.1")
+    ds.setPortNumber(13306)
+    ds.setDatabaseName("world")
+    ds.setUser("ldbc")
+    ds.setPassword("password")
+
+    db = Database.forDataSource(ds, None)
 
     query = TableQuery[CityTable]
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
+
+  @TearDown
+  def closeDatabase(): Unit =
+    db.close()
 
   @Benchmark
   def selectN: Seq[(Int, String, String)] =

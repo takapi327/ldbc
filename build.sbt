@@ -198,6 +198,7 @@ lazy val tests = crossProject(JVMPlatform)
 
 lazy val benchmark = (project in file("benchmark"))
   .settings(description := "Projects for Benchmark Measurement")
+  .settings(scalacOptions ++= additionalSettings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
   .settings(
@@ -208,7 +209,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, schema.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, schema.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))

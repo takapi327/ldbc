@@ -7,6 +7,9 @@
 package benchmark
 
 import ldbc.query.builder.Table
+import ldbc.query.builder.formatter.Naming
+
+given Naming = Naming.PASCAL
 
 case class Model1(
   c1: Int

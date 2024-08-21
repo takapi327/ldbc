@@ -33,10 +33,9 @@ class CallableStatementTest extends FTestPlatform:
         for
           callableStatement <- conn.prepareCall("CALL proc1()")
           resultSet         <- callableStatement.executeQuery()
-          value             <- resultSet.getString(1)
-        yield Option(value)
+        yield Option(resultSet.getString(1))
       },
-      Some("8.0.33")
+      Some("8.4.0")
     )
   }
 
@@ -47,11 +46,11 @@ class CallableStatementTest extends FTestPlatform:
           callableStatement <- conn.prepareCall("CALL proc1()")
           resultSet         <- callableStatement.executeUpdate() *> callableStatement.getResultSet()
           value <- resultSet match
-                     case Some(rs) => rs.getString(1)
+                     case Some(rs) => IO(rs.getString(1))
                      case None     => IO.raiseError(new Exception("No result set"))
         yield Option(value)
       },
-      Some("8.0.33")
+      Some("8.4.0")
     )
   }
 
@@ -61,8 +60,7 @@ class CallableStatementTest extends FTestPlatform:
         for
           callableStatement <- conn.prepareCall("CALL proc2(?)")
           resultSet         <- callableStatement.setInt(1, 1024) *> callableStatement.executeQuery()
-          value             <- resultSet.getInt(1)
-        yield value
+        yield resultSet.getInt(1)
       },
       1024
     )
@@ -77,9 +75,7 @@ class CallableStatementTest extends FTestPlatform:
           callableStatement <- conn.prepareCall("CALL proc3(?, ?)")
           resultSet <- callableStatement.setInt(1, 1024) *> callableStatement.setString(2, "Hello") *> callableStatement
                          .executeQuery()
-          param1 <- resultSet.getInt(1)
-          param2 <- resultSet.getString(2)
-        yield (param1, Option(param2))
+        yield (resultSet.getInt(1), Option(resultSet.getString(2)))
       },
       (1024, Some("Hello"))
     )
@@ -108,8 +104,7 @@ class CallableStatementTest extends FTestPlatform:
           callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
           resultSet <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
                          .executeQuery()
-          value <- resultSet.getString(1)
-        yield Option(value)
+        yield Option(resultSet.getString(1))
       },
       Some("abcdefg")
     )
@@ -151,13 +146,11 @@ class CallableStatementTest extends FTestPlatform:
           hasResult <- callableStatement.setString(1, "abcdefg") *> callableStatement.setInt(2, 1) *> callableStatement
                          .execute()
           values <- Monad[IO].whileM[List, Option[String]](callableStatement.getMoreResults()) {
-                      for
-                        resultSet <- callableStatement.getResultSet().flatMap {
-                                       case Some(rs) => IO.pure(rs)
-                                       case None     => IO.raiseError(new Exception("No result set"))
-                                     }
-                        value <- resultSet.getString(1)
-                      yield Option(value)
+                      for resultSet <- callableStatement.getResultSet().flatMap {
+                                         case Some(rs) => IO.pure(rs)
+                                         case None     => IO.raiseError(new Exception("No result set"))
+                                       }
+                      yield Option(resultSet.getString(1))
                     }
         yield values
       },
@@ -189,8 +182,7 @@ class CallableStatementTest extends FTestPlatform:
         for
           callableStatement <- conn.prepareCall("SELECT func1()")
           resultSet         <- callableStatement.executeQuery()
-          value             <- resultSet.getInt(1)
-        yield value
+        yield resultSet.getInt(1)
       },
       -1
     )
@@ -202,8 +194,7 @@ class CallableStatementTest extends FTestPlatform:
         for
           callableStatement <- conn.prepareCall("SELECT func2()")
           resultSet         <- callableStatement.executeQuery()
-          value             <- resultSet.getString(1)
-        yield Option(value)
+        yield Option(resultSet.getString(1))
       },
       Some("hello, world")
     )
@@ -215,8 +206,7 @@ class CallableStatementTest extends FTestPlatform:
         for
           callableStatement <- conn.prepareCall("select getPrice(?)")
           resultSet         <- callableStatement.setInt(1, 100) *> callableStatement.executeQuery()
-          value             <- resultSet.getInt(1)
-        yield value
+        yield resultSet.getInt(1)
       },
       110
     )
