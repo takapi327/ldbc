@@ -17,15 +17,20 @@ class HelperFunctionTest extends munit.CatsEffectSuite:
   test(
     "The statement that constructs VALUES with multiple values of the same type will be the same as the string specified."
   ) {
-    val sql = sql"INSERT INTO `table` (`column1`, `column2`) " ++ values(NonEmptyList.of(1, 2))
-    assertEquals(sql.statement, "INSERT INTO `table` (`column1`, `column2`) VALUES(?),(?)")
+    val sql = sql"INSERT INTO `table` (`column1`, `column2`) " ++ values(NonEmptyList.of((1, 2), (3, 4), (5, 6)))
+    assertEquals(sql.statement, "INSERT INTO `table` (`column1`, `column2`) VALUES(?,?),(?,?),(?,?)")
+  }
+
+  test(
+    "Statements that comprise VALUES with a single value of the same type will be the same as the specified string."
+  ) {
+    val sql = sql"INSERT INTO `table` (`column1`) " ++ values(NonEmptyList.of(1, 2, 3, 4))
+    assertEquals(sql.statement, "INSERT INTO `table` (`column1`) VALUES(?),(?),(?),(?)")
   }
 
   test("A statement that constructs VALUES in multiple sql is the same as the specified string.") {
     case class Value(c1: Int, c2: String)
-    val vs: NonEmptyList[Value] = NonEmptyList.of(Value(1, "value1"), Value(2, "value2"))
-    val sql =
-      sql"INSERT INTO `table` (`column1`, `column2`) VALUES" ++ comma(vs.map(v => parentheses(p"${ v.c1 },${ v.c2 }")))
+    val sql = sql"INSERT INTO `table` (`column1`, `column2`) " ++ values(NonEmptyList.of(Value(1, "value1"), Value(2, "value2")))
     assertEquals(sql.statement, "INSERT INTO `table` (`column1`, `column2`) VALUES(?,?),(?,?)")
   }
 
