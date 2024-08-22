@@ -36,7 +36,7 @@ class Insert:
   var query: Table[Test] = uninitialized
 
   @volatile
-  var queryRecords: List[(Int, String)] = List.empty
+  var records: NonEmptyList[(Int, String)] = uninitialized
 
   @volatile
   var dslRecords: SQL = uninitialized
@@ -54,14 +54,11 @@ class Insert:
 
     connection = Resource.make(datasource.getConnection)(_.close())
 
-    queryRecords = (1 to len).map(num => (num, s"record$num")).toList
-    dslRecords = comma(
-      NonEmptyList.fromListUnsafe((1 to len).map(num => parentheses(p"$num, ${ "record" + num }")).toList)
-    )
+    records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
     query = Table[Test]("ldbc_wrapper_query_test")
 
-  @Param(Array("10", "100", "1000", "2000"))
+  @Param(Array("10"))
   var len: Int = uninitialized
 
   @Benchmark
@@ -70,7 +67,7 @@ class Insert:
       .use { conn =>
         query
           .insertInto(test => (test.c1, test.c2))
-          .values(queryRecords)
+          .values(records.toList)
           .update
           .commit(conn)
       }
@@ -80,7 +77,7 @@ class Insert:
   def dslInsertN: Unit =
     connection
       .use { conn =>
-        (sql"INSERT INTO `ldbc_wrapper_dsl_test` (`c1`, `c2`) VALUES" ++ dslRecords).update
+        (sql"INSERT INTO `ldbc_wrapper_dsl_test` (`c1`, `c2`) " ++ values(records)).update
           .commit(conn)
       }
       .unsafeRunSync()
