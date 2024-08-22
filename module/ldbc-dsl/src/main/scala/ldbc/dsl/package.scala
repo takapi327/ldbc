@@ -34,7 +34,7 @@ package object dsl:
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
     /** Returns `VALUES (v0), (v1), ...`. */
-    def values[M[_] : Reducible, T](vs: M[T])(using Parameter[T]): Mysql[F] =
+    def values[M[_]: Reducible, T](vs: M[T])(using Parameter[T]): Mysql[F] =
       sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(p"$v")))
 
     /** Returns `VALUES (v0, v1), (v2, v3), ...`. */
@@ -42,11 +42,15 @@ package object dsl:
       sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values(v))))
 
     private inline def values[T <: Product](v: T)(using mirror: Mirror.ProductOf[T]): Mysql[F] =
-      val tuple = Parameter.fold[mirror.MirroredElemTypes]
+      val tuple  = Parameter.fold[mirror.MirroredElemTypes]
       val params = tuple.toList
-      Mysql[F](List.fill(params.size)("?").mkString(","), (Tuple.fromProduct(v).toList zip params).map {
-        case (value, param) => Parameter.DynamicBinder(value.asInstanceOf[Any])(using param.asInstanceOf[Parameter[Any]])
-      })
+      Mysql[F](
+        List.fill(params.size)("?").mkString(","),
+        (Tuple.fromProduct(v).toList zip params).map {
+          case (value, param) =>
+            Parameter.DynamicBinder(value.asInstanceOf[Any])(using param.asInstanceOf[Parameter[Any]])
+        }
+      )
 
     /** Returns `(sql IN (v0, v1, ...))`. */
     def in[T](s: SQL, v0: T, v1: T, vs: T*)(using Parameter[T]): Mysql[F] =
