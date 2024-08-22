@@ -6,6 +6,8 @@
 
 package ldbc
 
+import scala.deriving.Mirror
+
 import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
@@ -16,7 +18,7 @@ import ldbc.dsl.syntax.*
 
 package object dsl:
 
-  private[ldbc] trait SyncSyntax[F[_]: Sync] extends StringContextSyntax[F]:
+  private[ldbc] trait SyncSyntax[F[_]: Temporal] extends StringContextSyntax[F]:
 
     /**
      * Function for setting parameters to be used as static strings.
@@ -32,12 +34,19 @@ package object dsl:
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
     /** Returns `VALUES (v0), (v1), ...`. */
-    def values[M[_]: Reducible, T](vs: M[T])(using Parameter[T]): Mysql[F] =
+    def values[M[_] : Reducible, T](vs: M[T])(using Parameter[T]): Mysql[F] =
       sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(p"$v")))
 
-    /** Returns `VALUES (s0, s1, ...)`. */
-    def values[M[_]: Reducible](vs: M[SQL]): Mysql[F] =
-      sql"VALUES" ++ parentheses(comma(vs.toNonEmptyList))
+    /** Returns `VALUES (v0, v1), (v2, v3), ...`. */
+    inline def values[M[_]: Reducible, T <: Product](vs: M[T])(using Mirror.ProductOf[T]): Mysql[F] =
+      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values(v))))
+
+    private inline def values[T <: Product](v: T)(using mirror: Mirror.ProductOf[T]): Mysql[F] =
+      val tuple = Parameter.fold[mirror.MirroredElemTypes]
+      val params = tuple.toList
+      Mysql[F](List.fill(params.size)("?").mkString(","), (Tuple.fromProduct(v).toList zip params).map {
+        case (value, param) => Parameter.DynamicBinder(value.asInstanceOf[Any])(using param.asInstanceOf[Parameter[Any]])
+      })
 
     /** Returns `(sql IN (v0, v1, ...))`. */
     def in[T](s: SQL, v0: T, v1: T, vs: T*)(using Parameter[T]): Mysql[F] =
