@@ -42,8 +42,8 @@ import ldbc.dsl.io.*
   // #program1
 
   // #customReader
-  given ResultSetReader[IO, Status] =
-    ResultSetReader.mapping[IO, Boolean, Status] {
+  given ResultSetReader[Status] =
+    ResultSetReader.mapping[Boolean, Status] {
       case true  => Status.Active
       case false => Status.InActive
     }
