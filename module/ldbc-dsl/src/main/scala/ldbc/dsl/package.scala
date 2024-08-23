@@ -195,7 +195,6 @@ package object dsl:
     export ldbc.dsl.logging.LogHandler
     export ldbc.dsl.Parameter
 
-    type ResultSetReaderIO[T] = ldbc.dsl.ResultSetReader[F, T]
     export ldbc.dsl.ResultSetReader
 
     type PreparedStatementIO = ldbc.sql.PreparedStatement[F]
