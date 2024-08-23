@@ -48,8 +48,9 @@ object PacketSocket:
   ): PacketSocket[F] = new PacketSocket[F]:
 
     private def debug(msg: => String): F[Unit] =
-      sequenceIdRef.get
-        .flatMap(id => if debugEnabled then Console[F].println(s"[$id] $msg") else Concurrent[F].unit)
+      Concurrent[F].whenA(debugEnabled) {
+        sequenceIdRef.get.flatMap(id => Console[F].println(s"[$id] $msg"))
+      }
 
     override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       (for
@@ -100,7 +101,7 @@ object PacketSocket:
     sequenceIdRef:     Ref[F, Byte],
     initialPacketRef:  Ref[F, Option[InitialPacket]],
     readTimeout:       Duration,
-    capabilitiesFlags: List[CapabilitiesFlags]
+    capabilitiesFlags: Set[CapabilitiesFlags]
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
       fromBitVectorSocket(_, debug, sequenceIdRef)

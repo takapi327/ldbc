@@ -6,8 +6,6 @@
 
 package ldbc.tests.model
 
-import cats.effect.IO
-
 import ldbc.sql.PreparedStatement
 import ldbc.dsl.*
 import ldbc.query.builder.Table
@@ -30,5 +28,5 @@ object CountryLanguage:
     override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: IsOfficial): F[Unit] =
       statement.setString(index, value.toString)
 
-  given ResultSetReader[IO, IsOfficial] =
-    ResultSetReader.mapping[IO, String, IsOfficial](str => IsOfficial.valueOf(str))
+  given ResultSetReader[IsOfficial] =
+    ResultSetReader.mapping[String, IsOfficial](str => IsOfficial.valueOf(str))

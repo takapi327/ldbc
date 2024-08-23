@@ -31,6 +31,6 @@ trait ColumnDefinitionPacket extends ResponsePacket:
 
 object ColumnDefinitionPacket:
 
-  def decoder(capabilitiesFlags: Seq[CapabilitiesFlags]): Decoder[ColumnDefinitionPacket] =
+  def decoder(capabilitiesFlags: Set[CapabilitiesFlags]): Decoder[ColumnDefinitionPacket] =
     if capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41) then ColumnDefinition41Packet.decoder
     else ColumnDefinition320Packet.decoder

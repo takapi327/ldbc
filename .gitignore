@@ -11,5 +11,8 @@ target/
 .vscode/
 metals.sbt
 
+**/benchmark/**/*.json
+**/benchmark/**/*.svg
+
 # for Scala CLI
 **/.scala-build/

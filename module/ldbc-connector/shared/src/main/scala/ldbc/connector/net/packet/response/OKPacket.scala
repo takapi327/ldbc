@@ -56,7 +56,7 @@ case class OKPacket(
   status:           Int,
   affectedRows:     Long,
   lastInsertId:     Long,
-  statusFlags:      Seq[ServerStatusFlags],
+  statusFlags:      Set[ServerStatusFlags],
   warnings:         Option[Int],
   info:             Option[String],
   sessionStateInfo: Option[String],
@@ -69,7 +69,7 @@ object OKPacket:
 
   val STATUS = 0x00
 
-  def decoder(capabilityFlags: Seq[CapabilitiesFlags]): Decoder[OKPacket] =
+  def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[OKPacket] =
     val hasClientProtocol41Flag   = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
     val hasClientTransactionsFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_TRANSACTIONS)
     val hasClientSessionTrackFlag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_SESSION_TRACK)
@@ -78,7 +78,7 @@ object OKPacket:
       lastInsertId <- lengthEncodedIntDecoder
       statusFlags <-
         (if hasClientProtocol41Flag || hasClientTransactionsFlag then uint16L.map(int => ServerStatusFlags(int.toLong))
-         else provide(Nil))
+         else provide(Set.empty[ServerStatusFlags]))
       warnings <- if hasClientProtocol41Flag then uint16L.map(_.some) else provide(None)
       info     <- if hasClientSessionTrackFlag then bytes.map(_.decodeUtf8Lenient.some) else provide(None)
       sessionStateInfo <- (if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) then

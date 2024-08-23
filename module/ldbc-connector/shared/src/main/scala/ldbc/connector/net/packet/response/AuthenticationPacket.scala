@@ -20,7 +20,7 @@ trait AuthenticationPacket extends ResponsePacket
 object AuthenticationPacket:
 
   def decoder(
-    capabilityFlags: Seq[CapabilitiesFlags]
+    capabilityFlags: Set[CapabilitiesFlags]
   ): Decoder[AuthenticationPacket | GenericResponsePackets | UnknownPacket] =
     uint8.flatMap {
       case OKPacket.STATUS                => OKPacket.decoder(capabilityFlags)

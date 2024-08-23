@@ -8,7 +8,7 @@ package ldbc.connector.net.protocol
 
 import java.time.*
 
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
 import cats.syntax.all.*
@@ -32,14 +32,14 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
   serverVariables:         Map[String, String],
   sql:                     String,
   paramInfo:               CallableStatementImpl.ParamInfo,
-  params:                  Ref[F, ListMap[Int, Parameter]],
+  params:                  Ref[F, SortedMap[Int, Parameter]],
   batchedArgs:             Ref[F, Vector[String]],
   connectionClosed:        Ref[F, Boolean],
   statementClosed:         Ref[F, Boolean],
   resultSetClosed:         Ref[F, Boolean],
-  currentResultSet:        Ref[F, Option[ResultSet[F]]],
-  outputParameterResult:   Ref[F, Option[ResultSetImpl[F]]],
-  resultSets:              Ref[F, List[ResultSetImpl[F]]],
+  currentResultSet:        Ref[F, Option[ResultSet]],
+  outputParameterResult:   Ref[F, Option[ResultSetImpl]],
+  resultSets:              Ref[F, List[ResultSetImpl]],
   parameterIndexToRsIndex: Ref[F, Map[Int, Int]],
   updateCount:             Ref[F, Long],
   moreResults:             Ref[F, Boolean],
@@ -56,26 +56,21 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
     Attribute("sql", sql)
   )
 
-  override def executeQuery(): F[ResultSet[F]] =
+  override def executeQuery(): F[ResultSet] =
     checkClosed() *>
       checkNullOrEmptyQuery(sql) *>
-      exchange[F, ResultSet[F]]("statement") { (span: Span[F]) =>
+      exchange[F, ResultSet]("statement") { (span: Span[F]) =>
         if sql.toUpperCase.startsWith("CALL") then
           executeCallStatement(span).flatMap { resultSets =>
             resultSets.headOption match
               case None =>
                 for
-                  lastColumnReadNullable <- Ref[F].of(true)
-                  resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                  resultSet = ResultSetImpl.empty(
-                                serverVariables,
-                                protocol.initialPacket.serverVersion,
-                                resultSetClosed,
-                                lastColumnReadNullable,
-                                resultSetCurrentCursor,
-                                resultSetCurrentRow
-                              )
+                  resultSet <- ev.pure(
+                                 ResultSetImpl.empty(
+                                   serverVariables,
+                                   protocol.initialPacket.serverVersion
+                                 )
+                               )
                   _ <- currentResultSet.set(Some(resultSet))
                 yield resultSet
               case Some(resultSet) =>
@@ -95,7 +90,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               ) *>
               receiveQueryResult()
           }
-      } <* params.set(ListMap.empty)
+      } <* params.set(SortedMap.empty)
 
   override def executeLargeUpdate(): F[Long] =
     checkClosed() *>
@@ -106,17 +101,12 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
             resultSets.headOption match
               case None =>
                 for
-                  lastColumnReadNullable <- Ref[F].of(true)
-                  resultSetCurrentCursor <- Ref[F].of(0)
-                  resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-                  resultSet = ResultSetImpl.empty(
-                                serverVariables,
-                                protocol.initialPacket.serverVersion,
-                                resultSetClosed,
-                                lastColumnReadNullable,
-                                resultSetCurrentCursor,
-                                resultSetCurrentRow
-                              )
+                  resultSet <- ev.pure(
+                                 ResultSetImpl.empty(
+                                   serverVariables,
+                                   protocol.initialPacket.serverVersion
+                                 )
+                               )
                   _ <- currentResultSet.set(Some(resultSet))
                 yield resultSet
               case Some(resultSet) =>
@@ -189,7 +179,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       params.get.flatMap { params =>
         batchedArgs.update(_ :+ buildBatchQuery(sql, params))
       } *>
-      params.set(ListMap.empty)
+      params.set(SortedMap.empty)
 
   override def clearBatch(): F[Unit] = batchedArgs.set(Vector.empty)
 
@@ -251,35 +241,26 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                   )
           )
         }
-      } <* params.set(ListMap.empty) <* batchedArgs.set(Vector.empty)
+      } <* params.set(SortedMap.empty) <* batchedArgs.set(Vector.empty)
 
-  override def getGeneratedKeys(): F[ResultSet[F]] =
+  override def getGeneratedKeys(): F[ResultSet] =
     autoGeneratedKeys.get.flatMap {
       case Statement.RETURN_GENERATED_KEYS =>
         for
-          isResultSetClosed      <- Ref[F].of(false)
-          lastColumnReadNullable <- Ref[F].of(true)
-          resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-          lastInsertId           <- lastInsertId.get
-          resultSet = ResultSetImpl(
-                        Vector(new ColumnDefinitionPacket:
-                          override def table: String = ""
-
-                          override def name: String = "GENERATED_KEYS"
-
-                          override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
-
-                          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-                        ),
-                        Vector(ResultSetRowPacket(List(Some(lastInsertId.toString)))),
-                        serverVariables,
-                        protocol.initialPacket.serverVersion,
-                        isResultSetClosed,
-                        lastColumnReadNullable,
-                        resultSetCurrentCursor,
-                        resultSetCurrentRow
-                      )
+          lastInsertId <- lastInsertId.get
+          resultSet <- ev.pure(
+                         ResultSetImpl(
+                           Vector(new ColumnDefinitionPacket:
+                             override def table:      String                     = ""
+                             override def name:       String                     = "GENERATED_KEYS"
+                             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
+                             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+                           ),
+                           Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
+                           serverVariables,
+                           protocol.initialPacket.serverVersion
+                         )
+                       )
           _ <- currentResultSet.set(Some(resultSet))
         yield resultSet
       case Statement.NO_GENERATED_KEYS =>
@@ -314,8 +295,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               queryBuf.append("=")
 
               params.get.flatMap { params =>
-                val sql =
-                  (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+                val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
                 sendQuery(sql).flatMap {
                   case _: OKPacket      => ev.unit
                   case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
@@ -338,7 +318,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getString(index))
+         else shiftF(resultSet.getString(index)))
     yield Option(value)
 
   override def getBoolean(parameterIndex: Int): F[Boolean] =
@@ -349,7 +329,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getBoolean(index))
+         else shiftF(resultSet.getBoolean(index)))
     yield value
 
   override def getByte(parameterIndex: Int): F[Byte] =
@@ -360,7 +340,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getByte(index))
+         else shiftF(resultSet.getByte(index)))
     yield value
 
   override def getShort(parameterIndex: Int): F[Short] =
@@ -371,7 +351,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getShort(index))
+         else shiftF(resultSet.getShort(index)))
     yield value
 
   override def getInt(parameterIndex: Int): F[Int] =
@@ -382,7 +362,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getInt(index))
+         else shiftF(resultSet.getInt(index)))
     yield value
 
   override def getLong(parameterIndex: Int): F[Long] =
@@ -393,7 +373,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getLong(index))
+         else shiftF(resultSet.getLong(index)))
     yield value
 
   override def getFloat(parameterIndex: Int): F[Float] =
@@ -404,7 +384,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getFloat(index))
+         else shiftF(resultSet.getFloat(index)))
     yield value
 
   override def getDouble(parameterIndex: Int): F[Double] =
@@ -415,7 +395,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getDouble(index))
+         else shiftF(resultSet.getDouble(index)))
     yield value
 
   override def getBytes(parameterIndex: Int): F[Option[Array[Byte]]] =
@@ -426,7 +406,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getBytes(index))
+         else shiftF(resultSet.getBytes(index)))
     yield Option(value)
 
   override def getDate(parameterIndex: Int): F[Option[LocalDate]] =
@@ -437,7 +417,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getDate(index))
+         else shiftF(resultSet.getDate(index)))
     yield Option(value)
 
   override def getTime(parameterIndex: Int): F[Option[LocalTime]] =
@@ -448,7 +428,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getTime(index))
+         else shiftF(resultSet.getTime(index)))
     yield Option(value)
 
   override def getTimestamp(parameterIndex: Int): F[Option[LocalDateTime]] =
@@ -459,7 +439,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getTimestamp(index))
+         else shiftF(resultSet.getTimestamp(index)))
     yield Option(value)
 
   override def getBigDecimal(parameterIndex: Int): F[Option[BigDecimal]] =
@@ -470,85 +450,85 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       value <-
         (if index == CallableStatementImpl.NOT_OUTPUT_PARAMETER_INDICATOR then
            ev.raiseError(new SQLException(s"Parameter $parameterIndex is not registered as an output parameter"))
-         else resultSet.getBigDecimal(index))
+         else shiftF(resultSet.getBigDecimal(index)))
     yield Option(value)
 
   override def getString(parameterName: String): F[Option[String]] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getString(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getString(mangleParameterName(parameterName)))
     yield Option(value)
 
   override def getBoolean(parameterName: String): F[Boolean] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getBoolean(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getBoolean(mangleParameterName(parameterName)))
     yield value
 
   override def getByte(parameterName: String): F[Byte] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getByte(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getByte(mangleParameterName(parameterName)))
     yield value
 
   override def getShort(parameterName: String): F[Short] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getShort(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getShort(mangleParameterName(parameterName)))
     yield value
 
   override def getInt(parameterName: String): F[Int] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getInt(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getInt(mangleParameterName(parameterName)))
     yield value
 
   override def getLong(parameterName: String): F[Long] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getLong(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getLong(mangleParameterName(parameterName)))
     yield value
 
   override def getFloat(parameterName: String): F[Float] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getFloat(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getFloat(mangleParameterName(parameterName)))
     yield value
 
   override def getDouble(parameterName: String): F[Double] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getDouble(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getDouble(mangleParameterName(parameterName)))
     yield value
 
   override def getBytes(parameterName: String): F[Option[Array[Byte]]] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getBytes(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getBytes(mangleParameterName(parameterName)))
     yield Option(value)
 
   override def getDate(parameterName: String): F[Option[LocalDate]] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getDate(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getDate(mangleParameterName(parameterName)))
     yield Option(value)
 
   override def getTime(parameterName: String): F[Option[LocalTime]] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getTime(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getTime(mangleParameterName(parameterName)))
     yield Option(value)
 
   override def getTimestamp(parameterName: String): F[Option[LocalDateTime]] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getTimestamp(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getTimestamp(mangleParameterName(parameterName)))
     yield Option(value)
 
   override def getBigDecimal(parameterName: String): F[Option[BigDecimal]] =
     for
       resultSet <- getOutputParameters()
-      value     <- resultSet.getBigDecimal(mangleParameterName(parameterName))
+      value     <- shiftF(resultSet.getBigDecimal(mangleParameterName(parameterName)))
     yield Option(value)
 
   private def setParameter(index: Int, value: String): F[Unit] =
@@ -559,7 +539,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
       ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)
     ) *> protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
 
-  private def receiveUntilOkPacket(resultSets: Vector[ResultSetImpl[F]]): F[Vector[ResultSetImpl[F]]] =
+  private def receiveUntilOkPacket(resultSets: Vector[ResultSetImpl]): F[Vector[ResultSetImpl]] =
     protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
       case _: OKPacket      => resultSets.pure[F]
       case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
@@ -572,21 +552,13 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
             )
           resultSetRow <-
             protocol.readUntilEOF[ResultSetRowPacket](
-              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-              Vector.empty
+              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
             )
-          lastColumnReadNullable <- Ref[F].of(true)
-          resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
           resultSet = ResultSetImpl(
                         columnDefinitions,
                         resultSetRow,
                         serverVariables,
                         protocol.initialPacket.serverVersion,
-                        resultSetClosed,
-                        lastColumnReadNullable,
-                        resultSetCurrentCursor,
-                        resultSetCurrentRow,
                         resultSetType,
                         resultSetConcurrency
                       )
@@ -594,22 +566,16 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
         yield resultSets
     }
 
-  private def receiveQueryResult(): F[ResultSet[F]] =
+  private def receiveQueryResult(): F[ResultSet] =
     protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
       case _: OKPacket =>
-        for
-          lastColumnReadNullable <- Ref[F].of(true)
-          resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of[Option[ResultSetRowPacket]](None)
-        yield ResultSetImpl
-          .empty(
-            serverVariables,
-            protocol.initialPacket.serverVersion,
-            resultSetClosed,
-            lastColumnReadNullable,
-            resultSetCurrentCursor,
-            resultSetCurrentRow
-          )
+        ev.pure(
+          ResultSetImpl
+            .empty(
+              serverVariables,
+              protocol.initialPacket.serverVersion
+            )
+        )
       case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
       case result: ColumnsNumberPacket =>
         for
@@ -618,23 +584,14 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               result.size,
               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
             )
-          resultSetRow <-
-            protocol.readUntilEOF[ResultSetRowPacket](
-              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions),
-              Vector.empty
-            )
-          lastColumnReadNullable <- Ref[F].of(true)
-          resultSetCurrentCursor <- Ref[F].of(0)
-          resultSetCurrentRow    <- Ref[F].of(resultSetRow.headOption)
+          resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
+                            ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                          )
           resultSet = ResultSetImpl(
                         columnDefinitions,
                         resultSetRow,
                         serverVariables,
                         protocol.initialPacket.serverVersion,
-                        resultSetClosed,
-                        lastColumnReadNullable,
-                        resultSetCurrentCursor,
-                        resultSetCurrentRow,
                         resultSetType,
                         resultSetConcurrency
                       )
@@ -680,8 +637,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
           queryBuf.append("=")
 
           acc *> params.get.flatMap { params =>
-            val sql =
-              (queryBuf.toString.toCharArray ++ params.get(param.index).fold("NULL".toCharArray)(_.sql)).mkString
+            val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
             sendQuery(sql).flatMap {
               case _: OKPacket      => ev.unit
               case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
@@ -752,7 +708,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
         protocol.resetSequenceId *>
         protocol.send(ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
         receiveQueryResult().flatMap {
-          case resultSet: ResultSetImpl[F] => outputParameterResult.update(_ => Some(resultSet))
+          case resultSet: ResultSetImpl => outputParameterResult.update(_ => Some(resultSet))
         } *>
         parameters.zipWithIndex.foldLeft(ev.unit) {
           case (acc, ((paramIndex, _), index)) =>
@@ -767,7 +723,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
    * @return
    * the ResultSet that holds the output parameters
    */
-  private def getOutputParameters(): F[ResultSetImpl[F]] =
+  private def getOutputParameters(): F[ResultSetImpl] =
     outputParameterResult.get.flatMap {
       case None =>
         if paramInfo.numParameters == 0 then ev.raiseError(new SQLException("No output parameters registered."))
@@ -796,7 +752,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
    * @return
    * a list of ResultSet
    */
-  private def executeCallStatement(span: Span[F]): F[Vector[ResultSetImpl[F]]] =
+  private def executeCallStatement(span: Span[F]): F[Vector[ResultSetImpl]] =
     setInOutParamsOnServer(paramInfo) *>
       setOutParams() *>
       params.get.flatMap { params =>
@@ -883,58 +839,57 @@ object CallableStatementImpl:
 
   object ParamInfo:
 
-    def apply[F[_]: Temporal](
+    def apply(
       nativeSql:      String,
       database:       Option[String],
-      resultSet:      ResultSetImpl[F],
+      resultSet:      ResultSetImpl,
       isFunctionCall: Boolean
-    ): F[ParamInfo] =
-      val parameterListF = Monad[F].whileM[List, CallableStatementParameter](resultSet.next()) {
-        for
-          index           <- resultSet.getRow()
-          paramName       <- resultSet.getString(4)
-          procedureColumn <- resultSet.getInt(5)
-          jdbcType        <- resultSet.getInt(6)
-          typeName        <- resultSet.getString(7)
-          precision       <- resultSet.getInt(8)
-          scale           <- resultSet.getInt(19)
-          nullability     <- resultSet.getShort(12)
-        yield
-          val inOutModifier = procedureColumn match
-            case DatabaseMetaData.procedureColumnIn    => ParameterMetaData.parameterModeIn
-            case DatabaseMetaData.procedureColumnInOut => ParameterMetaData.parameterModeInOut
-            case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn =>
-              ParameterMetaData.parameterModeOut
-            case _ => ParameterMetaData.parameterModeUnknown
+    ): ParamInfo =
+      val builder = List.newBuilder[CallableStatementParameter]
+      while resultSet.next() do
+        val index           = resultSet.getRow()
+        val paramName       = resultSet.getString(4)
+        val procedureColumn = resultSet.getInt(5)
+        val jdbcType        = resultSet.getInt(6)
+        val typeName        = resultSet.getString(7)
+        val precision       = resultSet.getInt(8)
+        val scale           = resultSet.getInt(19)
+        val nullability     = resultSet.getShort(12)
 
-          val (isOutParameter, isInParameter) =
-            if index - 1 == 0 && isFunctionCall then (true, false)
-            else if inOutModifier == DatabaseMetaData.procedureColumnInOut then (true, true)
-            else if inOutModifier == DatabaseMetaData.procedureColumnIn then (false, true)
-            else if inOutModifier == DatabaseMetaData.procedureColumnOut then (true, false)
-            else (false, false)
-          CallableStatementParameter(
-            Option(paramName),
-            isInParameter,
-            isOutParameter,
-            index,
-            jdbcType,
-            Option(typeName),
-            precision,
-            scale,
-            nullability,
-            inOutModifier
-          )
-      }
+        val inOutModifier = procedureColumn match
+          case DatabaseMetaData.procedureColumnIn    => ParameterMetaData.parameterModeIn
+          case DatabaseMetaData.procedureColumnInOut => ParameterMetaData.parameterModeInOut
+          case DatabaseMetaData.procedureColumnOut | DatabaseMetaData.procedureColumnReturn =>
+            ParameterMetaData.parameterModeOut
+          case _ => ParameterMetaData.parameterModeUnknown
 
-      for
-        numParameters <- resultSet.rowLength()
-        parameterList <- parameterListF
-      yield ParamInfo(
+        val (isOutParameter, isInParameter) =
+          if index - 1 == 0 && isFunctionCall then (true, false)
+          else if inOutModifier == DatabaseMetaData.procedureColumnInOut then (true, true)
+          else if inOutModifier == DatabaseMetaData.procedureColumnIn then (false, true)
+          else if inOutModifier == DatabaseMetaData.procedureColumnOut then (true, false)
+          else (false, false)
+
+        builder += CallableStatementParameter(
+          Option(paramName),
+          isInParameter,
+          isOutParameter,
+          index,
+          jdbcType,
+          Option(typeName),
+          precision,
+          scale,
+          nullability,
+          inOutModifier
+        )
+
+      val parameterList = builder.result()
+
+      ParamInfo(
         nativeSql      = nativeSql,
         dbInUse        = database,
         isFunctionCall = isFunctionCall,
-        numParameters  = numParameters,
+        numParameters  = resultSet.rowLength(),
         parameterList  = parameterList,
         parameterMap   = ListMap(parameterList.map(p => p.paramName.getOrElse("") -> p)*)
       )

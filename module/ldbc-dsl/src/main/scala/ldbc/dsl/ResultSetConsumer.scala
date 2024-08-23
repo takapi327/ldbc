@@ -7,10 +7,10 @@
 package ldbc.dsl
 
 import cats.*
-import cats.data.Kleisli
 import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for generating the specified data type from a ResultSet.
@@ -31,34 +31,31 @@ trait ResultSetConsumer[F[_], T]:
    * @return
    *   Type you want to build with data obtained from ResultSet
    */
-  def consume(resultSet: ResultSet[F]): F[T]
+  def consume(resultSet: ResultSet): F[T]
 
 object ResultSetConsumer:
 
-  given [F[_], T](using
+  type Read[T] = ResultSet => T
+
+  given [F[_]: Monad, T](using
     consumer: ResultSetConsumer[F, Option[T]],
     error:    MonadError[F, Throwable]
   ): ResultSetConsumer[F, T] with
-    override def consume(resultSet: ResultSet[F]): F[T] =
+    override def consume(resultSet: ResultSet): F[T] =
       consumer.consume(resultSet).flatMap {
         case Some(value) => error.pure(value)
         case None        => error.raiseError(new NoSuchElementException(""))
       }
 
-  given [F[_]: Monad, T](using resultSetKleisli: Kleisli[F, ResultSet[F], T]): ResultSetConsumer[F, Option[T]] with
-    override def consume(resultSet: ResultSet[F]): F[Option[T]] =
-      for
-        hasNext <- resultSet.next()
-        result  <- if hasNext then resultSetKleisli.run(resultSet).map(_.some) else Monad[F].pure(None)
-      yield result
+  given [F[_]: Monad, T](using read: Read[T]): ResultSetConsumer[F, Option[T]] with
+    override def consume(resultSet: ResultSet): F[Option[T]] =
+      if resultSet.next() then Monad[F].pure(read(resultSet).some) else Monad[F].pure(None)
 
-  given [F[_]: Monad, T, G[_]: Applicative: MonoidK](using
-    resultSetKleisli: Kleisli[F, ResultSet[F], T]
+  given [F[_]: Monad, T, G[_]](using
+    read:          Read[T],
+    factoryCompat: FactoryCompat[T, G[T]]
   ): ResultSetConsumer[F, G[T]] with
-    override def consume(resultSet: ResultSet[F]): F[G[T]] =
-      def loop(acc: G[T]): F[G[T]] =
-        resultSet.next().flatMap {
-          case false => Monad[F].pure(acc)
-          case true  => resultSetKleisli.run(resultSet).flatMap(v => loop(acc <+> Applicative[G].pure(v)))
-        }
-      loop(MonoidK[G].empty)
+    override def consume(resultSet: ResultSet): F[G[T]] =
+      val builder = factoryCompat.newBuilder
+      while resultSet.next() do builder += read(resultSet)
+      Monad[F].pure(builder.result())

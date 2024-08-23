@@ -20,7 +20,8 @@ ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
 ThisBuild / crossScalaVersions         := Seq(scala3, scala34)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ settings2n
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
@@ -34,6 +35,17 @@ lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .default("core", "ldbc core project")
   .settings(
+    onLoadMessage :=
+      s"""
+         |${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.
+         |
+         |${ scala.Console.RED }${ organization.value } %% ${ name.value } % ${ version.value }
+         |
+         |         ${ scala.Console.RED }↓↓↓↓↓
+         |
+         |${ scala.Console.RED }${ organization.value } %% ldbc-schema % ${ version.value }
+         |
+         |""".stripMargin,
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"   % "2.10.0",
       "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
@@ -79,8 +91,11 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .dependsOn(queryBuilder)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
-  .settings(description := "Project to generate SchemaSPY documentation")
-  .settings(libraryDependencies += schemaspy)
+  .settings(
+    description := "Project to generate SchemaSPY documentation",
+    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
+    libraryDependencies += schemaspy
+  )
   .dependsOn(core.jvm)
 
 lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -96,7 +111,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .jvmSettings(
     libraryDependencies ++= Seq(
       "io.circe" %%% "circe-generic" % "0.14.9",
-      "io.circe" %%% "circe-yaml"    % "0.15.3"
+      "io.circe" %%% "circe-yaml"    % "0.16.0"
     )
   )
   .platformsSettings(JSPlatform, NativePlatform)(
@@ -123,18 +138,23 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-effect"       % "3.5.4",
-      "co.fs2"        %%% "fs2-core"          % "3.10-365636d",
-      "co.fs2"        %%% "fs2-io"            % "3.10-365636d",
+      "co.fs2"        %%% "fs2-core"          % "3.10.2",
+      "co.fs2"        %%% "fs2-io"            % "3.10.2",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.8.0",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.8.1",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
   )
   .jsSettings(
     Test / scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule))
+  )
+  .nativeEnablePlugins(ScalaNativeBrewedConfigPlugin)
+  .nativeSettings(
+    libraryDependencies += "com.armanbilge" %%% "epollcat" % "0.1.6",
+    Test / nativeBrewFormulas += "s2n"
   )
   .dependsOn(sql)
 
@@ -181,6 +201,7 @@ lazy val tests = crossProject(JVMPlatform)
 
 lazy val benchmark = (project in file("benchmark"))
   .settings(description := "Projects for Benchmark Measurement")
+  .settings(scalacOptions ++= additionalSettings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
   .settings(
@@ -191,7 +212,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, schema.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, schema.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
