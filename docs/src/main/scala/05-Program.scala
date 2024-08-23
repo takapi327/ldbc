@@ -6,8 +6,6 @@
 
 import scala.language.implicitConversions
 
-import cats.syntax.all.*
-
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
