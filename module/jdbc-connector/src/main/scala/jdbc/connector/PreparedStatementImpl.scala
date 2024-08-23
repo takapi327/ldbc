@@ -17,7 +17,7 @@ import ldbc.sql.{ PreparedStatement, ResultSet }
 private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.PreparedStatement)
   extends PreparedStatement[F]:
 
-  override def executeQuery(): F[ResultSet[F]] = Sync[F].blocking(statement.executeQuery()).map(ResultSetImpl.apply)
+  override def executeQuery(): F[ResultSet] = Sync[F].blocking(statement.executeQuery()).map(ResultSetImpl.apply)
 
   override def executeUpdate(): F[Int] = Sync[F].blocking(statement.executeUpdate())
 
@@ -69,7 +69,7 @@ private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.P
 
   override def addBatch(): F[Unit] = Sync[F].blocking(statement.addBatch())
 
-  override def getResultSet(): F[Option[ResultSet[F]]] =
+  override def getResultSet(): F[Option[ResultSet]] =
     Sync[F].blocking(Option(statement.getResultSet).map(ResultSetImpl.apply))
 
   override def getUpdateCount(): F[Int] = Sync[F].blocking(statement.getUpdateCount)
@@ -80,7 +80,7 @@ private[jdbc] open class PreparedStatementImpl[F[_]: Sync](statement: java.sql.P
 
   override def executeBatch(): F[Array[Int]] = Sync[F].blocking(statement.executeBatch())
 
-  override def getGeneratedKeys(): F[ResultSet[F]] =
+  override def getGeneratedKeys(): F[ResultSet] =
     Sync[F].blocking(statement.getGeneratedKeys).map(ResultSetImpl.apply)
 
   override def executeUpdate(

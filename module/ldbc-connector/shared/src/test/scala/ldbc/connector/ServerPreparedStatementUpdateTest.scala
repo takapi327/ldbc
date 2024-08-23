@@ -10,13 +10,11 @@ import java.time.*
 
 import cats.effect.*
 
-import munit.CatsEffectSuite
-
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.data.MysqlType
 
-class ServerPreparedStatementUpdateTest extends CatsEffectSuite:
+class ServerPreparedStatementUpdateTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 

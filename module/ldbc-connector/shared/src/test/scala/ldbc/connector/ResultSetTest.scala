@@ -8,12 +8,6 @@ package ldbc.connector
 
 import java.time.*
 
-import cats.Monad
-
-import cats.effect.*
-
-import munit.CatsEffectSuite
-
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
 import ldbc.connector.util.Version
@@ -21,16 +15,18 @@ import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 
-class ResultSetTest extends CatsEffectSuite:
+class ResultSetTest extends FTestPlatform:
 
   test("SQLException occurs when accessing the ResultSet after closing it.") {
     val resultSet = buildResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))
-    interceptIO[SQLException](
-      resultSet.close() *> resultSet.next()
-    )
-    interceptIO[SQLException](
-      resultSet.close() *> resultSet.getLong(1)
-    )
+    intercept[SQLException] {
+      resultSet.close()
+      resultSet.next()
+    }
+    intercept[SQLException] {
+      resultSet.close()
+      resultSet.getLong(1)
+    }
   }
 
   test("ResultSet should return the correct value for getInt") {
@@ -43,14 +39,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Int, Int, Int)](resultSet.next()) {
-      for
-        c1 <- resultSet.getInt(1)
-        c2 <- resultSet.getInt("c2")
-        c3 <- resultSet.getInt(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((1, 2, 0)))
+    val builder = List.newBuilder[(Int, Int, Int)]
+    while resultSet.next() do
+      val c1 = resultSet.getInt(1)
+      val c2 = resultSet.getInt("c2")
+      val c3 = resultSet.getInt(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((1, 2, 0)))
   }
 
   test("ResultSet should return the correct value for getLong") {
@@ -63,14 +59,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Long, Long, Long)](resultSet.next()) {
-      for
-        c1 <- resultSet.getLong(1)
-        c2 <- resultSet.getLong("c2")
-        c3 <- resultSet.getLong(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((1L, 2L, 0L)))
+    val builder = List.newBuilder[(Long, Long, Long)]
+    while resultSet.next() do
+      val c1 = resultSet.getLong(1)
+      val c2 = resultSet.getLong("c2")
+      val c3 = resultSet.getLong(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((1L, 2L, 0L)))
   }
 
   test("ResultSet should return the correct value for getDouble") {
@@ -83,14 +79,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Double, Double, Double)](resultSet.next()) {
-      for
-        c1 <- resultSet.getDouble(1)
-        c2 <- resultSet.getDouble("c2")
-        c3 <- resultSet.getDouble(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((1.1, 2.2, 0.0)))
+    val builder = List.newBuilder[(Double, Double, Double)]
+    while resultSet.next() do
+      val c1 = resultSet.getDouble(1)
+      val c2 = resultSet.getDouble("c2")
+      val c3 = resultSet.getDouble(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((1.1, 2.2, 0.0)))
   }
 
   test("ResultSet should return the correct value for getString") {
@@ -103,14 +99,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Option[String], Option[String], Option[String])](resultSet.next()) {
-      for
-        c1 <- resultSet.getString(1)
-        c2 <- resultSet.getString("c2")
-        c3 <- resultSet.getString(3)
-      yield (Option(c1), Option(c2), Option(c3))
-    }
-    assertIO(records, List((Some("1"), Some("2"), None)))
+    val builder = List.newBuilder[(Option[String], Option[String], Option[String])]
+    while resultSet.next() do
+      val c1 = resultSet.getString(1)
+      val c2 = resultSet.getString("c2")
+      val c3 = resultSet.getString(3)
+      builder += ((Option(c1), Option(c2), Option(c3)))
+
+    assertEquals(builder.result(), List((Some("1"), Some("2"), None)))
   }
 
   test("ResultSet should return the correct value for getBoolean") {
@@ -123,14 +119,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1"), Some("0"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Boolean, Boolean, Boolean)](resultSet.next()) {
-      for
-        c1 <- resultSet.getBoolean(1)
-        c2 <- resultSet.getBoolean("c2")
-        c3 <- resultSet.getBoolean(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((true, false, false)))
+    val builder = List.newBuilder[(Boolean, Boolean, Boolean)]
+    while resultSet.next() do
+      val c1 = resultSet.getBoolean(1)
+      val c2 = resultSet.getBoolean("c2")
+      val c3 = resultSet.getBoolean(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((true, false, false)))
   }
 
   test("ResultSet should return the correct value for getByte") {
@@ -143,14 +139,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Byte, Byte, Byte)](resultSet.next()) {
-      for
-        c1 <- resultSet.getByte(1)
-        c2 <- resultSet.getByte("c2")
-        c3 <- resultSet.getByte(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((49.toByte, 50.toByte, 0.toByte)))
+    val builder = List.newBuilder[(Byte, Byte, Byte)]
+    while resultSet.next() do
+      val c1 = resultSet.getByte(1)
+      val c2 = resultSet.getByte("c2")
+      val c3 = resultSet.getByte(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((49.toByte, 50.toByte, 0.toByte)))
   }
 
   test("ResultSet should return the correct value for getShort") {
@@ -163,14 +159,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Short, Short, Short)](resultSet.next()) {
-      for
-        c1 <- resultSet.getShort(1)
-        c2 <- resultSet.getShort("c2")
-        c3 <- resultSet.getShort(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((1.toShort, 2.toShort, 0.toShort)))
+    val builder = List.newBuilder[(Short, Short, Short)]
+    while resultSet.next() do
+      val c1 = resultSet.getShort(1)
+      val c2 = resultSet.getShort("c2")
+      val c3 = resultSet.getShort(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((1.toShort, 2.toShort, 0.toShort)))
   }
 
   test("ResultSet should return the correct value for getFloat") {
@@ -183,14 +179,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Float, Float, Float)](resultSet.next()) {
-      for
-        c1 <- resultSet.getFloat(1)
-        c2 <- resultSet.getFloat("c2")
-        c3 <- resultSet.getFloat(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((1.1f, 2.2f, 0.0f)))
+    val builder = List.newBuilder[(Float, Float, Float)]
+    while resultSet.next() do
+      val c1 = resultSet.getFloat(1)
+      val c2 = resultSet.getFloat("c2")
+      val c3 = resultSet.getFloat(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((1.1f, 2.2f, 0.0f)))
   }
 
   test("ResultSet should return the correct value for getBigDecimal") {
@@ -203,15 +199,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
-    val records =
-      Monad[IO].whileM[List, (Option[BigDecimal], Option[BigDecimal], Option[BigDecimal])](resultSet.next()) {
-        for
-          c1 <- resultSet.getBigDecimal(1)
-          c2 <- resultSet.getBigDecimal("c2")
-          c3 <- resultSet.getBigDecimal(3)
-        yield (Option(c1), Option(c2), Option(c3))
-      }
-    assertIO(records, List((Some(BigDecimal("1.1")), Some(BigDecimal("2.2")), None)))
+    val builder = List.newBuilder[(Option[BigDecimal], Option[BigDecimal], Option[BigDecimal])]
+    while resultSet.next() do
+      val c1 = resultSet.getBigDecimal(1)
+      val c2 = resultSet.getBigDecimal("c2")
+      val c3 = resultSet.getBigDecimal(3)
+      builder += ((Option(c1), Option(c2), Option(c3)))
+
+    assertEquals(builder.result(), List((Some(BigDecimal("1.1")), Some(BigDecimal("2.2")), None)))
   }
 
   test("ResultSet should return the correct value for getDate") {
@@ -224,14 +219,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("2023-01-01"), Some("2023-01-02"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Option[LocalDate], Option[LocalDate], Option[LocalDate])](resultSet.next()) {
-      for
-        c1 <- resultSet.getDate(1)
-        c2 <- resultSet.getDate("c2")
-        c3 <- resultSet.getDate(3)
-      yield (Option(c1), Option(c2), Option(c3))
-    }
-    assertIO(records, List((Some(LocalDate.of(2023, 1, 1)), Some(LocalDate.of(2023, 1, 2)), None)))
+    val builder = List.newBuilder[(Option[LocalDate], Option[LocalDate], Option[LocalDate])]
+    while resultSet.next() do
+      val c1 = resultSet.getDate(1)
+      val c2 = resultSet.getDate("c2")
+      val c3 = resultSet.getDate(3)
+      builder += ((Option(c1), Option(c2), Option(c3)))
+
+    assertEquals(builder.result(), List((Some(LocalDate.of(2023, 1, 1)), Some(LocalDate.of(2023, 1, 2)), None)))
   }
 
   test("ResultSet should return the correct value for getTime") {
@@ -244,14 +239,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("12:34:56"), Some("12:34:57"), None))),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Option[LocalTime], Option[LocalTime], Option[LocalTime])](resultSet.next()) {
-      for
-        c1 <- resultSet.getTime(1)
-        c2 <- resultSet.getTime("c2")
-        c3 <- resultSet.getTime(3)
-      yield (Option(c1), Option(c2), Option(c3))
-    }
-    assertIO(records, List((Some(LocalTime.of(12, 34, 56)), Some(LocalTime.of(12, 34, 57)), None)))
+    val builder = List.newBuilder[(Option[LocalTime], Option[LocalTime], Option[LocalTime])]
+    while resultSet.next() do
+      val c1 = resultSet.getTime(1)
+      val c2 = resultSet.getTime("c2")
+      val c3 = resultSet.getTime(3)
+      builder += ((Option(c1), Option(c2), Option(c3)))
+
+    assertEquals(builder.result(), List((Some(LocalTime.of(12, 34, 56)), Some(LocalTime.of(12, 34, 57)), None)))
   }
 
   test("ResultSet should return the correct value for getTimestamp") {
@@ -264,16 +259,15 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
-    val records =
-      Monad[IO].whileM[List, (Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])](resultSet.next()) {
-        for
-          c1 <- resultSet.getTimestamp(1)
-          c2 <- resultSet.getTimestamp("c2")
-          c3 <- resultSet.getTimestamp(3)
-        yield (Option(c1), Option(c2), Option(c3))
-      }
-    assertIO(
-      records,
+    val builder = List.newBuilder[(Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])]
+    while resultSet.next() do
+      val c1 = resultSet.getTimestamp(1)
+      val c2 = resultSet.getTimestamp("c2")
+      val c3 = resultSet.getTimestamp(3)
+      builder += ((Option(c1), Option(c2), Option(c3)))
+
+    assertEquals(
+      builder.result(),
       List((Some(LocalDateTime.of(2023, 1, 1, 12, 34, 56)), Some(LocalDateTime.of(2023, 1, 2, 12, 34, 57)), None))
     )
   }
@@ -288,16 +282,15 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
-    val records =
-      Monad[IO].whileM[List, (Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])](resultSet.next()) {
-        for
-          c1 <- resultSet.getTimestamp(1)
-          c2 <- resultSet.getTimestamp("c2")
-          c3 <- resultSet.getTimestamp(3)
-        yield (Option(c1), Option(c2), Option(c3))
-      }
-    assertIO(
-      records,
+    val builder = List.newBuilder[(Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])]
+    while resultSet.next() do
+      val c1 = resultSet.getTimestamp(1)
+      val c2 = resultSet.getTimestamp("c2")
+      val c3 = resultSet.getTimestamp(3)
+      builder += ((Option(c1), Option(c2), Option(c3)))
+
+    assertEquals(
+      builder.result(),
       List((Some(LocalDateTime.of(2023, 1, 1, 12, 34, 56)), Some(LocalDateTime.of(2023, 1, 2, 12, 34, 57)), None))
     )
   }
@@ -317,14 +310,14 @@ class ResultSetTest extends CatsEffectSuite:
       ),
       Version(0, 0, 0)
     )
-    val records = Monad[IO].whileM[List, (Int, Int, Int)](resultSet.next()) {
-      for
-        c1 <- resultSet.getInt(1)
-        c2 <- resultSet.getInt("c2")
-        c3 <- resultSet.getInt(3)
-      yield (c1, c2, c3)
-    }
-    assertIO(records, List((1, 2, 0), (3, 4, 0), (5, 6, 0), (7, 8, 0)))
+    val builder = List.newBuilder[(Int, Int, Int)]
+    while resultSet.next() do
+      val c1 = resultSet.getInt(1)
+      val c2 = resultSet.getInt("c2")
+      val c3 = resultSet.getInt(3)
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((1, 2, 0), (3, 4, 0), (5, 6, 0), (7, 8, 0)))
   }
 
   test("The total number of columns obtained from the meta-information of ResultSet matches the specified value.") {
@@ -338,7 +331,7 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getColumnCount()), 3)
+    assertEquals(resultSetMetaData.getColumnCount(), 3)
   }
 
   test("The column name obtained from the meta-information of ResultSet matches the specified value.") {
@@ -352,9 +345,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getColumnName(1)), "c1")
-    assertIO(resultSetMetaData.map(_.getColumnName(2)), "c2")
-    assertIO(resultSetMetaData.map(_.getColumnName(3)), "c3")
+    assertEquals(resultSetMetaData.getColumnName(1), "c1")
+    assertEquals(resultSetMetaData.getColumnName(2), "c2")
+    assertEquals(resultSetMetaData.getColumnName(3), "c3")
   }
 
   test("The column type obtained from the meta-information of ResultSet matches the specified value.") {
@@ -368,9 +361,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getColumnType(1)), ColumnDataType.MYSQL_TYPE_LONG.code.toInt)
-    assertIO(resultSetMetaData.map(_.getColumnType(2)), ColumnDataType.MYSQL_TYPE_DOUBLE.code.toInt)
-    assertIO(resultSetMetaData.map(_.getColumnType(3)), ColumnDataType.MYSQL_TYPE_STRING.code.toInt)
+    assertEquals(resultSetMetaData.getColumnType(1), ColumnDataType.MYSQL_TYPE_LONG.code.toInt)
+    assertEquals(resultSetMetaData.getColumnType(2), ColumnDataType.MYSQL_TYPE_DOUBLE.code.toInt)
+    assertEquals(resultSetMetaData.getColumnType(3), ColumnDataType.MYSQL_TYPE_STRING.code.toInt)
   }
 
   test("The column type name obtained from the meta-information of ResultSet matches the specified value.") {
@@ -384,9 +377,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getColumnTypeName(1)), "INT")
-    assertIO(resultSetMetaData.map(_.getColumnTypeName(2)), "DOUBLE")
-    assertIO(resultSetMetaData.map(_.getColumnTypeName(3)), "CHAR")
+    assertEquals(resultSetMetaData.getColumnTypeName(1), "INT")
+    assertEquals(resultSetMetaData.getColumnTypeName(2), "DOUBLE")
+    assertEquals(resultSetMetaData.getColumnTypeName(3), "CHAR")
   }
 
   test("The column label obtained from the meta-information of ResultSet matches the specified value.") {
@@ -400,9 +393,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getColumnLabel(1)), "label1")
-    assertIO(resultSetMetaData.map(_.getColumnLabel(2)), "label2")
-    assertIO(resultSetMetaData.map(_.getColumnLabel(3)), "label3")
+    assertEquals(resultSetMetaData.getColumnLabel(1), "label1")
+    assertEquals(resultSetMetaData.getColumnLabel(2), "label2")
+    assertEquals(resultSetMetaData.getColumnLabel(3), "label3")
   }
 
   test("The column display size obtained from the meta-information of ResultSet matches the specified value.") {
@@ -416,9 +409,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getColumnDisplaySize(1)), 0)
-    assertIO(resultSetMetaData.map(_.getColumnDisplaySize(2)), 0)
-    assertIO(resultSetMetaData.map(_.getColumnDisplaySize(3)), 0)
+    assertEquals(resultSetMetaData.getColumnDisplaySize(1), 0)
+    assertEquals(resultSetMetaData.getColumnDisplaySize(2), 0)
+    assertEquals(resultSetMetaData.getColumnDisplaySize(3), 0)
   }
 
   test("The column precision obtained from the meta-information of ResultSet matches the specified value.") {
@@ -432,9 +425,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getPrecision(1)), 0)
-    assertIO(resultSetMetaData.map(_.getPrecision(2)), 0)
-    assertIO(resultSetMetaData.map(_.getPrecision(3)), 0)
+    assertEquals(resultSetMetaData.getPrecision(1), 0)
+    assertEquals(resultSetMetaData.getPrecision(2), 0)
+    assertEquals(resultSetMetaData.getPrecision(3), 0)
   }
 
   test("The column scale obtained from the meta-information of ResultSet matches the specified value.") {
@@ -448,9 +441,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.getScale(1)), 0)
-    assertIO(resultSetMetaData.map(_.getScale(2)), 2)
-    assertIO(resultSetMetaData.map(_.getScale(3)), 0)
+    assertEquals(resultSetMetaData.getScale(1), 0)
+    assertEquals(resultSetMetaData.getScale(2), 2)
+    assertEquals(resultSetMetaData.getScale(3), 0)
   }
 
   test("The column is signed obtained from the meta-information of ResultSet matches the specified value.") {
@@ -464,9 +457,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isSigned(1)), true)
-    assertIO(resultSetMetaData.map(_.isSigned(2)), false)
-    assertIO(resultSetMetaData.map(_.isSigned(3)), false)
+    assertEquals(resultSetMetaData.isSigned(1), true)
+    assertEquals(resultSetMetaData.isSigned(2), false)
+    assertEquals(resultSetMetaData.isSigned(3), false)
   }
 
   test("The column is nullable obtained from the meta-information of ResultSet matches the specified value.") {
@@ -480,9 +473,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isNullable(1)), ResultSetMetaData.columnNoNulls)
-    assertIO(resultSetMetaData.map(_.isNullable(2)), ResultSetMetaData.columnNullable)
-    assertIO(resultSetMetaData.map(_.isNullable(3)), ResultSetMetaData.columnNullable)
+    assertEquals(resultSetMetaData.isNullable(1), ResultSetMetaData.columnNoNulls)
+    assertEquals(resultSetMetaData.isNullable(2), ResultSetMetaData.columnNullable)
+    assertEquals(resultSetMetaData.isNullable(3), ResultSetMetaData.columnNullable)
   }
 
   test("The column is case sensitive obtained from the meta-information of ResultSet matches the specified value.") {
@@ -496,9 +489,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isCaseSensitive(1)), false)
-    assertIO(resultSetMetaData.map(_.isCaseSensitive(2)), false)
-    assertIO(resultSetMetaData.map(_.isCaseSensitive(3)), false)
+    assertEquals(resultSetMetaData.isCaseSensitive(1), false)
+    assertEquals(resultSetMetaData.isCaseSensitive(2), false)
+    assertEquals(resultSetMetaData.isCaseSensitive(3), false)
   }
 
   test("The column is searchable obtained from the meta-information of ResultSet matches the specified value.") {
@@ -512,9 +505,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isSearchable(1)), true)
-    assertIO(resultSetMetaData.map(_.isSearchable(2)), true)
-    assertIO(resultSetMetaData.map(_.isSearchable(3)), true)
+    assertEquals(resultSetMetaData.isSearchable(1), true)
+    assertEquals(resultSetMetaData.isSearchable(2), true)
+    assertEquals(resultSetMetaData.isSearchable(3), true)
   }
 
   test("The column is writable obtained from the meta-information of ResultSet matches the specified value.") {
@@ -528,9 +521,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isWritable(1)), true)
-    assertIO(resultSetMetaData.map(_.isWritable(2)), true)
-    assertIO(resultSetMetaData.map(_.isWritable(3)), true)
+    assertEquals(resultSetMetaData.isWritable(1), true)
+    assertEquals(resultSetMetaData.isWritable(2), true)
+    assertEquals(resultSetMetaData.isWritable(3), true)
   }
 
   test(
@@ -546,9 +539,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isDefinitelyWritable(1)), true)
-    assertIO(resultSetMetaData.map(_.isDefinitelyWritable(2)), true)
-    assertIO(resultSetMetaData.map(_.isDefinitelyWritable(3)), true)
+    assertEquals(resultSetMetaData.isDefinitelyWritable(1), true)
+    assertEquals(resultSetMetaData.isDefinitelyWritable(2), true)
+    assertEquals(resultSetMetaData.isDefinitelyWritable(3), true)
   }
 
   test("The column is read only obtained from the meta-information of ResultSet matches the specified value.") {
@@ -562,9 +555,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isReadOnly(1)), false)
-    assertIO(resultSetMetaData.map(_.isReadOnly(2)), false)
-    assertIO(resultSetMetaData.map(_.isReadOnly(3)), false)
+    assertEquals(resultSetMetaData.isReadOnly(1), false)
+    assertEquals(resultSetMetaData.isReadOnly(2), false)
+    assertEquals(resultSetMetaData.isReadOnly(3), false)
   }
 
   test("The column is auto increment obtained from the meta-information of ResultSet matches the specified value.") {
@@ -578,9 +571,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isAutoIncrement(1)), true)
-    assertIO(resultSetMetaData.map(_.isAutoIncrement(2)), false)
-    assertIO(resultSetMetaData.map(_.isAutoIncrement(3)), false)
+    assertEquals(resultSetMetaData.isAutoIncrement(1), true)
+    assertEquals(resultSetMetaData.isAutoIncrement(2), false)
+    assertEquals(resultSetMetaData.isAutoIncrement(3), false)
   }
 
   test("The column is currency obtained from the meta-information of ResultSet matches the specified value.") {
@@ -594,9 +587,9 @@ class ResultSetTest extends CatsEffectSuite:
       Version(0, 0, 0)
     )
     val resultSetMetaData = resultSet.getMetaData()
-    assertIO(resultSetMetaData.map(_.isCurrency(1)), false)
-    assertIO(resultSetMetaData.map(_.isCurrency(2)), false)
-    assertIO(resultSetMetaData.map(_.isCurrency(3)), false)
+    assertEquals(resultSetMetaData.isCurrency(1), false)
+    assertEquals(resultSetMetaData.isCurrency(2), false)
+    assertEquals(resultSetMetaData.isCurrency(3), false)
   }
 
   test(
@@ -607,8 +600,14 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
-    assertIO(resultSet.isBeforeFirst(), true)
-    assertIO(resultSet.next() *> resultSet.isBeforeFirst(), false)
+    assert(resultSet.isBeforeFirst())
+    assertEquals(
+      {
+        resultSet.next()
+        resultSet.isBeforeFirst()
+      },
+      false
+    )
   }
 
   test(
@@ -619,8 +618,11 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
-    assertIO(resultSet.isAfterLast(), false)
-    assertIO(Monad[IO].whileM_(resultSet.next())(IO.unit) *> resultSet.isAfterLast(), true)
+    assertEquals(resultSet.isAfterLast(), false)
+    assert({
+      while resultSet.next() do ()
+      resultSet.isAfterLast()
+    })
   }
 
   test(
@@ -631,8 +633,11 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
-    assertIO(resultSet.isFirst(), false)
-    assertIO(resultSet.next() *> resultSet.isFirst(), true)
+    assertEquals(resultSet.isFirst(), false)
+    assert({
+      resultSet.next()
+      resultSet.isFirst()
+    })
   }
 
   test(
@@ -643,8 +648,11 @@ class ResultSetTest extends CatsEffectSuite:
       Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
-    assertIO(resultSet.isLast(), false)
-    assertIO(resultSet.next() *> resultSet.isLast(), true)
+    assertEquals(resultSet.isLast(), false)
+    assert({
+      resultSet.next()
+      resultSet.isLast()
+    })
   }
 
   test(
@@ -657,12 +665,21 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.isBeforeFirst(), true)
-    assertIO(resultSet.isFirst(), false)
-    assertIO(resultSet.next() *> resultSet.isBeforeFirst(), false)
-    assertIO(resultSet.isFirst(), true)
-    assertIO(resultSet.beforeFirst() *> resultSet.isBeforeFirst(), true)
-    assertIO(resultSet.isFirst(), false)
+    assert(resultSet.isBeforeFirst())
+    assertEquals(resultSet.isFirst(), false)
+    assertEquals(
+      {
+        resultSet.next()
+        resultSet.isBeforeFirst()
+      },
+      false
+    )
+    assert(resultSet.isFirst())
+    assert({
+      resultSet.beforeFirst()
+      resultSet.isBeforeFirst()
+    })
+    assertEquals(resultSet.isFirst(), false)
   }
 
   test(
@@ -673,7 +690,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptIO[SQLException](resultSet.beforeFirst())
+    intercept[SQLException](resultSet.beforeFirst())
   }
 
   test(
@@ -686,14 +703,22 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.isAfterLast(), false)
-    assertIO(resultSet.isLast(), false)
-    assertIO(Monad[IO].whileM_(resultSet.next())(IO.unit) *> resultSet.isAfterLast(), false)
-    assertIO(resultSet.isLast(), true)
-    assertIO(resultSet.isAfterLast(), true)
-    assertIO(resultSet.isLast(), false)
-    assertIO(resultSet.afterLast() *> resultSet.isAfterLast(), true)
-    assertIO(resultSet.isLast(), false)
+    assertEquals(resultSet.isAfterLast(), false)
+    assertEquals(resultSet.isLast(), false)
+    assert(
+      {
+        while resultSet.next() do ()
+        resultSet.isAfterLast()
+      }
+    )
+    assert({
+      resultSet.afterLast()
+      resultSet.isAfterLast()
+    })
+    assert({
+      resultSet.last()
+      resultSet.isLast()
+    })
   }
 
   test(
@@ -704,7 +729,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptIO[SQLException](resultSet.afterLast())
+    intercept[SQLException](resultSet.afterLast())
   }
 
   test(
@@ -717,10 +742,22 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.first(), true)
-    assertIO(resultSet.getRow(), 1)
-    assertIO(Monad[IO].whileM_(resultSet.next())(IO.unit) *> resultSet.getRow(), 1)
-    assertIO(resultSet.first() *> resultSet.getRow(), 1)
+    assert(resultSet.first())
+    assertEquals(resultSet.getRow(), 1)
+    assertEquals(
+      {
+        while resultSet.next() do ()
+        resultSet.getRow()
+      },
+      0
+    )
+    assertEquals(
+      {
+        resultSet.first()
+        resultSet.getRow()
+      },
+      1
+    )
   }
 
   test("If the record in the ResultSet is empty, the result of executing first is false.") {
@@ -731,7 +768,7 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.first(), false)
+    assertEquals(resultSet.first(), false)
   }
 
   test("When the type of ResultSet is TYPE_FORWARD_ONLY, the cursor position operation by first throws SQLException.") {
@@ -740,7 +777,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptIO[SQLException](resultSet.first())
+    intercept[SQLException](resultSet.first())
   }
 
   test(
@@ -756,9 +793,22 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.last(), true)
-    assertIO(resultSet.last() *> resultSet.getRow(), 2)
-    assertIO(Monad[IO].whileM_(resultSet.next())(IO.unit) *> resultSet.last() *> resultSet.getRow(), 2)
+    assert(resultSet.last())
+    assertEquals(
+      {
+        resultSet.last()
+        resultSet.getRow()
+      },
+      2
+    )
+    assertEquals(
+      {
+        while resultSet.next() do ()
+        resultSet.last()
+        resultSet.getRow()
+      },
+      2
+    )
   }
 
   test("If the record in the ResultSet is empty, the result of executing last is false.") {
@@ -769,7 +819,7 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.last(), false)
+    assertEquals(resultSet.last(), false)
   }
 
   test("When the type of ResultSet is TYPE_FORWARD_ONLY, the cursor position operation by last throws SQLException.") {
@@ -778,7 +828,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptIO[SQLException](resultSet.last())
+    intercept[SQLException](resultSet.last())
   }
 
   test(
@@ -791,17 +841,53 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.getRow(), 0)
-    assertIO(resultSet.absolute(1), true)
-    assertIO(resultSet.absolute(1) *> resultSet.getRow(), 1)
-    assertIO(resultSet.absolute(1) *> resultSet.getInt(1), 1)
-    assertIO(resultSet.absolute(0), false)
-    assertIO(resultSet.absolute(0) *> resultSet.getRow(), 0)
-    assertIO(resultSet.absolute(3), false)
-    assertIO(resultSet.absolute(3) *> resultSet.getRow(), 0)
-    assertIO(resultSet.absolute(-1), true)
-    assertIO(resultSet.absolute(-1) *> resultSet.getRow(), 2)
-    assertIO(resultSet.absolute(-1) *> resultSet.getInt(1), 2)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.absolute(1), true)
+    assertEquals(
+      {
+        resultSet.absolute(1)
+        resultSet.getRow()
+      },
+      1
+    )
+    assertEquals(
+      {
+        resultSet.absolute(1)
+        resultSet.getInt(1)
+      },
+      1
+    )
+    assertEquals(resultSet.absolute(0), false)
+    assertEquals(
+      {
+        resultSet.absolute(0)
+        resultSet.getRow()
+      },
+      0
+    )
+    assertEquals(resultSet.absolute(3), false)
+    assertEquals(
+      {
+        resultSet.absolute(3)
+        resultSet.getRow()
+      },
+      0
+    )
+    assertEquals(resultSet.absolute(-1), true)
+    assertEquals(
+      {
+        resultSet.absolute(-1)
+        resultSet.getRow()
+      },
+      2
+    )
+    assertEquals(
+      {
+        resultSet.absolute(-1)
+        resultSet.getInt(1)
+      },
+      2
+    )
   }
 
   test(
@@ -812,7 +898,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptIO[SQLException](resultSet.absolute(0))
+    intercept[SQLException](resultSet.absolute(0))
   }
 
   test(
@@ -825,18 +911,18 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.getRow(), 0)
-    assertIO(resultSet.relative(0), false)
-    assertIO(resultSet.getRow(), 0)
-    assertIO(resultSet.relative(0) *> resultSet.getInt(1), 1)
-    assertIO(resultSet.relative(1), true)
-    assertIO(resultSet.relative(1) *> resultSet.getRow(), 1)
-    assertIO(resultSet.relative(1) *> resultSet.getInt(1), 1)
-    assertIO(resultSet.relative(2), false)
-    assertIO(resultSet.relative(2) *> resultSet.getRow(), 0)
-    assertIO(resultSet.relative(-1), false)
-    assertIO(resultSet.relative(-1) *> resultSet.getRow(), 0)
-    assertIO(resultSet.relative(-1) *> resultSet.getInt(1), 1)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.relative(0), false)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.getInt(1), 1)
+    assertEquals(resultSet.relative(1), true)
+    assertEquals(resultSet.getRow(), 1)
+    assertEquals(resultSet.getInt(1), 1)
+    assertEquals(resultSet.relative(2), false)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.relative(-1), false)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.getInt(1), 1)
   }
 
   test(
@@ -847,7 +933,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptIO[SQLException](resultSet.relative(0))
+    intercept[SQLException](resultSet.relative(0))
   }
 
   test(
@@ -860,13 +946,39 @@ class ResultSetTest extends CatsEffectSuite:
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
     )
-    assertIO(resultSet.getRow(), 0)
-    assertIO(resultSet.absolute(2), true)
-    assertIO(resultSet.absolute(2) *> resultSet.getRow(), 2)
-    assertIO(resultSet.absolute(2) *> resultSet.getInt(1), 2)
-    assertIO(resultSet.previous(), true)
-    assertIO(resultSet.absolute(2) *> resultSet.previous() *> resultSet.getRow(), 1)
-    assertIO(resultSet.absolute(2) *> resultSet.previous() *> resultSet.getInt(1), 1)
+    assertEquals(resultSet.getRow(), 0)
+    assertEquals(resultSet.absolute(2), true)
+    assertEquals(
+      {
+        resultSet.absolute(2)
+        resultSet.getRow()
+      },
+      2
+    )
+    assertEquals(
+      {
+        resultSet.absolute(2)
+        resultSet.getInt(1)
+      },
+      2
+    )
+    assertEquals(resultSet.previous(), true)
+    assertEquals(
+      {
+        resultSet.absolute(2)
+        resultSet.previous()
+        resultSet.getRow()
+      },
+      1
+    )
+    assertEquals(
+      {
+        resultSet.absolute(2)
+        resultSet.previous()
+        resultSet.getInt(1)
+      },
+      1
+    )
   }
 
   test(
@@ -877,7 +989,7 @@ class ResultSetTest extends CatsEffectSuite:
       Vector.empty,
       Version(0, 0, 0)
     )
-    interceptIO[SQLException](resultSet.previous())
+    intercept[SQLException](resultSet.previous())
   }
 
   private def buildResultSet(
@@ -886,16 +998,12 @@ class ResultSetTest extends CatsEffectSuite:
     version:              Version,
     resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
     resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-  ): ResultSetImpl[IO] =
-    ResultSetImpl[IO](
+  ): ResultSetImpl =
+    ResultSetImpl(
       columns,
       records,
       Map.empty,
       version,
-      Ref.unsafe[IO, Boolean](false),
-      Ref.unsafe[IO, Boolean](true),
-      Ref.unsafe[IO, Int](0),
-      Ref.unsafe[IO, Option[ResultSetRowPacket]](None),
       resultSetType,
       resultSetConcurrency
     )

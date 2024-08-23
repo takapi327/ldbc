@@ -17,3 +17,10 @@ trait FactoryCompat[-A, +C]:
 object FactoryCompat:
   given [A, C](using factory: Factory[A, C]): FactoryCompat[A, C] = new FactoryCompat[A, C]:
     override def newBuilder: mutable.Builder[A, C] = factory.newBuilder
+
+  given [A]: FactoryCompat[A, Option[A]] = new FactoryCompat[A, Option[A]]:
+    override def newBuilder: mutable.Builder[A, Option[A]] = new mutable.Builder[A, Option[A]]:
+      private var value:   Option[A] = None
+      def addOne(elem: A): this.type = { value = Some(elem); this }
+      def clear():         Unit      = { value = None }
+      def result():        Option[A] = value

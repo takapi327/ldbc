@@ -10,7 +10,7 @@ import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDa
 
 import scala.compiletime.*
 
-import cats.{ Functor, Monad }
+import cats.Functor
 import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
@@ -18,12 +18,10 @@ import ldbc.sql.ResultSet
 /**
  * Trait to get the DataType that matches the Scala type information from the ResultSet.
  *
- * @tparam F
- *   The effect type
  * @tparam T
  *   Scala types that match SQL DataType
  */
-trait ResultSetReader[F[_], T]:
+trait ResultSetReader[T]:
 
   /**
    * Method to retrieve data from a ResultSet using column names.
@@ -34,7 +32,7 @@ trait ResultSetReader[F[_], T]:
    * @param columnLabel
    *   Column name of the data to be retrieved from the ResultSet.
    */
-  def read(resultSet: ResultSet[F], columnLabel: String): F[T]
+  def read(resultSet: ResultSet, columnLabel: String): T
 
   /**
    * Method to retrieve data from a ResultSet using an Index number.
@@ -45,19 +43,19 @@ trait ResultSetReader[F[_], T]:
    * @param index
    *   Index number of the data to be retrieved from the ResultSet.
    */
-  def read(resultSet: ResultSet[F], index: Int): F[T]
+  def read(resultSet: ResultSet, index: Int): T
 
 object ResultSetReader:
 
-  def apply[F[_], T](
-    readLabel: ResultSet[F] => String => F[T],
-    readIndex: ResultSet[F] => Int => F[T]
-  ): ResultSetReader[F, T] =
-    new ResultSetReader[F, T]:
-      override def read(resultSet: ResultSet[F], columnLabel: String): F[T] =
+  def apply[T](
+    readLabel: ResultSet => String => T,
+    readIndex: ResultSet => Int => T
+  ): ResultSetReader[T] =
+    new ResultSetReader[T]:
+      override def read(resultSet: ResultSet, columnLabel: String): T =
         readLabel(resultSet)(columnLabel)
 
-      override def read(resultSet: ResultSet[F], index: Int): F[T] =
+      override def read(resultSet: ResultSet, index: Int): T =
         readIndex(resultSet)(index)
 
   /**
@@ -67,68 +65,64 @@ object ResultSetReader:
    *   Function to convert from type A to B.
    * @param reader
    *   ResultSetReader to retrieve the DataType matching the type A information from the ResultSet.
-   * @tparam F
-   *   The effect type
    * @tparam A
    *   The Scala type to be converted from.
    * @tparam B
    *   The Scala type to be converted to.
    */
-  def mapping[F[_]: Functor, A, B](f: A => B)(using reader: ResultSetReader[F, A]): ResultSetReader[F, B] =
+  def mapping[A, B](f: A => B)(using reader: ResultSetReader[A]): ResultSetReader[B] =
     reader.map(f(_))
 
-  given [F[_]: Functor]: Functor[[T] =>> ResultSetReader[F, T]] with
-    override def map[A, B](fa: ResultSetReader[F, A])(f: A => B): ResultSetReader[F, B] =
+  given Functor[[T] =>> ResultSetReader[T]] with
+    override def map[A, B](fa: ResultSetReader[A])(f: A => B): ResultSetReader[B] =
       ResultSetReader(
-        resultSet => columnLabel => fa.read(resultSet, columnLabel).map(f),
-        resultSet => index => fa.read(resultSet, index).map(f)
+        resultSet => columnLabel => f(fa.read(resultSet, columnLabel)),
+        resultSet => index => f(fa.read(resultSet, index))
       )
 
-  given [F[_]]: ResultSetReader[F, String]        = ResultSetReader(_.getString, _.getString)
-  given [F[_]]: ResultSetReader[F, Boolean]       = ResultSetReader(_.getBoolean, _.getBoolean)
-  given [F[_]]: ResultSetReader[F, Byte]          = ResultSetReader(_.getByte, _.getByte)
-  given [F[_]]: ResultSetReader[F, Array[Byte]]   = ResultSetReader(_.getBytes, _.getBytes)
-  given [F[_]]: ResultSetReader[F, Short]         = ResultSetReader(_.getShort, _.getShort)
-  given [F[_]]: ResultSetReader[F, Int]           = ResultSetReader(_.getInt, _.getInt)
-  given [F[_]]: ResultSetReader[F, Long]          = ResultSetReader(_.getLong, _.getLong)
-  given [F[_]]: ResultSetReader[F, Float]         = ResultSetReader(_.getFloat, _.getFloat)
-  given [F[_]]: ResultSetReader[F, Double]        = ResultSetReader(_.getDouble, _.getDouble)
-  given [F[_]]: ResultSetReader[F, LocalDate]     = ResultSetReader(_.getDate, _.getDate)
-  given [F[_]]: ResultSetReader[F, LocalTime]     = ResultSetReader(_.getTime, _.getTime)
-  given [F[_]]: ResultSetReader[F, LocalDateTime] = ResultSetReader(_.getTimestamp, _.getTimestamp)
-  given [F[_]]: ResultSetReader[F, BigDecimal]    = ResultSetReader(_.getBigDecimal, _.getBigDecimal)
+  given ResultSetReader[String]        = ResultSetReader(_.getString, _.getString)
+  given ResultSetReader[Boolean]       = ResultSetReader(_.getBoolean, _.getBoolean)
+  given ResultSetReader[Byte]          = ResultSetReader(_.getByte, _.getByte)
+  given ResultSetReader[Array[Byte]]   = ResultSetReader(_.getBytes, _.getBytes)
+  given ResultSetReader[Short]         = ResultSetReader(_.getShort, _.getShort)
+  given ResultSetReader[Int]           = ResultSetReader(_.getInt, _.getInt)
+  given ResultSetReader[Long]          = ResultSetReader(_.getLong, _.getLong)
+  given ResultSetReader[Float]         = ResultSetReader(_.getFloat, _.getFloat)
+  given ResultSetReader[Double]        = ResultSetReader(_.getDouble, _.getDouble)
+  given ResultSetReader[LocalDate]     = ResultSetReader(_.getDate, _.getDate)
+  given ResultSetReader[LocalTime]     = ResultSetReader(_.getTime, _.getTime)
+  given ResultSetReader[LocalDateTime] = ResultSetReader(_.getTimestamp, _.getTimestamp)
+  given ResultSetReader[BigDecimal]    = ResultSetReader(_.getBigDecimal, _.getBigDecimal)
 
-  given [F[_]: Functor](using reader: ResultSetReader[F, String]): ResultSetReader[F, BigInt] =
+  given (using reader: ResultSetReader[String]): ResultSetReader[BigInt] =
     reader.map(str => if str == null then null else BigInt(str))
 
-  given [F[_]: Functor](using reader: ResultSetReader[F, Instant]): ResultSetReader[F, ZonedDateTime] =
+  given (using reader: ResultSetReader[Instant]): ResultSetReader[ZonedDateTime] =
     reader.map(instant => if instant == null then null else ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()))
 
-  given [F[_]: Monad, A](using reader: ResultSetReader[F, A]): ResultSetReader[F, Option[A]] with
+  given [A](using reader: ResultSetReader[A]): ResultSetReader[Option[A]] with
 
-    override def read(resultSet: ResultSet[F], columnLabel: String): F[Option[A]] =
-      for
-        result <- reader.read(resultSet, columnLabel)
-        bool   <- resultSet.wasNull()
-      yield if bool then None else Some(result)
+    override def read(resultSet: ResultSet, columnLabel: String): Option[A] =
+      val result = reader.read(resultSet, columnLabel)
+      val bool   = resultSet.wasNull()
+      if bool then None else Some(result)
 
-    override def read(resultSet: ResultSet[F], index: Int): F[Option[A]] =
-      for
-        result <- reader.read(resultSet, index)
-        bool   <- resultSet.wasNull()
-      yield if bool then None else Some(result)
+    override def read(resultSet: ResultSet, index: Int): Option[A] =
+      val result = reader.read(resultSet, index)
+      val bool   = resultSet.wasNull()
+      if bool then None else Some(result)
 
-  type MapToTuple[F[_], T <: Tuple] <: Tuple = T match
+  type MapToTuple[T <: Tuple] <: Tuple = T match
     case EmptyTuple => EmptyTuple
-    case h *: t     => ResultSetReader[F, h] *: MapToTuple[F, t]
+    case h *: t     => ResultSetReader[h] *: MapToTuple[t]
 
-  inline def infer[F[_], T]: ResultSetReader[F, T] =
-    summonFrom[ResultSetReader[F, T]] {
-      case reader: ResultSetReader[F, T] => reader
-      case _                             => error("ResultSetReader cannot be inferred")
+  inline def infer[T]: ResultSetReader[T] =
+    summonFrom[ResultSetReader[T]] {
+      case reader: ResultSetReader[T] => reader
+      case _                          => error("ResultSetReader cannot be inferred")
     }
 
-  inline def fold[F[_], T <: Tuple]: MapToTuple[F, T] =
+  inline def fold[T <: Tuple]: MapToTuple[T] =
     inline erasedValue[T] match
       case _: EmptyTuple => EmptyTuple
-      case _: (h *: t)   => infer[F, h] *: fold[F, t]
+      case _: (h *: t)   => infer[h] *: fold[t]
