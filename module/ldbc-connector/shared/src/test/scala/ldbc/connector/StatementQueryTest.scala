@@ -12,9 +12,7 @@ import org.typelevel.otel4s.trace.Tracer
 
 import cats.effect.*
 
-import munit.CatsEffectSuite
-
-class StatementQueryTest extends CatsEffectSuite:
+class StatementQueryTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 

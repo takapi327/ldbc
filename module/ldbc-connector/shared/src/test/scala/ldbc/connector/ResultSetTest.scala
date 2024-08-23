@@ -8,8 +8,6 @@ package ldbc.connector
 
 import java.time.*
 
-import munit.CatsEffectSuite
-
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
 import ldbc.connector.util.Version
@@ -17,7 +15,7 @@ import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 
-class ResultSetTest extends CatsEffectSuite:
+class ResultSetTest extends FTestPlatform:
 
   test("SQLException occurs when accessing the ResultSet after closing it.") {
     val resultSet = buildResultSet(Vector.empty, Vector.empty, Version(0, 0, 0))

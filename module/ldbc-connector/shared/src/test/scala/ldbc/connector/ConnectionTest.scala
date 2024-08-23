@@ -12,12 +12,10 @@ import com.comcast.ip4s.UnknownHostException
 
 import cats.effect.*
 
-import munit.CatsEffectSuite
-
 import ldbc.sql.DatabaseMetaData
 import ldbc.connector.exception.*
 
-class ConnectionTest extends CatsEffectSuite:
+class ConnectionTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 

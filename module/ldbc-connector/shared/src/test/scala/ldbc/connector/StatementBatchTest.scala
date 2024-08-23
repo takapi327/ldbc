@@ -10,11 +10,11 @@ import org.typelevel.otel4s.trace.Tracer
 
 import cats.effect.*
 
-import munit.{ AnyFixture, CatsEffectSuite }
+import munit.AnyFixture
 
 import ldbc.connector.exception.*
 
-class StatementBatchTest extends CatsEffectSuite:
+class StatementBatchTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 

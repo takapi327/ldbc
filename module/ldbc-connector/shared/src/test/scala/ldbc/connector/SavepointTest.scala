@@ -10,9 +10,9 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import munit.{ AnyFixture, CatsEffectSuite }
+import munit.AnyFixture
 
-class SavepointTest extends CatsEffectSuite:
+class SavepointTest extends FTestPlatform:
 
   given Tracer[IO] = Tracer.noop[IO]
 
