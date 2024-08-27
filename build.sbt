@@ -135,8 +135,8 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-effect"       % "3.5.4",
-      "co.fs2"        %%% "fs2-core"          % "3.10.2",
-      "co.fs2"        %%% "fs2-io"            % "3.10.2",
+      "co.fs2"        %%% "fs2-core"          % "3.11.0",
+      "co.fs2"        %%% "fs2-io"            % "3.11.0",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
