@@ -27,7 +27,9 @@ package object syntax:
 
     extension [T](query: Query[T])
 
-      inline def query(using mirror: Mirror.ProductOf[Tuples.InverseColumnMap[T]]): DslQuery[F, Tuples.InverseColumnMap[T]] =
+      inline def query(using
+        mirror: Mirror.ProductOf[Tuples.InverseColumnMap[T]]
+      ): DslQuery[F, Tuples.InverseColumnMap[T]] =
         DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params, Decoder.derivedTuple(mirror))
 
       inline def queryTo[P <: Product](using
@@ -36,7 +38,7 @@ package object syntax:
       ): DslQuery[F, P] =
         inline erasedValue[P] match
           case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(mirror))
-          case _ => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(mirror))
+          case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(mirror))
 
     extension (command: Command)
       def update: Executor[F, Int] =

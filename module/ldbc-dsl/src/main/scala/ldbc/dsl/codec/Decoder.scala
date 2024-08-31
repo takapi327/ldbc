@@ -6,7 +6,7 @@
 
 package ldbc.dsl.codec
 
-import java.time.{ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime}
+import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
 
 import scala.compiletime.*
 import scala.deriving.Mirror
@@ -84,19 +84,19 @@ object Decoder:
           resultSet => index => f(fa.decode(resultSet, index))
         )
 
-    given Elem[String] = Elem(_.getString, _.getString)
-    given Elem[Boolean] = Elem(_.getBoolean, _.getBoolean)
-    given Elem[Byte] = Elem(_.getByte, _.getByte)
-    given Elem[Array[Byte]] = Elem(_.getBytes, _.getBytes)
-    given Elem[Short] = Elem(_.getShort, _.getShort)
-    given Elem[Int] = Elem(_.getInt, _.getInt)
-    given Elem[Long] = Elem(_.getLong, _.getLong)
-    given Elem[Float] = Elem(_.getFloat, _.getFloat)
-    given Elem[Double] = Elem(_.getDouble, _.getDouble)
-    given Elem[LocalDate] = Elem(_.getDate, _.getDate)
-    given Elem[LocalTime] = Elem(_.getTime, _.getTime)
+    given Elem[String]        = Elem(_.getString, _.getString)
+    given Elem[Boolean]       = Elem(_.getBoolean, _.getBoolean)
+    given Elem[Byte]          = Elem(_.getByte, _.getByte)
+    given Elem[Array[Byte]]   = Elem(_.getBytes, _.getBytes)
+    given Elem[Short]         = Elem(_.getShort, _.getShort)
+    given Elem[Int]           = Elem(_.getInt, _.getInt)
+    given Elem[Long]          = Elem(_.getLong, _.getLong)
+    given Elem[Float]         = Elem(_.getFloat, _.getFloat)
+    given Elem[Double]        = Elem(_.getDouble, _.getDouble)
+    given Elem[LocalDate]     = Elem(_.getDate, _.getDate)
+    given Elem[LocalTime]     = Elem(_.getTime, _.getTime)
     given Elem[LocalDateTime] = Elem(_.getTimestamp, _.getTimestamp)
-    given Elem[BigDecimal] = Elem(_.getBigDecimal, _.getBigDecimal)
+    given Elem[BigDecimal]    = Elem(_.getBigDecimal, _.getBigDecimal)
 
     given (using decoder: Elem[String]): Elem[BigInt] =
       decoder.map(str => if str == null then null else BigInt(str))
@@ -118,21 +118,21 @@ object Decoder:
 
   inline given derived[A](using mirror: Mirror.Of[A]): Decoder[A] =
     inline mirror match
-      case s: Mirror.SumOf[A] => error("Sum type is not supported")
+      case s: Mirror.SumOf[A]     => error("Sum type is not supported")
       case p: Mirror.ProductOf[A] => derivedProduct(p)
 
   private[ldbc] inline def derivedProduct[A](mirror: Mirror.ProductOf[A]): Decoder[A] =
-    val labels = constValueTuple[mirror.MirroredElemLabels].toArray.map(_.toString)
+    val labels  = constValueTuple[mirror.MirroredElemLabels].toArray.map(_.toString)
     val decodes = getDecoders[mirror.MirroredElemTypes].toArray
 
     (resultSet: ResultSet) =>
       val results = labels.zip(decodes).map { (label, decoder) =>
         decoder match
           case dm: Decoder.Elem[t] => dm.decode(resultSet, label)
-          case d: Decoder[t] => d.decode(resultSet)
+          case d: Decoder[t]       => d.decode(resultSet)
       }
 
-        mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
+      mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
 
   private[ldbc] inline def derivedTuple[A](mirror: Mirror.ProductOf[A]): Decoder[A] =
     val decodes = getDecoders[mirror.MirroredElemTypes].toArray
@@ -141,7 +141,7 @@ object Decoder:
       val results = decodes.zipWithIndex.map { (decoder, index) =>
         decoder match
           case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
-          case d: Decoder[t] => d.decode(resultSet)
+          case d: Decoder[t]       => d.decode(resultSet)
       }
 
       mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
@@ -152,5 +152,5 @@ object Decoder:
       case _: (t *: ts) =>
         summonFrom {
           case dm: Decoder.Elem[`t`] => dm
-          case d: Decoder[`t`] => d
+          case d: Decoder[`t`]       => d
         } *: getDecoders[ts]

@@ -60,7 +60,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
   inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Query[F, P] =
     inline erasedValue[P] match
       case _: Tuple => Query.Impl[F, P](statement, params, Decoder.derivedTuple(mirror))
-      case _ => Query.Impl[F, P](statement, params, Decoder.derivedProduct(mirror))
+      case _        => Query.Impl[F, P](statement, params, Decoder.derivedProduct(mirror))
 
   /**
    * A method to execute an update operation against the MySQL server.

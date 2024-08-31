@@ -36,13 +36,13 @@ trait Query[F[_], T]:
   def unsafe: Executor[F, T]
 
 object Query:
-  
+
   private[ldbc] case class Decode[F[_]: Temporal, T](
     statement: String,
     params:    List[Parameter.DynamicBinder],
     decoder:   ldbc.dsl.codec.Decoder[T]
   ) extends Query[F, T]:
-    
+
     given ldbc.dsl.codec.Decoder[T] = decoder
 
     override def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]] =
@@ -67,8 +67,8 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet <- params.zipWithIndex.traverse {
-              case (param, index) => param.bind[F](prepareStatement, index + 1)
-            } >> prepareStatement.executeQuery()
+                           case (param, index) => param.bind[F](prepareStatement, index + 1)
+                         } >> prepareStatement.executeQuery()
             result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
           yield result
       )
