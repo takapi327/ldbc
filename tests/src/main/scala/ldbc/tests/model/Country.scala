@@ -8,6 +8,7 @@ package ldbc.tests.model
 
 import ldbc.sql.PreparedStatement
 import ldbc.dsl.*
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.Table
 
 case class Country(
@@ -45,5 +46,5 @@ object Country:
     override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Continent): F[Unit] =
       statement.setString(index, value.toString)
 
-  given ResultSetReader[Continent] =
-    ResultSetReader.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
+  given Decoder.Elem[Continent] =
+    Decoder.Elem.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
