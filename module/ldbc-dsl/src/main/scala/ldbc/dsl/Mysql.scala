@@ -8,12 +8,14 @@ package ldbc.dsl
 
 import scala.annotation.targetName
 import scala.deriving.Mirror
+import scala.compiletime.erasedValue
 
 import cats.syntax.all.*
 
 import cats.effect.Temporal
 
 import ldbc.sql.*
+import ldbc.dsl.codec.Decoder
 
 /**
  * A model with a query string and parameters to be bound to the query string that is executed by PreparedStatement,
@@ -42,9 +44,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * A [[ldbc.dsl.Query]] instance
    */
-  def query[T](using reader: ResultSetReader[T]): Query[F, T] =
-    given ResultSetConsumer.Read[T] = resultSet => reader.read(resultSet, 1)
-    Query.Impl[F, T](statement, params)
+  inline def query[T](using decoder: Decoder.Elem[T]): Query[F, T] =
+    Query.Impl[F, T](statement, params, Decoder.one[T])
 
   /**
    * A method to convert a query to a [[ldbc.dsl.Query]].
@@ -52,25 +53,14 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * {{{
    *   sql"SELECT `name`, `age` FROM user".query[User]
    * }}}
-   * 
+   *
    * @return
-   * A [[ldbc.dsl.Query]] instance
+   *   A [[ldbc.dsl.Query]] instance
    */
   inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Query[F, P] =
-    given ResultSetConsumer.Read[P] = resultSet =>
-      mirror.fromProduct(
-        Tuple.fromArray(
-          ResultSetReader
-            .fold[mirror.MirroredElemTypes]
-            .toArray
-            .zipWithIndex
-            .map {
-              case (reader: ResultSetReader[?], index) => reader.read(resultSet, index + 1)
-            }
-        )
-      )
-
-    Query.Impl[F, P](statement, params)
+    inline erasedValue[P] match
+      case _: Tuple => Query.Impl[F, P](statement, params, Decoder.derivedTuple(mirror))
+      case _ => Query.Impl[F, P](statement, params, Decoder.derivedProduct(mirror))
 
   /**
    * A method to execute an update operation against the MySQL server.
@@ -107,8 +97,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    *   The primary key value
    */
-  def returning[T <: String | Int | Long](using reader: ResultSetReader[T]): Executor[F, T] =
-    given ResultSetConsumer.Read[T] = resultSet => reader.read(resultSet, 1)
+  def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): Executor[F, T] =
+    given Decoder[T] = Decoder.one[T]
 
     Executor.Impl[F, T](
       statement,
