@@ -84,6 +84,21 @@ object Decoder:
           resultSet => index => f(fa.decode(resultSet, index))
         )
 
+    /**
+     * A method to convert the specified Scala type to an arbitrary type so that it can be handled by Decoder.
+     *
+     * @param f
+     *   Function to convert from type A to B.
+     * @param decoder
+     *   Decoder to retrieve the DataType matching the type A information from the ResultSet.
+     * @tparam A
+     *   The Scala type to be converted from.
+     * @tparam B
+     *   The Scala type to be converted to.
+     */
+    def mapping[A, B](f: A => B)(using decoder: Decoder.Elem[A]): Decoder.Elem[B] =
+      decoder.map(f(_))
+
     given Elem[String]        = Elem(_.getString, _.getString)
     given Elem[Boolean]       = Elem(_.getBoolean, _.getBoolean)
     given Elem[Byte]          = Elem(_.getByte, _.getByte)
@@ -146,7 +161,7 @@ object Decoder:
 
       mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
 
-  private inline def getDecoders[T <: Tuple]: Tuple =
+  private[ldbc] inline def getDecoders[T <: Tuple]: Tuple =
     inline erasedValue[T] match
       case _: EmptyTuple => EmptyTuple
       case _: (t *: ts) =>
