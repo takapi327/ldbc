@@ -37,42 +37,6 @@ trait Query[F[_], T]:
 
 object Query:
 
-  private[ldbc] case class Decode[F[_]: Temporal, T](
-    statement: String,
-    params:    List[Parameter.DynamicBinder],
-    decoder:   ldbc.dsl.codec.Decoder[T]
-  ) extends Query[F, T]:
-
-    given ldbc.dsl.codec.Decoder[T] = decoder
-
-    override def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]] =
-      Executor.Impl[F, G[T]](
-        statement,
-        params,
-        connection =>
-          for
-            prepareStatement <- connection.prepareStatement(statement)
-            resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind[F](prepareStatement, index + 1)
-                         } >> prepareStatement.executeQuery()
-            result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
-          yield result
-      )
-
-    override def unsafe: Executor[F, T] =
-      Executor.Impl[F, T](
-        statement,
-        params,
-        connection =>
-          for
-            prepareStatement <- connection.prepareStatement(statement)
-            resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind[F](prepareStatement, index + 1)
-                         } >> prepareStatement.executeQuery()
-            result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
-          yield result
-      )
-
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
     params:    List[Parameter.DynamicBinder],
