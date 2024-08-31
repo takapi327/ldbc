@@ -100,12 +100,15 @@ object Decoder:
 
   object Product:
 
+    def one[A](using decoder: Decoder[A]): Product[A] =
+      (resultSet: ResultSet) => decoder.decode(resultSet, 1)
+
     inline given derived[A](using mirror: Mirror.Of[A]): Product[A] =
       inline mirror match
         case s: Mirror.SumOf[A] => error("Sum type is not supported")
         case p: Mirror.ProductOf[A] => derivedProduct(p)
 
-    private inline def derivedProduct[A](mirror: Mirror.ProductOf[A]): Product[A] =
+    private[ldbc] inline def derivedProduct[A](mirror: Mirror.ProductOf[A]): Product[A] =
       val labels = constValueTuple[mirror.MirroredElemLabels].toArray.map(_.toString)
       val decodes = getDecoders[mirror.MirroredElemTypes].toArray
 
@@ -115,7 +118,19 @@ object Decoder:
             case d: Decoder[t] => d.decode(resultSet, label)
             case dp: Decoder.Product[t] => dp.decode(resultSet)
         }
-        
+
+        mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
+
+    private[ldbc] inline def derivedTuple[A](mirror: Mirror.ProductOf[A]): Product[A] =
+      val decodes = getDecoders[mirror.MirroredElemTypes].toArray
+
+      (resultSet: ResultSet) =>
+        val results = decodes.zipWithIndex.map { (decoder, index) =>
+          decoder match
+            case d: Decoder[t] => d.decode(resultSet, index + 1)
+            case dp: Decoder.Product[t] => dp.decode(resultSet)
+        }
+
         mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
 
     private inline def getDecoders[T <: Tuple]: Tuple =
@@ -124,5 +139,5 @@ object Decoder:
         case _: (t *: ts) =>
           summonFrom {
             case d: Decoder[`t`] => d
-            case dp: Decoder[`t`] => dp
+            case dp: Decoder.Product[`t`] => dp
           } *: getDecoders[ts]
