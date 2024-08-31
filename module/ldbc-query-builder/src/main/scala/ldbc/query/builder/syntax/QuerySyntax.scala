@@ -27,7 +27,7 @@ trait QuerySyntax[F[_]]:
      * @return
      *   A [[ldbc.dsl.Query]] instance
      */
-    inline def query: DslQuery[F, Tuples.InverseColumnMap[T]]
+    inline def query(using mirror: Mirror.ProductOf[Tuples.InverseColumnMap[T]]): DslQuery[F, Tuples.InverseColumnMap[T]]
 
     /**
      * A method to convert a query to a [[ldbc.dsl.Query]].
