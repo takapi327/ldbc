@@ -27,10 +27,18 @@ package object syntax:
 
     extension [T](query: Query[T])
 
-      inline def query(using
-        mirror: Mirror.ProductOf[Tuples.InverseColumnMap[T]]
-      ): DslQuery[F, Tuples.InverseColumnMap[T]] =
-        DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params, Decoder.derivedTuple(mirror))
+      inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
+        val decodes = Decoder.getDecoders[Tuples.InverseColumnMap[T]].toArray
+        val decoder: Decoder[Tuples.InverseColumnMap[T]] =
+          (resultSet: ResultSet) =>
+            val results = decodes.zipWithIndex.map { (decoder, index) =>
+              decoder match
+                case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
+                case d: Decoder[t]       => d.decode(resultSet)
+            }
+            Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[T]]
+
+        DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params, decoder)
 
       inline def queryTo[P <: Product](using
         mirror: Mirror.ProductOf[P],
