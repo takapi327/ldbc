@@ -16,7 +16,8 @@ trait Encoder[A]:
 
 object Encoder:
 
-  type SUPPORTED = Boolean | Byte | Short | Int | Long | Float | Double | BigDecimal | String | Array[Byte] | LocalTime | LocalDate | LocalDateTime | None.type
+  type SUPPORTED = Boolean | Byte | Short | Int | Long | Float | Double | BigDecimal | String | Array[Byte] |
+    LocalTime | LocalDate | LocalDateTime | None.type
 
   given Encoder[Boolean] with
     override def encode(value: Boolean): Boolean = value
@@ -67,10 +68,10 @@ object Encoder:
     override def encode(value: Option[A]): Encoder.SUPPORTED =
       value match
         case Some(value) => encoder.encode(value)
-        case None => None
+        case None        => None
 
 trait Parameter[F[_]]:
-  def parameter: String
+  def parameter:                                         String
   def bind(statement: PreparedStatement[F], index: Int): F[Unit]
 
 object Parameter:
@@ -80,20 +81,20 @@ object Parameter:
       override def parameter: String = value.toString
       override def bind(statement: PreparedStatement[F], index: Int): F[Unit] =
         encoder.encode(value) match
-          case value: Boolean => statement.setBoolean(index, value)
-          case value: Byte => statement.setByte(index, value)
-          case value: Short => statement.setShort(index, value)
-          case value: Int => statement.setInt(index, value)
-          case value: Long => statement.setLong(index, value)
-          case value: Float => statement.setFloat(index, value)
-          case value: Double => statement.setDouble(index, value)
-          case value: BigDecimal => statement.setBigDecimal(index, value)
-          case value: String => statement.setString(index, value)
-          case value: Array[Byte] => statement.setBytes(index, value)
-          case value: LocalTime => statement.setTime(index, value)
-          case value: LocalDate => statement.setDate(index, value)
+          case value: Boolean       => statement.setBoolean(index, value)
+          case value: Byte          => statement.setByte(index, value)
+          case value: Short         => statement.setShort(index, value)
+          case value: Int           => statement.setInt(index, value)
+          case value: Long          => statement.setLong(index, value)
+          case value: Float         => statement.setFloat(index, value)
+          case value: Double        => statement.setDouble(index, value)
+          case value: BigDecimal    => statement.setBigDecimal(index, value)
+          case value: String        => statement.setString(index, value)
+          case value: Array[Byte]   => statement.setBytes(index, value)
+          case value: LocalTime     => statement.setTime(index, value)
+          case value: LocalDate     => statement.setDate(index, value)
           case value: LocalDateTime => statement.setTimestamp(index, value)
-          case None => statement.setNull(index, ldbc.sql.Types.NULL)
+          case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
 
   given [F[_], A](using Encoder[A]): Conversion[A, Parameter[F]] with
     override def apply(value: A): Parameter[F] = Parameter(value)
