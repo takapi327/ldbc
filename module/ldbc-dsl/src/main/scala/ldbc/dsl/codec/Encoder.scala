@@ -99,11 +99,14 @@ object Parameter:
   given [F[_], A](using Encoder[A]): Conversion[A, Parameter[F]] with
     override def apply(value: A): Parameter[F] = Parameter(value)
 
-extension (sc: StringContext)
-  def sql(args: Parameter[cats.effect.IO]*): String =
-    val query = sc.parts.iterator.mkString("?")
-    val (expressions, parameters) = args.foldLeft((query, List.empty[Parameter[cats.effect.IO]])) {
-      case ((query, parameters), p) => (query, parameters :+ p)
-    }
-    expressions
-end extension
+trait Test[F[_]]:
+  extension (sc: StringContext)
+    def sql(args: Parameter[F]*): String =
+      val query = sc.parts.iterator.mkString("?")
+      val (expressions, parameters) = args.foldLeft((query, List.empty[Parameter[F]])) {
+        case ((query, parameters), p) => (query, parameters :+ p)
+      }
+      expressions
+  end extension
+
+val io = new Test[cats.effect.IO] {}
