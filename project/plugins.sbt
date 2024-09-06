@@ -6,7 +6,7 @@ addSbtPlugin("com.github.sbt"     % "sbt-site-paradox"                          
 addSbtPlugin("com.github.sbt"     % "sbt-ghpages"                                 % "0.8.0")
 addSbtPlugin("org.scalameta"      % "sbt-mdoc"                                    % "2.5.4")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                                     % "0.4.7")
-addSbtPlugin("org.typelevel"      % "sbt-typelevel"                               % "0.7.2")
+addSbtPlugin("org.typelevel"      % "sbt-typelevel"                               % "0.7.3")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"                                 % "1.16.0")
 addSbtPlugin("org.scala-native"   % "sbt-scala-native"                            % "0.4.17")
 addSbtPlugin("com.armanbilge"     % "sbt-scala-native-config-brew-github-actions" % "0.3.0")
