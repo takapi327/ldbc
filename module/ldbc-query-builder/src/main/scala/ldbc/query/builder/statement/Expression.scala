@@ -7,6 +7,7 @@
 package ldbc.query.builder.statement
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.Encoder
 import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.Extract
 
@@ -30,7 +31,7 @@ sealed trait Expression:
   /**
    * Trait to allow values to be set in PreparedStatement with only index by generating them from Parameter.
    */
-  def parameter: List[Parameter.DynamicBinder]
+  def parameter: List[Parameter.Dynamic]
 
   /**
    * Methods for combining expressions. Both conditions must be positive for the expression to be combined with this
@@ -110,7 +111,7 @@ object Expression:
         case (l, r)       => l.statement + flag + r.statement
       s"($result)"
 
-    override def parameter: List[Parameter.DynamicBinder] = left.parameter ++ right.parameter
+    override def parameter: List[Parameter.Dynamic] = left.parameter ++ right.parameter
 
   /**
    * Model for building sub queries.
@@ -131,7 +132,7 @@ object Expression:
   ) extends Expression:
 
     override def statement: String                        = s"$column $flag (${ value.statement })"
-    override def parameter: List[Parameter.DynamicBinder] = value.params
+    override def parameter: List[Parameter.Dynamic] = value.params
 
   /**
    * Model for building join queries.
@@ -155,14 +156,14 @@ object Expression:
 
     override def statement = s"${ left.alias.fold(left.name)(alias => s"$alias.${ left.name }") } $flag ${ right.alias
         .fold(right.name)(alias => s"$alias.${ right.name }") }"
-    override def parameter: List[Parameter.DynamicBinder] = List.empty
+    override def parameter: List[Parameter.Dynamic] = List.empty
 
   /** comparison operator */
   private[ldbc] case class MatchCondition[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag:      String                        = "="
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""
       s"$not$column $flag ?"
@@ -170,11 +171,11 @@ object Expression:
     def NOT: MatchCondition[T] = MatchCondition[T](this.column, true, this.value)
 
   private[ldbc] case class OrMore[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = ">="
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -183,11 +184,11 @@ object Expression:
     def NOT: OrMore[T] = OrMore[T](this.column, true, this.value)
 
   private[ldbc] case class Over[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = ">"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -196,11 +197,11 @@ object Expression:
     def NOT: Over[T] = Over[T](this.column, true, this.value)
 
   private[ldbc] case class LessThanOrEqualTo[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<="
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -209,11 +210,11 @@ object Expression:
     def NOT: LessThanOrEqualTo[T] = LessThanOrEqualTo[T](this.column, true, this.value)
 
   private[ldbc] case class LessThan[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -222,9 +223,9 @@ object Expression:
     def NOT: LessThan[T] = LessThan[T](this.column, true, this.value)
 
   private[ldbc] case class NotEqual[T](flag: String, column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -239,7 +240,7 @@ object Expression:
   ) extends SingleValue[T]:
     override def flag: String = "IS"
 
-    override def parameter: List[Parameter.DynamicBinder] = List.empty
+    override def parameter: List[Parameter.Dynamic] = List.empty
 
     override def statement: String =
       val not = if isNot then " NOT" else ""
@@ -248,11 +249,11 @@ object Expression:
     def NOT: Is[T] = Is[T](this.column, true, this.value)
 
   private[ldbc] case class NullSafeEqual[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<=>"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -261,11 +262,11 @@ object Expression:
     def NOT: NullSafeEqual[T] = NullSafeEqual[T](this.column, true, this.value)
 
   private[ldbc] case class In[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "IN"
 
-    override def parameter: List[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_)).toList
+    override def parameter: List[Parameter.Dynamic] = values.map(Parameter.Dynamic(_)).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -274,11 +275,11 @@ object Expression:
     def NOT: In[T] = In[T](this.column, true, this.values*)
 
   private[ldbc] case class Between[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "BETWEEN"
 
-    override def parameter: List[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_)).toList
+    override def parameter: List[Parameter.Dynamic] = values.map(Parameter.Dynamic(_)).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -287,11 +288,11 @@ object Expression:
     def NOT: Between[T] = Between[T](this.column, true, this.values*)
 
   private[ldbc] case class Like[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "LIKE"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -300,11 +301,11 @@ object Expression:
     def NOT: Like[T] = Like[T](this.column, true, this.value)
 
   private[ldbc] case class LikeEscape[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "LIKE"
 
-    override def parameter: List[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_)).toList
+    override def parameter: List[Parameter.Dynamic] = values.map(Parameter.Dynamic(_)).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -313,11 +314,11 @@ object Expression:
     def NOT: LikeEscape[T] = LikeEscape[T](this.column, true, this.values*)
 
   private[ldbc] case class Regexp[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "REGEXP"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -326,11 +327,11 @@ object Expression:
     def NOT: Regexp[T] = Regexp[T](this.column, true, this.value)
 
   private[ldbc] case class LeftShift[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "<<"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -339,11 +340,11 @@ object Expression:
     def NOT: LeftShift[T] = LeftShift[T](this.column, true, this.value)
 
   private[ldbc] case class RightShift[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = ">>"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -352,11 +353,11 @@ object Expression:
     def NOT: RightShift[T] = RightShift[T](this.column, true, this.value)
 
   private[ldbc] case class Div[T](column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends MultiValue[T]:
     override def flag: String = "DIV"
 
-    override def parameter: List[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_)).toList
+    override def parameter: List[Parameter.Dynamic] = values.map(Parameter.Dynamic(_)).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -365,9 +366,9 @@ object Expression:
     def NOT: Div[T] = Div[T](this.column, true, this.values*)
 
   private[ldbc] case class Mod[T](flag: String, column: String, isNot: Boolean, values: Extract[T]*)(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends MultiValue[T]:
-    override def parameter: List[Parameter.DynamicBinder] = values.map(Parameter.DynamicBinder(_)).toList
+    override def parameter: List[Parameter.Dynamic] = values.map(Parameter.Dynamic(_)).toList
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -376,11 +377,11 @@ object Expression:
     def NOT: Mod[T] = Mod[T](this.flag, this.column, true, this.values*)
 
   private[ldbc] case class BitXOR[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "^"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""
@@ -389,11 +390,11 @@ object Expression:
     def NOT: BitXOR[T] = BitXOR[T](this.column, true, this.value)
 
   private[ldbc] case class BitFlip[T](column: String, isNot: Boolean, value: Extract[T])(using
-    _parameter: Parameter[Extract[T]]
+    Encoder[Extract[T]]
   ) extends SingleValue[T]:
     override def flag: String = "~"
 
-    override def parameter: List[Parameter.DynamicBinder] = List(Parameter.DynamicBinder(value))
+    override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
 
     override def statement: String =
       val not = if isNot then "NOT " else ""

@@ -8,7 +8,8 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{ Parameter, SQL }
+import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.codec.Encoder
 import ldbc.query.builder.*
 
 /**
@@ -24,7 +25,7 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class Limit[T](
   statement: String,
-  params:    List[Parameter.DynamicBinder]
+  params:    List[Parameter.Dynamic]
 ) extends Query[T],
           Command:
 
@@ -35,10 +36,10 @@ private[ldbc] case class Limit[T](
   /**
    * A method for setting the OFFSET condition in a statement.
    */
-  def offset(length: Long): Parameter[Long] ?=> Offset[T] =
+  def offset(length: Long): Encoder[Long] ?=> Offset[T] =
     Offset(
       statement = statement ++ " OFFSET ?",
-      params    = params :+ Parameter.DynamicBinder(length)
+      params    = params :+ Parameter.Dynamic(length)
     )
 
 /**
@@ -50,8 +51,8 @@ private[ldbc] transparent trait LimitProvider[T]:
   /**
    * A method for setting the LIMIT condition in a statement.
    */
-  def limit(length: Long): Parameter[Long] ?=> Limit[T] =
+  def limit(length: Long): Encoder[Long] ?=> Limit[T] =
     Limit(
       statement = statement ++ " LIMIT ?",
-      params    = params :+ Parameter.DynamicBinder(length)
+      params    = params :+ Parameter.Dynamic(length)
     )

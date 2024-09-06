@@ -29,7 +29,7 @@ import ldbc.query.builder.*
 private[ldbc] case class Having[P <: Product, T](
   table:     Table[P],
   statement: String,
-  params:    List[Parameter.DynamicBinder]
+  params:    List[Parameter.Dynamic]
 ) extends Query[T],
           OrderByProvider[P, T],
           LimitProvider[T]:

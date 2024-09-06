@@ -28,7 +28,7 @@ import ldbc.dsl.codec.Decoder
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.DynamicBinder]) extends SQL:
+case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynamic]) extends SQL:
 
   @targetName("combine")
   override def ++(sql: SQL): Mysql[F] =
@@ -80,7 +80,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
         for
           prepareStatement <- connection.prepareStatement(statement)
           result <- params.zipWithIndex.traverse {
-                      case (param, index) => param.bind[F](prepareStatement, index + 1)
+                      case (param, index) => param.bind(prepareStatement, index + 1)
                     } >> prepareStatement.executeUpdate() <* prepareStatement.close()
         yield result
     )
@@ -107,7 +107,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
         for
           prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
           resultSet <- params.zipWithIndex.traverse {
-                         case (param, index) => param.bind[F](prepareStatement, index + 1)
+                         case (param, index) => param.bind(prepareStatement, index + 1)
                        } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
           result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
         yield result

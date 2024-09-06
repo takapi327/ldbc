@@ -24,7 +24,7 @@ trait SQL:
   /**
    * statement has '?' that the statement has.
    */
-  def params: List[Parameter.DynamicBinder]
+  def params: List[Parameter.Dynamic]
 
   @targetName("combine")
   def ++(sql: SQL): SQL

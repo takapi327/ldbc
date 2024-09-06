@@ -10,8 +10,6 @@ import java.time.*
 
 import scala.compiletime.*
 
-import ldbc.sql.PreparedStatement
-
 /**
  * Trait for converting Scala types to types that can be handled by PreparedStatement.
  *
@@ -81,6 +79,9 @@ object Encoder:
   given Encoder[ZonedDateTime] with
     override def encode(value: ZonedDateTime): LocalDateTime = value.toLocalDateTime
 
+  given Encoder[None.type] with
+    override def encode(value: None.type): None.type = value
+
   given [A](using encoder: Encoder[A]): Encoder[Option[A]] with
     override def encode(value: Option[A]): Encoder.Supported =
       value match
@@ -103,65 +104,3 @@ object Encoder:
       case _: EmptyTuple        => EmptyTuple
       case _: (h *: EmptyTuple) => infer[h] *: EmptyTuple
       case _: (h *: t)          => infer[h] *: fold[t]
-
-/**
- * Trait for setting Scala and Java values to PreparedStatement.
- */
-trait Parameter:
-
-  /** Query parameters to be plugged into the Statement. */
-  def parameter: String
-
-object Parameter:
-
-  case class Static(parameter: String) extends Parameter:
-    override def toString: String = parameter
-
-  trait Dynamic[F[_]] extends Parameter:
-
-    /**
-     * Methods for setting Scala and Java values to the specified position in PreparedStatement.
-     * 
-     * @param statement
-     *   An object that represents a precompiled SQL statement.
-     * @param index
-     *   the parameter value
-     */
-    def bind(statement: PreparedStatement[F], index: Int): F[Unit]
-
-  object Dynamic:
-
-    def apply[F[_], A](value: A)(using encoder: Encoder[A]): Dynamic[F] =
-      new Dynamic[F]:
-        override def parameter: String = value.toString
-        override def bind(statement: PreparedStatement[F], index: Int): F[Unit] =
-          encoder.encode(value) match
-            case value: Boolean       => statement.setBoolean(index, value)
-            case value: Byte          => statement.setByte(index, value)
-            case value: Short         => statement.setShort(index, value)
-            case value: Int           => statement.setInt(index, value)
-            case value: Long          => statement.setLong(index, value)
-            case value: Float         => statement.setFloat(index, value)
-            case value: Double        => statement.setDouble(index, value)
-            case value: BigDecimal    => statement.setBigDecimal(index, value)
-            case value: String        => statement.setString(index, value)
-            case value: Array[Byte]   => statement.setBytes(index, value)
-            case value: LocalTime     => statement.setTime(index, value)
-            case value: LocalDate     => statement.setDate(index, value)
-            case value: LocalDateTime => statement.setTimestamp(index, value)
-            case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
-
-    given [F[_], A](using Encoder[A]): Conversion[A, Dynamic[F]] with
-      override def apply(value: A): Dynamic[F] = Dynamic(value)
-
-trait Test[F[_]]:
-  extension (sc: StringContext)
-    def sql(args: Parameter*): String =
-      val query = sc.parts.iterator.mkString("?")
-      val (expressions, parameters) = args.foldLeft((query, List.empty[Parameter])) {
-        case ((query, parameters), p) => (query, parameters :+ p)
-      }
-      expressions
-  end extension
-
-val io = new Test[cats.effect.IO] {}

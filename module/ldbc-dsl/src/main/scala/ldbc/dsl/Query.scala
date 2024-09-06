@@ -39,7 +39,7 @@ object Query:
 
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
-    params:    List[Parameter.DynamicBinder],
+    params:    List[Parameter.Dynamic],
     decoder:   Decoder[T]
   ) extends Query[F, T]:
 
@@ -53,7 +53,7 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind[F](prepareStatement, index + 1)
+                           case (param, index) => param.bind(prepareStatement, index + 1)
                          } >> prepareStatement.executeQuery()
             result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
           yield result
@@ -67,7 +67,7 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind[F](prepareStatement, index + 1)
+                           case (param, index) => param.bind(prepareStatement, index + 1)
                          } >> prepareStatement.executeQuery()
             result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
           yield result
