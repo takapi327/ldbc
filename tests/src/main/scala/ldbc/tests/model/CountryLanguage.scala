@@ -7,7 +7,7 @@
 package ldbc.tests.model
 
 import ldbc.dsl.*
-import ldbc.dsl.codec.{Encoder, Decoder}
+import ldbc.dsl.codec.{ Encoder, Decoder }
 import ldbc.query.builder.Table
 
 case class CountryLanguage(

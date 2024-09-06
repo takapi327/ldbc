@@ -131,7 +131,7 @@ object Expression:
     value:  SQL
   ) extends Expression:
 
-    override def statement: String                        = s"$column $flag (${ value.statement })"
+    override def statement: String                  = s"$column $flag (${ value.statement })"
     override def parameter: List[Parameter.Dynamic] = value.params
 
   /**
@@ -162,7 +162,7 @@ object Expression:
   private[ldbc] case class MatchCondition[T](column: String, isNot: Boolean, value: Extract[T])(using
     Encoder[Extract[T]]
   ) extends SingleValue[T]:
-    override def flag:      String                        = "="
+    override def flag:      String                  = "="
     override def parameter: List[Parameter.Dynamic] = List(Parameter.Dynamic(value))
     override def statement: String =
       val not = if isNot then "NOT " else ""

@@ -41,8 +41,7 @@ private[ldbc] trait Insert[P <: Product] extends Command:
 
 object Insert:
 
-  case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.Dynamic])
-    extends Insert[P]:
+  case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.Dynamic]) extends Insert[P]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -77,8 +76,8 @@ private[ldbc] case class DuplicateKeyUpdateInsert(
  *   Tuple type of the property with type parameter P
  */
 case class SelectInsert[P <: Product, T](
-  table:     Table[P],
-  columns:   T,
+  table:   Table[P],
+  columns: T,
   encoder: Encoder.MapToTuple[Column.Extract[T]]
 )(using Tuples.IsColumn[T] =:= true):
 
