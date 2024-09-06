@@ -8,15 +8,32 @@ package ldbc.dsl.codec
 
 import java.time.*
 
+import scala.compiletime.*
+
 import ldbc.sql.PreparedStatement
 
+/**
+ * Trait for converting Scala types to types that can be handled by PreparedStatement.
+ *
+ * @tparam A
+ *   Types handled in Scala
+ */
 trait Encoder[A]:
 
-  def encode(value: A): Encoder.SUPPORTED
+  /**
+   * Method to convert Scala types to types that can be handled by PreparedStatement.
+   *
+   * @param value
+   *   Scala types
+   * @return
+   *   Types that can be handled by PreparedStatement
+   */
+  def encode(value: A): Encoder.Supported
 
 object Encoder:
 
-  type SUPPORTED = Boolean | Byte | Short | Int | Long | Float | Double | BigDecimal | String | Array[Byte] |
+  /** Types that can be handled by PreparedStatement. */
+  type Supported = Boolean | Byte | Short | Int | Long | Float | Double | BigDecimal | String | Array[Byte] |
     LocalTime | LocalDate | LocalDateTime | None.type
 
   given Encoder[Boolean] with
@@ -65,45 +82,83 @@ object Encoder:
     override def encode(value: ZonedDateTime): LocalDateTime = value.toLocalDateTime
 
   given [A](using encoder: Encoder[A]): Encoder[Option[A]] with
-    override def encode(value: Option[A]): Encoder.SUPPORTED =
+    override def encode(value: Option[A]): Encoder.Supported =
       value match
         case Some(value) => encoder.encode(value)
         case None        => None
 
-trait Parameter[F[_]]:
-  def parameter:                                         String
-  def bind(statement: PreparedStatement[F], index: Int): F[Unit]
+  type MapToTuple[T] <: Tuple = T match
+    case EmptyTuple      => EmptyTuple
+    case h *: EmptyTuple => Encoder[h] *: EmptyTuple
+    case h *: t          => Encoder[h] *: MapToTuple[t]
+
+  inline def infer[T]: Encoder[T] =
+    summonFrom[Encoder[T]] {
+      case parameter: Encoder[T] => parameter
+      case _                     => error("Parameter cannot be inferred")
+    }
+
+  inline def fold[T]: MapToTuple[T] =
+    inline erasedValue[T] match
+      case _: EmptyTuple        => EmptyTuple
+      case _: (h *: EmptyTuple) => infer[h] *: EmptyTuple
+      case _: (h *: t)          => infer[h] *: fold[t]
+
+/**
+ * Trait for setting Scala and Java values to PreparedStatement.
+ */
+trait Parameter:
+
+  /** Query parameters to be plugged into the Statement. */
+  def parameter: String
 
 object Parameter:
 
-  def apply[F[_], A](value: A)(using encoder: Encoder[A]): Parameter[F] =
-    new Parameter[F]:
-      override def parameter: String = value.toString
-      override def bind(statement: PreparedStatement[F], index: Int): F[Unit] =
-        encoder.encode(value) match
-          case value: Boolean       => statement.setBoolean(index, value)
-          case value: Byte          => statement.setByte(index, value)
-          case value: Short         => statement.setShort(index, value)
-          case value: Int           => statement.setInt(index, value)
-          case value: Long          => statement.setLong(index, value)
-          case value: Float         => statement.setFloat(index, value)
-          case value: Double        => statement.setDouble(index, value)
-          case value: BigDecimal    => statement.setBigDecimal(index, value)
-          case value: String        => statement.setString(index, value)
-          case value: Array[Byte]   => statement.setBytes(index, value)
-          case value: LocalTime     => statement.setTime(index, value)
-          case value: LocalDate     => statement.setDate(index, value)
-          case value: LocalDateTime => statement.setTimestamp(index, value)
-          case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
+  case class Static(parameter: String) extends Parameter:
+    override def toString: String = parameter
 
-  given [F[_], A](using Encoder[A]): Conversion[A, Parameter[F]] with
-    override def apply(value: A): Parameter[F] = Parameter(value)
+  trait Dynamic[F[_]] extends Parameter:
+
+    /**
+     * Methods for setting Scala and Java values to the specified position in PreparedStatement.
+     * 
+     * @param statement
+     *   An object that represents a precompiled SQL statement.
+     * @param index
+     *   the parameter value
+     */
+    def bind(statement: PreparedStatement[F], index: Int): F[Unit]
+
+  object Dynamic:
+
+    def apply[F[_], A](value: A)(using encoder: Encoder[A]): Dynamic[F] =
+      new Dynamic[F]:
+        override def parameter: String = value.toString
+        override def bind(statement: PreparedStatement[F], index: Int): F[Unit] =
+          encoder.encode(value) match
+            case value: Boolean       => statement.setBoolean(index, value)
+            case value: Byte          => statement.setByte(index, value)
+            case value: Short         => statement.setShort(index, value)
+            case value: Int           => statement.setInt(index, value)
+            case value: Long          => statement.setLong(index, value)
+            case value: Float         => statement.setFloat(index, value)
+            case value: Double        => statement.setDouble(index, value)
+            case value: BigDecimal    => statement.setBigDecimal(index, value)
+            case value: String        => statement.setString(index, value)
+            case value: Array[Byte]   => statement.setBytes(index, value)
+            case value: LocalTime     => statement.setTime(index, value)
+            case value: LocalDate     => statement.setDate(index, value)
+            case value: LocalDateTime => statement.setTimestamp(index, value)
+            case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
+
+    given [F[_], A](using Encoder[A]): Conversion[A, Dynamic[F]] with
+      override def apply(value: A): Dynamic[F] = Dynamic(value)
 
 trait Test[F[_]]:
   extension (sc: StringContext)
-    def sql(args: Parameter[F]*): String =
+    def sql(args: Parameter*): String =
       val query = sc.parts.iterator.mkString("?")
-      val (expressions, parameters) = args.foldLeft((query, List.empty[Parameter[F]])) {
+      val (expressions, parameters) = args.foldLeft((query, List.empty[Parameter])) {
         case ((query, parameters), p) => (query, parameters :+ p)
       }
       expressions
