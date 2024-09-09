@@ -453,7 +453,7 @@ private[ldbc] case class ResultSetImpl(
 
   private def findByName(columnLabel: String): Option[(ColumnDefinitionPacket, Int)] =
     columns.zipWithIndex.find { (column: ColumnDefinitionPacket, _) =>
-        column.name == columnLabel || column.fullName == columnLabel
+      column.name == columnLabel || column.fullName == columnLabel
     }
 
   private def raiseError[T](message: String): T =
