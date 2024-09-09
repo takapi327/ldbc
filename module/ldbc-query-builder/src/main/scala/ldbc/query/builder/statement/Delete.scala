@@ -29,7 +29,7 @@ private[ldbc] case class Delete[P <: Product, T](
   table:     Table[P],
   columns:   T,
   statement: String,
-  params:    List[Parameter.Dynamic] = List.empty
+  params:    List[Parameter.DynamicBinder] = List.empty
 ) extends Command,
           LimitProvider[T]:
 

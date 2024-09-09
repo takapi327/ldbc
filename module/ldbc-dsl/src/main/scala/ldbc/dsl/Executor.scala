@@ -68,7 +68,7 @@ object Executor:
 
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
-    params:    List[Parameter],
+    params:    List[Parameter.DynamicBinder],
     run:       Connection[F] => F[T]
   ) extends Executor[F, T]:
 

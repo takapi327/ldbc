@@ -6,8 +6,8 @@
 
 package ldbc.tests.model
 
+import ldbc.sql.PreparedStatement
 import ldbc.dsl.*
-import ldbc.dsl.codec.{ Encoder, Decoder }
 import ldbc.query.builder.Table
 
 case class CountryLanguage(
@@ -24,8 +24,9 @@ object CountryLanguage:
 
   object IsOfficial
 
-  given Encoder[IsOfficial] with
-    override def encode(isOfficial: IsOfficial): String = isOfficial.toString
+  given Parameter[IsOfficial] with
+    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: IsOfficial): F[Unit] =
+      statement.setString(index, value.toString)
 
-  given Decoder.Elem[IsOfficial] =
-    Decoder.Elem.mapping[String, IsOfficial](str => IsOfficial.valueOf(str))
+  given ResultSetReader[IsOfficial] =
+    ResultSetReader.mapping[String, IsOfficial](str => IsOfficial.valueOf(str))

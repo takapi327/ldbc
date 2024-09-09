@@ -7,7 +7,6 @@
 package ldbc.query.builder
 
 import scala.deriving.Mirror
-import scala.compiletime.erasedValue
 
 import cats.syntax.all.*
 
@@ -16,7 +15,6 @@ import cats.effect.*
 import ldbc.sql.*
 
 import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
-import ldbc.dsl.codec.Decoder
 
 import ldbc.query.builder.statement.{ Query, Command }
 import ldbc.query.builder.interpreter.Tuples
@@ -28,25 +26,39 @@ package object syntax:
     extension [T](query: Query[T])
 
       inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
-        val decodes = Decoder.getDecoders[Tuples.InverseColumnMap[T]].toArray
-        val decoder: Decoder[Tuples.InverseColumnMap[T]] =
-          (resultSet: ResultSet) =>
-            val results = decodes.zipWithIndex.map { (decoder, index) =>
-              decoder match
-                case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
-                case d: Decoder[t]       => d.decode(resultSet)
-            }
-            Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[T]]
+        given ResultSetConsumer.Read[Tuples.InverseColumnMap[T]] = resultSet =>
+          Tuple
+            .fromArray(
+              ResultSetReader
+                .fold[Tuples.InverseColumnMap[T]]
+                .toArray
+                .zipWithIndex
+                .map {
+                  case (reader: ResultSetReader[?], index) => reader.read(resultSet, index + 1)
+                }
+            )
+            .asInstanceOf[Tuples.InverseColumnMap[T]]
 
-        DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params, decoder)
+        DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params)
 
       inline def queryTo[P <: Product](using
         mirror: Mirror.ProductOf[P],
         check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
       ): DslQuery[F, P] =
-        inline erasedValue[P] match
-          case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(mirror))
-          case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(mirror))
+        given ResultSetConsumer.Read[P] = resultSet =>
+          mirror.fromProduct(
+            Tuple.fromArray(
+              ResultSetReader
+                .fold[mirror.MirroredElemTypes]
+                .toArray
+                .zipWithIndex
+                .map {
+                  case (reader: ResultSetReader[?], index) => reader.read(resultSet, index + 1)
+                }
+            )
+          )
+
+        DslQuery.Impl[F, P](query.statement, query.params)
 
     extension (command: Command)
       def update: Executor[F, Int] =
@@ -62,8 +74,8 @@ package object syntax:
             yield result
         )
 
-      def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): Executor[F, T] =
-        given Decoder[T] = Decoder.one[T]
+      def returning[T <: String | Int | Long](using reader: ResultSetReader[T]): Executor[F, T] =
+        given ResultSetConsumer.Read[T] = resultSet => reader.read(resultSet, 1)
 
         Executor.Impl[F, T](
           command.statement,

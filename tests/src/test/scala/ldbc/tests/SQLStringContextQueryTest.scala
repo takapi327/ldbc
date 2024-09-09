@@ -676,23 +676,20 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   }
 
   test("Statement and can be converted to any model.") {
+    case class LongClass(int: Long, intNull: Option[Long])
     assertIO(
       connection.use { conn =>
         (for
           result1 <-
-            sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`"
-              .query[(Long, Option[Long])]
-              .to[List]
+            sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".query[LongClass].to[List]
           result2 <-
             sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types` WHERE `int_unsigned` = ${ 4294967295L }"
-              .query[(Long, Option[Long])]
+              .query[LongClass]
               .to[Option]
           result3 <-
-            sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`"
-              .query[(Long, Option[Long])]
-              .unsafe
+            sql"SELECT `int_unsigned`, `int_unsigned_null` FROM `connector_test`.`all_types`".query[LongClass].unsafe
         yield (result1, result2, result3)).readOnly(conn)
       },
-      (List((4294967295L, None)), Some((4294967295L, None)), (4294967295L, None))
+      (List(LongClass(4294967295L, None)), Some(LongClass(4294967295L, None)), LongClass(4294967295L, None))
     )
   }
