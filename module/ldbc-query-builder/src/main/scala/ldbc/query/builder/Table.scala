@@ -13,11 +13,12 @@ import scala.compiletime.ops.int.*
 import scala.annotation.targetName
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.Encoder
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
 
-sealed trait MySQLTable[P <: Product]:
+trait MySQLTable[P <: Product]:
 
   /**
    * Type of scala types.
@@ -240,9 +241,9 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     values: mirror.MirroredElemTypes*
   ): Insert[P] =
     val parameterBinders = values
-      .flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
+      .flatMap(_.zip(Encoder.fold[mirror.MirroredElemTypes]).toList)
       .map {
-        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
       }
       .toList
     val statement = s"INSERT INTO ${ _name } (${ *.toList
@@ -260,8 +261,8 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   inline def insertInto[T](func: Table[P] => T)(using
     Tuples.IsColumn[T] =:= true
   ): SelectInsert[P, T] =
-    val parameter: Parameter.MapToTuple[Column.Extract[T]] = Parameter.fold[Column.Extract[T]]
-    SelectInsert[P, T](this, func(this), parameter)
+    val encoder: Encoder.MapToTuple[Column.Extract[T]] = Encoder.fold[Column.Extract[T]]
+    SelectInsert[P, T](this, func(this), encoder)
 
   /**
    * A method to build a query model that inserts data from the model into all columns defined in the table.
@@ -275,10 +276,10 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   inline def +=(value: P)(using mirror: Mirror.ProductOf[P]): Insert[P] =
     val tuples = Tuple.fromProductTyped(value)
     val parameterBinders = tuples
-      .zip(Parameter.fold[mirror.MirroredElemTypes])
+      .zip(Encoder.fold[mirror.MirroredElemTypes])
       .toList
       .map {
-        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
       }
     Insert.Impl[P](
       this,
@@ -298,9 +299,9 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   inline def ++=(values: List[P])(using mirror: Mirror.ProductOf[P]): Insert[P] =
     val tuples = values.map(Tuple.fromProductTyped)
     val parameterBinders = tuples
-      .flatMap(_.zip(Parameter.fold[mirror.MirroredElemTypes]).toList)
+      .flatMap(_.zip(Encoder.fold[mirror.MirroredElemTypes]).toList)
       .map {
-        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
       }
     val statement = s"INSERT INTO ${ _name } (${ *.toList
         .mkString(", ") }) VALUES${ tuples.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(", ") })").mkString(", ") }"
@@ -330,7 +331,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
     type PARAM = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    val params    = List(Parameter.DynamicBinder[PARAM](check(value))(using Parameter.infer[PARAM]))
+    val params    = List(Parameter.Dynamic[PARAM](check(value))(using Encoder.infer[PARAM]))
     val statement = s"UPDATE ${ _name } SET ${ selectDynamic[Tag](tag).name } = ?"
     Update[P](
       table     = this,
@@ -349,10 +350,10 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
   inline def update(value: P)(using mirror: Mirror.ProductOf[P]): Update[P] =
     val parameterBinders = Tuple
       .fromProductTyped(value)
-      .zip(Parameter.fold[mirror.MirroredElemTypes])
+      .zip(Encoder.fold[mirror.MirroredElemTypes])
       .toList
       .map {
-        case (value, parameter) => Parameter.DynamicBinder(value)(using parameter.asInstanceOf[Parameter[Any]])
+        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
       }
     val statement =
       s"UPDATE ${ _name } SET ${ columnNames.map(name => s"$name = ?").mkString(", ") }"

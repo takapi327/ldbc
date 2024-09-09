@@ -10,6 +10,7 @@ import scala.deriving.Mirror
 import scala.annotation.targetName
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.Encoder
 import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.Tuples
 
@@ -29,7 +30,7 @@ import ldbc.query.builder.interpreter.Tuples
 case class Update[P <: Product](
   table:     Table[P],
   statement: String,
-  params:    List[Parameter.DynamicBinder]
+  params:    List[Parameter.Dynamic]
 ) extends Command:
 
   @targetName("combine")
@@ -61,7 +62,7 @@ case class Update[P <: Product](
     check:  T =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    val param     = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
+    val param     = Parameter.Dynamic[Param](check(value))(using Encoder.infer[Param])
     val statement = this.statement ++ s", ${ table.selectDynamic[Tag](tag).name } = ?"
     this.copy(
       statement = statement,
@@ -93,7 +94,7 @@ case class Update[P <: Product](
     check:  Option[T] =:= Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
   ): Update[P] =
     type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-    val param     = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
+    val param     = Parameter.Dynamic[Param](check(value))(using Encoder.infer[Param])
     val statement = this.statement ++ s", ${ table.selectDynamic[Tag](tag).name } = ?"
     this.copy(
       statement = statement,
@@ -128,7 +129,7 @@ case class Update[P <: Product](
   ): Update[P] =
     if bool then
       type Param = Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-      val param     = Parameter.DynamicBinder[Param](check(value))(using Parameter.infer[Param])
+      val param     = Parameter.Dynamic[Param](check(value))(using Encoder.infer[Param])
       val statement = this.statement ++ s", ${ table.selectDynamic[Tag](tag).name } = ?"
       this.copy(
         statement = statement,
