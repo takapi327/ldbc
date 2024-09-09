@@ -11,6 +11,7 @@ import scala.annotation.targetName
 import cats.syntax.all.*
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.Encoder
 import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.*
 
@@ -40,8 +41,7 @@ private[ldbc] trait Insert[P <: Product] extends Command:
 
 object Insert:
 
-  case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.DynamicBinder])
-    extends Insert[P]:
+  case class Impl[P <: Product](table: Table[P], statement: String, params: List[Parameter.Dynamic]) extends Insert[P]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -56,7 +56,7 @@ object Insert:
  */
 private[ldbc] case class DuplicateKeyUpdateInsert(
   statement: String,
-  params:    List[Parameter.DynamicBinder]
+  params:    List[Parameter.Dynamic]
 ) extends Command:
 
   @targetName("combine")
@@ -76,9 +76,9 @@ private[ldbc] case class DuplicateKeyUpdateInsert(
  *   Tuple type of the property with type parameter P
  */
 case class SelectInsert[P <: Product, T](
-  table:     Table[P],
-  columns:   T,
-  parameter: Parameter.MapToTuple[Column.Extract[T]]
+  table:   Table[P],
+  columns: T,
+  encoder: Encoder.MapToTuple[Column.Extract[T]]
 )(using Tuples.IsColumn[T] =:= true):
 
   private val columnStatement = columns match
@@ -93,11 +93,11 @@ case class SelectInsert[P <: Product, T](
       table,
       s"$insertStatement VALUES(${ tuple.toArray.map(_ => "?").mkString(", ") })",
       tuple
-        .zip(parameter)
+        .zip(encoder)
         .toArray
         .map {
-          case (value: Any, parameter: Any) =>
-            Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
+          case (value: Any, encoder: Any) =>
+            Parameter.Dynamic[Any](value)(using encoder.asInstanceOf[Encoder[Any]])
         }
         .toList
     )
@@ -107,8 +107,8 @@ case class SelectInsert[P <: Product, T](
     Insert.Impl[P](
       table,
       s"$insertStatement VALUES${ values.mkString(", ") }",
-      tuples.flatMap(_.zip(parameter).toArray.map {
-        case (value: Any, parameter: Any) =>
-          Parameter.DynamicBinder[Any](value)(using parameter.asInstanceOf[Parameter[Any]])
+      tuples.flatMap(_.zip(encoder).toArray.map {
+        case (value: Any, encoder: Any) =>
+          Parameter.Dynamic[Any](value)(using encoder.asInstanceOf[Encoder[Any]])
       })
     )

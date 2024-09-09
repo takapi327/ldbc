@@ -24,7 +24,7 @@ import ldbc.query.builder.*
  */
 private[ldbc] case class OrderBy[T](
   statement: String,
-  params:    List[Parameter.DynamicBinder]
+  params:    List[Parameter.Dynamic]
 ) extends Query[T],
           LimitProvider[T]:
 
