@@ -320,6 +320,26 @@ class ResultSetTest extends FTestPlatform:
     assertEquals(builder.result(), List((1, 2, 0), (3, 4, 0), (5, 6, 0), (7, 8, 0)))
   }
 
+  test("If the table name is replaced by an alias, the record can be retrieved by specifying the table name and column name together.") {
+    val resultSet = buildResultSet(
+      Vector(
+        column("c1", ColumnDataType.MYSQL_TYPE_TINY, Some("t")),
+        column("c2", ColumnDataType.MYSQL_TYPE_TINY, Some("t")),
+        column("c3", ColumnDataType.MYSQL_TYPE_TINY, Some("t"))
+      ),
+      Vector(ResultSetRowPacket(Array(Some("1"), Some("0"), None))),
+      Version(0, 0, 0)
+    )
+    val builder = List.newBuilder[(Boolean, Boolean, Boolean)]
+    while resultSet.next() do
+      val c1 = resultSet.getBoolean("t.c1")
+      val c2 = resultSet.getBoolean("t.c2")
+      val c3 = resultSet.getBoolean("t.c3")
+      builder += ((c1, c2, c3))
+
+    assertEquals(builder.result(), List((true, false, false)))
+  }
+
   test("The total number of columns obtained from the meta-information of ResultSet matches the specified value.") {
     val resultSet = buildResultSet(
       Vector(
@@ -385,9 +405,9 @@ class ResultSetTest extends FTestPlatform:
   test("The column label obtained from the meta-information of ResultSet matches the specified value.") {
     val resultSet = buildResultSet(
       Vector(
-        column("c1", ColumnDataType.MYSQL_TYPE_LONG, Some("label1")),
-        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE, Some("label2")),
-        column("c3", ColumnDataType.MYSQL_TYPE_STRING, Some("label3"))
+        column("c1", ColumnDataType.MYSQL_TYPE_LONG, alias = Some("label1")),
+        column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE, alias = Some("label2")),
+        column("c3", ColumnDataType.MYSQL_TYPE_STRING, alias = Some("label3"))
       ),
       Vector.empty,
       Version(0, 0, 0)
@@ -1011,6 +1031,7 @@ class ResultSetTest extends FTestPlatform:
   private def column(
     columnName: String,
     `type`:     ColumnDataType,
+    table:     Option[String] = None,
     alias:      Option[String] = None,
     useScale:   Boolean = false,
     isSigned:   Boolean = false,
@@ -1025,7 +1046,7 @@ class ResultSetTest extends FTestPlatform:
     ColumnDefinition41Packet(
       catalog      = "def",
       schema       = "test_database",
-      table        = "test_table",
+      table        = table.getOrElse("test"),
       orgTable     = "test",
       name         = alias.getOrElse(columnName),
       orgName      = columnName,
