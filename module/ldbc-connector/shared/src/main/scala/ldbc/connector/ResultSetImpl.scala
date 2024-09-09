@@ -182,7 +182,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getString(columnLabel: String): String =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getString(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -191,7 +191,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBoolean(columnLabel: String): Boolean =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getBoolean(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -200,7 +200,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getByte(columnLabel: String): Byte =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getByte(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -209,7 +209,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getShort(columnLabel: String): Short =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getShort(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -218,7 +218,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getInt(columnLabel: String): Int =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getInt(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -227,7 +227,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getLong(columnLabel: String): Long =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getLong(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -236,7 +236,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getFloat(columnLabel: String): Float =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getFloat(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -245,7 +245,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getDouble(columnLabel: String): Double =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getDouble(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -254,7 +254,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBytes(columnLabel: String): Array[Byte] =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getBytes(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -263,7 +263,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getDate(columnLabel: String): LocalDate =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getDate(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -272,7 +272,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTime(columnLabel: String): LocalTime =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getTime(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -281,7 +281,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTimestamp(columnLabel: String): LocalDateTime =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getTimestamp(index + 1)
         case None =>
           lastColumnReadNullable = true
@@ -450,6 +450,11 @@ private[ldbc] case class ResultSetImpl(
 
   private def rowDecode[T](decode: ResultSetRowPacket => Option[T]): Option[T] =
     currentRow.flatMap(decode)
+
+  private def findByName(columnLabel: String): Option[(ColumnDefinitionPacket, Int)] =
+    columns.zipWithIndex.find { (column: ColumnDefinitionPacket, _) =>
+      column.name.equalsIgnoreCase(columnLabel) || column.fullName.equalsIgnoreCase(columnLabel)
+    }
 
   private def raiseError[T](message: String): T =
     throw new SQLException(message)
