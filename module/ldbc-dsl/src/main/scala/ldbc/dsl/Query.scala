@@ -12,7 +12,6 @@ import cats.syntax.all.*
 import cats.effect.Temporal
 
 import ldbc.dsl.util.FactoryCompat
-import ldbc.dsl.codec.Decoder
 
 /**
  * Trait for determining what type of search system statements are retrieved from the database.
@@ -39,11 +38,9 @@ object Query:
 
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
-    params:    List[Parameter.Dynamic],
-    decoder:   Decoder[T]
-  ) extends Query[F, T]:
-
-    given Decoder[T] = decoder
+    params:    List[Parameter.DynamicBinder]
+  )(using ResultSetConsumer.Read[T])
+    extends Query[F, T]:
 
     override def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]] =
       Executor.Impl[F, G[T]](
@@ -53,7 +50,7 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind(prepareStatement, index + 1)
+                           case (param, index) => param.bind[F](prepareStatement, index + 1)
                          } >> prepareStatement.executeQuery()
             result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
           yield result
@@ -67,7 +64,7 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind(prepareStatement, index + 1)
+                           case (param, index) => param.bind[F](prepareStatement, index + 1)
                          } >> prepareStatement.executeQuery()
             result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
           yield result

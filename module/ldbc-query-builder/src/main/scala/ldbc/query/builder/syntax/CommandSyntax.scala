@@ -7,7 +7,6 @@
 package ldbc.query.builder.syntax
 
 import ldbc.dsl.*
-import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.statement.Command
 
 trait CommandSyntax[F[_]]:
@@ -46,4 +45,4 @@ trait CommandSyntax[F[_]]:
      * @return
      *   The primary key value
      */
-    def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): Executor[F, T]
+    def returning[T <: String | Int | Long](using reader: ResultSetReader[T]): Executor[F, T]

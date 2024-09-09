@@ -131,7 +131,7 @@ object Join:
 
   private[ldbc] case class JoinOrderBy[T](
     statement: String,
-    params:    List[Parameter.Dynamic]
+    params:    List[Parameter.DynamicBinder]
   ) extends Query[T],
             LimitProvider[T]:
 
@@ -159,7 +159,7 @@ object Join:
   private[ldbc] case class JoinHaving[SELECTS <: Tuple](
     selects:   SELECTS,
     statement: String,
-    params:    List[Parameter.Dynamic]
+    params:    List[Parameter.DynamicBinder]
   ) extends Query[SELECTS],
             JoinOrderByProvider[SELECTS],
             LimitProvider[SELECTS]:
@@ -172,7 +172,7 @@ object Join:
     selects:   SELECTS,
     statement: String,
     columns:   T,
-    params:    List[Parameter.Dynamic]
+    params:    List[Parameter.DynamicBinder]
   ) extends Query[T],
             JoinOrderByProvider[SELECTS],
             LimitProvider[T]:
@@ -198,7 +198,7 @@ object Join:
     selects:   SELECTS,
     statement: String,
     columns:   T,
-    params:    List[Parameter.Dynamic]
+    params:    List[Parameter.DynamicBinder]
   ) extends Query[T],
             JoinOrderByProvider[SELECTS],
             LimitProvider[T]:
@@ -249,7 +249,7 @@ object Join:
     selects:       SELECTS,
     fromStatement: String,
     columns:       T,
-    params:        List[Parameter.Dynamic]
+    params:        List[Parameter.DynamicBinder]
   ) extends Query[T],
             JoinOrderByProvider[SELECTS],
             LimitProvider[T]:

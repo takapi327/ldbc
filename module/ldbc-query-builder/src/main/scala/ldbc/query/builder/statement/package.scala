@@ -14,7 +14,7 @@ package object statement:
 
   trait Command extends SQL
   object Command:
-    case class Pure(statement: String, params: List[Parameter.Dynamic]) extends Command:
+    case class Pure(statement: String, params: List[Parameter.DynamicBinder]) extends Command:
       @targetName("combine")
       override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
