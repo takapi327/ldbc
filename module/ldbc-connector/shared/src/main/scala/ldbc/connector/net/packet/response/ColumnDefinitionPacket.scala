@@ -28,6 +28,9 @@ trait ColumnDefinitionPacket extends ResponsePacket:
 
   /** ColumnDefinitionFlags is a bitset of column definition flags. */
   def flags: Seq[ColumnDefinitionFlags]
+  
+  /** Full name with table and column names connected by dots */
+  def fullName: String = table + "." + name
 
 object ColumnDefinitionPacket:
 
