@@ -452,12 +452,8 @@ private[ldbc] case class ResultSetImpl(
     currentRow.flatMap(decode)
 
   private def findByName(columnLabel: String): Option[(ColumnDefinitionPacket, Int)] =
-    columns.zipWithIndex.find {
-      case (column: ColumnDefinition41Packet, _) =>
-        if column.table != column.orgTable then
-          (column.table + "." + column.name).toLowerCase == columnLabel.toLowerCase
-        else column.name == columnLabel
-      case (column: ColumnDefinition320Packet, _) => column.name == columnLabel
+    columns.zipWithIndex.find { (column: ColumnDefinitionPacket, _) =>
+        column.name == columnLabel || column.fullName == columnLabel
     }
 
   private def raiseError[T](message: String): T =
