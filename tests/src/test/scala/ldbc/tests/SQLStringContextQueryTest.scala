@@ -29,6 +29,7 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
+      database = Some("world"),
       ssl      = SSL.Trusted
     )
 
@@ -694,5 +695,18 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
         yield (result1, result2, result3)).readOnly(conn)
       },
       (List((4294967295L, None)), Some((4294967295L, None)), (4294967295L, None))
+    )
+  }
+
+  test("The results obtained by JOIN can be converted to a model based on property names.") {
+    case class City(id: Int, name: String)
+    case class Country(code: String, name: String)
+    case class CityWithCountry(c: City, ct: Country)
+
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT c.Id, c.Name, ct.Code, ct.Name FROM city AS c JOIN country AS ct ON c.CountryCode = ct.Code LIMIT 1".query[CityWithCountry].to[Option].readOnly(conn)
+      },
+      Some(CityWithCountry(City(1, "Kabul"), Country("AFG", "Afghanistan")))
     )
   }
