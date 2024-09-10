@@ -705,7 +705,10 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
 
     assertIO(
       connection.use { conn =>
-        sql"SELECT c.Id, c.Name, ct.Code, ct.Name FROM city AS c JOIN country AS ct ON c.CountryCode = ct.Code LIMIT 1".query[CityWithCountry].to[Option].readOnly(conn)
+        sql"SELECT c.Id, c.Name, ct.Code, ct.Name FROM city AS c JOIN country AS ct ON c.CountryCode = ct.Code LIMIT 1"
+          .query[CityWithCountry]
+          .to[Option]
+          .readOnly(conn)
       },
       Some(CityWithCountry(City(1, "Kabul"), Country("AFG", "Afghanistan")))
     )
