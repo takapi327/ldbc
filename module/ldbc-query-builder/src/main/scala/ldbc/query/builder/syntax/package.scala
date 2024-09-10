@@ -30,11 +30,11 @@ package object syntax:
       inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
         val decodes = Decoder.getDecoders[Tuples.InverseColumnMap[T]].toArray
         val decoder: Decoder[Tuples.InverseColumnMap[T]] =
-          (resultSet: ResultSet) =>
+          (resultSet: ResultSet, prefix: Option[String]) =>
             val results = decodes.zipWithIndex.map { (decoder, index) =>
               decoder match
                 case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
-                case d: Decoder[t]       => d.decode(resultSet)
+                case d: Decoder[t]       => d.decode(resultSet, prefix)
             }
             Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[T]]
 
