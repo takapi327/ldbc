@@ -9,6 +9,7 @@ package ldbc.query.builder.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 
 /**
@@ -24,16 +25,17 @@ import ldbc.query.builder.*
  * @tparam P
  *   Base trait for all products
  * @tparam T
- *   Union type of column
+ *   Scala types to be converted by Decoder
  */
 private[ldbc] case class Having[P <: Product, T](
   table:     Table[P],
   statement: String,
-  params:    List[Parameter.Dynamic]
+  params:    List[Parameter.Dynamic],
+  decoder: Decoder[T]
 ) extends Query[T],
           OrderByProvider[P, T],
-          LimitProvider[T]:
+          Limit.QueryProvider[T]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Having[P, T](table, statement ++ sql.statement, params ++ sql.params)
+    Having[P, T](table, statement ++ sql.statement, params ++ sql.params, decoder)
