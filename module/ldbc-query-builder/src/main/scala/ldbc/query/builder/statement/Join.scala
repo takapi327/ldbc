@@ -9,6 +9,7 @@ package ldbc.query.builder.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.Tuples
 
@@ -107,12 +108,21 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
-  def select[C](func: SELECTS => C)(using Tuples.IsColumn[C] =:= true): Join.JoinSelect[SELECTS, C] =
-    Join.JoinSelect[SELECTS, C](
+  def select[C](func: SELECTS => C)(using Tuples.IsColumn[C] =:= true): Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]] =
+    val decodes: Array[Decoder[?]] = func(selects) match
+      case v: Tuple => v.toArray.map {
+        case column: Column[t] => column.decoder
+      }
+      case v: Column[t] => Array(v.decoder)
+    val decoder: Decoder[Tuples.InverseColumnMap[C]] = (resultSet: ldbc.sql.ResultSet, prefix: Option[String]) =>
+      val results = decodes.map(_.decode(resultSet, None))
+      Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[C]]
+    Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]](
       selects       = selects,
       fromStatement = statement,
       columns       = func(selects),
-      params        = Nil
+      params        = Nil,
+      decoder       = decoder
     )
 
 object Join:
@@ -131,51 +141,55 @@ object Join:
 
   private[ldbc] case class JoinOrderBy[T](
     statement: String,
-    params:    List[Parameter.Dynamic]
+    params:    List[Parameter.Dynamic],
+    decoder: Decoder[T]
   ) extends Query[T],
-            LimitProvider[T]:
+            Limit.QueryProvider[T]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
-      JoinOrderBy(statement ++ sql.statement, params ++ sql.params)
+      JoinOrderBy(statement ++ sql.statement, params ++ sql.params, decoder)
 
-  private[ldbc] transparent trait JoinOrderByProvider[SELECTS <: Tuple]:
-    self: SQL =>
+  private[ldbc] transparent trait JoinOrderByProvider[SELECTS <: Tuple, D]:
+    self: Query[D] =>
 
     def selects: SELECTS
 
     def orderBy[A <: OrderBy.Order[?] | OrderBy.Order[?] *: NonEmptyTuple | Column[?]](
       func: SELECTS => A
-    ): JoinOrderBy[SELECTS] =
+    ): JoinOrderBy[D] =
       val order = func(selects) match
         case v: Tuple            => v.toList.mkString(", ")
         case v: OrderBy.Order[?] => v.statement
         case v: Column[?]        => v.alias.fold(v.name)(as => s"$as.${ v.name }")
       JoinOrderBy(
         statement = self.statement ++ s" ORDER BY $order",
-        params    = self.params
+        params    = self.params,
+        decoder   = self.decoder
       )
 
-  private[ldbc] case class JoinHaving[SELECTS <: Tuple](
+  private[ldbc] case class JoinHaving[SELECTS <: Tuple, D](
     selects:   SELECTS,
     statement: String,
-    params:    List[Parameter.Dynamic]
-  ) extends Query[SELECTS],
-            JoinOrderByProvider[SELECTS],
-            LimitProvider[SELECTS]:
+    params:    List[Parameter.Dynamic],
+    decoder: Decoder[D]
+  ) extends Query[D],
+            JoinOrderByProvider[SELECTS, D],
+            Limit.QueryProvider[D]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
-      JoinHaving(selects, statement ++ sql.statement, params ++ sql.params)
+      JoinHaving(selects, statement ++ sql.statement, params ++ sql.params, decoder)
 
-  private[ldbc] case class JoinGroupBy[SELECTS <: Tuple, T](
+  private[ldbc] case class JoinGroupBy[SELECTS <: Tuple, C, D](
     selects:   SELECTS,
     statement: String,
-    columns:   T,
-    params:    List[Parameter.Dynamic]
-  ) extends Query[T],
-            JoinOrderByProvider[SELECTS],
-            LimitProvider[T]:
+    columns:   C,
+    params:    List[Parameter.Dynamic],
+    decoder: Decoder[D]
+  ) extends Query[D],
+            JoinOrderByProvider[SELECTS, D],
+            Limit.QueryProvider[D]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -183,25 +197,28 @@ object Join:
         selects   = selects,
         statement = statement ++ sql.statement,
         columns   = columns,
-        params    = params ++ sql.params
+        params    = params ++ sql.params,
+        decoder   = decoder
       )
 
-    def having[A](func: T => Expression): JoinHaving[SELECTS] =
+    def having[A](func: C => Expression): JoinHaving[SELECTS, D] =
       val expression = func(columns)
       JoinHaving(
         selects   = selects,
         statement = statement ++ s" HAVING ${ expression.statement }",
-        params    = params ++ expression.parameter
+        params    = params ++ expression.parameter,
+        decoder   = decoder
       )
 
-  private[ldbc] case class JoinWhere[SELECTS <: Tuple, T](
+  private[ldbc] case class JoinWhere[SELECTS <: Tuple, C, D](
     selects:   SELECTS,
     statement: String,
-    columns:   T,
-    params:    List[Parameter.Dynamic]
-  ) extends Query[T],
-            JoinOrderByProvider[SELECTS],
-            LimitProvider[T]:
+    columns:   C,
+    params:    List[Parameter.Dynamic],
+    decoder: Decoder[D]
+  ) extends Query[D],
+            JoinOrderByProvider[SELECTS, D],
+            Limit.QueryProvider[D]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -209,50 +226,54 @@ object Join:
         selects   = selects,
         statement = statement ++ sql.statement,
         columns   = columns,
-        params    = params ++ sql.params
+        params    = params ++ sql.params,
+        decoder   = decoder
       )
 
-    private def union(label: String, expression: Expression): JoinWhere[SELECTS, T] =
-      JoinWhere[SELECTS, T](
+    private def union(label: String, expression: Expression): JoinWhere[SELECTS, C, D] =
+      JoinWhere[SELECTS, C, D](
         selects   = selects,
         statement = statement ++ s" $label ${ expression.statement }",
         columns   = columns,
-        params    = params ++ expression.parameter
+        params    = params ++ expression.parameter,
+        decoder   = decoder
       )
 
-    def and(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
+    def and(func: SELECTS => Expression): JoinWhere[SELECTS, C, D] =
       union("AND", func(selects))
 
-    def or(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
+    def or(func: SELECTS => Expression): JoinWhere[SELECTS, C, D] =
       union("OR", func(selects))
 
     @targetName("OR")
-    def ||(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
+    def ||(func: SELECTS => Expression): JoinWhere[SELECTS, C, D] =
       union("||", func(selects))
 
-    def xor(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
+    def xor(func: SELECTS => Expression): JoinWhere[SELECTS, C, D] =
       union("XOR", func(selects))
 
     @targetName("AND")
-    def &&(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
+    def &&(func: SELECTS => Expression): JoinWhere[SELECTS, C, D] =
       union("&&", func(selects))
 
-    def groupBy[A](func: T => Column[A]): JoinGroupBy[SELECTS, T] =
+    def groupBy[A](func: C => Column[A]): JoinGroupBy[SELECTS, C, D] =
       JoinGroupBy(
         selects   = selects,
         statement = statement ++ s" GROUP BY ${ func(columns).name }",
         columns   = columns,
-        params    = params
+        params    = params,
+        decoder   = decoder
       )
 
-  private[ldbc] case class JoinSelect[SELECTS <: Tuple, T](
+  private[ldbc] case class JoinSelect[SELECTS <: Tuple, C, D](
     selects:       SELECTS,
     fromStatement: String,
-    columns:       T,
-    params:        List[Parameter.Dynamic]
-  ) extends Query[T],
-            JoinOrderByProvider[SELECTS],
-            LimitProvider[T]:
+    columns:       C,
+    params:        List[Parameter.Dynamic],
+    decoder: Decoder[D]
+  ) extends Query[D],
+            JoinOrderByProvider[SELECTS, D],
+            Limit.QueryProvider[D]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -260,7 +281,8 @@ object Join:
         selects       = selects,
         fromStatement = fromStatement,
         columns       = columns,
-        params        = params ++ sql.params
+        params        = params ++ sql.params,
+        decoder       = decoder
       )
 
     private val str = columns match
@@ -269,19 +291,21 @@ object Join:
 
     override def statement: String = s"SELECT $str $fromStatement"
 
-    def where(func: SELECTS => Expression): JoinWhere[SELECTS, T] =
+    def where(func: SELECTS => Expression): JoinWhere[SELECTS, C, D] =
       val expression = func(selects)
       JoinWhere(
         selects   = selects,
         statement = statement ++ s" WHERE ${ expression.statement }",
         columns   = columns,
-        params    = expression.parameter
+        params    = expression.parameter,
+        decoder   = decoder
       )
 
-    def groupBy[A](func: T => Column[A]): JoinGroupBy[SELECTS, T] =
+    def groupBy[A](func: C => Column[A]): JoinGroupBy[SELECTS, C, D] =
       JoinGroupBy(
         selects   = selects,
         statement = statement ++ s" GROUP BY ${ func(columns).name }",
         columns   = columns,
-        params    = params
+        params    = params,
+        decoder   = decoder
       )
