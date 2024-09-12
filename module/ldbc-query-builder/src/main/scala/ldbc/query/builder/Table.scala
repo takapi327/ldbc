@@ -425,22 +425,6 @@ object Table:
         }
     }
 
-  private inline def buildColumns[NT <: Tuple, T <: Tuple, I <: Int](
-    inline nt: NT,
-    inline xs: List[Column[?]]
-  )(using naming: Naming): Tuple.Map[T, Column] =
-    inline nt match
-      case nt1: (e *: ts) =>
-        inline nt1.head match
-          case h: String =>
-            val name                             = naming.format(h)
-            given Decoder.Elem[Tuple.Elem[T, I]] = summonInline[Decoder.Elem[Tuple.Elem[T, I]]]
-            val c                                = Column.Impl[Tuple.Elem[T, I]](name, None)
-            buildColumns[ts, T, I + 1](nt1.tail, xs :+ c)
-          case n: (name, _) =>
-            error("stat " + constValue[name] + " should be a constant string")
-      case _: EmptyTuple => Tuple.fromArray(xs.toArray).asInstanceOf[Tuple.Map[T, Column]]
-
   inline def derived[P <: Product](using m: Mirror.ProductOf[P], naming: Naming = Naming.SNAKE): Table[P] =
     val labels  = constValueTuple[m.MirroredElemLabels].toArray.map(_.toString)
     val decodes = Decoder.getDecoders[m.MirroredElemTypes].toArray
