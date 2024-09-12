@@ -32,7 +32,7 @@ case class ColumnImpl[T](
   alias:      Option[String],
   dataType:   DataType[T],
   attributes: List[Attribute[T]],
-  decoder: Decoder[T]
+  decoder:    Decoder[T]
 ) extends Column[T]:
 
   override def as(name: String): Column[T] = ColumnImpl[T](this.name, Some(name), dataType, attributes, decoder)
@@ -58,7 +58,7 @@ object Column:
     val attributes: List[Attribute[T]] = dataType match
       case data: DataType.Alias[T] => data.attributes
       case _                       => List.empty
-    val decoder: Decoder[T] =  (resultSet: ResultSet, prefix: Option[String]) =>
+    val decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
       elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
     ColumnImpl[T](name, None, dataType, attributes, decoder)
 
@@ -67,7 +67,7 @@ object Column:
     dataType:   DataType[T],
     attributes: Attribute[T]*
   )(using elem: Decoder.Elem[T]): ColumnImpl[T] =
-    val decoder: Decoder[T] =  (resultSet: ResultSet, prefix: Option[String]) =>
+    val decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
       elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
     ColumnImpl[T](name, None, dataType, attributes.toList, decoder)
 
@@ -77,6 +77,6 @@ object Column:
     attributes: Seq[Attribute[T]],
     alias:      Option[String]
   )(using elem: Decoder.Elem[T]): ColumnImpl[T] =
-    val decoder: Decoder[T] =  (resultSet: ResultSet, prefix: Option[String]) =>
+    val decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
       elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
     ColumnImpl[T](name, alias, dataType, attributes.toList, decoder)

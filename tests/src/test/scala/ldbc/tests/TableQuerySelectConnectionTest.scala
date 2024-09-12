@@ -332,7 +332,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("If a record is retrieved from a Table model with sellectAll, it is converted to that model and the record is retrieved.") {
+  test(
+    "If a record is retrieved from a Table model with sellectAll, it is converted to that model and the record is retrieved."
+  ) {
     assertIO(
       connection.use { conn =>
         city.selectAll.query.to[Option].readOnly(conn)
@@ -341,18 +343,40 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("When a record is retrieved with sellectAll after performing a join, it is converted to the respective model and the record can be retrieved.") {
+  test(
+    "When a record is retrieved with sellectAll after performing a join, it is converted to the respective model and the record can be retrieved."
+  ) {
     assertIO(
       connection.use { conn =>
-        (city join country)((city, country) => city.countryCode _equals country.code)
-          .selectAll
+        (city join country)((city, country) => city.countryCode _equals country.code).selectAll
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
           .to[Option]
           .readOnly(conn)
       },
-      Some((City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230), Country("JPN", "Japan", Country.Continent.Asia, "Eastern Asia", BigDecimal(377829.00), Some(-660), 126714000, Some(80.7), Some(BigDecimal(3787042.00)), Some(BigDecimal(4192638.00)), "Nihon/Nippon", "Constitutional Monarchy", Some("Akihito"), Some(1532), "JP")))
+      Some(
+        (
+          City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230),
+          Country(
+            "JPN",
+            "Japan",
+            Country.Continent.Asia,
+            "Eastern Asia",
+            BigDecimal(377829.00),
+            Some(-660),
+            126714000,
+            Some(80.7),
+            Some(BigDecimal(3787042.00)),
+            Some(BigDecimal(4192638.00)),
+            "Nihon/Nippon",
+            "Constitutional Monarchy",
+            Some("Akihito"),
+            Some(1532),
+            "JP"
+          )
+        )
+      )
     )
   }
 

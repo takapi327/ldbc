@@ -138,12 +138,12 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
         Tuple.fromArray(results).asInstanceOf[Table.Extract[JOINS]]
 
     Join.JoinSelect[SELECTS, Tuple, Table.Extract[JOINS]](
-      selects = selects,
+      selects       = selects,
       fromStatement = statement,
       columns = Tuple.fromArray(joins.toArray.flatMap {
         case table: Table[t] => table.*.toArray
       }),
-      params = Nil,
+      params  = Nil,
       decoder = decoder
     )
 

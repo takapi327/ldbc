@@ -22,7 +22,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
   columnNames:    List[String],
   keyDefinitions: List[Key],
   options:        List[TableOption | Character | Collate[String]],
-  decoder: Decoder[P]
+  decoder:        Decoder[P]
 ) extends Table[P]:
 
   override type ElemLabels = ElemLabels0
