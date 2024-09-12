@@ -29,6 +29,6 @@ package object statement:
    *   Scala types to be converted by Decoder
    */
   trait Query[T] extends SQL:
-    
+
     /** Function to get a value of type T from a ResultSet */
     def decoder: Decoder[T]

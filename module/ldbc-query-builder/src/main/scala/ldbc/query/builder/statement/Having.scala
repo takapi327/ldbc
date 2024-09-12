@@ -31,7 +31,7 @@ private[ldbc] case class Having[P <: Product, T](
   table:     Table[P],
   statement: String,
   params:    List[Parameter.Dynamic],
-  decoder: Decoder[T]
+  decoder:   Decoder[T]
 ) extends Query[T],
           OrderByProvider[P, T],
           Limit.QueryProvider[T]:

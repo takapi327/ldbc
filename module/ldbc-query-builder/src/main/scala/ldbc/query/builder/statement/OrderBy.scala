@@ -26,9 +26,9 @@ import ldbc.query.builder.*
 private[ldbc] case class OrderBy[T](
   statement: String,
   params:    List[Parameter.Dynamic],
-  decoder: Decoder[T]
+  decoder:   Decoder[T]
 ) extends Query[T],
-  Limit.QueryProvider[T]:
+          Limit.QueryProvider[T]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =

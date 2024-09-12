@@ -36,7 +36,7 @@ private[ldbc] case class GroupBy[P <: Product, C, D](
   columns:   C,
   statement: String,
   params:    List[Parameter.Dynamic],
-  decoder: Decoder[D]
+  decoder:   Decoder[D]
 ) extends Query[D],
           OrderByProvider[P, D],
           Limit.QueryProvider[D]:

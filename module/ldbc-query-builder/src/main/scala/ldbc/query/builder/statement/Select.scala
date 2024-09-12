@@ -8,7 +8,7 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 
@@ -36,7 +36,7 @@ private[ldbc] case class Select[P <: Product, C, D](
   statement: String,
   columns:   C,
   params:    List[Parameter.Dynamic],
-  decoder: Decoder[D]
+  decoder:   Decoder[D]
 ) extends Query[D],
           OrderByProvider[P, D],
           Limit.QueryProvider[D]:

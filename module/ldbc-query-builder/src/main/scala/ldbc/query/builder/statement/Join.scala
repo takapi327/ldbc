@@ -108,11 +108,14 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       joinStatements :+ s"${ Join.JoinType.RIGHT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
-  def select[C](func: SELECTS => C)(using Tuples.IsColumn[C] =:= true): Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]] =
+  def select[C](func: SELECTS => C)(using
+    Tuples.IsColumn[C] =:= true
+  ): Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]] =
     val decodes: Array[Decoder[?]] = func(selects) match
-      case v: Tuple => v.toArray.map {
-        case column: Column[t] => column.decoder
-      }
+      case v: Tuple =>
+        v.toArray.map {
+          case column: Column[t] => column.decoder
+        }
       case v: Column[t] => Array(v.decoder)
     val decoder: Decoder[Tuples.InverseColumnMap[C]] = (resultSet: ldbc.sql.ResultSet, prefix: Option[String]) =>
       val results = decodes.map(_.decode(resultSet, None))
@@ -142,7 +145,7 @@ object Join:
   private[ldbc] case class JoinOrderBy[T](
     statement: String,
     params:    List[Parameter.Dynamic],
-    decoder: Decoder[T]
+    decoder:   Decoder[T]
   ) extends Query[T],
             Limit.QueryProvider[T]:
 
@@ -172,7 +175,7 @@ object Join:
     selects:   SELECTS,
     statement: String,
     params:    List[Parameter.Dynamic],
-    decoder: Decoder[D]
+    decoder:   Decoder[D]
   ) extends Query[D],
             JoinOrderByProvider[SELECTS, D],
             Limit.QueryProvider[D]:
@@ -186,7 +189,7 @@ object Join:
     statement: String,
     columns:   C,
     params:    List[Parameter.Dynamic],
-    decoder: Decoder[D]
+    decoder:   Decoder[D]
   ) extends Query[D],
             JoinOrderByProvider[SELECTS, D],
             Limit.QueryProvider[D]:
@@ -215,7 +218,7 @@ object Join:
     statement: String,
     columns:   C,
     params:    List[Parameter.Dynamic],
-    decoder: Decoder[D]
+    decoder:   Decoder[D]
   ) extends Query[D],
             JoinOrderByProvider[SELECTS, D],
             Limit.QueryProvider[D]:
@@ -270,7 +273,7 @@ object Join:
     fromStatement: String,
     columns:       C,
     params:        List[Parameter.Dynamic],
-    decoder: Decoder[D]
+    decoder:       Decoder[D]
   ) extends Query[D],
             JoinOrderByProvider[SELECTS, D],
             Limit.QueryProvider[D]:

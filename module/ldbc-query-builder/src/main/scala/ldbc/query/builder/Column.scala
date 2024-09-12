@@ -10,7 +10,7 @@ import scala.annotation.targetName
 
 import ldbc.sql.ResultSet
 import ldbc.dsl.*
-import ldbc.dsl.codec.{Encoder, Decoder}
+import ldbc.dsl.codec.{ Encoder, Decoder }
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.statement.Expression.*
 import ldbc.query.builder.interpreter.Extract
@@ -34,7 +34,7 @@ trait Column[T]:
 
   /** Function to get a value of type T from a ResultSet */
   def decoder: Decoder[T]
-  
+
   def opt(using Decoder.Elem[Option[T]]): Column[Option[T]] = Column.Impl[Option[T]](name, alias)
 
   def count(using decoder: Decoder.Elem[Int]): Column.Count = Column.Count(name)
@@ -603,14 +603,20 @@ object Column:
   private[ldbc] case class Impl[T](
     name:  String,
     alias: Option[String]
-  )(using elem: Decoder.Elem[T]) extends Column[T]:
+  )(using elem: Decoder.Elem[T])
+    extends Column[T]:
     override def as(name: String): Column[T] = Impl[T](this.name, Some(name))
     override def decoder: Decoder[T] =
       (resultSet: ResultSet, prefix: Option[String]) =>
         val column = prefix.orElse(alias).map(_ + ".").getOrElse("") + name
         elem.decode(resultSet, column)
 
-  private[ldbc] case class MultiColumn[T](flag: String, left: Column[T], right: Column[T], alias: Option[String] = None)(using elem: Decoder.Elem[T])
+  private[ldbc] case class MultiColumn[T](
+    flag:  String,
+    left:  Column[T],
+    right: Column[T],
+    alias: Option[String] = None
+  )(using elem: Decoder.Elem[T])
     extends Column[T]:
     override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
@@ -621,5 +627,5 @@ object Column:
     override def name:             String         = s"COUNT($_name)"
     override def alias:            Option[String] = None
     override def as(name: String): Column[Int]    = this.copy(name)
-    override def decoder: Decoder[Int] = (resultSet: ResultSet, prefix: Option[String]) => elem.decode(resultSet, name)
-    override def toString:         String         = name
+    override def decoder:  Decoder[Int] = (resultSet: ResultSet, prefix: Option[String]) => elem.decode(resultSet, name)
+    override def toString: String       = name

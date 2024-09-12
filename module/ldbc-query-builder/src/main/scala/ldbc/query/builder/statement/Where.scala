@@ -23,13 +23,13 @@ trait Where[P <: Product]:
   type Self
 
   /** Trait for generating SQL table information. */
-  def table:     Table[P]
+  def table: Table[P]
 
   /** SQL statement string */
   def statement: String
 
   /** A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index only. */
-  def params:    List[Parameter.Dynamic]
+  def params: List[Parameter.Dynamic]
 
   /**
    * A method for combining WHERE statements.
@@ -80,8 +80,11 @@ object Where:
     statement: String,
     columns:   C,
     params:    List[Parameter.Dynamic],
-    decoder: Decoder[D]
-  ) extends Where[P], Query[D], OrderByProvider[P, D], Limit.QueryProvider[D]:
+    decoder:   Decoder[D]
+  ) extends Where[P],
+            Query[D],
+            OrderByProvider[P, D],
+            Limit.QueryProvider[D]:
 
     override type Self = Q[P, C, D]
 
@@ -123,7 +126,9 @@ object Where:
     table:     Table[P],
     statement: String,
     params:    List[Parameter.Dynamic]
-  ) extends Where[P], Command, Limit.CommandProvider:
+  ) extends Where[P],
+            Command,
+            Limit.CommandProvider:
 
     override type Self = C[P]
 

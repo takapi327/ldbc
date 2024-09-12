@@ -9,17 +9,17 @@ package ldbc.query.builder.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
-import ldbc.dsl.codec.{Encoder, Decoder}
+import ldbc.dsl.codec.{ Encoder, Decoder }
 import ldbc.query.builder.*
 
 trait Limit:
-  
+
   /** SQL statement string */
   def statement: String
-  
+
   /** A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index only. */
-  def params:    List[Parameter.Dynamic]
-  
+  def params: List[Parameter.Dynamic]
+
 object Limit:
 
   /**
@@ -37,9 +37,10 @@ object Limit:
   case class Q[T](
     statement: String,
     params:    List[Parameter.Dynamic],
-    decoder: Decoder[T]
-  ) extends Limit, Query[T]:
-    
+    decoder:   Decoder[T]
+  ) extends Limit,
+            Query[T]:
+
     @targetName("combine")
     override def ++(sql: SQL): SQL = Q[T](statement ++ sql.statement, params ++ sql.params, decoder)
 
@@ -47,7 +48,7 @@ object Limit:
       Offset(
         statement = statement ++ " OFFSET ?",
         params    = params :+ Parameter.Dynamic(length),
-        decoder = this.decoder
+        decoder   = this.decoder
       )
 
   transparent trait QueryProvider[T]:
@@ -57,7 +58,7 @@ object Limit:
       Limit.Q(
         statement = statement ++ " LIMIT ?",
         params    = params :+ Parameter.Dynamic(length),
-        decoder = self.decoder
+        decoder   = self.decoder
       )
 
   /**
@@ -71,11 +72,12 @@ object Limit:
   case class C(
     statement: String,
     params:    List[Parameter.Dynamic]
-  ) extends Limit, Command:
-    
+  ) extends Limit,
+            Command:
+
     @targetName("combine")
     override def ++(sql: SQL): SQL = C(statement ++ sql.statement, params ++ sql.params)
-    
+
   transparent trait CommandProvider:
     self: Command =>
 
