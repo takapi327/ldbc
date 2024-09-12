@@ -8,7 +8,8 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{ Parameter, SQL }
+import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 
 /**
@@ -25,21 +26,24 @@ import ldbc.query.builder.*
  *   only.
  * @tparam P
  *   Base trait for all products
- * @tparam T
+ * @tparam C
  *   Union type of column
+ * @tparam D
+ *   Scala types to be converted by Decoder
  */
-private[ldbc] case class Select[P <: Product, T](
+private[ldbc] case class Select[P <: Product, C, D](
   table:     Table[P],
   statement: String,
-  columns:   T,
-  params:    List[Parameter.Dynamic]
-) extends Query[T],
-          OrderByProvider[P, T],
-          LimitProvider[T]:
+  columns:   C,
+  params:    List[Parameter.Dynamic],
+  decoder: Decoder[D]
+) extends Query[D],
+          OrderByProvider[P, D],
+          Limit.QueryProvider[D]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Select[P, T](table, statement ++ sql.statement, columns, params ++ sql.params)
+    Select[P, C, D](table, statement ++ sql.statement, columns, params ++ sql.params, decoder)
 
   /**
    * A method for setting the WHERE condition in a SELECT statement.
@@ -47,19 +51,21 @@ private[ldbc] case class Select[P <: Product, T](
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def where(func: Table[P] => Expression): Where[P, T] =
+  def where(func: Table[P] => Expression): Where.Q[P, C, D] =
     val expression = func(table)
-    Where[P, T](
+    Where.Q[P, C, D](
       table     = table,
       statement = statement ++ s" WHERE ${ expression.statement }",
       columns   = columns,
-      params    = params ++ expression.parameter
+      params    = params ++ expression.parameter,
+      decoder   = decoder
     )
 
-  def groupBy[A](func: T => Column[A]): GroupBy[P, T] =
+  def groupBy[A](func: C => Column[A]): GroupBy[P, C, D] =
     GroupBy(
       table     = table,
       statement = statement ++ s" GROUP BY ${ func(columns).name }",
       columns   = columns,
-      params    = params
+      params    = params,
+      decoder   = decoder
     )
