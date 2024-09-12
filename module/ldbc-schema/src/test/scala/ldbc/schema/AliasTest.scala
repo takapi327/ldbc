@@ -47,7 +47,8 @@ class AliasTest extends AnyFlatSpec, Matchers:
     val p2 = UNIQUE_KEY(column[String]("p1", VARCHAR(255)))
     val p3 = UNIQUE_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
     val p4 = UNIQUE_KEY("index", column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
-    val p5 = UNIQUE_KEY("index", Index.Type.BTREE, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p5 =
+      UNIQUE_KEY("index", Index.Type.BTREE, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
     val p6 = UNIQUE_KEY(
       "index",
       Index.Type.BTREE,
@@ -76,9 +77,16 @@ class AliasTest extends AnyFlatSpec, Matchers:
     val p1 = INDEX_KEY(column[String]("p1", VARCHAR(255)))
     val p2 = INDEX_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
     val p3 = INDEX_KEY(None, None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
-    val p4 = INDEX_KEY(Some("index"), None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p4 =
+      INDEX_KEY(Some("index"), None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
     val p5 =
-      INDEX_KEY(Some("index"), Some(Index.Type.BTREE), None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+      INDEX_KEY(
+        Some("index"),
+        Some(Index.Type.BTREE),
+        None,
+        column[String]("p1", VARCHAR(255)),
+        column[String]("p2", VARCHAR(255))
+      )
     val p6 = INDEX_KEY(
       Some("index"),
       Some(Index.Type.BTREE),
