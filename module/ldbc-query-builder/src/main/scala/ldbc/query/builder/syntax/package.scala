@@ -19,7 +19,6 @@ import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 import ldbc.dsl.codec.Decoder
 
 import ldbc.query.builder.statement.{ Query, Command }
-import ldbc.query.builder.interpreter.Tuples
 
 package object syntax:
 
@@ -27,23 +26,9 @@ package object syntax:
 
     extension [T](query: Query[T])
 
-      inline def query: DslQuery[F, Tuples.InverseColumnMap[T]] =
-        val decodes = Decoder.getDecoders[Tuples.InverseColumnMap[T]].toArray
-        val decoder: Decoder[Tuples.InverseColumnMap[T]] =
-          (resultSet: ResultSet, prefix: Option[String]) =>
-            val results = decodes.zipWithIndex.map { (decoder, index) =>
-              decoder match
-                case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
-                case d: Decoder[t]       => d.decode(resultSet, prefix)
-            }
-            Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[T]]
+      def query: DslQuery[F, T] = DslQuery.Impl[F, T](query.statement, query.params, query.decoder)
 
-        DslQuery.Impl[F, Tuples.InverseColumnMap[T]](query.statement, query.params, decoder)
-
-      inline def queryTo[P <: Product](using
-        mirror: Mirror.ProductOf[P],
-        check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
-      ): DslQuery[F, P] =
+      inline def queryTo[P <: Product](using mirror: Mirror.ProductOf[P]): DslQuery[F, P] =
         inline erasedValue[P] match
           case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(mirror))
           case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(mirror))
