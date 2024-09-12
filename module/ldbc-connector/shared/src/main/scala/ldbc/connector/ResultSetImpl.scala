@@ -306,7 +306,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBigDecimal(columnLabel: String): BigDecimal =
     checkClose {
-      columns.zipWithIndex.find(_._1.name == columnLabel) match
+      findByName(columnLabel) match
         case Some((_, index)) => getBigDecimal(index + 1)
         case None =>
           lastColumnReadNullable = true
