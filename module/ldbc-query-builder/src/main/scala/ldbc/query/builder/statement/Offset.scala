@@ -9,6 +9,7 @@ package ldbc.query.builder.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 
 /**
@@ -20,13 +21,14 @@ import ldbc.query.builder.*
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
  * @tparam T
- *   Union type of column
+ *   Scala types to be converted by Decoder
  */
 private[ldbc] case class Offset[T](
   statement: String,
-  params:    List[Parameter.Dynamic]
+  params:    List[Parameter.Dynamic],
+  decoder: Decoder[T]
 ) extends Query[T]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    Offset(statement ++ sql.statement, params ++ sql.params)
+    Offset(statement ++ sql.statement, params ++ sql.params, decoder)
