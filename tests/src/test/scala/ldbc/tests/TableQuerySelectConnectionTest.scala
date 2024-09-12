@@ -296,13 +296,12 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The retrieved data matches the specified value.") {
-    case class CountryCodeGroup(countryCode: String, length: Int)
     assertIO(
       connection.use { conn =>
         city
           .select(v => (v.countryCode, v.id.count))
           .groupBy(_._1)
-          .queryTo[CountryCodeGroup]
+          .query
           .to[List]
           .readOnly(conn)
           .map(_.length)
