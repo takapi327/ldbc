@@ -22,6 +22,8 @@ import ldbc.query.builder.*
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
+ * @param decoder
+ *   Decoder for converting SQL data to Scala data
  * @tparam P
  *   Base trait for all products
  * @tparam T

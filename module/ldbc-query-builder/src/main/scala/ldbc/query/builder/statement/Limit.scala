@@ -30,7 +30,7 @@ object Limit:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index only.
    * @param decoder
-   *   Function to convert values from ResultSet to type T.
+   *   Decoder for converting SQL data to Scala data
    * @tparam T
    *   Scala types to be converted by Decoder
    */

@@ -67,7 +67,7 @@ object Where:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    * @param decoder
-   *   Function to convert values from ResultSet to type T.
+   *   Decoder for converting SQL data to Scala data
    * @tparam P
    *   Base trait for all products
    * @tparam C
