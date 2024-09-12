@@ -12,8 +12,9 @@ import scala.compiletime.*
 import scala.compiletime.ops.int.*
 import scala.annotation.targetName
 
+import ldbc.sql.ResultSet
 import ldbc.dsl.*
-import ldbc.dsl.codec.Encoder
+import ldbc.dsl.codec.{Encoder, Decoder}
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
@@ -74,6 +75,9 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    */
   def as(name: String): Table[P]
 
+  /** Function to get a value of type P from a ResultSet */
+  def decoder: Decoder[P]
+  
   /**
    * Function for setting table names.
    *
@@ -120,13 +124,21 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    * @return
    *   Select model
    */
-  def select[T](func: Table[P] => T): Select[P, T] =
+  def select[T](func: Table[P] => T): Select[P, T, Tuples.InverseColumnMap[T]] =
     val columns = func(this)
+    val decodes: Array[Decoder[?]] = columns match
+      case v: Tuple => v.toArray.map {
+        case column: Column[t] => column.decoder
+      }
+      case v: Column[t] => Array(v.decoder)
+    val decoder: Decoder[Tuples.InverseColumnMap[T]] = (resultSet: ResultSet, prefix: Option[String]) =>
+      val results = decodes.map(_.decode(resultSet, None))
+      Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[T]]
     val str = columns match
       case v: Tuple => v.toArray.distinct.mkString(", ")
       case v        => v
     val statement = s"SELECT $str FROM $label"
-    Select(this, statement, columns, Nil)
+    Select(this, statement, columns, Nil, decoder)
 
   /**
    * A method to perform a simple Select.
@@ -136,14 +148,9 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    *   // SELECT id, name, age FROM person
    * }}}
    */
-  def selectAll(using mirror: Mirror.ProductOf[P]): Select[P, Tuple.Map[mirror.MirroredElemTypes, Column]] =
+  def selectAll: Select[P, Tuple.Map[ElemTypes, Column], P] =
     val statement = s"SELECT ${ *.toList.distinct.mkString(", ") } FROM $label"
-    Select[P, Tuple.Map[mirror.MirroredElemTypes, Column]](
-      this,
-      statement,
-      *.asInstanceOf[Tuple.Map[mirror.MirroredElemTypes, Column]],
-      Nil
-    )
+    Select(this, statement, *, Nil, decoder)
 
   /**
    * A method to perform a simple Join.
@@ -388,7 +395,8 @@ object Table:
     _name:       String,
     _alias:      Option[String],
     columnNames: List[String],
-    columns:     Tuple.Map[ElemTypes0, Column]
+    columns:     Tuple.Map[ElemTypes0, Column],
+    decoder: Decoder[P]
   ) extends Table[P]:
     override type ElemLabels = ElemLabels0
     override type ElemTypes  = ElemTypes0
@@ -425,6 +433,7 @@ object Table:
         inline nt1.head match
           case h: String =>
             val name = naming.format(h)
+            given Decoder.Elem[Tuple.Elem[T, I]] = summonInline[Decoder.Elem[Tuple.Elem[T, I]]]
             val c    = Column.Impl[Tuple.Elem[T, I]](name, None)
             buildColumns[ts, T, I + 1](nt1.tail, xs :+ c)
           case n: (name, _) =>
@@ -432,28 +441,40 @@ object Table:
       case _: EmptyTuple => Tuple.fromArray(xs.toArray).asInstanceOf[Tuple.Map[T, Column]]
 
   inline def derived[P <: Product](using m: Mirror.ProductOf[P], naming: Naming = Naming.SNAKE): Table[P] =
-    val labels = constValueTuple[m.MirroredElemLabels]
+    val labels = constValueTuple[m.MirroredElemLabels].toArray.map(_.toString)
+    val decodes = Decoder.getDecoders[m.MirroredElemTypes].toArray
+    val columns = labels.zip(decodes).map {
+      case (label: String, decoder: Decoder.Elem[t]) => Column.Impl[t](label, None)(using decoder)
+    }
+    val decoder: Decoder[P] = (resultSet: ResultSet, prefix: Option[String]) =>
+      m.fromTuple(Tuple.fromArray(columns.map(_.decoder.decode(resultSet, prefix.orElse(Some(constValue[m.MirroredLabel]))))).asInstanceOf[m.MirroredElemTypes])
     Impl[P, m.MirroredElemLabels, m.MirroredElemTypes](
       _name       = naming.format(constValue[m.MirroredLabel]),
       _alias      = None,
       columnNames = listOfLabels[m.MirroredElemLabels].map(naming.format),
-      columns     = buildColumns[m.MirroredElemLabels, m.MirroredElemTypes, 0](labels, Nil)
+      columns     = Tuple.fromArray(columns).asInstanceOf[Tuple.Map[m.MirroredElemTypes, ldbc.query.builder.Column]],
+      decoder     = decoder
     )
+
+  type Extract[T] <: Tuple = T match
+    case Table[t]               => t *: EmptyTuple
+    case Table[t] *: EmptyTuple => t *: EmptyTuple
+    case Table[t] *: ts         => t *: Extract[ts]
 
 private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
 
   transparent inline def selectDynamic[Tag <: Singleton](
-    tag: Tag
-  )(using
-    mirror: Mirror.ProductOf[P],
-    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-  ): Column[
-    Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+                                                          tag: Tag
+                                                        )(using
+                                                          mirror: Mirror.ProductOf[P],
+                                                          index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+                                                          decoder: Decoder.Elem[Option[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+                                                        ): Column[
+    Option[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
   ] =
     *.productElement(index.value)
-      .asInstanceOf[Column[
-        Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
-      ]]
+      .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+      .opt
 
 object TableOpt:
 
