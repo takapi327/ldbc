@@ -8,6 +8,7 @@ package ldbc.query.builder.statement
 
 import scala.annotation.targetName
 
+import ldbc.sql.ResultSet
 import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
@@ -117,7 +118,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
           case column: Column[t] => column.decoder
         }
       case v: Column[t] => Array(v.decoder)
-    val decoder: Decoder[Tuples.InverseColumnMap[C]] = (resultSet: ldbc.sql.ResultSet, prefix: Option[String]) =>
+    val decoder: Decoder[Tuples.InverseColumnMap[C]] = (resultSet: ResultSet, prefix: Option[String]) =>
       val results = decodes.map(_.decode(resultSet, None))
       Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[C]]
     Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]](
@@ -126,6 +127,24 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       columns       = func(selects),
       params        = Nil,
       decoder       = decoder
+    )
+
+  inline def selectAll: Join.JoinSelect[SELECTS, Tuple, Table.Extract[JOINS]] =
+    val decoder = new Decoder[Table.Extract[JOINS]]:
+      override def decode(resultSet: ResultSet, prefix: Option[String]): Table.Extract[JOINS] =
+        val results = joins.toArray.map {
+          case table: Table[t] => table.decoder.decode(resultSet, Some(table._name))
+        }
+        Tuple.fromArray(results).asInstanceOf[Table.Extract[JOINS]]
+
+    Join.JoinSelect[SELECTS, Tuple, Table.Extract[JOINS]](
+      selects = selects,
+      fromStatement = statement,
+      columns = Tuple.fromArray(joins.toArray.flatMap {
+        case table: Table[t] => table.*.toArray
+      }),
+      params = Nil,
+      decoder = decoder
     )
 
 object Join:
