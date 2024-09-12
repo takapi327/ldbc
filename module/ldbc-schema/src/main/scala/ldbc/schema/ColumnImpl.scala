@@ -54,22 +54,18 @@ object Column:
   def apply[T](
     name:     String,
     dataType: DataType[T]
-  )(using elem: Decoder.Elem[T]): ColumnImpl[T] =
+  )(using Decoder.Elem[T]): ColumnImpl[T] =
     val attributes: List[Attribute[T]] = dataType match
       case data: DataType.Alias[T] => data.attributes
       case _                       => List.empty
-    val decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
-      elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
-    ColumnImpl[T](name, None, dataType, attributes, decoder)
+    this.apply(name, dataType, attributes*)
 
   def apply[T](
     name:       String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  )(using elem: Decoder.Elem[T]): ColumnImpl[T] =
-    val decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
-      elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
-    ColumnImpl[T](name, None, dataType, attributes.toList, decoder)
+  )(using Decoder.Elem[T]): ColumnImpl[T] =
+    this.apply(name, dataType, attributes, None)
 
   private[ldbc] def apply[T](
     name:       String,
