@@ -8,8 +8,9 @@ package ldbc.query.builder
 
 import scala.annotation.targetName
 
+import ldbc.sql.ResultSet
 import ldbc.dsl.*
-import ldbc.dsl.codec.Encoder
+import ldbc.dsl.codec.{Encoder, Decoder}
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.statement.Expression.*
 import ldbc.query.builder.interpreter.Extract
@@ -31,7 +32,12 @@ trait Column[T]:
   /** Functions for setting aliases on columns */
   def as(name: String): Column[T]
 
-  def count: Column.Count = Column.Count(name)
+  /** Function to get a value of type T from a ResultSet */
+  def decoder: Decoder[T]
+  
+  def opt(using Decoder.Elem[Option[T]]): Column[Option[T]] = Column.Impl[Option[T]](name, alias)
+
+  def count(using decoder: Decoder.Elem[Int]): Column.Count = Column.Count(name)
 
   def asc:  OrderBy.Order[T] = OrderBy.Order.Asc(this)
   def desc: OrderBy.Order[T] = OrderBy.Order.Desc(this)
@@ -424,7 +430,7 @@ trait Column[T]:
   @targetName("_bitFlip")
   def ~(value: Extract[T])(using Encoder[Extract[T]]): BitFlip[T] = bitFlip(value)
 
-  def combine(other: Column[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("+", this, other)
+  def combine(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("+", this, other)
 
   /**
    * A function to combine columns in a SELECT statement.
@@ -440,9 +446,9 @@ trait Column[T]:
    *   A query to combine columns in a SELECT statement
    */
   @targetName("_combine")
-  def ++(other: Column[T]): Column.MultiColumn[T] = combine(other)
+  def ++(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = combine(other)
 
-  def deduct(other: Column[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("-", this, other)
+  def deduct(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("-", this, other)
 
   /**
    * A function to subtract columns in a SELECT statement.
@@ -458,9 +464,9 @@ trait Column[T]:
    *   A query to subtract columns in a SELECT statement
    */
   @targetName("_deduct")
-  def --(other: Column[T]): Column.MultiColumn[T] = deduct(other)
+  def --(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = deduct(other)
 
-  def multiply(other: Column[T]): Column.MultiColumn[T] =
+  def multiply(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] =
     Column.MultiColumn[T]("*", this, other)
 
   /**
@@ -477,9 +483,9 @@ trait Column[T]:
    *   A query to multiply columns in a SELECT statement
    */
   @targetName("_multiply")
-  def *(other: Column[T]): Column.MultiColumn[T] = multiply(other)
+  def *(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = multiply(other)
 
-  def smash(other: Column[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("/", this, other)
+  def smash(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("/", this, other)
 
   /**
    * A function to divide columns in a SELECT statement.
@@ -495,7 +501,7 @@ trait Column[T]:
    *   A query to divide columns in a SELECT statement
    */
   @targetName("_smash")
-  def /(other: Column[T]): Column.MultiColumn[T] = smash(other)
+  def /(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = smash(other)
 
   /** List of sub query methods */
   def _equals(value: SQL): SubQuery[T] =
@@ -585,7 +591,7 @@ trait Column[T]:
   @targetName("join!Equal")
   def !==(other: Column[?]): Expression = JoinQuery("!=", this, other)
 
-  override def toString: String = alias.fold(s"`$name`")(label => s"$label.`$name`")
+  override def toString: String = alias.fold(name)(label => s"$label.$name")
 
 object Column:
 
@@ -597,16 +603,23 @@ object Column:
   private[ldbc] case class Impl[T](
     name:  String,
     alias: Option[String]
-  ) extends Column[T]:
+  )(using elem: Decoder.Elem[T]) extends Column[T]:
     override def as(name: String): Column[T] = Impl[T](this.name, Some(name))
+    override def decoder: Decoder[T] =
+      (resultSet: ResultSet, prefix: Option[String]) =>
+        val column = prefix.orElse(alias).map(_ + ".").getOrElse("") + name
+        elem.decode(resultSet, column)
 
-  private[ldbc] case class MultiColumn[T](flag: String, left: Column[T], right: Column[T], alias: Option[String] = None)
+  private[ldbc] case class MultiColumn[T](flag: String, left: Column[T], right: Column[T], alias: Option[String] = None)(using elem: Decoder.Elem[T])
     extends Column[T]:
     override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
+    override def decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
+      elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
 
-  private[ldbc] case class Count(_name: String) extends Column[Int]:
+  private[ldbc] case class Count(_name: String)(using elem: Decoder.Elem[Int]) extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
     override def alias:            Option[String] = None
     override def as(name: String): Column[Int]    = this.copy(name)
+    override def decoder: Decoder[Int] = (resultSet: ResultSet, prefix: Option[String]) => elem.decode(resultSet, name)
     override def toString:         String         = name
