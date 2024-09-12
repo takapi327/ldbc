@@ -9,6 +9,7 @@ package ldbc.query.builder.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 
 /**
@@ -25,26 +26,30 @@ import ldbc.query.builder.*
  *   only.
  * @tparam P
  *   Base trait for all products
- * @tparam T
+ * @tparam C
  *   Union type of column
+ * @tparam D
+ *   Scala types to be converted by Decoder
  */
-private[ldbc] case class GroupBy[P <: Product, T](
+private[ldbc] case class GroupBy[P <: Product, C, D](
   table:     Table[P],
-  columns:   T,
+  columns:   C,
   statement: String,
-  params:    List[Parameter.Dynamic]
-) extends Query[T],
-          OrderByProvider[P, T],
-          LimitProvider[T]:
+  params:    List[Parameter.Dynamic],
+  decoder: Decoder[D]
+) extends Query[D],
+          OrderByProvider[P, D],
+          Limit.QueryProvider[D]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    GroupBy[P, T](table, columns, statement ++ sql.statement, params ++ sql.params)
+    GroupBy[P, C, D](table, columns, statement ++ sql.statement, params ++ sql.params, decoder)
 
-  def having(func: T => Expression): Having[P, T] =
+  def having(func: C => Expression): Having[P, D] =
     val expression = func(columns)
-    Having[P, T](
+    Having[P, D](
       table     = table,
       statement = statement ++ s" HAVING ${ expression.statement }",
-      params    = params ++ expression.parameter
+      params    = params ++ expression.parameter,
+      decoder   = decoder
     )
