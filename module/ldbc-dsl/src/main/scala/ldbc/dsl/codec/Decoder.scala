@@ -6,7 +6,7 @@
 
 package ldbc.dsl.codec
 
-import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime }
+import java.time.{ ZoneId, Instant, ZonedDateTime, LocalTime, LocalDate, LocalDateTime, Year }
 
 import scala.compiletime.*
 import scala.deriving.Mirror
@@ -120,6 +120,9 @@ object Decoder:
 
     given (using decoder: Elem[Instant]): Elem[ZonedDateTime] =
       decoder.map(instant => if instant == null then null else ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()))
+
+    given (using decoder: Elem[Int]): Elem[Year] =
+      decoder.map(int => Year.of(int))
 
     given [A](using decoder: Elem[A]): Elem[Option[A]] with
       override def decode(resultSet: ResultSet, columnLabel: String): Option[A] =
