@@ -28,10 +28,14 @@ package object syntax:
 
       def query: DslQuery[F, T] = DslQuery.Impl[F, T](query.statement, query.params, query.decoder)
 
-      inline def queryTo[P <: Product](using mirror: Mirror.ProductOf[P]): DslQuery[F, P] =
+      inline def queryTo[P <: Product](using
+                                       m1: Mirror.ProductOf[P],
+                                       m2: Mirror.ProductOf[T],
+                                       check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
+                                      ): DslQuery[F, P] =
         inline erasedValue[P] match
-          case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(mirror))
-          case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(mirror))
+          case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(m1))
+          case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(m1))
 
     extension (command: Command)
       def update: Executor[F, Int] =
