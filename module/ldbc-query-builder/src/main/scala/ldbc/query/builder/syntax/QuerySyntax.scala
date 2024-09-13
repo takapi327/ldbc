@@ -38,4 +38,8 @@ trait QuerySyntax[F[_]]:
      * @return
      *   A [[ldbc.dsl.Query]] instance
      */
-    inline def queryTo[P <: Product](using m1: Mirror.ProductOf[P], m2: Mirror.ProductOf[T], check: m1.MirroredElemTypes =:= m2.MirroredElemTypes): DslQuery[F, P]
+    inline def queryTo[P <: Product](using
+      m1:    Mirror.ProductOf[P],
+      m2:    Mirror.ProductOf[T],
+      check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
+    ): DslQuery[F, P]

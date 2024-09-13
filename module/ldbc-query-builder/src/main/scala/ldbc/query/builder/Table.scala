@@ -455,14 +455,18 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
   )(using
-    mirror:  Mirror.ProductOf[P],
-    index:   ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    decoder: Decoder.Elem[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]
+    mirror: Mirror.ProductOf[P],
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
+    decoder: Decoder.Elem[Option[
+      ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+    ]]
   ): Column[
     Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
   ] =
     *.productElement(index.value)
-      .asInstanceOf[Column[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]
+      .asInstanceOf[Column[
+        ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+      ]]
       .opt
 
 object TableOpt:
