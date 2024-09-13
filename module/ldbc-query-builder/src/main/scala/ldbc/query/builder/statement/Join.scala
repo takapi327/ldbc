@@ -112,7 +112,8 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
   def select[C](func: SELECTS => C)(using
     Tuples.IsColumn[C] =:= true
   ): Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]] =
-    val decodes: Array[Decoder[?]] = func(selects) match
+    val columns = func(selects)
+    val decodes: Array[Decoder[?]] = columns match
       case v: Tuple =>
         v.toArray.map {
           case column: Column[t] => column.decoder
@@ -124,7 +125,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
     Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]](
       selects       = selects,
       fromStatement = statement,
-      columns       = func(selects),
+      columns       = columns,
       params        = Nil,
       decoder       = decoder
     )
