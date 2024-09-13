@@ -457,12 +457,12 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
   )(using
     mirror:  Mirror.ProductOf[P],
     index:   ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]],
-    decoder: Decoder.Elem[Option[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+    decoder: Decoder.Elem[Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]
   ): Column[
-    Option[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+    Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
   ] =
     *.productElement(index.value)
-      .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+      .asInstanceOf[Column[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]]
       .opt
 
 object TableOpt:
