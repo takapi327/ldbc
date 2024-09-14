@@ -434,7 +434,7 @@ object Table:
     val decoder: Decoder[P] = (resultSet: ResultSet, prefix: Option[String]) =>
       m.fromTuple(
         Tuple
-          .fromArray(columns.map(_.decoder.decode(resultSet, prefix.orElse(Some(constValue[m.MirroredLabel])))))
+          .fromArray(columns.map(_.decoder.decode(resultSet, prefix)))
           .asInstanceOf[m.MirroredElemTypes]
       )
     Impl[P, m.MirroredElemLabels, m.MirroredElemTypes](
