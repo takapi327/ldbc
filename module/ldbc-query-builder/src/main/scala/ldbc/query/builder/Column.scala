@@ -35,7 +35,7 @@ trait Column[T]:
   /** Function to get a value of type T from a ResultSet */
   def decoder: Decoder[T]
 
-  def opt(using Decoder.Elem[Option[T]]): Column[Option[T]] = Column.Impl[Option[T]](name, alias)
+  def opt: Column[Option[T]] = Column.Opt[T](name, alias, decoder)
 
   def count(using decoder: Decoder.Elem[Int]): Column.Count = Column.Count(name)
 
@@ -610,6 +610,16 @@ object Column:
       (resultSet: ResultSet, prefix: Option[String]) =>
         val column = prefix.orElse(alias).map(_ + ".").getOrElse("") + name
         elem.decode(resultSet, column)
+
+  private[ldbc] case class Opt[T](
+    name:  String,
+    alias: Option[String],
+    _decoder: Decoder[T]
+  ) extends Column[Option[T]]:
+    override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(name), _decoder)
+    override def decoder: Decoder[Option[T]] =
+      (resultSet: ResultSet, prefix: Option[String]) =>
+        Option(_decoder.decode(resultSet, prefix.orElse(alias)))
 
   private[ldbc] case class MultiColumn[T](
     flag:  String,
