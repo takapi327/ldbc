@@ -130,15 +130,12 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       decoder       = decoder
     )
 
-  inline def selectAll: Join.JoinSelect[SELECTS, Tuple, Table.Extract[SELECTS]] =
+  def selectAll: Join.JoinSelect[SELECTS, Tuple, Table.Extract[SELECTS]] =
     val decoder = new Decoder[Table.Extract[SELECTS]]:
       override def decode(resultSet: ResultSet, prefix: Option[String]): Table.Extract[SELECTS] =
         val results = selects.toArray.map {
-          case table: MySQLTable[t] =>
-            println(table._name)
-            val result = table.decoder.decode(resultSet, Some(table._name))
-            println(result)
-            result
+          case table: Table[t] => table.decoder.decode(resultSet, Some(table._name))
+          case tableOpt: TableOpt[t] => tableOpt.decoder.decode(resultSet, Some(tableOpt._name))
         }
         Tuple.fromArray(results).asInstanceOf[Table.Extract[SELECTS]]
 

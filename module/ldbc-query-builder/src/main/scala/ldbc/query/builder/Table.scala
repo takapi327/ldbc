@@ -19,7 +19,7 @@ import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
 
-sealed trait MySQLTable[P]:
+sealed trait MySQLTable[P <: Product]:
 
   /**
    * Type of scala types.
@@ -36,9 +36,6 @@ sealed trait MySQLTable[P]:
    */
   @targetName("all")
   def * : Tuple.Map[ElemTypes, Column]
-
-  /** Function to get a value of type P from a ResultSet */
-  def decoder: Decoder[P]
 
 /**
  * Trait for generating SQL table information.
@@ -77,6 +74,9 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    *   Table with alias name
    */
   def as(name: String): Table[P]
+
+  /** Function to get a value of type P from a ResultSet */
+  def decoder: Decoder[P]
 
   /**
    * Function for setting table names.
@@ -450,7 +450,10 @@ object Table:
     case MySQLTable[t] *: EmptyTuple => t *: EmptyTuple
     case MySQLTable[t] *: ts         => t *: Extract[ts]
 
-private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[Option[P]], Dynamic:
+private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
+
+  /** Function to get a value of type P from a ResultSet */
+  def decoder: Decoder[Option[P]]
 
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
@@ -471,7 +474,7 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[Option[P]], Dynami
 
 object TableOpt:
 
-  private[ldbc] case class Impl[P <: Product](table: MySQLTable[P]) extends TableOpt[P]:
+  private[ldbc] case class Impl[P <: Product](table: Table[P]) extends TableOpt[P]:
     override type ElemTypes = table.ElemTypes
     override def _name: String = table._name
     @targetName("all")
