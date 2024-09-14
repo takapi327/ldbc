@@ -471,7 +471,7 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[Option[P]], Dynami
 
 object TableOpt:
 
-  private[ldbc] case class Impl[P <: Product](table: Table[P]) extends TableOpt[P]:
+  private[ldbc] case class Impl[P <: Product](table: MySQLTable[P]) extends TableOpt[P]:
     override type ElemTypes = table.ElemTypes
     override def _name: String = table._name
     @targetName("all")
