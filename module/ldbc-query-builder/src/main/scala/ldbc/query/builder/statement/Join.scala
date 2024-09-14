@@ -82,7 +82,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
     Join.Impl(
       main,
       joins ++ Tuple(sub),
-      selects ++ Tuple(TableOpt.Impl(sub.*)),
+      selects ++ Tuple(TableOpt.Impl(sub)),
       joinStatements :+ s"${ Join.JoinType.LEFT_JOIN.statement } ${ other.label } ON ${ on(joins ++ Tuple(sub)).statement }"
     )
 
@@ -130,15 +130,19 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
       decoder       = decoder
     )
 
-  inline def selectAll: Join.JoinSelect[SELECTS, Tuple, Table.Extract[JOINS]] =
-    val decoder = new Decoder[Table.Extract[JOINS]]:
-      override def decode(resultSet: ResultSet, prefix: Option[String]): Table.Extract[JOINS] =
-        val results = joins.toArray.map {
-          case table: Table[t] => table.decoder.decode(resultSet, Some(table._name))
+  inline def selectAll: Join.JoinSelect[SELECTS, Tuple, Table.Extract[SELECTS]] =
+    val decoder = new Decoder[Table.Extract[SELECTS]]:
+      override def decode(resultSet: ResultSet, prefix: Option[String]): Table.Extract[SELECTS] =
+        val results = selects.toArray.map {
+          case table: MySQLTable[t] =>
+            println(table._name)
+            val result = table.decoder.decode(resultSet, Some(table._name))
+            println(result)
+            result
         }
-        Tuple.fromArray(results).asInstanceOf[Table.Extract[JOINS]]
+        Tuple.fromArray(results).asInstanceOf[Table.Extract[SELECTS]]
 
-    Join.JoinSelect[SELECTS, Tuple, Table.Extract[JOINS]](
+    Join.JoinSelect[SELECTS, Tuple, Table.Extract[SELECTS]](
       selects       = selects,
       fromStatement = statement,
       columns = Tuple.fromArray(joins.toArray.flatMap {

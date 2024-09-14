@@ -19,7 +19,7 @@ import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
 
-trait MySQLTable[P <: Product]:
+sealed trait MySQLTable[P]:
 
   /**
    * Type of scala types.
@@ -27,10 +27,18 @@ trait MySQLTable[P <: Product]:
   type ElemTypes <: Tuple
 
   /**
+   * The name of the table.
+   */
+  def _name: String
+
+  /**
    * A method to get all columns defined in the table.
    */
   @targetName("all")
   def * : Tuple.Map[ElemTypes, Column]
+
+  /** Function to get a value of type P from a ResultSet */
+  def decoder: Decoder[P]
 
 /**
  * Trait for generating SQL table information.
@@ -41,11 +49,6 @@ trait MySQLTable[P <: Product]:
 trait Table[P <: Product] extends MySQLTable[P], Dynamic:
 
   type ElemLabels <: Tuple
-
-  /**
-   * The name of the table.
-   */
-  def _name: String
 
   /**
    * An alias for the table.
@@ -74,9 +77,6 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
    *   Table with alias name
    */
   def as(name: String): Table[P]
-
-  /** Function to get a value of type P from a ResultSet */
-  def decoder: Decoder[P]
 
   /**
    * Function for setting table names.
@@ -205,7 +205,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     Join.Impl[Table[P] *: Tuple1[Table[O]], Table[P] *: Tuple1[TableOpt[O]]](
       main,
       joins,
-      main *: Tuple(TableOpt.Impl(sub.*)),
+      main *: Tuple(TableOpt.Impl(sub)),
       List(s"${ Join.JoinType.LEFT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -233,7 +233,7 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
     Join.Impl[Table[P] *: Tuple1[Table[O]], TableOpt[P] *: Tuple1[Table[O]]](
       main,
       joins,
-      TableOpt.Impl(main.*) *: Tuple(sub),
+      TableOpt.Impl(main) *: Tuple(sub),
       List(s"${ Join.JoinType.RIGHT_JOIN.statement } ${ sub.label } ON ${ on(joins).statement }")
     )
 
@@ -446,11 +446,11 @@ object Table:
     )
 
   type Extract[T] <: Tuple = T match
-    case Table[t]               => t *: EmptyTuple
-    case Table[t] *: EmptyTuple => t *: EmptyTuple
-    case Table[t] *: ts         => t *: Extract[ts]
+    case MySQLTable[t]               => t *: EmptyTuple
+    case MySQLTable[t] *: EmptyTuple => t *: EmptyTuple
+    case MySQLTable[t] *: ts         => t *: Extract[ts]
 
-private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
+private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[Option[P]], Dynamic:
 
   transparent inline def selectDynamic[Tag <: Singleton](
     tag: Tag
@@ -471,8 +471,16 @@ private[ldbc] trait TableOpt[P <: Product] extends MySQLTable[P], Dynamic:
 
 object TableOpt:
 
-  private[ldbc] case class Impl[P <: Product, ElemTypes0 <: Tuple](columns: Tuple.Map[ElemTypes0, Column])
-    extends TableOpt[P]:
-    override type ElemTypes = ElemTypes0
+  private[ldbc] case class Impl[P <: Product](table: Table[P]) extends TableOpt[P]:
+    override type ElemTypes = table.ElemTypes
+    override def _name: String = table._name
     @targetName("all")
-    override def * : Tuple.Map[ElemTypes, Column] = columns
+    override def * : Tuple.Map[ElemTypes, Column] = table.*
+    override def decoder: Decoder[Option[P]] =
+      val columns = *.toArray
+      (resultSet: ResultSet, prefix: Option[String]) =>
+        val result = columns.map {
+          case column: Column[t] => column.opt.decoder.decode(resultSet, prefix)
+        }
+        if result.flatten.length == columns.length then Option(table.decoder.decode(resultSet, prefix))
+        else None
