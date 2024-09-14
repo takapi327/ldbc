@@ -74,8 +74,8 @@ object Executor:
 
     private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
       run(connection)
-        .onError(ex => logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.parameter), ex)))
-        <* logHandler.run(LogEvent.Success(statement, params.map(_.parameter)))
+        .onError(ex => logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex)))
+        <* logHandler.run(LogEvent.Success(statement, params.map(_.value)))
 
   def pure[F[_]: Temporal, T](value: T): Executor[F, T] =
     new Executor[F, T]:

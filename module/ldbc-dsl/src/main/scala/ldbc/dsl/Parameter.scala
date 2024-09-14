@@ -17,12 +17,12 @@ import ldbc.dsl.codec.Encoder
 trait Parameter:
 
   /** Query parameters to be plugged into the Statement. */
-  def parameter: String
+  def value: String
 
 object Parameter:
 
-  case class Static(parameter: String) extends Parameter:
-    override def toString: String = parameter
+  case class Static(value: String) extends Parameter:
+    override def toString: String = value
 
   trait Dynamic extends Parameter:
 
@@ -38,11 +38,11 @@ object Parameter:
 
   object Dynamic:
 
-    def apply[A](value: A)(using encoder: Encoder[A]): Dynamic =
+    def apply[A](_value: A)(using encoder: Encoder[A]): Dynamic =
       new Dynamic:
-        override def parameter: String = value.toString
+        override def value: String = _value.toString
         override def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit] =
-          encoder.encode(value) match
+          encoder.encode(_value) match
             case value: Boolean       => statement.setBoolean(index, value)
             case value: Byte          => statement.setByte(index, value)
             case value: Short         => statement.setShort(index, value)
