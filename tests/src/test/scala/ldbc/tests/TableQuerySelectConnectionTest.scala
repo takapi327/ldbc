@@ -68,7 +68,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        country.selectAll.queryTo[Country].to[List].readOnly(conn).map(_.length)
+        country.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       239
     )
@@ -79,7 +79,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        city.selectAll.queryTo[City].to[List].readOnly(conn).map(_.length)
+        city.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       4079
     )
@@ -90,7 +90,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.queryTo[CountryLanguage].to[List].readOnly(conn).map(_.length)
+        countryLanguage.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       984
     )
@@ -101,7 +101,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.queryTo[CountryLanguage].to[List].readOnly(conn).map(_.length)
+        countryLanguage.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       984
     )
@@ -112,9 +112,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        governmentOffice.selectAll.queryTo[GovernmentOffice].to[List].readOnly(conn).map(_.length)
+        governmentOffice.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
-      2
+      3
     )
   }
 
@@ -138,7 +138,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         country.selectAll
           .where(_.code _equals "JPN")
-          .queryTo[Country]
+          .query
           .to[Option]
           .readOnly(conn)
       },
@@ -169,7 +169,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         city.selectAll
           .where(_.id _equals 1532)
-          .queryTo[City]
+          .query
           .to[Option]
           .readOnly(conn)
       },
@@ -183,7 +183,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
         countryLanguage.selectAll
           .where(_.countryCode _equals "JPN")
           .and(_.language _equals "Japanese")
-          .queryTo[CountryLanguage]
+          .query
           .to[Option]
           .readOnly(conn)
       },
@@ -391,5 +391,43 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
           .readOnly(conn)
       },
       Some(("Tokyo", 134694230))
+    )
+  }
+
+  test("If selectAll is performed with LeftJoin, the model with no value will be None.") {
+    assertIO(
+      connection.use { conn =>
+        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId)
+          .selectAll
+          .where((city, _) => city.name _equals "Osaka")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          City(1534, "Osaka", "JPN", "Osaka", 2595674),
+          None
+        )
+      )
+    )
+  }
+
+  test("If you do selectAll with LeftJoin, the model with the value is wrapped in Some.") {
+    assertIO(
+      connection.use { conn =>
+        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId)
+          .selectAll
+          .where((city, _) => city.name _equals "Tokyo")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230),
+          Some(GovernmentOffice(3, 1532, "Tokyo Metropolitan Government", Some(java.time.LocalDate.of(2023, 12, 13))))
+        )
+      )
     )
   }
