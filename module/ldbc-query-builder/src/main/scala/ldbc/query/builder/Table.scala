@@ -20,7 +20,7 @@ import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
 
 sealed trait MySQLTable[P]:
-  
+
   /**
    * Type of scala types.
    */
