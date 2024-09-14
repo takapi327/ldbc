@@ -37,6 +37,10 @@ trait Decoder[A]:
 
 object Decoder:
 
+  given Functor[[A] =>> Decoder[A]] with
+    override def map[A, B](fa: Decoder[A])(f: A => B): Decoder[B] =
+      (resultSet: ResultSet, prefix: Option[String]) => f(fa.decode(resultSet, prefix))
+
   /**
    * Trait to get the DataType that matches the Scala type information from the ResultSet.
    *
