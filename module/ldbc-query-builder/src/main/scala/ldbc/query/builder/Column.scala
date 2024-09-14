@@ -612,14 +612,13 @@ object Column:
         elem.decode(resultSet, column)
 
   private[ldbc] case class Opt[T](
-    name:  String,
-    alias: Option[String],
+    name:     String,
+    alias:    Option[String],
     _decoder: Decoder[T]
   ) extends Column[Option[T]]:
     override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(name), _decoder)
     override def decoder: Decoder[Option[T]] =
-      (resultSet: ResultSet, prefix: Option[String]) =>
-        Option(_decoder.decode(resultSet, prefix.orElse(alias)))
+      (resultSet: ResultSet, prefix: Option[String]) => Option(_decoder.decode(resultSet, prefix.orElse(alias)))
 
   private[ldbc] case class MultiColumn[T](
     flag:  String,

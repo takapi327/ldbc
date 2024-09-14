@@ -397,8 +397,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("If selectAll is performed with LeftJoin, the model with no value will be None.") {
     assertIO(
       connection.use { conn =>
-        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId)
-          .selectAll
+        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
           .where((city, _) => city.name _equals "Osaka")
           .query
           .to[Option]
@@ -416,8 +415,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("If you do selectAll with LeftJoin, the model with the value is wrapped in Some.") {
     assertIO(
       connection.use { conn =>
-        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId)
-          .selectAll
+        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
           .where((city, _) => city.name _equals "Tokyo")
           .query
           .to[Option]
