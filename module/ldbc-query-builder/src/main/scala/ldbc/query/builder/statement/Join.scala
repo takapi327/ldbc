@@ -134,7 +134,7 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
     val decoder = new Decoder[Table.Extract[SELECTS]]:
       override def decode(resultSet: ResultSet, prefix: Option[String]): Table.Extract[SELECTS] =
         val results = selects.toArray.map {
-          case table: Table[t] => table.decoder.decode(resultSet, Some(table._name))
+          case table: Table[t]       => table.decoder.decode(resultSet, Some(table._name))
           case tableOpt: TableOpt[t] => tableOpt.decoder.decode(resultSet, Some(tableOpt._name))
         }
         Tuple.fromArray(results).asInstanceOf[Table.Extract[SELECTS]]
