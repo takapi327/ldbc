@@ -394,7 +394,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("If selectAll is performed with LeftJoin, the model with no value will be None.") {
+  test("If selectAll is performed with Left Join, the model with no value will be None.") {
     assertIO(
       connection.use { conn =>
         (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
@@ -412,7 +412,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("If you do selectAll with LeftJoin, the model with the value is wrapped in Some.") {
+  test("If you do selectAll with Left Join, the model with the value is wrapped in Some.") {
     assertIO(
       connection.use { conn =>
         (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
@@ -425,6 +425,119 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
         (
           City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230),
           Some(GovernmentOffice(3, 1532, "Tokyo Metropolitan Government", Some(java.time.LocalDate.of(2023, 12, 13))))
+        )
+      )
+    )
+  }
+
+  test("If selectAll is performed with Right Join, the model with no value will be None.") {
+    assertIO(
+      connection.use { conn =>
+        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id).selectAll
+          .where((_, city) => city.id _equals 1534)
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          None,
+          City(1534, "Osaka", "JPN", "Osaka", 2595674)
+        )
+      )
+    )
+  }
+
+  test("If you do selectAll with Right Join, the model with the value is wrapped in Some.") {
+    assertIO(
+      connection.use { conn =>
+        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id).selectAll
+          .where((_, city) => city.id _equals 1532)
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          Some(GovernmentOffice(3, 1532, "Tokyo Metropolitan Government", Some(java.time.LocalDate.of(2023, 12, 13)))),
+          City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230)
+        )
+      )
+    )
+  }
+
+  test("If you use selectAll to retrieve records in a query with multiple Right Join joins, some with values will be set to Some and none without values will be set to None.") {
+    assertIO(
+      connection.use { conn =>
+        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+          .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
+          .selectAll
+          .where((_, _, country) => country.code _equals "JPN")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          None,
+          Some(City(1779, "Tsuyama", "JPN", "Okayama", 91170)),
+          Country(
+            "JPN",
+            "Japan",
+            Country.Continent.Asia,
+            "Eastern Asia",
+            BigDecimal(377829.00),
+            Some(-660),
+            126714000,
+            Some(80.7),
+            Some(BigDecimal(3787042.00)),
+            Some(BigDecimal(4192638.00)),
+            "Nihon/Nippon",
+            "Constitutional Monarchy",
+            Some("Akihito"),
+            Some(1532),
+            "JP"
+          )
+        )
+      )
+    )
+  }
+
+  test("When a record is retrieved with selectAll in a query using multiple Right Join joins, if there are only records in the base table, all other values will be None.") {
+    assertIO(
+      connection.use { conn =>
+        (for
+          _ <- (country += Country("XXX", "XXX", Country.Continent.Asia, "XXX", BigDecimal(0), None, 0, None, None, None, "XXX", "XXX", None, None, "XX")).update
+          result <- (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+            .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
+            .selectAll
+            .where((_, _, country) => country.code _equals "XXX")
+            .query
+            .to[Option]
+          _ <- country.delete.where(_.code _equals "XXX").update
+        yield result).transaction(conn)
+      },
+      Some(
+        (
+          None,
+          None,
+          Country(
+            "XXX",
+            "XXX",
+            Country.Continent.Asia,
+            "XXX",
+            BigDecimal(0),
+            None,
+            0,
+            None,
+            None,
+            None,
+            "XXX",
+            "XXX",
+            None,
+            None,
+            "XX"
+          )
         )
       )
     )
