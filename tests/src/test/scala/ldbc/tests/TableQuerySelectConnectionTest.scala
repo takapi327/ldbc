@@ -466,7 +466,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("If you use selectAll to retrieve records in a query with multiple Right Join joins, some with values will be set to Some and none without values will be set to None.") {
+  test(
+    "If you use selectAll to retrieve records in a query with multiple Right Join joins, some with values will be set to Some and none without values will be set to None."
+  ) {
     assertIO(
       connection.use { conn =>
         (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
@@ -503,17 +505,36 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("When a record is retrieved with selectAll in a query using multiple Right Join joins, if there are only records in the base table, all other values will be None.") {
+  test(
+    "When a record is retrieved with selectAll in a query using multiple Right Join joins, if there are only records in the base table, all other values will be None."
+  ) {
     assertIO(
       connection.use { conn =>
         (for
-          _ <- (country += Country("XXX", "XXX", Country.Continent.Asia, "XXX", BigDecimal(0), None, 0, None, None, None, "XXX", "XXX", None, None, "XX")).update
-          result <- (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
-            .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
-            .selectAll
-            .where((_, _, country) => country.code _equals "XXX")
-            .query
-            .to[Option]
+          _ <- (country += Country(
+                 "XXX",
+                 "XXX",
+                 Country.Continent.Asia,
+                 "XXX",
+                 BigDecimal(0),
+                 None,
+                 0,
+                 None,
+                 None,
+                 None,
+                 "XXX",
+                 "XXX",
+                 None,
+                 None,
+                 "XX"
+               )).update
+          result <-
+            (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+              .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
+              .selectAll
+              .where((_, _, country) => country.code _equals "XXX")
+              .query
+              .to[Option]
           _ <- country.delete.where(_.code _equals "XXX").update
         yield result).transaction(conn)
       },
