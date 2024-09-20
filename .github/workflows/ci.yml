@@ -28,13 +28,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [3.3.3, 3.5.0]
+        scala: [3.3.3, 3.5.1]
         java: [corretto@11, corretto@17]
         project: [ldbcJS, ldbcNative, ldbcJVM]
         exclude:
           - project: ldbcJS
             java: corretto@17
-          - scala: 3.5.0
+          - scala: 3.5.1
             java: corretto@17
           - project: ldbcNative
             java: corretto@17
@@ -194,32 +194,32 @@ jobs:
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.5.0, ldbcJS)
+      - name: Download target directories (3.5.1, ldbcJS)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.0-ldbcJS
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.1-ldbcJS
 
-      - name: Inflate target directories (3.5.0, ldbcJS)
+      - name: Inflate target directories (3.5.1, ldbcJS)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.5.0, ldbcNative)
+      - name: Download target directories (3.5.1, ldbcNative)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.0-ldbcNative
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.1-ldbcNative
 
-      - name: Inflate target directories (3.5.0, ldbcNative)
+      - name: Inflate target directories (3.5.1, ldbcNative)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.5.0, ldbcJVM)
+      - name: Download target directories (3.5.1, ldbcJVM)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.0-ldbcJVM
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.1-ldbcJVM
 
-      - name: Inflate target directories (3.5.0, ldbcJVM)
+      - name: Inflate target directories (3.5.1, ldbcJVM)
         run: |
           tar xf targets.tar
           rm targets.tar
