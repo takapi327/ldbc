@@ -79,6 +79,12 @@ object Encoder:
   given Encoder[ZonedDateTime] with
     override def encode(value: ZonedDateTime): LocalDateTime = value.toLocalDateTime
 
+  given Encoder[Year] with
+    override def encode(value: Year): String = value.toString
+
+  given Encoder[YearMonth] with
+    override def encode(value: YearMonth): String = value.toString
+
   given Encoder[None.type] with
     override def encode(value: None.type): None.type = value
 
