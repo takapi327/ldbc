@@ -126,7 +126,9 @@ object Decoder:
       decoder.map(localDateTime => if localDateTime == null then null else localDateTime.toInstant(ZoneOffset.UTC))
 
     given (using decoder: Elem[LocalDateTime]): Elem[ZonedDateTime] =
-      decoder.map(localDateTime => if localDateTime == null then null else ZonedDateTime.of(localDateTime, ZoneOffset.UTC))
+      decoder.map(localDateTime =>
+        if localDateTime == null then null else ZonedDateTime.of(localDateTime, ZoneOffset.UTC)
+      )
 
     given (using decoder: Elem[Int]): Elem[Year] =
       decoder.map(int => Year.of(int))
