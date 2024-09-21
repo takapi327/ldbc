@@ -141,10 +141,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
   override def getProcedureTerm(): String = "PROCEDURE"
 
-  override def getCatalogTerm(): String = databaseTerm.fold("") {
-    case DatabaseMetaData.DatabaseTerm.SCHEMA  => ""
-    case DatabaseMetaData.DatabaseTerm.CATALOG => "CATALOG"
-  }
+  override def getCatalogTerm(): String = databaseTerm match
+    case Some(DatabaseMetaData.DatabaseTerm.SCHEMA) => "CATALOG"
+    case Some(DatabaseMetaData.DatabaseTerm.CATALOG) => "database"
+    case None => "database"
 
   override def supportsSchemasInDataManipulation(): Boolean = databaseTerm.fold(false) {
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => true
@@ -171,10 +171,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     case DatabaseMetaData.DatabaseTerm.CATALOG => false
   }
 
-  override def supportsCatalogsInDataManipulation(): Boolean = databaseTerm.fold(false) {
-    case DatabaseMetaData.DatabaseTerm.SCHEMA  => false
-    case DatabaseMetaData.DatabaseTerm.CATALOG => true
-  }
+  override def supportsCatalogsInDataManipulation(): Boolean = databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
 
   override def supportsCatalogsInProcedureCalls(): Boolean = databaseTerm.fold(false) {
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => false
@@ -191,73 +188,21 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     case DatabaseMetaData.DatabaseTerm.CATALOG => true
   }
 
-  override def supportsCatalogsInPrivilegeDefinitions(): Boolean = databaseTerm.fold(false) {
-    case DatabaseMetaData.DatabaseTerm.SCHEMA  => false
-    case DatabaseMetaData.DatabaseTerm.CATALOG => true
-  }
+  override def supportsCatalogsInPrivilegeDefinitions(): Boolean = databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
 
   override def getProcedures(
     catalog:              Option[String],
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String]
   ): F[ResultSet] =
-
-    val db = getDatabase(catalog, schemaPattern)
-
-    val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM,"
-      else "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM,"
-    )
-    sqlBuf.append(
-      " ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVED_2, NULL AS RESERVED_3, ROUTINE_COMMENT AS REMARKS, CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN "
-    )
-    sqlBuf.append(DatabaseMetaData.procedureNoResult)
-    sqlBuf.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ")
-    sqlBuf.append(DatabaseMetaData.procedureReturnsResult)
-    sqlBuf.append(" ELSE ")
-    sqlBuf.append(DatabaseMetaData.procedureResultUnknown)
-    sqlBuf.append(" END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES")
-
-    val conditionBuf = new StringBuilder()
-
-    if getProceduresReturnsFunctions then conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
-    end if
-
-    if db.nonEmpty then
-      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
-      end if
-
-      conditionBuf.append(
-        if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then " ROUTINE_SCHEMA LIKE ?"
-        else " ROUTINE_SCHEMA = ?"
-      )
-    end if
-
-    if procedureNamePattern.nonEmpty then
-      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
-      end if
-
-      conditionBuf.append(" ROUTINE_NAME LIKE ?")
-    end if
-
-    if conditionBuf.nonEmpty then
-      sqlBuf.append(" WHERE")
-      sqlBuf.append(conditionBuf)
-    end if
-
-    sqlBuf.append(" ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE")
-
-    prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-      val setting = (db, procedureNamePattern) match
-        case (Some(dbValue), Some(procedureName)) =>
-          preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
-        case (Some(dbValue), None)       => preparedStatement.setString(1, dbValue)
-        case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
-        case _                           => ev.unit
-
-      setting *> preparedStatement.executeQuery()
-    }
+    (catalog, schemaPattern, procedureNamePattern) match
+      case (None, None, None) =>
+        for
+          results <- getProceduresAndOrFunctions(catalog, schemaPattern, procedureNamePattern, true, true)
+          systemProcedures <- getProceduresAndOrFunctions(Some("sys"), None, None, true, true)
+        yield
+          results.copy(records = results.records ++ systemProcedures.records)
+      case _ => getProceduresAndOrFunctions(catalog, schemaPattern, procedureNamePattern, true, true).asInstanceOf[F[ResultSet]]
 
   override def getProcedureColumns(
     catalog:              Option[String],
@@ -1619,10 +1564,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     )
 
   protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
-    (databaseTerm, catalog, schema) match
-      case (Some(DatabaseMetaData.DatabaseTerm.SCHEMA), None, value)  => value.fold(database)(_.some)
-      case (Some(DatabaseMetaData.DatabaseTerm.CATALOG), value, None) => value.fold(database)(_.some)
-      case _                                                          => database
+    databaseTerm match
+      case Some(DatabaseMetaData.DatabaseTerm.SCHEMA)  => schema.orElse(database)
+      case Some(DatabaseMetaData.DatabaseTerm.CATALOG) => catalog.orElse(database)
+      case None                                                          => catalog.orElse(database)
 
   /**
    * Get a prepared statement to query information_schema tables.
@@ -1829,6 +1774,121 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       case FunctionConstant.FUNCTION_NO_NULLS         => DatabaseMetaData.functionNoNulls
       case FunctionConstant.FUNCTION_NULLABLE         => DatabaseMetaData.functionNullable
       case FunctionConstant.FUNCTION_NULLABLE_UNKNOWN => DatabaseMetaData.functionNullableUnknown
+
+  private def getProceduresAndOrFunctions(
+                                           catalog: Option[String],
+                                           schema: Option[String], 
+                                           procedureNamePattern: Option[String], 
+                                           returnProcedures: Boolean,
+                                           returnFunctions: Boolean): F[ResultSetImpl] =
+    val db = getDatabase(catalog, schema)
+    
+    val functions: F[Vector[ResultSetRowPacket]] = if returnFunctions then
+      val sqlBuf = new StringBuilder()
+
+      sqlBuf.append(
+        "SHOW FUNCTION STATUS WHERE " + (
+          if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then "Db LIKE ?"
+          else "Db = ?"
+        )
+      )
+
+      if procedureNamePattern.nonEmpty then
+        sqlBuf.append(" AND Name LIKE ?")
+      end if
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        preparedStatement.setString(1, db.getOrElse("")) *>
+          procedureNamePattern.fold(ev.unit)(preparedStatement.setString(2, _)) *>
+          preparedStatement.executeQuery().map { resultSet =>
+            val records = Vector.newBuilder[ResultSetRowPacket]
+            while resultSet.next() do
+              val procDb = Option(resultSet.getString("Db"))
+              val functionName = Option(resultSet.getString("Name"))
+              records += ResultSetRowPacket(
+                Array(
+                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else procDb,
+                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then procDb else None,
+                  functionName,
+                  None,
+                  None,
+                  None,
+                  Option(resultSet.getString("Comment")),
+                  Some(DatabaseMetaData.procedureReturnsResult.toString),
+                  functionName,
+                )
+              )
+            records.result()
+          }
+      }
+
+    else ev.pure(Vector.empty)
+
+    val procedures: F[Vector[ResultSetRowPacket]] = if returnProcedures then
+      val sqlBuf = new StringBuilder()
+
+      sqlBuf.append(
+        "SHOW PROCEDURE STATUS WHERE " + (
+          if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then "Db LIKE ?"
+          else "Db = ?"
+        )
+      )
+
+      if procedureNamePattern.nonEmpty then
+        sqlBuf.append(" AND Name LIKE ?")
+      end if
+
+      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+        val setting = (db, procedureNamePattern) match
+          case (Some(dbValue), Some(procedureName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
+          case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
+          case _ => ev.unit
+
+        setting *> preparedStatement.executeQuery().map { resultSet =>
+          val records = Vector.newBuilder[ResultSetRowPacket]
+          while resultSet.next() do
+            val procDb = Option(resultSet.getString("Db"))
+            val procedureName = Option(resultSet.getString("Name"))
+            records += ResultSetRowPacket(
+              Array(
+                if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else procDb,
+                if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then procDb else None,
+                procedureName,
+                None,
+                None,
+                None,
+                Option(resultSet.getString("Comment")),
+                Some(DatabaseMetaData.procedureNoResult.toString),
+                procedureName,
+              )
+            )
+          records.result()
+        }
+      }
+    else ev.pure(Vector.empty)
+
+    for
+      functions <- functions
+      procedures <- procedures
+    yield
+      ResultSetImpl(
+        Vector(
+          "PROCEDURE_CAT",
+          "PROCEDURE_SCHEM",
+          "PROCEDURE_NAME",
+          "RESERVED1",
+          "RESERVED2",
+          "RESERVED3",
+          "REMARKS",
+          "PROCEDURE_TYPE",
+          "SPECIFIC_NAME"
+        ).map(name => ColumnDefinitionPacket("", name, ColumnDataType.MYSQL_TYPE_VARCHAR, Seq.empty)),
+        (functions ++ procedures).sortBy(_.values(2)),
+        serverVariables,
+        protocol.initialPacket.serverVersion
+      )
 
 private[ldbc] object DatabaseMetaDataImpl:
 
@@ -2166,7 +2226,7 @@ private[ldbc] object DatabaseMetaDataImpl:
 
     override def getSearchStringEscape(): String = "\\"
 
-    override def getExtraNameCharacters(): String = "#@"
+    override def getExtraNameCharacters(): String = "$"
 
     override def supportsAlterTableWithAddColumn(): Boolean = true
 
@@ -2320,7 +2380,7 @@ private[ldbc] object DatabaseMetaDataImpl:
 
     override def supportsResultSetHoldability(holdability: Int): Boolean =
       holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT
-    override def locatorsUpdateCopy(): Boolean = false
+    override def locatorsUpdateCopy(): Boolean = true
   end StaticDatabaseMetaData
 
   def apply[F[_]: Temporal: Exchange: Tracer](
