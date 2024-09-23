@@ -6,6 +6,8 @@
 
 package ldbc.connector.util
 
+import scala.util.boundary, boundary.break
+
 /**
  * Utility class to inspect a MySQL string, typically a query string.
  *
@@ -301,8 +303,10 @@ class StringInspector(
    *   the new current position
    */
   def incrementPosition(by: Int, searchMode: Set[SearchMode]): Int =
-    for i <- 0 until by do
-      if incrementPosition(searchMode) == -1 then return -1
+    boundary:
+      for i <- 0 until by do
+        if incrementPosition(searchMode) == -1 then break(i)
+        -1
     pos
 
   /**
