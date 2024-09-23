@@ -197,3 +197,123 @@ object StringHelper:
 
       else
         identifierTrim
+
+  def isCharEqualIgnoreCase(charToCompare: Char, compareTpCHarUC: Char, compareToCharLC: Char): Boolean =
+    Character.toLowerCase(charToCompare) == compareToCharLC || Character.toUpperCase(charToCompare) == compareTpCHarUC
+
+  /**
+   * Splits stringToSplit into a list, using the given delimiter
+   *
+   * @param stringToSplit
+   *   the string to split
+   * @param delimiter
+   *   the string to split on
+   * @param trim
+   *   should the split strings be whitespace trimmed?
+   * @return
+   *   the list of strings, split by delimiter
+   */
+  def split(stringToSplit: Option[String], delimiter: String, trim: Boolean): List[String] =
+    stringToSplit match
+      case None => List.empty
+      case Some(string) =>
+        val tokens = string.split(delimiter, -1)
+        if trim then tokens.map(_.trim).toList
+        else tokens.toList
+
+/**
+ * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
+ *
+ * @param stringToSplit
+ *   the string to split
+ * @param delimiter
+ *   the string to split on
+ * @param openingMarkers
+ *   characters that delimit the beginning of a text block to skip
+ * @param closingMarkers
+ *   characters that delimit the end of a text block to skip
+ * @param trim
+ *   should the split strings be whitespace trimmed?
+ * @return
+ *   the list of strings, split by delimiter
+ */
+  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, trim: Boolean): List[String] =
+    split(stringToSplit, delimiter, openingMarkers, closingMarkers, "", trim)
+
+/**
+ * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
+ *
+ * @param stringToSplit
+ *   the string to split
+ * @param delimiter
+ *   the string to split on
+ * @param openingMarkers
+ *   characters that delimit the beginning of a text block to skip
+ * @param closingMarkers
+ *   characters that delimit the end of a text block to skip
+ * @param trim
+ *   should the split strings be whitespace trimmed?
+ * @param searchMode
+ *   a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
+ *   behaviour of the search
+ * @return
+ *   the list of strings, split by delimiter
+ */
+  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, trim: Boolean, searchMode: Set[SearchMode]): List[String] =
+    split(stringToSplit, delimiter, openingMarkers, closingMarkers, "", trim, searchMode)
+
+/**
+ * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
+ *
+ * @param stringToSplit
+ *   the string to split
+ * @param delimiter
+ *   the string to split on
+ * @param openingMarkers
+ *   characters that delimit the beginning of a text block to skip
+ * @param closingMarkers
+ *   characters that delimit the end of a text block to skip
+ * @param overridingMarkers
+ *   the subset of <code>openingMarkers</code> that override the remaining markers, e.g., if <code>openingMarkers = "'("</code> and
+ *   <code>overridingMarkers = "'"</code> then the block between the outer parenthesis in <code>"start ('max('); end"</code> is strictly consumed,
+ *   otherwise the suffix <code>" end"</code> would end up being consumed too in the process of handling the nested parenthesis.
+ * @param trim
+ *   should the split strings be whitespace trimmed?
+ * @return
+ * the list of strings, split by delimiter
+ */
+  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, overridingMarkers: String, trim: Boolean): List[String] =
+    split(stringToSplit, delimiter, openingMarkers, closingMarkers, overridingMarkers, trim, Set.empty)
+
+/**
+ * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
+ *
+ * @param stringToSplit
+ *   the string to split
+ * @param delimiter
+ *   the string to split on
+ * @param openingMarkers
+ *   characters that delimit the beginning of a text block to skip
+ * @param closingMarkers
+ *   characters that delimit the end of a text block to skip
+ * @param overridingMarkers
+ *   the subset of <code>openingMarkers</code> that override the remaining markers, e.g., if <code>openingMarkers = "'("</code> and
+ *   <code>overridingMarkers = "'"</code> then the block between the outer parenthesis in <code>"start ('max('); end"</code> is strictly consumed,
+ *   otherwise the suffix <code>" end"</code> would end up being consumed too in the process of handling the nested parenthesis.
+ * @param trim
+ *   should the split strings be whitespace trimmed?
+ * @param searchMode
+ *   a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
+ *   behaviour of the search
+ * @return
+ * the list of strings, split by delimiter
+ */
+  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, overridingMarkers: String, trim: Boolean, searchMode: Set[SearchMode]): List[String] =
+    val strInspector = new StringInspector(
+      source = stringToSplit.getOrElse(""),
+      openingMarkers = openingMarkers,
+      closingMarkers = closingMarkers,
+      overridingMarkers = overridingMarkers,
+      defaultSearchMode = searchMode
+    )
+    strInspector.split(delimiter, trim)
