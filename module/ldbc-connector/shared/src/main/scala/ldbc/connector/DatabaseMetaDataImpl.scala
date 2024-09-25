@@ -9,7 +9,6 @@ package ldbc.connector
 import java.util.StringTokenizer
 
 import scala.collection.immutable.{ ListMap, SortedMap }
-import scala.util.boundary, boundary.break
 
 import cats.*
 import cats.syntax.all.*
@@ -29,7 +28,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.net.protocol.*
-import ldbc.connector.util.StringHelper
+import ldbc.connector.util.*
 
 private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   protocol:                      Protocol[F],
@@ -42,7 +41,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   getProceduresReturnsFunctions: Boolean                               = true,
   tinyInt1isBit:                 Boolean                               = true,
   transformedBitIsBoolean:       Boolean                               = false,
-  yearIsDateType:                Boolean                               = true
+  yearIsDateType:                Boolean                               = true,
+  nullDatabaseMeansCurrent:     Boolean                               = false,
 )(using ev: MonadError[F, Throwable])
   extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
@@ -199,14 +199,62 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     schemaPattern:        Option[String],
     procedureNamePattern: Option[String]
   ): F[ResultSet] =
-    (catalog, schemaPattern, procedureNamePattern) match
-      case (None, None, None) =>
-        for
-          results <- getProceduresAndOrFunctions(catalog, schemaPattern, procedureNamePattern, true, true)
-          systemProcedures <- getProceduresAndOrFunctions(Some("sys"), None, None, true, true)
-        yield
-          results.copy(records = results.records ++ systemProcedures.records)
-      case _ => getProceduresAndOrFunctions(catalog, schemaPattern, procedureNamePattern, true, true).asInstanceOf[F[ResultSet]]
+    val db = getDatabase(catalog, schemaPattern)
+
+    val sqlBuf = new StringBuilder(
+      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
+        "SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM,"
+      else "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM,"
+    )
+    sqlBuf.append(
+      " ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVED_2, NULL AS RESERVED_3, ROUTINE_COMMENT AS REMARKS, CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN "
+    )
+    sqlBuf.append(DatabaseMetaData.procedureNoResult)
+    sqlBuf.append(" WHEN ROUTINE_TYPE='FUNCTION' THEN ")
+    sqlBuf.append(DatabaseMetaData.procedureReturnsResult)
+    sqlBuf.append(" ELSE ")
+    sqlBuf.append(DatabaseMetaData.procedureResultUnknown)
+    sqlBuf.append(" END AS PROCEDURE_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES")
+
+    val conditionBuf = new StringBuilder()
+
+    if !getProceduresReturnsFunctions then conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
+    end if
+
+    if db.nonEmpty then
+      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+      end if
+
+      conditionBuf.append(
+        if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then " ROUTINE_SCHEMA LIKE ?"
+        else " ROUTINE_SCHEMA = ?"
+      )
+    end if
+
+    if procedureNamePattern.nonEmpty then
+      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+      end if
+
+      conditionBuf.append(" ROUTINE_NAME LIKE ?")
+    end if
+
+    if conditionBuf.nonEmpty then
+      sqlBuf.append(" WHERE")
+      sqlBuf.append(conditionBuf)
+    end if
+
+    sqlBuf.append(" ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE")
+
+    prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
+      val setting = (db, procedureNamePattern) match
+        case (Some(dbValue), Some(procedureName)) =>
+          preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
+        case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
+        case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
+        case _ => ev.unit
+
+      setting *> preparedStatement.executeQuery()
+    }
 
   override def getProcedureColumns(
     catalog:              Option[String],
@@ -214,8 +262,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     procedureNamePattern: Option[String],
     columnNamePattern:    Option[String]
   ): F[ResultSet] =
-    getProcedureOrFunctionColumns(catalog, schemaPattern, procedureNamePattern, columnNamePattern, true, true)
-    /*
     val db = getDatabase(catalog, schemaPattern)
 
     val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
@@ -338,7 +384,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val conditionBuf = new StringBuilder()
 
-    if getProceduresReturnsFunctions then conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
+    if !getProceduresReturnsFunctions then conditionBuf.append(" ROUTINE_TYPE = 'PROCEDURE'")
     end if
 
     if db.nonEmpty then
@@ -392,7 +438,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
       setting *> preparedStatement.executeQuery()
     }
-     */
 
   override def getTables(
     catalog:          Option[String],
@@ -1570,10 +1615,12 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     )
 
   protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
-    databaseTerm match
-      case Some(DatabaseMetaData.DatabaseTerm.SCHEMA)  => schema.orElse(database)
-      case Some(DatabaseMetaData.DatabaseTerm.CATALOG) => catalog.orElse(database)
-      case None                                                          => catalog.orElse(database)
+    databaseTerm.flatMap {
+      case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+        if schema.nonEmpty && nullDatabaseMeansCurrent then database else schema
+      case DatabaseMetaData.DatabaseTerm.CATALOG =>
+        if catalog.nonEmpty && nullDatabaseMeansCurrent then database else catalog
+    }
 
   /**
    * Get a prepared statement to query information_schema tables.
@@ -1780,537 +1827,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       case FunctionConstant.FUNCTION_NO_NULLS         => DatabaseMetaData.functionNoNulls
       case FunctionConstant.FUNCTION_NULLABLE         => DatabaseMetaData.functionNullable
       case FunctionConstant.FUNCTION_NULLABLE_UNKNOWN => DatabaseMetaData.functionNullableUnknown
-
-  private def getProceduresAndOrFunctions(
-                                           catalog: Option[String],
-                                           schemaPattern: Option[String], 
-                                           procedureNamePattern: Option[String], 
-                                           returnProcedures: Boolean,
-                                           returnFunctions: Boolean): F[ResultSetImpl] =
-    val db = getDatabase(catalog, schemaPattern)
-    
-    val functions: F[Vector[ResultSetRowPacket]] = if returnFunctions then
-      val sqlBuf = new StringBuilder()
-
-      sqlBuf.append(
-        "SHOW FUNCTION STATUS WHERE " + (
-          if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then "Db LIKE ?"
-          else "Db = ?"
-        )
-      )
-
-      if procedureNamePattern.nonEmpty then
-        sqlBuf.append(" AND Name LIKE ?")
-      end if
-
-      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-        preparedStatement.setString(1, db.getOrElse("")) *>
-          procedureNamePattern.fold(ev.unit)(preparedStatement.setString(2, _)) *>
-          preparedStatement.executeQuery().map { resultSet =>
-            val records = Vector.newBuilder[ResultSetRowPacket]
-            while resultSet.next() do
-              val procDb = Option(resultSet.getString("Db"))
-              val functionName = Option(resultSet.getString("Name"))
-              records += ResultSetRowPacket(
-                Array(
-                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else procDb,
-                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then procDb else None,
-                  functionName,
-                  None,
-                  None,
-                  None,
-                  Option(resultSet.getString("Comment")),
-                  Some(DatabaseMetaData.procedureReturnsResult.toString),
-                  functionName,
-                )
-              )
-            records.result()
-          }
-      }
-
-    else ev.pure(Vector.empty)
-
-    val procedures: F[Vector[ResultSetRowPacket]] = if returnProcedures then
-      val sqlBuf = new StringBuilder()
-
-      sqlBuf.append(
-        "SHOW PROCEDURE STATUS WHERE " + (
-          if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then "Db LIKE ?"
-          else "Db = ?"
-        )
-      )
-
-      if procedureNamePattern.nonEmpty then
-        sqlBuf.append(" AND Name LIKE ?")
-      end if
-
-      prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-        val setting = (db, procedureNamePattern) match
-          case (Some(dbValue), Some(procedureName)) =>
-            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
-          case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
-          case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
-          case _ => ev.unit
-
-        setting *> preparedStatement.executeQuery().map { resultSet =>
-          val records = Vector.newBuilder[ResultSetRowPacket]
-          while resultSet.next() do
-            val procDb = Option(resultSet.getString("Db"))
-            val procedureName = Option(resultSet.getString("Name"))
-            records += ResultSetRowPacket(
-              Array(
-                if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else procDb,
-                if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then procDb else None,
-                procedureName,
-                None,
-                None,
-                None,
-                Option(resultSet.getString("Comment")),
-                Some(DatabaseMetaData.procedureNoResult.toString),
-                procedureName,
-              )
-            )
-          records.result()
-        }
-      }
-    else ev.pure(Vector.empty)
-
-    for
-      functions <- functions
-      procedures <- procedures
-    yield
-      ResultSetImpl(
-        Vector(
-          "PROCEDURE_CAT",
-          "PROCEDURE_SCHEM",
-          "PROCEDURE_NAME",
-          "RESERVED1",
-          "RESERVED2",
-          "RESERVED3",
-          "REMARKS",
-          "PROCEDURE_TYPE",
-          "SPECIFIC_NAME"
-        ).map(name => ColumnDefinitionPacket("", name, ColumnDataType.MYSQL_TYPE_VARCHAR, Seq.empty)),
-        (functions ++ procedures).sortBy(_.values(2)),
-        serverVariables,
-        protocol.initialPacket.serverVersion
-      )
-
-  private def getProcedureOrFunctionColumns(
-                                                 catalog: Option[String],
-                                           schemaPattern: Option[String],
-                                           procedureOrFunctionNamePattern: Option[String],
-                                           columnNamePattern: Option[String],
-                                           returnProcedures: Boolean,
-                                           returnFunctions: Boolean
-                                           ): F[ResultSet] =
-    val db = getDatabase(catalog, schemaPattern)
-    val dbMapsToSchema = databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA)
-
-    val procsOrFuncsToExtractList = Vector.newBuilder[(String, String)]
-
-    val quotedId = getIdentifierQuoteString()
-
-    val resultSetImpl = (catalog, schemaPattern) match
-      case (None, None) =>
-        for
-          results <- getProceduresAndOrFunctions(catalog, schemaPattern, procedureOrFunctionNamePattern, returnProcedures, returnFunctions)
-          systemProcedures <- getProceduresAndOrFunctions(Some("sys"), None, None, returnProcedures, returnFunctions)
-        yield results.copy(records = results.records ++ systemProcedures.records)
-      case _ => getProceduresAndOrFunctions(catalog, schemaPattern, procedureOrFunctionNamePattern, returnProcedures, returnFunctions)
-
-    resultSetImpl.flatMap { resultSet =>
-      while resultSet.next() do
-        val key = StringHelper.getFullyQualifiedName(
-          if dbMapsToSchema then Option(resultSet.getString(2)) else Option(resultSet.getString(1)),
-          resultSet.getString(3),
-          quotedId,
-          false
-        )
-        val value = resultSet.getString(8) match
-          case value if value == DatabaseMetaData.procedureNoResult.toString => "PROCEDURE"
-          case _ => "FUNCTION"
-
-        procsOrFuncsToExtractList += ((key, value))
-      end while
-
-      val rowsF: F[Vector[ResultSetRowPacket]] = procsOrFuncsToExtractList.result().traverse((key, value) =>
-        var idx = 0
-        if !" ".equals(quotedId) then
-          idx = StringHelper.indexOfIgnoreCase(0, key, ".")
-        else
-          idx = key.indexOf(".")
-
-        val result = if idx > 0 then
-          getCallStmtParameterTypes(
-            StringHelper.unQuoteIdentifier(key.substring(0, idx), quotedId), key, value, columnNamePattern, false
-          )
-        else
-          getCallStmtParameterTypes(db.getOrElse(""), key, value, columnNamePattern, false)
-        result
-      ).map(_.flatten)
-
-      rowsF.map { rows =>
-        ResultSetImpl(
-          Vector(
-            "PROCEDURE_CAT",
-            "PROCEDURE_SCHEM",
-            "PROCEDURE_NAME",
-            "COLUMN_NAME",
-            "COLUMN_TYPE",
-            "DATA_TYPE",
-            "TYPE_NAME",
-            "PRECISION",
-            "LENGTH",
-            "SCALE",
-            "RADIX",
-            "NULLABLE",
-            "REMARKS",
-            "COLUMN_DEF",
-            "SQL_DATA_TYPE",
-            "SQL_DATETIME_SUB",
-            "CHAR_OCTET_LENGTH",
-            "ORDINAL_POSITION",
-            "IS_NULLABLE",
-            "SPECIFIC_NAME"
-          ).map(name => ColumnDefinitionPacket("", name, ColumnDataType.MYSQL_TYPE_VARCHAR, Seq.empty)),
-          rows.sortBy(_.values(0)),
-          serverVariables,
-          protocol.initialPacket.serverVersion
-        )
-      }
-    }
-
-  private def getCallStmtParameterTypes(
-                                         db: String,
-                                         quotedProcName: String,
-                                         procType: String,
-                                         parameterNamePattern: Option[String],
-                                         forGetFunctionColumns: Boolean
-                                       ): F[Vector[ResultSetRowPacket]] =
-
-    val quotedId = getIdentifierQuoteString()
-
-    val dotIndex = if " ".equals(quotedId) then
-      quotedProcName.indexOf(".")
-    else
-      StringHelper.indexOfIgnoreCase(0, quotedProcName, ".")
-
-    var dbName = ""
-    var updateQuotedProcName = quotedProcName
-    if dotIndex != 1 && dotIndex + 1 < quotedProcName.length then
-      dbName = quotedProcName.substring(0, dotIndex)
-      updateQuotedProcName = quotedProcName.substring(dotIndex + 1)
-    else
-      dbName = StringHelper.quoteIdentifier(db, quotedId, false)
-
-    // Moved from above so that procName is *without* database as expected by the rest of code
-    // Removing QuoteChar to get output as it was before PROC_CAT fixes
-    val tmpProcName = StringHelper.unQuoteIdentifier(updateQuotedProcName, quotedId)
-    // procCatAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8")
-
-    // there is no need to quote the identifier here since 'dbName' and 'procName' are guaranteed to be already quoted.
-    val procNameBuf = new StringBuilder()
-    procNameBuf.append(dbName)
-    procNameBuf.append('.')
-    procNameBuf.append(updateQuotedProcName)
-
-    val (showQuery, fieldName) = if procType == "PROCEDURE" then
-      ("SHOW CREATE PROCEDURE " + procNameBuf.toString(), "Create Procedure")
-    else
-      ("SHOW CREATE FUNCTION " + procNameBuf.toString(), "Create Function")
-
-    for
-      statement <- prepareMetaDataSafeStatement(showQuery)
-      resultSet <- statement.executeQuery()
-    yield
-      if resultSet.next() then
-        val procedureDef = Option(resultSet.getString(fieldName))
-        val sqlMode = resultSet.getString("sql_mode")
-        val isProcedureInAnsiMode = StringHelper.indexOfIgnoreCase(0, sqlMode, "ANSI") != -1
-
-        val identifierMarkers = if isProcedureInAnsiMode then "`\"" else "`"
-        val storageDefnDelims = "(" + identifierMarkers
-        val storageDefnClosures = identifierMarkers + ")"
-
-        procedureDef match
-          case Some(pDef) if pDef.nonEmpty =>
-             val openParenIndex = StringHelper.indexOfIgnoreCase(0, pDef, "(")
-             val endOfParamDeclarationIndex = endPositionOfParameterDeclaration(openParenIndex, pDef)
-
-             val paramDef = Option(pDef.substring(openParenIndex + 1, endOfParamDeclarationIndex))
-
-             paramDef match
-               case Some(param) =>
-                 var ordinal = 1
-                 val parseList = StringHelper.split(Some(param), ",", storageDefnDelims, storageDefnClosures, true)
-                 val parseListLen = parseList.length
-
-                 val rows = Vector.newBuilder[ResultSetRowPacket]
-
-                 boundary:
-                   for i <- 0 until parseListLen do
-                     parseList.get(i) match
-                       case None => break(i)
-                       case Some(declaration) if declaration.trim.isEmpty =>
-                         // no parameters actually declared, but whitespace spans lines
-                         break(i)
-                       case Some(dec) =>
-                         // tokenizer will break if declaration contains special characters like \n
-                         val declaration = dec.replaceAll("[\\t\\n\\x0B\\f\\r]", " ")
-                         val declarationTok = new StringTokenizer(declaration, " \t")
-
-                         var paramName: String = ""
-                         var isOutParam: Boolean = false
-                         var isInParam: Boolean = false
-
-                         if declarationTok.hasMoreTokens then
-                           val possibleParamName = declarationTok.nextToken()
-
-                           if possibleParamName.equalsIgnoreCase("OUT") then
-                             isOutParam = true
-                             if declarationTok.hasMoreTokens then
-                               paramName = declarationTok.nextToken()
-                             else
-                               throw new SQLException("Internal error when parsing callable statement metadata (missing parameter name)")
-                             end if
-                           else if possibleParamName.equalsIgnoreCase("INOUT") then
-                              isOutParam = true
-                              isInParam = true
-
-                              if declarationTok.hasMoreTokens then
-                                paramName = declarationTok.nextToken()
-                              else
-                                throw new SQLException("Internal error when parsing callable statement metadata (missing parameter name)")
-                           else if possibleParamName.equalsIgnoreCase("IN") then
-                              isOutParam = false
-                              isInParam = true
-
-                              if declarationTok.hasMoreTokens then
-                                paramName = declarationTok.nextToken()
-                              else
-                                throw new SQLException("Internal error when parsing callable statement metadata (missing parameter name)")
-                              end if
-                           else
-                              isOutParam = false
-                              isInParam = true
-                              paramName = possibleParamName
-                           end if
-
-                            val typeDesc: DatabaseMetaDataImpl.TypeDescriptor =
-                              if declarationTok.hasMoreTokens then
-                                val typeInfoBuf = new StringBuilder(declarationTok.nextToken())
-
-                                while declarationTok.hasMoreTokens do
-                                  typeInfoBuf.append(" ")
-                                  typeInfoBuf.append(declarationTok.nextToken())
-                                end while
-
-                                val typeInfo = typeInfoBuf.toString()
-                                DatabaseMetaDataImpl.TypeDescriptor(typeInfo, "YES", tinyInt1isBit, transformedBitIsBoolean)
-                              else
-                                throw new SQLException("Internal error when parsing callable statement metadata (missing parameter type)")
-                              end if
-
-                            if paramName.startsWith("`") && paramName.endsWith("`") || isProcedureInAnsiMode && paramName.startsWith("\"") && paramName.endsWith("\"") then
-                              paramName = paramName.substring(1, paramName.length() - 1)
-                            end if
-
-                            if parameterNamePattern.isEmpty || StringHelper.wildCompareIgnoreCase(paramName, parameterNamePattern.getOrElse("")) then
-                              ordinal += 1
-                              rows += convertTypeDescriptorToProcedureRow(
-                                procName = tmpProcName,
-                                procCat = dbName,
-                                paramName = paramName,
-                                isOutParam = isOutParam,
-                                isInParam = isInParam,
-                                isReturnParam = false,
-                                typeDesc = typeDesc,
-                                forGetFunctionColumns = forGetFunctionColumns,
-                                ordinal = ordinal
-                              )
-                            end if
-
-                         else
-                           throw new SQLException("Internal error when parsing callable statement metadata (unknown output from ''SHOW CREATE PROCEDURE…")
-                         end if
-                   end for
-
-                 rows.result()
-
-               case None =>
-                 // Is this an error? JDBC spec doesn't make it clear if stored procedure doesn't exist, is it an error....
-                 Vector.empty
-             end match
-          case _ => Vector.empty
-        end match
-      else Vector.empty
-
-  /**
-   * Finds the end of the parameter declaration from the output of "SHOW
-   * CREATE PROCEDURE".
-   *
-   * @param beginIndex
-   *   should be the index of the procedure body that contains the
-   *   first "(".
-   * @param procedureDef
-   *   the procedure body
-   * @return
-   *   the ending index of the parameter declaration, not including the closing ")"
-   */
-  private def endPositionOfParameterDeclaration(beginIndex: Int, procedureDef: String): Int =
-    var currentPos = beginIndex + 1
-    var parenDepth = 1 // counting the first openParen
-
-    while parenDepth >0 && currentPos < procedureDef.length do
-      val closedParenIndex = StringHelper.indexOfIgnoreCase(currentPos, procedureDef, ")")
-
-      if closedParenIndex != 1 then
-        val nextOpenParenIndex = StringHelper.indexOfIgnoreCase(currentPos, procedureDef, "(")
-
-        if nextOpenParenIndex != -1 && nextOpenParenIndex < closedParenIndex then
-          parenDepth += 1
-          currentPos = closedParenIndex + 1
-        else
-          parenDepth -= 1
-          currentPos = closedParenIndex
-        end if
-      else
-        // we should always get closed paren of some sort
-        throw new SQLException("Internal error when parsing callable statement metadata")
-    end while
-
-    currentPos
-
-  /**
-   * Determines the COLUMN_TYPE information based on parameter type (IN, OUT or INOUT) or function return parameter.
-   *
-   * @param isOutParam
-   *   Indicates whether it's an output parameter.
-   * @param isInParam
-   *   Indicates whether it's an input parameter.
-   * @param isReturnParam
-     * Indicates whether it's a function return parameter.
-   * @param forGetFunctionColumns
-   *   Indicates whether the column belong to a function. This argument is required for JDBC4, in which case
-   *   this method must be overridden to provide the correct functionality.
-   * @return
-   *   The corresponding COLUMN_TYPE as in java.sql.getProcedureColumns API.
-   */
-  private def getColumnType(isOutParam: Boolean, isInParam: Boolean, isReturnParam: Boolean, forGetFunctionColumns: Boolean): Int =
-    getProcedureOrFunctionColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns)
-
-  /**
-   * Determines the COLUMN_TYPE information based on parameter type (IN, OUT or INOUT) or function return parameter.
-   *
-   * @param isOutParam
-   *   Indicates whether it's an output parameter.
-   * @param isInParam
-   *   Indicates whether it's an input parameter.
-   * @param isReturnParam
-   *   Indicates whether it's a function return parameter.
-   * @param forGetFunctionColumns
-   *   Indicates whether the column belong to a function.
-   * @return
-   *   The corresponding COLUMN_TYPE as in java.sql.getProcedureColumns API.
-   */
-  private def getProcedureOrFunctionColumnType(isOutParam: Boolean, isInParam: Boolean, isReturnParam: Boolean, forGetFunctionColumns: Boolean): Int =
-    if isInParam && isOutParam then
-      if forGetFunctionColumns then DatabaseMetaData.functionColumnInOut
-      else DatabaseMetaData.procedureColumnInOut
-    else if isInParam then
-      if forGetFunctionColumns then DatabaseMetaData.functionColumnIn
-      else DatabaseMetaData.procedureColumnIn
-    else if isOutParam then
-      if forGetFunctionColumns then DatabaseMetaData.functionColumnOut
-      else DatabaseMetaData.procedureColumnOut
-    else if isReturnParam then
-      if forGetFunctionColumns then DatabaseMetaData.functionReturn
-      else DatabaseMetaData.procedureColumnReturn
-    else DatabaseMetaData.procedureColumnUnknown
-
-  private def convertTypeDescriptorToProcedureRow(procName: String, procCat: String, paramName: String, isOutParam: Boolean, isInParam: Boolean, isReturnParam: Boolean, typeDesc: DatabaseMetaDataImpl.TypeDescriptor, forGetFunctionColumns: Boolean, ordinal: Int): ResultSetRowPacket =
-    val records = Array.newBuilder[Option[String]]
-
-    // PROCEDURE_CAT
-    // PROCEDURE_SCHEM
-    if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-      records += Some("def")
-      records += Some(procCat)
-    else
-      records += Some(procCat)
-      records += None
-    end if
-
-    // PROCEDURE_NAME
-    records += Some(procName)
-
-    // COLUMN_NAME
-    records += Some(paramName)
-
-    // COLUMN_TYPE
-    records += Option(getColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns).toString)
-
-    // DATA_TYPE
-    if typeDesc.mysqlType == MysqlType.YEAR && !yearIsDateType then
-      records += Some(SMALLINT.toString)
-    else
-      records += Some(typeDesc.mysqlType.jdbcType.toString)
-    end if
-
-    // TYPE_NAME
-    records += Some(typeDesc.mysqlType.getName())
-
-    // PRECISION
-    typeDesc.datetimePrecision match
-      case None => records += typeDesc.columnSize.map(_.toString)
-      case Some(precision) => records += Some(precision.toString)
-
-    // LENGTH
-    records += typeDesc.columnSize.map(_.toString)
-
-    // SCALE
-    records += typeDesc.decimalDigits.map(_.toString)
-
-    // RADIX
-    records += Some(typeDesc.numPrecRadix.toString)
-
-    // NULLABLE
-    typeDesc.nullability match
-      case DatabaseMetaData.columnNoNulls => records += Some(DatabaseMetaData.procedureNoNulls.toString)
-      case DatabaseMetaData.columnNullable => records += Some(DatabaseMetaData.procedureNullable.toString)
-      case DatabaseMetaData.columnNullableUnknown => records += Some(DatabaseMetaData.procedureNullableUnknown.toString)
-      case _ => records += None
-
-    // RESERVATION
-    records += None
-
-    if forGetFunctionColumns then
-      // CHAR_OCTET_LENGTH
-      records += typeDesc.charOctetLength.map(_.toString)
-      // ORDINAL_POSITION
-      records += Some(ordinal.toString)
-      // IS_NULLABLE
-      records += Some(typeDesc.isNullable)
-      // SPECIFIC_NAME
-      records += Some(procName)
-    else
-      // COLUMN_DEF
-      records += None
-      // SQL_DATA_TYPE (future use)
-      records += None
-      // SQL_DATETIME_SUB (future use)
-      records += None
-      // CHAR_OCTET_LENGTH
-      records += typeDesc.charOctetLength.map(_.toString)
-      // ORDINAL_POSITION
-      records += Some(ordinal.toString)
-      // IS_NULLABLE
-      records += Some(typeDesc.isNullable)
-      // SPECIFIC_NAME
-      records += Some(procName)
-
-    ResultSetRowPacket(records.result())
 
 private[ldbc] object DatabaseMetaDataImpl:
 
@@ -2804,33 +2320,6 @@ private[ldbc] object DatabaseMetaDataImpl:
       holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT
     override def locatorsUpdateCopy(): Boolean = true
   end StaticDatabaseMetaData
-
-  def apply[F[_]: Temporal: Exchange: Tracer](
-    protocol:                      Protocol[F],
-    serverVariables:               Map[String, String],
-    connectionClosed:              Ref[F, Boolean],
-    statementClosed:               Ref[F, Boolean],
-    resultSetClosed:               Ref[F, Boolean],
-    database:                      Option[String] = None,
-    databaseTerm:                  Option[DatabaseMetaData.DatabaseTerm] = None,
-    getProceduresReturnsFunctions: Boolean = true,
-    tinyInt1isBit:                 Boolean = true,
-    transformedBitIsBoolean:       Boolean = false,
-    yearIsDateType:                Boolean = true
-  )(using ev: MonadError[F, Throwable]): DatabaseMetaData[F] =
-    new DatabaseMetaDataImpl[F](
-      protocol,
-      serverVariables,
-      connectionClosed,
-      statementClosed,
-      resultSetClosed,
-      database,
-      databaseTerm,
-      getProceduresReturnsFunctions,
-      tinyInt1isBit,
-      transformedBitIsBoolean,
-      yearIsDateType
-    )
 
   /**
    * Parses and represents common data type information used by various
