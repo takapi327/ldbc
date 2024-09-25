@@ -884,7 +884,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use(_.getMetaData().map(_.getExtraNameCharacters())),
-      "#@"
+      "$"
     )
   }
 
@@ -902,7 +902,7 @@ class ConnectionTest extends FTestPlatform:
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getProcedures("def", "connector_test", "demoSp")
+          resultSet <- metaData.getProcedures(Some("connector_test"), None, Some("demoSp"))
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -934,7 +934,7 @@ class ConnectionTest extends FTestPlatform:
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getProcedureColumns(Some("def"), Some("connector_test"), Some("demoSp"), None)
+          resultSet <- metaData.getProcedureColumns(Some("connector_test"), None, Some("demoSp"), None)
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -967,7 +967,7 @@ class ConnectionTest extends FTestPlatform:
       connection.use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getTables(None, Some("connector_test"), Some("all_types"), Array.empty[String])
+          resultSet <- metaData.getTables(Some("connector_test"), None, Some("all_types"), Array.empty[String])
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
