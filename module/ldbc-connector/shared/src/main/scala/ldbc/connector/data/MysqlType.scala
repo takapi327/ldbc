@@ -611,6 +611,15 @@ enum MysqlType(
   case GEOMETRY extends MysqlType("GEOMETRY", Types.BINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 65535L, "")
 
   /**
+   * VECTOR[(M)]
+   * A VECTOR column with a maximum length of 65,532 (16383 x 4) bytes. An optional length M can be given for this type to indicate the maximum number of
+   * entries in a VECTOR. M cannot exceed 16383. Each entry is a 4 Byte (single-precision) floating-point value.
+   *
+   * Protocol: FIELD_TYPE_VECTOR = 242
+   */
+  case VECTOR extends MysqlType("VECTOR", Types.LONGVARBINARY, 0, MysqlTypeVariables.IS_NOT_DECIMAL, 65532L, "[(M)]")
+
+  /**
    * Fall-back type for those MySQL data types which c/J can't recognize.
    * Handled the same as BLOB.
    *
