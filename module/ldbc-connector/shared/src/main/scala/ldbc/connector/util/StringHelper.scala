@@ -8,17 +8,7 @@ package ldbc.connector.util
 
 import java.util.UUID
 
-import scala.annotation.tailrec
-
 object StringHelper:
-
-  private val WILD_COMPARE_MATCH = 0
-  private val WILD_COMPARE_CONTINUE_WITH_WILD = 1
-  private val WILD_COMPARE_NO_MATCH = -1
-
-  private val WILDCARD_MANY = '%'
-  private val WILDCARD_ONE = '_'
-  private val WILDCARD_ESCAPE = '\\'
 
   /**
    * Determines whether or not the string 'searchIn' contains the string 'searchFor', disregarding case and starting at 'startAt'. Shorthand for a
@@ -178,37 +168,35 @@ object StringHelper:
    *   </ul>
    */
   def unQuoteIdentifier(identifier: String, quoteChar: String): String =
-    val trimmedIdentifier = identifier.trim
+    val identifierTrim = identifier.trim
 
     val quoteCharLength = quoteChar.length
 
-    if quoteCharLength == 0 then trimmedIdentifier
-    else if trimmedIdentifier.startsWith(quoteChar) && trimmedIdentifier.endsWith(quoteChar) then
-      val identifierQuoteTrimmed = trimmedIdentifier.substring(quoteCharLength, trimmedIdentifier.length - quoteCharLength)
-
-      def hasMatchingQuotes(str: String): Boolean =
-
-        @tailrec
-        def loop(pos: Int): Boolean =
-          val quoteCharPos = str.indexOf(quoteChar, pos)
-          if quoteCharPos < 0 then
-            true
-          else
-            val quoteCharNextExpectedPos = quoteCharPos + quoteCharLength
-            val quoteCharNextPosition = str.indexOf(quoteChar, quoteCharNextExpectedPos)
-            if quoteCharNextPosition == quoteCharNextExpectedPos then
-              loop(quoteCharNextPosition + quoteCharLength)
-            else
-              false
-
-        loop(0)
-
-      if hasMatchingQuotes(identifierQuoteTrimmed) then
-        identifierQuoteTrimmed.replace(quoteChar + quoteChar, quoteChar)
-      else
-        trimmedIdentifier
+    if quoteCharLength == 0 then identifierTrim
     else
-      trimmedIdentifier
+      // Check if the identifier is really quoted or if it simply contains quote chars in it (assuming that the value is a valid identifier).
+      if identifierTrim.startsWith(quoteChar) && identifierTrim.endsWith(quoteChar) then
+        // Trim outermost quotes from the identifier.
+        val identifierQuoteTrimmed = identifierTrim.substring(quoteCharLength, identifierTrim.length - quoteCharLength)
+
+        // Check for pairs of quotes.
+        var quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar)
+        var result = identifierTrim
+        while quoteCharPos >= 0 do
+          val quoteCharNextExpectedPos = quoteCharPos + quoteCharLength
+          val quoteCharNextPosition = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextExpectedPos)
+
+          if quoteCharNextPosition == quoteCharNextExpectedPos then
+            quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextPosition + quoteCharLength)
+            result = identifierTrim
+              .substring(quoteCharLength, identifierTrim.length - quoteCharLength)
+              .replaceAll(quoteChar + quoteChar, quoteChar)
+        end while
+
+        result
+
+      else
+        identifierTrim
 
   def isCharEqualIgnoreCase(charToCompare: Char, compareTpCHarUC: Char, compareToCharLC: Char): Boolean =
     Character.toLowerCase(charToCompare) == compareToCharLC || Character.toUpperCase(charToCompare) == compareTpCHarUC
@@ -232,194 +220,3 @@ object StringHelper:
         val tokens = string.split(delimiter, -1)
         if trim then tokens.map(_.trim).toList
         else tokens.toList
-
-/**
- * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
- *
- * @param stringToSplit
- *   the string to split
- * @param delimiter
- *   the string to split on
- * @param openingMarkers
- *   characters that delimit the beginning of a text block to skip
- * @param closingMarkers
- *   characters that delimit the end of a text block to skip
- * @param trim
- *   should the split strings be whitespace trimmed?
- * @return
- *   the list of strings, split by delimiter
- */
-  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, trim: Boolean): List[String] =
-    split(stringToSplit, delimiter, openingMarkers, closingMarkers, "", trim)
-
-/**
- * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
- *
- * @param stringToSplit
- *   the string to split
- * @param delimiter
- *   the string to split on
- * @param openingMarkers
- *   characters that delimit the beginning of a text block to skip
- * @param closingMarkers
- *   characters that delimit the end of a text block to skip
- * @param trim
- *   should the split strings be whitespace trimmed?
- * @param searchMode
- *   a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
- *   behaviour of the search
- * @return
- *   the list of strings, split by delimiter
- */
-  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, trim: Boolean, searchMode: Set[SearchMode]): List[String] =
-    split(stringToSplit, delimiter, openingMarkers, closingMarkers, "", trim, searchMode)
-
-/**
- * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
- *
- * @param stringToSplit
- *   the string to split
- * @param delimiter
- *   the string to split on
- * @param openingMarkers
- *   characters that delimit the beginning of a text block to skip
- * @param closingMarkers
- *   characters that delimit the end of a text block to skip
- * @param overridingMarkers
- *   the subset of <code>openingMarkers</code> that override the remaining markers, e.g., if <code>openingMarkers = "'("</code> and
- *   <code>overridingMarkers = "'"</code> then the block between the outer parenthesis in <code>"start ('max('); end"</code> is strictly consumed,
- *   otherwise the suffix <code>" end"</code> would end up being consumed too in the process of handling the nested parenthesis.
- * @param trim
- *   should the split strings be whitespace trimmed?
- * @return
- * the list of strings, split by delimiter
- */
-  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, overridingMarkers: String, trim: Boolean): List[String] =
-    split(stringToSplit, delimiter, openingMarkers, closingMarkers, overridingMarkers, trim, Set.empty)
-
-/**
- * Splits stringToSplit into a list, using the given delimiter and skipping all between the given markers.
- *
- * @param stringToSplit
- *   the string to split
- * @param delimiter
- *   the string to split on
- * @param openingMarkers
- *   characters that delimit the beginning of a text block to skip
- * @param closingMarkers
- *   characters that delimit the end of a text block to skip
- * @param overridingMarkers
- *   the subset of <code>openingMarkers</code> that override the remaining markers, e.g., if <code>openingMarkers = "'("</code> and
- *   <code>overridingMarkers = "'"</code> then the block between the outer parenthesis in <code>"start ('max('); end"</code> is strictly consumed,
- *   otherwise the suffix <code>" end"</code> would end up being consumed too in the process of handling the nested parenthesis.
- * @param trim
- *   should the split strings be whitespace trimmed?
- * @param searchMode
- *   a <code>Set</code>, ideally an <code>EnumSet</code>, containing the flags from the enum <code>StringUtils.SearchMode</code> that determine the
- *   behaviour of the search
- * @return
- * the list of strings, split by delimiter
- */
-  def split(stringToSplit: Option[String], delimiter: String, openingMarkers: String, closingMarkers: String, overridingMarkers: String, trim: Boolean, searchMode: Set[SearchMode]): List[String] =
-    val strInspector = new StringInspector(
-      source = stringToSplit.getOrElse(""),
-      openingMarkers = openingMarkers,
-      closingMarkers = closingMarkers,
-      overridingMarkers = overridingMarkers,
-      defaultSearchMode = searchMode
-    )
-    strInspector.split(delimiter, trim)
-
-  /**
-   * Compares searchIn against searchForWildcard with wildcards, in a case insensitive manner.
-   *
-   * @param searchIn
-   *   the string to search in
-   * @param searchFor
-   *   the string to search for, using the 'standard' SQL wildcard chars of '%' and '_'
-   * @return
-   *   true if matches
-   */
-  def wildCompareIgnoreCase(searchIn: String, searchFor: String): Boolean =
-    wildCompareInternal(searchIn.toLowerCase, searchFor.toLowerCase) == WILD_COMPARE_MATCH
-
-  private def wildCompareInternal(searchIn: String, searchFor: String): Int =
-    if searchFor.equals("%") then WILD_COMPARE_MATCH
-    else
-      var searchForPos = 0
-      val searchForEnd = searchFor.length()
-
-      var searchInPos = 0
-      val searchInEnd = searchIn.length()
-
-      var result = WILD_COMPARE_NO_MATCH /* Not found, using wildcards */
-
-      while searchForPos != searchForEnd do
-        while searchFor.charAt(searchForPos) != WILDCARD_MANY && searchFor.charAt(searchForPos) != WILDCARD_ONE do
-          if searchFor.charAt(searchForPos) == WILDCARD_ESCAPE && searchForPos + 1 != searchForEnd then
-            searchForPos += 1
-          end if
-
-          if searchInPos == searchInEnd || Character.toUpperCase(searchFor.charAt({
-            searchForPos += 1
-            searchForPos
-          })) != Character.toUpperCase(searchIn.charAt({searchInPos += 1; searchInPos})) then
-            return WILD_COMPARE_NO_MATCH /* No match */
-          end if
-
-          if searchForPos == searchForEnd then
-            return if searchInPos != searchInEnd then WILD_COMPARE_CONTINUE_WITH_WILD else WILD_COMPARE_MATCH /* Match if both are at end */
-          end if
-
-          result = WILD_COMPARE_CONTINUE_WITH_WILD
-
-        end while
-
-        if searchFor.charAt(searchForPos) == WILDCARD_ONE then
-          while
-            if searchInPos == searchInEnd then // Skip one char if possible
-              return result
-            searchInPos += 1
-            {
-              searchForPos += 1; searchForPos < searchForEnd && searchFor.charAt(searchForPos) == WILDCARD_ONE
-            }
-          do ()
-
-        /* Found w_many */
-        if searchFor.charAt(searchForPos) == WILDCARD_MANY then
-          searchForPos += 1
-
-          /* Remove any '%' and '_' from the wild search string */
-
-          if searchForPos == searchForEnd then return WILD_COMPARE_MATCH /* Ok if w_many is last */
-          if searchInPos == searchInEnd then return WILD_COMPARE_NO_MATCH
-
-          var cmp: Char = searchFor.charAt(searchForPos)
-          if cmp == WILDCARD_ESCAPE && searchForPos + 1 != searchForEnd then
-            cmp = searchFor.charAt(searchForPos)
-          end if
-
-          searchForPos += 1
-
-          @tailrec
-          def loop(): Int =
-            while searchInPos != searchInEnd && Character.toUpperCase(searchIn.charAt(searchInPos)) != Character.toUpperCase(cmp) do
-              searchInPos += 1
-
-            if searchInPos == searchInEnd then
-              WILD_COMPARE_NO_MATCH
-            else
-              searchInPos += 1
-              val tmp = wildCompareInternal(searchIn.substring(searchInPos), searchFor.substring(searchForPos))
-              if tmp <= 0 then tmp
-              else if searchInPos != searchInEnd then loop()
-              else WILD_COMPARE_NO_MATCH
-
-          loop()
-
-          return WILD_COMPARE_NO_MATCH
-        end if
-
-      end while
-
-      if searchInPos != searchInEnd then WILD_COMPARE_CONTINUE_WITH_WILD else WILD_COMPARE_MATCH
