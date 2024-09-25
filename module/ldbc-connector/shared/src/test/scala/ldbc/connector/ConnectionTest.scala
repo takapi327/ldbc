@@ -264,7 +264,7 @@ class ConnectionTest extends FTestPlatform:
     assertIOBoolean(connection.use(_ => IO(true)))
   }
 
-  test("Schema change will change the currently connected Schema.") {
+  test("Catalog change will change the currently connected Catalog.") {
     val connection = Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
@@ -276,7 +276,7 @@ class ConnectionTest extends FTestPlatform:
 
     assertIO(
       connection.use { conn =>
-        conn.setSchema("world") *> conn.getSchema()
+        conn.setCatalog("world") *> conn.getCatalog()
       },
       "world"
     )
