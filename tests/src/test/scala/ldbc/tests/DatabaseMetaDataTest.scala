@@ -1777,7 +1777,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
           builder.result()
       },
       Vector(
-        "connector_test, null, tax, false, null, PRIMARY, 3, 1, id, A, 2, 0, null"
+        "connector_test, null, tax, false, null, PRIMARY, 3, 1, id, A, 3, 0, null"
       )
     )
   }
