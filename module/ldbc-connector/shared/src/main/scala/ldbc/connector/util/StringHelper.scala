@@ -100,32 +100,30 @@ object StringHelper:
    *   </ul>
    */
   def quoteIdentifier(identifier: String, quoteChar: String, isPedantic: Boolean): String =
-    val identifierTrim = identifier.trim
+    val identifierTrim  = identifier.trim
     val quoteCharLength = quoteChar.length
 
     if quoteCharLength == 0 then identifierTrim
     else
-      // Check if the identifier is correctly quoted and if quotes within are correctly escaped. If not, quote and escape it.
-      if !isPedantic && identifierTrim.startsWith(quoteChar) && identifierTrim.endsWith(quoteChar) then
-        // Trim outermost quotes from the identifier.
-        val identifierQuoteTrimmed = identifierTrim.substring(quoteCharLength, identifierTrim.length - quoteCharLength)
+    // Check if the identifier is correctly quoted and if quotes within are correctly escaped. If not, quote and escape it.
+    if !isPedantic && identifierTrim.startsWith(quoteChar) && identifierTrim.endsWith(quoteChar) then
+      // Trim outermost quotes from the identifier.
+      val identifierQuoteTrimmed = identifierTrim.substring(quoteCharLength, identifierTrim.length - quoteCharLength)
 
-        // Check for pairs of quotes.
-        var quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar)
+      // Check for pairs of quotes.
+      var quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar)
 
-        while quoteCharPos >= 0 do
-          val quoteCharNextExpectedPos = quoteCharPos + quoteCharLength
-          val quoteCharNextPosition = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextExpectedPos)
+      while quoteCharPos >= 0 do
+        val quoteCharNextExpectedPos = quoteCharPos + quoteCharLength
+        val quoteCharNextPosition    = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextExpectedPos)
 
-          if quoteCharNextPosition == quoteCharNextExpectedPos then
-            quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextPosition + quoteCharLength)
-        end while
+        if quoteCharNextPosition == quoteCharNextExpectedPos then
+          quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextPosition + quoteCharLength)
+      end while
 
-        if quoteCharPos < 0 then identifierTrim
-        else
-          quoteChar + identifierTrim.replaceAll(quoteChar, quoteChar + quoteChar) + quoteChar
-      else
-        quoteChar + identifierTrim.replaceAll(quoteChar, quoteChar + quoteChar) + quoteChar
+      if quoteCharPos < 0 then identifierTrim
+      else quoteChar + identifierTrim.replaceAll(quoteChar, quoteChar + quoteChar) + quoteChar
+    else quoteChar + identifierTrim.replaceAll(quoteChar, quoteChar + quoteChar) + quoteChar
 
   /**
    * Builds and returns a fully qualified name, quoted if necessary, for the given database entity.
@@ -174,29 +172,27 @@ object StringHelper:
 
     if quoteCharLength == 0 then identifierTrim
     else
-      // Check if the identifier is really quoted or if it simply contains quote chars in it (assuming that the value is a valid identifier).
-      if identifierTrim.startsWith(quoteChar) && identifierTrim.endsWith(quoteChar) then
-        // Trim outermost quotes from the identifier.
-        val identifierQuoteTrimmed = identifierTrim.substring(quoteCharLength, identifierTrim.length - quoteCharLength)
+    // Check if the identifier is really quoted or if it simply contains quote chars in it (assuming that the value is a valid identifier).
+    if identifierTrim.startsWith(quoteChar) && identifierTrim.endsWith(quoteChar) then
+      // Trim outermost quotes from the identifier.
+      val identifierQuoteTrimmed = identifierTrim.substring(quoteCharLength, identifierTrim.length - quoteCharLength)
 
-        // Check for pairs of quotes.
-        var quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar)
-        var result = identifierTrim
-        while quoteCharPos >= 0 do
-          val quoteCharNextExpectedPos = quoteCharPos + quoteCharLength
-          val quoteCharNextPosition = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextExpectedPos)
+      // Check for pairs of quotes.
+      var quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar)
+      var result       = identifierTrim
+      while quoteCharPos >= 0 do
+        val quoteCharNextExpectedPos = quoteCharPos + quoteCharLength
+        val quoteCharNextPosition    = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextExpectedPos)
 
-          if quoteCharNextPosition == quoteCharNextExpectedPos then
-            quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextPosition + quoteCharLength)
-            result = identifierTrim
-              .substring(quoteCharLength, identifierTrim.length - quoteCharLength)
-              .replaceAll(quoteChar + quoteChar, quoteChar)
-        end while
+        if quoteCharNextPosition == quoteCharNextExpectedPos then
+          quoteCharPos = identifierQuoteTrimmed.indexOf(quoteChar, quoteCharNextPosition + quoteCharLength)
+          result = identifierTrim
+            .substring(quoteCharLength, identifierTrim.length - quoteCharLength)
+            .replaceAll(quoteChar + quoteChar, quoteChar)
+      end while
 
-        result
-
-      else
-        identifierTrim
+      result
+    else identifierTrim
 
   def isCharEqualIgnoreCase(charToCompare: Char, compareTpCHarUC: Char, compareToCharLC: Char): Boolean =
     Character.toLowerCase(charToCompare) == compareToCharLC || Character.toUpperCase(charToCompare) == compareTpCHarUC

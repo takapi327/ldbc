@@ -42,7 +42,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   tinyInt1isBit:                 Boolean                               = true,
   transformedBitIsBoolean:       Boolean                               = false,
   yearIsDateType:                Boolean                               = true,
-  nullDatabaseMeansCurrent:     Boolean                               = false,
+  nullDatabaseMeansCurrent:      Boolean                               = false
 )(using ev: MonadError[F, Throwable])
   extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
@@ -146,9 +146,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   override def getProcedureTerm(): String = "PROCEDURE"
 
   override def getCatalogTerm(): String = databaseTerm match
-    case Some(DatabaseMetaData.DatabaseTerm.SCHEMA) => "CATALOG"
+    case Some(DatabaseMetaData.DatabaseTerm.SCHEMA)  => "CATALOG"
     case Some(DatabaseMetaData.DatabaseTerm.CATALOG) => "database"
-    case None => "database"
+    case None                                        => "database"
 
   override def supportsSchemasInDataManipulation(): Boolean = databaseTerm.fold(false) {
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => true
@@ -175,7 +175,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     case DatabaseMetaData.DatabaseTerm.CATALOG => false
   }
 
-  override def supportsCatalogsInDataManipulation(): Boolean = databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
+  override def supportsCatalogsInDataManipulation(): Boolean =
+    databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
 
   override def supportsCatalogsInProcedureCalls(): Boolean = databaseTerm.fold(false) {
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => false
@@ -192,7 +193,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     case DatabaseMetaData.DatabaseTerm.CATALOG => true
   }
 
-  override def supportsCatalogsInPrivilegeDefinitions(): Boolean = databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
+  override def supportsCatalogsInPrivilegeDefinitions(): Boolean =
+    databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
 
   override def getProcedures(
     catalog:              Option[String],
@@ -249,9 +251,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       val setting = (db, procedureNamePattern) match
         case (Some(dbValue), Some(procedureName)) =>
           preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
-        case (Some(dbValue), None) => preparedStatement.setString(1, dbValue)
+        case (Some(dbValue), None)       => preparedStatement.setString(1, dbValue)
         case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
-        case _ => ev.unit
+        case _                           => ev.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -2326,20 +2328,25 @@ private[ldbc] object DatabaseMetaDataImpl:
    * column/parameter methods.
    */
   case class TypeDescriptor(
-                        bufferLength: Int,
-                        datetimePrecision: Option[Int] = None,
-                        columnSize: Option[Int] = None,
-                        charOctetLength: Option[Int] = None,
-                        decimalDigits: Option[Int] = None,
-                        isNullable: String,
-                        nullability: Int,
-                        numPrecRadix: Int = 10,
-                        mysqlTypeName: String,
-                        mysqlType: MysqlType
-                      )
+    bufferLength:      Int,
+    datetimePrecision: Option[Int] = None,
+    columnSize:        Option[Int] = None,
+    charOctetLength:   Option[Int] = None,
+    decimalDigits:     Option[Int] = None,
+    isNullable:        String,
+    nullability:       Int,
+    numPrecRadix:      Int         = 10,
+    mysqlTypeName:     String,
+    mysqlType:         MysqlType
+  )
 
   object TypeDescriptor:
-    def apply(typeInfo: String, nullabilityInfo: String, tinyInt1isBit: Boolean, transformedBitIsBoolean: Boolean): TypeDescriptor =
+    def apply(
+      typeInfo:                String,
+      nullabilityInfo:         String,
+      tinyInt1isBit:           Boolean,
+      transformedBitIsBoolean: Boolean
+    ): TypeDescriptor =
       val mysqlType = MysqlType.getByName(typeInfo)
 
       val (nullability, isNullable) =
@@ -2352,7 +2359,7 @@ private[ldbc] object DatabaseMetaDataImpl:
       import MysqlType.*
       mysqlType match
         case ENUM =>
-          val temp = typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.lastIndexOf(")"))
+          val temp      = typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.lastIndexOf(")"))
           val tokenizer = new StringTokenizer(temp, ",")
 
           while tokenizer.hasMoreTokens do
@@ -2361,218 +2368,220 @@ private[ldbc] object DatabaseMetaDataImpl:
           end while
 
           new TypeDescriptor(
-            bufferLength = maxBufferSize,
-            columnSize = Some(maxLength),
-            isNullable = isNullable,
-            nullability = nullability,
+            bufferLength  = maxBufferSize,
+            columnSize    = Some(maxLength),
+            isNullable    = isNullable,
+            nullability   = nullability,
             mysqlTypeName = typeInfo,
-            mysqlType = ENUM
+            mysqlType     = ENUM
           )
 
         case SET =>
-          val temp = typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.lastIndexOf(")"))
+          val temp      = typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.lastIndexOf(")"))
           val tokenizer = new StringTokenizer(temp, ",")
 
           val numElements = tokenizer.countTokens()
-          if numElements > 0 then
-            maxLength += numElements - 1
+          if numElements > 0 then maxLength += numElements - 1
           end if
 
           while tokenizer.hasMoreTokens do
             val setMember = tokenizer.nextToken.trim
 
-            if setMember.startsWith("'") && setMember.endsWith("'") then
-              maxLength += setMember.length - 2
-            else
-              maxLength += setMember.length
+            if setMember.startsWith("'") && setMember.endsWith("'") then maxLength += setMember.length - 2
+            else maxLength += setMember.length
             end if
           end while
 
           new TypeDescriptor(
-            bufferLength = maxBufferSize,
-            columnSize = Some(maxLength),
-            isNullable = isNullable,
-            nullability = nullability,
+            bufferLength  = maxBufferSize,
+            columnSize    = Some(maxLength),
+            isNullable    = isNullable,
+            nullability   = nullability,
             mysqlTypeName = typeInfo,
-            mysqlType = SET
+            mysqlType     = SET
           )
 
         case FLOAT | FLOAT_UNSIGNED =>
           if typeInfo.indexOf(",") != -1 then
             // Numeric with decimals
-            val columnSize = Integer.valueOf(typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.indexOf(",")).trim).toInt
-            val decimalDigits = Integer.valueOf(typeInfo.substring(typeInfo.indexOf(",") + 1, typeInfo.indexOf(")")).trim).toInt
+            val columnSize =
+              Integer.valueOf(typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.indexOf(",")).trim).toInt
+            val decimalDigits =
+              Integer.valueOf(typeInfo.substring(typeInfo.indexOf(",") + 1, typeInfo.indexOf(")")).trim).toInt
 
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              columnSize = Some(columnSize),
+              bufferLength  = maxBufferSize,
+              columnSize    = Some(columnSize),
               decimalDigits = Some(decimalDigits),
-              isNullable = isNullable,
-              nullability = nullability,
+              isNullable    = isNullable,
+              nullability   = nullability,
               mysqlTypeName = typeInfo,
-              mysqlType = mysqlType
+              mysqlType     = mysqlType
             )
-
           else if typeInfo.indexOf("(") != -1 then
             val size = Integer.parseInt(typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.indexOf(")")).trim)
             if size > 23 then
               new TypeDescriptor(
-                bufferLength = maxBufferSize,
-                columnSize = Some(22),
+                bufferLength  = maxBufferSize,
+                columnSize    = Some(22),
                 decimalDigits = Some(0),
-                isNullable = isNullable,
-                nullability = nullability,
+                isNullable    = isNullable,
+                nullability   = nullability,
                 mysqlTypeName = typeInfo,
-                mysqlType = if mysqlType == FLOAT then DOUBLE else DOUBLE_UNSIGNED
+                mysqlType     = if mysqlType == FLOAT then DOUBLE else DOUBLE_UNSIGNED
               )
             else
               new TypeDescriptor(
-                bufferLength = maxBufferSize,
-                isNullable = isNullable,
-                nullability = nullability,
+                bufferLength  = maxBufferSize,
+                isNullable    = isNullable,
+                nullability   = nullability,
                 mysqlTypeName = typeInfo,
-                mysqlType = mysqlType
+                mysqlType     = mysqlType
               )
           else
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              columnSize = Some(22),
+              bufferLength  = maxBufferSize,
+              columnSize    = Some(22),
               decimalDigits = Some(0),
-              isNullable = isNullable,
-              nullability = nullability,
+              isNullable    = isNullable,
+              nullability   = nullability,
               mysqlTypeName = typeInfo,
-              mysqlType = mysqlType
+              mysqlType     = mysqlType
             )
 
         case DECIMAL | DECIMAL_UNSIGNED | DOUBLE | DOUBLE_UNSIGNED =>
           if typeInfo.indexOf(",") != -1 then
             // Numeric with decimals
-            val columnSize = Integer.valueOf(typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.indexOf(",")).trim).toInt
-            val decimalDigits = Integer.valueOf(typeInfo.substring(typeInfo.indexOf(",") + 1, typeInfo.indexOf(")")).trim).toInt
+            val columnSize =
+              Integer.valueOf(typeInfo.substring(typeInfo.indexOf("(") + 1, typeInfo.indexOf(",")).trim).toInt
+            val decimalDigits =
+              Integer.valueOf(typeInfo.substring(typeInfo.indexOf(",") + 1, typeInfo.indexOf(")")).trim).toInt
 
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              columnSize = Some(columnSize),
+              bufferLength  = maxBufferSize,
+              columnSize    = Some(columnSize),
               decimalDigits = Some(decimalDigits),
-              isNullable = isNullable,
-              nullability = nullability,
+              isNullable    = isNullable,
+              nullability   = nullability,
               mysqlTypeName = typeInfo,
-              mysqlType = mysqlType
+              mysqlType     = mysqlType
             )
           else
             val columnSize = mysqlType match
               case DECIMAL | DECIMAL_UNSIGNED => Some(65)
-              case DOUBLE | DOUBLE_UNSIGNED => Some(22)
-              case _ => None
+              case DOUBLE | DOUBLE_UNSIGNED   => Some(22)
+              case _                          => None
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              columnSize = columnSize,
+              bufferLength  = maxBufferSize,
+              columnSize    = columnSize,
               decimalDigits = Some(0),
-              isNullable = isNullable,
-              nullability = nullability,
+              isNullable    = isNullable,
+              nullability   = nullability,
               mysqlTypeName = typeInfo,
-              mysqlType = mysqlType
+              mysqlType     = mysqlType
             )
 
-        case CHAR | VARCHAR | TINYTEXT | MEDIUMTEXT | LONGTEXT | JSON | TINYBLOB | MEDIUMBLOB | LONGBLOB | BLOB | BINARY | VARBINARY | BIT =>
+        case CHAR | VARCHAR | TINYTEXT | MEDIUMTEXT | LONGTEXT | JSON | TINYBLOB | MEDIUMBLOB | LONGBLOB | BLOB |
+          BINARY | VARBINARY | BIT =>
           val columnSize = if mysqlType == CHAR then Some(1) else None
 
           if typeInfo.indexOf("(") != -1 then
             val endParenIndex = if typeInfo.indexOf(")") == -1 then typeInfo.length else typeInfo.indexOf(")")
-            val columnSize = Integer.valueOf(typeInfo.substring(typeInfo.indexOf("(") + 1, endParenIndex).trim).toInt
+            val columnSize    = Integer.valueOf(typeInfo.substring(typeInfo.indexOf("(") + 1, endParenIndex).trim).toInt
 
-            val mysqlBoolType = if tinyInt1isBit && columnSize == 1 && StringHelper.regionMatchesIgnoreCase(typeInfo, 0, "tinyint") then
-              if transformedBitIsBoolean then MysqlType.BOOLEAN else MysqlType.BIT
-            else mysqlType
+            val mysqlBoolType =
+              if tinyInt1isBit && columnSize == 1 && StringHelper.regionMatchesIgnoreCase(typeInfo, 0, "tinyint") then
+                if transformedBitIsBoolean then MysqlType.BOOLEAN else MysqlType.BIT
+              else mysqlType
 
             // Adjust for pseudo-boolean
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              columnSize = Some(columnSize),
-              isNullable = isNullable,
-              nullability = nullability,
+              bufferLength  = maxBufferSize,
+              columnSize    = Some(columnSize),
+              isNullable    = isNullable,
+              nullability   = nullability,
               mysqlTypeName = typeInfo,
-              mysqlType = mysqlBoolType
+              mysqlType     = mysqlBoolType
             )
           else
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              columnSize = columnSize,
+              bufferLength    = maxBufferSize,
+              columnSize      = columnSize,
               charOctetLength = columnSize,
-              isNullable = isNullable,
-              nullability = nullability,
-              mysqlTypeName = typeInfo,
-              mysqlType = mysqlType
+              isNullable      = isNullable,
+              nullability     = nullability,
+              mysqlTypeName   = typeInfo,
+              mysqlType       = mysqlType
             )
 
         case TINYINT =>
           if tinyInt1isBit && typeInfo.indexOf("(1)") != -1 then
             val mysqlBoolType = if transformedBitIsBoolean then MysqlType.BOOLEAN else MysqlType.BIT
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              isNullable = isNullable,
-              nullability = nullability,
+              bufferLength  = maxBufferSize,
+              isNullable    = isNullable,
+              nullability   = nullability,
               mysqlTypeName = typeInfo,
-              mysqlType = mysqlBoolType
+              mysqlType     = mysqlBoolType
             )
           else
             new TypeDescriptor(
-              bufferLength = maxBufferSize,
-              columnSize = Some(3),
-              isNullable = isNullable,
-              nullability = nullability,
+              bufferLength  = maxBufferSize,
+              columnSize    = Some(3),
+              isNullable    = isNullable,
+              nullability   = nullability,
               mysqlTypeName = typeInfo,
-              mysqlType = mysqlType
+              mysqlType     = mysqlType
             )
 
         case TINYINT_UNSIGNED =>
           new TypeDescriptor(
-            bufferLength = maxBufferSize,
-            columnSize = Some(3),
-            isNullable = isNullable,
-            nullability = nullability,
+            bufferLength  = maxBufferSize,
+            columnSize    = Some(3),
+            isNullable    = isNullable,
+            nullability   = nullability,
             mysqlTypeName = typeInfo,
-            mysqlType = mysqlType
+            mysqlType     = mysqlType
           )
 
         case DATE =>
           new TypeDescriptor(
-            bufferLength = maxBufferSize,
+            bufferLength      = maxBufferSize,
             datetimePrecision = Some(0),
-            columnSize = Some(10),
-            isNullable = isNullable,
-            nullability = nullability,
-            mysqlTypeName = typeInfo,
-            mysqlType = mysqlType
+            columnSize        = Some(10),
+            isNullable        = isNullable,
+            nullability       = nullability,
+            mysqlTypeName     = typeInfo,
+            mysqlType         = mysqlType
           )
 
         case TIME =>
           new TypeDescriptor(
-            bufferLength = maxBufferSize,
+            bufferLength      = maxBufferSize,
             datetimePrecision = Some(0),
-            columnSize = Some(8),
-            isNullable = isNullable,
-            nullability = nullability,
-            mysqlTypeName = typeInfo,
-            mysqlType = mysqlType
+            columnSize        = Some(8),
+            isNullable        = isNullable,
+            nullability       = nullability,
+            mysqlTypeName     = typeInfo,
+            mysqlType         = mysqlType
           )
 
         case DATETIME | TIMESTAMP =>
           new TypeDescriptor(
-            bufferLength = maxBufferSize,
+            bufferLength      = maxBufferSize,
             datetimePrecision = Some(0),
-            columnSize = Some(19),
-            isNullable = isNullable,
-            nullability = nullability,
-            mysqlTypeName = typeInfo,
-            mysqlType = mysqlType
+            columnSize        = Some(19),
+            isNullable        = isNullable,
+            nullability       = nullability,
+            mysqlTypeName     = typeInfo,
+            mysqlType         = mysqlType
           )
 
         case _ =>
           new TypeDescriptor(
-            bufferLength = maxBufferSize,
-            isNullable = isNullable,
-            nullability = nullability,
+            bufferLength  = maxBufferSize,
+            isNullable    = isNullable,
+            nullability   = nullability,
             mysqlTypeName = typeInfo,
-            mysqlType = mysqlType
+            mysqlType     = mysqlType
           )
