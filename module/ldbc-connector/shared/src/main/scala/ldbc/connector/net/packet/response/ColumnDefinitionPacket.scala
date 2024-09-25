@@ -37,15 +37,3 @@ object ColumnDefinitionPacket:
   def decoder(capabilitiesFlags: Set[CapabilitiesFlags]): Decoder[ColumnDefinitionPacket] =
     if capabilitiesFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41) then ColumnDefinition41Packet.decoder
     else ColumnDefinition320Packet.decoder
-
-  def apply(
-    _table:      String,
-    _name:       String,
-    _columnType: ColumnDataType,
-    _flags:      Seq[ColumnDefinitionFlags]
-  ): ColumnDefinitionPacket =
-    new ColumnDefinitionPacket:
-      def table:      String                     = _table
-      def name:       String                     = _name
-      def columnType: ColumnDataType             = _columnType
-      def flags:      Seq[ColumnDefinitionFlags] = _flags
