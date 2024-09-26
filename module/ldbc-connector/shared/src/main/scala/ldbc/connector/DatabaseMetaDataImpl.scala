@@ -474,7 +474,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         sqlBuf.append(
           if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(
               dbValue
-            ) || !dbValue.contains("%")
+            ) || !StringHelper.hasWildcards(dbValue)
             || databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
           then " TABLE_SCHEMA = ?"
           else " TABLE_SCHEMA LIKE ?"
@@ -485,7 +485,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       case Some(tableName) =>
         if db.nonEmpty then sqlBuf.append(" AND")
         end if
-        if tableName.contains("%") then sqlBuf.append(" TABLE_NAME LIKE ?")
+        if StringHelper.hasWildcards(tableName) then sqlBuf.append(" TABLE_NAME LIKE ?")
         else sqlBuf.append(" TABLE_NAME = ?")
       case None => ()
 
