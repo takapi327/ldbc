@@ -1167,6 +1167,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       ResultSetRowPacket(getTypeInfo("MEDIUMBLOB")),
       ResultSetRowPacket(getTypeInfo("LONGBLOB")),
       ResultSetRowPacket(getTypeInfo("BLOB")),
+      ResultSetRowPacket(getTypeInfo("VECTOR")),
       ResultSetRowPacket(getTypeInfo("VARBINARY")),
       ResultSetRowPacket(getTypeInfo("TINYBLOB")),
       ResultSetRowPacket(getTypeInfo("BINARY")),
@@ -1187,7 +1188,6 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       ResultSetRowPacket(getTypeInfo("MEDIUMINT UNSIGNED")),
       ResultSetRowPacket(getTypeInfo("SMALLINT")),
       ResultSetRowPacket(getTypeInfo("SMALLINT UNSIGNED")),
-      ResultSetRowPacket(getTypeInfo("YEAR")),
       ResultSetRowPacket(getTypeInfo("FLOAT")),
       ResultSetRowPacket(getTypeInfo("DOUBLE")),
       ResultSetRowPacket(getTypeInfo("DOUBLE PRECISION")),
@@ -1198,6 +1198,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       ResultSetRowPacket(getTypeInfo("TINYTEXT")),
       ResultSetRowPacket(getTypeInfo("BOOL")),
       ResultSetRowPacket(getTypeInfo("DATE")),
+      ResultSetRowPacket(getTypeInfo("YEAR")),
       ResultSetRowPacket(getTypeInfo("TIME")),
       ResultSetRowPacket(getTypeInfo("DATETIME")),
       ResultSetRowPacket(getTypeInfo("TIMESTAMP"))
@@ -1501,7 +1502,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     if tinyInt1isBit && !transformedBitIsBoolean then
       sqlBuf.append(
-        " WHEN (UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0) AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
+        " WHEN UPPER(DATA_TYPE)='TINYINT' AND LOCATE('ZEROFILL', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) = 0 AND LOCATE('(1)', DTD_IDENTIFIER) != 0 THEN 1"
       )
 
     sqlBuf.append(" WHEN UPPER(DATA_TYPE)='MEDIUMINT' AND LOCATE('UNSIGNED', UPPER(DTD_IDENTIFIER)) != 0 THEN 8")
@@ -1766,7 +1767,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         case MysqlType.TINYBLOB | MysqlType.BLOB | MysqlType.MEDIUMBLOB | MysqlType.LONGBLOB | MysqlType.TINYTEXT |
           MysqlType.TEXT | MysqlType.MEDIUMTEXT | MysqlType.LONGTEXT | MysqlType.JSON | MysqlType.BINARY |
           MysqlType.VARBINARY | MysqlType.CHAR | MysqlType.VARCHAR | MysqlType.ENUM | MysqlType.SET | MysqlType.DATE |
-          MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.UNKNOWN =>
+          MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.VECTOR | MysqlType.UNKNOWN =>
           Array(Some("'"), Some("'"))
         case _ => Array(Some(""), Some(""))
     ) ++ Array(
@@ -1779,11 +1780,13 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       Some("false"),      // FIXED_PREC_SCALE
       (
         mysqlType match
-          case MysqlType.BIGINT | MysqlType.BIGINT_UNSIGNED | MysqlType.BOOLEAN | MysqlType.DOUBLE |
-            MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED | MysqlType.INT |
+          case MysqlType.BIGINT | MysqlType.BIGINT_UNSIGNED | MysqlType.BOOLEAN | MysqlType.INT |
             MysqlType.INT_UNSIGNED | MysqlType.MEDIUMINT | MysqlType.MEDIUMINT_UNSIGNED | MysqlType.SMALLINT |
             MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
             Some("true")
+          case MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED =>
+            val supportsAutoIncrement = protocol.initialPacket.serverVersion.compare(Version(8, 4, 0)) >= 0
+            if supportsAutoIncrement then Some("true") else Some("false")
           case _ => Some("false")
       ),                   // AUTO_INCREMENT
       Some(mysqlType.name) // LOCAL_TYPE_NAME
