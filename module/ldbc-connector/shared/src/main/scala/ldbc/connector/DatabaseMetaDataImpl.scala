@@ -28,6 +28,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.net.protocol.*
+import ldbc.connector.util.StringHelper
 
 private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   protocol:                      Protocol[F],
@@ -560,8 +561,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-      else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+        "SELECT TABLE_CATALOG, TABLE_SCHEMA,"
+      else "SELECT TABLE_SCHEMA, NULL,"
     )
 
     sqlBuf.append(" TABLE_NAME, COLUMN_NAME,")
@@ -684,38 +685,42 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val conditionBuf = new StringBuilder()
 
-    db match
-      case Some(dbValue) =>
-        conditionBuf.append(
-          if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(
-              dbValue
-            ) || !dbValue.contains("%")
-            || databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA)
-          then " TABLE_SCHEMA = ?"
-          else " TABLE_SCHEMA LIKE ?"
-        )
-      case None => ()
+    db.foreach(dbValue =>
+      conditionBuf.append(
+        if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(
+            dbValue
+          ) || !StringHelper.hasWildcards(dbValue)
+          || databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
+        then " TABLE_SCHEMA = ?"
+        else " TABLE_SCHEMA LIKE ?"
+      )
+    )
+    
+    tableName.foreach(name =>
+      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
 
-    tableName match
-      case Some(tableNameValue) =>
-        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
-        end if
-        conditionBuf.append(if tableNameValue.contains("%") then " TABLE_NAME LIKE ?" else " TABLE_NAME = ?")
-      case None => ()
+      conditionBuf.append(
+        if StringHelper.hasWildcards(name) then " TABLE_NAME LIKE ?"
+        else " TABLE_NAME = ?"
+      )
+    )
 
-    columnNamePattern match
-      case Some(columnName) =>
-        if conditionBuf.nonEmpty then conditionBuf.append(" AND")
-        end if
-        conditionBuf.append(if columnName.contains("%") then " COLUMN_NAME LIKE ?" else " COLUMN_NAME = ?")
-      case None => ()
+    columnNamePattern.foreach(columnName =>
+      if conditionBuf.nonEmpty then conditionBuf.append(" AND")
+
+      conditionBuf.append(
+        if StringHelper.hasWildcards(columnName) then " COLUMN_NAME LIKE ?"
+        else " COLUMN_NAME = ?"
+      )
+    )
 
     if conditionBuf.nonEmpty then sqlBuf.append(" WHERE")
     end if
 
     sqlBuf.append(conditionBuf)
 
-    sqlBuf.append(" ORDER BY TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION")
+    sqlBuf.append(" ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION")
+
     prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
       val settings = (db, tableName, columnNamePattern) match
         case (Some(dbValue), Some(tableNameValue), Some(columnName)) =>
@@ -736,6 +741,45 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
       settings *> preparedStatement.executeQuery()
     }
+      .map { resultSet =>
+        ResultSetImpl(
+          Vector(
+            "TABLE_CAT",
+            "TABLE_SCHEM",
+            "TABLE_NAME",
+            "COLUMN_NAME",
+            "DATA_TYPE",
+            "TYPE_NAME",
+            "COLUMN_SIZE",
+            "BUFFER_LENGTH",
+            "DECIMAL_DIGITS",
+            "NUM_PREC_RADIX",
+            "NULLABLE",
+            "REMARKS",
+            "COLUMN_DEF",
+            "SQL_DATA_TYPE",
+            "SQL_DATETIME_SUB",
+            "CHAR_OCTET_LENGTH",
+            "ORDINAL_POSITION",
+            "IS_NULLABLE",
+            "SCOPE_CATALOG",
+            "SCOPE_SCHEMA",
+            "SCOPE_TABLE",
+            "SOURCE_DATA_TYPE",
+            "IS_AUTOINCREMENT",
+            "IS_GENERATEDCOLUMN"
+          ).map(value =>
+            new ColumnDefinitionPacket:
+              override def table:      String                     = ""
+              override def name:       String                     = value
+              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+          ),
+          resultSet.asInstanceOf[ResultSetImpl].records,
+          serverVariables,
+          protocol.initialPacket.serverVersion
+        )
+      }
 
   override def getColumnPrivileges(
     catalog:           Option[String],
