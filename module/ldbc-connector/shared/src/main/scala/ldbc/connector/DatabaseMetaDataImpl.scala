@@ -6,6 +6,8 @@
 
 package ldbc.connector
 
+import java.util.{Locale, StringTokenizer}
+
 import scala.collection.immutable.{ ListMap, SortedMap }
 
 import cats.*
@@ -789,7 +791,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
-      "SELECT db AS TABLE_SCHEM, table_name AS TABLE_NAME, grantor AS GRANTOR, CONCAT(user, '@', host) AS GRANTEE, table_priv AS PRIVILEGE FROM mysql.tables_priv"
+      "SELECT host,db,table_name,grantor,user,table_priv FROM mysql.tables_priv"
     )
 
     val conditionBuf = new StringBuilder()
@@ -820,6 +822,74 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         case _                       => ev.unit
 
       setting *> preparedStatement.executeQuery()
+    }.flatMap { resultSet =>
+
+      val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
+      while resultSet.next() do
+        val host = Option(resultSet.getString(1))
+        val db = Option(resultSet.getString(2))
+        val table = Option(resultSet.getString(3))
+        val grantor = Option(resultSet.getString(4))
+        val user = Option(resultSet.getString(5)).getOrElse("%")
+    
+        val fullUser = new StringBuilder(user)
+        host.foreach(h => fullUser.append("@").append(h))
+
+        Option(resultSet.getString(6)) match
+          case Some(value) =>
+            val allPrivileges = value.toUpperCase(Locale.ENGLISH)
+            val stringTokenizer = new StringTokenizer(allPrivileges, ",")
+    
+            while stringTokenizer.hasMoreTokens do
+              val privilege = stringTokenizer.nextToken().trim
+              
+              keys += ((db, table, grantor, fullUser.toString(), privilege))
+            end while
+              
+          case None => // no privileges
+      end while
+      
+      val records = keys.result().traverse { (db, table, grantor, user, privilege) =>
+        val columnResults = getColumns(catalog, schemaPattern, table, None)
+        columnResults.map { columnResult =>
+          val records = Vector.newBuilder[ResultSetRowPacket]
+          while columnResult.next() do
+            val rows = Array(
+              if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else db, // TABLE_CAT
+              if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then db else None, // TABLE_SCHEM
+              table, // TABLE_NAME
+              grantor, // GRANTOR
+              Some(user), // GRANTEE
+              Some(privilege), // PRIVILEGE
+              None, // IS_GRANTABLE
+            )
+            records += ResultSetRowPacket(rows)
+          records.result()
+        }
+      }.map(_.flatten)
+      
+      records.map { records =>
+        ResultSetImpl(
+          Vector(
+            "TABLE_CAT",
+            "TABLE_SCHEM",
+            "TABLE_NAME",
+            "GRANTOR",
+            "GRANTEE",
+            "PRIVILEGE",
+            "IS_GRANTABLE"
+          ).map { value =>
+            new ColumnDefinitionPacket:
+              override def table: String = ""
+              override def name: String = value
+              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
+              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
+          },
+          records,
+          serverVariables,
+          protocol.initialPacket.serverVersion
+        )
+      }
     }
 
   override def getBestRowIdentifier(
