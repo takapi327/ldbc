@@ -698,6 +698,7 @@ object MysqlType:
       case name if name.contains("BLOB")                                                     => MysqlType.BLOB
       case name if name.contains("TEXT")                                                     => MysqlType.TEXT
       case name if name.contains("GEOM") | name.contains("POINT") | name.contains("POLYGON") => MysqlType.GEOMETRY
+      case name if name.contains("VECTOR")                                                   => MysqlType.VECTOR
       case _                                                                                 => MysqlType.UNKNOWN
 
 /**
