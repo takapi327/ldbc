@@ -1185,12 +1185,12 @@ class ConnectionTest extends FTestPlatform:
 
   test("The result of retrieving table privileges information matches the specified value.") {
     val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("connector_test"),
+      ssl      = SSL.Trusted
     )
 
     assertIO(
