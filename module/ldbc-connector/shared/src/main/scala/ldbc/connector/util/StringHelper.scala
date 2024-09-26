@@ -71,3 +71,14 @@ object StringHelper:
   def getUniqueSavepointId: String =
     val uuid = UUID.randomUUID().toString
     uuid.replaceAll("-", "_")
+
+  /**
+   * Does the string contain wildcard symbols ('%' or '_'). Used in DatabaseMetaData.
+   *
+   * @param src
+   *   string
+   * @return
+   *   true if src contains wildcard symbols
+   */
+  def hasWildcards(src: String): Boolean =
+    indexOfIgnoreCase(0, src, "%") != -1 || indexOfIgnoreCase(0, src, "_") != -1
