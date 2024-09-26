@@ -6,7 +6,7 @@
 
 package ldbc.connector
 
-import java.util.{Locale, StringTokenizer}
+import java.util.{ Locale, StringTokenizer }
 
 import scala.collection.immutable.{ ListMap, SortedMap }
 
@@ -560,8 +560,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT TABLE_CATALOG, TABLE_SCHEMA,"
+      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then "SELECT TABLE_CATALOG, TABLE_SCHEMA,"
       else "SELECT TABLE_SCHEMA, NULL,"
     )
 
@@ -695,7 +694,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         else " TABLE_SCHEMA LIKE ?"
       )
     )
-    
+
     tableName.foreach(name =>
       if conditionBuf.nonEmpty then conditionBuf.append(" AND")
 
@@ -721,26 +720,27 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     sqlBuf.append(" ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION")
 
-    prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-      val settings = (db, tableName, columnNamePattern) match
-        case (Some(dbValue), Some(tableNameValue), Some(columnName)) =>
-          preparedStatement.setString(1, dbValue) *> preparedStatement.setString(
-            2,
-            tableNameValue
-          ) *> preparedStatement.setString(3, columnName)
-        case (Some(dbValue), Some(tableNameValue), None) =>
-          preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableNameValue)
-        case (Some(dbValue), None, Some(columnName)) =>
-          preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, columnName)
-        case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
-        case (None, Some(tableNameValue), Some(columnName)) =>
-          preparedStatement.setString(1, tableNameValue) *> preparedStatement.setString(2, columnName)
-        case (None, Some(tableNameValue), None) => preparedStatement.setString(1, tableNameValue)
-        case (None, None, Some(columnName))     => preparedStatement.setString(1, columnName)
-        case (None, None, None)                 => ev.unit
+    prepareMetaDataSafeStatement(sqlBuf.toString())
+      .flatMap { preparedStatement =>
+        val settings = (db, tableName, columnNamePattern) match
+          case (Some(dbValue), Some(tableNameValue), Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(
+              2,
+              tableNameValue
+            ) *> preparedStatement.setString(3, columnName)
+          case (Some(dbValue), Some(tableNameValue), None) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableNameValue)
+          case (Some(dbValue), None, Some(columnName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, columnName)
+          case (Some(dbValue), None, None) => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableNameValue), Some(columnName)) =>
+            preparedStatement.setString(1, tableNameValue) *> preparedStatement.setString(2, columnName)
+          case (None, Some(tableNameValue), None) => preparedStatement.setString(1, tableNameValue)
+          case (None, None, Some(columnName))     => preparedStatement.setString(1, columnName)
+          case (None, None, None)                 => ev.unit
 
-      settings *> preparedStatement.executeQuery()
-    }
+        settings *> preparedStatement.executeQuery()
+      }
       .map { resultSet =>
         ResultSetImpl(
           Vector(
@@ -857,84 +857,89 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       sqlBuf.append(conditionBuf)
     end if
 
-    prepareMetaDataSafeStatement(sqlBuf.toString()).flatMap { preparedStatement =>
-      val setting = (db, tableNamePattern) match
-        case (Some(dbValue), Some(tableName)) =>
-          preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
-        case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
-        case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
-        case _                       => ev.unit
+    prepareMetaDataSafeStatement(sqlBuf.toString())
+      .flatMap { preparedStatement =>
+        val setting = (db, tableNamePattern) match
+          case (Some(dbValue), Some(tableName)) =>
+            preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
+          case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
+          case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
+          case _                       => ev.unit
 
-      setting *> preparedStatement.executeQuery()
-    }.flatMap { resultSet =>
-
-      val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
-      while resultSet.next() do
-        val host = Option(resultSet.getString(1))
-        val db = Option(resultSet.getString(2))
-        val table = Option(resultSet.getString(3))
-        val grantor = Option(resultSet.getString(4))
-        val user = Option(resultSet.getString(5)).getOrElse("%")
-    
-        val fullUser = new StringBuilder(user)
-        host.foreach(h => fullUser.append("@").append(h))
-
-        Option(resultSet.getString(6)) match
-          case Some(value) =>
-            val allPrivileges = value.toUpperCase(Locale.ENGLISH)
-            val stringTokenizer = new StringTokenizer(allPrivileges, ",")
-    
-            while stringTokenizer.hasMoreTokens do
-              val privilege = stringTokenizer.nextToken().trim
-              
-              keys += ((db, table, grantor, fullUser.toString(), privilege))
-            end while
-              
-          case None => // no privileges
-      end while
-      
-      val records = keys.result().traverse { (db, table, grantor, user, privilege) =>
-        val columnResults = getColumns(catalog, schemaPattern, table, None)
-        columnResults.map { columnResult =>
-          val records = Vector.newBuilder[ResultSetRowPacket]
-          while columnResult.next() do
-            val rows = Array(
-              if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else db, // TABLE_CAT
-              if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then db else None, // TABLE_SCHEM
-              table, // TABLE_NAME
-              grantor, // GRANTOR
-              Some(user), // GRANTEE
-              Some(privilege), // PRIVILEGE
-              None, // IS_GRANTABLE
-            )
-            records += ResultSetRowPacket(rows)
-          records.result()
-        }
-      }.map(_.flatten)
-      
-      records.map { records =>
-        ResultSetImpl(
-          Vector(
-            "TABLE_CAT",
-            "TABLE_SCHEM",
-            "TABLE_NAME",
-            "GRANTOR",
-            "GRANTEE",
-            "PRIVILEGE",
-            "IS_GRANTABLE"
-          ).map { value =>
-            new ColumnDefinitionPacket:
-              override def table: String = ""
-              override def name: String = value
-              override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_VARCHAR
-              override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-          },
-          records,
-          serverVariables,
-          protocol.initialPacket.serverVersion
-        )
+        setting *> preparedStatement.executeQuery()
       }
-    }
+      .flatMap { resultSet =>
+
+        val keys = Vector.newBuilder[(Option[String], Option[String], Option[String], String, String)]
+        while resultSet.next() do
+          val host    = Option(resultSet.getString(1))
+          val db      = Option(resultSet.getString(2))
+          val table   = Option(resultSet.getString(3))
+          val grantor = Option(resultSet.getString(4))
+          val user    = Option(resultSet.getString(5)).getOrElse("%")
+
+          val fullUser = new StringBuilder(user)
+          host.foreach(h => fullUser.append("@").append(h))
+
+          Option(resultSet.getString(6)) match
+            case Some(value) =>
+              val allPrivileges   = value.toUpperCase(Locale.ENGLISH)
+              val stringTokenizer = new StringTokenizer(allPrivileges, ",")
+
+              while stringTokenizer.hasMoreTokens do
+                val privilege = stringTokenizer.nextToken().trim
+
+                keys += ((db, table, grantor, fullUser.toString(), privilege))
+              end while
+
+            case None => // no privileges
+        end while
+
+        val records = keys
+          .result()
+          .traverse { (db, table, grantor, user, privilege) =>
+            val columnResults = getColumns(catalog, schemaPattern, table, None)
+            columnResults.map { columnResult =>
+              val records = Vector.newBuilder[ResultSetRowPacket]
+              while columnResult.next() do
+                val rows = Array(
+                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else db, // TABLE_CAT
+                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then db else None, // TABLE_SCHEM
+                  table,                                                                            // TABLE_NAME
+                  grantor,                                                                          // GRANTOR
+                  Some(user),                                                                       // GRANTEE
+                  Some(privilege),                                                                  // PRIVILEGE
+                  None                                                                              // IS_GRANTABLE
+                )
+                records += ResultSetRowPacket(rows)
+              records.result()
+            }
+          }
+          .map(_.flatten)
+
+        records.map { records =>
+          ResultSetImpl(
+            Vector(
+              "TABLE_CAT",
+              "TABLE_SCHEM",
+              "TABLE_NAME",
+              "GRANTOR",
+              "GRANTEE",
+              "PRIVILEGE",
+              "IS_GRANTABLE"
+            ).map { value =>
+              new ColumnDefinitionPacket:
+                override def table:      String                     = ""
+                override def name:       String                     = value
+                override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
+                override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
+            },
+            records,
+            serverVariables,
+            protocol.initialPacket.serverVersion
+          )
+        }
+      }
 
   override def getBestRowIdentifier(
     catalog:  Option[String],
@@ -1881,7 +1886,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         case MysqlType.TINYBLOB | MysqlType.BLOB | MysqlType.MEDIUMBLOB | MysqlType.LONGBLOB | MysqlType.TINYTEXT |
           MysqlType.TEXT | MysqlType.MEDIUMTEXT | MysqlType.LONGTEXT | MysqlType.JSON | MysqlType.BINARY |
           MysqlType.VARBINARY | MysqlType.CHAR | MysqlType.VARCHAR | MysqlType.ENUM | MysqlType.SET | MysqlType.DATE |
-          MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.VECTOR | MysqlType.UNKNOWN =>
+          MysqlType.TIME | MysqlType.DATETIME | MysqlType.TIMESTAMP | MysqlType.GEOMETRY | MysqlType.VECTOR |
+          MysqlType.UNKNOWN =>
           Array(Some("'"), Some("'"))
         case _ => Array(Some(""), Some(""))
     ) ++ Array(

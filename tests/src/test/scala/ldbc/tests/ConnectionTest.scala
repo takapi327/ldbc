@@ -29,7 +29,7 @@ class LdbcConnectionTest extends ConnectionTest:
       database = Some(database),
       ssl      = SSL.Trusted,
       databaseTerm = Some(databaseTerm match
-        case "SCHEMA" => DatabaseMetaData.DatabaseTerm.SCHEMA
+        case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
         case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
       )
     )
@@ -52,14 +52,14 @@ class JdbcConnectionTest extends ConnectionTest:
 trait ConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
-  
-  protected val host: String = "127.0.0.1"
-  protected val port: Int    = 13306
-  protected val user: String = "ldbc"
+
+  protected val host:     String = "127.0.0.1"
+  protected val port:     Int    = 13306
+  protected val user:     String = "ldbc"
   protected val password: String = "password"
   protected val database: String = "connector_test"
 
-  def prefix:     "jdbc" | "ldbc"
+  def prefix:                                                     "jdbc" | "ldbc"
   def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Resource[IO, Connection[IO]]
 
   test("Catalog change will change the currently connected Catalog.") {
@@ -141,10 +141,10 @@ trait ConnectionTest extends CatsEffectSuite:
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
     assertIO(
       connection().use(_.getMetaData().map(_.getDriverVersion())),
-      if prefix == "jdbc" then "mysql-connector-j-8.4.0 (Revision: 1c3f5c149e0bfe31c7fbeb24e2d260cd890972c4)" else "ldbc-connector-0.3.0"
+      if prefix == "jdbc" then "mysql-connector-j-8.4.0 (Revision: 1c3f5c149e0bfe31c7fbeb24e2d260cd890972c4)"
+      else "ldbc-connector-0.3.0"
     )
   }
-
 
   test("The usesLocalFiles method of DatabaseMetaData is always false.") {
     assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.usesLocalFiles())))
@@ -298,21 +298,21 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIO(
       connection().use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(Some("connector_test"), None, Some("all_types"), Array.empty[String])
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
-            val tableCat = resultSet.getString("TABLE_CAT")
-            val tableSchem = resultSet.getString("TABLE_SCHEM")
-            val tableName = resultSet.getString("TABLE_NAME")
-            val tableType = resultSet.getString("TABLE_TYPE")
-            val remarks = resultSet.getString("REMARKS")
-            val typeCat = resultSet.getString("TYPE_CAT")
-            val typeSchem = resultSet.getString("TYPE_SCHEM")
-            val typeName = resultSet.getString("TYPE_NAME")
+            val tableCat               = resultSet.getString("TABLE_CAT")
+            val tableSchem             = resultSet.getString("TABLE_SCHEM")
+            val tableName              = resultSet.getString("TABLE_NAME")
+            val tableType              = resultSet.getString("TABLE_TYPE")
+            val remarks                = resultSet.getString("REMARKS")
+            val typeCat                = resultSet.getString("TYPE_CAT")
+            val typeSchem              = resultSet.getString("TYPE_SCHEM")
+            val typeName               = resultSet.getString("TYPE_NAME")
             val selfReferencingColName = resultSet.getString("SELF_REFERENCING_COL_NAME")
-            val refGeneration = resultSet.getString("REF_GENERATION")
+            val refGeneration          = resultSet.getString("REF_GENERATION")
             builder += s"Table Catalog: $tableCat, Table Schema: $tableSchem, Table Name: $tableName, Table Type: $tableType, Remarks: $remarks, Type Catalog: $typeCat, Type Schema: $typeSchem, Type Name: $typeName, Self Referencing Column Name: $selfReferencingColName, Reference Generation: $refGeneration"
           builder.result()
       },
@@ -842,34 +842,34 @@ trait ConnectionTest extends CatsEffectSuite:
     assertIO(
       connection("SCHEMA").use { conn =>
         for
-          metaData <- conn.getMetaData()
+          metaData  <- conn.getMetaData()
           resultSet <- metaData.getColumns(None, None, Some("privileges_table"), None)
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
-            val tableCat = resultSet.getString("TABLE_CAT")
-            val tableSchem = resultSet.getString("TABLE_SCHEM")
-            val tableName = resultSet.getString("TABLE_NAME")
-            val columnName = resultSet.getString("COLUMN_NAME")
-            val dataType = resultSet.getInt("DATA_TYPE")
-            val typeName = resultSet.getString("TYPE_NAME")
-            val columnSize = resultSet.getInt("COLUMN_SIZE")
-            val bufferLength = resultSet.getInt("BUFFER_LENGTH")
-            val decimalDigits = resultSet.getInt("DECIMAL_DIGITS")
-            val numPrecRadix = resultSet.getInt("NUM_PREC_RADIX")
-            val nullable = resultSet.getInt("NULLABLE")
-            val remarks = resultSet.getString("REMARKS")
-            val columnDef = resultSet.getString("COLUMN_DEF")
-            val sqlDataType = resultSet.getInt("SQL_DATA_TYPE")
-            val sqlDatetimeSub = resultSet.getInt("SQL_DATETIME_SUB")
-            val charOctetLength = resultSet.getInt("CHAR_OCTET_LENGTH")
-            val ordinalPosition = resultSet.getInt("ORDINAL_POSITION")
-            val isNullable = resultSet.getString("IS_NULLABLE")
-            val scopeCatalog = resultSet.getString("SCOPE_CATALOG")
-            val scopeSchema = resultSet.getString("SCOPE_SCHEMA")
-            val scopeTable = resultSet.getString("SCOPE_TABLE")
-            val sourceDataType = resultSet.getShort("SOURCE_DATA_TYPE")
-            val isAutoincrement = resultSet.getString("IS_AUTOINCREMENT")
+            val tableCat          = resultSet.getString("TABLE_CAT")
+            val tableSchem        = resultSet.getString("TABLE_SCHEM")
+            val tableName         = resultSet.getString("TABLE_NAME")
+            val columnName        = resultSet.getString("COLUMN_NAME")
+            val dataType          = resultSet.getInt("DATA_TYPE")
+            val typeName          = resultSet.getString("TYPE_NAME")
+            val columnSize        = resultSet.getInt("COLUMN_SIZE")
+            val bufferLength      = resultSet.getInt("BUFFER_LENGTH")
+            val decimalDigits     = resultSet.getInt("DECIMAL_DIGITS")
+            val numPrecRadix      = resultSet.getInt("NUM_PREC_RADIX")
+            val nullable          = resultSet.getInt("NULLABLE")
+            val remarks           = resultSet.getString("REMARKS")
+            val columnDef         = resultSet.getString("COLUMN_DEF")
+            val sqlDataType       = resultSet.getInt("SQL_DATA_TYPE")
+            val sqlDatetimeSub    = resultSet.getInt("SQL_DATETIME_SUB")
+            val charOctetLength   = resultSet.getInt("CHAR_OCTET_LENGTH")
+            val ordinalPosition   = resultSet.getInt("ORDINAL_POSITION")
+            val isNullable        = resultSet.getString("IS_NULLABLE")
+            val scopeCatalog      = resultSet.getString("SCOPE_CATALOG")
+            val scopeSchema       = resultSet.getString("SCOPE_SCHEMA")
+            val scopeTable        = resultSet.getString("SCOPE_TABLE")
+            val sourceDataType    = resultSet.getShort("SOURCE_DATA_TYPE")
+            val isAutoincrement   = resultSet.getString("IS_AUTOINCREMENT")
             val isGeneratedcolumn = resultSet.getString("IS_GENERATEDCOLUMN")
             builder += s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
           builder.result()
