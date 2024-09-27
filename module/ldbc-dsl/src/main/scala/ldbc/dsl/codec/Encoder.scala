@@ -73,12 +73,6 @@ object Encoder:
   given Encoder[LocalDateTime] with
     override def encode(value: LocalDateTime): LocalDateTime = value
 
-  given Encoder[Instant] with
-    override def encode(value: Instant): LocalDateTime = LocalDateTime.ofInstant(value, ZoneId.systemDefault())
-
-  given Encoder[ZonedDateTime] with
-    override def encode(value: ZonedDateTime): LocalDateTime = value.toLocalDateTime
-
   given Encoder[Year] with
     override def encode(value: Year): String = value.toString
 
