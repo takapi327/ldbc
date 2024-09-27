@@ -16,14 +16,14 @@ class AliasTest extends AnyFlatSpec, Matchers:
 
   it should "PRIMARY_KEY call succeeds" in {
     val p1 = PRIMARY_KEY
-    val p2 = PRIMARY_KEY(column("p1", VARCHAR(255)))
-    val p3 = PRIMARY_KEY(column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p4 = PRIMARY_KEY(Index.Type.BTREE, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p2 = PRIMARY_KEY(column[String]("p1", VARCHAR(255)))
+    val p3 = PRIMARY_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p4 = PRIMARY_KEY(Index.Type.BTREE, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
     val p5 = PRIMARY_KEY(
       Index.Type.BTREE,
       Index.IndexOption(Some(1), None, None, None, None, None),
-      column("p1", VARCHAR(255)),
-      column("p2", VARCHAR(255))
+      column[String]("p1", VARCHAR(255)),
+      column[String]("p2", VARCHAR(255))
     )
 
     p1.queryString === "PRIMARY KEY" &&
@@ -44,18 +44,19 @@ class AliasTest extends AnyFlatSpec, Matchers:
 
   it should "UNIQUE_KEY call succeeds" in {
     val p1 = UNIQUE_KEY
-    val p2 = UNIQUE_KEY(column("p1", VARCHAR(255)))
-    val p3 = UNIQUE_KEY(column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p4 = UNIQUE_KEY("index", column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p5 = UNIQUE_KEY("index", Index.Type.BTREE, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p2 = UNIQUE_KEY(column[String]("p1", VARCHAR(255)))
+    val p3 = UNIQUE_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p4 = UNIQUE_KEY("index", column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p5 =
+      UNIQUE_KEY("index", Index.Type.BTREE, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
     val p6 = UNIQUE_KEY(
       "index",
       Index.Type.BTREE,
       Index.IndexOption(Some(1), None, None, None, None, None),
-      column("p1", VARCHAR(255)),
-      column("p2", VARCHAR(255))
+      column[String]("p1", VARCHAR(255)),
+      column[String]("p2", VARCHAR(255))
     )
-    val p7 = UNIQUE_KEY(None, None, None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p7 = UNIQUE_KEY(None, None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
 
     p1.queryString === "UNIQUE KEY" &&
     p2.queryString === "UNIQUE KEY (`p1`)" &&
@@ -73,18 +74,25 @@ class AliasTest extends AnyFlatSpec, Matchers:
   }
 
   it should "INDEX_KEY call succeeds" in {
-    val p1 = INDEX_KEY(column("p1", VARCHAR(255)))
-    val p2 = INDEX_KEY(column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p3 = INDEX_KEY(None, None, None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
-    val p4 = INDEX_KEY(Some("index"), None, None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+    val p1 = INDEX_KEY(column[String]("p1", VARCHAR(255)))
+    val p2 = INDEX_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p3 = INDEX_KEY(None, None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p4 =
+      INDEX_KEY(Some("index"), None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
     val p5 =
-      INDEX_KEY(Some("index"), Some(Index.Type.BTREE), None, column("p1", VARCHAR(255)), column("p2", VARCHAR(255)))
+      INDEX_KEY(
+        Some("index"),
+        Some(Index.Type.BTREE),
+        None,
+        column[String]("p1", VARCHAR(255)),
+        column[String]("p2", VARCHAR(255))
+      )
     val p6 = INDEX_KEY(
       Some("index"),
       Some(Index.Type.BTREE),
       Some(Index.IndexOption(Some(1), None, None, None, None, None)),
-      column("p1", VARCHAR(255)),
-      column("p2", VARCHAR(255))
+      column[String]("p1", VARCHAR(255)),
+      column[String]("p2", VARCHAR(255))
     )
 
     p1.queryString === "INDEX (`p1`)" &&
@@ -108,9 +116,9 @@ class AliasTest extends AnyFlatSpec, Matchers:
   }
 
   it should "FOREIGN_KEY call succeeds" in {
-    val p1 = FOREIGN_KEY(column("test_id", BIGINT), REFERENCE(table, table.id))
+    val p1 = FOREIGN_KEY(column[Long]("test_id", BIGINT), REFERENCE(table, table.id))
     val p2 = FOREIGN_KEY(
-      (column("test_id", BIGINT), column("test_status", INT)),
+      (column[Long]("test_id", BIGINT), column[Int]("test_status", INT)),
       REFERENCE(table, (table.id, table.status))
     )
 

@@ -15,6 +15,7 @@ import cats.syntax.all.*
 import cats.effect.*
 
 import ldbc.dsl.syntax.*
+import ldbc.dsl.codec.Encoder
 
 package object dsl:
 
@@ -28,13 +29,13 @@ package object dsl:
      *   // SELECT * FROM table WHERE id = ?
      * }}}
      */
-    def sc(value: String): Parameter.StaticBinder = Parameter.StaticBinder(value)
+    def sc(value: String): Parameter.Static = Parameter.Static(value)
 
     // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
     /** Returns `VALUES (v0), (v1), ...`. */
-    def values[M[_]: Reducible, T](vs: M[T])(using Parameter[T]): Mysql[F] =
+    def values[M[_]: Reducible, T](vs: M[T])(using Encoder[T]): Mysql[F] =
       sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(p"$v")))
 
     /** Returns `VALUES (v0, v1), (v2, v3), ...`. */
@@ -42,36 +43,36 @@ package object dsl:
       sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values(v))))
 
     private inline def values[T <: Product](v: T)(using mirror: Mirror.ProductOf[T]): Mysql[F] =
-      val tuple  = Parameter.fold[mirror.MirroredElemTypes]
+      val tuple  = Encoder.fold[mirror.MirroredElemTypes]
       val params = tuple.toList
       Mysql[F](
         List.fill(params.size)("?").mkString(","),
         (Tuple.fromProduct(v).toList zip params).map {
           case (value, param) =>
-            Parameter.DynamicBinder(value.asInstanceOf[Any])(using param.asInstanceOf[Parameter[Any]])
+            Parameter.Dynamic(value.asInstanceOf[Any])(using param.asInstanceOf[Encoder[Any]])
         }
       )
 
     /** Returns `(sql IN (v0, v1, ...))`. */
-    def in[T](s: SQL, v0: T, v1: T, vs: T*)(using Parameter[T]): Mysql[F] =
+    def in[T](s: SQL, v0: T, v1: T, vs: T*)(using Encoder[T]): Mysql[F] =
       in(s, NonEmptyList(v0, v1 :: vs.toList))
 
     /** Returns `(sql IN (s0, s1, ...))`. */
-    def in[M[_]: Reducible: Functor, T](s: SQL, vs: M[T])(using Parameter[T]): Mysql[F] =
+    def in[M[_]: Reducible: Functor, T](s: SQL, vs: M[T])(using Encoder[T]): Mysql[F] =
       parentheses(s ++ sql" IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
-    def inOpt[M[_]: Foldable, T](s: SQL, vs: M[T])(using Parameter[T]): Option[Mysql[F]] =
+    def inOpt[M[_]: Foldable, T](s: SQL, vs: M[T])(using Encoder[T]): Option[Mysql[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => in(s, nel))
 
     /** Returns `(sql NOT IN (v0, v1, ...))`. */
-    def notIn[T](s: SQL, v0: T, v1: T, vs: T*)(using Parameter[T]): Mysql[F] =
+    def notIn[T](s: SQL, v0: T, v1: T, vs: T*)(using Encoder[T]): Mysql[F] =
       notIn(s, NonEmptyList(v0, v1 :: vs.toList))
 
     /** Returns `(sql NOT IN (v0, v1, ...))`, or `true` for empty `fs`. */
-    def notIn[M[_]: Reducible: Functor, T](s: SQL, vs: M[T])(using Parameter[T]): Mysql[F] =
+    def notIn[M[_]: Reducible: Functor, T](s: SQL, vs: M[T])(using Encoder[T]): Mysql[F] =
       parentheses(s ++ sql" NOT IN " ++ parentheses(comma(vs.map(v => p"$v"))))
 
-    def notInOpt[M[_]: Foldable, T](s: SQL, vs: M[T])(using Parameter[T]): Option[Mysql[F]] =
+    def notInOpt[M[_]: Foldable, T](s: SQL, vs: M[T])(using Encoder[T]): Option[Mysql[F]] =
       NonEmptyList.fromFoldable(vs).map(nel => notIn(s, nel))
 
     /** Returns `(s1 AND s2 AND ... sn)` for a non-empty collection. */

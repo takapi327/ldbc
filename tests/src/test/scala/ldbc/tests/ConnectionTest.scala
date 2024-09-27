@@ -4,817 +4,212 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.connector
+package ldbc.tests
 
-import org.typelevel.otel4s.trace.Tracer
-
-import com.comcast.ip4s.UnknownHostException
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import ldbc.sql.DatabaseMetaData
-import ldbc.connector.exception.*
+import org.typelevel.otel4s.trace.Tracer
 
-class ConnectionTest extends FTestPlatform:
+import munit.*
+
+import ldbc.sql.*
+import ldbc.connector.SSL
+
+class LdbcConnectionTest extends ConnectionTest:
+  override def prefix: "ldbc" = "ldbc"
+
+  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Resource[IO, Connection[IO]] =
+    ldbc.connector.Connection[IO](
+      host     = host,
+      port     = port,
+      user     = user,
+      password = Some(password),
+      database = Some(database),
+      ssl      = SSL.Trusted,
+      databaseTerm = Some(databaseTerm match
+        case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
+        case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
+      )
+    )
+
+class JdbcConnectionTest extends ConnectionTest:
+
+  val ds = new MysqlDataSource()
+  ds.setServerName(host)
+  ds.setPortNumber(port)
+  ds.setDatabaseName(database)
+  ds.setUser(user)
+  ds.setPassword(password)
+
+  override def prefix: "jdbc" | "ldbc" = "jdbc"
+
+  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Resource[IO, Connection[IO]] =
+    ds.setDatabaseTerm(databaseTerm)
+    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+
+trait ConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
-  test("Passing an empty string to host causes SQLException") {
-    val connection = Connection[IO](
-      host = "",
-      port = 13306,
-      user = "root"
-    )
-    interceptIO[SQLClientInfoException] {
-      connection.use(_ => IO.unit)
-    }
-  }
+  protected val host:     String = "127.0.0.1"
+  protected val port:     Int    = 13306
+  protected val user:     String = "ldbc"
+  protected val password: String = "password"
+  protected val database: String = "connector_test"
 
-  test("UnknownHostException occurs when invalid host is passed") {
-    val connection = Connection[IO](
-      host = "host",
-      port = 13306,
-      user = "root"
-    )
-    interceptIO[UnknownHostException] {
-      connection.use(_ => IO.unit)
-    }
-  }
-
-  test("Passing a negative value to Port causes SQLException") {
-    val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = -1,
-      user = "root"
-    )
-    interceptIO[SQLClientInfoException] {
-      connection.use(_ => IO.unit)
-    }
-  }
-
-  test("SQLException occurs when passing more than 65535 values to Port") {
-    val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 65536,
-      user = "root"
-    )
-    interceptIO[SQLClientInfoException] {
-      connection.use(_ => IO.unit)
-    }
-  }
-
-  test("A user using mysql_native_password can establish a connection with the MySQL server.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password")
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "Connections to MySQL servers using users with mysql_native_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Connections to MySQL servers using users with mysql_native_password will succeed for SSL connections.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Users using mysql_native_password can establish a connection with the MySQL server by specifying database.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test")
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with mysql_native_password will succeed."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_mysql_native_user",
-      password                = Some("ldbc_mysql_native_password"),
-      database                = Some("connector_test"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "A connection to a MySQL server with a database specified using a user with mysql_native_password will succeed with an SSL connection."
-  ) {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Connections to MySQL servers using users with sha256_password will fail for non-SSL connections.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_sha256_user",
-      password = Some("ldbc_sha256_password")
-    )
-    interceptIO[SQLInvalidAuthorizationSpecException] {
-      connection.use(_ => IO.unit)
-    }
-  }
-
-  test(
-    "Connections to MySQL servers using users with sha256_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_sha256_user",
-      password                = Some("ldbc_sha256_password"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Connections to MySQL servers using users with sha256_password will succeed for SSL connections.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_sha256_user",
-      password = Some("ldbc_sha256_password"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with sha256_password will succeed."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc_sha256_user",
-      password                = Some("ldbc_sha256_password"),
-      database                = Some("connector_test"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "A connection to a MySQL server with a database specified using a user with sha256_password will succeed with an SSL connection."
-  ) {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_sha256_user",
-      password = Some("ldbc_sha256_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "Connections to MySQL servers using users with caching_sha2_password will succeed if allowPublicKeyRetrieval is enabled for non-SSL connections."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc",
-      password                = Some("password"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test("Connections to MySQL servers using users with caching_sha2_password will succeed for SSL connections.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "If the login information of a user using caching_sha2_password is cached, the connection to the MySQL server will succeed even for non-SSL connections."
-  ) {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password")
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "If allowPublicKeyRetrieval is enabled for non-SSL connections, a connection to a MySQL server specifying a database using a user with caching_sha2_password will succeed."
-  ) {
-    val connection = Connection[IO](
-      host                    = "127.0.0.1",
-      port                    = 13306,
-      user                    = "ldbc",
-      password                = Some("password"),
-      database                = Some("connector_test"),
-      allowPublicKeyRetrieval = true
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
-
-  test(
-    "A connection to a MySQL server with a database specified using a user with caching_sha2_password will succeed with an SSL connection."
-  ) {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-    assertIOBoolean(connection.use(_ => IO(true)))
-  }
+  def prefix:                                                     "jdbc" | "ldbc"
+  def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Resource[IO, Connection[IO]]
 
   test("Catalog change will change the currently connected Catalog.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         conn.setCatalog("world") *> conn.getCatalog()
       },
       "world"
     )
   }
 
-  test("Statistics of the MySQL server can be obtained.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIO(
-      connection.use(_.getStatistics.map(_.toString)),
-      "COM_STATISTICS Response Packet"
-    )
-  }
-
   test("The connection is valid.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.isValid(0)))
-  }
-
-  test("Connection state reset succeeds.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.resetServerState) *> IO(true))
-  }
-
-  test("If multi-querying is not enabled, ERRPacketException is raised when multi-querying is performed.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    interceptIO[SQLSyntaxErrorException](connection.use { conn =>
-      for
-        statement <- conn.createStatement()
-        resultSet <- statement.executeQuery("SELECT 1; SELECT2")
-      yield resultSet
-    })
-  }
-
-  test("Can change from mysql_native_password user to caching_sha2_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc", "password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from mysql_native_password user to sha256_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_mysql_native_user",
-      password = Some("ldbc_mysql_native_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_sha256_user", "ldbc_sha256_password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from sha256_password user to mysql_native_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_sha256_user",
-      password = Some("ldbc_sha256_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_mysql_native_user", "ldbc_mysql_native_password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from sha256_password user to caching_sha2_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc_sha256_user",
-      password = Some("ldbc_sha256_password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc", "password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from caching_sha2_password user to mysql_native_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_mysql_native_user", "ldbc_mysql_native_password")) *> IO.pure(true),
-      true
-    )
-  }
-
-  test("Can change from caching_sha2_password user to sha256_password user.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(
-      connection.use(_.changeUser("ldbc_sha256_user", "ldbc_sha256_password")) *> IO.pure(true),
-      true
-    )
+    assertIOBoolean(connection().use(_.isValid(0)))
   }
 
   test("The allProceduresAreCallable method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.allProceduresAreCallable())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.allProceduresAreCallable())))
   }
 
   test("The allTablesAreSelectable method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.allTablesAreSelectable())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.allTablesAreSelectable())))
   }
 
   test("The URL retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getURL())),
+      connection().use(_.getMetaData().map(_.getURL())),
       "jdbc:mysql://127.0.0.1:13306/connector_test"
     )
   }
 
   test("The User name retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().flatMap(_.getUserName())),
+      connection().use(_.getMetaData().flatMap(_.getUserName())),
       "ldbc@172.18.0.1"
     )
   }
 
   test("The isReadOnly method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.isReadOnly())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.isReadOnly())))
   }
 
   test("The nullsAreSortedHigh method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedHigh())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.nullsAreSortedHigh())))
   }
 
   test("The nullsAreSortedLow method of DatabaseMetaData is always true.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => meta.nullsAreSortedLow())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => meta.nullsAreSortedLow())))
   }
 
   test("The nullsAreSortedAtStart method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtStart())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.nullsAreSortedAtStart())))
   }
 
   test("The nullsAreSortedAtEnd method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.nullsAreSortedAtEnd())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.nullsAreSortedAtEnd())))
   }
 
   test("The getDatabaseProductName method of DatabaseMetaData is always MySQL.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getDatabaseProductName())),
+      connection().use(_.getMetaData().map(_.getDatabaseProductName())),
       "MySQL"
     )
   }
 
   test("The Server version retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getDatabaseProductVersion())),
+      connection().use(_.getMetaData().map(_.getDatabaseProductVersion())),
       "8.4.0"
     )
   }
 
   test("The getDriverName method of DatabaseMetaData is always MySQL Connector/L.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getDriverName())),
-      "MySQL Connector/L"
+      connection().use(_.getMetaData().map(_.getDriverName())),
+      if prefix == "jdbc" then "MySQL Connector/J" else "MySQL Connector/L"
     )
   }
 
   test("The Driver version retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getDriverVersion())),
-      "ldbc-connector-0.3.0"
+      connection().use(_.getMetaData().map(_.getDriverVersion())),
+      if prefix == "jdbc" then "mysql-connector-j-8.4.0 (Revision: 1c3f5c149e0bfe31c7fbeb24e2d260cd890972c4)"
+      else "ldbc-connector-0.3.0"
     )
   }
 
   test("The usesLocalFiles method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.usesLocalFiles())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.usesLocalFiles())))
   }
 
   test("The usesLocalFilePerTable method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.usesLocalFilePerTable())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.usesLocalFilePerTable())))
   }
 
   test("The supports Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(_.supportsMixedCaseIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(_.supportsMixedCaseIdentifiers())))
   }
 
   test("The storesUpperCaseIdentifiers method of DatabaseMetaData is always false.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.storesUpperCaseIdentifiers())))
   }
 
   test("The stores Lower Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.storesLowerCaseIdentifiers())))
   }
 
   test("The stores Mixed Case Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(_.storesMixedCaseIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(_.storesMixedCaseIdentifiers())))
   }
 
   test("The supports Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(_.supportsMixedCaseQuotedIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(_.supportsMixedCaseQuotedIdentifiers())))
   }
 
   test("The storesUpperCaseQuotedIdentifiers method of DatabaseMetaData is always true.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(_.storesUpperCaseQuotedIdentifiers())))
   }
 
   test("The stores Lower Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(meta => !meta.storesLowerCaseQuotedIdentifiers())))
   }
 
   test("The stores Mixed Case Quoted Identifiers retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
-    assertIOBoolean(connection.use(_.getMetaData().map(_.storesMixedCaseQuotedIdentifiers())))
+    assertIOBoolean(connection().use(_.getMetaData().map(_.storesMixedCaseQuotedIdentifiers())))
   }
 
   test("The Identifier Quote String retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getIdentifierQuoteString())),
+      connection().use(_.getMetaData().map(_.getIdentifierQuoteString())),
       "`"
     )
   }
 
   test("The SQL Keywords retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().flatMap(_.getSQLKeywords())),
+      connection().use(_.getMetaData().flatMap(_.getSQLKeywords())),
       "ACCESSIBLE,ADD,ANALYZE,ASC,BEFORE,CASCADE,CHANGE,CONTINUE,DATABASE,DATABASES,DAY_HOUR,DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,DESC,DISTINCTROW,DIV,DUAL,ELSEIF,EMPTY,ENCLOSED,ESCAPED,EXIT,EXPLAIN,FIRST_VALUE,FLOAT4,FLOAT8,FORCE,FULLTEXT,GENERATED,GROUPS,HIGH_PRIORITY,HOUR_MICROSECOND,HOUR_MINUTE,HOUR_SECOND,IF,IGNORE,INDEX,INFILE,INT1,INT2,INT3,INT4,INT8,IO_AFTER_GTIDS,IO_BEFORE_GTIDS,ITERATE,JSON_TABLE,KEY,KEYS,KILL,LAG,LAST_VALUE,LEAD,LEAVE,LIMIT,LINEAR,LINES,LOAD,LOCK,LONG,LONGBLOB,LONGTEXT,LOOP,LOW_PRIORITY,MAXVALUE,MEDIUMBLOB,MEDIUMINT,MEDIUMTEXT,MIDDLEINT,MINUTE_MICROSECOND,MINUTE_SECOND,NO_WRITE_TO_BINLOG,NTH_VALUE,NTILE,OPTIMIZE,OPTIMIZER_COSTS,OPTION,OPTIONALLY,OUTFILE,PURGE,READ,READ_WRITE,REGEXP,RENAME,REPEAT,REPLACE,REQUIRE,RESIGNAL,RESTRICT,RLIKE,SCHEMA,SCHEMAS,SECOND_MICROSECOND,SEPARATOR,SHOW,SIGNAL,SPATIAL,SQL_BIG_RESULT,SQL_CALC_FOUND_ROWS,SQL_SMALL_RESULT,SSL,STARTING,STORED,STRAIGHT_JOIN,TERMINATED,TINYBLOB,TINYINT,TINYTEXT,UNDO,UNLOCK,UNSIGNED,USAGE,USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,VARCHARACTER,VIRTUAL,WHILE,WRITE,XOR,YEAR_MONTH,ZEROFILL"
     )
   }
 
   test("The Numeric Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getNumericFunctions())),
+      connection().use(_.getMetaData().map(_.getNumericFunctions())),
       "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE"
     )
   }
 
   test("The String Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getStringFunctions())),
+      connection().use(_.getMetaData().map(_.getStringFunctions())),
       "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
         + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
         + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
@@ -823,33 +218,15 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The System Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getSystemFunctions())),
+      connection().use(_.getMetaData().map(_.getSystemFunctions())),
       "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION"
     )
   }
 
   test("The Time Date Functions retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getTimeDateFunctions())),
+      connection().use(_.getMetaData().map(_.getTimeDateFunctions())),
       "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
         + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
         + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC"
@@ -857,49 +234,22 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The Search String Escape retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getSearchStringEscape())),
+      connection().use(_.getMetaData().map(_.getSearchStringEscape())),
       "\\"
     )
   }
 
   test("The Extra Name Characters retrieved from DatabaseMetaData matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use(_.getMetaData().map(_.getExtraNameCharacters())),
+      connection().use(_.getMetaData().map(_.getExtraNameCharacters())),
       "$"
     )
   }
 
   test("The result of retrieving procedure information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedures(Some("connector_test"), None, Some("demoSp"))
@@ -921,17 +271,8 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving procedure columns information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getProcedureColumns(Some("connector_test"), None, Some("demoSp"), None)
@@ -954,17 +295,8 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving tables information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTables(Some("connector_test"), None, Some("all_types"), Array.empty[String])
@@ -991,18 +323,8 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving schemas information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection("SCHEMA").use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getSchemas()
@@ -1028,17 +350,8 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving catalogs information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getCatalogs()
@@ -1061,17 +374,8 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving tableTypes information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData <- conn.getMetaData()
           resultSet = metaData.getTableTypes()
@@ -1090,76 +394,12 @@ class ConnectionTest extends FTestPlatform:
     )
   }
 
-  test("The result of retrieving columns information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
-    assertIO(
-      connection.use { conn =>
-        for
-          metaData  <- conn.getMetaData()
-          resultSet <- metaData.getColumns(None, None, Some("privileges_table"), None)
-        yield
-          val builder = Vector.newBuilder[String]
-          while resultSet.next() do
-            val tableCat          = resultSet.getString("TABLE_CAT")
-            val tableSchem        = resultSet.getString("TABLE_SCHEM")
-            val tableName         = resultSet.getString("TABLE_NAME")
-            val columnName        = resultSet.getString("COLUMN_NAME")
-            val dataType          = resultSet.getInt("DATA_TYPE")
-            val typeName          = resultSet.getString("TYPE_NAME")
-            val columnSize        = resultSet.getInt("COLUMN_SIZE")
-            val bufferLength      = resultSet.getInt("BUFFER_LENGTH")
-            val decimalDigits     = resultSet.getInt("DECIMAL_DIGITS")
-            val numPrecRadix      = resultSet.getInt("NUM_PREC_RADIX")
-            val nullable          = resultSet.getInt("NULLABLE")
-            val remarks           = resultSet.getString("REMARKS")
-            val columnDef         = resultSet.getString("COLUMN_DEF")
-            val sqlDataType       = resultSet.getInt("SQL_DATA_TYPE")
-            val sqlDatetimeSub    = resultSet.getInt("SQL_DATETIME_SUB")
-            val charOctetLength   = resultSet.getInt("CHAR_OCTET_LENGTH")
-            val ordinalPosition   = resultSet.getInt("ORDINAL_POSITION")
-            val isNullable        = resultSet.getString("IS_NULLABLE")
-            val scopeCatalog      = resultSet.getString("SCOPE_CATALOG")
-            val scopeSchema       = resultSet.getString("SCOPE_SCHEMA")
-            val scopeTable        = resultSet.getString("SCOPE_TABLE")
-            val sourceDataType    = resultSet.getShort("SOURCE_DATA_TYPE")
-            val isAutoincrement   = resultSet.getString("IS_AUTOINCREMENT")
-            val isGeneratedcolumn = resultSet.getString("IS_GENERATEDCOLUMN")
-            builder += s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
-          builder.result()
-      },
-      Vector(
-        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c1, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: null, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: NO",
-        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c2, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: null, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 2, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: NO",
-        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: updated_at, Data Type: 93, Type Name: TIMESTAMP, Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: CURRENT_TIMESTAMP, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 3, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: YES"
-      )
-    )
-  }
-
   test("The result of retrieving column privileges information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getColumnPrivileges(None, Some("connector_test"), Some("privileges_table"), None)
+          resultSet <- metaData.getColumnPrivileges(Some("connector_test"), None, Some("privileges_table"), None)
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1175,26 +415,17 @@ class ConnectionTest extends FTestPlatform:
           builder.result()
       },
       Vector(
-        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c1, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO",
-        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c1, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
-        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c2, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO",
-        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c2, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO"
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Column Name: c1, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Column Name: c1, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Column Name: c2, Grantor: null, Grantee: 'ldbc'@'%', Privilege: INSERT, Is Grantable: NO",
+        "Table Cat: connector_test, Table Schem: null, Table Name: privileges_table, Column Name: c2, Grantor: null, Grantee: 'ldbc'@'%', Privilege: SELECT, Is Grantable: NO"
       )
     )
   }
 
   test("The result of retrieving table privileges information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getTablePrivileges(None, None, Some("privileges_table"))
@@ -1223,18 +454,8 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving best row identifier information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getBestRowIdentifier(None, Some("connector_test"), "privileges_table", None, None)
@@ -1259,17 +480,8 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving version columns information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
           resultSet <- metaData.getVersionColumns(None, Some("connector_test"), "privileges_table")
@@ -1294,20 +506,11 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving primary key information matches the specified value.") {
-    val connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getPrimaryKeys(None, Some("connector_test"), "privileges_table")
+          resultSet <- metaData.getPrimaryKeys(Some("connector_test"), None, "privileges_table")
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1327,21 +530,11 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving imported key information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getImportedKeys(None, Some("world"), "city")
+          resultSet <- metaData.getImportedKeys(Some("world"), None, "city")
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1363,27 +556,17 @@ class ConnectionTest extends FTestPlatform:
           builder.result()
       },
       Vector(
-        "PK Table Cat: def, PK Table Schem: world, PK Table Name: country, PK Column Name: Code, FK Table Cat: def, FK Table Schem: world, FK Table Name: city, FK Column Name: CountryCode, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: city_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
+        "PK Table Cat: world, PK Table Schem: null, PK Table Name: country, PK Column Name: Code, FK Table Cat: world, FK Table Schem: null, FK Table Name: city, FK Column Name: CountryCode, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: city_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
       )
     )
   }
 
   test("The result of retrieving exported key information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getExportedKeys(None, Some("world"), "city")
+          resultSet <- metaData.getExportedKeys(Some("world"), None, "city")
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1405,28 +588,18 @@ class ConnectionTest extends FTestPlatform:
           builder.result()
       },
       Vector(
-        "PK Table Cat: def, PK Table Schem: world, PK Table Name: city, PK Column Name: ID, FK Table Cat: def, FK Table Schem: world, FK Table Name: government_office, FK Column Name: CityID, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: government_office_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
+        "PK Table Cat: world, PK Table Schem: null, PK Table Name: city, PK Column Name: ID, FK Table Cat: world, FK Table Schem: null, FK Table Name: government_office, FK Column Name: CityID, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: government_office_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
       )
     )
   }
 
   test("The result of retrieving cross reference information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData <- conn.getMetaData()
           resultSet <-
-            metaData.getCrossReference(None, Some("world"), "city", None, Some("world"), Some("government_office"))
+            metaData.getCrossReference(Some("world"), None, "city", Some("world"), None, Some("government_office"))
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1448,24 +621,14 @@ class ConnectionTest extends FTestPlatform:
           builder.result()
       },
       Vector(
-        "PK Table Cat: def, PK Table Schem: world, PK Table Name: city, PK Column Name: ID, FK Table Cat: def, FK Table Schem: world, FK Table Name: government_office, FK Column Name: CityID, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: government_office_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
+        "PK Table Cat: world, PK Table Schem: null, PK Table Name: city, PK Column Name: ID, FK Table Cat: world, FK Table Schem: null, FK Table Name: government_office, FK Column Name: CityID, Key Seq: 1, Update Rule: 1, Delete Rule: 1, FK Name: government_office_ibfk_1, PK Name: PRIMARY, Deferrability: 7"
       )
     )
   }
 
   test("The result of retrieving type information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData <- conn.getMetaData()
           resultSet = metaData.getTypeInfo()
@@ -1543,22 +706,12 @@ class ConnectionTest extends FTestPlatform:
   }
 
   test("The result of retrieving index information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      database     = Some("connector_test"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData <- conn.getMetaData()
           resultSet <-
-            metaData.getIndexInfo(None, Some("world"), Some("city"), true, true)
+            metaData.getIndexInfo(Some("world"), None, Some("city"), true, true)
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1578,26 +731,17 @@ class ConnectionTest extends FTestPlatform:
           builder.result()
       },
       Vector(
-        "Table Cat: def, Table Schem: world, Table Name: city, Non Unique: false, Index Qualifier: null, Index Name: PRIMARY, Type: 3, Ordinal Position: 1, Column Name: ID, Asc Or Desc: A, Pages: 0, Filter Condition: null"
+        "Table Cat: world, Table Schem: null, Table Name: city, Non Unique: false, Index Qualifier: null, Index Name: PRIMARY, Type: 3, Ordinal Position: 1, Column Name: ID, Asc Or Desc: A, Pages: 0, Filter Condition: null"
       )
     )
   }
 
   test("The result of retrieving function information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getFunctions(None, Some("sys"), None)
+          resultSet <- metaData.getFunctions(Some("sys"), None, None)
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1610,47 +754,38 @@ class ConnectionTest extends FTestPlatform:
           builder.result()
       },
       Vector(
-        "Function Cat: def, Function Schem: sys, Function Name: extract_schema_from_file_name, Function Type: 1, Specific Name: extract_schema_from_file_name",
-        "Function Cat: def, Function Schem: sys, Function Name: extract_table_from_file_name, Function Type: 1, Specific Name: extract_table_from_file_name",
-        "Function Cat: def, Function Schem: sys, Function Name: format_bytes, Function Type: 1, Specific Name: format_bytes",
-        "Function Cat: def, Function Schem: sys, Function Name: format_path, Function Type: 1, Specific Name: format_path",
-        "Function Cat: def, Function Schem: sys, Function Name: format_statement, Function Type: 1, Specific Name: format_statement",
-        "Function Cat: def, Function Schem: sys, Function Name: format_time, Function Type: 1, Specific Name: format_time",
-        "Function Cat: def, Function Schem: sys, Function Name: list_add, Function Type: 1, Specific Name: list_add",
-        "Function Cat: def, Function Schem: sys, Function Name: list_drop, Function Type: 1, Specific Name: list_drop",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_account_enabled, Function Type: 1, Specific Name: ps_is_account_enabled",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_consumer_enabled, Function Type: 1, Specific Name: ps_is_consumer_enabled",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_enabled, Function Type: 1, Specific Name: ps_is_instrument_default_enabled",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_timed, Function Type: 1, Specific Name: ps_is_instrument_default_timed",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_thread_instrumented, Function Type: 1, Specific Name: ps_is_thread_instrumented",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_account, Function Type: 1, Specific Name: ps_thread_account",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_id, Function Type: 1, Specific Name: ps_thread_id",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_stack, Function Type: 1, Specific Name: ps_thread_stack",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_trx_info, Function Type: 1, Specific Name: ps_thread_trx_info",
-        "Function Cat: def, Function Schem: sys, Function Name: quote_identifier, Function Type: 1, Specific Name: quote_identifier",
-        "Function Cat: def, Function Schem: sys, Function Name: sys_get_config, Function Type: 1, Specific Name: sys_get_config",
-        "Function Cat: def, Function Schem: sys, Function Name: version_major, Function Type: 1, Specific Name: version_major",
-        "Function Cat: def, Function Schem: sys, Function Name: version_minor, Function Type: 1, Specific Name: version_minor",
-        "Function Cat: def, Function Schem: sys, Function Name: version_patch, Function Type: 1, Specific Name: version_patch"
+        "Function Cat: sys, Function Schem: null, Function Name: extract_schema_from_file_name, Function Type: 1, Specific Name: extract_schema_from_file_name",
+        "Function Cat: sys, Function Schem: null, Function Name: extract_table_from_file_name, Function Type: 1, Specific Name: extract_table_from_file_name",
+        "Function Cat: sys, Function Schem: null, Function Name: format_bytes, Function Type: 1, Specific Name: format_bytes",
+        "Function Cat: sys, Function Schem: null, Function Name: format_path, Function Type: 1, Specific Name: format_path",
+        "Function Cat: sys, Function Schem: null, Function Name: format_statement, Function Type: 1, Specific Name: format_statement",
+        "Function Cat: sys, Function Schem: null, Function Name: format_time, Function Type: 1, Specific Name: format_time",
+        "Function Cat: sys, Function Schem: null, Function Name: list_add, Function Type: 1, Specific Name: list_add",
+        "Function Cat: sys, Function Schem: null, Function Name: list_drop, Function Type: 1, Specific Name: list_drop",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_account_enabled, Function Type: 1, Specific Name: ps_is_account_enabled",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_consumer_enabled, Function Type: 1, Specific Name: ps_is_consumer_enabled",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_instrument_default_enabled, Function Type: 1, Specific Name: ps_is_instrument_default_enabled",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_instrument_default_timed, Function Type: 1, Specific Name: ps_is_instrument_default_timed",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_thread_instrumented, Function Type: 1, Specific Name: ps_is_thread_instrumented",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_account, Function Type: 1, Specific Name: ps_thread_account",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_id, Function Type: 1, Specific Name: ps_thread_id",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_stack, Function Type: 1, Specific Name: ps_thread_stack",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_trx_info, Function Type: 1, Specific Name: ps_thread_trx_info",
+        "Function Cat: sys, Function Schem: null, Function Name: quote_identifier, Function Type: 1, Specific Name: quote_identifier",
+        "Function Cat: sys, Function Schem: null, Function Name: sys_get_config, Function Type: 1, Specific Name: sys_get_config",
+        "Function Cat: sys, Function Schem: null, Function Name: version_major, Function Type: 1, Specific Name: version_major",
+        "Function Cat: sys, Function Schem: null, Function Name: version_minor, Function Type: 1, Specific Name: version_minor",
+        "Function Cat: sys, Function Schem: null, Function Name: version_patch, Function Type: 1, Specific Name: version_patch"
       )
     )
   }
 
   test("The result of retrieving function column information matches the specified value.") {
-    val connection = Connection[IO](
-      host         = "127.0.0.1",
-      port         = 13306,
-      user         = "ldbc",
-      password     = Some("password"),
-      ssl          = SSL.Trusted,
-      databaseTerm = Some(DatabaseMetaData.DatabaseTerm.SCHEMA)
-    )
-
     assertIO(
-      connection.use { conn =>
+      connection().use { conn =>
         for
           metaData  <- conn.getMetaData()
-          resultSet <- metaData.getFunctionColumns(None, Some("sys"), None, Some("in_host"))
+          resultSet <- metaData.getFunctionColumns(Some("sys"), None, None, Some("in_host"))
         yield
           val builder = Vector.newBuilder[String]
           while resultSet.next() do
@@ -1676,29 +811,73 @@ class ConnectionTest extends FTestPlatform:
           builder.result()
       },
       Vector(
-        "Function Cat: def, Function Schem: sys, Function Name: extract_schema_from_file_name, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: YES, Specific Name: extract_schema_from_file_name",
-        "Function Cat: def, Function Schem: sys, Function Name: extract_table_from_file_name, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: YES, Specific Name: extract_table_from_file_name",
-        "Function Cat: def, Function Schem: sys, Function Name: format_bytes, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_bytes",
-        "Function Cat: def, Function Schem: sys, Function Name: format_path, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 512, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2048, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_path",
-        "Function Cat: def, Function Schem: sys, Function Name: format_statement, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_statement",
-        "Function Cat: def, Function Schem: sys, Function Name: format_time, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_time",
-        "Function Cat: def, Function Schem: sys, Function Name: list_add, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: list_add",
-        "Function Cat: def, Function Schem: sys, Function Name: list_drop, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: list_drop",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_account_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_account_enabled",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_account_enabled, Column Name: in_host, Column Type: 1, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 255, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 1020, Ordinal Position: 1, Is Nullable: YES, Specific Name: ps_is_account_enabled",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_consumer_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_consumer_enabled",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_instrument_default_enabled",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_instrument_default_timed, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_instrument_default_timed",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_is_thread_instrumented, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 7, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 28, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_thread_instrumented",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_account, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_account",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_id, Column Name: , Column Type: 4, Data Type: -5, Type Name: BIGINT UNSIGNED, Precision: 20, Length: 20, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_id",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_stack, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_stack",
-        "Function Cat: def, Function Schem: sys, Function Name: ps_thread_trx_info, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_trx_info",
-        "Function Cat: def, Function Schem: sys, Function Name: quote_identifier, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: quote_identifier",
-        "Function Cat: def, Function Schem: sys, Function Name: sys_get_config, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 128, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 512, Ordinal Position: 0, Is Nullable: YES, Specific Name: sys_get_config",
-        "Function Cat: def, Function Schem: sys, Function Name: version_major, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_major",
-        "Function Cat: def, Function Schem: sys, Function Name: version_minor, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_minor",
-        "Function Cat: def, Function Schem: sys, Function Name: version_patch, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_patch"
+        "Function Cat: sys, Function Schem: null, Function Name: extract_schema_from_file_name, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: YES, Specific Name: extract_schema_from_file_name",
+        "Function Cat: sys, Function Schem: null, Function Name: extract_table_from_file_name, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 64, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 256, Ordinal Position: 0, Is Nullable: YES, Specific Name: extract_table_from_file_name",
+        "Function Cat: sys, Function Schem: null, Function Name: format_bytes, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_bytes",
+        "Function Cat: sys, Function Schem: null, Function Name: format_path, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 512, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2048, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_path",
+        "Function Cat: sys, Function Schem: null, Function Name: format_statement, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_statement",
+        "Function Cat: sys, Function Schem: null, Function Name: format_time, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: format_time",
+        "Function Cat: sys, Function Schem: null, Function Name: list_add, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: list_add",
+        "Function Cat: sys, Function Schem: null, Function Name: list_drop, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: list_drop",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_account_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_account_enabled",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_account_enabled, Column Name: in_host, Column Type: 1, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 255, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 1020, Ordinal Position: 1, Is Nullable: YES, Specific Name: ps_is_account_enabled",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_consumer_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_consumer_enabled",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_instrument_default_enabled, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_instrument_default_enabled",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_instrument_default_timed, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 12, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_instrument_default_timed",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_is_thread_instrumented, Column Name: , Column Type: 4, Data Type: 1, Type Name: ENUM, Precision: 0, Length: 7, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 28, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_is_thread_instrumented",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_account, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_account",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_id, Column Name: , Column Type: 4, Data Type: -5, Type Name: BIGINT UNSIGNED, Precision: 20, Length: 20, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_id",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_stack, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_stack",
+        "Function Cat: sys, Function Schem: null, Function Name: ps_thread_trx_info, Column Name: , Column Type: 4, Data Type: -1, Type Name: LONGTEXT, Precision: 0, Length: 2147483647, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 2147483647, Ordinal Position: 0, Is Nullable: YES, Specific Name: ps_thread_trx_info",
+        "Function Cat: sys, Function Schem: null, Function Name: quote_identifier, Column Name: , Column Type: 4, Data Type: -1, Type Name: TEXT, Precision: 0, Length: 65535, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 65535, Ordinal Position: 0, Is Nullable: YES, Specific Name: quote_identifier",
+        "Function Cat: sys, Function Schem: null, Function Name: sys_get_config, Column Name: , Column Type: 4, Data Type: 12, Type Name: VARCHAR, Precision: 0, Length: 128, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 512, Ordinal Position: 0, Is Nullable: YES, Specific Name: sys_get_config",
+        "Function Cat: sys, Function Schem: null, Function Name: version_major, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_major",
+        "Function Cat: sys, Function Schem: null, Function Name: version_minor, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_minor",
+        "Function Cat: sys, Function Schem: null, Function Name: version_patch, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_patch"
+      )
+    )
+  }
+
+  test("The result of retrieving columns information matches the specified value.") {
+    assertIO(
+      connection("SCHEMA").use { conn =>
+        for
+          metaData  <- conn.getMetaData()
+          resultSet <- metaData.getColumns(None, None, Some("privileges_table"), None)
+        yield
+          val builder = Vector.newBuilder[String]
+          while resultSet.next() do
+            val tableCat          = resultSet.getString("TABLE_CAT")
+            val tableSchem        = resultSet.getString("TABLE_SCHEM")
+            val tableName         = resultSet.getString("TABLE_NAME")
+            val columnName        = resultSet.getString("COLUMN_NAME")
+            val dataType          = resultSet.getInt("DATA_TYPE")
+            val typeName          = resultSet.getString("TYPE_NAME")
+            val columnSize        = resultSet.getInt("COLUMN_SIZE")
+            val bufferLength      = resultSet.getInt("BUFFER_LENGTH")
+            val decimalDigits     = resultSet.getInt("DECIMAL_DIGITS")
+            val numPrecRadix      = resultSet.getInt("NUM_PREC_RADIX")
+            val nullable          = resultSet.getInt("NULLABLE")
+            val remarks           = resultSet.getString("REMARKS")
+            val columnDef         = resultSet.getString("COLUMN_DEF")
+            val sqlDataType       = resultSet.getInt("SQL_DATA_TYPE")
+            val sqlDatetimeSub    = resultSet.getInt("SQL_DATETIME_SUB")
+            val charOctetLength   = resultSet.getInt("CHAR_OCTET_LENGTH")
+            val ordinalPosition   = resultSet.getInt("ORDINAL_POSITION")
+            val isNullable        = resultSet.getString("IS_NULLABLE")
+            val scopeCatalog      = resultSet.getString("SCOPE_CATALOG")
+            val scopeSchema       = resultSet.getString("SCOPE_SCHEMA")
+            val scopeTable        = resultSet.getString("SCOPE_TABLE")
+            val sourceDataType    = resultSet.getShort("SOURCE_DATA_TYPE")
+            val isAutoincrement   = resultSet.getString("IS_AUTOINCREMENT")
+            val isGeneratedcolumn = resultSet.getString("IS_GENERATEDCOLUMN")
+            builder += s"Table Cat: $tableCat, Table Schem: $tableSchem, Table Name: $tableName, Column Name: $columnName, Data Type: $dataType, Type Name: $typeName, Column Size: $columnSize, Buffer Length: $bufferLength, Decimal Digits: $decimalDigits, Num Prec Radix: $numPrecRadix, Nullable: $nullable, Remarks: $remarks, Column Def: $columnDef, SQL Data Type: $sqlDataType, SQL Datetime Sub: $sqlDatetimeSub, Char Octet Length: $charOctetLength, Ordinal Position: $ordinalPosition, Is Nullable: $isNullable, Scope Catalog: $scopeCatalog, Scope Schema: $scopeSchema, Scope Table: $scopeTable, Source Data Type: $sourceDataType, Is Autoincrement: $isAutoincrement, Is Generatedcolumn: $isGeneratedcolumn"
+          builder.result()
+      },
+      Vector(
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c1, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: null, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 1, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: NO",
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: c2, Data Type: 4, Type Name: INT, Column Size: 10, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: null, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 2, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: NO",
+        "Table Cat: def, Table Schem: connector_test, Table Name: privileges_table, Column Name: updated_at, Data Type: 93, Type Name: TIMESTAMP, Column Size: 19, Buffer Length: 65535, Decimal Digits: 0, Num Prec Radix: 10, Nullable: 0, Remarks: , Column Def: CURRENT_TIMESTAMP, SQL Data Type: 0, SQL Datetime Sub: 0, Char Octet Length: 0, Ordinal Position: 3, Is Nullable: NO, Scope Catalog: null, Scope Schema: null, Scope Table: null, Source Data Type: 0, Is Autoincrement: NO, Is Generatedcolumn: YES"
       )
     )
   }

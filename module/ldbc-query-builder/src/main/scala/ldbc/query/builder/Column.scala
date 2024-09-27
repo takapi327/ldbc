@@ -8,7 +8,9 @@ package ldbc.query.builder
 
 import scala.annotation.targetName
 
+import ldbc.sql.ResultSet
 import ldbc.dsl.*
+import ldbc.dsl.codec.{ Encoder, Decoder }
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.statement.Expression.*
 import ldbc.query.builder.interpreter.Extract
@@ -30,7 +32,12 @@ trait Column[T]:
   /** Functions for setting aliases on columns */
   def as(name: String): Column[T]
 
-  def count: Column.Count = Column.Count(name)
+  /** Function to get a value of type T from a ResultSet */
+  def decoder: Decoder[T]
+
+  def opt: Column[Option[T]] = Column.Opt[T](name, alias, decoder)
+
+  def count(using decoder: Decoder.Elem[Int]): Column.Count = Column.Count(name)
 
   def asc:  OrderBy.Order[T] = OrderBy.Order.Asc(this)
   def desc: OrderBy.Order[T] = OrderBy.Order.Desc(this)
@@ -38,7 +45,7 @@ trait Column[T]:
   private lazy val noBagQuotLabel: String =
     alias.fold(name)(as => s"$as.$name")
 
-  def _equals(value: Extract[T])(using Parameter[Extract[T]]): MatchCondition[T] =
+  def _equals(value: Extract[T])(using Encoder[Extract[T]]): MatchCondition[T] =
     MatchCondition[T](noBagQuotLabel, false, value)
 
   /**
@@ -55,9 +62,9 @@ trait Column[T]:
    *   A query to check whether the values match in a Where statement
    */
   @targetName("matchCondition")
-  def ===(value: Extract[T])(using Parameter[Extract[T]]): MatchCondition[T] = _equals(value)
+  def ===(value: Extract[T])(using Encoder[Extract[T]]): MatchCondition[T] = _equals(value)
 
-  def orMore(value: Extract[T])(using Parameter[Extract[T]]): OrMore[T] =
+  def orMore(value: Extract[T])(using Encoder[Extract[T]]): OrMore[T] =
     OrMore[T](noBagQuotLabel, false, value)
 
   /**
@@ -74,9 +81,9 @@ trait Column[T]:
    *   A query to check whether the values are greater than or equal to in a Where statement
    */
   @targetName("_orMore")
-  def >=(value: Extract[T])(using Parameter[Extract[T]]): OrMore[T] = orMore(value)
+  def >=(value: Extract[T])(using Encoder[Extract[T]]): OrMore[T] = orMore(value)
 
-  def over(value: Extract[T])(using Parameter[Extract[T]]): Over[T] =
+  def over(value: Extract[T])(using Encoder[Extract[T]]): Over[T] =
     Over[T](noBagQuotLabel, false, value)
 
   /**
@@ -93,9 +100,9 @@ trait Column[T]:
    *   A query to check whether the values are greater than in a Where statement
    */
   @targetName("_over")
-  def >(value: Extract[T])(using Parameter[Extract[T]]): Over[T] = over(value)
+  def >(value: Extract[T])(using Encoder[Extract[T]]): Over[T] = over(value)
 
-  def lessThanOrEqual(value: Extract[T])(using Parameter[Extract[T]]): LessThanOrEqualTo[T] =
+  def lessThanOrEqual(value: Extract[T])(using Encoder[Extract[T]]): LessThanOrEqualTo[T] =
     LessThanOrEqualTo[T](noBagQuotLabel, false, value)
 
   /**
@@ -112,9 +119,9 @@ trait Column[T]:
    *   A query to check whether the values are less than or equal to in a Where statement
    */
   @targetName("_lessThanOrEqual")
-  def <=(value: Extract[T])(using Parameter[Extract[T]]): LessThanOrEqualTo[T] = lessThanOrEqual(value)
+  def <=(value: Extract[T])(using Encoder[Extract[T]]): LessThanOrEqualTo[T] = lessThanOrEqual(value)
 
-  def lessThan(value: Extract[T])(using Parameter[Extract[T]]): LessThan[T] =
+  def lessThan(value: Extract[T])(using Encoder[Extract[T]]): LessThan[T] =
     LessThan[T](noBagQuotLabel, false, value)
 
   /**
@@ -131,9 +138,9 @@ trait Column[T]:
    *   A query to check whether the values are less than in a Where statement
    */
   @targetName("_lessThan")
-  def <(value: Extract[T])(using Parameter[Extract[T]]): LessThan[T] = lessThan(value)
+  def <(value: Extract[T])(using Encoder[Extract[T]]): LessThan[T] = lessThan(value)
 
-  def notEqual(value: Extract[T])(using Parameter[Extract[T]]): NotEqual[T] =
+  def notEqual(value: Extract[T])(using Encoder[Extract[T]]): NotEqual[T] =
     NotEqual[T]("<>", noBagQuotLabel, false, value)
 
   /**
@@ -150,7 +157,7 @@ trait Column[T]:
    *   A query to check whether the values are not equal in a Where statement
    */
   @targetName("_notEqual")
-  def <>(value: Extract[T])(using Parameter[Extract[T]]): NotEqual[T] = notEqual(value)
+  def <>(value: Extract[T])(using Encoder[Extract[T]]): NotEqual[T] = notEqual(value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are not equal in a SELECT statement.
@@ -166,7 +173,7 @@ trait Column[T]:
    *   A query to check whether the values are not equal in a Where statement
    */
   @targetName("_!equal")
-  def !==(value: Extract[T])(using Parameter[Extract[T]]): NotEqual[T] =
+  def !==(value: Extract[T])(using Encoder[Extract[T]]): NotEqual[T] =
     NotEqual[T]("!=", noBagQuotLabel, false, value)
 
   /**
@@ -187,7 +194,7 @@ trait Column[T]:
   def IS[A <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: A): Is[A] =
     Is[A](noBagQuotLabel, false, value)
 
-  def nullSafeEqual(value: Extract[T])(using Parameter[Extract[T]]): NullSafeEqual[T] =
+  def nullSafeEqual(value: Extract[T])(using Encoder[Extract[T]]): NullSafeEqual[T] =
     NullSafeEqual[T](noBagQuotLabel, false, value)
 
   /**
@@ -204,7 +211,7 @@ trait Column[T]:
    *   A query to check whether the values are equal in a Where statement
    */
   @targetName("_nullSafeEqual")
-  def <=>(value: Extract[T])(using Parameter[Extract[T]]): NullSafeEqual[T] = nullSafeEqual(value)
+  def <=>(value: Extract[T])(using Encoder[Extract[T]]): NullSafeEqual[T] = nullSafeEqual(value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
@@ -219,7 +226,7 @@ trait Column[T]:
    * @return
    *   A query to check whether the values are equal in a Where statement
    */
-  def IN(value: Extract[T]*)(using Parameter[Extract[T]]): In[T] =
+  def IN(value: Extract[T]*)(using Encoder[Extract[T]]): In[T] =
     In[T](noBagQuotLabel, false, value*)
 
   /**
@@ -237,7 +244,7 @@ trait Column[T]:
    * @return
    *   A query to check whether the value is included in a specified range in a Where statement
    */
-  def BETWEEN(start: Extract[T], end: Extract[T])(using Parameter[Extract[T]]): Between[T] =
+  def BETWEEN(start: Extract[T], end: Extract[T])(using Encoder[Extract[T]]): Between[T] =
     Between[T](noBagQuotLabel, false, start, end)
 
   /**
@@ -253,7 +260,7 @@ trait Column[T]:
    * @return
    *   A query to check a value with an ambiguous search in a Where statement
    */
-  def LIKE(value: Extract[T])(using Parameter[Extract[T]]): Like[T] =
+  def LIKE(value: Extract[T])(using Encoder[Extract[T]]): Like[T] =
     Like[T](noBagQuotLabel, false, value)
 
   /**
@@ -271,7 +278,7 @@ trait Column[T]:
    * @return
    *   A query to check a value with an ambiguous search in a Where statement
    */
-  def LIKE_ESCAPE(like: Extract[T], escape: Extract[T])(using Parameter[Extract[T]]): LikeEscape[T] =
+  def LIKE_ESCAPE(like: Extract[T], escape: Extract[T])(using Encoder[Extract[T]]): LikeEscape[T] =
     LikeEscape[T](noBagQuotLabel, false, like, escape)
 
   /**
@@ -287,10 +294,10 @@ trait Column[T]:
    * @return
    *   A query to check values in a regular expression in a Where statement
    */
-  def REGEXP(value: Extract[T])(using Parameter[Extract[T]]): Regexp[T] =
+  def REGEXP(value: Extract[T])(using Encoder[Extract[T]]): Regexp[T] =
     Regexp[T](noBagQuotLabel, false, value)
 
-  def leftShift(value: Extract[T])(using Parameter[Extract[T]]): LeftShift[T] =
+  def leftShift(value: Extract[T])(using Encoder[Extract[T]]): LeftShift[T] =
     LeftShift[T](noBagQuotLabel, false, value)
 
   /**
@@ -307,9 +314,9 @@ trait Column[T]:
    *   A query to check whether the values are shifted to the left in a Where statement
    */
   @targetName("_leftShift")
-  def <<(value: Extract[T])(using Parameter[Extract[T]]): LeftShift[T] = leftShift(value)
+  def <<(value: Extract[T])(using Encoder[Extract[T]]): LeftShift[T] = leftShift(value)
 
-  def rightShift(value: Extract[T])(using Parameter[Extract[T]]): RightShift[T] =
+  def rightShift(value: Extract[T])(using Encoder[Extract[T]]): RightShift[T] =
     RightShift[T](noBagQuotLabel, false, value)
 
   /**
@@ -326,7 +333,7 @@ trait Column[T]:
    *   A query to check whether the values are shifted to the right in a Where statement
    */
   @targetName("_rightShift")
-  def >>(value: Extract[T])(using Parameter[Extract[T]]): RightShift[T] = rightShift(value)
+  def >>(value: Extract[T])(using Encoder[Extract[T]]): RightShift[T] = rightShift(value)
 
   /**
    * A function to set a WHERE condition to check whether the values are added in a SELECT statement.
@@ -343,7 +350,7 @@ trait Column[T]:
    * @return
    *   A query to check whether the values are added in a Where statement
    */
-  def DIV(cond: Extract[T], result: Extract[T])(using Parameter[Extract[T]]): Div[T] =
+  def DIV(cond: Extract[T], result: Extract[T])(using Encoder[Extract[T]]): Div[T] =
     Div[T](noBagQuotLabel, false, cond, result)
 
   /**
@@ -361,10 +368,10 @@ trait Column[T]:
    * @return
    *   A query to check the modulo operation in a Where statement
    */
-  def MOD(cond: Extract[T], result: Extract[T])(using Parameter[Extract[T]]): Mod[T] =
+  def MOD(cond: Extract[T], result: Extract[T])(using Encoder[Extract[T]]): Mod[T] =
     Mod[T]("MOD", noBagQuotLabel, false, cond, result)
 
-  def mod(cond: Extract[T], result: Extract[T])(using Parameter[Extract[T]]): Mod[T] =
+  def mod(cond: Extract[T], result: Extract[T])(using Encoder[Extract[T]]): Mod[T] =
     Mod[T]("%", noBagQuotLabel, false, cond, result)
 
   /**
@@ -383,9 +390,9 @@ trait Column[T]:
    *   A query to check the modulo operation in a Where statement
    */
   @targetName("_mod")
-  def %(cond: Extract[T], result: Extract[T])(using Parameter[Extract[T]]): Mod[T] = mod(cond, result)
+  def %(cond: Extract[T], result: Extract[T])(using Encoder[Extract[T]]): Mod[T] = mod(cond, result)
 
-  def bitXOR(value: Extract[T])(using Parameter[Extract[T]]): BitXOR[T] =
+  def bitXOR(value: Extract[T])(using Encoder[Extract[T]]): BitXOR[T] =
     BitXOR[T](noBagQuotLabel, false, value)
 
   /**
@@ -402,9 +409,9 @@ trait Column[T]:
    *   A query to check the bitwise XOR operation in a Where statement
    */
   @targetName("_bitXOR")
-  def ^(value: Extract[T])(using Parameter[Extract[T]]): BitXOR[T] = bitXOR(value)
+  def ^(value: Extract[T])(using Encoder[Extract[T]]): BitXOR[T] = bitXOR(value)
 
-  def bitFlip(value: Extract[T])(using Parameter[Extract[T]]): BitFlip[T] =
+  def bitFlip(value: Extract[T])(using Encoder[Extract[T]]): BitFlip[T] =
     BitFlip[T](noBagQuotLabel, false, value)
 
   /**
@@ -421,9 +428,9 @@ trait Column[T]:
    *   A query to check the bitwise NOT operation in a Where statement
    */
   @targetName("_bitFlip")
-  def ~(value: Extract[T])(using Parameter[Extract[T]]): BitFlip[T] = bitFlip(value)
+  def ~(value: Extract[T])(using Encoder[Extract[T]]): BitFlip[T] = bitFlip(value)
 
-  def combine(other: Column[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("+", this, other)
+  def combine(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("+", this, other)
 
   /**
    * A function to combine columns in a SELECT statement.
@@ -439,9 +446,9 @@ trait Column[T]:
    *   A query to combine columns in a SELECT statement
    */
   @targetName("_combine")
-  def ++(other: Column[T]): Column.MultiColumn[T] = combine(other)
+  def ++(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = combine(other)
 
-  def deduct(other: Column[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("-", this, other)
+  def deduct(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("-", this, other)
 
   /**
    * A function to subtract columns in a SELECT statement.
@@ -457,9 +464,9 @@ trait Column[T]:
    *   A query to subtract columns in a SELECT statement
    */
   @targetName("_deduct")
-  def --(other: Column[T]): Column.MultiColumn[T] = deduct(other)
+  def --(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = deduct(other)
 
-  def multiply(other: Column[T]): Column.MultiColumn[T] =
+  def multiply(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] =
     Column.MultiColumn[T]("*", this, other)
 
   /**
@@ -476,9 +483,9 @@ trait Column[T]:
    *   A query to multiply columns in a SELECT statement
    */
   @targetName("_multiply")
-  def *(other: Column[T]): Column.MultiColumn[T] = multiply(other)
+  def *(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = multiply(other)
 
-  def smash(other: Column[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("/", this, other)
+  def smash(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("/", this, other)
 
   /**
    * A function to divide columns in a SELECT statement.
@@ -494,7 +501,7 @@ trait Column[T]:
    *   A query to divide columns in a SELECT statement
    */
   @targetName("_smash")
-  def /(other: Column[T]): Column.MultiColumn[T] = smash(other)
+  def /(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = smash(other)
 
   /** List of sub query methods */
   def _equals(value: SQL): SubQuery[T] =
@@ -584,7 +591,7 @@ trait Column[T]:
   @targetName("join!Equal")
   def !==(other: Column[?]): Expression = JoinQuery("!=", this, other)
 
-  override def toString: String = alias.fold(s"`$name`")(label => s"$label.`$name`")
+  override def toString: String = alias.fold(name)(label => s"$label.$name")
 
 object Column:
 
@@ -596,16 +603,38 @@ object Column:
   private[ldbc] case class Impl[T](
     name:  String,
     alias: Option[String]
-  ) extends Column[T]:
+  )(using elem: Decoder.Elem[T])
+    extends Column[T]:
     override def as(name: String): Column[T] = Impl[T](this.name, Some(name))
+    override def decoder: Decoder[T] =
+      (resultSet: ResultSet, prefix: Option[String]) =>
+        val column = prefix.orElse(alias).map(_ + ".").getOrElse("") + name
+        elem.decode(resultSet, column)
 
-  private[ldbc] case class MultiColumn[T](flag: String, left: Column[T], right: Column[T], alias: Option[String] = None)
+  private[ldbc] case class Opt[T](
+    name:     String,
+    alias:    Option[String],
+    _decoder: Decoder[T]
+  ) extends Column[Option[T]]:
+    override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(name), _decoder)
+    override def decoder: Decoder[Option[T]] =
+      (resultSet: ResultSet, prefix: Option[String]) => Option(_decoder.decode(resultSet, prefix.orElse(alias)))
+
+  private[ldbc] case class MultiColumn[T](
+    flag:  String,
+    left:  Column[T],
+    right: Column[T],
+    alias: Option[String] = None
+  )(using elem: Decoder.Elem[T])
     extends Column[T]:
     override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
+    override def decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
+      elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
 
-  private[ldbc] case class Count(_name: String) extends Column[Int]:
+  private[ldbc] case class Count(_name: String)(using elem: Decoder.Elem[Int]) extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
     override def alias:            Option[String] = None
     override def as(name: String): Column[Int]    = this.copy(name)
-    override def toString:         String         = name
+    override def decoder:  Decoder[Int] = (resultSet: ResultSet, prefix: Option[String]) => elem.decode(resultSet, name)
+    override def toString: String       = name

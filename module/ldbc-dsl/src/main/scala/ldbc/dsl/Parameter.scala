@@ -6,170 +6,57 @@
 
 package ldbc.dsl
 
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneId, ZonedDateTime }
-
-import scala.compiletime.*
+import java.time.*
 
 import ldbc.sql.PreparedStatement
+import ldbc.dsl.codec.Encoder
 
 /**
  * Trait for setting Scala and Java values to PreparedStatement.
- *
- * @tparam T
- *   Scala and Java types available in PreparedStatement.
  */
-trait Parameter[-T]:
+trait Parameter:
 
-  /**
-   * Methods for setting Scala and Java values to the specified position in PreparedStatement.
-   *
-   * @param statement
-   *   An object that represents a precompiled SQL statement.
-   * @param index
-   *   the first parameter is 1, the second is 2, ...
-   * @param value
-   *   the parameter value
-   * @tparam F
-   *   The effect type
-   */
-  def bind[F[_]](statement: PreparedStatement[F], index: Int, value: T): F[Unit]
+  /** Query parameters to be plugged into the Statement. */
+  def value: String
 
 object Parameter:
 
-  trait Binder:
+  case class Static(value: String) extends Parameter:
+    override def toString: String = value
 
-    /** Query parameters to be plugged into the Statement. */
-    def parameter: String
-
-  case class StaticBinder(parameter: String) extends Binder:
-    override def toString: String = parameter
-
-  trait DynamicBinder extends Binder:
+  trait Dynamic extends Parameter:
 
     /**
      * Methods for setting Scala and Java values to the specified position in PreparedStatement.
      *
      * @param statement
-     * An object that represents a precompiled SQL statement.
+     *   An object that represents a precompiled SQL statement.
      * @param index
-     * the first parameter is 1, the second is 2, ...
+     *   the parameter value
      */
     def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit]
 
-  object DynamicBinder:
-    def apply[T](value: T)(using param: Parameter[T]): DynamicBinder =
-      new DynamicBinder:
-        override def parameter: String = value.toString
+  object Dynamic:
+
+    def apply[A](_value: A)(using encoder: Encoder[A]): Dynamic =
+      new Dynamic:
+        override def value: String = _value.toString
         override def bind[F[_]](statement: PreparedStatement[F], index: Int): F[Unit] =
-          param.bind(statement, index, value)
+          encoder.encode(_value) match
+            case value: Boolean       => statement.setBoolean(index, value)
+            case value: Byte          => statement.setByte(index, value)
+            case value: Short         => statement.setShort(index, value)
+            case value: Int           => statement.setInt(index, value)
+            case value: Long          => statement.setLong(index, value)
+            case value: Float         => statement.setFloat(index, value)
+            case value: Double        => statement.setDouble(index, value)
+            case value: BigDecimal    => statement.setBigDecimal(index, value)
+            case value: String        => statement.setString(index, value)
+            case value: Array[Byte]   => statement.setBytes(index, value)
+            case value: LocalTime     => statement.setTime(index, value)
+            case value: LocalDate     => statement.setDate(index, value)
+            case value: LocalDateTime => statement.setTimestamp(index, value)
+            case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
 
-  given [T](using Parameter[T]): Conversion[T, DynamicBinder] with
-    override def apply(x: T): DynamicBinder = DynamicBinder[T](x)
-
-  def convert[A, B](f: B => A)(using parameter: Parameter[A]): Parameter[B] = new Parameter[B]:
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: B): F[Unit] =
-      parameter.bind[F](statement, index, f(value))
-
-  given Parameter[Boolean] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Boolean): F[Unit] =
-      statement.setBoolean(index, value)
-
-  given Parameter[Byte] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Byte): F[Unit] =
-      statement.setByte(index, value)
-
-  given Parameter[Int] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Int): F[Unit] =
-      statement.setInt(index, value)
-
-  given Parameter[Short] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Short): F[Unit] =
-      statement.setShort(index, value)
-
-  given Parameter[Long] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Long): F[Unit] =
-      statement.setLong(index, value)
-
-  given Parameter[Float] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Float): F[Unit] =
-      statement.setFloat(index, value)
-
-  given Parameter[Double] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Double): F[Unit] =
-      statement.setDouble(index, value)
-
-  given Parameter[BigDecimal] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: BigDecimal): F[Unit] =
-      statement.setBigDecimal(index, value)
-
-  given Parameter[String] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: String): F[Unit] =
-      statement.setString(index, value)
-
-  given Parameter[Array[Byte]] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Array[Byte]): F[Unit] =
-      statement.setBytes(index, value)
-
-  given Parameter[LocalDate] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: LocalDate): F[Unit] =
-      statement.setDate(index, value)
-
-  given Parameter[LocalTime] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: LocalTime): F[Unit] =
-      statement.setTime(index, value)
-
-  given Parameter[LocalDateTime] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: LocalDateTime): F[Unit] =
-      statement.setTimestamp(index, value)
-
-  given Parameter[Instant] =
-    Parameter.convert(instant => LocalDateTime.ofInstant(instant, ZoneId.systemDefault()))
-
-  given Parameter[ZonedDateTime] = Parameter.convert(_.toInstant)
-
-  given Parameter[Object] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Object): F[Unit] =
-      statement.setObject(index, value)
-
-  given Parameter[Null] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Null): F[Unit] =
-      statement.setObject(index, value)
-
-  given Parameter[None.type] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: None.type): F[Unit] =
-      statement.setObject(index, null)
-
-  given [T](using parameter: Parameter[T], nullParameter: Parameter[Null]): Parameter[Option[T]] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Option[T]): F[Unit] =
-      value match
-        case Some(value) => parameter.bind(statement, index, value)
-        case None        => nullParameter.bind(statement, index, null)
-
-  given [T](using parameter: Parameter[String]): Parameter[List[T]] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: List[T]): F[Unit] =
-      parameter.bind(statement, index, value.mkString(","))
-
-  given [T](using parameter: Parameter[String]): Parameter[Seq[T]] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Seq[T]): F[Unit] =
-      parameter.bind(statement, index, value.mkString(","))
-
-  given [T](using parameter: Parameter[String]): Parameter[Set[T]] with
-    override def bind[F[_]](statement: PreparedStatement[F], index: Int, value: Set[T]): F[Unit] =
-      parameter.bind(statement, index, value.mkString(","))
-
-  type MapToTuple[T] <: Tuple = T match
-    case EmptyTuple      => EmptyTuple
-    case h *: EmptyTuple => Parameter[h] *: EmptyTuple
-    case h *: t          => Parameter[h] *: MapToTuple[t]
-
-  inline def infer[T]: Parameter[T] =
-    summonFrom[Parameter[T]] {
-      case parameter: Parameter[T] => parameter
-      case _                       => error("Parameter cannot be inferred")
-    }
-
-  inline def fold[T]: MapToTuple[T] =
-    inline erasedValue[T] match
-      case _: EmptyTuple        => EmptyTuple
-      case _: (h *: EmptyTuple) => infer[h] *: EmptyTuple
-      case _: (h *: t)          => infer[h] *: fold[t]
+  given [A](using Encoder[A]): Conversion[A, Dynamic] with
+    override def apply(value: A): Dynamic = Dynamic(value)

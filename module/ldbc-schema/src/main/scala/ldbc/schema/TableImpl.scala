@@ -10,8 +10,9 @@ import scala.annotation.targetName
 import scala.language.dynamics
 import scala.deriving.Mirror
 
+import ldbc.sql.ResultSet
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.{ Table, Column }
-
 import ldbc.schema.interpreter.*
 
 private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes0 <: Tuple](
@@ -20,7 +21,8 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
   columns:        Tuple.Map[ElemTypes0, Column],
   columnNames:    List[String],
   keyDefinitions: List[Key],
-  options:        List[TableOption | Character | Collate[String]]
+  options:        List[TableOption | Character | Collate[String]],
+  decoder:        Decoder[P]
 ) extends Table[P]:
 
   override type ElemLabels = ElemLabels0
@@ -113,6 +115,14 @@ object Table:
     name:    String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
   ): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
+    val decoder: Decoder[P] = (resultSet: ResultSet, prefix: Option[String]) =>
+      mirror.fromTuple(
+        Tuple
+          .fromArray(columns.toArray.map {
+            case column: Column[?] => column.decoder.decode(resultSet, prefix.orElse(Some(name)))
+          })
+          .asInstanceOf[mirror.MirroredElemTypes]
+      )
     TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes](
       _name   = name,
       _alias  = None,
@@ -121,5 +131,6 @@ object Table:
         case column: Column[?] => column.name
       },
       keyDefinitions = List.empty,
-      options        = List.empty
+      options        = List.empty,
+      decoder        = decoder
     )

@@ -110,7 +110,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "io.circe" %%% "circe-generic" % "0.14.9",
+      "io.circe" %%% "circe-generic" % "0.14.10",
       "io.circe" %%% "circe-yaml"    % "0.16.0"
     )
   )
@@ -138,12 +138,12 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-effect"       % "3.5.4",
-      "co.fs2"        %%% "fs2-core"          % "3.10.2",
-      "co.fs2"        %%% "fs2-io"            % "3.10.2",
+      "co.fs2"        %%% "fs2-core"          % "3.11.0",
+      "co.fs2"        %%% "fs2-io"            % "3.11.0",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.8.1",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.9.0",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
