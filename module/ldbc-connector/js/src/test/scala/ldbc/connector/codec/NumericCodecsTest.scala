@@ -8,14 +8,16 @@ package ldbc.connector.codec
 
 import munit.FunSuite
 
+import scodec.bits.BitVector
+
 import ldbc.connector.data.*
 import ldbc.connector.codec.all.*
 
 class NumericCodecsTest extends FunSuite:
 
   test("bit encode successfully") {
-    assertEquals(bit.encode(Byte.MinValue), List(Some(Encoded("-128", false))))
-    assertEquals(bit.encode(Byte.MaxValue), List(Some(Encoded("127", false))))
+    assertEquals(bit.encode(BitVector(Byte.MinValue)), List(Some(Encoded("-128", false))))
+    assertEquals(bit.encode(BitVector(Byte.MaxValue)), List(Some(Encoded("127", false))))
   }
 
   test("bit decode successfully") {

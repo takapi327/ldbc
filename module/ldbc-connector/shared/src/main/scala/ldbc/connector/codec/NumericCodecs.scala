@@ -53,7 +53,7 @@ trait NumericCodecs:
     "0.3.0"
   )
   def bit(size: Int): Codec[BitVector] = Codec.simple(
-    _.toBin,
+    _.toByte(false).toString,
     safe(Type.bit)(str =>
       BitVector.fromByte(
         if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
@@ -63,7 +63,7 @@ trait NumericCodecs:
     Type.bit(size)
   )
   val bit: Codec[BitVector] = Codec.simple(
-    _.toBin,
+    _.toByte(false).toString,
     safe(Type.bit)(str =>
       BitVector.fromByte(
         if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
