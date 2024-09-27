@@ -54,18 +54,22 @@ trait NumericCodecs:
   )
   def bit(size: Int): Codec[BitVector] = Codec.simple(
     _.toBin,
-    safe(Type.bit)(str => BitVector.fromByte(
-      if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
-      else str.toByte
-    )),
+    safe(Type.bit)(str =>
+      BitVector.fromByte(
+        if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
+        else str.toByte
+      )
+    ),
     Type.bit(size)
   )
   val bit: Codec[BitVector] = Codec.simple(
     _.toBin,
-    safe(Type.bit)(str => BitVector.fromByte(
-      if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
-      else str.toByte
-    )),
+    safe(Type.bit)(str =>
+      BitVector.fromByte(
+        if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
+        else str.toByte
+      )
+    ),
     Type.bit
   )
 
