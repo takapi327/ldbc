@@ -21,10 +21,10 @@ class NumericCodecsTest extends FunSuite:
   }
 
   test("bit decode successfully") {
-    assertEquals(bit.decode(0, List(Some("-128"))), Right(BitVector(Byte.MinValue)))
-    assertEquals(bit.decode(0, List(Some("127"))), Right(BitVector(Byte.MaxValue)))
-    assertEquals(bit.opt.decode(0, List(Some("-128"))), Right(Some(BitVector(Byte.MinValue))))
-    assertEquals(bit.opt.decode(0, List(Some("127"))), Right(Some(BitVector(Byte.MaxValue))))
+    assertEquals(bit.decode(0, List(Some("-128"))), Right(BitVector.fromByte(Byte.MinValue)))
+    assertEquals(bit.decode(0, List(Some("127"))), Right(BitVector.fromByte(Byte.MaxValue)))
+    assertEquals(bit.opt.decode(0, List(Some("-128"))), Right(Some(BitVector.fromByte(Byte.MinValue))))
+    assertEquals(bit.opt.decode(0, List(Some("127"))), Right(Some(BitVector.fromByte(Byte.MaxValue))))
     assertEquals(bit.opt.decode(0, List(None)), Right(None))
   }
 

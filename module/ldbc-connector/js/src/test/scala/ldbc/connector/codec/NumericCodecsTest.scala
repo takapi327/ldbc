@@ -16,15 +16,15 @@ import ldbc.connector.codec.all.*
 class NumericCodecsTest extends FunSuite:
 
   test("bit encode successfully") {
-    assertEquals(bit.encode(BitVector(Byte.MinValue)), List(Some(Encoded("-128", false))))
-    assertEquals(bit.encode(BitVector(Byte.MaxValue)), List(Some(Encoded("127", false))))
+    assertEquals(bit.encode(BitVector.fromByte(Byte.MinValue)), List(Some(Encoded("-128", false))))
+    assertEquals(bit.encode(BitVector.fromByte(Byte.MaxValue)), List(Some(Encoded("127", false))))
   }
 
   test("bit decode successfully") {
-    assertEquals(bit.decode(0, List(Some("-128"))), Right(Byte.MinValue))
-    assertEquals(bit.decode(0, List(Some("127"))), Right(Byte.MaxValue))
-    assertEquals(bit.opt.decode(0, List(Some("-128"))), Right(Some(Byte.MinValue)))
-    assertEquals(bit.opt.decode(0, List(Some("127"))), Right(Some(Byte.MaxValue)))
+    assertEquals(bit.decode(0, List(Some("-128"))), Right(BitVector.fromByte(Byte.MinValue)))
+    assertEquals(bit.decode(0, List(Some("127"))), Right(BitVector.fromByte(Byte.MaxValue)))
+    assertEquals(bit.opt.decode(0, List(Some("-128"))), Right(Some(BitVector.fromByte(Byte.MinValue))))
+    assertEquals(bit.opt.decode(0, List(Some("127"))), Right(Some(BitVector.fromByte(Byte.MaxValue))))
     assertEquals(bit.opt.decode(0, List(None)), Right(None))
   }
 
