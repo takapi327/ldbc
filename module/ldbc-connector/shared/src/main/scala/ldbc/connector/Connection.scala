@@ -60,7 +60,7 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
