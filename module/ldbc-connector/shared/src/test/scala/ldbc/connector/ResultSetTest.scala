@@ -146,7 +146,7 @@ class ResultSetTest extends FTestPlatform:
       val c3 = resultSet.getByte(3)
       builder += ((c1, c2, c3))
 
-    assertEquals(builder.result(), List((49.toByte, 50.toByte, 0.toByte)))
+    assertEquals(builder.result(), List((1.toByte, 2.toByte, 0.toByte)))
   }
 
   test("ResultSet should return the correct value for getShort") {
