@@ -8,6 +8,8 @@ package ldbc.connector.codec
 
 import scala.compiletime.error
 
+import scodec.bits.BitVector
+
 import ldbc.connector.data.Type
 
 trait NumericCodecs:
@@ -50,17 +52,20 @@ trait NumericCodecs:
     "As of MySQL 8.0.17, the display width attribute for integer data types is deprecated. It will no longer be supported in future versions of MySQL.",
     "0.3.0"
   )
-  def bit(size: Int): Codec[Byte] = Codec.simple(
-    _.toString,
-    safe(Type.bit)(str =>
-      if str.length == 1 then str.getBytes("ASCII")(0)
+  def bit(size: Int): Codec[BitVector] = Codec.simple(
+    _.toBin,
+    safe(Type.bit)(str => BitVector.fromByte(
+      if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
       else str.toByte
-    ),
+    )),
     Type.bit(size)
   )
-  val bit: Codec[Byte] = Codec.simple(
-    _.toString,
-    safe(Type.bit)(_.toByte),
+  val bit: Codec[BitVector] = Codec.simple(
+    _.toBin,
+    safe(Type.bit)(str => BitVector.fromByte(
+      if str.length == 1 && !str.forall(_.isDigit) then str.getBytes().head
+      else str.toByte
+    )),
     Type.bit
   )
 

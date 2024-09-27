@@ -75,7 +75,7 @@ private[ldbc] case class ResultSetImpl(
       rowDecode(row => bit.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
         case Some(value) =>
           lastColumnReadNullable = false
-          value
+          value.toByte(false)
         case None =>
           lastColumnReadNullable = true
           0
