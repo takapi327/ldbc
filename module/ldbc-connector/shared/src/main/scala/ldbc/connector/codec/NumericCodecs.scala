@@ -60,10 +60,7 @@ trait NumericCodecs:
   )
   val bit: Codec[Byte] = Codec.simple(
     _.toString,
-    safe(Type.bit)(str =>
-      if str.length == 1 then str.getBytes("ASCII")(0)
-      else str.toByte
-    ),
+    safe(Type.bit)(_.toByte),
     Type.bit
   )
 
