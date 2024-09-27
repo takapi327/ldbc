@@ -152,6 +152,9 @@ private[ldbc] object TableModelGenerator:
         val enumName = formatter.format(column.name)
         Some(s"""enum $enumName extends model.Enum:
            |    case ${ types.mkString(", ") }
-           |  object $enumName extends model.EnumDataType[$enumName]
+           |  object $enumName extends model.EnumDataType[$enumName]:
+           |    given ldbc.dsl.codec.Decoder.Elem[$enumName] = new ldbc.dsl.codec.Decoder.Elem[$enumName]:
+           |      override def decode(resultSet: ldbc.sql.ResultSet, columnLabel: String): $enumName = $enumName.fromOrdinal(resultSet.getInt(columnLabel))
+           |      override def decode(resultSet: ldbc.sql.ResultSet, index: Int): $enumName = $enumName.fromOrdinal(resultSet.getInt(index))
            |""".stripMargin)
       case _ => None

@@ -11,7 +11,6 @@ import scala.deriving.Mirror
 import ldbc.dsl.{ Query as DslQuery, * }
 
 import ldbc.query.builder.statement.Query
-import ldbc.query.builder.interpreter.Tuples
 
 trait QuerySyntax[F[_]]:
 
@@ -27,7 +26,7 @@ trait QuerySyntax[F[_]]:
      * @return
      *   A [[ldbc.dsl.Query]] instance
      */
-    inline def query: DslQuery[F, Tuples.InverseColumnMap[T]]
+    def query: DslQuery[F, T]
 
     /**
      * A method to convert a query to a [[ldbc.dsl.Query]].
@@ -40,6 +39,7 @@ trait QuerySyntax[F[_]]:
      *   A [[ldbc.dsl.Query]] instance
      */
     inline def queryTo[P <: Product](using
-      mirror: Mirror.ProductOf[P],
-      check:  Tuples.InverseColumnMap[T] =:= mirror.MirroredElemTypes
+      m1:    Mirror.ProductOf[P],
+      m2:    Mirror.ProductOf[T],
+      check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
     ): DslQuery[F, P]

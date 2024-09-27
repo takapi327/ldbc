@@ -9,8 +9,8 @@ package ldbc.schema
 import java.time.*
 import java.time.Year as JYear
 
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.interpreter.Tuples
-
 import ldbc.schema.attribute.*
 
 private[ldbc] trait Alias:
@@ -21,13 +21,13 @@ private[ldbc] trait Alias:
   def column[T](
     label:    String,
     dataType: DataType[T]
-  ): ColumnImpl[T] = Column[T](label, dataType)
+  )(using Decoder.Elem[T]): ColumnImpl[T] = Column[T](label, dataType)
 
   def column[T](
     label:      String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  ): ColumnImpl[T] = Column[T](label, dataType, attributes*)
+  )(using Decoder.Elem[T]): ColumnImpl[T] = Column[T](label, dataType, attributes*)
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 

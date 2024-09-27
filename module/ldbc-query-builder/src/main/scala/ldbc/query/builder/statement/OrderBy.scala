@@ -9,6 +9,7 @@ package ldbc.query.builder.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 
 /**
@@ -19,18 +20,21 @@ import ldbc.query.builder.*
  * @param params
  *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
  *   only.
+ * @param decoder
+ *   Decoder for converting SQL data to Scala data
  * @tparam T
- *   Union type of column
+ *   Scala types to be converted by Decoder
  */
 private[ldbc] case class OrderBy[T](
   statement: String,
-  params:    List[Parameter.DynamicBinder]
+  params:    List[Parameter.Dynamic],
+  decoder:   Decoder[T]
 ) extends Query[T],
-          LimitProvider[T]:
+          Limit.QueryProvider[T]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
-    OrderBy[T](statement ++ sql.statement, params ++ sql.params)
+    OrderBy[T](statement ++ sql.statement, params ++ sql.params, decoder)
 
 object OrderBy:
 
@@ -47,7 +51,7 @@ object OrderBy:
  *   Base trait for all products
  */
 private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
-  self: SQL =>
+  self: Query[T] =>
 
   /** Trait for generating SQL table information. */
   def table: Table[P]
@@ -64,5 +68,6 @@ private[ldbc] transparent trait OrderByProvider[P <: Product, T]:
       case column: Column[?]       => column.toString
     OrderBy(
       statement = statement ++ s" ORDER BY $order",
-      params    = params
+      params    = params,
+      decoder   = decoder
     )

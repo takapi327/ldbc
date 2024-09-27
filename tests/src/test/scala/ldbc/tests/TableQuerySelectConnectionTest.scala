@@ -68,7 +68,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        country.selectAll.queryTo[Country].to[List].readOnly(conn).map(_.length)
+        country.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       239
     )
@@ -79,7 +79,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        city.selectAll.queryTo[City].to[List].readOnly(conn).map(_.length)
+        city.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       4079
     )
@@ -90,7 +90,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.queryTo[CountryLanguage].to[List].readOnly(conn).map(_.length)
+        countryLanguage.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       984
     )
@@ -101,7 +101,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.queryTo[CountryLanguage].to[List].readOnly(conn).map(_.length)
+        countryLanguage.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       984
     )
@@ -112,9 +112,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        governmentOffice.selectAll.queryTo[GovernmentOffice].to[List].readOnly(conn).map(_.length)
+        governmentOffice.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
-      2
+      3
     )
   }
 
@@ -138,7 +138,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         country.selectAll
           .where(_.code _equals "JPN")
-          .queryTo[Country]
+          .query
           .to[Option]
           .readOnly(conn)
       },
@@ -169,7 +169,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         city.selectAll
           .where(_.id _equals 1532)
-          .queryTo[City]
+          .query
           .to[Option]
           .readOnly(conn)
       },
@@ -183,7 +183,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
         countryLanguage.selectAll
           .where(_.countryCode _equals "JPN")
           .and(_.language _equals "Japanese")
-          .queryTo[CountryLanguage]
+          .query
           .to[Option]
           .readOnly(conn)
       },
@@ -207,18 +207,17 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Join matches the specified model.") {
-    case class CountryCity(cityName: String, countryName: String)
     assertIO(
       connection.use { conn =>
         (city join country)((city, country) => city.countryCode _equals country.code)
           .select((city, country) => (city.name, country.name))
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
-          .queryTo[CountryCity]
+          .query
           .to[Option]
           .readOnly(conn)
       },
-      Some(CountryCity("Tokyo", "Japan"))
+      Some(("Tokyo", "Japan"))
     )
   }
 
@@ -238,18 +237,17 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Left Join matches the specified model.") {
-    case class CountryCity(cityName: String, countryName: Option[String])
     assertIO(
       connection.use { conn =>
         (city leftJoin country)((city, country) => city.countryCode _equals country.code)
           .select((city, country) => (city.name, country.name))
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
-          .queryTo[CountryCity]
+          .query
           .to[Option]
           .readOnly(conn)
       },
-      Some(CountryCity("Tokyo", Some("Japan")))
+      Some(("Tokyo", Some("Japan")))
     )
   }
 
@@ -269,18 +267,17 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The data retrieved by Right Join matches the specified model.") {
-    case class CountryCity(cityName: Option[String], countryName: String)
     assertIO(
       connection.use { conn =>
         (city rightJoin country)((city, country) => city.countryCode _equals country.code)
           .select((city, country) => (city.name, country.name))
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
-          .queryTo[CountryCity]
+          .query
           .to[Option]
           .readOnly(conn)
       },
-      Some(CountryCity(Some("Tokyo"), "Japan"))
+      Some((Some("Tokyo"), "Japan"))
     )
   }
 
@@ -299,13 +296,12 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   }
 
   test("The retrieved data matches the specified value.") {
-    case class CountryCodeGroup(countryCode: String, length: Int)
     assertIO(
       connection.use { conn =>
         city
           .select(v => (v.countryCode, v.id.count))
           .groupBy(_._1)
-          .queryTo[CountryCodeGroup]
+          .query
           .to[List]
           .readOnly(conn)
           .map(_.length)
@@ -332,5 +328,238 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
         yield cities.length).readOnly(conn)
       },
       248
+    )
+  }
+
+  test(
+    "If a record is retrieved from a Table model with sellectAll, it is converted to that model and the record is retrieved."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        city.selectAll.query.to[Option].readOnly(conn)
+      },
+      Some(City(4079, "Rafah", "PSE", "Rafah", 92020))
+    )
+  }
+
+  test(
+    "When a record is retrieved with sellectAll after performing a join, it is converted to the respective model and the record can be retrieved."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        (city join country)((city, country) => city.countryCode _equals country.code).selectAll
+          .where((_, country) => country.code _equals "JPN")
+          .and((city, _) => city.name _equals "Tokyo")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230),
+          Country(
+            "JPN",
+            "Japan",
+            Country.Continent.Asia,
+            "Eastern Asia",
+            BigDecimal(377829.00),
+            Some(-660),
+            126714000,
+            Some(80.7),
+            Some(BigDecimal(3787042.00)),
+            Some(BigDecimal(4192638.00)),
+            "Nihon/Nippon",
+            "Constitutional Monarchy",
+            Some("Akihito"),
+            Some(1532),
+            "JP"
+          )
+        )
+      )
+    )
+  }
+
+  test("Even if a column join is performed at join time, the retrieved data will match the specified values.") {
+    assertIO(
+      connection.use { conn =>
+        (city join country)((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => (city.name, city.population ++ country.population))
+          .where((_, country) => country.code _equals "JPN")
+          .and((city, _) => city.name _equals "Tokyo")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(("Tokyo", 134694230))
+    )
+  }
+
+  test("If selectAll is performed with Left Join, the model with no value will be None.") {
+    assertIO(
+      connection.use { conn =>
+        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
+          .where((city, _) => city.name _equals "Osaka")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          City(1534, "Osaka", "JPN", "Osaka", 2595674),
+          None
+        )
+      )
+    )
+  }
+
+  test("If you do selectAll with Left Join, the model with the value is wrapped in Some.") {
+    assertIO(
+      connection.use { conn =>
+        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
+          .where((city, _) => city.name _equals "Tokyo")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230),
+          Some(GovernmentOffice(3, 1532, "Tokyo Metropolitan Government", Some(java.time.LocalDate.of(2023, 12, 13))))
+        )
+      )
+    )
+  }
+
+  test("If selectAll is performed with Right Join, the model with no value will be None.") {
+    assertIO(
+      connection.use { conn =>
+        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id).selectAll
+          .where((_, city) => city.id _equals 1534)
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          None,
+          City(1534, "Osaka", "JPN", "Osaka", 2595674)
+        )
+      )
+    )
+  }
+
+  test("If you do selectAll with Right Join, the model with the value is wrapped in Some.") {
+    assertIO(
+      connection.use { conn =>
+        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id).selectAll
+          .where((_, city) => city.id _equals 1532)
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          Some(GovernmentOffice(3, 1532, "Tokyo Metropolitan Government", Some(java.time.LocalDate.of(2023, 12, 13)))),
+          City(1532, "Tokyo", "JPN", "Tokyo-to", 7980230)
+        )
+      )
+    )
+  }
+
+  test(
+    "If you use selectAll to retrieve records in a query with multiple Right Join joins, some with values will be set to Some and none without values will be set to None."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+          .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
+          .selectAll
+          .where((_, _, country) => country.code _equals "JPN")
+          .query
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some(
+        (
+          None,
+          Some(City(1779, "Tsuyama", "JPN", "Okayama", 91170)),
+          Country(
+            "JPN",
+            "Japan",
+            Country.Continent.Asia,
+            "Eastern Asia",
+            BigDecimal(377829.00),
+            Some(-660),
+            126714000,
+            Some(80.7),
+            Some(BigDecimal(3787042.00)),
+            Some(BigDecimal(4192638.00)),
+            "Nihon/Nippon",
+            "Constitutional Monarchy",
+            Some("Akihito"),
+            Some(1532),
+            "JP"
+          )
+        )
+      )
+    )
+  }
+
+  test(
+    "When a record is retrieved with selectAll in a query using multiple Right Join joins, if there are only records in the base table, all other values will be None."
+  ) {
+    assertIO(
+      connection.use { conn =>
+        (for
+          _ <- (country += Country(
+                 "XXX",
+                 "XXX",
+                 Country.Continent.Asia,
+                 "XXX",
+                 BigDecimal(0),
+                 None,
+                 0,
+                 None,
+                 None,
+                 None,
+                 "XXX",
+                 "XXX",
+                 None,
+                 None,
+                 "XX"
+               )).update
+          result <-
+            (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+              .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
+              .selectAll
+              .where((_, _, country) => country.code _equals "XXX")
+              .query
+              .to[Option]
+          _ <- country.delete.where(_.code _equals "XXX").update
+        yield result).transaction(conn)
+      },
+      Some(
+        (
+          None,
+          None,
+          Country(
+            "XXX",
+            "XXX",
+            Country.Continent.Asia,
+            "XXX",
+            BigDecimal(0),
+            None,
+            0,
+            None,
+            None,
+            None,
+            "XXX",
+            "XXX",
+            None,
+            None,
+            "XX"
+          )
+        )
+      )
     )
   }
