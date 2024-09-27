@@ -142,4 +142,4 @@ object Key:
               s"REFERENCE($className.table, (${ columns.mkString(", ") })).onUpdate(${ update.option })"
             case (Some(delete), Some(update)) =>
               s"REFERENCE($className.table, (${ columns.mkString(", ") })).onDelete(${ delete.option }).onUpdate(${ update.option })"
-        case None => s"REFERENCE($className.table, ${ columns.mkString(",") })"
+        case None => s"REFERENCE($className.table, (${ columns.mkString(",") }))"

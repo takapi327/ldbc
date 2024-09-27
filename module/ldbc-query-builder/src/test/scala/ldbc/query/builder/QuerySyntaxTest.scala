@@ -20,7 +20,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = Table[User]
         |
-        |val query = user.selectAll.queryTo[User].to[List]
+        |val query = user.selectAll.query.to[List]
         |""".stripMargin
     )
   }
@@ -53,7 +53,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = Table[User]
         |
-        |val query: Executor[IO, List[(Long, String, Int)]] = user.selectAll.query.to[List]
+        |val query: Executor[IO, List[User]] = user.selectAll.query.to[List]
         |""".stripMargin
     )
   }
@@ -68,7 +68,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = Table[User]
         |
-        |val query = user.selectAll.where(_.id === 1).queryTo[User].to[Option]
+        |val query = user.selectAll.where(_.id === 1).query.to[Option]
         |""".stripMargin
     )
   }
@@ -102,7 +102,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = Table[User]
         |
-        |val query: Executor[IO, Option[(Long, String, Int)]] = user.selectAll.where(_.id === 1).query.to[Option]
+        |val query: Executor[IO, Option[User]] = user.selectAll.where(_.id === 1).query.to[Option]
         |""".stripMargin
     )
   }
@@ -120,7 +120,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = Table[User]
         |
-        |val query: Executor[IO, User] = user.selectAll.where(_.id === 1).queryTo[User].unsafe
+        |val query: Executor[IO, User] = user.selectAll.where(_.id === 1).query.unsafe
         |""".stripMargin
     )
   }
@@ -154,7 +154,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |val user = Table[User]
         |
-        |val query: Executor[IO, (Long, String, Int)] = user.selectAll.where(_.id === 1).query.unsafe
+        |val query: Executor[IO, User] = user.selectAll.where(_.id === 1).query.unsafe
         |""".stripMargin
     )
   }

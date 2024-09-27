@@ -9,8 +9,8 @@ package ldbc.schema
 import java.time.*
 import java.time.Year as JYear
 
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.interpreter.Tuples
-
 import ldbc.schema.attribute.*
 
 private[ldbc] trait Alias:
@@ -21,13 +21,13 @@ private[ldbc] trait Alias:
   def column[T](
     label:    String,
     dataType: DataType[T]
-  ): ColumnImpl[T] = Column[T](label, dataType)
+  )(using Decoder.Elem[T]): ColumnImpl[T] = Column[T](label, dataType)
 
   def column[T](
     label:      String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  ): ColumnImpl[T] = Column[T](label, dataType, attributes*)
+  )(using Decoder.Elem[T]): ColumnImpl[T] = Column[T](label, dataType, attributes*)
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 
@@ -169,11 +169,18 @@ private[ldbc] trait Alias:
   ): ForeignKey[Column[T] *: EmptyTuple] = ForeignKey[Column[T] *: EmptyTuple](None, column *: EmptyTuple, reference)
 
   def FOREIGN_KEY[T](
+    name:      Option[String],
+    column:    Column[T],
+    reference: Reference[Column[T] *: EmptyTuple]
+  ): ForeignKey[Column[T] *: EmptyTuple] =
+    ForeignKey[Column[T] *: EmptyTuple](name, column *: EmptyTuple, reference)
+
+  def FOREIGN_KEY[T](
     name:      String,
     column:    Column[T],
     reference: Reference[Column[T] *: EmptyTuple]
   ): ForeignKey[Column[T] *: EmptyTuple] =
-    ForeignKey[Column[T] *: EmptyTuple](Some(name), column *: EmptyTuple, reference)
+    FOREIGN_KEY[T](Some(name), column, reference)
 
   def FOREIGN_KEY[T <: Tuple](
     columns:   T,

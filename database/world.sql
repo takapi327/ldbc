@@ -5461,4 +5461,5 @@ CREATE TABLE `government_office` (
 set autocommit=0;
 INSERT INTO `government_office` VALUES (1, 1, 'Test', NULL);
 INSERT INTO `government_office` VALUES (2, 2, 'Test', '2023-12-13');
+INSERT INTO `government_office` VALUES (3, 1532, 'Tokyo Metropolitan Government', '2023-12-13');
 SET autocommit=@old_autocommit;
