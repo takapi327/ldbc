@@ -124,7 +124,7 @@ import ldbc.dsl.io.*
   connection
     .use { conn =>
       createDatabase.commit(conn) *>
-        conn.setSchema("sandbox_db") *>
+        conn.setCatalog("sandbox_db") *>
         (setUpTables *> insertData)
           .transaction(conn)
           .as(println("Database setup completed"))

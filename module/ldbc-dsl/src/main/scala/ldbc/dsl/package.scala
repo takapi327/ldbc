@@ -194,12 +194,6 @@ package object dsl:
     export ldbc.dsl.Executor
 
     export ldbc.dsl.logging.LogHandler
-    export ldbc.dsl.Parameter
-
-    export ldbc.dsl.ResultSetReader
-
-    type PreparedStatementIO = ldbc.sql.PreparedStatement[F]
-    export ldbc.sql.PreparedStatement
 
     implicit def logger: LogHandler[F] = LogHandler.noop[F]
 
