@@ -173,7 +173,7 @@ Finally, you can use the query builder to create a query.
 
 ```scala
 val result: IO[List[User]] = connection.use { conn =>
-  userTable.selectAll.query[User].to[List].readOnly(conn)
+  userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
 ```
@@ -218,7 +218,7 @@ Finally, you can use the query builder to create a query.
 
 ```scala
 val result: IO[List[User]] = connection.use { conn =>
-  userTable.selectAll.query[User].to[List].readOnly(conn)
+  userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
 ```
