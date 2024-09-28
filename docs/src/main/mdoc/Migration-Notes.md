@@ -234,7 +234,100 @@ val userTable = Table[User]
 
 ```scala
 val result: IO[List[User]] = connection.use { conn =>
-  userTable.selectAll.query[User].to[List].readOnly(conn)
+  userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
+```
+
+#### カスタムデータ型のサポート
+
+ユーザー定義のデータ型を使用する際は、`ResultSetReader`と`Parameter`を使用してカスタムデータ型をサポートしていました。
+
+今回の更新で、`ResultSetReader`と`Parameter`を使用してカスタムデータ型をサポートする方法が変更されました。
+
+##### Encoder
+
+クエリ文字列に動的に埋め込むために、`Parameter`から`Encoder`に変更。
+
+これにより、ユーザはEffect Typeを受け取るための冗長な処理を記述する必要がなくなり、よりシンプルな実装とカスタムデータ型のパラメータとしての使用が可能になります。
+
+```scala
+enum Status(val code: Int, val name: String):
+  case Active   extends Status(1, "Active")
+  case InActive extends Status(2, "InActive")
+```
+
+**Before**
+
+```scala
+given Parameter[Status] with
+  override def bind[F[_]](
+    statement: PreparedStatement[F],
+    index: Int,
+    status: Status
+  ): F[Unit] = statement.setInt(index, status.code)
+```
+
+**After**
+
+```scala
+given Encoder[Status] with
+  override def encode(status: Status): Int = status.done
+```
+
+`Encoder`のエンコード処理では、`PreparedStatement`で扱えるScala型しか返すことができません。
+
+現在、以下のタイプがサポートされている。
+
+| Scala Type              | Methods called in PreparedStatement |
+|-------------------------|-------------------------------------|
+| Boolean                 | setBoolean                          |
+| Byte                    | setByte                             |
+| Short                   | setShort                            |
+| Int                     | setInt                              |
+| Long                    | setLong                             |
+| Float                   | setFloat                            |
+| Double                  | setDouble                           |
+| BigDecimal              | setBigDecimal                       |
+| String                  | setString                           |
+| Array[Byte]             | setBytes                            |
+| java.time.LocalDate     | setDate                             |
+| java.time.LocalTime     | setTime                             |
+| java.time.LocalDateTime | setTimestamp                        |
+| None                    | setNull                             |
+
+##### Decoder
+
+`ResultSet`からデータを取得する処理を`ResultSetReader`から`Decoder`に変更。
+
+これにより、ユーザーは取得したレコードをネストした階層データに変換できる。
+
+
+```scala
+case class City(id: Int, name: String, countryCode: String)
+case class Country(code: String, name: String)
+case class CityWithCountry(city: City, country: Country)
+
+sql"SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code".query[CityWithCountry]
+```
+
+**Using Query Builder**
+
+```scala
+case class City(id: Int, name: String, countryCode: String) derives Table
+case class Country(code: String, name: String) derives Table
+
+val city = Table[City]
+val country = Table[Country]
+
+city.join(country).join((city, country) => city.countryCode === country.code)
+  .select((city, country) => (city.name, country.name))
+  .query // (String, String)
+  .to[Option]
+  
+
+city.join(country).join((city, country) => city.countryCode === country.code)
+  .selectAll
+  .query // (City, Country)
+  .to[Option]
 ```
