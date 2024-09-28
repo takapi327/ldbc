@@ -33,7 +33,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
   readOnly:         Ref[F, Boolean],
   isAutoCommit:     Ref[F, Boolean],
   connectionClosed: Ref[F, Boolean],
-  databaseTerm:     Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
+  databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG
 )(using ev: MonadError[F, Throwable])
   extends LdbcConnection[F]:
 
@@ -111,16 +111,18 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
   override def isReadOnly: F[Boolean] = readOnly.get
 
   override def setCatalog(catalog: String): F[Unit] =
-    if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG) then setSchema(catalog)
-    else ev.unit
+    databaseTerm match
+      case DatabaseMetaData.DatabaseTerm.CATALOG => setSchema(catalog)
+      case DatabaseMetaData.DatabaseTerm.SCHEMA =>  ev.unit
 
   override def getCatalog(): F[String] =
-    if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG) then
-      for
-        statement <- createStatement()
-        result    <- statement.executeQuery("SELECT DATABASE()")
-      yield Option(result.getString(1)).getOrElse("")
-    else ev.pure(null)
+    databaseTerm match
+      case DatabaseMetaData.DatabaseTerm.CATALOG =>
+        for
+          statement <- createStatement()
+          result    <- statement.executeQuery("SELECT DATABASE()")
+        yield Option(result.getString(1)).getOrElse("")
+      case DatabaseMetaData.DatabaseTerm.SCHEMA => ev.pure(null)
 
   override def setTransactionIsolation(level: Int): F[Unit] =
     level match
@@ -221,7 +223,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
     for
       metaData <- getMetaData()
       procName <- extractProcedureName(sql)
-      resultSet <- ev.pure(databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA))
+      resultSet <- ev.pure(databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA)
                      .ifM(
                        metaData.getProcedureColumns(None, database, Some(procName), Some("%")),
                        metaData.getProcedureColumns(database, None, Some(procName), Some("%"))
@@ -488,12 +490,13 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
   override def setSchema(schema: String): F[Unit] = protocol.resetSequenceId *> protocol.comInitDB(schema)
 
   override def getSchema(): F[String] =
-    if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-      for
-        statement <- createStatement()
-        result    <- statement.executeQuery("SELECT DATABASE()")
-      yield Option(result.getString(1)).getOrElse("")
-    else ev.pure(null)
+    databaseTerm match
+      case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+        for
+          statement <- createStatement()
+          result    <- statement.executeQuery("SELECT DATABASE()")
+        yield Option(result.getString(1)).getOrElse("")
+      case DatabaseMetaData.DatabaseTerm.CATALOG => ev.pure(null)
 
   override def getStatistics: F[StatisticsPacket] = protocol.resetSequenceId *> protocol.comStatistics()
 
