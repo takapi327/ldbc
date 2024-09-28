@@ -36,13 +36,13 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],
   resultSetClosed:               Ref[F, Boolean],
-  database:                      Option[String]                        = None,
+  database:                      Option[String]                = None,
   databaseTerm:                  DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
-  getProceduresReturnsFunctions: Boolean                               = true,
-  tinyInt1isBit:                 Boolean                               = true,
-  transformedBitIsBoolean:       Boolean                               = false,
-  yearIsDateType:                Boolean                               = true,
-  nullDatabaseMeansCurrent:      Boolean                               = false
+  getProceduresReturnsFunctions: Boolean                       = true,
+  tinyInt1isBit:                 Boolean                       = true,
+  transformedBitIsBoolean:       Boolean                       = false,
+  yearIsDateType:                Boolean                       = true,
+  nullDatabaseMeansCurrent:      Boolean                       = false
 )(using ev: MonadError[F, Throwable])
   extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
@@ -195,7 +195,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM,"
         case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM,"
     )
     sqlBuf.append(
@@ -219,7 +220,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
       conditionBuf.append(
         databaseTerm match
-          case DatabaseMetaData.DatabaseTerm.SCHEMA => " ROUTINE_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " ROUTINE_SCHEMA LIKE ?"
           case DatabaseMetaData.DatabaseTerm.CATALOG => " ROUTINE_SCHEMA = ?"
       )
     end if
@@ -261,8 +262,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT SPECIFIC_CATALOG AS PROCEDURE_CAT, SPECIFIC_SCHEMA AS `PROCEDURE_SCHEM`,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT SPECIFIC_CATALOG AS PROCEDURE_CAT, SPECIFIC_SCHEMA AS `PROCEDURE_SCHEM`,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`,"
     )
 
     sqlBuf.append(" SPECIFIC_NAME AS `PROCEDURE_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`,")
@@ -386,7 +389,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
       conditionBuf.append(
         databaseTerm match
-          case DatabaseMetaData.DatabaseTerm.SCHEMA => " SPECIFIC_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " SPECIFIC_SCHEMA LIKE ?"
           case DatabaseMetaData.DatabaseTerm.CATALOG => " SPECIFIC_SCHEMA = ?"
       )
     end if
@@ -443,7 +446,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
         case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
 
@@ -553,7 +556,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT TABLE_CATALOG, TABLE_SCHEMA,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG, TABLE_SCHEMA,"
         case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA, NULL,"
     )
 
@@ -784,7 +787,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
         case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
 
@@ -897,7 +900,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
               while columnResult.next() do
                 val rows = Array(
                   if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def") else db, // TABLE_CAT
-                  if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None, // TABLE_SCHEM
+                  if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None,        // TABLE_SCHEM
                   table,                                                                            // TABLE_NAME
                   grantor,                                                                          // GRANTOR
                   Some(user),                                                                       // GRANTEE
@@ -1077,8 +1080,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
     sqlBuf.append(
       " TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE"
@@ -1105,15 +1108,17 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
     )
 
     sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
     sqlBuf.append(
       databaseTerm match
         case DatabaseMetaData.DatabaseTerm.SCHEMA => " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
     sqlBuf.append(generateUpdateRuleClause())
@@ -1148,14 +1153,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
     sqlBuf.append(
       databaseTerm match
         case DatabaseMetaData.DatabaseTerm.SCHEMA => " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
     sqlBuf.append(generateUpdateRuleClause())
@@ -1200,14 +1207,16 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
     sqlBuf.append(
       databaseTerm match
         case DatabaseMetaData.DatabaseTerm.SCHEMA => " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
     sqlBuf.append(generateUpdateRuleClause())
@@ -1363,8 +1372,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG =>  "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
     sqlBuf.append(" TABLE_NAME, NON_UNIQUE, NULL AS INDEX_QUALIFIER, INDEX_NAME,")
     sqlBuf.append(DatabaseMetaData.tableIndexOther)
@@ -1514,7 +1523,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT ROUTINE_CATALOG AS FUNCTION_CAT, ROUTINE_SCHEMA AS FUNCTION_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT ROUTINE_CATALOG AS FUNCTION_CAT, ROUTINE_SCHEMA AS FUNCTION_SCHEM,"
         case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM,"
     )
     sqlBuf.append(" ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, ")
@@ -1524,7 +1534,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     if db.nonEmpty then
       sqlBuf.append(
         databaseTerm match
-          case DatabaseMetaData.DatabaseTerm.SCHEMA => " AND ROUTINE_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " AND ROUTINE_SCHEMA LIKE ?"
           case DatabaseMetaData.DatabaseTerm.CATALOG => " AND ROUTINE_SCHEMA = ?"
       )
 
@@ -1556,8 +1566,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     val sqlBuf = new StringBuilder(
       databaseTerm match
-        case DatabaseMetaData.DatabaseTerm.SCHEMA => "SELECT SPECIFIC_CATALOG AS FUNCTION_CAT, SPECIFIC_SCHEMA AS `FUNCTION_SCHEM`,"
-        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`,"
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT SPECIFIC_CATALOG AS FUNCTION_CAT, SPECIFIC_SCHEMA AS `FUNCTION_SCHEM`,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`,"
     )
     sqlBuf.append(
       " SPECIFIC_NAME AS `FUNCTION_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN "
@@ -1665,7 +1677,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     if db.nonEmpty then
       conditionBuf.append(
         databaseTerm match
-          case DatabaseMetaData.DatabaseTerm.SCHEMA => " SPECIFIC_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " SPECIFIC_SCHEMA LIKE ?"
           case DatabaseMetaData.DatabaseTerm.CATALOG => " SPECIFIC_SCHEMA = ?"
       )
 

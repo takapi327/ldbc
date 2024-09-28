@@ -113,7 +113,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
   override def setCatalog(catalog: String): F[Unit] =
     databaseTerm match
       case DatabaseMetaData.DatabaseTerm.CATALOG => setSchema(catalog)
-      case DatabaseMetaData.DatabaseTerm.SCHEMA =>  ev.unit
+      case DatabaseMetaData.DatabaseTerm.SCHEMA  => ev.unit
 
   override def getCatalog(): F[String] =
     databaseTerm match
