@@ -13,13 +13,13 @@
 
 このプログラムでは、データベースに接続し計算結果を取得するプログラムを作成します。
 
-それでは、sql string interpolatorを使って、データベースに定数の計算を依頼する問い合わせを作成してみましょう。
+それでは、`sql string interpolator`を使って、データベースに定数の計算を依頼する問い合わせを作成してみましょう。
 
 ```scala
 val program: Executor[IO, Option[Int]] = sql"SELECT 2".query[Int].to[Option]
 ```
 
-sql string interpolatorを使って作成したクエリは`query`メソッドで取得する型の決定を行います。ここでは`Int`型を取得するため、`query[Int]`としています。また、`to`メソッドで取得する型を決定します。ここでは`Option`型を取得するため、`to[Option]`としています。
+`sql string interpolator`を使って作成したクエリは`query`メソッドで取得する型の決定を行います。ここでは`Int`型を取得するため、`query[Int]`としています。また、`to`メソッドで取得する型を決定します。ここでは`Option`型を取得するため、`to[Option]`としています。
 
 | Method       | Return Type    | Notes                         |
 |--------------|----------------|-------------------------------|

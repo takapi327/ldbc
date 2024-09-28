@@ -44,7 +44,7 @@ sql"SELECT name, email FROM user"
 ldbcは、複数のカラムを選択してクラスにマッピングすることもできます。
 
 ```scala
-case class User(name: String, population: Int)
+case class User(name: String, email: String)
 
 sql"SELECT name, email FROM user"
   .query[User] // Query[IO, User]

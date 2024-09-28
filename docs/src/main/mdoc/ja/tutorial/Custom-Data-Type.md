@@ -13,34 +13,27 @@
 ALTER TABLE user ADD COLUMN status BOOLEAN NOT NULL DEFAULT TRUE;
 ```
 
-## 受け渡し
+## Encoder
 
-ldbcではstatementに受け渡す値を`Parameter`で表現しています。`Parameter`はstatementへのバインドする値を表現するためのtraitです。
+ldbcではstatementに受け渡す値を`Encoder`で表現しています。`Encoder`はstatementへのバインドする値を表現するためのtraitです。
 
-`Parameter`を実装することでstatementに受け渡す値をカスタム型で表現することができます。
+`Encoder`を実装することでstatementに受け渡す値をカスタム型で表現することができます。
 
 ユーザー情報にそのユーザーのステータスを表す`Status`を追加します。
 
 ```scala 3
 enum Status(val done: Boolean, val name: String):
-  case Active   extends TaskStatus(false, "Active")
-  case InActive extends TaskStatus(true, "InActive")
+  case Active   extends Status(false, "Active")
+  case InActive extends Status(true, "InActive")
 ```
 
-以下のコード例では、`Parameter`を実装した`CustomParameter`を定義しています。
+以下のコード例では、カスタム型の`Encoder`を定義しています。
 
 これによりstatementにカスタム型をバインドすることができるようになります。
 
 ```scala 3
-given Parameter[Status] with
-  override def bind[F[_]](
-    statement: PreparedStatement[F],
-    index: Int,
-    status: Status
-  ): F[Unit] =
-    status match
-      case Status.Active   => statement.setBoolean(index, true)
-      case Status.InActive => statement.setBoolean(index, false)
+given Encoder[Status] with
+  override def encode(status: Status): Boolean = status.done
 ```
 
 カスタム型は他のパラメーターと同じようにstatementにバインドすることができます。
@@ -52,20 +45,19 @@ val program1: Executor[IO, Int] =
 
 これでstatementにカスタム型をバインドすることができるようになりました。
 
-## 読み取り
+## Decoder
 
-ldbcではパラメーターの他に実行結果から独自の型を取得するための`ResultSetReader`も提供しています。
+ldbcではパラメーターの他に実行結果から独自の型を取得するための`Decoder`も提供しています。
 
-`ResultSetReader`を実装することでstatementの実行結果から独自の型を取得することができます。
+`Decoder`を実装することでstatementの実行結果から独自の型を取得することができます。
 
-以下のコード例では、`ResultSetReader`を実装した`CustomResultSetReader`を定義しています。
+以下のコード例では、`Decoder.Elem`を使用して単一のデータ型を取得する方法を示しています。
 
 ```scala 3
-given ResultSetReader[IO, Status] =
-  ResultSetReader.mapping[IO, Boolean, Status] {
-    case true  => Status.Active
-    case false => Status.InActive
-  }
+  given Decoder.Elem[Status] = Decoder.Elem.mapping[Boolean, Status] {
+  case true  => Status.Active
+  case false => Status.InActive
+}
 ```
 
 ```scala 3
