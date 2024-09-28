@@ -119,7 +119,7 @@ object Connection:
               readOnly,
               autoCommit,
               connectionClosed,
-              databaseTerm
+              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG)
             )
           )
         )(_.close())

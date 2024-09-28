@@ -36,13 +36,13 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   connectionClosed:              Ref[F, Boolean],
   statementClosed:               Ref[F, Boolean],
   resultSetClosed:               Ref[F, Boolean],
-  database:                      Option[String]                        = None,
-  databaseTerm:                  Option[DatabaseMetaData.DatabaseTerm] = None,
-  getProceduresReturnsFunctions: Boolean                               = true,
-  tinyInt1isBit:                 Boolean                               = true,
-  transformedBitIsBoolean:       Boolean                               = false,
-  yearIsDateType:                Boolean                               = true,
-  nullDatabaseMeansCurrent:      Boolean                               = false
+  database:                      Option[String]                = None,
+  databaseTerm:                  DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  getProceduresReturnsFunctions: Boolean                       = true,
+  tinyInt1isBit:                 Boolean                       = true,
+  transformedBitIsBoolean:       Boolean                       = false,
+  yearIsDateType:                Boolean                       = true,
+  nullDatabaseMeansCurrent:      Boolean                       = false
 )(using ev: MonadError[F, Throwable])
   extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
@@ -138,63 +138,53 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             .mkString(",")
       }
 
-  override def getSchemaTerm(): String = databaseTerm.fold("") {
+  override def getSchemaTerm(): String = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SCHEMA"
     case DatabaseMetaData.DatabaseTerm.CATALOG => ""
-  }
 
   override def getProcedureTerm(): String = "PROCEDURE"
 
   override def getCatalogTerm(): String = databaseTerm match
-    case Some(DatabaseMetaData.DatabaseTerm.SCHEMA)  => "CATALOG"
-    case Some(DatabaseMetaData.DatabaseTerm.CATALOG) => "database"
-    case None                                        => "database"
+    case DatabaseMetaData.DatabaseTerm.SCHEMA  => "CATALOG"
+    case DatabaseMetaData.DatabaseTerm.CATALOG => "database"
 
-  override def supportsSchemasInDataManipulation(): Boolean = databaseTerm.fold(false) {
+  override def supportsSchemasInDataManipulation(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => true
     case DatabaseMetaData.DatabaseTerm.CATALOG => false
-  }
 
-  override def supportsSchemasInProcedureCalls(): Boolean = databaseTerm.fold(false) {
+  override def supportsSchemasInProcedureCalls(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => true
     case DatabaseMetaData.DatabaseTerm.CATALOG => false
-  }
 
-  override def supportsSchemasInTableDefinitions(): Boolean = databaseTerm.fold(false) {
+  override def supportsSchemasInTableDefinitions(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => true
     case DatabaseMetaData.DatabaseTerm.CATALOG => false
-  }
 
-  override def supportsSchemasInIndexDefinitions(): Boolean = databaseTerm.fold(false) {
+  override def supportsSchemasInIndexDefinitions(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => true
     case DatabaseMetaData.DatabaseTerm.CATALOG => false
-  }
 
-  override def supportsSchemasInPrivilegeDefinitions(): Boolean = databaseTerm.fold(false) {
+  override def supportsSchemasInPrivilegeDefinitions(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => true
     case DatabaseMetaData.DatabaseTerm.CATALOG => false
-  }
 
   override def supportsCatalogsInDataManipulation(): Boolean =
-    databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
+    databaseTerm == DatabaseMetaData.DatabaseTerm.CATALOG
 
-  override def supportsCatalogsInProcedureCalls(): Boolean = databaseTerm.fold(false) {
+  override def supportsCatalogsInProcedureCalls(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => false
     case DatabaseMetaData.DatabaseTerm.CATALOG => true
-  }
 
-  override def supportsCatalogsInTableDefinitions(): Boolean = databaseTerm.fold(false) {
+  override def supportsCatalogsInTableDefinitions(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => false
     case DatabaseMetaData.DatabaseTerm.CATALOG => true
-  }
 
-  override def supportsCatalogsInIndexDefinitions(): Boolean = databaseTerm.fold(false) {
+  override def supportsCatalogsInIndexDefinitions(): Boolean = databaseTerm match
     case DatabaseMetaData.DatabaseTerm.SCHEMA  => false
     case DatabaseMetaData.DatabaseTerm.CATALOG => true
-  }
 
   override def supportsCatalogsInPrivilegeDefinitions(): Boolean =
-    databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
+    databaseTerm == DatabaseMetaData.DatabaseTerm.CATALOG
 
   override def getProcedures(
     catalog:              Option[String],
@@ -204,9 +194,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM,"
-      else "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT ROUTINE_CATALOG AS PROCEDURE_CAT, ROUTINE_SCHEMA AS PROCEDURE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, NULL AS PROCEDURE_SCHEM,"
     )
     sqlBuf.append(
       " ROUTINE_NAME AS PROCEDURE_NAME, NULL AS RESERVED_1, NULL AS RESERVED_2, NULL AS RESERVED_3, ROUTINE_COMMENT AS REMARKS, CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN "
@@ -228,8 +219,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       end if
 
       conditionBuf.append(
-        if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then " ROUTINE_SCHEMA LIKE ?"
-        else " ROUTINE_SCHEMA = ?"
+        databaseTerm match
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " ROUTINE_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.CATALOG => " ROUTINE_SCHEMA = ?"
       )
     end if
 
@@ -269,9 +261,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val supportsFractSeconds = protocol.initialPacket.serverVersion.compare(Version(5, 6, 4)) >= 0
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT SPECIFIC_CATALOG AS PROCEDURE_CAT, SPECIFIC_SCHEMA AS `PROCEDURE_SCHEM`,"
-      else "SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT SPECIFIC_CATALOG AS PROCEDURE_CAT, SPECIFIC_SCHEMA AS `PROCEDURE_SCHEM`,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, NULL AS `PROCEDURE_SCHEM`,"
     )
 
     sqlBuf.append(" SPECIFIC_NAME AS `PROCEDURE_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`,")
@@ -394,8 +388,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       end if
 
       conditionBuf.append(
-        if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then " SPECIFIC_SCHEMA LIKE ?"
-        else " SPECIFIC_SCHEMA = ?"
+        databaseTerm match
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " SPECIFIC_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.CATALOG => " SPECIFIC_SCHEMA = ?"
       )
     end if
 
@@ -450,9 +445,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-      else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
 
     sqlBuf.append(
@@ -475,7 +470,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(
               dbValue
             ) || !StringHelper.hasWildcards(dbValue)
-            || databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
+            || databaseTerm == DatabaseMetaData.DatabaseTerm.CATALOG
           then " TABLE_SCHEMA = ?"
           else " TABLE_SCHEMA LIKE ?"
         )
@@ -518,7 +513,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     }
 
   override def getCatalogs(): F[ResultSet] =
-    (if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then ev.pure(List.empty[String])
+    (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then ev.pure(List.empty[String])
      else getDatabases(None)).map { dbList =>
       ResultSetImpl(
         Vector("TABLE_CAT").map { value =>
@@ -560,8 +555,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then "SELECT TABLE_CATALOG, TABLE_SCHEMA,"
-      else "SELECT TABLE_SCHEMA, NULL,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG, TABLE_SCHEMA,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA, NULL,"
     )
 
     sqlBuf.append(" TABLE_NAME, COLUMN_NAME,")
@@ -689,7 +685,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         if "information_schema".equalsIgnoreCase(dbValue) || "performance_schema".equalsIgnoreCase(
             dbValue
           ) || !StringHelper.hasWildcards(dbValue)
-          || databaseTerm.contains(DatabaseMetaData.DatabaseTerm.CATALOG)
+          || databaseTerm == DatabaseMetaData.DatabaseTerm.CATALOG
         then " TABLE_SCHEMA = ?"
         else " TABLE_SCHEMA LIKE ?"
       )
@@ -790,9 +786,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-      else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
 
     sqlBuf.append(
@@ -842,7 +838,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     if db.nonEmpty then
       conditionBuf.append(
-        if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then " db LIKE ?" else " db = ?"
+        if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then " db LIKE ?" else " db = ?"
       )
     end if
 
@@ -903,8 +899,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
               val records = Vector.newBuilder[ResultSetRowPacket]
               while columnResult.next() do
                 val rows = Array(
-                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then Some("def") else db, // TABLE_CAT
-                  if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then db else None, // TABLE_SCHEM
+                  if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then Some("def") else db, // TABLE_CAT
+                  if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then db else None,        // TABLE_SCHEM
                   table,                                                                            // TABLE_NAME
                   grantor,                                                                          // GRANTOR
                   Some(user),                                                                       // GRANTEE
@@ -1083,9 +1079,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-      else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
     sqlBuf.append(
       " TABLE_NAME, COLUMN_NAME, SEQ_IN_INDEX AS KEY_SEQ, 'PRIMARY' AS PK_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE"
@@ -1111,16 +1107,18 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-      else "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
     )
 
     sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
     sqlBuf.append(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
-      else " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA => " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
     sqlBuf.append(generateUpdateRuleClause())
@@ -1154,15 +1152,17 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-      else "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
     sqlBuf.append(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
-      else " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA => " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
     sqlBuf.append(generateUpdateRuleClause())
@@ -1206,15 +1206,17 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val foreignDb = getDatabase(foreignCatalog, foreignSchema)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
-      else "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT DISTINCT A.CONSTRAINT_CATALOG AS PKTABLE_CAT, A.REFERENCED_TABLE_SCHEMA AS PKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT DISTINCT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,NULL AS PKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.REFERENCED_TABLE_NAME AS PKTABLE_NAME, A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,")
     sqlBuf.append(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
-      else " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA => " A.TABLE_CATALOG AS FKTABLE_CAT, A.TABLE_SCHEMA AS FKTABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => " A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
     )
     sqlBuf.append(" A.TABLE_NAME AS FKTABLE_NAME, A.COLUMN_NAME AS FKCOLUMN_NAME, A.ORDINAL_POSITION AS KEY_SEQ,")
     sqlBuf.append(generateUpdateRuleClause())
@@ -1369,9 +1371,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schema)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
-      else "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA  => "SELECT TABLE_CATALOG AS TABLE_CAT, TABLE_SCHEMA AS TABLE_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM,"
     )
     sqlBuf.append(" TABLE_NAME, NON_UNIQUE, NULL AS INDEX_QUALIFIER, INDEX_NAME,")
     sqlBuf.append(DatabaseMetaData.tableIndexOther)
@@ -1485,7 +1487,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   override def getDatabaseMinorVersion(): Int = protocol.initialPacket.serverVersion.minor
 
   override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet] =
-    (if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then getDatabases(schemaPattern)
+    (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then getDatabases(schemaPattern)
      else ev.pure(List.empty[String])).map { dbList =>
       ResultSetImpl(
         Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
@@ -1520,9 +1522,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT ROUTINE_CATALOG AS FUNCTION_CAT, ROUTINE_SCHEMA AS FUNCTION_SCHEM,"
-      else "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT ROUTINE_CATALOG AS FUNCTION_CAT, ROUTINE_SCHEMA AS FUNCTION_SCHEM,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG => "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM,"
     )
     sqlBuf.append(" ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, ")
     sqlBuf.append(DatabaseMetaData.functionNoTable)
@@ -1530,8 +1533,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     sqlBuf.append(" WHERE ROUTINE_TYPE LIKE 'FUNCTION'")
     if db.nonEmpty then
       sqlBuf.append(
-        if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then " AND ROUTINE_SCHEMA LIKE ?"
-        else " AND ROUTINE_SCHEMA = ?"
+        databaseTerm match
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " AND ROUTINE_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.CATALOG => " AND ROUTINE_SCHEMA = ?"
       )
 
     if functionNamePattern.nonEmpty then sqlBuf.append(" AND ROUTINE_NAME LIKE ?")
@@ -1561,9 +1565,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     val db = getDatabase(catalog, schemaPattern)
 
     val sqlBuf = new StringBuilder(
-      if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then
-        "SELECT SPECIFIC_CATALOG AS FUNCTION_CAT, SPECIFIC_SCHEMA AS `FUNCTION_SCHEM`,"
-      else "SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`,"
+      databaseTerm match
+        case DatabaseMetaData.DatabaseTerm.SCHEMA =>
+          "SELECT SPECIFIC_CATALOG AS FUNCTION_CAT, SPECIFIC_SCHEMA AS `FUNCTION_SCHEM`,"
+        case DatabaseMetaData.DatabaseTerm.CATALOG =>
+          "SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, NULL AS `FUNCTION_SCHEM`,"
     )
     sqlBuf.append(
       " SPECIFIC_NAME AS `FUNCTION_NAME`, IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, CASE WHEN PARAMETER_MODE = 'IN' THEN "
@@ -1670,8 +1676,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
     if db.nonEmpty then
       conditionBuf.append(
-        if databaseTerm.contains(DatabaseMetaData.DatabaseTerm.SCHEMA) then " SPECIFIC_SCHEMA LIKE ?"
-        else " SPECIFIC_SCHEMA = ?"
+        databaseTerm match
+          case DatabaseMetaData.DatabaseTerm.SCHEMA  => " SPECIFIC_SCHEMA LIKE ?"
+          case DatabaseMetaData.DatabaseTerm.CATALOG => " SPECIFIC_SCHEMA = ?"
       )
 
     if functionNamePattern.nonEmpty then
@@ -1734,12 +1741,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     )
 
   protected def getDatabase(catalog: Option[String], schema: Option[String]): Option[String] =
-    databaseTerm.flatMap {
+    databaseTerm match
       case DatabaseMetaData.DatabaseTerm.SCHEMA =>
         if schema.nonEmpty && nullDatabaseMeansCurrent then database else schema
       case DatabaseMetaData.DatabaseTerm.CATALOG =>
         if catalog.nonEmpty && nullDatabaseMeansCurrent then database else catalog
-    }
 
   /**
    * Get a prepared statement to query information_schema tables.
