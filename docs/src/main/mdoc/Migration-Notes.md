@@ -279,22 +279,22 @@ given Encoder[Status] with
 
 現在、以下のタイプがサポートされている。
 
-| Scala Type              | Methods called in PreparedStatement |
-|-------------------------|-------------------------------------|
-| Boolean                 | setBoolean                          |
-| Byte                    | setByte                             |
-| Short                   | setShort                            |
-| Int                     | setInt                              |
-| Long                    | setLong                             |
-| Float                   | setFloat                            |
-| Double                  | setDouble                           |
-| BigDecimal              | setBigDecimal                       |
-| String                  | setString                           |
-| Array[Byte]             | setBytes                            |
-| java.time.LocalDate     | setDate                             |
-| java.time.LocalTime     | setTime                             |
-| java.time.LocalDateTime | setTimestamp                        |
-| None                    | setNull                             |
+| Scala Type                | Methods called in PreparedStatement |
+|---------------------------|-------------------------------------|
+| `Boolean`                 | `setBoolean`                        |
+| `Byte`                    | `setByte`                           |
+| `Short`                   | `setShort`                          |
+| `Int`                     | `setInt`                            |
+| `Long`                    | `setLong`                           |
+| `Float`                   | `setFloat`                          |
+| `Double`                  | `setDouble`                         |
+| `BigDecimal`              | `setBigDecimal`                     |
+| `String`                  | `setString`                         |
+| `Array[Byte]`             | `setBytes`                          |
+| `java.time.LocalDate`     | `setDate`                           |
+| `java.time.LocalTime`     | `setTime`                           |
+| `java.time.LocalDateTime` | `setTimestamp`                      |
+| `None`                    | `setNull`                           |
 
 ##### Decoder
 
