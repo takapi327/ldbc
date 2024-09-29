@@ -17,12 +17,12 @@ import cats.syntax.all.*
 import ldbc.sql.ResultSet
 
 /**
- * Trait to get the DataType that matches the Scala type information from the ResultSet.
+ * Class to get the DataType that matches the Scala type information from the ResultSet.
  *
  * @tparam A
  *   Scala types that match SQL DataType
  */
-trait Decoder[A]:
+class Decoder[A](f: (resultSet: ResultSet, prefix: Option[String]) => A):
 
   /**
    * Method to retrieve data from a ResultSet
@@ -33,13 +33,13 @@ trait Decoder[A]:
    * @param prefix
    *   Prefix to be added to the column name when retrieving data from the ResultSet.
    */
-  def decode(resultSet: ResultSet, prefix: Option[String]): A
+  def decode(resultSet: ResultSet, prefix: Option[String]): A = f(resultSet, prefix)
 
 object Decoder:
 
   given Functor[[A] =>> Decoder[A]] with
     override def map[A, B](fa: Decoder[A])(f: A => B): Decoder[B] =
-      (resultSet: ResultSet, prefix: Option[String]) => f(fa.decode(resultSet, prefix))
+      new Decoder((resultSet, prefix) => f(fa.decode(resultSet, prefix)))
 
   /**
    * Trait to get the DataType that matches the Scala type information from the ResultSet.
@@ -138,7 +138,7 @@ object Decoder:
         if resultSet.wasNull() then None else Some(value)
 
   def one[A](using decoder: Decoder.Elem[A]): Decoder[A] =
-    (resultSet: ResultSet, prefix: Option[String]) => decoder.decode(resultSet, 1)
+    new Decoder((resultSet, prefix) => decoder.decode(resultSet, 1))
 
   inline given derived[A](using mirror: Mirror.Of[A]): Decoder[A] =
     inline mirror match
@@ -149,7 +149,7 @@ object Decoder:
     val labels  = constValueTuple[mirror.MirroredElemLabels].toArray.map(_.toString)
     val decodes = getDecoders[mirror.MirroredElemTypes].toArray
 
-    (resultSet: ResultSet, prefix: Option[String]) =>
+    new Decoder[A]((resultSet: ResultSet, prefix: Option[String]) =>
       val results = labels.zip(decodes).map { (label, decoder) =>
         val column = prefix.map(_ + ".").getOrElse("") + label
         decoder match
@@ -158,11 +158,12 @@ object Decoder:
       }
 
       mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
+    )
 
   private[ldbc] inline def derivedTuple[A](mirror: Mirror.ProductOf[A]): Decoder[A] =
     val decodes = getDecoders[mirror.MirroredElemTypes].toArray
 
-    (resultSet: ResultSet, prefix: Option[String]) =>
+    new Decoder[A]((resultSet: ResultSet, prefix: Option[String]) =>
       val results = decodes.zipWithIndex.map { (decoder, index) =>
         decoder match
           case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
@@ -170,6 +171,7 @@ object Decoder:
       }
 
       mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
+    )
 
   private[ldbc] inline def getDecoders[T <: Tuple]: Tuple =
     inline erasedValue[T] match
