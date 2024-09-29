@@ -145,7 +145,7 @@ class TableImplTest extends AnyFlatSpec:
       Column("age", INT(255))
     )
 
-    table.id === Column("id", BIGINT(64))
+    table.id === column[Long]("id", BIGINT(64))
   }
 
   it should "The column accessed by selectDynamic does not match the type of the specified column." in {
@@ -157,5 +157,5 @@ class TableImplTest extends AnyFlatSpec:
       column("age", INT(255))
     )
 
-    table.id !== Column("name", VARCHAR(255))
+    table.id !== column[String]("name", VARCHAR(255))
   }

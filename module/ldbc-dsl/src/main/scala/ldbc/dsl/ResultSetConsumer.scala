@@ -11,6 +11,7 @@ import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
 import ldbc.dsl.util.FactoryCompat
+import ldbc.dsl.codec.Decoder
 
 /**
  * Trait for generating the specified data type from a ResultSet.
@@ -47,15 +48,15 @@ object ResultSetConsumer:
         case None        => error.raiseError(new NoSuchElementException(""))
       }
 
-  given [F[_]: Monad, T](using read: Read[T]): ResultSetConsumer[F, Option[T]] with
+  given [F[_]: Monad, T](using decoder: Decoder[T]): ResultSetConsumer[F, Option[T]] with
     override def consume(resultSet: ResultSet): F[Option[T]] =
-      if resultSet.next() then Monad[F].pure(read(resultSet).some) else Monad[F].pure(None)
+      if resultSet.next() then Monad[F].pure(decoder.decode(resultSet, None).some) else Monad[F].pure(None)
 
   given [F[_]: Monad, T, G[_]](using
-    read:          Read[T],
+    decoder:       Decoder[T],
     factoryCompat: FactoryCompat[T, G[T]]
   ): ResultSetConsumer[F, G[T]] with
     override def consume(resultSet: ResultSet): F[G[T]] =
       val builder = factoryCompat.newBuilder
-      while resultSet.next() do builder += read(resultSet)
+      while resultSet.next() do builder += decoder.decode(resultSet, None)
       Monad[F].pure(builder.result())

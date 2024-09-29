@@ -54,7 +54,7 @@ object Parameter:
   def byte(value: Byte): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_TINY
     override def sql:            String         = value.toString
-    override def encode:         BitVector      = uint8L.encode(value).require
+    override def encode:         BitVector      = BitVector.fromByte(value)
 
   def short(value: Short): Parameter = new Parameter:
     override def columnDataType: ColumnDataType = ColumnDataType.MYSQL_TYPE_SHORT

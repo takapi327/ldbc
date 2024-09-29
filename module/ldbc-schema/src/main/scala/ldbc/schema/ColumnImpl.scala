@@ -6,8 +6,9 @@
 
 package ldbc.schema
 
+import ldbc.sql.ResultSet
+import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.Column
-
 import ldbc.schema.attribute.Attribute
 
 /**
@@ -21,6 +22,8 @@ import ldbc.schema.attribute.Attribute
  *   Column data type
  * @param attributes
  *   Extra attribute of column
+ * @param decoder
+ *   Decoder for converting SQL data to Scala data
  * @tparam T
  *   Scala types that match SQL DataType
  */
@@ -28,10 +31,11 @@ case class ColumnImpl[T](
   name:       String,
   alias:      Option[String],
   dataType:   DataType[T],
-  attributes: List[Attribute[T]]
+  attributes: List[Attribute[T]],
+  decoder:    Decoder[T]
 ) extends Column[T]:
 
-  override def as(name: String): Column[T] = ColumnImpl[T](this.name, Some(name), dataType, attributes)
+  override def as(name: String): Column[T] = ColumnImpl[T](this.name, Some(name), dataType, attributes, decoder)
 
   /**
    * Define SQL query string for each Column
@@ -50,22 +54,27 @@ object Column:
   def apply[T](
     name:     String,
     dataType: DataType[T]
-  ): ColumnImpl[T] =
+  )(using Decoder.Elem[T]): ColumnImpl[T] =
     val attributes: List[Attribute[T]] = dataType match
       case data: DataType.Alias[T] => data.attributes
       case _                       => List.empty
-    ColumnImpl[T](name, None, dataType, attributes)
+    this.apply(name, dataType, attributes*)
 
   def apply[T](
     name:       String,
     dataType:   DataType[T],
     attributes: Attribute[T]*
-  ): ColumnImpl[T] =
-    ColumnImpl[T](name, None, dataType, attributes.toList)
+  )(using Decoder.Elem[T]): ColumnImpl[T] =
+    this.apply(name, dataType, attributes, None)
 
   private[ldbc] def apply[T](
     name:       String,
     dataType:   DataType[T],
     attributes: Seq[Attribute[T]],
     alias:      Option[String]
-  ): ColumnImpl[T] = ColumnImpl[T](name, alias, dataType, attributes.toList)
+  )(using elem: Decoder.Elem[T]): ColumnImpl[T] =
+    val decoder: Decoder[T] =
+      new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
+        elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
+      )
+    ColumnImpl[T](name, alias, dataType, attributes.toList, decoder)

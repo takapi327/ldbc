@@ -21,163 +21,163 @@ class TableQueryTest extends AnyFlatSpec:
   private val joinQuery2 = Table[JoinTest2]
 
   it should "The select query statement generated from Table is equal to the specified query statement." in {
-    assert(query.select(_.p1).statement === "SELECT `p1` FROM test")
-    assert(query.select(_.p1).where(_.p1 > 1).statement === "SELECT `p1` FROM test WHERE p1 > ?")
+    assert(query.select(_.p1).statement === "SELECT p1 FROM test")
+    assert(query.select(_.p1).where(_.p1 > 1).statement === "SELECT p1 FROM test WHERE p1 > ?")
     assert(
       query
         .select(_.p1)
         .where(_.p1 >= 1)
         .and(_.p2 === "test")
-        .statement === "SELECT `p1` FROM test WHERE p1 >= ? AND p2 = ?"
+        .statement === "SELECT p1 FROM test WHERE p1 >= ? AND p2 = ?"
     )
     assert(
       query
         .select(_.p1)
         .where(v => v.p1 > 1 || v.p2 === "test")
-        .statement === "SELECT `p1` FROM test WHERE (p1 > ? OR p2 = ?)"
+        .statement === "SELECT p1 FROM test WHERE (p1 > ? OR p2 = ?)"
     )
     assert(
       query
         .select(_.p1)
         .where(v => v.p1 > 1 && v.p2 === "test")
         .or(_.p3 === "test")
-        .statement === "SELECT `p1` FROM test WHERE (p1 > ? AND p2 = ?) OR p3 = ?"
+        .statement === "SELECT p1 FROM test WHERE (p1 > ? AND p2 = ?) OR p3 = ?"
     )
-    assert(query.select(_.p1).groupBy(p1 => p1).statement === "SELECT `p1` FROM test GROUP BY p1")
+    assert(query.select(_.p1).groupBy(p1 => p1).statement === "SELECT p1 FROM test GROUP BY p1")
     assert(
       query
         .select(_.p1)
         .groupBy(p1 => p1)
         .having(_ < 1)
-        .statement === "SELECT `p1` FROM test GROUP BY p1 HAVING p1 < ?"
+        .statement === "SELECT p1 FROM test GROUP BY p1 HAVING p1 < ?"
     )
-    assert(query.select(_.p1).orderBy(_.p1.desc).statement === "SELECT `p1` FROM test ORDER BY p1 DESC")
-    assert(query.select(_.p1).limit(10).statement === "SELECT `p1` FROM test LIMIT ?")
-    assert(query.select(_.p1).limit(10).offset(0).statement === "SELECT `p1` FROM test LIMIT ? OFFSET ?")
+    assert(query.select(_.p1).orderBy(_.p1.desc).statement === "SELECT p1 FROM test ORDER BY p1 DESC")
+    assert(query.select(_.p1).limit(10).statement === "SELECT p1 FROM test LIMIT ?")
+    assert(query.select(_.p1).limit(10).offset(0).statement === "SELECT p1 FROM test LIMIT ? OFFSET ?")
     assert(
       query
         .select(_.p1)
         .where(_.p1 === query.select(_.p1).where(_.p1 > 1))
-        .statement === "SELECT `p1` FROM test WHERE p1 = (SELECT `p1` FROM test WHERE p1 > ?)"
+        .statement === "SELECT p1 FROM test WHERE p1 = (SELECT p1 FROM test WHERE p1 > ?)"
     )
     assert(
       query
         .select(_.p1)
         .where(v => (v.p1 >= query.select(_.p1).where(_.p1 > 1)) || (v.p2 === query.select(_.p2)))
-        .statement === "SELECT `p1` FROM test WHERE (p1 >= (SELECT `p1` FROM test WHERE p1 > ?) OR p2 = (SELECT `p2` FROM test))"
+        .statement === "SELECT p1 FROM test WHERE (p1 >= (SELECT p1 FROM test WHERE p1 > ?) OR p2 = (SELECT p2 FROM test))"
     )
     assert(
       query
         .join(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .select((test, joinTest) => (test.p2, joinTest.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2` FROM test JOIN join_test ON test.p1 = join_test.p1"
+        .statement === "SELECT test.p2, join_test.p2 FROM test JOIN join_test ON test.p1 = join_test.p1"
     )
     assert(
       query
         .leftJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .select((test, joinTest) => (test.p2, joinTest.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2` FROM test LEFT JOIN join_test ON test.p1 = join_test.p1"
+        .statement === "SELECT test.p2, join_test.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1"
     )
     assert(
       query
         .rightJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .select((test, joinTest) => (test.p2, joinTest.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2` FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1"
+        .statement === "SELECT test.p2, join_test.p2 FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1"
     )
     assert(
       query
         .join(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .join(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
         .join(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .leftJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
         .join(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .rightJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
         .leftJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .join(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
         .rightJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .join(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
         .rightJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .leftJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
         .leftJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .leftJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
         .leftJoin(joinQuery)((test, joinTest) => test.p1 === joinTest.p1)
         .rightJoin(joinQuery2)((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => (test.p2, joinTest.p2, joinTest2.p2))
-        .statement === "SELECT test.`p2`, join_test.`p2`, join_test2.`p2` FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
+        .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
-    assert(query.selectAll.statement === "SELECT `p1`, `p2`, `p3` FROM test")
+    assert(query.selectAll.statement === "SELECT p1, p2, p3 FROM test")
   }
 
   it should "The insert query statement generated from Table is equal to the specified query statement." in {
     assert(
-      query.insert((1L, "p2", Some("p3"))).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?)"
+      query.insert((1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?)"
     )
     assert(
       query
         .insert((1L, "p2", Some("p3")), (2L, "p2", None))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?), (?, ?, ?)"
     )
     assert(
       query
         .insertInto(v => (v.p1, v.p2, v.p3))
         .values((1L, "p2", Some("p3")))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?)"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?)"
     )
     assert(
       query
         .insertInto(v => (v.p1, v.p2, v.p3))
         .values(List((1L, "p2", Some("p3")), (2L, "p2", None)))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?), (?, ?, ?)"
     )
     assert(
-      (query += Test(1L, "p2", Some("p3"))).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?)"
+      (query += Test(1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?)"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
-      )).statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?)"
+      )).statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?), (?, ?, ?)"
     )
     assert(
       query
         .insert((1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate(t => (t.p1, t.p2, t.p3))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1, p2 = new_test.p2, p3 = new_test.p3"
     )
     assert(
       query
@@ -186,43 +186,43 @@ class TableQueryTest extends AnyFlatSpec:
           (2L, "p2", None)
         )
         .onDuplicateKeyUpdate(t => (t.p1, t.p2, t.p3))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1, p2 = new_test.p2, p3 = new_test.p3"
     )
     assert(
       query
         .insert((1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate(_.p1)
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1"
     )
     assert(
       query
         .insert((1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate(v => (v.p1, v.p2, v.p3))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1, p2 = new_test.p2, p3 = new_test.p3"
     )
     assert(
       (query += Test(1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate(_.p1)
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1"
     )
     assert(
       (query += Test(1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate(v => (v.p1, v.p2, v.p3))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1, p2 = new_test.p2, p3 = new_test.p3"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
       )).onDuplicateKeyUpdate(_.p1)
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
       )).onDuplicateKeyUpdate(v => (v.p1, v.p2, v.p3))
-        .statement === "INSERT INTO test (`p1`, `p2`, `p3`) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE `p1` = new_test.`p1`, `p2` = new_test.`p2`, `p3` = new_test.`p3`"
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES(?, ?, ?), (?, ?, ?) AS new_test ON DUPLICATE KEY UPDATE p1 = new_test.p1, p2 = new_test.p2, p3 = new_test.p3"
     )
   }
 

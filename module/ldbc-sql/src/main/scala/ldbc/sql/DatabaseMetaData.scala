@@ -1064,7 +1064,7 @@ trait DatabaseMetaData[F[_]]:
    * Only procedure descriptions matching the schema and
    * procedure name criteria are returned.  They are ordered by
    * <code>PROCEDURE_CAT</code>, <code>PROCEDURE_SCHEM</code>,
-   * <code>PROCEDURE_NAME</code> and <code>SPECIFIC_ NAME</code>.
+   * <code>PROCEDURE_NAME</code> and <code>SPECIFIC_NAME</code>.
    *
    * <P>Each procedure description has the following columns:
    *  <OL>
