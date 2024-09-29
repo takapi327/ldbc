@@ -13,7 +13,7 @@ import scala.compiletime.ops.int.*
 import scala.annotation.targetName
 import ldbc.sql.ResultSet
 import ldbc.dsl.*
-import ldbc.dsl.codec.{Decoder, Encoder}
+import ldbc.dsl.codec.{ Decoder, Encoder }
 import ldbc.query.builder.statement.*
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.formatter.Naming
@@ -132,11 +132,11 @@ trait Table[P <: Product] extends MySQLTable[P], Dynamic:
           case column: Column[t] => column.decoder
         }
       case v: Column[t] => Array(v.decoder)
-    val decoder: Decoder[Tuples.InverseColumnMap[T]] = new Decoder[InverseColumnMap[T]](
-      (resultSet: ResultSet, prefix: Option[String]) =>
+    val decoder: Decoder[Tuples.InverseColumnMap[T]] =
+      new Decoder[InverseColumnMap[T]]((resultSet: ResultSet, prefix: Option[String]) =>
         val results = decodes.map(_.decode(resultSet, None))
         Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[T]]
-    )
+      )
     val str = columns match
       case v: Tuple => v.toArray.distinct.mkString(", ")
       case v        => v
@@ -433,13 +433,12 @@ object Table:
     val columns = labels.zip(decodes).map {
       case (label: String, decoder: Decoder.Elem[t]) => Column.Impl[t](label, None)(using decoder)
     }
-    val decoder: Decoder[P] = new Decoder[P](
-      (resultSet: ResultSet, prefix: Option[String]) =>
-        m.fromTuple(
-          Tuple
-            .fromArray(columns.map(_.decoder.decode(resultSet, prefix)))
-            .asInstanceOf[m.MirroredElemTypes]
-        )
+    val decoder: Decoder[P] = new Decoder[P]((resultSet: ResultSet, prefix: Option[String]) =>
+      m.fromTuple(
+        Tuple
+          .fromArray(columns.map(_.decoder.decode(resultSet, prefix)))
+          .asInstanceOf[m.MirroredElemTypes]
+      )
     )
     Impl[P, m.MirroredElemLabels, m.MirroredElemTypes](
       _name       = naming.format(constValue[m.MirroredLabel]),
@@ -482,11 +481,10 @@ object TableOpt:
     override def * : Tuple.Map[ElemTypes, Column] = table.*
     override def decoder: Decoder[Option[P]] =
       val columns = *.toArray
-      new Decoder[Option[P]](
-        (resultSet: ResultSet, prefix: Option[String]) =>
-          val result = columns.map {
-            case column: Column[t] => column.opt.decoder.decode(resultSet, prefix)
-          }
-          if result.flatten.length == columns.length then Option(table.decoder.decode(resultSet, prefix))
-          else None
+      new Decoder[Option[P]]((resultSet: ResultSet, prefix: Option[String]) =>
+        val result = columns.map {
+          case column: Column[t] => column.opt.decoder.decode(resultSet, prefix)
+        }
+        if result.flatten.length == columns.length then Option(table.decoder.decode(resultSet, prefix))
+        else None
       )

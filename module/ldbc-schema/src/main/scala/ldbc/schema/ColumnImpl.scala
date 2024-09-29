@@ -74,8 +74,7 @@ object Column:
     alias:      Option[String]
   )(using elem: Decoder.Elem[T]): ColumnImpl[T] =
     val decoder: Decoder[T] =
-      new Decoder[T](
-        (resultSet: ResultSet, prefix: Option[String]) =>
-          elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
+      new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
+        elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
       )
     ColumnImpl[T](name, alias, dataType, attributes.toList, decoder)

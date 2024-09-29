@@ -149,30 +149,28 @@ object Decoder:
     val labels  = constValueTuple[mirror.MirroredElemLabels].toArray.map(_.toString)
     val decodes = getDecoders[mirror.MirroredElemTypes].toArray
 
-    new Decoder[A](
-      (resultSet: ResultSet, prefix: Option[String]) =>
-        val results = labels.zip(decodes).map { (label, decoder) =>
-          val column = prefix.map(_ + ".").getOrElse("") + label
-          decoder match
-            case dm: Decoder.Elem[t] => dm.decode(resultSet, column)
-            case d: Decoder[t]       => d.decode(resultSet, Some(column))
-        }
+    new Decoder[A]((resultSet: ResultSet, prefix: Option[String]) =>
+      val results = labels.zip(decodes).map { (label, decoder) =>
+        val column = prefix.map(_ + ".").getOrElse("") + label
+        decoder match
+          case dm: Decoder.Elem[t] => dm.decode(resultSet, column)
+          case d: Decoder[t]       => d.decode(resultSet, Some(column))
+      }
 
-        mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
+      mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
     )
 
   private[ldbc] inline def derivedTuple[A](mirror: Mirror.ProductOf[A]): Decoder[A] =
     val decodes = getDecoders[mirror.MirroredElemTypes].toArray
-    
-    new Decoder[A](
-      (resultSet: ResultSet, prefix: Option[String]) =>
-        val results = decodes.zipWithIndex.map { (decoder, index) =>
-          decoder match
-            case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
-            case d: Decoder[t]       => d.decode(resultSet, prefix)
-        }
 
-        mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
+    new Decoder[A]((resultSet: ResultSet, prefix: Option[String]) =>
+      val results = decodes.zipWithIndex.map { (decoder, index) =>
+        decoder match
+          case dm: Decoder.Elem[t] => dm.decode(resultSet, index + 1)
+          case d: Decoder[t]       => d.decode(resultSet, prefix)
+      }
+
+      mirror.fromTuple(Tuple.fromArray(results).asInstanceOf[mirror.MirroredElemTypes])
     )
 
   private[ldbc] inline def getDecoders[T <: Tuple]: Tuple =
