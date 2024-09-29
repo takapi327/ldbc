@@ -607,9 +607,11 @@ object Column:
     extends Column[T]:
     override def as(name: String): Column[T] = Impl[T](this.name, Some(name))
     override def decoder: Decoder[T] =
-      (resultSet: ResultSet, prefix: Option[String]) =>
-        val column = prefix.orElse(alias).map(_ + ".").getOrElse("") + name
-        elem.decode(resultSet, column)
+      new Decoder[T](
+        (resultSet: ResultSet, prefix: Option[String]) =>
+          val column = prefix.orElse(alias).map(_ + ".").getOrElse("") + name
+          elem.decode(resultSet, column)
+      )
 
   private[ldbc] case class Opt[T](
     name:     String,
@@ -618,7 +620,9 @@ object Column:
   ) extends Column[Option[T]]:
     override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(name), _decoder)
     override def decoder: Decoder[Option[T]] =
-      (resultSet: ResultSet, prefix: Option[String]) => Option(_decoder.decode(resultSet, prefix.orElse(alias)))
+      new Decoder[Option[T]](
+        (resultSet: ResultSet, prefix: Option[String]) => Option(_decoder.decode(resultSet, prefix.orElse(alias)))
+      )
 
   private[ldbc] case class MultiColumn[T](
     flag:  String,
@@ -629,12 +633,15 @@ object Column:
     extends Column[T]:
     override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
-    override def decoder: Decoder[T] = (resultSet: ResultSet, prefix: Option[String]) =>
-      elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
+    override def decoder: Decoder[T] =
+      new Decoder[T](
+        (resultSet: ResultSet, prefix: Option[String]) =>
+          elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
+      )
 
   private[ldbc] case class Count(_name: String)(using elem: Decoder.Elem[Int]) extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
     override def alias:            Option[String] = None
     override def as(name: String): Column[Int]    = this.copy(name)
-    override def decoder:  Decoder[Int] = (resultSet: ResultSet, prefix: Option[String]) => elem.decode(resultSet, name)
+    override def decoder:  Decoder[Int] = new Decoder[Int]((resultSet: ResultSet, prefix: Option[String]) => elem.decode(resultSet, name))
     override def toString: String       = name

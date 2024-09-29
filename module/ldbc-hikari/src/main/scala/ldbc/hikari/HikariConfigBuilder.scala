@@ -11,7 +11,6 @@ import java.util.concurrent.{ ScheduledExecutorService, ThreadFactory, TimeUnit 
 import javax.sql.DataSource as JDataSource
 
 import scala.concurrent.duration.Duration
-import scala.jdk.CollectionConverters.*
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory
