@@ -7,12 +7,12 @@
 package ldbc.query.builder.statement
 
 import scala.annotation.targetName
-
 import ldbc.sql.ResultSet
 import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Decoder
 import ldbc.query.builder.*
 import ldbc.query.builder.interpreter.Tuples
+import ldbc.query.builder.interpreter.Tuples.InverseColumnMap
 
 /**
  * Trait to build a Join.
@@ -119,9 +119,11 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
           case column: Column[t] => column.decoder
         }
       case v: Column[t] => Array(v.decoder)
-    val decoder: Decoder[Tuples.InverseColumnMap[C]] = (resultSet: ResultSet, prefix: Option[String]) =>
-      val results = decodes.map(_.decode(resultSet, None))
-      Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[C]]
+    val decoder: Decoder[Tuples.InverseColumnMap[C]] =
+      new Decoder[InverseColumnMap[C]]((resultSet: ResultSet, prefix: Option[String]) =>
+        val results = decodes.map(_.decode(resultSet, None))
+        Tuple.fromArray(results).asInstanceOf[Tuples.InverseColumnMap[C]]
+      )
     Join.JoinSelect[SELECTS, C, Tuples.InverseColumnMap[C]](
       selects       = selects,
       fromStatement = statement,
@@ -131,13 +133,13 @@ trait Join[JOINS <: Tuple, SELECTS <: Tuple]:
     )
 
   def selectAll: Join.JoinSelect[SELECTS, Tuple, Table.Extract[SELECTS]] =
-    val decoder = new Decoder[Table.Extract[SELECTS]]:
-      override def decode(resultSet: ResultSet, prefix: Option[String]): Table.Extract[SELECTS] =
-        val results = selects.toArray.map {
-          case table: Table[t]       => table.decoder.decode(resultSet, Some(table._name))
-          case tableOpt: TableOpt[t] => tableOpt.decoder.decode(resultSet, Some(tableOpt._name))
-        }
-        Tuple.fromArray(results).asInstanceOf[Table.Extract[SELECTS]]
+    val decoder = new Decoder[Table.Extract[SELECTS]]((resultSet: ResultSet, prefix: Option[String]) =>
+      val results = selects.toArray.map {
+        case table: Table[t]       => table.decoder.decode(resultSet, Some(table._name))
+        case tableOpt: TableOpt[t] => tableOpt.decoder.decode(resultSet, Some(tableOpt._name))
+      }
+      Tuple.fromArray(results).asInstanceOf[Table.Extract[SELECTS]]
+    )
 
     Join.JoinSelect[SELECTS, Tuple, Table.Extract[SELECTS]](
       selects       = selects,

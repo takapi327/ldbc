@@ -79,7 +79,7 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
       val inputBuf = alloc[UByte](input.length.toULong)
       for i <- input.indices do !(inputBuf + i) = input(i).toUByte
 
-      val outLen = stackalloc[CSize](1)
+      val outLen = stackalloc[CSize]()
       !outLen = 0.toULong
 
       if EVP_PKEY_encrypt(ctx, null, outLen, inputBuf, input.length.toULong) <= 0 then

@@ -115,7 +115,7 @@ object Table:
     name:    String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
   ): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
-    val decoder: Decoder[P] = (resultSet: ResultSet, prefix: Option[String]) =>
+    val decoder: Decoder[P] = new Decoder[P]((resultSet: ResultSet, prefix: Option[String]) =>
       mirror.fromTuple(
         Tuple
           .fromArray(columns.toArray.map {
@@ -123,6 +123,7 @@ object Table:
           })
           .asInstanceOf[mirror.MirroredElemTypes]
       )
+    )
     TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes](
       _name   = name,
       _alias  = None,
