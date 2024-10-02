@@ -47,10 +47,7 @@ object Decoder:
    * @tparam A
    *   Scala types that match SQL DataType
    */
-  class Elem[A](
-    decodeLabel: ResultSet => String => A,
-    decodeIndex: ResultSet => Int => A
-  ):
+  trait Elem[A]:
 
     /**
      * Method to retrieve data from a ResultSet using column names.
@@ -61,7 +58,7 @@ object Decoder:
      * @param columnLabel
      * Column name of the data to be retrieved from the ResultSet.
      */
-    def decode(resultSet: ResultSet, columnLabel: String): A = decodeLabel(resultSet)(columnLabel)
+    def decode(resultSet: ResultSet, columnLabel: String): A
 
     /**
      * Method to retrieve data from a ResultSet using an Index number.
@@ -72,13 +69,24 @@ object Decoder:
      * @param index
      * Index number of the data to be retrieved from the ResultSet.
      */
-    def decode(resultSet: ResultSet, index: Int): A = decodeIndex(resultSet)(index)
+    def decode(resultSet: ResultSet, index: Int): A
 
   object Elem:
 
+    def apply[T](
+      decodeLabel: ResultSet => String => T,
+      decodeIndex: ResultSet => Int => T
+    ): Elem[T] =
+      new Elem[T]:
+        override def decode(resultSet: ResultSet, columnLabel: String): T =
+          decodeLabel(resultSet)(columnLabel)
+
+        override def decode(resultSet: ResultSet, index: Int): T =
+          decodeIndex(resultSet)(index)
+
     given Functor[[T] =>> Elem[T]] with
       override def map[A, B](fa: Elem[A])(f: A => B): Elem[B] =
-        new Elem(
+        Elem(
           resultSet => columnLabel => f(fa.decode(resultSet, columnLabel)),
           resultSet => index => f(fa.decode(resultSet, index))
         )
@@ -98,19 +106,19 @@ object Decoder:
     def mapping[A, B](f: A => B)(using decoder: Decoder.Elem[A]): Decoder.Elem[B] =
       decoder.map(f(_))
 
-    given Elem[String]        = new Elem(_.getString, _.getString)
-    given Elem[Boolean]       = new Elem(_.getBoolean, _.getBoolean)
-    given Elem[Byte]          = new Elem(_.getByte, _.getByte)
-    given Elem[Array[Byte]]   = new Elem(_.getBytes, _.getBytes)
-    given Elem[Short]         = new Elem(_.getShort, _.getShort)
-    given Elem[Int]           = new Elem(_.getInt, _.getInt)
-    given Elem[Long]          = new Elem(_.getLong, _.getLong)
-    given Elem[Float]         = new Elem(_.getFloat, _.getFloat)
-    given Elem[Double]        = new Elem(_.getDouble, _.getDouble)
-    given Elem[LocalDate]     = new Elem(_.getDate, _.getDate)
-    given Elem[LocalTime]     = new Elem(_.getTime, _.getTime)
-    given Elem[LocalDateTime] = new Elem(_.getTimestamp, _.getTimestamp)
-    given Elem[BigDecimal]    = new Elem(_.getBigDecimal, _.getBigDecimal)
+    given Elem[String]        = Elem(_.getString, _.getString)
+    given Elem[Boolean]       = Elem(_.getBoolean, _.getBoolean)
+    given Elem[Byte]          = Elem(_.getByte, _.getByte)
+    given Elem[Array[Byte]]   = Elem(_.getBytes, _.getBytes)
+    given Elem[Short]         = Elem(_.getShort, _.getShort)
+    given Elem[Int]           = Elem(_.getInt, _.getInt)
+    given Elem[Long]          = Elem(_.getLong, _.getLong)
+    given Elem[Float]         = Elem(_.getFloat, _.getFloat)
+    given Elem[Double]        = Elem(_.getDouble, _.getDouble)
+    given Elem[LocalDate]     = Elem(_.getDate, _.getDate)
+    given Elem[LocalTime]     = Elem(_.getTime, _.getTime)
+    given Elem[LocalDateTime] = Elem(_.getTimestamp, _.getTimestamp)
+    given Elem[BigDecimal]    = Elem(_.getBigDecimal, _.getBigDecimal)
 
     given (using decoder: Elem[String]): Elem[BigInt] =
       decoder.map(str => if str == null then null else BigInt(str))
@@ -121,18 +129,14 @@ object Decoder:
     given (using decoder: Elem[String]): Elem[YearMonth] =
       decoder.map(str => YearMonth.parse(str))
 
-    given [A](using decoder: Elem[A]): Elem[Option[A]] =
-      new Elem(
-        resultSet =>
-          columnLabel =>
-            val value = decoder.decode(resultSet, columnLabel)
-            if resultSet.wasNull() then None else Some(value)
-        ,
-        resultSet =>
-          index =>
-            val value = decoder.decode(resultSet, index)
-            if resultSet.wasNull() then None else Some(value)
-      )
+    given [A](using decoder: Elem[A]): Elem[Option[A]] with
+      override def decode(resultSet: ResultSet, columnLabel: String): Option[A] =
+        val value = decoder.decode(resultSet, columnLabel)
+        if resultSet.wasNull() then None else Some(value)
+
+      override def decode(resultSet: ResultSet, index: Int): Option[A] =
+        val value = decoder.decode(resultSet, index)
+        if resultSet.wasNull() then None else Some(value)
 
   def one[A](using decoder: Decoder.Elem[A]): Decoder[A] =
     new Decoder((resultSet, prefix) => decoder.decode(resultSet, 1))
