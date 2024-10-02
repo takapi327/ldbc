@@ -33,7 +33,9 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
       ssl      = SSL.Trusted
     )
 
-  test("If the acquired column name and the field name of the class to be mapped are different, an exception is raised.") {
+  test(
+    "If the acquired column name and the field name of the class to be mapped are different, an exception is raised."
+  ) {
     case class City(id: Int, title: String)
 
     interceptIO[ldbc.connector.exception.SQLException](
@@ -46,7 +48,9 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
     )
   }
 
-  test("If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised.") {
+  test(
+    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
+  ) {
     case class City(id: Int, name: String, age: Int)
 
     interceptIO[ldbc.connector.exception.SQLException](
@@ -71,7 +75,9 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Resource[IO, Connection[IO]] =
     Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
 
-  test("If the acquired column name and the field name of the class to be mapped are different, an exception is raised.") {
+  test(
+    "If the acquired column name and the field name of the class to be mapped are different, an exception is raised."
+  ) {
     case class City(id: Int, title: String)
 
     interceptIO[java.sql.SQLException](
@@ -84,7 +90,9 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
     )
   }
 
-  test("If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised.") {
+  test(
+    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
+  ) {
     case class City(id: Int, name: String, age: Int)
 
     interceptIO[java.sql.SQLException](

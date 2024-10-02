@@ -24,9 +24,9 @@ private[ldbc] case class ResultSetImpl(
   records:              Vector[ResultSetRowPacket],
   serverVariables:      Map[String, String],
   version:              Version,
-  resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
-  statement: Option[String] = None
+  resultSetType:        Int            = ResultSet.TYPE_FORWARD_ONLY,
+  resultSetConcurrency: Int            = ResultSet.CONCUR_READ_ONLY,
+  statement:            Option[String] = None
 ) extends ResultSet:
 
   private final var isClosed:               Boolean                    = false
@@ -414,9 +414,16 @@ private[ldbc] case class ResultSetImpl(
     currentRow.flatMap(decode)
 
   private def findByName(columnLabel: String): Int =
-    columns.zipWithIndex.find { (column: ColumnDefinitionPacket, _) =>
-      column.name.equalsIgnoreCase(columnLabel) || column.fullName.equalsIgnoreCase(columnLabel)
-    }.map(_._2).getOrElse(raiseError(s"${Console.CYAN}Column name '${Console.RED}$columnLabel${Console.CYAN}' does not exist in the ResultSet."))
+    columns.zipWithIndex
+      .find { (column: ColumnDefinitionPacket, _) =>
+        column.name.equalsIgnoreCase(columnLabel) || column.fullName.equalsIgnoreCase(columnLabel)
+      }
+      .map(_._2)
+      .getOrElse(
+        raiseError(
+          s"${ Console.CYAN }Column name '${ Console.RED }$columnLabel${ Console.CYAN }' does not exist in the ResultSet."
+        )
+      )
 
   private def raiseError[T](message: String): T =
     throw new SQLException(message, sql = statement)

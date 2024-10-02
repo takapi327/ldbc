@@ -103,7 +103,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                               protocol.initialPacket.serverVersion,
                               resultSetType,
                               resultSetConcurrency,
-                  Some(sql)
+                              Some(sql)
                             )
                 _ <- currentResultSet.set(Some(resultSet))
               yield resultSet

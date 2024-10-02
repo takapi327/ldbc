@@ -123,12 +123,15 @@ object Decoder:
 
     given [A](using decoder: Elem[A]): Elem[Option[A]] =
       new Elem(
-        resultSet => columnLabel =>
-          val value = decoder.decode(resultSet, columnLabel)
-          if resultSet.wasNull() then None else Some(value),
-        resultSet => index =>
-          val value = decoder.decode(resultSet, index)
-          if resultSet.wasNull() then None else Some(value)
+        resultSet =>
+          columnLabel =>
+            val value = decoder.decode(resultSet, columnLabel)
+            if resultSet.wasNull() then None else Some(value)
+        ,
+        resultSet =>
+          index =>
+            val value = decoder.decode(resultSet, index)
+            if resultSet.wasNull() then None else Some(value)
       )
 
   def one[A](using decoder: Decoder.Elem[A]): Decoder[A] =
