@@ -25,7 +25,8 @@ private[ldbc] case class ResultSetImpl(
   serverVariables:      Map[String, String],
   version:              Version,
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
-  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
+  resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY,
+  statement: Option[String] = None
 ) extends ResultSet:
 
   private final var isClosed:               Boolean                    = false
@@ -182,110 +183,74 @@ private[ldbc] case class ResultSetImpl(
 
   override def getString(columnLabel: String): String =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getString(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          null
+      val index = findByName(columnLabel)
+      getString(index + 1)
     }
 
   override def getBoolean(columnLabel: String): Boolean =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getBoolean(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          false
+      val index = findByName(columnLabel)
+      getBoolean(index + 1)
     }
 
   override def getByte(columnLabel: String): Byte =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getByte(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          0
+      val index = findByName(columnLabel)
+      getByte(index + 1)
     }
 
   override def getShort(columnLabel: String): Short =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getShort(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          0
+      val index = findByName(columnLabel)
+      getShort(index + 1)
     }
 
   override def getInt(columnLabel: String): Int =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getInt(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          0
+      val index = findByName(columnLabel)
+      getInt(index + 1)
     }
 
   override def getLong(columnLabel: String): Long =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getLong(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          0L
+      val index = findByName(columnLabel)
+      getLong(index + 1)
     }
 
   override def getFloat(columnLabel: String): Float =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getFloat(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          0f
+      val index = findByName(columnLabel)
+      getFloat(index + 1)
     }
 
   override def getDouble(columnLabel: String): Double =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getDouble(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          0.toDouble
+      val index = findByName(columnLabel)
+      getDouble(index + 1)
     }
 
   override def getBytes(columnLabel: String): Array[Byte] =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getBytes(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          null
+      val index = findByName(columnLabel)
+      getBytes(index + 1)
     }
 
   override def getDate(columnLabel: String): LocalDate =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getDate(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          null
+      val index = findByName(columnLabel)
+      getDate(index + 1)
     }
 
   override def getTime(columnLabel: String): LocalTime =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getTime(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          null
+      val index = findByName(columnLabel)
+      getTime(index + 1)
     }
 
   override def getTimestamp(columnLabel: String): LocalDateTime =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getTimestamp(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          null
+      val index = findByName(columnLabel)
+      getTimestamp(index + 1)
     }
 
   override def getMetaData(): ResultSetMetaData =
@@ -306,11 +271,8 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBigDecimal(columnLabel: String): BigDecimal =
     checkClose {
-      findByName(columnLabel) match
-        case Some((_, index)) => getBigDecimal(index + 1)
-        case None =>
-          lastColumnReadNullable = true
-          null
+      val index = findByName(columnLabel)
+      getBigDecimal(index + 1)
     }
 
   override def isBeforeFirst(): Boolean =
@@ -451,13 +413,13 @@ private[ldbc] case class ResultSetImpl(
   private def rowDecode[T](decode: ResultSetRowPacket => Option[T]): Option[T] =
     currentRow.flatMap(decode)
 
-  private def findByName(columnLabel: String): Option[(ColumnDefinitionPacket, Int)] =
+  private def findByName(columnLabel: String): Int =
     columns.zipWithIndex.find { (column: ColumnDefinitionPacket, _) =>
       column.name.equalsIgnoreCase(columnLabel) || column.fullName.equalsIgnoreCase(columnLabel)
-    }
+    }.map(_._2).getOrElse(raiseError(s"${Console.CYAN}Column name '${Console.RED}$columnLabel${Console.CYAN}' does not exist in the ResultSet."))
 
   private def raiseError[T](message: String): T =
-    throw new SQLException(message)
+    throw new SQLException(message, sql = statement)
 
 private[ldbc] object ResultSetImpl:
 
