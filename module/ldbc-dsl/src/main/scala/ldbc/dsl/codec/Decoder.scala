@@ -72,6 +72,7 @@ object Decoder:
     def decode(resultSet: ResultSet, index: Int): A
 
   object Elem:
+
     def apply[T](
       decodeLabel: ResultSet => String => T,
       decodeIndex: ResultSet => Int => T

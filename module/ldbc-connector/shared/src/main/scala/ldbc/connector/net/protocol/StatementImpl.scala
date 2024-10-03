@@ -78,7 +78,8 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
                             serverVariables,
                             protocol.initialPacket.serverVersion,
                             resultSetType,
-                            resultSetConcurrency
+                            resultSetConcurrency,
+                            Some(sql)
                           )
               _ <- currentResultSet.set(Some(resultSet))
             yield resultSet
