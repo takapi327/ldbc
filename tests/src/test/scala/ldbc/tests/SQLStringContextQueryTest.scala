@@ -773,3 +773,18 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
       Some(CityWithCountry(City(1, "Kabul"), Country("AFG", "Afghanistan")))
     )
   }
+
+  test("The results obtained by JOIN can be mapped to the class Tuple.") {
+    case class City(id: Int, name: String)
+    case class Country(code: String, name: String)
+
+    assertIO(
+      connection.use { conn =>
+        sql"SELECT city.Id, city.Name, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code LIMIT 1"
+          .query[(City, Country)]
+          .to[Option]
+          .readOnly(conn)
+      },
+      Some((City(1, "Kabul"), Country("AFG", "Afghanistan")))
+    )
+  }
