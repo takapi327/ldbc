@@ -1,6 +1,6 @@
 {%
   laika.title = Parameter
-  laika.metadata.language = ja
+  laika.metadata.language = en
 %}
 
 # Parameterized Queries
