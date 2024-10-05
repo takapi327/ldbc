@@ -100,29 +100,48 @@ ldbcでは`Join`を行い複数のテーブルからデータを取得する際�
 
 ```scala 3
 case class City(id: Long, name: String)
-case class Country(code: String, countryName: String, region: String)
+case class Country(code: String, name: String, region: String)
 
 sql"""
   SELECT
     city.id,
     city.name,
     country.code,
-    country.name AS countryName,
+    country.name,
     country.region
   FROM city
   JOIN country ON city.country_code = country.code
 """
-  .query[(City, Country)] // Query[IO, (City, Country)]
-  .to[List] // Executor[IO, List[(City, Country)]]
-  .readOnly(conn) // IO[List[(City, Country)]]
-  .unsafeRunSync() // List[(City, Country)]
-  .foreach(println) // Unit
+  .query[(City, Country)]
+  .to[List]
+  .readOnly(conn)
+  .unsafeRunSync()
+  .foreach(println)
 ```
 
 この例では、`City`クラスと`Country`クラスを`Tuple`にマッピングしています。
 
-ここで注意したいのが、先ほどと異なり`テーブル名`.`カラム名`を`クラス名`.`フィールド名`にマッピングすることはできません。なぜならクラスのフィールドにはテーブル名が含まれていないためです。
+ここで注意したいのが、先ほどと異なり`テーブル名`.`カラム名`を`クラス名`.`フィールド名`にマッピングすること際にテーブル名はクラス名を使用しています。
 
-今回の`city`と`country`テーブルのように`name`という同じ名前のカラムが存在する場合、どちらのカラムをどのクラスのフィールドにマッピングするかを判別することができません。
+そのため、このマッピングには制約がありテーブル名とクラス名は等価でなければいけません。つまり、エイリアスなどを使ってテーブル名を`city`から`c`などに短縮した場合、クラス名も`C`でなければならない。
 
-そのため、`Country`クラスの`name`カラムを`countryName`としデータを`SELECT`文で指定する際に同様に`country`テーブルの`name`カラムを`countryName`というエイリアスを指定することでマッピングできるようにしています。
+```scala 3
+case class C(id: Long, name: String)
+case class CT(code: String, name: String, region: String)
+
+sql"""
+  SELECT
+    c.id,
+    c.name,
+    ct.code,
+    ct.name,
+    ct.region
+  FROM city AS c
+  JOIN country AS ct ON c.country_code = ct.code
+"""
+  .query[(City, Country)]
+  .to[List]
+  .readOnly(conn)
+  .unsafeRunSync()
+  .foreach(println)
+```

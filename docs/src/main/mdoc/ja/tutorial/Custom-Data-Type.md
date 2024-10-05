@@ -54,7 +54,7 @@ ldbcではパラメーターの他に実行結果から独自の型を取得す�
 以下のコード例では、`Decoder.Elem`を使用して単一のデータ型を取得する方法を示しています。
 
 ```scala 3
-  given Decoder.Elem[Status] = Decoder.Elem.mapping[Boolean, Status] {
+given Decoder.Elem[Status] = Decoder.Elem.mapping[Boolean, Status] {
   case true  => Status.Active
   case false => Status.InActive
 }
