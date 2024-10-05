@@ -1,27 +1,27 @@
 {%
-  laika.title = ロギング
-  laika.metadata.language = ja
+  laika.title = Logging
+  laika.metadata.language = en
 %}
 
-# ロギング
+# Logging
 
-ldbcではデータベース接続の実行ログやエラーログを任意のロギングライブラリを使用して任意の形式で書き出すことができます。
+ldbc can export execution and error logs of database connections in any format using any logging library.
 
-標準ではCats EffectのConsoleを使用したロガーが提供されているため開発時はこちらを使用することができます。
+The standard logger using Cats Effect's Console is provided and can be used during development.
 
 ```scala 3
 given LogHandler[IO] = LogHandler.console[IO]
 ```
 
-任意のロギングライブラリを使用してログをカスタマイズする場合は`ldbc.dsl.logging.LogHandler`を使用します。
+Use `ldbc.dsl.logging.LogHandler` to customize logging using any logging library.
 
-以下は標準実装のログ実装です。ldbcではデータベース接続で以下3種類のイベントが発生します。
+The following is the standard implementation of logging. ldbc generates the following three types of events on database connection
 
-- Success: 処理の成功
-- ProcessingFailure: データ取得後もしくはデータベース接続前の処理のエラー
-- ExecFailure: データベースへの接続処理のエラー
+- Success: Success of processing
+- ProcessingFailure: Error in processing after getting data or before connecting to the database
+- ExecFailure: Error in the process of connecting to the database
 
-それぞれのイベントでどのようなログを書き込むかをパターンマッチングによって振り分けを行います。
+Each event is sorted by pattern matching to determine what kind of log to write.
 
 ```scala 3
 def console[F[_]: Console: Sync]: LogHandler[F] =
