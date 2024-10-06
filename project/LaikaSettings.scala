@@ -4,8 +4,9 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
+import sbt.*
+
 import laika.ast.Path.Root
-import laika.theme.ThemeProvider
 import laika.config.{ Version, Versions }
 import laika.helium.config.*
 
@@ -40,7 +41,6 @@ object LaikaSettings {
       .withNewerVersions(all.takeWhile(_ != current) *)
   }
 
-  import sbt.*
   val helium = Def.setting(
     tlSiteHelium.value.site
       .internalCSS(Root / "css" / "site.css")
