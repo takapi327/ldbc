@@ -8,7 +8,7 @@ addSbtPlugin("org.scalameta"      % "sbt-mdoc"                                  
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                                     % "0.4.7")
 addSbtPlugin("org.typelevel"      % "sbt-typelevel"                               % "0.7.3")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"                                 % "1.17.0")
-addSbtPlugin("org.scala-native"   % "sbt-scala-native"                            % "0.4.17")
+addSbtPlugin("org.scala-native"   % "sbt-scala-native"                            % "0.5.5")
 addSbtPlugin("com.armanbilge"     % "sbt-scala-native-config-brew-github-actions" % "0.3.0")
 
 // TODO: Remove this line when the following issue is resolved:
