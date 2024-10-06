@@ -9,7 +9,7 @@ import laika.theme.ThemeProvider
 import laika.config.{ Version, Versions }
 import laika.helium.config.*
 
-import org. typelevel. sbt. TypelevelSitePlugin. autoImport.*
+import org.typelevel.sbt.TypelevelSitePlugin.autoImport.*
 
 object LaikaSettings {
 
@@ -30,9 +30,9 @@ object LaikaSettings {
       if (canonical) v.setCanonical else v
     }
 
-    val v03: Version      = version("0.3", "Dev")
-    val current: Version = v03
-    val all: Seq[Version]     = Seq(v03)
+    val v03:     Version      = version("0.3", "Dev")
+    val current: Version      = v03
+    val all:     Seq[Version] = Seq(v03)
 
     val config: Versions = Versions
       .forCurrentVersion(current)
@@ -42,16 +42,18 @@ object LaikaSettings {
 
   import sbt.*
   val helium = Def.setting(
-    tlSiteHelium.value
-      .site.internalCSS(Root / "css" / "site.css")
-      .site.topNavigationBar(
+    tlSiteHelium.value.site
+      .internalCSS(Root / "css" / "site.css")
+      .site
+      .topNavigationBar(
         versionMenu = VersionMenu.create(
           "Version",
           "Choose Version",
           additionalLinks = Seq(TextLink.internal(Root / "olderVersions" / "index.md", "Older Versions"))
         )
       )
-      .site.versions(versions.config)
+      .site
+      .versions(versions.config)
       .build
   )
 }
