@@ -51,7 +51,7 @@ object LaikaSettings {
       .site
       .topNavigationBar(
         navLinks = Seq(
-          IconLink.external(paths.apiLink, HeliumIcon.api),
+          IconLink.external(paths.apiLink, HeliumIcon.api)
         ),
         versionMenu = VersionMenu.create(
           "Version",
