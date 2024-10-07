@@ -41,11 +41,18 @@ object LaikaSettings {
       .withNewerVersions(all.takeWhile(_ != current) *)
   }
 
+  private object paths {
+    val apiLink = "https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"
+  }
+
   val helium = Def.setting(
     tlSiteHelium.value.site
       .internalCSS(Root / "css" / "site.css")
       .site
       .topNavigationBar(
+        navLinks = Seq(
+          IconLink.external(paths.apiLink, HeliumIcon.api),
+        ),
         versionMenu = VersionMenu.create(
           "Version",
           "Choose Version",
