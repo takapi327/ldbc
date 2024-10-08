@@ -19,7 +19,7 @@ object LaikaSettings {
     private def version(version: String, label: String = "EOL"): Version = {
       val (pathSegment, canonical) = version match {
         case LdbcVersions.latest => ("latest", true)
-        case _     => (version, false)
+        case _                   => (version, false)
       }
 
       val v =

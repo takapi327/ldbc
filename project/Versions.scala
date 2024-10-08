@@ -4,8 +4,8 @@
 
 object LdbcVersions {
   val latest = "0.3"
-  val v02     = "0.2"
-  val v01     = "0.1"
+  val v02    = "0.2"
+  val v01    = "0.1"
 }
 
 object ScalaVersions {
