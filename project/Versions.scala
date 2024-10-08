@@ -2,6 +2,12 @@
   * distributed with this source code.
   */
 
+object LdbcVersions {
+  val latest = "0.3"
+  val v02     = "0.2"
+  val v01     = "0.1"
+}
+
 object ScalaVersions {
   val scala2  = "2.12.19"
   val scala3  = "3.3.4"
