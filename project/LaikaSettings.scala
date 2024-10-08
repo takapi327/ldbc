@@ -16,11 +16,9 @@ object LaikaSettings {
 
   object versions {
 
-    val latestRelease = "0.3.0"
-
     private def version(version: String, label: String = "EOL"): Version = {
       val (pathSegment, canonical) = version match {
-        case "0.3" => ("latest", true)
+        case LdbcVersions.latest => ("latest", true)
         case _     => (version, false)
       }
 
@@ -31,7 +29,7 @@ object LaikaSettings {
       if (canonical) v.setCanonical else v
     }
 
-    val v03:     Version      = version("0.3", "Dev")
+    val v03:     Version      = version("0.3", "Stable")
     val current: Version      = v03
     val all:     Seq[Version] = Seq(v03)
 

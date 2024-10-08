@@ -4,8 +4,6 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import laika.ast.Path.Root
-
 import ScalaVersions.*
 import JavaVersions.*
 import BuildSettings.*
@@ -14,7 +12,7 @@ import Workflows.*
 import ProjectKeys.*
 import Implicits.*
 
-ThisBuild / tlBaseVersion              := "0.3"
+ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
