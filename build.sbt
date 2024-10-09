@@ -4,8 +4,6 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import laika.ast.Path.Root
-
 import ScalaVersions.*
 import JavaVersions.*
 import BuildSettings.*
@@ -14,7 +12,7 @@ import Workflows.*
 import ProjectKeys.*
 import Implicits.*
 
-ThisBuild / tlBaseVersion              := "0.3"
+ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
@@ -227,9 +225,7 @@ lazy val docs = (project in file("docs"))
       "SCALA_VERSION" -> scalaVersion.value,
       "MYSQL_VERSION" -> mysqlVersion
     ),
-    laikaTheme := tlSiteHelium.value.site
-      .internalCSS(Root / "css" / "site.css")
-      .build
+    laikaTheme := LaikaSettings.helium.value
   )
   .settings(commonSettings)
   .dependsOn(
