@@ -16,7 +16,7 @@ ThisBuild / tlBaseVersion              := "0.3"
 ThisBuild / tlFatalWarnings            := true
 ThisBuild / projectName                := "ldbc"
 ThisBuild / scalaVersion               := scala3
-ThisBuild / crossScalaVersions         := Seq(scala3, scala34)
+ThisBuild / crossScalaVersions         := Seq(scala3, scala35)
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
