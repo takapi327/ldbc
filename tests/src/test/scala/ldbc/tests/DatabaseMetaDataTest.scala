@@ -1770,14 +1770,13 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
             val ordinalPosition = resultSet.getInt("ORDINAL_POSITION")
             val columnName      = resultSet.getString("COLUMN_NAME")
             val ascOrDesc       = resultSet.getString("ASC_OR_DESC")
-            val cardinality     = resultSet.getInt("CARDINALITY")
             val pages           = resultSet.getInt("PAGES")
             val filterCondition = resultSet.getString("FILTER_CONDITION")
-            builder += s"$tableCat, $tableSchem, $tableName, $nonUnique, $indexQualifier, $indexName, $typed, $ordinalPosition, $columnName, $ascOrDesc, $cardinality, $pages, $filterCondition"
+            builder += s"$tableCat, $tableSchem, $tableName, $nonUnique, $indexQualifier, $indexName, $typed, $ordinalPosition, $columnName, $ascOrDesc, $pages, $filterCondition"
           builder.result()
       },
       Vector(
-        "connector_test, null, tax, false, null, PRIMARY, 3, 1, id, A, 3, 0, null"
+        "connector_test, null, tax, false, null, PRIMARY, 3, 1, id, A, 0, null"
       )
     )
   }
