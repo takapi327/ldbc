@@ -72,6 +72,7 @@ object Decoder:
     def decode(resultSet: ResultSet, index: Int): A
 
   object Elem:
+
     def apply[T](
       decodeLabel: ResultSet => String => T,
       decodeIndex: ResultSet => Int => T
@@ -151,7 +152,12 @@ object Decoder:
 
     new Decoder[A]((resultSet: ResultSet, prefix: Option[String]) =>
       val results = labels.zip(decodes).map { (label, decoder) =>
-        val column = prefix.map(_ + ".").getOrElse("") + label
+        val columns = (prefix.map(_ + ".").getOrElse("") + label).split('.')
+        // When selecting columns with a Select statement, no more than two `. ` is never used more than once when selecting a column in a Select statement.
+        // Therefore, if the length of the columns is greater than 2, it is assumed that the column name is specified in the format `table`.`column`.
+        // To support mapping to both nested classes and class Tuple`. ` to support mapping to both nested classes and class tuples.
+        val column =
+          if columns.length > 2 then columns.tail.mkString(".") else constValue[mirror.MirroredLabel] ++ "." ++ label
         decoder match
           case dm: Decoder.Elem[t] => dm.decode(resultSet, column)
           case d: Decoder[t]       => d.decode(resultSet, Some(column))
