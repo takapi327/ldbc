@@ -1,19 +1,19 @@
 {%
-laika.title = Schema Code Generation
-laika.metadata.language = en
+  laika.title = Schema code generation
+  laika.metadata.language = en
 %}
 
-# Schema Code Generation
+# Schema code generation
 
-This chapter describes how to automatically generate LDBC table definitions from SQL files.
+This chapter describes how to automatically generate ldbc table definitions from SQL files.
 
-The following dependencies must be set up for the project
+The following dependencies must be set up in your project
 
 ```scala 3
 addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
 ```
 
-## Generation
+## Generate
 
 Enable the plugin for the project.
 
@@ -30,7 +30,7 @@ Compile / parseFiles := List(baseDirectory.value / "test.sql")
 
 **List of keys that can be set by enabling the plugin**
 
-| Key                  | Details                                                                |
+| Key                  | Detail                                                                 |
 |----------------------|------------------------------------------------------------------------|
 | `parseFiles`         | `List of SQL files to be analyzed`                                     |
 | `parseDirectories`   | `Specify SQL files to be parsed by directory`                          |
@@ -40,10 +40,10 @@ Compile / parseFiles := List(baseDirectory.value / "test.sql")
 | `propertyNameFormat` | `Value specifying the format of the property name in the Scala model`  |
 | `ldbcPackage`        | `Value specifying the package name of the generated file`              |
 
-The SQL file to be parsed must always begin with a database Create or Use statement, and LDBC parses the file one file at a time, generating table definitions and storing the list of tables in the database model.
+The SQL file to be parsed must always begin with a Create or Use statement for the database. ldbc parses the file one file at a time, generates table definitions, and stores the list of tables in the database model.
 This is because it is necessary to tell which database the table belongs to.
 
-```mysql
+```sql
 CREATE DATABASE `location`;
 
 USE `location`;
@@ -58,7 +58,7 @@ CREATE TABLE country (
 
 The SQL file to be analyzed should contain only Create/Use statements for the database or Create/Drop statements for table definitions.
 
-## Generation Code
+## Generated Code
 
 When the sbt project is started and compiled, model classes generated based on the SQL file to be analyzed and table definitions are generated under the target of the sbt project.
 
@@ -66,12 +66,12 @@ When the sbt project is started and compiled, model classes generated based on t
 sbt compile
 ```
 
-The code generated from the above SQL file will look like this.
+The code generated from the above SQL file will look like this
 
 ```scala 3
 package ldbc.generated.location
 
-import ldbc.core.*
+import ldbc.schema.*
 
 case class Country(
   id: Long,
@@ -87,14 +87,14 @@ object Country:
   )
 ```
 
-If the SQL file has been modified or the cache has been removed by running the clean command, Compile will generate the code again. If the SQL file has been modified or the cache has been removed by executing the clean command, the code will be generated again by executing Compile.
-If you want to generate code again without using the cache, execute the command `generateBySchema`. This command will always generate code without using the cache.
+If the SQL file has been modified or the cache has been removed by running the clean command, Compile will generate the code again. If the SQL file has been modified or the cache has been deleted by executing the clean command, the code will be generated again when Compile is executed.
+If you want to generate the code again without using the cache, execute the command `generateBySchema`. This command does not use the cache and always generates code.
 
 ```shell
 sbt generateBySchema
 ```
 
-## Customize
+## Customization
 
 There may be times when you want to convert the type of code generated from an SQL file to something else. This can be done by passing `customYamlFiles` with the yml files to be customized.
 
@@ -110,9 +110,9 @@ The format of the yml file should be as follows
 database:
   name: '{Database Name}'
   tables:
-    - name: '{table name}'
+    - name: '{Table Name}'
       columns: # Optional
-        - name: '{column name}'
+        - name: '{Column Name}'
           type: '{Scala type you want to change}'
       class: # Optional
         extends:
@@ -120,18 +120,18 @@ database:
       object: # Optional
         extends:
           - '{The package path, such as trait, that you want the object to inherit.}'
-    - name: '{table name}'
+    - name: '{Table Name}'
       ...
 ```
 
-The `database` must be the name of the database listed in the SQL file to be analyzed. The table name must be the name of a table belonging to the database listed in the SQL file to be analyzed.
+The `database` must be the name of the database listed in the SQL file to be analyzed. The table name must be the name of a table belonging to the database listed in the SQL file to be parsed.
 
-In the `columns` field, enter the name of the column to be retyped and the Scala type to be changed as a string. You can set multiple values for `columns`, but the column name listed in name must be in the target table.
+The `columns` field should be a string containing the name of the column whose type you want to change and the Scala type you want to change. Columns` can have multiple values, but the column name in `name` must belong to the target table.
 Also, the Scala type to be converted must be one that is supported by the column's Data type. If you want to specify an unsupported type, you must pass a trait, abstract class, etc. that is configured to do implicit type conversion for `object`.
 
-See [here](/en/01-Table-Definitions.md) for types supported by the Data type and [here](/en/02-Custom-Data-Type.md).
+See [here](/en/tutorial/Schema.md#data-type) for types supported by Data type and [here](/en/tutorial/Schema.md#custom-data-types) for how to set unsupported types.
 
-To convert an Int type to the user's own type, CountryCode, implement the following `CustomMapping`trait.
+To convert an Int type to the user's own type, CountryCode, implement the following `CustomMapping`trait
 
 ```scala 3
 trait CountryCode:
@@ -139,7 +139,7 @@ trait CountryCode:
 object Japan extends CountryCode:
   override val code: Int = 1
 
-trait CustomMapping: // Any name
+trait CustomMapping: // 任意の名前
   given Conversion[INT[Int], CountryCode] = DataType.mappingp[INT[Int], CountryCode]
 ```
 
@@ -180,7 +180,7 @@ The database model is also automatically generated from SQL files.
 ```scala 3
 package ldbc.generated.location
 
-import ldbc.core.*
+import ldbc.schema.*
 
 case class LocationDatabase(
   schemaMeta: Option[String] = None,
