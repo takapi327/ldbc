@@ -31,7 +31,7 @@ object LaikaSettings {
 
     val v02:     Version      = version("0.2", "Stable")
     val v03:     Version      = version("0.3", "Dev")
-    val current: Version      = v02
+    val current: Version      = v03
     val all:     Seq[Version] = Seq(v03, v02)
 
     val config: Versions = Versions
