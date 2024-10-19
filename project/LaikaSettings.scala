@@ -54,7 +54,7 @@ object LaikaSettings {
         versionMenu = VersionMenu.create(
           "Version",
           "Choose Version",
-          additionalLinks = Seq(TextLink.internal(Root / "olderVersions" / "index.md", "Older Versions"))
+          additionalLinks = Seq(TextLink.internal(Root / "older-versions.md", "Older Versions"))
         )
       )
       .site
