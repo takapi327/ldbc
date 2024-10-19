@@ -1,5 +1,6 @@
 {%
 laika.title = ldbc
+laika.versioned = false
 laika.metadata {
 language = en
 isRootPath = true
