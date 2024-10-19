@@ -12,7 +12,7 @@ laika.metadata.language = ja
 ```scala
 libraryDependencies ++= Seq(
   "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@",
-  "com.mysql" % "mysql-connector-j" % "$mysqlVersion$"
+  "com.mysql" % "mysql-connector-j" % "@MYSQL_VERSION@"
 )
 ```
 
