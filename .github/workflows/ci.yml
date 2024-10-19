@@ -379,7 +379,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/target/docs/site
-          keep_files: false
+          keep_files: true
 
   sbtScripted:
     name: sbt scripted
