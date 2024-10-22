@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Type-safe Query Construction</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../css/site.css" />
+  <script src="../helium/site/laika-helium.js"></script>
+    <script src="../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../", "/en/03-Type-safe-Query-Builder.html", "0.2", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.2</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="index.html">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="01-Table-Definitions.html">Table Definitions</a></li>
+    <li class="level1 nav-leaf"><a href="02-Custom-Data-Type.html">Custom Data Type</a></li>
+    <li class="level1 active nav-leaf"><a href="#">Type-safe Query Construction</a></li>
+    <li class="level1 nav-leaf"><a href="04-Database-Connection.html">Database Connection</a></li>
+    <li class="level1 nav-leaf"><a href="05-Plain-SQL-Queries.html">Plain SQL Queries</a></li>
+    <li class="level1 nav-leaf"><a href="06-Generating-SchemaSPY-Documentation.html">SchemaSPY Document Generation</a></li>
+    <li class="level1 nav-leaf"><a href="07-Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-leaf"><a href="08-Performance.html">Performance</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Type-safe Query Construction</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-node"><a href="#select">SELECT</a></li>
+    <li class="level2 nav-leaf"><a href="#where-1">WHERE</a></li>
+    <li class="level2 nav-leaf"><a href="#group-by-having">GROUP BY/Having</a></li>
+    <li class="level2 nav-leaf"><a href="#order-by">ORDER BY</a></li>
+    <li class="level2 nav-leaf"><a href="#limit-offset">LIMIT/OFFSET</a></li>
+    <li class="level1 nav-leaf"><a href="#join-left-join-right-join">JOIN/LEFT JOIN/RIGHT JOIN</a></li>
+    <li class="level1 nav-leaf"><a href="#custom-data-type">Custom Data Type</a></li>
+    <li class="level1 nav-node"><a href="#insert">INSERT</a></li>
+    <li class="level2 nav-leaf"><a href="#on-duplicate-key-update">ON DUPLICATE KEY UPDATE</a></li>
+    <li class="level1 nav-node"><a href="#update">UPDATE</a></li>
+    <li class="level2 nav-leaf"><a href="#where-2">WHERE</a></li>
+    <li class="level1 nav-node"><a href="#delete">DELETE</a></li>
+    <li class="level2 nav-leaf"><a href="#where-3">WHERE</a></li>
+    <li class="level1 nav-leaf"><a href="#ddl">DDL</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="type-safe-query-construction" class="title">Type-safe Query Construction</h1>
+    <p>This chapter describes how to use LDBC-built table definitions to construct type-safe queries.</p>
+    <p>The following dependencies must be set up for the project</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-query-builder&quot;</span><span> % </span><span class="string-literal">&quot;0.3.0-beta8&quot;</span></code></pre>
+    <p>If you have not yet read how to define tables in LDBC, we recommend that you read the chapter <a href="01-Table-Definitions.html">Table Definitions</a> first.</p>
+    <p>The following code example assumes the following import</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">core</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">builder</span><span>.</span><span class="type-name">TableQuery</span></code></pre>
+    <p>LDBC performs type-safe query construction by passing table definitions to TableQuery.</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
+  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>)),
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">userQuery</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">User</span><span>](</span><span class="identifier">table</span><span>)</span></code></pre>
+    
+    <h2 id="select" class="section"><a class="anchor-link left" href="#select"><i class="icofont-laika link">&#xef71;</i></a>SELECT</h2>
+    <p>A type-safe way to construct a SELECT statement is to use the <code>select</code> method provided by TableQuery, which is implemented in LDBC to mimic a plain query, making query construction intuitive. LDBC is also designed so that you can see at a glance what kind of query is being constructed.</p>
+    <p>To construct a SELECT statement that retrieves only specific columns, simply specify the columns you want to retrieve in the <code>select</code> method.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id` FROM user&quot;</span></code></pre>
+    <p>To specify multiple columns, simply specify the columns you wish to retrieve using the <code>select</code> method and return a tuple of the specified columns.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name` FROM user&quot;</span></code></pre>
+    <p>If you want to specify all columns, you can construct it by using the <code>selectAll</code> method provided by TableQuery.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM user&quot;</span></code></pre>
+    <p>If you want to get the number of a specific column, you can construct it by using <code>count</code> on the specified column.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>.</span><span class="identifier">count</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT COUNT(id) FROM user&quot;</span></code></pre>
+    
+    <h3 id="where-1" class="section"><a class="anchor-link left" href="#where-1"><i class="icofont-laika link">&#xef71;</i></a>WHERE</h3>
+    <p>A type-safe way to set a Where condition in a query is to use the <code>where</code> method.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>).</span><span class="identifier">where</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">name</span><span> === </span><span class="string-literal">&quot;Test&quot;</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id` FROM user WHERE name = ?&quot;</span></code></pre>
+    <p>The following is a list of conditions that can be used in the <code>where</code> method.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>condition</th>
+          <th>statement</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>===</code></td>
+          <td><code>column = ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&gt;=</code></td>
+          <td><code>column &gt;= ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&gt;</code></td>
+          <td><code>column &gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;=</code></td>
+          <td><code>column &lt;= ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;</code></td>
+          <td><code>column &lt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;&gt;</code></td>
+          <td><code>column &lt;&gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>!==</code></td>
+          <td><code>column != ?</code></td>
+        </tr>
+        <tr>
+          <td><code>IS (&quot;TRUE&quot;/&quot;FALSE&quot;/&quot;UNKNOWN&quot;/&quot;NULL&quot;)</code></td>
+          <td><code>column IS {TRUE/FALSE/UNKNOWN/NULL}</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;=&gt;</code></td>
+          <td><code>column &lt;=&gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>IN (value, value, ...)</code></td>
+          <td><code>column IN (?, ?, ...)</code></td>
+        </tr>
+        <tr>
+          <td><code>BETWEEN (start, end)</code></td>
+          <td><code>column BETWEEN ? AND ?</code></td>
+        </tr>
+        <tr>
+          <td><code>LIKE (value)</code></td>
+          <td><code>column LIKE ?</code></td>
+        </tr>
+        <tr>
+          <td><code>LIKE_ESCAPE (like, escape)</code></td>
+          <td><code>column LIKE ? ESCAPE ?</code></td>
+        </tr>
+        <tr>
+          <td><code>REGEXP (value)</code></td>
+          <td><code>column REGEXP ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;&lt;</code> (value)</td>
+          <td><code>column &lt;&lt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&gt;&gt;</code> (value)</td>
+          <td><code>column &gt;&gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>DIV (cond, result)</code></td>
+          <td><code>column DIV ? = ?</code></td>
+        </tr>
+        <tr>
+          <td><code>MOD (cond, result)</code></td>
+          <td><code>column MOD ? = ?</code></td>
+        </tr>
+        <tr>
+          <td><code>^ (value)</code></td>
+          <td><code>column ^ ?</code></td>
+        </tr>
+        <tr>
+          <td><code>~ (value)</code></td>
+          <td><code>~column = ?</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="group-by-having" class="section"><a class="anchor-link left" href="#group-by-having"><i class="icofont-laika link">&#xef71;</i></a>GROUP BY/Having</h3>
+    <p>A type-safe way to set a Group By clause in a query is to use the <code>groupBy</code> method.</p>
+    <p>Using <code>groupBy</code> allows you to group data based on the value of a column name you specify when retrieving data with <code>select</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM user GROUP BY age&quot;</span></code></pre>
+    <p>When grouping, the number of data that can be retrieved with <code>select</code> is the number of groups. So, when grouping, you can retrieve the values of the columns specified for grouping, or the results of aggregating the column values by group using the provided functions.</p>
+    <p>The <code>having</code> allows you to set the conditions for retrieval with respect to data grouped and retrieved by <code>groupBy</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span>).</span><span class="identifier">having</span><span>(</span><span class="identifier">_</span><span class="number-literal">._3</span><span> &gt; </span><span class="number-literal">20</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM user GROUP BY age HAVING age &gt; ?&quot;</span></code></pre>
+    
+    <h3 id="order-by" class="section"><a class="anchor-link left" href="#order-by"><i class="icofont-laika link">&#xef71;</i></a>ORDER BY</h3>
+    <p>A type-safe way to set an ORDER BY clause in a query is to use the <code>orderBy</code> method.</p>
+    <p>Using <code>orderBy</code> allows you to get the results sorted by the values of the columns you specify when retrieving data with <code>select</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">orderBy</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">age</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM user ORDER BY age&quot;</span></code></pre>
+    <p>If you want to specify ascending/descending order, simply call <code>asc</code>/<code>desc</code> for the columns, respectively.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">desc</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">orderBy</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">age</span><span>.</span><span class="identifier">desc</span><span>)
+
+</span><span class="identifier">desc</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM user ORDER BY age DESC&quot;</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">asc</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">orderBy</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">age</span><span>.</span><span class="identifier">asc</span><span>)
+
+</span><span class="identifier">asc</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM user ORDER BY age ASC&quot;</span></code></pre>
+    
+    <h3 id="limit-offset" class="section"><a class="anchor-link left" href="#limit-offset"><i class="icofont-laika link">&#xef71;</i></a>LIMIT/OFFSET</h3>
+    <p>A type-safe way to set the LIMIT and OFFSET clauses in a query is to use the <code>limit</code>/<code>offset</code> methods.</p>
+    <p>The <code>limit</code> can be set to the maximum number of rows of data to retrieve when <code>select</code> is executed, and the <code>offset</code> can be set to the number of rows of data to retrieve.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">limit</span><span>(</span><span class="number-literal">100</span><span>).</span><span class="identifier">offset</span><span>(</span><span class="number-literal">50</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT `id`, `name`, `age` FROM user LIMIT ? OFFSET ?&quot;</span></code></pre>
+    
+    <h2 id="join-left-join-right-join" class="section"><a class="anchor-link left" href="#join-left-join-right-join"><i class="icofont-laika link">&#xef71;</i></a>JOIN/LEFT JOIN/RIGHT JOIN</h2>
+    <p>A type-safe way to set a Join on a query is to use the <code>join</code>/<code>leftJoin</code>/<code>rightJoin</code> methods.</p>
+    <p>The following definition is used as a sample for Join.</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Country</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">object</span><span> </span><span class="type-name">Country</span><span>:
+  </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">Country</span><span>](</span><span class="string-literal">&quot;country&quot;</span><span>)(
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;code&quot;</span><span>, </span><span class="type-name">CHAR</span><span>(</span><span class="number-literal">3</span><span>), </span><span class="type-name">PRIMARY_KEY</span><span>),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>))
+  )
+
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">countryCode</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">object</span><span> </span><span class="type-name">City</span><span>:
+  </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">City</span><span>](</span><span class="string-literal">&quot;city&quot;</span><span>)(
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>)),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;country_code&quot;</span><span>, </span><span class="type-name">CHAR</span><span>(</span><span class="number-literal">3</span><span>))
+  )
+
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CountryLanguage</span><span>(
+  </span><span class="identifier">countryCode</span><span>: </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">language</span><span>:    </span><span class="type-name">String</span><span>
+)
+</span><span class="keyword">object</span><span> </span><span class="type-name">CountryLanguage</span><span>:
+  </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span>: </span><span class="type-name">Table</span><span>[</span><span class="type-name">CountryLanguage</span><span>] = </span><span class="type-name">Table</span><span>[</span><span class="type-name">CountryLanguage</span><span>](</span><span class="string-literal">&quot;country_language&quot;</span><span>)(
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;country_code&quot;</span><span>, </span><span class="type-name">CHAR</span><span>(</span><span class="number-literal">3</span><span>)),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;language&quot;</span><span>, </span><span class="type-name">CHAR</span><span>(</span><span class="number-literal">30</span><span>))
+  )
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">countryQuery</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">Country</span><span>](</span><span class="type-name">Country</span><span>.</span><span class="identifier">table</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">cityQuery</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">City</span><span>](</span><span class="type-name">City</span><span>.</span><span class="identifier">table</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">countryLanguageQuery</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">CountryLanguage</span><span>](</span><span class="type-name">CountryLanguage</span><span>.</span><span class="identifier">table</span><span>)</span></code></pre>
+    <p>If you want to do a simple Join first, use <code>join</code>.
+    The first argument of <code>join</code> is the table to be joined, and the second argument is a function that compares the source table with the columns of the table to be joined. This corresponds to the ON clause in Join.</p>
+    <p>After the join, the <code>select</code> will specify columns from the two tables.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">join</span><span> = </span><span class="identifier">countryQuery</span><span>.</span><span class="identifier">join</span><span>(</span><span class="identifier">cityQuery</span><span>)((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; </span><span class="identifier">country</span><span>.</span><span class="identifier">code</span><span> === </span><span class="identifier">city</span><span>.</span><span class="identifier">countryCode</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; (</span><span class="identifier">country</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> = </span><span class="string-literal">&quot;SELECT country.`name`, city.`name` FROM country JOIN city ON country.code = city.country_code&quot;</span></code></pre>
+    <p>Next, if you want to perform a Left Join, which is a left outer join, use <code>leftJoin</code>.
+    The implementation itself is the same as for a simple Join, only <code>join</code> is changed to <code>leftJoin</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">leftJoin</span><span> = </span><span class="identifier">countryQuery</span><span>.</span><span class="identifier">leftJoin</span><span>(</span><span class="identifier">cityQuery</span><span>)((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; </span><span class="identifier">country</span><span>.</span><span class="identifier">code</span><span> === </span><span class="identifier">city</span><span>.</span><span class="identifier">countryCode</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; (</span><span class="identifier">country</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> = </span><span class="string-literal">&quot;SELECT country.`name`, city.`name` FROM country LEFT JOIN city ON country.code = city.country_code&quot;</span></code></pre>
+    <p>The difference from a simple Join is that when using <code>leftJoin</code>, the records retrieved from the table to be joined may be NULL.</p>
+    <p>Therefore, in LDBC, all records in the column retrieved from the table passed to <code>leftJoin</code> will be of type Option.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">leftJoin</span><span> = </span><span class="identifier">countryQuery</span><span>.</span><span class="identifier">leftJoin</span><span>(</span><span class="identifier">cityQuery</span><span>)((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; </span><span class="identifier">country</span><span>.</span><span class="identifier">code</span><span> === </span><span class="identifier">city</span><span>.</span><span class="identifier">countryCode</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; (</span><span class="identifier">country</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>)) </span><span class="comment">// (String, Option[String])</span></code></pre>
+    <p>Next, if you want to perform a Right Join, which is a right outer join, use <code>rightJoin</code>.
+    The implementation itself is the same as that of simple Join, only <code>join</code> is changed to <code>rightJoin</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">rightJoin</span><span> = </span><span class="identifier">countryQuery</span><span>.</span><span class="identifier">rightJoin</span><span>(</span><span class="identifier">cityQuery</span><span>)((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; </span><span class="identifier">country</span><span>.</span><span class="identifier">code</span><span> === </span><span class="identifier">city</span><span>.</span><span class="identifier">countryCode</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; (</span><span class="identifier">country</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> = </span><span class="string-literal">&quot;SELECT country.`name`, city.`name` FROM country RIGHT JOIN city ON country.code = city.country_code&quot;</span></code></pre>
+    <p>The difference from a simple Join is that when using <code>rightJoin</code>, the records retrieved from the join source table may be NULL.</p>
+    <p>Therefore, in LDBC, all records of a column retrieved from a join source table using <code>rightJoin</code> are of type Option.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">rightJoin</span><span> = </span><span class="identifier">countryQuery</span><span>.</span><span class="identifier">rightJoin</span><span>(</span><span class="identifier">cityQuery</span><span>)((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; </span><span class="identifier">country</span><span>.</span><span class="identifier">code</span><span> === </span><span class="identifier">city</span><span>.</span><span class="identifier">countryCode</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; (</span><span class="identifier">country</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>)) </span><span class="comment">// (Option[String], String)</span></code></pre>
+    <p>If multiple joins are desired, this can be accomplished by calling any Join method in the method chain.</p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">join</span><span> = 
+  (</span><span class="identifier">countryQuery</span><span> </span><span class="identifier">join</span><span> </span><span class="identifier">cityQuery</span><span>)((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>) =&gt; </span><span class="identifier">country</span><span>.</span><span class="identifier">code</span><span> === </span><span class="identifier">city</span><span>.</span><span class="identifier">countryCode</span><span>)
+    .</span><span class="identifier">rightJoin</span><span>(</span><span class="identifier">countryLanguageQuery</span><span>)((</span><span class="identifier">_</span><span>, </span><span class="identifier">city</span><span>, </span><span class="identifier">countryLanguage</span><span>) =&gt; </span><span class="identifier">city</span><span>.</span><span class="identifier">countryCode</span><span> === </span><span class="identifier">countryLanguage</span><span>.</span><span class="identifier">countryCode</span><span>)
+    .</span><span class="identifier">select</span><span>((</span><span class="identifier">country</span><span>, </span><span class="identifier">city</span><span>, </span><span class="identifier">countryLanguage</span><span>) =&gt; (</span><span class="identifier">country</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">city</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">countryLanguage</span><span>.</span><span class="identifier">language</span><span>)) </span><span class="comment">// (Option[String], Option[String], String)]
+</span><span>
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> =
+  </span><span class="string-literal">&quot;&quot;&quot;
+    |SELECT
+    |  country.`name`, 
+    |  city.`name`,
+    |  country_language.`language`
+    |FROM country
+    |JOIN city ON country.code = city.country_code
+    |RIGHT JOIN country_language ON city.country_code = country_language.country_code
+    |&quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span></code></pre>
+    <p>Note that a <code>rightJoin</code> join with multiple joins will result in NULL-acceptable access to all records retrieved from the previously joined table, regardless of what the previous join was.</p>
+    
+    <h2 id="custom-data-type" class="section"><a class="anchor-link left" href="#custom-data-type"><i class="icofont-laika link">&#xef71;</i></a>Custom Data Type</h2>
+    <p>In the previous section, we used the <code>mapping</code> method of DataType to map custom types to DataType in order to use user-specific or unsupported types. (<a href="02-Custom-Data-Type.html">reference</a>)</p>
+    <p>LDBC separates the table definition from the process of connecting to the database.
+    Therefore, if you want to retrieve data from the database and convert it to a user-specific or unsupported type, you must link the method of retrieving data from the ResultSet to the user-specific or unsupported type.</p>
+    <p>For example, if you want to map a user-defined Enum to a string type</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">enum</span><span> </span><span class="type-name">Custom</span><span>:
+  </span><span class="keyword">case</span><span> ...
+
+</span><span class="keyword">given</span><span> </span><span class="type-name">ResultSetReader</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Custom</span><span>] =
+  </span><span class="type-name">ResultSetReader</span><span>.</span><span class="identifier">mapping</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="identifier">str</span><span>, </span><span class="type-name">Custom</span><span>](</span><span class="identifier">str</span><span> =&gt; </span><span class="type-name">Custom</span><span>.</span><span class="identifier">valueOf</span><span>(</span><span class="identifier">str</span><span>))</span></code></pre>
+    <p>※ This process may be integrated with DataType mapping in a future version.</p>
+    
+    <h2 id="insert" class="section"><a class="anchor-link left" href="#insert"><i class="icofont-laika link">&#xef71;</i></a>INSERT</h2>
+    <p>A type-safe way to construct an INSERT statement is to use the following methods provided by TableQuery.</p>
+    <ul>
+      <li>insert</li>
+      <li>insertInto</li>
+      <li>+=</li>
+      <li>++=</li>
+    </ul>
+    <p><strong>insert</strong></p>
+    <p>The <code>insert</code> method is passed a tuple of data to insert. The tuples must have the same number and type of properties as the model. Also, the order of the inserted data must be in the same order as the model properties and table columns.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?)&quot;</span></code></pre>
+    <p>If you want to insert multiple data, you can construct it by passing multiple tuples to the <code>insert</code> method.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>), (</span><span class="number-literal">2L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?), (?, ?, ?)&quot;</span></code></pre>
+    <p><strong>insertInto</strong></p>
+    <p>The <code>insert</code> method inserts data into all columns the table has, but if you want to insert data only into specific columns, use the <code>insertInto</code> method.</p>
+    <p>This can be used, for example, to exclude data insertion into columns with AutoIncrement or Default values.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insertInto</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">values</span><span>((</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`name`, `age`) VALUES(?, ?)&quot;</span></code></pre>
+    <p>If you want to insert multiple data, you can construct it by passing an array of tuples to <code>values</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insertInto</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">values</span><span>(</span><span class="type-name">List</span><span>((</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>), (</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">Some</span><span>(</span><span class="number-literal">20</span><span>))))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`name`, `age`) VALUES(?, ?), (?, ?)&quot;</span></code></pre>
+    <p><strong>+=</strong></p>
+    <p>The <code>+=</code> method can be used to construct an INSERT statement using a model. Note that when using a model, data is inserted into all columns.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span> += </span><span class="type-name">User</span><span>(</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?)&quot;</span></code></pre>
+    <p><strong>++=</strong></p>
+    <p>Use the <code>++=</code> method if you want to insert multiple data using the model.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span> ++= </span><span class="type-name">List</span><span>(</span><span class="type-name">User</span><span>(</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>), </span><span class="type-name">User</span><span>(</span><span class="number-literal">2L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?), (?, ?, ?)&quot;</span></code></pre>
+    
+    <h3 id="on-duplicate-key-update" class="section"><a class="anchor-link left" href="#on-duplicate-key-update"><i class="icofont-laika link">&#xef71;</i></a>ON DUPLICATE KEY UPDATE</h3>
+    <p>Inserting a row with an ON DUPLICATE KEY UPDATE clause will cause an UPDATE of the old row if the UNIQUE index or PRIMARY KEY has duplicate values.</p>
+    <p>There are two ways to achieve this in LDBC: using <code>insertOrUpdate{s}</code> or using <code>onDuplicateKeyUpdate</code> for <code>Insert</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insertOrUpdate</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `id` = new_user.`id`, `name` = new_user.`name`, `age` = new_user.`age`&quot;</span></code></pre>
+    <p>Note that if you use <code>insertOrUpdate{s}</code>, all columns will be updated. If you have duplicate values and wish to update only certain columns, use <code>onDuplicateKeyUpdate</code> to specify only the columns you wish to update.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">onDuplicateKeyUpdate</span><span>(</span><span class="identifier">v</span><span> =&gt; (</span><span class="identifier">v</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">v</span><span>.</span><span class="identifier">age</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `age`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `name` = new_user.`name`, `age` = new_user.`age`&quot;</span></code></pre>
+    
+    <h2 id="update" class="section"><a class="anchor-link left" href="#update"><i class="icofont-laika link">&#xef71;</i></a>UPDATE</h2>
+    <p>A type-safe way to construct an UPDATE statement is to use the <code>update</code> method provided by TableQuery.</p>
+    <p>The first argument of the <code>update</code> method is the name of the model property, not the column name of the table, and the second argument is the value to be updated. The type of the value passed as the second argument must be the same as the type of the property specified in the first argument.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>)
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET name = ?&quot;</span></code></pre>
+    <p>If a property name that does not exist is specified as the first argument, a compile error occurs.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;hoge&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>) </span><span class="comment">// Compile error</span></code></pre>
+    <p>If you want to update multiple columns, use the <code>set</code> method.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">Some</span><span>(</span><span class="number-literal">20</span><span>))
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET name = ?, age = ?&quot;</span></code></pre>
+    <p>You can also prevent the <code>set</code> method from generating queries based on conditions.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">Some</span><span>(</span><span class="number-literal">20</span><span>), </span><span class="boolean-literal">false</span><span>)
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET name = ?&quot;</span></code></pre>
+    <p>You can also use a model to construct the UPDATE statement. Note that if you use a model, all columns will be updated.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="type-name">User</span><span>(</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>, </span><span class="type-name">None</span><span>))
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET id = ?, name = ?, age = ?&quot;</span></code></pre>
+    
+    <h3 id="where-2" class="section"><a class="anchor-link left" href="#where-2"><i class="icofont-laika link">&#xef71;</i></a>WHERE</h3>
+    <p>The <code>where</code> method can also be used to set a where condition on the update statement.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">Some</span><span>(</span><span class="number-literal">20</span><span>)).</span><span class="identifier">where</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span> === </span><span class="number-literal">1</span><span>)
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET name = ?, age = ? WHERE id = ?&quot;</span></code></pre>
+    <p>See <a href="#">where item</a> in the Insert statement for conditions that can be used in the <code>where</code> method.</p>
+    
+    <h2 id="delete" class="section"><a class="anchor-link left" href="#delete"><i class="icofont-laika link">&#xef71;</i></a>DELETE</h2>
+    <p>A type-safe way to construct a DELETE statement is to use the <code>delete</code> method provided by TableQuery.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">delete</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">delete</span><span>
+
+</span><span class="identifier">delete</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;DELETE FROM user&quot;</span></code></pre>
+    
+    <h3 id="where-3" class="section"><a class="anchor-link left" href="#where-3"><i class="icofont-laika link">&#xef71;</i></a>WHERE</h3>
+    <p>The <code>where</code> method can also be used to set a Where condition on a delete statement.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">delete</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">delete</span><span>.</span><span class="identifier">where</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span> === </span><span class="number-literal">1</span><span>)
+
+</span><span class="identifier">delete</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;DELETE FROM user WHERE id = ?&quot;</span></code></pre>
+    <p>See <a href="#">where item</a> in the Insert statement for conditions that can be used in the <code>where</code> method.</p>
+    
+    <h2 id="ddl" class="section"><a class="anchor-link left" href="#ddl"><i class="icofont-laika link">&#xef71;</i></a>DDL</h2>
+    <p>A type-safe way to construct DDL is to use the following methods provided by TableQuery.</p>
+    <ul>
+      <li>createTable</li>
+      <li>dropTable</li>
+      <li>truncateTable</li>
+    </ul>
+    <p>If you are using spec2, you can run DDL before and after the test as follows.</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">global</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">specs2</span><span>.</span><span class="identifier">mutable</span><span>.</span><span class="type-name">Specification</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">specs2</span><span>.</span><span class="identifier">specification</span><span>.</span><span class="identifier">core</span><span>.</span><span class="type-name">Fragments</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">specs2</span><span>.</span><span class="identifier">specification</span><span>.</span><span class="type-name">BeforeAfterEach</span><span>
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">Test</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Specification</span><span>, </span><span class="type-name">BeforeAfterEach</span><span>:
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">before</span><span>: </span><span class="type-name">Fragments</span><span> =
+    </span><span class="identifier">step</span><span>((</span><span class="identifier">tableQuery</span><span>.</span><span class="identifier">createTable</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">autoCommit</span><span>(</span><span class="identifier">dataSource</span><span>) &gt;&gt; </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">&quot;Complete create table&quot;</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>())
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">after</span><span>: </span><span class="type-name">Fragments</span><span> =
+    </span><span class="identifier">step</span><span>((</span><span class="identifier">tableQuery</span><span>.</span><span class="identifier">dropTable</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">autoCommit</span><span>(</span><span class="identifier">dataSource</span><span>) &gt;&gt; </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="string-literal">&quot;Complete drop table&quot;</span><span>)).</span><span class="identifier">unsafeRunSync</span><span>())</span></code></pre>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

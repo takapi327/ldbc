@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Database Connection</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../css/site.css" />
+  <script src="../helium/site/laika-helium.js"></script>
+    <script src="../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../", "/en/04-Database-Connection.html", "0.2", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.2</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="index.html">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="01-Table-Definitions.html">Table Definitions</a></li>
+    <li class="level1 nav-leaf"><a href="02-Custom-Data-Type.html">Custom Data Type</a></li>
+    <li class="level1 nav-leaf"><a href="03-Type-safe-Query-Builder.html">Type-safe Query Construction</a></li>
+    <li class="level1 active nav-leaf"><a href="#">Database Connection</a></li>
+    <li class="level1 nav-leaf"><a href="05-Plain-SQL-Queries.html">Plain SQL Queries</a></li>
+    <li class="level1 nav-leaf"><a href="06-Generating-SchemaSPY-Documentation.html">SchemaSPY Document Generation</a></li>
+    <li class="level1 nav-leaf"><a href="07-Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-leaf"><a href="08-Performance.html">Performance</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Database Connection</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#using-datasource">Using DataSource</a></li>
+    <li class="level1 nav-node"><a href="#log">Log</a></li>
+    <li class="level2 nav-leaf"><a href="#customize">Customize</a></li>
+    <li class="level1 nav-node"><a href="#query">Query</a></li>
+    <li class="level2 nav-leaf"><a href="#tolist">toList</a></li>
+    <li class="level2 nav-leaf"><a href="#headoption">headOption</a></li>
+    <li class="level2 nav-leaf"><a href="#unsafe">unsafe</a></li>
+    <li class="level1 nav-leaf"><a href="#update">Update</a></li>
+    <li class="level1 nav-node"><a href="#perform-database-operations">Perform database operations</a></li>
+    <li class="level2 nav-leaf"><a href="#read-only">Read Only</a></li>
+    <li class="level2 nav-leaf"><a href="#auto-commit">Auto Commit</a></li>
+    <li class="level2 nav-leaf"><a href="#transaction">Transaction</a></li>
+    <li class="level1 nav-node"><a href="#database-action">Database Action</a></li>
+    <li class="level2 nav-leaf"><a href="#database-model">Database model</a></li>
+    <li class="level2 nav-leaf"><a href="#use-in-method-chain">Use in method chain</a></li>
+    <li class="level1 nav-node"><a href="#using-a-hikaricp-connection-pool">Using a HikariCP Connection Pool</a></li>
+    <li class="level2 nav-leaf"><a href="#hikaridatabase">HikariDatabase</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="database-connection" class="title">Database Connection</h1>
+    <p>This chapter describes how to use queries built with LDBC to process connections to databases.</p>
+    <p>The following dependencies must be set up for the project</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.3.0-beta8&quot;</span><span>,
+  </span><span class="string-literal">&quot;com.mysql&quot;</span><span> % </span><span class="string-literal">&quot;mysql-connector-j&quot;</span><span> % </span><span class="string-literal">&quot;8.4.0&quot;</span><span>
+)</span></code></pre>
+    <p>If you have not yet read about how to build queries with LDBC, we recommend that you read the chapter <a href="03-Type-safe-Query-Builder.html">Building Type-Safe Queries</a> first.</p>
+    <p>The following code example assumes the following import</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">com</span><span>.</span><span class="identifier">mysql</span><span>.</span><span class="identifier">cj</span><span>.</span><span class="identifier">jdbc</span><span>.</span><span class="type-name">MysqlDataSource</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="comment">// This is just for testing. Consider using cats.effect.IOApp instead of calling
+// unsafe methods directly.
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">global</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">sql</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">io</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">logging</span><span>.</span><span class="type-name">ConsoleLogHandler</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">builder</span><span>.</span><span class="type-name">TableQuery</span></code></pre>
+    <p>Table definitions use the following</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>,
+  </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>],
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>.</span><span class="type-name">UNSIGNED</span><span>.</span><span class="type-name">DEFAULT</span><span>(</span><span class="type-name">None</span><span>)),
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">userQuery</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">User</span><span>](</span><span class="identifier">table</span><span>)</span></code></pre>
+    
+    <h2 id="using-datasource" class="section"><a class="anchor-link left" href="#using-datasource"><i class="icofont-laika link">&#xef71;</i></a>Using DataSource</h2>
+    <p>LDBC uses JDBC&#39;s DataSource for database connections, and since LDBC does not provide an implementation for building this DataSource, it is necessary to use a library such as mysql or HikariCP. In this example, we will use mysqlDataSource to build the DataSource.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="keyword">new</span><span> </span><span class="type-name">MysqlDataSource</span><span>()
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">setServerName</span><span>(</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>)
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">setPortNumber</span><span>(</span><span class="number-literal">3306</span><span>)
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">setDatabaseName</span><span>(</span><span class="string-literal">&quot;database name&quot;</span><span>)
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">setUser</span><span>(</span><span class="string-literal">&quot;user name&quot;</span><span>)
+</span><span class="identifier">dataSource</span><span>.</span><span class="identifier">setPassword</span><span>(</span><span class="string-literal">&quot;password&quot;</span><span>)</span></code></pre>
+    
+    <h2 id="log" class="section"><a class="anchor-link left" href="#log"><i class="icofont-laika link">&#xef71;</i></a>Log</h2>
+    <p>LDBC can export execution and error logs of Database connections in any format using any logging library.</p>
+    <p>A logger using Cats Effect&#39;s Console is provided as standard, which can be used during development.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">LogHandler</span><span>[</span><span class="type-name">IO</span><span>] = </span><span class="type-name">ConsoleLogHandler</span><span>[</span><span class="type-name">IO</span><span>]</span></code></pre>
+    
+    <h3 id="customize" class="section"><a class="anchor-link left" href="#customize"><i class="icofont-laika link">&#xef71;</i></a>Customize</h3>
+    <p>Use <code>ldbc.dsl.logging.LogHandler</code> to customize logs using any logging library.</p>
+    <p>The following is the standard implementation of logging: LDBC generates the following three types of events on database connections</p>
+    <ul>
+      <li>Success: Successful processing</li>
+      <li>ProcessingFailure: Error in processing after data acquisition or before database connection</li>
+      <li>ExecFailure: Error processing connection to database</li>
+    </ul>
+    <p>Pattern matching is used to sort out what logs to write for each event.</p>
+    <pre><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">consoleLogger</span><span>[</span><span class="type-name">F</span><span>[</span><span class="identifier">_</span><span>]: </span><span class="type-name">Console</span><span>: </span><span class="type-name">Sync</span><span>]: </span><span class="type-name">LogHandler</span><span>[</span><span class="type-name">F</span><span>] =
+  </span><span class="keyword">case</span><span> </span><span class="type-name">LogEvent</span><span>.</span><span class="type-name">Success</span><span>(</span><span class="identifier">sql</span><span>, </span><span class="identifier">args</span><span>) =&gt;
+    </span><span class="type-name">Console</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">println</span><span>(
+      </span><span class="string-literal">s&quot;&quot;&quot;Successful Statement Execution:
+         |  </span><span class="substitution">$sql</span><span class="string-literal">
+         |
+         | arguments = [</span><span class="substitution">${ args.mkString(&quot;,&quot;) }</span><span class="string-literal">]
+         |&quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>
+    )
+  </span><span class="keyword">case</span><span> </span><span class="type-name">LogEvent</span><span>.</span><span class="type-name">ProcessingFailure</span><span>(</span><span class="identifier">sql</span><span>, </span><span class="identifier">args</span><span>, </span><span class="identifier">failure</span><span>) =&gt;
+    </span><span class="type-name">Console</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">errorln</span><span>(
+      </span><span class="string-literal">s&quot;&quot;&quot;Failed ResultSet Processing:
+         |  </span><span class="substitution">$sql</span><span class="string-literal">
+         |
+         | arguments = [</span><span class="substitution">${ args.mkString(&quot;,&quot;) }</span><span class="string-literal">]
+         |&quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>
+    ) &gt;&gt; </span><span class="type-name">Console</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">printStackTrace</span><span>(</span><span class="identifier">failure</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">LogEvent</span><span>.</span><span class="type-name">ExecFailure</span><span>(</span><span class="identifier">sql</span><span>, </span><span class="identifier">args</span><span>, </span><span class="identifier">failure</span><span>) =&gt;
+    </span><span class="type-name">Console</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">errorln</span><span>(
+      </span><span class="string-literal">s&quot;&quot;&quot;Failed Statement Execution:
+         |  </span><span class="substitution">$sql</span><span class="string-literal">
+         |
+         | arguments = [</span><span class="substitution">${ args.mkString(&quot;,&quot;) }</span><span class="string-literal">]
+         |&quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span><span>
+    ) &gt;&gt; </span><span class="type-name">Console</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">printStackTrace</span><span>(</span><span class="identifier">failure</span><span>)</span></code></pre>
+    
+    <h2 id="query" class="section"><a class="anchor-link left" href="#query"><i class="icofont-laika link">&#xef71;</i></a>Query</h2>
+    <p>Constructing a <code>select</code> statement allows the use of the <code>toList</code>/<code>headOption</code>/<code>unsafe</code> methods. These methods are used to determine the format of the data to be retrieved. If you do not specify any particular type, the column type specified in the <code>select</code> method will be returned as a Tuple.</p>
+    
+    <h3 id="tolist" class="section"><a class="anchor-link left" href="#tolist"><i class="icofont-laika link">&#xef71;</i></a>toList</h3>
+    <p>The <code>toList</code> method is used to retrieve a list of data as a result of executing a query. If you use the <code>toList</code> method to process the database and get zero data, an empty array will be returned.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">query1</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">toList</span><span> </span><span class="comment">// List[(Long, String, Option[Int])]</span></code></pre>
+    <p>Specifying a model in the <code>toList</code> method allows the data after acquisition to be converted to the specified model.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">toList</span><span>[</span><span class="type-name">User</span><span>] </span><span class="comment">// User</span></code></pre>
+    <p>The model type specified in the <code>toList</code> method must match the Tuple type specified in the <code>select</code> method or be type-convertible from the Tuple type to the specified model.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">query1</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">toList</span><span>[</span><span class="type-name">User</span><span>] </span><span class="comment">// Compile error
+</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Test</span><span>(</span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">age</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>])
+</span><span class="keyword">val</span><span> </span><span class="identifier">query2</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">age</span><span>)).</span><span class="identifier">toList</span><span>[</span><span class="type-name">Test</span><span>] </span><span class="comment">// Test</span></code></pre>
+    
+    <h3 id="headoption" class="section"><a class="anchor-link left" href="#headoption"><i class="icofont-laika link">&#xef71;</i></a>headOption</h3>
+    <p>If you want to get the first data as an Optional result of the query, use the <code>headOption</code> method. If the result of database processing using the <code>headOption</code> method is zero, none is returned.</p>
+    <p>Note that if you use the <code>headOption</code> method, only the first data will be returned, even if you execute a query that retrieves multiple data.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">query1</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">headOption</span><span> </span><span class="comment">// Option[(Long, String, Option[Int])]
+</span><span class="keyword">val</span><span> </span><span class="identifier">query2</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">headOption</span><span>[</span><span class="type-name">User</span><span>] </span><span class="comment">// Option[User]</span></code></pre>
+    
+    <h3 id="unsafe" class="section"><a class="anchor-link left" href="#unsafe"><i class="icofont-laika link">&#xef71;</i></a>unsafe</h3>
+    <p>When using the <code>unsafe</code> method, it is the same as the <code>headOption</code> method in that it returns only the first case of the retrieved data, but the data is returned as is, not as Optional. If the number of data returned is zero, an exception will be raised and appropriate exception handling is required.</p>
+    <p>It is named <code>unsafe</code> because it is likely to raise an exception at runtime.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">query1</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">unsafe</span><span> </span><span class="comment">// (Long, String, Option[Int])
+</span><span class="keyword">val</span><span> </span><span class="identifier">query2</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">unsafe</span><span>[</span><span class="type-name">User</span><span>] </span><span class="comment">// User</span></code></pre>
+    
+    <h2 id="update" class="section"><a class="anchor-link left" href="#update"><i class="icofont-laika link">&#xef71;</i></a>Update</h2>
+    <p>Constructing an <code>insert/update/delete</code> statement allows you to use the <code>update</code> method. The <code>update</code> method returns the number of write operations to the database.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">update</span><span> </span><span class="comment">// Int
+</span><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">update</span><span> </span><span class="comment">// Int
+</span><span class="keyword">val</span><span> </span><span class="identifier">delete</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">delete</span><span>.</span><span class="identifier">update</span><span> </span><span class="comment">// Int</span></code></pre>
+    <p>In the case of an <code>insert</code> statement, you may want the values generated by AutoIncrement to be returned when inserting data. In this case, use the <code>returning</code> method instead of the <code>update</code> method to specify the columns to be returned.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">returning</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>) </span><span class="comment">// Long</span></code></pre>
+    <p>The value specified in the <code>returning</code> method must be the name of a property that the model has. Also, if the specified property does not have the AutoIncrement attribute set on the table definition, an error will occur.</p>
+    <p>In MySQL, the only value that can be returned when inserting data is the AutoIncrement column, so the same specification applies to LDBC.</p>
+    
+    <h2 id="perform-database-operations" class="section"><a class="anchor-link left" href="#perform-database-operations"><i class="icofont-laika link">&#xef71;</i></a>Perform database operations</h2>
+    <p>Before making a database connection, commit timing, read/write-only, and other settings must be made.</p>
+    
+    <h3 id="read-only" class="section"><a class="anchor-link left" href="#read-only"><i class="icofont-laika link">&#xef71;</i></a>Read Only</h3>
+    <p>The <code>readOnly</code> method can be used to make the processing of a query to be executed read-only. The <code>readOnly</code> method can also be used with <code>insert/update/delete</code> statements, but it will result in an error at runtime because of the write operation.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">read</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">toList</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">dataSource</span><span>)</span></code></pre>
+    
+    <h3 id="auto-commit" class="section"><a class="anchor-link left" href="#auto-commit"><i class="icofont-laika link">&#xef71;</i></a>Auto Commit</h3>
+    <p>The <code>autoCommit</code> method can be used to set the query processing to commit at each query execution.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">read</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">update</span><span>.</span><span class="identifier">autoCommit</span><span>(</span><span class="identifier">dataSource</span><span>)</span></code></pre>
+    
+    <h3 id="transaction" class="section"><a class="anchor-link left" href="#transaction"><i class="icofont-laika link">&#xef71;</i></a>Transaction</h3>
+    <p>The <code>transaction</code> method can be used to combine multiple database connection operations into a single transaction.</p>
+    <p>The return value of the <code>toList/headOption/unsafe/returning/update</code> method is of type <code>Kleisli[F, Connection[F], T]</code>. Therefore, you can use map or flatMap to combine the process into one.</p>
+    <p>By using the <code>transaction</code> method on a single <code>Kleisli[F, Connection[F], T]</code>, all database connection operations performed within will be combined into a single transaction.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>(</span><span class="keyword">for</span><span>
+  </span><span class="identifier">result1</span><span> &lt;- </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">returning</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>)
+  </span><span class="identifier">result2</span><span> &lt;- </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">update</span><span>
+  ...
+</span><span class="keyword">yield</span><span> ...).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">dataSource</span><span>)</span></code></pre>
+    
+    <h2 id="database-action" class="section"><a class="anchor-link left" href="#database-action"><i class="icofont-laika link">&#xef71;</i></a>Database Action</h2>
+    <p>There is also a way to perform database processing using <code>Database</code> with connection information to the database.</p>
+    <p>There are two ways to construct a <code>Database</code>: using the DriverManager or generating one from a DataSource. The following is an example of constructing a <code>Database</code> with connection information to a database using a MySQL driver.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">db</span><span> = </span><span class="type-name">Database</span><span>.</span><span class="identifier">fromMySQLDriver</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;database name&quot;</span><span>, </span><span class="string-literal">&quot;host&quot;</span><span>, </span><span class="string-literal">&quot;port number&quot;</span><span>, </span><span class="string-literal">&quot;user name&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>)</span></code></pre>
+    <p>The advantages of using <code>Database</code> to perform database processing are as follows</p>
+    <ul>
+      <li>Simplifies DataSource construction (when using DriverManager)</li>
+      <li>Eliminates the need to pass a DataSource for each query</li>
+    </ul>
+    <p>The method using <code>Database</code> is merely a simplified method of passing a DataSource, so there is no difference in execution results between the two.
+    The only difference is whether the processes are combined using <code>flatMap</code> or other methods and executed in a method chain, or whether the combined processes are executed using <code>Database</code>. Therefore, the user can choose the execution method of his/her choice.</p>
+    <p><strong>Read Only</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">user</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">User</span><span>] = </span><span class="identifier">db</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">headOption</span><span>[</span><span class="type-name">User</span><span>]).</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
+    <p><strong>Auto Commit</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="identifier">db</span><span>.</span><span class="identifier">autoCommit</span><span>(</span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">update</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
+    <p><strong>Transaction</strong></p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">db</span><span>.</span><span class="identifier">transaction</span><span>(</span><span class="keyword">for</span><span>
+  </span><span class="identifier">result1</span><span> &lt;- </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">returning</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>)
+  </span><span class="identifier">result2</span><span> &lt;- </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">update</span><span>
+  ...
+</span><span class="keyword">yield</span><span> ...).</span><span class="identifier">unsafeRunSync</span><span>()</span></code></pre>
+    
+    <h3 id="database-model" class="section"><a class="anchor-link left" href="#database-model"><i class="icofont-laika link">&#xef71;</i></a>Database model</h3>
+    <p>In LDBC, the <code>Database</code> model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see <a href="../ja/06-Generating-SchemaSPY-Documentation.html">here</a> for information on SchemaSPY document generation.</p>
+    <p>If you have already generated a <code>Database</code> model for another use, you can use that model to build a <code>Database</code> with database connection information.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.</span><span class="identifier">io</span><span>.*
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">database</span><span>: </span><span class="type-name">Database</span><span> = ???
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">db</span><span> = </span><span class="identifier">database</span><span>.</span><span class="identifier">fromDriverManager</span><span>()
+</span><span class="comment">// or
+</span><span class="keyword">val</span><span> </span><span class="identifier">db</span><span> = </span><span class="identifier">database</span><span>.</span><span class="identifier">fromDriverManager</span><span>(</span><span class="string-literal">&quot;user name&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>)</span></code></pre>
+    
+    <h3 id="use-in-method-chain" class="section"><a class="anchor-link left" href="#use-in-method-chain"><i class="icofont-laika link">&#xef71;</i></a>Use in method chain</h3>
+    <p>The <code>Database</code> model can also be used in place of <code>DataSource</code> in <code>TableQuery</code> methods.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">read</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">toList</span><span>.</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">db</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">commit</span><span> = </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">update</span><span>.</span><span class="identifier">autoCommit</span><span>(</span><span class="identifier">db</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">transaction</span><span> = (</span><span class="keyword">for</span><span>
+  </span><span class="identifier">result1</span><span> &lt;- </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1L</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">None</span><span>)).</span><span class="identifier">returning</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>)
+  </span><span class="identifier">result2</span><span> &lt;- </span><span class="identifier">userQuery</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">update</span><span>
+  ...
+</span><span class="keyword">yield</span><span> ...).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">db</span><span>)</span></code></pre>
+    
+    <h2 id="using-a-hikaricp-connection-pool" class="section"><a class="anchor-link left" href="#using-a-hikaricp-connection-pool"><i class="icofont-laika link">&#xef71;</i></a>Using a HikariCP Connection Pool</h2>
+    <p><code>ldbc-hikari</code> provides a builder to build HikariConfig and HikariDataSource for building HikariCP connection pools.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-hikari&quot;</span><span> % </span><span class="string-literal">&quot;0.3.0-beta8&quot;</span><span>,
+)</span></code></pre>
+    <p><code>HikariConfigBuilder</code> is a builder to build <code>HikariConfig</code> of HikariCP as the name suggests.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span>: </span><span class="identifier">com</span><span>.</span><span class="identifier">zaxxer</span><span>.</span><span class="identifier">hikari</span><span>.</span><span class="type-name">HikariConfig</span><span> = </span><span class="type-name">HikariConfigBuilder</span><span>.</span><span class="identifier">default</span><span>.</span><span class="identifier">build</span><span>()</span></code></pre>
+    <p>The <code>HikariConfigBuilder</code> has a <code>default</code> and a <code>from</code> method. When <code>default</code> is used, the <code>HikariConfig</code> is constructed by retrieving the target values from the Config based on the LDBC specified path.</p>
+    <pre class="keep-together pdf epub"><code class="text">ldbc.hikari {
+  jdbc_url = ...
+  username = ...
+  password = ...
+}</code></pre>
+    <p>If you want to specify a user-specific path, you must use the <code>from</code> method and pass the path you want to retrieve as an argument.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span>: </span><span class="identifier">com</span><span>.</span><span class="identifier">zaxxer</span><span>.</span><span class="identifier">hikari</span><span>.</span><span class="type-name">HikariConfig</span><span> = </span><span class="type-name">HikariConfigBuilder</span><span>.</span><span class="identifier">from</span><span>(</span><span class="string-literal">&quot;custom.path&quot;</span><span>).</span><span class="identifier">build</span><span>()
+
+</span><span class="comment">// custom.path {
+//   jdbc_url = ...
+//   username = ...
+//   password = ...
+// }</span></code></pre>
+    <p>Please refer to <a href="https://github.com/brettwooldridge/HikariCP">official</a> for details on what can be set in HikariCP.</p>
+    <p>The following is a list of keys that can be set for Config.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Key name</th>
+          <th>Description</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>catalog</code></td>
+          <td><code>Default catalog name to be set when connecting</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>connection_timeout</code></td>
+          <td><code>Maximum number of milliseconds the client will wait for a connection from the pool</code></td>
+          <td><code>Duration</code></td>
+        </tr>
+        <tr>
+          <td><code>idle_timeout</code></td>
+          <td><code>Maximum time (in milliseconds) that a connection is allowed to be idle in the pool</code></td>
+          <td><code>Duration</code></td>
+        </tr>
+        <tr>
+          <td><code>leak_detection_threshold</code></td>
+          <td><code>Time a connection is out of the pool before a message indicating a possible connection leak is logged</code></td>
+          <td><code>Duration</code></td>
+        </tr>
+        <tr>
+          <td><code>maximum_pool_size</code></td>
+          <td><code>Maximum size allowed by the pool, including both idle and in-use connections</code></td>
+          <td><code>Int</code></td>
+        </tr>
+        <tr>
+          <td><code>max_lifetime</code></td>
+          <td><code>Maximum lifetime of connections in the pool</code></td>
+          <td><code>Duration</code></td>
+        </tr>
+        <tr>
+          <td><code>minimum_idle</code></td>
+          <td><code>Minimum number of idle connections that HikariCP will try to keep in the pool, including both idle and in-use connections</code></td>
+          <td><code>Int</code></td>
+        </tr>
+        <tr>
+          <td><code>pool_name</code></td>
+          <td><code>Connection pool name</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>allow_pool_suspension</code></td>
+          <td><code>Whether to allow pool suspend</code></td>
+          <td><code>Boolean</code></td>
+        </tr>
+        <tr>
+          <td><code>auto_commit</code></td>
+          <td><code>Default autocommit behavior for connections in the pool</code></td>
+          <td><code>Boolean</code></td>
+        </tr>
+        <tr>
+          <td><code>connection_init_sql</code></td>
+          <td><code>SQL string to be executed when a new connection is created, before it is added to the pool</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>connection_test_query</code></td>
+          <td><code>SQL query to execute to test the validity of the connection</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>data_source_classname</code></td>
+          <td><code>Fully qualified class name of the JDBC DataSource to be used to create Connections</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>initialization_fail_timeout</code></td>
+          <td><code>Pool initialization failure timeout</code></td>
+          <td><code>Duration</code></td>
+        </tr>
+        <tr>
+          <td><code>isolate_internal_queries</code></td>
+          <td><code>Whether internal pool queries (mainly validity checks) are separated in their own transaction by Connection.rollback()</code></td>
+          <td><code>Boolean</code></td>
+        </tr>
+        <tr>
+          <td><code>jdbc_url</code></td>
+          <td><code>JDBC URL</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>readonly</code></td>
+          <td><code>Whether connections to be added to the pool should be set as read-only connections</code></td>
+          <td><code>Boolean</code></td>
+        </tr>
+        <tr>
+          <td><code>register_mbeans</code></td>
+          <td><code>Whether HikariCP self-registers HikariConfigMXBean and HikariPoolMXBean in JMX</code></td>
+          <td><code>Boolean</code></td>
+        </tr>
+        <tr>
+          <td><code>schema</code></td>
+          <td><code>Default schema name to set when connecting</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>username</code></td>
+          <td><code>Default username used for calls to DataSource.getConnection(username,password)</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>password</code></td>
+          <td><code>Default password used for calling DataSource.getConnection(username,password)</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>driver_class_name</code></td>
+          <td><code>Driver class name to be used</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>transaction_isolation</code></td>
+          <td><code>Default transaction isolation level</code></td>
+          <td><code>String</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <p>The <code>HikariDataSourceBuilder</code> allows you to build a <code>HikariDataSource</code> for HikariCP.</p>
+    <p>The <code>HikariDataSource</code> built by the builder is managed as a <code>Resource</code> since the connection pool is a lifetime managed object and needs to be shut down cleanly.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">HikariDataSource</span><span>] = </span><span class="type-name">HikariDataSourceBuilder</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">buildDataSource</span><span>()</span></code></pre>
+    <p>The <code>HikariDataSource</code> built via <code>buildDataSource</code> uses <code>HikariConfig</code>, which is built internally by retrieving settings from Config based on the LDBC specified path.
+    This is equivalent to <code>HikariConfig</code> generated via <code>default</code> in <code>HikariConfigBuilder</code>.</p>
+    <p>If you want to use a user-specified <code>HikariConfig</code>, you can use <code>buildFromConfig</code> to build a <code>HikariDataSource</code>.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span> = ???
+</span><span class="keyword">val</span><span> </span><span class="identifier">dataSource</span><span> = </span><span class="type-name">HikariDataSourceBuilder</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">buildFromConfig</span><span>(</span><span class="identifier">hikariConfig</span><span>)</span></code></pre>
+    <p>A <code>HikariDataSource</code> built with <code>HikariDataSourceBuilder</code> is usually executed using IOApp.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">object</span><span> </span><span class="type-name">HikariApp</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span>:
+
+  </span><span class="keyword">val</span><span> </span><span class="identifier">dataSourceResource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">HikariDataSource</span><span>] = </span><span class="type-name">HikariDataSourceBuilder</span><span>.</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>].</span><span class="identifier">buildDataSource</span><span>()
+
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>(</span><span class="identifier">args</span><span>: </span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]): </span><span class="type-name">IO</span><span>[</span><span class="type-name">ExitCode</span><span>] =
+    </span><span class="identifier">dataSourceResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">dataSource</span><span> =&gt;
+       ...
+    }</span></code></pre>
+    
+    <h3 id="hikaridatabase" class="section"><a class="anchor-link left" href="#hikaridatabase"><i class="icofont-laika link">&#xef71;</i></a>HikariDatabase</h3>
+    <p>There is also a way to build a <code>Database</code> with HikariCP connection information.</p>
+    <p>The <code>HikariDatabase</code> is managed as a <code>Resource</code> like the <code>HikariDataSource</code>.
+    Therefore, it is usually executed using IOApp.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">object</span><span> </span><span class="type-name">HikariApp</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span>:
+
+  </span><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span> = ???
+  </span><span class="keyword">val</span><span> </span><span class="identifier">databaseResource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">F</span><span>, </span><span class="type-name">Database</span><span>[</span><span class="type-name">F</span><span>]] = </span><span class="type-name">HikariDatabase</span><span>.</span><span class="identifier">fromHikariConfig</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="identifier">hikariConfig</span><span>)
+
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>(</span><span class="identifier">args</span><span>: </span><span class="type-name">List</span><span>[</span><span class="type-name">String</span><span>]): </span><span class="type-name">IO</span><span>[</span><span class="type-name">ExitCode</span><span>] =
+    </span><span class="identifier">databaseResource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">database</span><span> =&gt;
+       </span><span class="keyword">for</span><span>
+         </span><span class="identifier">result</span><span> &lt;- </span><span class="identifier">database</span><span>.</span><span class="identifier">readOnly</span><span>(...)
+        </span><span class="keyword">yield</span><span> </span><span class="type-name">ExitCode</span><span>.</span><span class="type-name">Success</span><span>
+    }</span></code></pre>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

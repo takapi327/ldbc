@@ -1,0 +1,27 @@
+{
+  "versions": [
+    { "displayValue": "0.2", "pathSegment": "0.2", "fallbackLink": "/index.html", "label": "Stable", "canonical": false }
+  ],
+  "linkTargets": [
+    { "path": "/en/01-Table-Definitions.html", "versions": ["0.2"] },
+    { "path": "/en/02-Custom-Data-Type.html", "versions": ["0.2"] },
+    { "path": "/en/03-Type-safe-Query-Builder.html", "versions": ["0.2"] },
+    { "path": "/en/04-Database-Connection.html", "versions": ["0.2"] },
+    { "path": "/en/05-Plain-SQL-Queries.html", "versions": ["0.2"] },
+    { "path": "/en/06-Generating-SchemaSPY-Documentation.html", "versions": ["0.2"] },
+    { "path": "/en/07-Schema-Code-Generation.html", "versions": ["0.2"] },
+    { "path": "/en/08-Performance.html", "versions": ["0.2"] },
+    { "path": "/en/index.html", "versions": ["0.2"] },
+    { "path": "/index.html", "versions": ["0.2"] },
+    { "path": "/ja/01-Table-Definitions.html", "versions": ["0.2"] },
+    { "path": "/ja/02-Custom-Data-Type.html", "versions": ["0.2"] },
+    { "path": "/ja/03-Type-safe-Query-Builder.html", "versions": ["0.2"] },
+    { "path": "/ja/04-Database-Connection.html", "versions": ["0.2"] },
+    { "path": "/ja/05-Plain-SQL-Queries.html", "versions": ["0.2"] },
+    { "path": "/ja/06-Generating-SchemaSPY-Documentation.html", "versions": ["0.2"] },
+    { "path": "/ja/07-Schema-Code-Generation.html", "versions": ["0.2"] },
+    { "path": "/ja/08-Performance.html", "versions": ["0.2"] },
+    { "path": "/ja/index.html", "versions": ["0.2"] },
+    { "path": "/older-versions.html", "versions": ["0.2"] }
+  ]
+}
