@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>スキーマ</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/ja/tutorial/Schema.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Notes</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">データ更新</a></li>
+    <li class="level2 nav-leaf"><a href="Error-Handling.html">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 nav-leaf"><a href="Query-Builder.html">クエリビルダー</a></li>
+    <li class="level2 active nav-leaf"><a href="#">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">スキーマ</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#データ型">データ型</a></li>
+    <li class="level1 nav-leaf"><a href="#属性">属性</a></li>
+    <li class="level1 nav-node"><a href="#キーの設定">キーの設定</a></li>
+    <li class="level2 nav-leaf"><a href="#primary-key">PRIMARY KEY</a></li>
+    <li class="level2 nav-leaf"><a href="#unique-key">UNIQUE KEY</a></li>
+    <li class="level2 nav-leaf"><a href="#index-key">INDEX KEY</a></li>
+    <li class="level2 nav-leaf"><a href="#foreign-key">FOREIGN KEY</a></li>
+    <li class="level2 nav-leaf"><a href="#制約名">制約名</a></li>
+    <li class="level1 nav-leaf"><a href="#カスタム-データ型">カスタム データ型</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="スキーマ" class="title">スキーマ</h1>
+    <p>この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、Code Generatorを使ってこの作業を省略することもできます。</p>
+    <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-schema:0.3.0-beta8&quot;</span></code></pre>
+    <p>以下のコード例では、以下のimportを想定しています。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.</span><span class="identifier">attribute</span><span>.*</span></code></pre>
+    <p>ldbcは、Scalaモデルとデータベースのテーブル定義を1対1のマッピングで管理します。モデルが保持するプロパティとテーブルが保持するカラムのマッピングは、定義順に行われます。テーブル定義は、Create文の構造と非常によく似ています。このため、テーブル定義の構築はユーザーにとって直感的なものとなります。</p>
+    <p>ldbc は、このテーブル定義をさまざまな目的で使用します。型安全なクエリの生成、ドキュメントの生成など。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>:    </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">name</span><span>:  </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>,
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(                  </span><span class="comment">// CREATE TABLE `user` (
+</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>), </span><span class="comment">//   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),                    </span><span class="comment">//   `name` VARCHAR(50) NOT NULL,
+</span><span>  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>)),                  </span><span class="comment">//   `email` VARCHAR(100) NOT NULL,
+</span><span>)                                                 </span><span class="comment">// );</span></code></pre>
+    <p>すべてのカラムはcolumnメソッドで定義されます。各カラムにはカラム名、データ型、属性があります。以下のプリミティブ型が標準でサポートされており、すぐに使用できます。</p>
+    <ul>
+      <li>Numeric types: <code>Byte</code>, <code>Short</code>, <code>Int</code>, <code>Long</code>, <code>Float</code>, <code>Double</code>, <code>BigDecimal</code>, <code>BigInt</code></li>
+      <li>LOB types: <code>java.sql.Blob</code>, <code>java.sql.Clob</code>, <code>Array[Byte]</code></li>
+      <li>Date types: <code>java.sql.Date</code>, <code>java.sql.Time</code>, <code>java.sql.Timestamp</code></li>
+      <li>String</li>
+      <li>Boolean</li>
+      <li>java.time.*</li>
+    </ul>
+    <p>Null可能な列は<code>Option[T]</code>で表現され、Tはサポートされるプリミティブ型の1つです。Option型でない列はすべてNot Nullであることに注意してください。</p>
+    
+    <h2 id="データ型" class="section"><a class="anchor-link left" href="#データ型"><i class="icofont-laika link">&#xef71;</i></a>データ型</h2>
+    <p>モデルが持つプロパティのScala型とカラムが持つデータ型の対応付けは、定義されたデータ型がScala型をサポートしている必要があります。サポートされていない型を割り当てようとするとコンパイルエラーが発生します。</p>
+    <p>データ型がサポートするScalaの型は以下の表の通りです。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Scala Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>BIT</code></td>
+          <td><code>Byte, Short, Int, Long</code></td>
+        </tr>
+        <tr>
+          <td><code>TINYINT</code></td>
+          <td><code>Byte, Short</code></td>
+        </tr>
+        <tr>
+          <td><code>SMALLINT</code></td>
+          <td><code>Short, Int</code></td>
+        </tr>
+        <tr>
+          <td><code>MEDIUMINT</code></td>
+          <td><code>Int</code></td>
+        </tr>
+        <tr>
+          <td><code>INT</code></td>
+          <td><code>Int, Long</code></td>
+        </tr>
+        <tr>
+          <td><code>BIGINT</code></td>
+          <td><code>Long, BigInt</code></td>
+        </tr>
+        <tr>
+          <td><code>DECIMAL</code></td>
+          <td><code>BigDecimal</code></td>
+        </tr>
+        <tr>
+          <td><code>FLOAT</code></td>
+          <td><code>Float</code></td>
+        </tr>
+        <tr>
+          <td><code>DOUBLE</code></td>
+          <td><code>Double</code></td>
+        </tr>
+        <tr>
+          <td><code>CHAR</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>VARCHAR</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>BINARY</code></td>
+          <td><code>Array[Byte]</code></td>
+        </tr>
+        <tr>
+          <td><code>VARBINARY</code></td>
+          <td><code>Array[Byte]</code></td>
+        </tr>
+        <tr>
+          <td><code>TINYBLOB</code></td>
+          <td><code>Array[Byte]</code></td>
+        </tr>
+        <tr>
+          <td><code>BLOB</code></td>
+          <td><code>Array[Byte]</code></td>
+        </tr>
+        <tr>
+          <td><code>MEDIUMBLOB</code></td>
+          <td><code>Array[Byte]</code></td>
+        </tr>
+        <tr>
+          <td><code>LONGBLOB</code></td>
+          <td><code>Array[Byte]</code></td>
+        </tr>
+        <tr>
+          <td><code>TINYTEXT</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>TEXT</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>MEDIUMTEXT</code></td>
+          <td><code>String</code></td>
+        </tr>
+        <tr>
+          <td><code>DATE</code></td>
+          <td><code>java.time.LocalDate</code></td>
+        </tr>
+        <tr>
+          <td><code>DATETIME</code></td>
+          <td><code>java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime</code></td>
+        </tr>
+        <tr>
+          <td><code>TIMESTAMP</code></td>
+          <td><code>java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime</code></td>
+        </tr>
+        <tr>
+          <td><code>TIME</code></td>
+          <td><code>java.time.LocalTime</code></td>
+        </tr>
+        <tr>
+          <td><code>YEAR</code></td>
+          <td><code>java.time.Instant, java.time.LocalDate, java.time.Year</code></td>
+        </tr>
+        <tr>
+          <td><code>BOOLEA</code></td>
+          <td><code>Boolean</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>整数型を扱う際の注意点</strong></p>
+    <p>符号あり、符号なしに応じて、扱えるデータの範囲がScalaの型に収まらないことに注意する必要があります。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Signed Range</th>
+          <th>Unsigned Range</th>
+          <th>Scala Type</th>
+          <th>Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>TINYINT</code></td>
+          <td><code>-128 ~ 127</code></td>
+          <td><code>0 ~ 255</code></td>
+          <td><code>Byte&lt;br&gt;Short</code></td>
+          <td><code>-128 ~ 127&lt;br&gt;-32768～32767</code></td>
+        </tr>
+        <tr>
+          <td><code>SMALLINT</code></td>
+          <td><code>-32768 ~ 32767</code></td>
+          <td><code>0 ~ 65535</code></td>
+          <td><code>Short&lt;br&gt;Int</code></td>
+          <td><code>-32768～32767&lt;br&gt;-2147483648～2147483647</code></td>
+        </tr>
+        <tr>
+          <td><code>MEDIUMINT</code></td>
+          <td><code>-8388608 ~ 8388607</code></td>
+          <td><code>0 ~ 16777215</code></td>
+          <td><code>Int</code></td>
+          <td><code>-2147483648～2147483647</code></td>
+        </tr>
+        <tr>
+          <td><code>INT</code></td>
+          <td><code>-2147483648	~ 2147483647</code></td>
+          <td><code>0 ~ 4294967295</code></td>
+          <td><code>Int&lt;br&gt;Long</code></td>
+          <td><code>-2147483648～2147483647&lt;br&gt;-9223372036854775808～9223372036854775807</code></td>
+        </tr>
+        <tr>
+          <td><code>BIGINT</code></td>
+          <td><code>-9223372036854775808 ~ 9223372036854775807</code></td>
+          <td><code>0 ~ 18446744073709551615</code></td>
+          <td><code>Long&lt;br&gt;BigInt</code></td>
+          <td><code>-9223372036854775808～9223372036854775807&lt;br&gt;...</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <p>ユーザー定義の独自型やサポートされていない型を扱う場合は、カスタムデータ型を参照してください。</p>
+    
+    <h2 id="属性" class="section"><a class="anchor-link left" href="#属性"><i class="icofont-laika link">&#xef71;</i></a>属性</h2>
+    <p>カラムにはさまざまな属性を割り当てることができます。</p>
+    <ul>
+      <li><code>AUTO_INCREMENT</code>
+      DDL文を作成し、SchemaSPYを文書化する際に、列を自動インクリメント・キーとしてマークする。
+      MySQLでは、データ挿入時にAutoIncでないカラムを返すことはできません。そのため、必要に応じて、ldbcは戻りカラムがAutoIncとして適切にマークされているかどうかを確認します。</li>
+      <li><code>PRIMARY_KEY</code>
+      DDL文やSchemaSPYドキュメントを作成する際に、列を主キーとしてマークする。</li>
+      <li><code>UNIQUE_KEY</code>
+      DDL文やSchemaSPYドキュメントを作成する際に、列を一意キーとしてマークする。</li>
+      <li><code>COMMENT</code>
+      DDL文やSchemaSPY文書を作成する際に、列にコメントを設定する。</li>
+    </ul>
+    
+    <h2 id="キーの設定" class="section"><a class="anchor-link left" href="#キーの設定"><i class="icofont-laika link">&#xef71;</i></a>キーの設定</h2>
+    <p>MySQLではテーブルに対してUniqueキーやIndexキー、外部キーなどの様々なキーを設定することができます。ldbcで構築したテーブル定義でこれらのキーを設定する方法を見ていきましょう。</p>
+    
+    <h3 id="primary-key" class="section"><a class="anchor-link left" href="#primary-key"><i class="icofont-laika link">&#xef71;</i></a>PRIMARY KEY</h3>
+    <p>主キー（primary key）とはMySQLにおいてデータを一意に識別するための項目のことです。カラムにプライマリーキー制約を設定すると、カラムには他のデータの値を重複することのない値しか格納することができなくなります。また NULL も格納することができません。その結果、プライマリーキー制約が設定されたカラムの値を検索することで、テーブルの中でただ一つのデータを特定することができます。</p>
+    <p>ldbcではこのプライマリーキー制約を2つの方法で設定することができます。</p>
+    <ol class="arabic">
+      <li>columnメソッドの属性として設定する</li>
+      <li>tableのkeySetメソッドで設定する</li>
+    </ol>
+    <p><strong>columnメソッドの属性として設定する</strong></p>
+    <p>columnメソッドの属性として設定する方法は非常に簡単で、columnメソッドの第3引数以降に<code>PRIMARY_KEY</code>を渡すだけです。これによって以下の場合 <code>id</code>カラムを主キーとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>)</span></code></pre>
+    <p><strong>tableのkeySetメソッドで設定する</strong></p>
+    <p>ldbcのテーブル定義には <code>keySet</code>というメソッドが生えており、ここで<code>PRIMARY_KEY</code>に主キーとして設定したいカラムを渡すことで主キーとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">id</span><span>))
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   ...,
+//   PRIMARY KEY (`id`)
+// )</span></code></pre>
+    <p><code>PRIMARY_KEY</code>メソッドにはカラム意外にも以下のパラメーターを設定することができます。</p>
+    <ul>
+      <li><code>Index Type</code> ldbc.schema.Index.Type.BTREE or ldbc.schema.Index.Type.HASH</li>
+      <li><code>Index Option</code> ldbc.schema.Index.IndexOption</li>
+    </ul>
+    
+    <h4 id="複合キー-primary-key" class="section"><a class="anchor-link left" href="#複合キー-primary-key"><i class="icofont-laika link">&#xef71;</i></a>複合キー (primary key)</h4>
+    <p>1つのカラムだけではなく、複数のカラムを主キーとして組み合わせ主キーとして設定することもできます。<code>PRIMARY_KEY</code>に主キーとして設定したいカラムを複数渡すだけで複合主キーとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">table</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   ...,
+//   PRIMARY KEY (`id`, `name`)
+// )</span></code></pre>
+    <p>複合キーは<code>keySet</code>メソッドでの<code>PRIMARY_KEY</code>でしか設定することはできません。仮に以下のようにcolumnメソッドの属性として複数設定を行うと複合キーとしてではなく、それぞれを主キーとして設定されてしまいます。</p>
+    <p>ldbcではテーブル定義に複数<code>PRIMARY_KEY</code>を設定したとしてもコンパイルエラーにすることはできません。しかし、テーブル定義をクエリの生成やドキュメントの生成などで使用する場合エラーとなります。これはPRIMARY KEYはテーブルごとに1つしか設定することができないという制約によるものです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>), </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+// )</span></code></pre>
+    
+    <h3 id="unique-key" class="section"><a class="anchor-link left" href="#unique-key"><i class="icofont-laika link">&#xef71;</i></a>UNIQUE KEY</h3>
+    <p>一意キー（unique key）とはMySQLにおいてデータを一意に識別するための項目のことです。カラムに一意性制約を設定すると、カラムには他のデータの値を重複することのない値しか格納することができなくなります。</p>
+    <p>ldbcではこの一意性制約を2つの方法で設定することができます。</p>
+    <ol class="arabic">
+      <li>columnメソッドの属性として設定する</li>
+      <li>tableのkeySetメソッドで設定する</li>
+    </ol>
+    <p><strong>columnメソッドの属性として設定する</strong></p>
+    <p>columnメソッドの属性として設定する方法は非常に簡単で、columnメソッドの第3引数以降に<code>UNIQUE_KEY</code>を渡すだけです。これによって以下の場合 <code>id</code>カラムを一意キーとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">UNIQUE_KEY</span><span>)</span></code></pre>
+    <p><strong>tableのkeySetメソッドで設定する</strong></p>
+    <p>ldbcのテーブル定義には <code>keySet</code>というメソッドが生えており、ここで<code>UNIQUE_KEY</code>に一意キーとして設定したいカラムを渡すことで一意キーとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">UNIQUE_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">id</span><span>))
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   ...,
+//   UNIQUE KEY (`id`)
+// )</span></code></pre>
+    <p><code>UNIQUE_KEY</code>メソッドにはカラム意外にも以下のパラメーターを設定することができます。</p>
+    <ul>
+      <li><code>Index Name</code> String</li>
+      <li><code>Index Type</code> ldbc.schema.Index.Type.BTREE or ldbc.schema.Index.Type.HASH</li>
+      <li><code>Index Option</code> ldbc.schema.Index.IndexOption</li>
+    </ul>
+    
+    <h4 id="複合キー-unique-key" class="section"><a class="anchor-link left" href="#複合キー-unique-key"><i class="icofont-laika link">&#xef71;</i></a>複合キー (unique key)</h4>
+    <p>1つのカラムだけではなく、複数のカラムを一意キーとして組み合わせ一意キーとして設定することもできます。<code>UNIQUE_KEY</code>に一意キーとして設定したいカラムを複数渡すだけで複合一意キーとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">UNIQUE_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">table</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   ...,
+//   UNIQUE KEY (`id`, `name`)
+// )</span></code></pre>
+    <p>複合キーは<code>keySet</code>メソッドでの<code>UNIQUE_KEY</code>でしか設定することはできません。仮にcolumnメソッドの属性として複数設定を行うと複合キーとしてではなく、それぞれを一意キーとして設定されてしまいます。</p>
+    
+    <h3 id="index-key" class="section"><a class="anchor-link left" href="#index-key"><i class="icofont-laika link">&#xef71;</i></a>INDEX KEY</h3>
+    <p>インデックスキー（index key）とはMySQLにおいて目的のレコードを効率よく取得するための「索引」のことです。</p>
+    <p>ldbcではこのインデックスを2つの方法で設定することができます。</p>
+    <ol class="arabic">
+      <li>columnメソッドの属性として設定する</li>
+      <li>tableのkeySetメソッドで設定する</li>
+    </ol>
+    <p><strong>columnメソッドの属性として設定する</strong></p>
+    <p>columnメソッドの属性として設定する方法は非常に簡単で、columnメソッドの第3引数以降に<code>INDEX_KEY</code>を渡すだけです。これによって以下の場合 <code>id</code>カラムをインデックスとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">INDEX_KEY</span><span>)</span></code></pre>
+    <p><strong>tableのkeySetメソッドで設定する</strong></p>
+    <p>ldbcのテーブル定義には <code>keySet</code>というメソッドが生えており、ここで<code>INDEX_KEY</code>にインデックスとして設定したいカラムを渡すことでインデックスキーとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">INDEX_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">id</span><span>))
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   ...,
+//   INDEX KEY (`id`)
+// )</span></code></pre>
+    <p><code>INDEX_KEY</code>メソッドにはカラム意外にも以下のパラメーターを設定することができます。</p>
+    <ul>
+      <li><code>Index Name</code> String</li>
+      <li><code>Index Type</code> ldbc.schema.Index.Type.BTREE or ldbc.schema.Index.Type.HASH</li>
+      <li><code>Index Option</code> ldbc.schema.Index.IndexOption</li>
+    </ul>
+    
+    <h4 id="複合キー-index-key" class="section"><a class="anchor-link left" href="#複合キー-index-key"><i class="icofont-laika link">&#xef71;</i></a>複合キー (index key)</h4>
+    <p>1つのカラムだけではなく、複数のカラムをインデックスキーとして組み合わせインデックスキーとして設定することもできます。<code>INDEX_KEY</code>にインデックスキーとして設定したいカラムを複数渡すだけで複合インデックスとして設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">INDEX_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">table</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   ...,
+//   INDEX KEY (`id`, `name`)
+// )</span></code></pre>
+    <p>複合キーは<code>keySet</code>メソッドでの<code>INDEX_KEY</code>でしか設定することはできません。仮にcolumnメソッドの属性として複数設定を行うと複合インデックスとしてではなく、それぞれをインデックスキーとして設定されてしまいます。</p>
+    
+    <h3 id="foreign-key" class="section"><a class="anchor-link left" href="#foreign-key"><i class="icofont-laika link">&#xef71;</i></a>FOREIGN KEY</h3>
+    <p>外部キー（foreign key）とは、MySQLにおいてデータの整合性を保つための制約（参照整合性制約）です。  外部キーに設定されているカラムには、参照先となるテーブルのカラム内に存在している値しか設定できません。</p>
+    <p>ldbcではこの外部キー制約をtableのkeySetメソッドを使用する方法で設定することができます。</p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">user</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">order</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">Order</span><span>](</span><span class="string-literal">&quot;order&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;user_id&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>))
+  ...
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">FOREIGN_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">userId</span><span>, </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">user</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>)))
+
+</span><span class="comment">// CREATE TABLE `order` (
+//   ...,
+//   FOREIGN KEY (user_id) REFERENCES `user` (id),
+// )</span></code></pre>
+    <p><code>FOREIGN_KEY</code>メソッドにはカラムとReference値意外にも以下のパラメーターを設定することができます。</p>
+    <ul>
+      <li><code>Index Name</code> String</li>
+    </ul>
+    <p>外部キー制約には親テーブルの削除時と更新時の挙動を設定することができます。<code>REFERENCE</code>メソッドに<code>onDelete</code>と<code>onUpdate</code>メソッドが提供されているのでこちらを使用することでそれぞれ設定することができます。</p>
+    <p>設定することのできる値は<code>ldbc.schema.Reference.ReferenceOption</code>から取得することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">order</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">Order</span><span>](</span><span class="string-literal">&quot;order&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;user_id&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>))
+  ...
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">FOREIGN_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">userId</span><span>, </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">user</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>).</span><span class="identifier">onDelete</span><span>(</span><span class="type-name">Reference</span><span>.</span><span class="type-name">ReferenceOption</span><span>.</span><span class="type-name">RESTRICT</span><span>)))
+
+</span><span class="comment">// CREATE TABLE `order` (
+//   ...,
+//   FOREIGN KEY (`user_id`)  REFERENCES `user` (`id`) ON DELETE RESTRICT
+// )</span></code></pre>
+    <p>設定することのできる値は以下になります。</p>
+    <ul>
+      <li><code>RESTRICT</code>: 親テーブルに対する削除または更新操作を拒否します。</li>
+      <li><code>CASCADE</code>: 親テーブルから行を削除または更新し、子テーブル内の一致する行を自動的に削除または更新します。</li>
+      <li><code>SET_NULL</code>: 親テーブルから行を削除または更新し、子テーブルの外部キーカラムを NULL に設定します。</li>
+      <li><code>NO_ACTION</code>: 標準 SQL のキーワード。 MySQLでは、RESTRICT と同等です。</li>
+      <li><code>SET_DEFAULT</code>: このアクションは MySQL パーサーによって認識されますが、InnoDB と NDB はどちらも、ON DELETE SET DEFAULT または ON UPDATE SET DEFAULT 句を含むテーブル定義を拒否します。</li>
+    </ul>
+    
+    <h4 id="複合キー-foreign-key" class="section"><a class="anchor-link left" href="#複合キー-foreign-key"><i class="icofont-laika link">&#xef71;</i></a>複合キー (foreign key)</h4>
+    <p>1つのカラムだけではなく、複数のカラムを外部キーとして組み合わせて設定することもできます。<code>FOREIGN_KEY</code>に外部キーとして設定したいカラムを複数渡すだけで複合外部キーとして設定することができます。</p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">user</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">order</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">Order</span><span>](</span><span class="string-literal">&quot;order&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;user_id&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>))
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;user_email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+  ...
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">FOREIGN_KEY</span><span>((</span><span class="identifier">table</span><span>.</span><span class="identifier">userId</span><span>, </span><span class="identifier">table</span><span>.</span><span class="identifier">userEmail</span><span>), </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">user</span><span>, (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">email</span><span>))))
+
+</span><span class="comment">// CREATE TABLE `user` (
+//   ...,
+//   FOREIGN KEY (`user_id`, `user_email`)  REFERENCES `user` (`id`, `email`)
+// )</span></code></pre>
+    
+    <h3 id="制約名" class="section"><a class="anchor-link left" href="#制約名"><i class="icofont-laika link">&#xef71;</i></a>制約名</h3>
+    <p>MySQLではCONSTRAINTを使用することで制約に対して任意の名前を付与することができます。この制約名はデータベース単位で一意の値である必要があります。</p>
+    <p>ldbcではCONSTRAINTメソッドが提供されているのでキー制約などの制約を設定する処理をCONSTRAINTメソッドに渡すだけで設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">order</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">Order</span><span>](</span><span class="string-literal">&quot;order&quot;</span><span>)(
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>),
+  </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;user_id&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>))
+  ...
+)
+  .</span><span class="identifier">keySet</span><span>(</span><span class="identifier">table</span><span> =&gt; </span><span class="type-name">CONSTRAINT</span><span>(</span><span class="string-literal">&quot;fk_user_id&quot;</span><span>, </span><span class="type-name">FOREIGN_KEY</span><span>(</span><span class="identifier">table</span><span>.</span><span class="identifier">userId</span><span>, </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">user</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>))))
+
+</span><span class="comment">// CREATE TABLE `order` (
+//   ...,
+//   CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`)  REFERENCES `user` (`id`)
+// )</span></code></pre>
+    
+    <h2 id="カスタム-データ型" class="section"><a class="anchor-link left" href="#カスタム-データ型"><i class="icofont-laika link">&#xef71;</i></a>カスタム データ型</h2>
+    <p>ユーザー独自の型もしくはサポートされていない型を使用するための方法はカラムのデータ型をどのような型として扱うかを教えてあげることです。DataTypeには<code>mapping</code>メソッドが提供されているのでこのメソッドを使用して暗黙の型変換として設定します。</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>:    </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">name</span><span>:  </span><span class="type-name">User</span><span>.</span><span class="type-name">Name</span><span>,
+  </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>,
+)
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">User</span><span>:
+
+  </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Name</span><span>(</span><span class="identifier">firstName</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">lastName</span><span>: </span><span class="type-name">String</span><span>)
+
+  </span><span class="keyword">given</span><span> </span><span class="type-name">Conversion</span><span>[</span><span class="type-name">VARCHAR</span><span>[</span><span class="type-name">String</span><span>], </span><span class="type-name">DataType</span><span>[</span><span class="type-name">Name</span><span>]] = </span><span class="type-name">DataType</span><span>.</span><span class="identifier">mapping</span><span>[</span><span class="type-name">VARCHAR</span><span>[</span><span class="type-name">String</span><span>], </span><span class="type-name">Name</span><span>]
+
+  </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+  )</span></code></pre>
+    <p>ldbcでは複数のカラムをモデルが持つ1つのプロパティに統合することはできません。ldbcの目的はモデルとテーブルを1対1でマッピングを行い、データベースのテーブル定義を型安全に構築することにあるからです。</p>
+    <p>そのためテーブル定義とモデルで異なった数のプロパティを持つようなことは許可していません。以下のような実装はコンパイルエラーとなります。</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>:    </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">name</span><span>:  </span><span class="type-name">User</span><span>.</span><span class="type-name">Name</span><span>,
+  </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>,
+)
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">User</span><span>:
+
+  </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Name</span><span>(</span><span class="identifier">firstName</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">lastName</span><span>: </span><span class="type-name">String</span><span>)
+
+  </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;first_name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;last_name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+  )</span></code></pre>
+    <p>上記のような実装を行いたい場合は以下のような実装を検討してください。</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>:        </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">firstName</span><span>: </span><span class="type-name">String</span><span>, 
+  </span><span class="identifier">lastName</span><span>:  </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">email</span><span>:     </span><span class="type-name">String</span><span>,
+):
+  
+  </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span>: </span><span class="type-name">User</span><span>.</span><span class="type-name">Name</span><span> = </span><span class="type-name">User</span><span>.</span><span class="type-name">Name</span><span>(</span><span class="identifier">firstName</span><span>, </span><span class="identifier">lastName</span><span>)
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">User</span><span>:
+
+  </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Name</span><span>(</span><span class="identifier">firstName</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">lastName</span><span>: </span><span class="type-name">String</span><span>)
+
+  </span><span class="keyword">val</span><span> </span><span class="identifier">table</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>)(
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">INT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;first_name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;last_name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>)),
+    </span><span class="identifier">column</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>))
+  )</span></code></pre>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

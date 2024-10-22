@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>クエリビルダー</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/ja/tutorial/Query-Builder.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Notes</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="index.html">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">セットアップ</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">コネクション</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">シンプルプログラム</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">データベース操作</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">パラメータ</a></li>
+    <li class="level2 nav-leaf"><a href="Selecting-Data.html">データ選択</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">データ更新</a></li>
+    <li class="level2 nav-leaf"><a href="Error-Handling.html">エラーハンドリング</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">ロギング</a></li>
+    <li class="level2 nav-leaf"><a href="Custom-Data-Type.html">カスタム データ型</a></li>
+    <li class="level2 active nav-leaf"><a href="#">クエリビルダー</a></li>
+    <li class="level2 nav-leaf"><a href="Schema.html">スキーマ</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">スキーマコード生成</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">クエリビルダー</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-node"><a href="#select">SELECT</a></li>
+    <li class="level2 nav-leaf"><a href="#where">WHERE</a></li>
+    <li class="level2 nav-leaf"><a href="#group-by-having">GROUP BY/Having</a></li>
+    <li class="level2 nav-leaf"><a href="#order-by">ORDER BY</a></li>
+    <li class="level2 nav-leaf"><a href="#limit-offset">LIMIT/OFFSET</a></li>
+    <li class="level1 nav-leaf"><a href="#join-left-join-right-join">JOIN/LEFT JOIN/RIGHT JOIN</a></li>
+    <li class="level1 nav-node"><a href="#insert">INSERT</a></li>
+    <li class="level2 nav-leaf"><a href="#on-duplicate-key-update">ON DUPLICATE KEY UPDATE</a></li>
+    <li class="level1 nav-leaf"><a href="#update">UPDATE</a></li>
+    <li class="level1 nav-leaf"><a href="#delete">DELETE</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="クエリビルダー" class="title">クエリビルダー</h1>
+    <p>この章では、型安全にクエリを構築するための方法について説明します。</p>
+    <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-query-builder:0.3.0-beta8&quot;</span></code></pre>
+    <p>ldbcでは、クラスを使用してクエリを構築します。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">builder</span><span>.*
+
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span></code></pre>
+    <p><code>User</code>クラスは<code>Table</code>トレイトを継承しています。<code>Table</code>トレイトは<code>Table</code>クラスを継承しているため、<code>Table</code>クラスのメソッドを使用してクエリを構築することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">email</span><span>))
+  .</span><span class="identifier">where</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">email</span><span> === </span><span class="string-literal">&quot;alice@example.com&quot;</span><span>)</span></code></pre>
+    
+    <h2 id="select" class="section"><a class="anchor-link left" href="#select"><i class="icofont-laika link">&#xef71;</i></a>SELECT</h2>
+    <p>型安全にSELECT文を構築する方法はTableが提供する<code>select</code>メソッドを使用することです。ldbcではプレーンなクエリに似せて実装されているため直感的にクエリ構築が行えます。またどのようなクエリが構築されているかも一目でわかるような作りになっています。</p>
+    <p>特定のカラムのみ取得を行うSELECT文を構築するには<code>select</code>メソッドで取得したいカラムを指定するだけです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">select</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id FROM user&quot;</span></code></pre>
+    <p>複数のカラムを指定する場合は<code>select</code>メソッドで取得したいカラムを指定して指定したカラムのタプルを返すだけです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name FROM user&quot;</span></code></pre>
+    <p>全てのカラムを指定したい場合はTableが提供する<code>selectAll</code>メソッドを使用することで構築できます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">selectAll</span><span>
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name, email FROM user&quot;</span></code></pre>
+    <p>特定のカラムの数を取得したい場合は、指定したカラムで<code>count</code>を使用することで構築できます。　</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">select</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>.</span><span class="identifier">count</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT COUNT(id) FROM user&quot;</span></code></pre>
+    
+    <h3 id="where" class="section"><a class="anchor-link left" href="#where"><i class="icofont-laika link">&#xef71;</i></a>WHERE</h3>
+    <p>クエリに型安全にWhere条件を設定する方法は<code>where</code>メソッドを使用することです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">where</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">where</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">email</span><span> === </span><span class="string-literal">&quot;alice@example.com&quot;</span><span>)
+
+</span><span class="identifier">where</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name, email FROM user WHERE email = ?&quot;</span></code></pre>
+    <p><code>where</code>メソッドで使用できる条件の一覧は以下です。</p>
+    <table>
+      <thead>
+        <tr>
+          <th>条件</th>
+          <th>ステートメント</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>===</code></td>
+          <td><code>column = ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&gt;=</code></td>
+          <td><code>column &gt;= ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&gt;</code></td>
+          <td><code>column &gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;=</code></td>
+          <td><code>column &lt;= ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;</code></td>
+          <td><code>column &lt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;&gt;</code></td>
+          <td><code>column &lt;&gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>!==</code></td>
+          <td><code>column != ?</code></td>
+        </tr>
+        <tr>
+          <td><code>IS (&quot;TRUE&quot;/&quot;FALSE&quot;/&quot;UNKNOWN&quot;/&quot;NULL&quot;)</code></td>
+          <td><code>column IS {TRUE/FALSE/UNKNOWN/NULL}</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;=&gt;</code></td>
+          <td><code>column &lt;=&gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>IN (value, value, ...)</code></td>
+          <td><code>column IN (?, ?, ...)</code></td>
+        </tr>
+        <tr>
+          <td><code>BETWEEN (start, end)</code></td>
+          <td><code>column BETWEEN ? AND ?</code></td>
+        </tr>
+        <tr>
+          <td><code>LIKE (value)</code></td>
+          <td><code>column LIKE ?</code></td>
+        </tr>
+        <tr>
+          <td><code>LIKE_ESCAPE (like, escape)</code></td>
+          <td><code>column LIKE ? ESCAPE ?</code></td>
+        </tr>
+        <tr>
+          <td><code>REGEXP (value)</code></td>
+          <td><code>column REGEXP ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;&lt;</code> (value)</td>
+          <td><code>column &lt;&lt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>&gt;&gt;</code> (value)</td>
+          <td><code>column &gt;&gt; ?</code></td>
+        </tr>
+        <tr>
+          <td><code>DIV (cond, result)</code></td>
+          <td><code>column DIV ? = ?</code></td>
+        </tr>
+        <tr>
+          <td><code>MOD (cond, result)</code></td>
+          <td><code>column MOD ? = ?</code></td>
+        </tr>
+        <tr>
+          <td><code>^ (value)</code></td>
+          <td><code>column ^ ?</code></td>
+        </tr>
+        <tr>
+          <td><code>~ (value)</code></td>
+          <td><code>~column = ?</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h3 id="group-by-having" class="section"><a class="anchor-link left" href="#group-by-having"><i class="icofont-laika link">&#xef71;</i></a>GROUP BY/Having</h3>
+    <p>クエリに型安全にGROUP BY句を設定する方法は<code>groupBy</code>メソッドを使用することです。</p>
+    <p><code>groupBy</code>を使用することで<code>select</code>でデータを取得する時に指定したカラム名の値を基準にグループ化することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+  .</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name FROM user GROUP BY name&quot;</span></code></pre>
+    <p>グループ化すると<code>select</code>で取得できるデータの数はグループの数だけとなります。そこでグループ化を行った場合には、グループ化に指定したカラムの値や、用意された関数を使ってカラムの値をグループ単位で集計した結果などを取得することができます。</p>
+    <p><code>having</code>を使用すると<code>groupBy</code>によってグループ化されて取得したデータに関して、取得する条件を設定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+  .</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">_</span><span class="number-literal">._2</span><span>)
+  .</span><span class="identifier">having</span><span>(</span><span class="identifier">_</span><span class="number-literal">._1</span><span> &gt; </span><span class="number-literal">1</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name FROM user GROUP BY name HAVING id &gt; ?&quot;</span></code></pre>
+    
+    <h3 id="order-by" class="section"><a class="anchor-link left" href="#order-by"><i class="icofont-laika link">&#xef71;</i></a>ORDER BY</h3>
+    <p>クエリに型安全にORDER BY句を設定する方法は<code>orderBy</code>メソッドを使用することです。</p>
+    <p><code>orderBy</code>を使用することで<code>select</code>でデータを取得する時に指定したカラム名の値を基準に昇順、降順で並び替えることができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+  .</span><span class="identifier">orderBy</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name FROM user ORDER BY id&quot;</span></code></pre>
+    <p>昇順/降順を指定したい場合は、それぞれカラムに対して <code>asc</code>/<code>desc</code>を呼び出すだけです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+  .</span><span class="identifier">orderBy</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>.</span><span class="identifier">asc</span><span>)
+
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name FROM user ORDER BY id ASC&quot;</span></code></pre>
+    
+    <h3 id="limit-offset" class="section"><a class="anchor-link left" href="#limit-offset"><i class="icofont-laika link">&#xef71;</i></a>LIMIT/OFFSET</h3>
+    <p>クエリに型安全にLIMIT句とOFFSET句を設定する方法は<code>limit</code>/<code>offset</code>メソッドを使用することです。</p>
+    <p><code>limit</code>を設定すると<code>select</code>を実行した時に取得するデータの行数の上限を設定することができ、<code>offset</code>を設定すると何番目からのデータを取得するのかを指定することができます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">select</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>]
+  .</span><span class="identifier">select</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+  .</span><span class="identifier">limit</span><span>(</span><span class="number-literal">1</span><span>)
+  .</span><span class="identifier">offset</span><span>(</span><span class="number-literal">1</span><span>)
+    
+</span><span class="identifier">select</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;SELECT id, name FROM user LIMIT ? OFFSET ?&quot;</span></code></pre>
+    
+    <h2 id="join-left-join-right-join" class="section"><a class="anchor-link left" href="#join-left-join-right-join"><i class="icofont-laika link">&#xef71;</i></a>JOIN/LEFT JOIN/RIGHT JOIN</h2>
+    <p>クエリに型安全にJoinを設定する方法は<code>join</code>/<code>leftJoin</code>/<code>rightJoin</code>メソッドを使用することです。</p>
+    <p>Joinでは以下定義をサンプルとして使用します。</p>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Product</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">BigDecimal</span><span>) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Order</span><span>(
+  </span><span class="identifier">id</span><span>:        </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">userId</span><span>:    </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">productId</span><span>: </span><span class="type-name">Int</span><span>,
+  </span><span class="identifier">orderDate</span><span>: </span><span class="type-name">LocalDateTime</span><span>,
+  </span><span class="identifier">quantity</span><span>:  </span><span class="type-name">Int</span><span>
+) </span><span class="keyword">derives</span><span> </span><span class="type-name">Table</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span>    = </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>]
+</span><span class="keyword">val</span><span> </span><span class="identifier">productTable</span><span> = </span><span class="type-name">Table</span><span>[</span><span class="type-name">Product</span><span>]
+</span><span class="keyword">val</span><span> </span><span class="identifier">orderTable</span><span>   = </span><span class="type-name">Table</span><span>[</span><span class="type-name">Order</span><span>]</span></code></pre>
+    <p>まずシンプルなJoinを行いたい場合は、<code>join</code>を使用します。
+    <code>join</code>の第一引数には結合したいテーブルを渡し、第二引数では結合元のテーブルと結合したいテーブルのカラムで比較を行う関数を渡します。これはJoinにおいてのON句に該当します。</p>
+    <p>Join後の<code>select</code>は2つのテーブルからカラムを指定することになります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">join</span><span> = </span><span class="identifier">userTable</span><span>.</span><span class="identifier">join</span><span>(</span><span class="identifier">orderTable</span><span>)((</span><span class="identifier">user</span><span>, </span><span class="identifier">order</span><span>) =&gt; </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span> === </span><span class="identifier">order</span><span>.</span><span class="identifier">userId</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">user</span><span>, </span><span class="identifier">order</span><span>) =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">order</span><span>.</span><span class="identifier">quantity</span><span>))
+
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> = </span><span class="string-literal">&quot;SELECT user.`name`, order.`quantity` FROM user JOIN order ON user.id = order.user_id&quot;</span></code></pre>
+    <p>次に左外部結合であるLeft Joinを行いたい場合は、<code>leftJoin</code>を使用します。
+    <code>join</code>が<code>leftJoin</code>に変わっただけで実装自体はシンプルなJoinの時と同じになります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">leftJoin</span><span> = </span><span class="identifier">userTable</span><span>.</span><span class="identifier">leftJoin</span><span>(</span><span class="identifier">orderTable</span><span>)((</span><span class="identifier">user</span><span>, </span><span class="identifier">order</span><span>) =&gt; </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span> === </span><span class="identifier">order</span><span>.</span><span class="identifier">userId</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">user</span><span>, </span><span class="identifier">order</span><span>) =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">order</span><span>.</span><span class="identifier">quantity</span><span>))
+
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> = </span><span class="string-literal">&quot;SELECT user.`name`, order.`quantity` FROM user LEFT JOIN order ON user.id = order.user_id&quot;</span></code></pre>
+    <p>シンプルなJoinとの違いは<code>leftJoin</code>を使用した場合、結合を行うテーブルから取得するレコードはNULLになる可能性があるということです。</p>
+    <p>そのためldbcでは<code>leftJoin</code>に渡されたテーブルから取得するカラムのレコードは全てOption型になります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">leftJoin</span><span> = </span><span class="identifier">userTable</span><span>.</span><span class="identifier">leftJoin</span><span>(</span><span class="identifier">orderTable</span><span>)((</span><span class="identifier">user</span><span>, </span><span class="identifier">order</span><span>) =&gt; </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span> === </span><span class="identifier">order</span><span>.</span><span class="identifier">userId</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">user</span><span>, </span><span class="identifier">order</span><span>) =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">order</span><span>.</span><span class="identifier">quantity</span><span>)) </span><span class="comment">// (String, Option[Int])</span></code></pre>
+    <p>次に右外部結合であるRight Joinを行いたい場合は、<code>rightJoin</code>を使用します。
+    こちらも<code>join</code>が<code>rightJoin</code>に変わっただけで実装自体はシンプルなJoinの時と同じになります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">rightJoin</span><span> = </span><span class="identifier">orderTable</span><span>.</span><span class="identifier">rightJoin</span><span>(</span><span class="identifier">userTable</span><span>)((</span><span class="identifier">order</span><span>, </span><span class="identifier">user</span><span>) =&gt; </span><span class="identifier">order</span><span>.</span><span class="identifier">userId</span><span> === </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">order</span><span>, </span><span class="identifier">user</span><span>) =&gt; (</span><span class="identifier">order</span><span>.</span><span class="identifier">quantity</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>))
+
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> = </span><span class="string-literal">&quot;SELECT order.`quantity`, user.`name` FROM order RIGHT JOIN user ON order.user_id = user.id&quot;</span></code></pre>
+    <p>シンプルなJoinとの違いは<code>rightJoin</code>を使用した場合、結合元のテーブルから取得するレコードはNULLになる可能性があるということです。</p>
+    <p>そのためldbcでは<code>rightJoin</code>を使用した結合元のテーブルから取得するカラムのレコードは全てOption型になります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">rightJoin</span><span> = </span><span class="identifier">orderTable</span><span>.</span><span class="identifier">rightJoin</span><span>(</span><span class="identifier">userTable</span><span>)((</span><span class="identifier">order</span><span>, </span><span class="identifier">user</span><span>) =&gt; </span><span class="identifier">order</span><span>.</span><span class="identifier">userId</span><span> === </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>)
+  .</span><span class="identifier">select</span><span>((</span><span class="identifier">order</span><span>, </span><span class="identifier">user</span><span>) =&gt; (</span><span class="identifier">order</span><span>.</span><span class="identifier">quantity</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>)) </span><span class="comment">// (Option[Int], String)</span></code></pre>
+    <p>複数のJoinを行いたい場合は、メソッドチェーンで任意のJoinメソッドを呼ぶことで実現することができます。</p>
+    <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">join</span><span> = 
+  (</span><span class="identifier">productTable</span><span> </span><span class="identifier">join</span><span> </span><span class="identifier">orderTable</span><span>)((</span><span class="identifier">product</span><span>, </span><span class="identifier">order</span><span>) =&gt; </span><span class="identifier">product</span><span>.</span><span class="identifier">id</span><span> === </span><span class="identifier">order</span><span>.</span><span class="identifier">productId</span><span>)
+    .</span><span class="identifier">rightJoin</span><span>(</span><span class="identifier">userTable</span><span>)((</span><span class="identifier">_</span><span>, </span><span class="identifier">order</span><span>, </span><span class="identifier">user</span><span>) =&gt; </span><span class="identifier">order</span><span>.</span><span class="identifier">userId</span><span> === </span><span class="identifier">user</span><span>.</span><span class="identifier">id</span><span>)
+    .</span><span class="identifier">select</span><span>((</span><span class="identifier">product</span><span>, </span><span class="identifier">order</span><span>, </span><span class="identifier">user</span><span>) =&gt; (</span><span class="identifier">product</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">order</span><span>.</span><span class="identifier">quantity</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>)) </span><span class="comment">// (Option[String], Option[Int], String)]
+</span><span>
+</span><span class="identifier">join</span><span>.</span><span class="identifier">statement</span><span> =
+  </span><span class="string-literal">&quot;&quot;&quot;
+    |SELECT
+    |  product.`name`, 
+    |  order.`quantity`,
+    |  user.`name`
+    |FROM product
+    |JOIN order ON product.id = order.product_id
+    |RIGHT JOIN user ON order.user_id = user.id
+    |&quot;&quot;&quot;</span><span>.</span><span class="identifier">stripMargin</span></code></pre>
+    <p>複数のJoinを行っている状態で<code>rightJoin</code>での結合を行うと、今までの結合が何であったかにかかわらず直前まで結合していたテーブルから取得するレコードは全てNULL許容なアクセスとなることに注意してください。</p>
+    
+    <h2 id="insert" class="section"><a class="anchor-link left" href="#insert"><i class="icofont-laika link">&#xef71;</i></a>INSERT</h2>
+    <p>型安全にINSERT文を構築する方法はTableが提供する以下のメソッドを使用することです。</p>
+    <ul>
+      <li>insert</li>
+      <li>insertInto</li>
+      <li>+=</li>
+      <li>++=</li>
+    </ul>
+    <p><strong>insert</strong></p>
+    <p><code>insert</code>メソッドには挿入するデータのタプルを渡します。タプルはモデルと同じプロパティの数と型である必要があります。また、挿入されるデータの順番はモデルのプロパティおよびテーブルのカラムと同じ順番である必要があります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;email@example.com&quot;</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?)&quot;</span></code></pre>
+    <p>複数のデータを挿入したい場合は、<code>insert</code>メソッドに複数のタプルを渡すことで構築できます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;name 1&quot;</span><span>, </span><span class="string-literal">&quot;email+1@example.com&quot;</span><span>), (</span><span class="number-literal">2</span><span>, </span><span class="string-literal">&quot;name 2&quot;</span><span>, </span><span class="string-literal">&quot;email+2@example.com&quot;</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)&quot;</span></code></pre>
+    <p><strong>insertInto</strong></p>
+    <p><code>insert</code>メソッドはテーブルが持つ全てのカラムにデータ挿入を行いますが、特定のカラムに対してのみデータを挿入したい場合は<code>insertInto</code>メソッドを使用します。</p>
+    <p>これはAutoIncrementやDefault値を持つカラムへのデータ挿入を除外したい場合などに使用できます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">insertInto</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">email</span><span>)).</span><span class="identifier">values</span><span>((</span><span class="string-literal">&quot;name 3&quot;</span><span>, </span><span class="string-literal">&quot;email+3@example.com&quot;</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`name`, `email`) VALUES(?, ?)&quot;</span></code></pre>
+    <p>複数のデータを挿入したい場合は、<code>values</code>にタプルの配列を渡すことで構築できます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">insertInto</span><span>(</span><span class="identifier">user</span><span> =&gt; (</span><span class="identifier">user</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">user</span><span>.</span><span class="identifier">email</span><span>)).</span><span class="identifier">values</span><span>(</span><span class="type-name">List</span><span>((</span><span class="string-literal">&quot;name 4&quot;</span><span>, </span><span class="string-literal">&quot;email+4@example.com&quot;</span><span>), (</span><span class="string-literal">&quot;name 5&quot;</span><span>, </span><span class="string-literal">&quot;email+5@example.com&quot;</span><span>)))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`name`, `email`) VALUES(?, ?), (?, ?)&quot;</span></code></pre>
+    <p><strong>+=</strong></p>
+    <p><code>+=</code>メソッドを使用することでモデルを使用してinsert文を構築することができます。モデルを使用する場合は全てのカラムにデータを挿入してしまうことに注意してください。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">user</span><span> += </span><span class="type-name">User</span><span>(</span><span class="number-literal">6</span><span>, </span><span class="string-literal">&quot;name 6&quot;</span><span>, </span><span class="string-literal">&quot;email+6@example.com&quot;</span><span>)
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?)&quot;</span></code></pre>
+    <p><strong>++=</strong></p>
+    <p>モデルを使用して複数のデータを挿入したい場合は<code>++=</code>メソッドを使用します。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">user</span><span> ++= </span><span class="type-name">List</span><span>(</span><span class="type-name">User</span><span>(</span><span class="number-literal">7</span><span>, </span><span class="string-literal">&quot;name 7&quot;</span><span>, </span><span class="string-literal">&quot;email+7@example.com&quot;</span><span>), </span><span class="type-name">User</span><span>(</span><span class="number-literal">8</span><span>, </span><span class="string-literal">&quot;name 8&quot;</span><span>, </span><span class="string-literal">&quot;email+8@example.com&quot;</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)&quot;</span></code></pre>
+    
+    <h3 id="on-duplicate-key-update" class="section"><a class="anchor-link left" href="#on-duplicate-key-update"><i class="icofont-laika link">&#xef71;</i></a>ON DUPLICATE KEY UPDATE</h3>
+    <p>ON DUPLICATE KEY UPDATE 句を指定し行を挿入すると、UNIQUEインデックスまたはPRIMARY KEYで値が重複する場合、古い行のUPDATEが発生します。</p>
+    <p>ldbcでこの処理を実現する方法は、<code>Insert</code>に対して<code>onDuplicateKeyUpdate</code>を使用することです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">insert</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">insert</span><span>((</span><span class="number-literal">9</span><span>, </span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;email+9@example.com&quot;</span><span>)).</span><span class="identifier">onDuplicateKeyUpdate</span><span>(</span><span class="identifier">v</span><span> =&gt; (</span><span class="identifier">v</span><span>.</span><span class="identifier">name</span><span>, </span><span class="identifier">v</span><span>.</span><span class="identifier">email</span><span>))
+
+</span><span class="identifier">insert</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `name` = new_user.`name`, `email` = new_user.`email`&quot;</span></code></pre>
+    
+    <h2 id="update" class="section"><a class="anchor-link left" href="#update"><i class="icofont-laika link">&#xef71;</i></a>UPDATE</h2>
+    <p>型安全にUPDATE文を構築する方法はTableが提供する<code>update</code>メソッドを使用することです。</p>
+    <p><code>update</code>メソッドの第1引数にはテーブルのカラム名ではなくモデルのプロパティ名を指定し、第2引数に更新したい値を渡します。第2引数に渡す値の型は第1引数で指定したプロパティの型と同じである必要があります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>)
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET name = ?&quot;</span></code></pre>
+    <p>第1引数に存在しないプロパティ名を指定した場合コンパイルエラーとなります。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;hoge&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>) </span><span class="comment">// Compile error</span></code></pre>
+    <p>複数のカラムを更新したい場合は<code>set</code>メソッドを使用します。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="string-literal">&quot;update-email@example.com&quot;</span><span>)
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET name = ?, email = ?&quot;</span></code></pre>
+    <p><code>set</code>メソッドには条件に応じてクエリを生成させないようにすることもできます。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">update</span><span>(</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>).</span><span class="identifier">set</span><span>(</span><span class="string-literal">&quot;email&quot;</span><span>, </span><span class="string-literal">&quot;update-email@example.com&quot;</span><span>, </span><span class="boolean-literal">false</span><span>)
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET name = ?&quot;</span></code></pre>
+    <p>モデルを使用してupdate文を構築することもできます。モデルを使用する場合は全てのカラムを更新してしまうことに注意してください。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">update</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">update</span><span>(</span><span class="type-name">User</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;update name&quot;</span><span>, </span><span class="string-literal">&quot;update-email@example.com&quot;</span><span>))
+
+</span><span class="identifier">update</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;UPDATE user SET id = ?, name = ?, email = ?&quot;</span></code></pre>
+    
+    <h2 id="delete" class="section"><a class="anchor-link left" href="#delete"><i class="icofont-laika link">&#xef71;</i></a>DELETE</h2>
+    <p>型安全にDELETE文を構築する方法はTableが提供する<code>delete</code>メソッドを使用することです。</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">delete</span><span> = </span><span class="identifier">user</span><span>.</span><span class="identifier">delete</span><span>
+
+</span><span class="identifier">delete</span><span>.</span><span class="identifier">statement</span><span> === </span><span class="string-literal">&quot;DELETE FROM user&quot;</span></code></pre>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>
