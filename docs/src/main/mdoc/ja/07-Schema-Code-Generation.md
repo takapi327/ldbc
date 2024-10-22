@@ -1,11 +1,11 @@
 {%
-  laika.title = スキーマコード生成
-  laika.metadata.language = ja
+laika.title = スキーマコード生成
+laika.metadata.language = ja
 %}
 
 # スキーマコード生成
 
-この章では、ldbcのテーブル定義をSQLファイルから自動生成する方法について説明します。
+この章では、LDBCのテーブル定義をSQLファイルから自動生成する方法について説明します。
 
 プロジェクトに以下の依存関係を設定する必要があります。
 
@@ -40,7 +40,7 @@ Compile / parseFiles := List(baseDirectory.value / "test.sql")
 | `propertyNameFormat` | `Scalaモデルのプロパティ名の形式を指定する値`                |
 | `ldbcPackage`        | `生成されるファイルのパッケージ名を指定する値`                  |
 
-解析対象のSQLファイルの先頭には必ずデータベースのCreate文もしくはUse文を定義する必要があります。ldbcはファイルの解析を1ファイルずつ行い、テーブル定義を生成しデータベースモデルにテーブルのリストを格納させます。
+解析対象のSQLファイルの先頭には必ずデータベースのCreate文もしくはUse文を定義する必要があります。LDBCはファイルの解析を1ファイルずつ行い、テーブル定義を生成しデータベースモデルにテーブルのリストを格納させます。
 そのためテーブルがどのデータベースに所属しているかを教えてあげる必要があるからです。
 
 ```sql
@@ -71,7 +71,7 @@ sbt compile
 ```scala 3
 package ldbc.generated.location
 
-import ldbc.schema.*
+import ldbc.core.*
 
 case class Country(
   id: Long,
@@ -129,7 +129,7 @@ database:
 `columns`には型を変更したいカラム名と変更したいScalaの型を文字列で記載を行います。`columns`には複数の値を設定できますが、nameに記載されたカラム名が対象のテーブルに含まれいてなければなりません。
 また、変換を行うScalaの型はカラムのData型がサポートしている型である必要があります。もしサポート対象外の型を指定したい場合は、`object`に対して暗黙の型変換を行う設定を持ったtraitやabstract classなどを渡してあげる必要があります。
 
-Data型がサポートしている型に関しては[こちら](/ja/tutorial/Schema.md#データ型)を、サポート対象外の型を設定する方法は[こちら](/ja/tutorial/Schema.md#カスタム-データ型)を参照してください。
+Data型がサポートしている型に関しては[こちら](/ja/01-Table-Definitions.md)を、サポート対象外の型を設定する方法は[こちら](/ja/02-Custom-Data-Type.md)を参照してください。
 
 Int型をユーザー独自の型であるCountryCodeに変換する場合は、以下のような`CustomMapping`traitを実装します。
 
@@ -180,7 +180,7 @@ object Country extends /*{package.name.}*/CustomMapping:
 ```scala 3
 package ldbc.generated.location
 
-import ldbc.schema.*
+import ldbc.core.*
 
 case class LocationDatabase(
   schemaMeta: Option[String] = None,
