@@ -118,7 +118,7 @@ val connection: Resource[IO, Connection[IO]] =
 
 The connection process to the database can be carried out using the connections established by each of these methods.
 
-```scala
+```scala 3
 val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
   (for
     result1 <- sql"SELECT 1".query[Int].to[List]
@@ -222,8 +222,8 @@ val result: IO[List[User]] = connection.use { conn =>
 
 Full documentation can be found at Currently available in English and Japanese.
 
-- [English](https://takapi327.github.io/ldbc/en/)
-- [Japanese](https://takapi327.github.io/ldbc/ja/)
+- [English](https://takapi327.github.io/ldbc/latest/en/)
+- [Japanese](https://takapi327.github.io/ldbc/latest/ja/)
 
 ## Features/Roadmap
 
