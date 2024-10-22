@@ -29,7 +29,7 @@ object LaikaSettings {
       if (canonical) v.setCanonical else v
     }
 
-    val v02:     Version      = version("0.2", "Stable")
+    val v02:     Version      = version(LdbcVersions.v02, "Stable")
     val current: Version      = v02
     val all:     Seq[Version] = Seq(v02)
 
