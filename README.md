@@ -25,6 +25,9 @@ Note that **ldbc** is pre-1.0 software and is still undergoing active developmen
 
 Please drop a :star: if this project interests you. I need encouragement.
 
+> [!CAUTION]
+> The current README contains the contents of the `0.3.x` version under development. Please refer to the [documentation](https://takapi327.github.io/ldbc/0.2) for the `0.2.x` version, which is currently released as a stable version.
+
 ## Modules availability
 
 ldbc is available on the JVM, Scala.js, and ScalaNative
@@ -118,7 +121,7 @@ val connection: Resource[IO, Connection[IO]] =
 
 The connection process to the database can be carried out using the connections established by each of these methods.
 
-```scala
+```scala 3
 val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
   (for
     result1 <- sql"SELECT 1".query[Int].to[List]
@@ -222,8 +225,8 @@ val result: IO[List[User]] = connection.use { conn =>
 
 Full documentation can be found at Currently available in English and Japanese.
 
-- [English](https://takapi327.github.io/ldbc/en/)
-- [Japanese](https://takapi327.github.io/ldbc/ja/)
+- [English](https://takapi327.github.io/ldbc/0.2/en/)
+- [Japanese](https://takapi327.github.io/ldbc/0.2/ja/)
 
 ## Features/Roadmap
 
