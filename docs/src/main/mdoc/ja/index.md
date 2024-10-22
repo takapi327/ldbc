@@ -1,14 +1,7 @@
-@@@ index
- * [Table Definitions](./01-Table-Definitions.md)
- * [Custom Data Type](./02-Custom-Data-Type.md)
- * [Type-safe Query Builder](./03-Type-safe-Query-Builder.md)
- * [Database Connection](./04-Database-Connection.md)
- * [Plain SQL Queries](./05-Plain-SQL-Queries.md)
- * [Generating SchemaSPY Documentation](./06-Generating-SchemaSPY-Documentation.md)
- * [Schema Code Generation](./07-Schema-Code-Generation.md)
- * [Performance](./08-Perdormance.md)
- * [Connector](./09-Connector.md)
-@@@
+{%
+laika.title = ldbc
+laika.metadata.language = ja
+%}
 
 # LDBC
 
@@ -60,7 +53,7 @@ LDBCでのモデルをテーブル定義にマッピングするのはとても�
 
 モデルが持つプロパティと、そのカラムのために定義されるデータ型の間のマッピングも非常にシンプルです。開発者は、モデルが持つプロパティと同じ順序で、対応するカラムを定義するだけです。
 
-```scala mdoc:silent
+```scala 3
 import ldbc.core.*
 
 case class User(
@@ -90,28 +83,26 @@ val table = Table[User]("user")(
 [error]     |where:    T is a type variable with constraint <: Int | Long | Option[Int | Long]
 ```
 
-これらのアドオンの詳細については、[テーブル定義](/ldbc/ja/01-Table-Definitions.html) を参照してください。
+これらのアドオンの詳細については、[テーブル定義](/ja/01-Table-Definitions.md) を参照してください。
 
 ## クイックスタート
 
-現在のバージョンは **Scala $scalaVersion$** に対応した **$version$** です。
+現在のバージョンは **Scala @SCALA_VERSION@** に対応した **@VERSION@** です。
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
 
   // まずはこの1つから
-  "$org$" %% "ldbc-core" % "$version$",
+  "@ORGANIZATION@" %% "ldbc-core" % "@VERSION@",
 
   // そして、必要に応じてこれらを加える
-  "$org$" %% "ldbc-dsl"           % "$version$", // プレーンクエリー データベース接続
-  "$org$" %% "ldbc-query-builder" % "$version$", // 型安全なクエリ構築
-  "$org$" %% "ldbc-schemaspy"     % "$version$", // SchemaSPYドキュメント生成
+  "@ORGANIZATION@" %% "ldbc-dsl"           % "@VERSION@", // プレーンクエリー データベース接続
+  "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@", // 型安全なクエリ構築
+  "@ORGANIZATION@" %% "ldbc-schemaspy"     % "@VERSION@", // SchemaSPYドキュメント生成
 )
 ```
-@@@
 
-sbtプラグインの使い方については、こちらの[documentation](/ldbc/ja/07-Schema-Code-Generation.html)を参照してください。
+sbtプラグインの使い方については、こちらの[documentation](/ja/07-Schema-Code-Generation.md)を参照してください。
 
 ## TODO
 

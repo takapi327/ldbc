@@ -1,16 +1,19 @@
+{%
+laika.title = 型安全なクエリ構築
+laika.metadata.language = ja
+%}
+
 # 型安全なクエリ構築
 
 この章では、LDBCで構築したテーブル定義を使用して、型安全にクエリを構築するための方法について説明します。
 
 プロジェクトに以下の依存関係を設定する必要があります。
 
-@@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-query-builder" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@"
 ```
-@@@
 
-LDBCでのテーブル定義方法をまだ読んでいない場合は、[テーブル定義](/ldbc/ja/01-Table-Definitions.html)の章を先に読むことをオススメしましす。
+LDBCでのテーブル定義方法をまだ読んでいない場合は、[テーブル定義](/ja/01-Table-Definitions.md)の章を先に読むことをオススメしましす。
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -86,28 +89,28 @@ select.statement === "SELECT `id` FROM user WHERE name = ?"
 
 `where`メソッドで使用できる条件の一覧は以下です。
 
-| 条件                                   | ステートメント                               |
-|--------------------------------------|---------------------------------------|
-| ===                                  | `column = ?`                          |
-| >=                                   | `column >= ?`                         |
-| >                                    | `column > ?`                          |
-| <=                                   | `column <= ?`                         |
-| <                                    | `column < ?`                          |
-| <>                                   | `column <> ?`                         |
-| !==                                  | `column != ?`                         |
-| IS ("TRUE"/"FALSE"/"UNKNOWN"/"NULL") | `column IS {TRUE/FALSE/UNKNOWN/NULL}` |
-| <=>                                  | `column <=> ?`                        |
-| IN (value, value, ...)               | `column IN (?, ?, ...)`               |
-| BETWEEN (start, end)                 | `column BETWEEN ? AND ?`              |
-| LIKE (value)                         | `column LIKE ?`                       |
-| LIKE_ESCAPE (like, escape)           | `column LIKE ? ESCAPE ?`              |
-| REGEXP (value)                       | `column REGEXP ?`                     |
-| `<<` (value)                         | `column << ?`                         |
-| `>>` (value)                         | `column >> ?`                         |
-| DIV (cond, result)                   | `column DIV ? = ?`                    |
-| MOD (cond, result)                   | `column MOD ? = ?`                    |
-| ^ (value)                            | `column ^ ?`                          |
-| ~ (value)                            | `~column = ?`                         |
+| 条件                                     | ステートメント                               |
+|----------------------------------------|---------------------------------------|
+| `===`                                  | `column = ?`                          |
+| `>=`                                   | `column >= ?`                         |
+| `>`                                    | `column > ?`                          |
+| `<=`                                   | `column <= ?`                         |
+| `<`                                    | `column < ?`                          |
+| `<>`                                   | `column <> ?`                         |
+| `!==`                                  | `column != ?`                         |
+| `IS ("TRUE"/"FALSE"/"UNKNOWN"/"NULL")` | `column IS {TRUE/FALSE/UNKNOWN/NULL}` |
+| `<=>`                                  | `column <=> ?`                        |
+| `IN (value, value, ...)`               | `column IN (?, ?, ...)`               |
+| `BETWEEN (start, end)`                 | `column BETWEEN ? AND ?`              |
+| `LIKE (value)`                         | `column LIKE ?`                       |
+| `LIKE_ESCAPE (like, escape)`           | `column LIKE ? ESCAPE ?`              |
+| `REGEXP (value)`                       | `column REGEXP ?`                     |
+| `<<` (value)                           | `column << ?`                         |
+| `>>` (value)                           | `column >> ?`                         |
+| `DIV (cond, result)`                   | `column DIV ? = ?`                    |
+| `MOD (cond, result)`                   | `column MOD ? = ?`                    |
+| `^ (value)`                            | `column ^ ?`                          |
+| `~ (value)`                            | `~column = ?`                         |
 
 ### GROUP BY/Having
 
@@ -278,7 +281,7 @@ join.statement =
 
 ## Custom Data Type
 
-前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの`mapping`メソッドを使用して独自の型とDataTypeのマッピングを行ないました。([参照](/ldbc/ja/02-Custom-Data-Type.html))
+前章でユーザー独自の型もしくはサポートされていない型を使用するためにDataTypeの`mapping`メソッドを使用して独自の型とDataTypeのマッピングを行ないました。([参照](/ja/02-Custom-Data-Type.md))
 
 LDBCはテーブル定義とデータベースへの接続処理が分離されています。
 そのためデータベースからデータを取得する際にユーザー独自の型もしくはサポートされていない型に変換したい場合は、ResultSetからのデータ取得方法を独自の型もしくはサポートされていない型と紐付けてあげる必要があります。
@@ -434,7 +437,7 @@ val update = userQuery.update("name", "update name").set("age", Some(20)).where(
 update.statement === "UPDATE user SET name = ?, age = ? WHERE id = ?"
 ```
 
-`where`メソッドで使用できる条件はInsert文の[where項目](/ldbc/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
+`where`メソッドで使用できる条件はSelect文の[where項目](/ja/03-Type-safe-Query-Builder.md)を参照してください。
 
 ## DELETE
 
@@ -456,7 +459,7 @@ val delete = userQuery.delete.where(_.id === 1)
 delete.statement === "DELETE FROM user WHERE id = ?"
 ```
 
-`where`メソッドで使用できる条件はInsert文の[where項目](/ldbc/ja/03-Type-safe-Query-Builder.html#where)を参照してください。
+`where`メソッドで使用できる条件はSelect文の[where項目](/ja/03-Type-safe-Query-Builder.md)を参照してください。
 
 ## DDL
 

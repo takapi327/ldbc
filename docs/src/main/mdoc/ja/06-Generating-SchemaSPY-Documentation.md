@@ -1,16 +1,19 @@
+{%
+laika.title = SchemaSPYドキュメントの生成
+laika.metadata.language = ja
+%}
+
 # SchemaSPYドキュメントの生成
 
 この章では、LDBCで構築したテーブル定義を使用して、SchemaSPYドキュメントの作成を行うための方法について説明します。
 
 プロジェクトに以下の依存関係を設定する必要があります。
 
-@@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-schemaspy" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-schemaspy" % "@VERSION@"
 ```
-@@@
 
-LDBCでのテーブル定義方法をまだ読んでいない場合は、[テーブル定義](/ldbc/ja/01-Table-Definitions.html)の章を先に読むことをオススメしましす。
+LDBCでのテーブル定義方法をまだ読んでいない場合は、[テーブル定義](/ja/01-Table-Definitions.md)の章を先に読むことをオススメしましす。
 
 以下のコード例では、以下のimportを想定しています。
 

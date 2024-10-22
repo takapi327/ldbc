@@ -1,19 +1,22 @@
+{%
+laika.title = データベース接続
+laika.metadata.language = ja
+%}
+
 # データベース接続
 
 この章では、LDBCで構築したクエリを使用して、データベースへの接続処理を行うための方法について説明します。
 
 プロジェクトに以下の依存関係を設定する必要があります。
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
-  "$org$" %% "ldbc-dsl" % "$version$",
-  "com.mysql" % "mysql-connector-j" % "$mysqlVersion$"
+  "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@",
+  "com.mysql" % "mysql-connector-j" % "@MYSQL_VERSION@"
 )
 ```
-@@@
 
-LDBCでのクエリ構築方法をまだ読んでいない場合は、[型安全なクエリ構築](/ldbc/ja/03-Type-safe-Query-Builder.html)の章を先に読むことをオススメしましす。
+LDBCでのクエリ構築方法をまだ読んでいない場合は、[型安全なクエリ構築](/ja/03-Type-safe-Query-Builder.md)の章を先に読むことをオススメしましす。
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -259,7 +262,7 @@ yield ...).unsafeRunSync()
 
 ### Database model
 
-LDBCでは`Database`モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては[こちら](/ldbc/ja/06-Generating-SchemaSPY-Documentation.html)を参照してください。
+LDBCでは`Database`モデルはデータベースの接続情報を持つ以外の用途でも使用されます。他の用途としてSchemaSPYのドキュメント生成に使用されることです。SchemaSPYのドキュメント生成に関しては[こちら](/ja/06-Generating-SchemaSPY-Documentation.md)を参照してください。
 
 すでに`Database`モデルを別の用途で生成している場合は、そのモデルを使用してデータベースの接続情報を持った`Database`を構築することができます。
 
@@ -291,13 +294,11 @@ yield ...).transaction(db)
 
 `ldbc-hikari`は、HikariCP接続プールを構築するためのHikariConfigおよびHikariDataSourceを構築するためのビルダーを提供します。
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
-  "$org$" %% "ldbc-hikari" % "$version$",
+  "@ORGANIZATION@" %% "ldbc-hikari" % "@VERSION@",
 )
 ```
-@@@
 
 `HikariConfigBuilder`は名前の通りHikariCPの`HikariConfig`を構築するためのビルダーです。
 
@@ -331,31 +332,31 @@ HikariCPに設定できる内容は[公式](https://github.com/brettwooldridge/H
 
 Configに設定できるキーの一覧は以下になります。
 
-| キー名                         | 説明                                                                     | 型        |
-|-----------------------------|------------------------------------------------------------------------|----------|
-| catalog                     | 接続時に設定するデフォルトのカタログ名                                                    | String   |
-| connection_timeout          | クライアントがプールからの接続を待機する最大ミリ秒数                                             | Duration |
-| idle_timeout                | 接続がプール内でアイドル状態であることを許可される最大時間 (ミリ秒単位)                                  | Duration |
-| leak_detection_threshold    | 接続漏れの可能性を示すメッセージがログに記録されるまでに、接続がプールから外れる時間                             | Duration |
-| maximum_pool_size           | アイドル接続と使用中の接続の両方を含め、プールが許容する最大サイズ                                      | Int      |
-| max_lifetime                | プール内の接続の最大寿命                                                           | Duration |
-| minimum_idle                | アイドル接続と使用中接続の両方を含め、HikariCPがプール内に維持しようとするアイドル接続の最小数                    | Int      |
-| pool_name                   | 接続プールの名前                                                               | String   |
-| allow_pool_suspension       | プール・サスペンドを許可するかどうか                                                     | Boolean  |
-| auto_commit                 | プール内の接続のデフォルトの自動コミット動作                                                 | Boolean  |
-| connection_init_sql         | 新しい接続が作成されたときに、その接続がプールに追加される前に実行されるSQL文字列                             | String   |
-| connection_test_query       | 接続の有効性をテストするために実行する SQL クエリ                                            | String   |
-| data_source_classname       | Connections の作成に使用する JDBC DataSourceの完全修飾クラス名                          | String   |
-| initialization_fail_timeout | プール初期化の失敗タイムアウト                                                        | Duration |
-| isolate_internal_queries    | 内部プール・クエリ (主に有効性チェック)を、`Connection.rollback()`によって独自のトランザクションで分離するかどうか | Boolean  |
-| jdbc_url                    | JDBCのURL                                                               | String   |
-| readonly                    | プールに追加する接続を読み取り専用接続として設定するかどうか                                         | Boolean  |
-| register_mbeans             | HikariCPがJMXにHikariConfigMXBeanとHikariPoolMXBeanを自己登録するかどうか            | Boolean  |
-| schema                      | 接続時に設定するデフォルトのスキーマ名                                                    | String   |
-| username                    | `DataSource.getConnection(username,password)`の呼び出しに使用されるデフォルトのユーザ名     | String   |
-| password                    | `DataSource.getConnection(username,password)`の呼び出しに使用するデフォルトのパスワード     | String   |
-| driver_class_name           | 使用するDriverのクラス名                                                        | String   |
-| transaction_isolation       | デフォルトのトランザクション分離レベル                                                    | String   |
+| キー名                           | 説明                                                                     | 型          |
+|-------------------------------|------------------------------------------------------------------------|------------|
+| `catalog`                     | `接続時に設定するデフォルトのカタログ名`                                                  | `String`   |
+| `connection_timeout`          | `クライアントがプールからの接続を待機する最大ミリ秒数`                                           | `Duration` |
+| `idle_timeout`                | `接続がプール内でアイドル状態であることを許可される最大時間 (ミリ秒単位)`                                | `Duration` |
+| `leak_detection_threshold`    | `接続漏れの可能性を示すメッセージがログに記録されるまでに、接続がプールから外れる時間`                           | `Duration` |
+| `maximum_pool_size`           | `アイドル接続と使用中の接続の両方を含め、プールが許容する最大サイズ`                                    | `Int`      |
+| `max_lifetime`                | `プール内の接続の最大寿命`                                                         | `Duration` |
+| `minimum_idle`                | `アイドル接続と使用中接続の両方を含め、HikariCPがプール内に維持しようとするアイドル接続の最小数`                  | `Int`      |
+| `pool_name`                   | `接続プールの名前`                                                             | `String`   |
+| `allow_pool_suspension`       | `プール・サスペンドを許可するかどうか`                                                   | `Boolean`  |
+| `auto_commit`                 | `プール内の接続のデフォルトの自動コミット動作`                                               | `Boolean`  |
+| `connection_init_sql`         | `新しい接続が作成されたときに、その接続がプールに追加される前に実行されるSQL文字列`                           | `String`   |
+| `connection_test_query`       | `接続の有効性をテストするために実行する SQL クエリ`                                          | `String`   |
+| `data_source_classname`       | `Connections の作成に使用する JDBC DataSourceの完全修飾クラス名`                        | `String`   |
+| `initialization_fail_timeout` | `プール初期化の失敗タイムアウト`                                                      | `Duration` |
+| `isolate_internal_queries`    | `内部プール・クエリ (主に有効性チェック)を、Connection.rollback()によって独自のトランザクションで分離するかどうか` | `Boolean`  |
+| `jdbc_url`                    | `JDBCのURL`                                                             | `String`   |
+| `readonly`                    | `プールに追加する接続を読み取り専用接続として設定するかどうか`                                       | `Boolean`  |
+| `register_mbeans`             | `HikariCPがJMXにHikariConfigMXBeanとHikariPoolMXBeanを自己登録するかどうか`          | `Boolean`  |
+| `schema`                      | `接続時に設定するデフォルトのスキーマ名`                                                  | `String`   |
+| `username`                    | `DataSource.getConnection(username,password)の呼び出しに使用されるデフォルトのユーザ名`     | `String`   |
+| `password`                    | `DataSource.getConnection(username,password)の呼び出しに使用するデフォルトのパスワード`     | `String`   |
+| `driver_class_name`           | `使用するDriverのクラス名`                                                      | `String`   |
+| `transaction_isolation`       | `デフォルトのトランザクション分離レベル`                                                  | `String`   |
 
 `HikariDataSourceBuilder`を使用することで、HikariCPの`HikariDataSource`を構築することができます。
 

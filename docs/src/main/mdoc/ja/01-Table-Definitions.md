@@ -1,6 +1,11 @@
+{%
+laika.title = テーブル定義
+laika.metadata.language = ja
+%}
+
 # テーブル定義
 
-この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator](/ldbc/ja/07-Schema-Code-Generation.html) を使ってこの作業を省略することもできます。
+この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、[code generator](/ja/07-Schema-Code-Generation.md) を使ってこの作業を省略することもできます。
 
 以下のコード例では、以下のimportを想定しています。
 
@@ -36,7 +41,7 @@ val table = Table[User]("user")(                     // CREATE TABLE `user` (
 - Boolean
 - java.time.*
 
-Null可能な列はOption[T]で表現され、Tはサポートされるプリミティブ型の1つです。Option型でない列はすべてNot Nullであることに注意してください。
+Null可能な列は`Option[T]`で表現され、Tはサポートされるプリミティブ型の1つです。Option型でない列はすべてNot Nullであることに注意してください。
 
 ## データ型
 
@@ -44,48 +49,48 @@ Null可能な列はOption[T]で表現され、Tはサポートされるプリミ
 
 データ型がサポートするScalaの型は以下の表の通りです。
 
-| Data Type  | Scala Type                                                                                    |
-|------------|-----------------------------------------------------------------------------------------------|
-| BIT        | Byte, Short, Int, Long                                                                        |
-| TINYINT    | Byte, Short                                                                                   |
-| SMALLINT   | Short, Int                                                                                    |
-| MEDIUMINT  | Int                                                                                           |
-| INT        | Int, Long                                                                                     |
-| BIGINT     | Long, BigInt                                                                                  |
-| DECIMAL    | BigDecimal                                                                                    |
-| FLOAT      | Float                                                                                         |
-| DOUBLE     | Double                                                                                        |
-| CHAR       | String                                                                                        |
-| VARCHAR    | String                                                                                        |
-| BINARY     | Array[Byte]                                                                                   |
-| VARBINARY  | Array[Byte]                                                                                   |
-| TINYBLOB   | Array[Byte]                                                                                   |
-| BLOB       | Array[Byte]                                                                                   |
-| MEDIUMBLOB | Array[Byte]                                                                                   |
-| LONGBLOB   | Array[Byte]                                                                                   |
-| TINYTEXT   | String                                                                                        |
-| TEXT       | String                                                                                        |
-| MEDIUMTEXT | String                                                                                        |
-| DATE       | java.time.LocalDate                                                                           |
-| DATETIME   | java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime                              |
-| TIMESTAMP  | java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime |
-| TIME       | java.time.LocalTime                                                                           |
-| YEAR       | java.time.Instant, java.time.LocalDate, java.time.Year                                        |
-| BOOLEAN    | Boolean                                                                                       |
+| Data Type    | Scala Type                                                                                      |
+|--------------|-------------------------------------------------------------------------------------------------|
+| `BIT`        | `Byte, Short, Int, Long`                                                                        |
+| `TINYINT`    | `Byte, Short`                                                                                   |
+| `SMALLINT`   | `Short, Int`                                                                                    |
+| `MEDIUMINT`  | `Int`                                                                                           |
+| `INT`        | `Int, Long`                                                                                     |
+| `BIGINT`     | `Long, BigInt`                                                                                  |
+| `DECIMAL`    | `BigDecimal`                                                                                    |
+| `FLOAT`      | `Float`                                                                                         |
+| `DOUBLE`     | `Double`                                                                                        |
+| `CHAR`       | `String`                                                                                        |
+| `VARCHAR`    | `String`                                                                                        |
+| `BINARY`     | `Array[Byte]`                                                                                   |
+| `VARBINARY`  | `Array[Byte]`                                                                                   |
+| `TINYBLOB`   | `Array[Byte]`                                                                                   |
+| `BLOB`       | `Array[Byte]`                                                                                   |
+| `MEDIUMBLOB` | `Array[Byte]`                                                                                   |
+| `LONGBLOB`   | `Array[Byte]`                                                                                   |
+| `TINYTEXT`   | `String`                                                                                        |
+| `TEXT`       | `String`                                                                                        |
+| `MEDIUMTEXT` | `String`                                                                                        |
+| `DATE`       | `java.time.LocalDate`                                                                           |
+| `DATETIME`   | `java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime`                              |
+| `TIMESTAMP`  | `java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime` |
+| `TIME`       | `java.time.LocalTime`                                                                           |
+| `YEAR`       | `java.time.Instant, java.time.LocalDate, java.time.Year`                                        |
+| `BOOLEA`     | `Boolean`                                                                                       |
 
 **整数型を扱う際の注意点**
 
 符号あり、符号なしに応じて、扱えるデータの範囲がScalaの型に収まらないことに注意する必要があります。
 
-| Data Type | signed range                               | unsigned range           | Scala Type     | range                                                              |
-|-----------|--------------------------------------------|--------------------------|----------------|--------------------------------------------------------------------|
-| TINYINT   | -128 ~ 127                                 | 0 ~ 255                  | Byte<br>Short  | -128 ~ 127<br>-32768～32767                                         |
-| SMALLINT  | -32768 ~ 32767                             | 0 ~ 65535                | Short<br>Int   | -32768～32767<br>-2147483648～2147483647                             |
-| MEDIUMINT | -8388608 ~ 8388607                         | 0 ~ 16777215             | Int            | -2147483648～2147483647                                             |
-| INT       | -2147483648	~ 2147483647                   | 0 ~ 4294967295           | Int<br>Long    | -2147483648～2147483647<br>-9223372036854775808～9223372036854775807 |
-| BIGINT    | -9223372036854775808 ~ 9223372036854775807 | 0 ~ 18446744073709551615 | Long<br>BigInt | -9223372036854775808～9223372036854775807<br>...                    |
+| Data Type   | Signed Range                                 | Unsigned Range             | Scala Type       | Range                                                                |
+|-------------|----------------------------------------------|----------------------------|------------------|----------------------------------------------------------------------|
+| `TINYINT`   | `-128 ~ 127`                                 | `0 ~ 255`                  | `Byte<br>Short`  | `-128 ~ 127<br>-32768～32767`                                         |
+| `SMALLINT`  | `-32768 ~ 32767`                             | `0 ~ 65535`                | `Short<br>Int`   | `-32768～32767<br>-2147483648～2147483647`                             |
+| `MEDIUMINT` | `-8388608 ~ 8388607`                         | `0 ~ 16777215`             | `Int`            | `-2147483648～2147483647`                                             |
+| `INT`       | `-2147483648	~ 2147483647`                   | `0 ~ 4294967295`           | `Int<br>Long`    | `-2147483648～2147483647<br>-9223372036854775808～9223372036854775807` |
+| `BIGINT`    | `-9223372036854775808 ~ 9223372036854775807` | `0 ~ 18446744073709551615` | `Long<br>BigInt` | `-9223372036854775808～9223372036854775807<br>...`                    |
 
-ユーザー定義の独自型やサポートされていない型を扱う場合は、[カスタム型](/ldbc/ja/02-Custom-Data-Type.html) を参照してください。
+ユーザー定義の独自型やサポートされていない型を扱う場合は、[カスタム型](/ja/02-Custom-Data-Type.md) を参照してください。
 
 ## 属性
 

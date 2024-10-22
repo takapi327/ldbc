@@ -1,14 +1,17 @@
+{%
+laika.title = Schema Code Generation
+laika.metadata.language = en
+%}
+
 # Schema Code Generation
 
 This chapter describes how to automatically generate LDBC table definitions from SQL files.
 
 The following dependencies must be set up for the project
 
-@@@ vars
 ```scala 3
-addSbtPlugin("$org$" % "ldbc-plugin" % "$version$")
+addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
 ```
-@@@
 
 ## Generation
 
@@ -27,15 +30,15 @@ Compile / parseFiles := List(baseDirectory.value / "test.sql")
 
 **List of keys that can be set by enabling the plugin**
 
-| Key                | Details                                                              |
-|--------------------|----------------------------------------------------------------------|
-| parseFiles         | List of SQL files to be analyzed                                     |
-| parseDirectories   | Specify SQL files to be parsed by directory                          |
-| excludeFiles       | List of file names to exclude from analysis                          |
-| customYamlFiles    | List of yaml files for customizing Scala types and column data types |
-| classNameFormat    | Value specifying the format of the class name                        |
-| propertyNameFormat | Value specifying the format of the property name in the Scala model  |
-| ldbcPackage        | Value specifying the package name of the generated file              |
+| Key                  | Details                                                                |
+|----------------------|------------------------------------------------------------------------|
+| `parseFiles`         | `List of SQL files to be analyzed`                                     |
+| `parseDirectories`   | `Specify SQL files to be parsed by directory`                          |
+| `excludeFiles`       | `List of file names to exclude from analysis`                          |
+| `customYamlFiles`    | `List of yaml files for customizing Scala types and column data types` |
+| `classNameFormat`    | `Value specifying the format of the class name`                        |
+| `propertyNameFormat` | `Value specifying the format of the property name in the Scala model`  |
+| `ldbcPackage`        | `Value specifying the package name of the generated file`              |
 
 The SQL file to be parsed must always begin with a database Create or Use statement, and LDBC parses the file one file at a time, generating table definitions and storing the list of tables in the database model.
 This is because it is necessary to tell which database the table belongs to.
@@ -126,7 +129,7 @@ The `database` must be the name of the database listed in the SQL file to be ana
 In the `columns` field, enter the name of the column to be retyped and the Scala type to be changed as a string. You can set multiple values for `columns`, but the column name listed in name must be in the target table.
 Also, the Scala type to be converted must be one that is supported by the column's Data type. If you want to specify an unsupported type, you must pass a trait, abstract class, etc. that is configured to do implicit type conversion for `object`.
 
-See [here](/ldbc/en/01-Table-Definitions.html) for types supported by the Data type and [here](/ldbc/en/02-Custom-Data-Type.html).
+See [here](/en/01-Table-Definitions.md) for types supported by the Data type and [here](/en/02-Custom-Data-Type.md).
 
 To convert an Int type to the user's own type, CountryCode, implement the following `CustomMapping`trait.
 

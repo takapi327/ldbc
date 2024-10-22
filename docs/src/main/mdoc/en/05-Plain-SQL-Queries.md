@@ -1,9 +1,14 @@
+{%
+laika.title = Plain SQL Queries
+laika.metadata.language = en
+%}
+
 # Plain SQL Queries
 
 Sometimes you may need to write your own SQL code for operations that are not well supported at a higher level of abstraction; instead of going back to the lower layers of JDBC, you can use LDBC's Plain SQL queries in the Scala-based API.
 This chapter describes how to use Plain SQL queries in LDBC to process connections to databases in such cases.
 
-See the previous chapter on [Database Connections](/ldbc/en/04-Database-Connection.html) for project dependencies and the use and logging of DataSource.
+See the previous chapter on [Database Connections](/en/04-Database-Connection.md) for project dependencies and the use and logging of DataSource.
 
 ## Plain SQL
 
@@ -20,7 +25,7 @@ val delete = sql"DELETE FROM user WHERE id = $id" // DELETE FROM user WHERE id =
 
 Plain SQL queries simply construct SQL statements at runtime. While this provides a safe and easy way to construct complex statements, it is merely an embedded string. Any syntax errors in the statement or type mismatch between the database and the Scala code cannot be detected at compile time.
 
-Please refer to the [Query](/ldbc/en/04-Database-Connection.html#Query) item in the previous section "Database Connection" for information on setting the return type of the query result and the connection method.
+Please refer to the [Query](/en/04-Database-Connection.md#query) item in the previous section "Database Connection" for information on setting the return type of the query result and the connection method.
 It is built and works the same way as a query built using a table definition.
 
 Plain queries and type-safe queries are constructed differently, but the implementation is the same, including the subsequent connection methods. Therefore, it is possible to combine the two and execute the query.

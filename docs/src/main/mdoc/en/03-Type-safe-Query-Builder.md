@@ -1,16 +1,19 @@
+{%
+laika.title = Type-safe Query Construction
+laika.metadata.language = en
+%}
+
 # Type-safe Query Construction
 
 This chapter describes how to use LDBC-built table definitions to construct type-safe queries.
 
 The following dependencies must be set up for the project
 
-@@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-query-builder" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@"
 ```
-@@@
 
-If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](/ldbc/en/01-Table-Definitions.html) first.
+If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](/en/01-Table-Definitions.md) first.
 
 The following code example assumes the following import
 
@@ -86,28 +89,28 @@ select.statement === "SELECT `id` FROM user WHERE name = ?"
 
 The following is a list of conditions that can be used in the `where` method.
 
-| condition                            | statement                             |
-|--------------------------------------|---------------------------------------|
-| ===                                  | `column = ?`                          |
-| >=                                   | `column >= ?`                         |
-| >                                    | `column > ?`                          |
-| <=                                   | `column <= ?`                         |
-| <                                    | `column < ?`                          |
-| <>                                   | `column <> ?`                         |
-| !==                                  | `column != ?`                         |
-| IS ("TRUE"/"FALSE"/"UNKNOWN"/"NULL") | `column IS {TRUE/FALSE/UNKNOWN/NULL}` |
-| <=>                                  | `column <=> ?`                        |
-| IN (value, value, ...)               | `column IN (?, ?, ...)`               |
-| BETWEEN (start, end)                 | `column BETWEEN ? AND ?`              |
-| LIKE (value)                         | `column LIKE ?`                       |
-| LIKE_ESCAPE (like, escape)           | `column LIKE ? ESCAPE ?`              |
-| REGEXP (value)                       | `column REGEXP ?`                     |
-| `<<` (value)                         | `column << ?`                         |
-| `>>` (value)                         | `column >> ?`                         |
-| DIV (cond, result)                   | `column DIV ? = ?`                    |
-| MOD (cond, result)                   | `column MOD ? = ?`                    |
-| ^ (value)                            | `column ^ ?`                          |
-| ~ (value)                            | `~column = ?`                         |
+| condition                              | statement                             |
+|----------------------------------------|---------------------------------------|
+| `===`                                  | `column = ?`                          |
+| `>=`                                   | `column >= ?`                         |
+| `>`                                    | `column > ?`                          |
+| `<=`                                   | `column <= ?`                         |
+| `<`                                    | `column < ?`                          |
+| `<>`                                   | `column <> ?`                         |
+| `!==`                                  | `column != ?`                         |
+| `IS ("TRUE"/"FALSE"/"UNKNOWN"/"NULL")` | `column IS {TRUE/FALSE/UNKNOWN/NULL}` |
+| `<=>`                                  | `column <=> ?`                        |
+| `IN (value, value, ...)`               | `column IN (?, ?, ...)`               |
+| `BETWEEN (start, end)`                 | `column BETWEEN ? AND ?`              |
+| `LIKE (value)`                         | `column LIKE ?`                       |
+| `LIKE_ESCAPE (like, escape)`           | `column LIKE ? ESCAPE ?`              |
+| `REGEXP (value)`                       | `column REGEXP ?`                     |
+| `<<` (value)                           | `column << ?`                         |
+| `>>` (value)                           | `column >> ?`                         |
+| `DIV (cond, result)`                   | `column DIV ? = ?`                    |
+| `MOD (cond, result)`                   | `column MOD ? = ?`                    |
+| `^ (value)`                            | `column ^ ?`                          |
+| `~ (value)`                            | `~column = ?`                         |
 
 ### GROUP BY/Having
 
@@ -278,7 +281,7 @@ Note that a `rightJoin` join with multiple joins will result in NULL-acceptable 
 
 ## Custom Data Type
 
-In the previous section, we used the `mapping` method of DataType to map custom types to DataType in order to use user-specific or unsupported types. ([reference](/ldbc/en/02-Custom-Data-Type.html))
+In the previous section, we used the `mapping` method of DataType to map custom types to DataType in order to use user-specific or unsupported types. ([reference](/en/02-Custom-Data-Type.md))
 
 LDBC separates the table definition from the process of connecting to the database.
 Therefore, if you want to retrieve data from the database and convert it to a user-specific or unsupported type, you must link the method of retrieving data from the ResultSet to the user-specific or unsupported type.
@@ -434,7 +437,7 @@ val update = userQuery.update("name", "update name").set("age", Some(20)).where(
 update.statement === "UPDATE user SET name = ?, age = ? WHERE id = ?"
 ```
 
-See [where item](/ldbc/en/03-Type-safe-Query-Builder.html#where) in the Insert statement for conditions that can be used in the `where` method.
+See [where item](/en/03-Type-safe-Query-Builder.md) in the Insert statement for conditions that can be used in the `where` method.
 
 ## DELETE
 
@@ -456,7 +459,7 @@ val delete = userQuery.delete.where(_.id === 1)
 delete.statement === "DELETE FROM user WHERE id = ?"
 ```
 
-See [where item](/ldbc/en/03-Type-safe-Query-Builder.html#where) in the Insert statement for conditions that can be used in the `where` method.
+See [where item](/en/03-Type-safe-Query-Builder.md) in the Insert statement for conditions that can be used in the `where` method.
 
 ## DDL
 

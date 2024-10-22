@@ -1,16 +1,19 @@
+{%
+laika.title = SchemaSPY Document Generation
+laika.metadata.language = en
+%}
+
 # SchemaSPY Document Generation
 
 This chapter describes how to use table definitions built in LDBC to create SchemaSPY documents.
 
 The following dependencies must be set up for the project
 
-@@@ vars
 ```scala
-libraryDependencies += "$org$" %% "ldbc-schemaspy" % "$version$"
+libraryDependencies += "@ORGANIZATION@" %% "ldbc-schemaspy" % "@VERSION@"
 ```
-@@@
 
-If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](/ldbc/en/01-Table-Definitions.html) first.
+If you have not yet read how to define tables in LDBC, we recommend that you read the chapter [Table Definitions](/en/01-Table-Definitions.md) first.
 
 The following code example assumes the following import
 

@@ -1,19 +1,22 @@
+{%
+laika.title = Database Connection
+laika.metadata.language = en
+%}
+
 # Database Connection
 
 This chapter describes how to use queries built with LDBC to process connections to databases.
 
 The following dependencies must be set up for the project
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
-  "$org$" %% "ldbc-dsl" % "$version$",
-  "com.mysql" % "mysql-connector-j" % "$mysqlVersion$"
+  "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@",
+  "com.mysql" % "mysql-connector-j" % "@MYSQL_VERSION@"
 )
 ```
-@@@
 
-If you have not yet read about how to build queries with LDBC, we recommend that you read the chapter [Building Type-Safe Queries](/ldbc/en/03-Type-safe-Query-Builder.html) first.
+If you have not yet read about how to build queries with LDBC, we recommend that you read the chapter [Building Type-Safe Queries](/en/03-Type-safe-Query-Builder.md) first.
 
 The following code example assumes the following import
 
@@ -259,7 +262,7 @@ yield ...).unsafeRunSync()
 
 ### Database model
 
-In LDBC, the `Database` model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see [here](/ldbc/ja/06-Generating-SchemaSPY-Documentation.html) for information on SchemaSPY document generation.
+In LDBC, the `Database` model is also used for purposes other than holding database connection information. Another use is for SchemaSPY documentation generation, see [here](/ja/06-Generating-SchemaSPY-Documentation.md) for information on SchemaSPY document generation.
 
 If you have already generated a `Database` model for another use, you can use that model to build a `Database` with database connection information.
 
@@ -291,13 +294,11 @@ yield ...).transaction(db)
 
 `ldbc-hikari` provides a builder to build HikariConfig and HikariDataSource for building HikariCP connection pools.
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
-  "$org$" %% "ldbc-hikari" % "$version$",
+  "@ORGANIZATION@" %% "ldbc-hikari" % "@VERSION@",
 )
 ```
-@@@
 
 `HikariConfigBuilder` is a builder to build `HikariConfig` of HikariCP as the name suggests.
 
@@ -331,31 +332,31 @@ Please refer to [official](https://github.com/brettwooldridge/HikariCP) for deta
 
 The following is a list of keys that can be set for Config.
 
-| Key name                    | Description                                                                                                               | Type     |
-|-----------------------------|---------------------------------------------------------------------------------------------------------------------------|----------|
-| catalog                     | Default catalog name to be set when connecting                                                                            | String   |
-| connection_timeout          | Maximum number of milliseconds the client will wait for a connection from the pool                                        | Duration |
-| idle_timeout                | Maximum time (in milliseconds) that a connection is allowed to be idle in the pool                                        | Duration |
-| leak_detection_threshold    | Time a connection is out of the pool before a message indicating a possible connection leak is logged                     | Duration |
-| maximum_pool_size           | Maximum size allowed by the pool, including both idle and in-use connections                                              | Int      |
-| max_lifetime                | Maximum lifetime of connections in the pool                                                                               | Duration |
-| minimum_idle                | Minimum number of idle connections that HikariCP will try to keep in the pool, including both idle and in-use connections | Int      |
-| pool_name                   | Connection pool name                                                                                                      | String   |
-| allow_pool_suspension       | Whether to allow pool suspend                                                                                             | Boolean  |
-| auto_commit                 | Default autocommit behavior for connections in the pool                                                                   | Boolean  |
-| connection_init_sql         | SQL string to be executed when a new connection is created, before it is added to the pool                                | String   |
-| connection_test_query       | SQL query to execute to test the validity of the connection                                                               | String   |
-| data_source_classname       | Fully qualified class name of the JDBC DataSource to be used to create Connections                                        | String   |
-| initialization_fail_timeout | Pool initialization failure timeout                                                                                       | Duration |
-| isolate_internal_queries    | Whether internal pool queries (mainly validity checks) are separated in their own transaction by `Connection.rollback()`. | Boolean  |
-| jdbc_url                    | JDBC URL                                                                                                                  | String   |
-| readonly                    | Whether connections to be added to the pool should be set as read-only connections                                        | Boolean  |
-| register_mbeans             | Whether HikariCP self-registers HikariConfigMXBean and HikariPoolMXBean in JMX                                            | Boolean  |
-| schema                      | Default schema name to set when connecting                                                                                | String   |
-| username                    | Default username used for calls to `DataSource.getConnection(username,password)`                                          | String   |
-| password                    | Default password used for calling `DataSource.getConnection(username,password)`                                           | String   |
-| driver_class_name           | Driver class name to be used                                                                                              | String   |
-| transaction_isolation       | Default transaction isolation level                                                                                       | String   |
+| Key name                      | Description                                                                                                                 | Type       |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------|------------|
+| `catalog`                     | `Default catalog name to be set when connecting`                                                                            | `String`   |
+| `connection_timeout`          | `Maximum number of milliseconds the client will wait for a connection from the pool`                                        | `Duration` |
+| `idle_timeout`                | `Maximum time (in milliseconds) that a connection is allowed to be idle in the pool`                                        | `Duration` |
+| `leak_detection_threshold`    | `Time a connection is out of the pool before a message indicating a possible connection leak is logged`                     | `Duration` |
+| `maximum_pool_size`           | `Maximum size allowed by the pool, including both idle and in-use connections`                                              | `Int`      |
+| `max_lifetime`                | `Maximum lifetime of connections in the pool`                                                                               | `Duration` |
+| `minimum_idle`                | `Minimum number of idle connections that HikariCP will try to keep in the pool, including both idle and in-use connections` | `Int`      |
+| `pool_name`                   | `Connection pool name`                                                                                                      | `String`   |
+| `allow_pool_suspension`       | `Whether to allow pool suspend`                                                                                             | `Boolean`  |
+| `auto_commit`                 | `Default autocommit behavior for connections in the pool`                                                                   | `Boolean`  |
+| `connection_init_sql`         | `SQL string to be executed when a new connection is created, before it is added to the pool`                                | `String`   |
+| `connection_test_query`       | `SQL query to execute to test the validity of the connection`                                                               | `String`   |
+| `data_source_classname`       | `Fully qualified class name of the JDBC DataSource to be used to create Connections`                                        | `String`   |
+| `initialization_fail_timeout` | `Pool initialization failure timeout`                                                                                       | `Duration` |
+| `isolate_internal_queries`    | `Whether internal pool queries (mainly validity checks) are separated in their own transaction by Connection.rollback()`    | `Boolean`  |
+| `jdbc_url`                    | `JDBC URL`                                                                                                                  | `String`   |
+| `readonly`                    | `Whether connections to be added to the pool should be set as read-only connections`                                        | `Boolean`  |
+| `register_mbeans`             | `Whether HikariCP self-registers HikariConfigMXBean and HikariPoolMXBean in JMX`                                            | `Boolean`  |
+| `schema`                      | `Default schema name to set when connecting`                                                                                | `String`   |
+| `username`                    | `Default username used for calls to DataSource.getConnection(username,password)`                                            | `String`   |
+| `password`                    | `Default password used for calling DataSource.getConnection(username,password)`                                             | `String`   |
+| `driver_class_name`           | `Driver class name to be used`                                                                                              | `String`   |
+| `transaction_isolation`       | `Default transaction isolation level`                                                                                       | `String`   |
 
 The `HikariDataSourceBuilder` allows you to build a `HikariDataSource` for HikariCP.
 

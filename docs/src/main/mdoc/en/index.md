@@ -1,14 +1,7 @@
-@@@ index
- * [Table Definitions](./01-Table-Definitions.md)
- * [Custom Data Type](./02-Custom-Data-Type.md)
- * [Type-safe Query Builder](./03-Type-safe-Query-Builder.md)
- * [Database Connection](./04-Database-Connection.md)
- * [Plain SQL Queries](./05-Plain-SQL-Queries.md)
- * [Generating SchemaSPY Documentation](./06-Generating-SchemaSPY-Documentation.md)
- * [Schema Code Generation](./07-Schema-Code-Generation.md)
- * [Performance](./08-Perdormance.md)
- * [Connector](./09-Connector.md)
-@@@
+{%
+  laika.title = ldbc
+  laika.metadata.language = en
+%}
 
 # LDBC
 
@@ -60,7 +53,7 @@ Mapping models in LDBC to table definitions is very easy.
 
 The mapping between the properties a model has and the data types defined for its columns is also very simple. The developer simply defines the corresponding columns in the same order as the properties the model has.
 
-```scala mdoc:silent
+```scala 3
 import ldbc.core.*
 
 case class User(
@@ -90,28 +83,26 @@ For example, passing a column of type INT to a column related to the name proper
 [error]     |where:    T is a type variable with constraint <: Int | Long | Option[Int | Long]
 ```
 
-For more information on these add-ons, see [Table Definitions](/ldbc/en/01-Table-Definitions.html).
+For more information on these add-ons, see [Table Definitions](/en/01-Table-Definitions.md).
 
 ## Quick Start
 
-The current version is **$version$** for **Scala $scalaVersion$**.
+The current version is **@VERSION@** for **Scala $scalaVersion$**.
 
-@@@ vars
 ```scala
 libraryDependencies ++= Seq(
 
   // Start with this one.
-  "$org$" %% "ldbc-core" % "$version$",
+  "@ORGANIZATION@" %% "ldbc-core" % "@VERSION@",
 
   // Then add these as needed
-  "$org$" %% "ldbc-dsl"           % "$version$", // Plain Query Database Connection
-  "$org$" %% "ldbc-query-builder" % "$version$", // Type-safe query construction
-  "$org$" %% "ldbc-schemaspy"     % "$version$", // SchemaSPY document generation
+  "@ORGANIZATION@" %% "ldbc-dsl"           % "@VERSION@", // Plain Query Database Connection
+  "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@", // Type-safe query construction
+  "@ORGANIZATION@" %% "ldbc-schemaspy"     % "@VERSION@", // SchemaSPY document generation
 )
 ```
-@@@
 
-For more information on how to use the sbt plugin, please refer to this [documentation](/ldbc/en/07-Schema-Code-Generation.html).
+For more information on how to use the sbt plugin, please refer to this [documentation](/en/07-Schema-Code-Generation.md).
 
 ## TODO
 

@@ -1,16 +1,17 @@
 {%
 laika.title = ldbc
+laika.versioned = false
 laika.metadata {
-  language = en
-  isRootPath = true
+language = en
+isRootPath = true
 }
 %}
 
 # ldbc (Lepus Database Connectivity)
 
 @:image(img/lepus_logo.png) {
-  alt = "ldbc (Lepus Database Connectivity)"
-  style = "center-logo"
+alt = "ldbc (Lepus Database Connectivity)"
+style = "center-logo"
 }
 
 [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.takapi327/ldbc-core_3?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-core_3/0.2.1/jar)
