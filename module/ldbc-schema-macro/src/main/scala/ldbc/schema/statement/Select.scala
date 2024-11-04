@@ -23,9 +23,9 @@ case class Select[A, B](
   override def ++(sql: SQL): SQL =
     this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-  def where(func: A => Expression): Where[A, B] =
+  def where(func: A => Expression): Where.Q[A, B] =
     val expression = func(table)
-    Where[A, B](
+    Where.Q[A, B](
       table = table,
       columns = columns,
       statement = statement ++ s" WHERE ${ expression.statement }",
