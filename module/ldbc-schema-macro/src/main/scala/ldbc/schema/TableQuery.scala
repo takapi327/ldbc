@@ -10,6 +10,7 @@ import ldbc.dsl.Parameter
 import ldbc.query.builder.statement.Expression
 import ldbc.query.builder.Column
 import ldbc.schema.internal.QueryConcat
+import ldbc.schema.statement.*
 
 trait TableQuery[A]:
 
@@ -22,9 +23,9 @@ trait TableQuery[A]:
   def join[B, AB](other: TableQuery[B])(using QueryConcat.Aux[A, B, AB]): TableQuery.Join[A, B, AB] =
     TableQuery.Join(this, other)
 
-  def select[C](func: A => Column[C]): Query.Select[A, C] =
+  def select[C](func: A => Column[C]): Select[A, C] =
     val columns = func(table)
-    Query.Select(table, columns, s"SELECT ${columns.toString} FROM $statement", params)
+    Select(table, columns, s"SELECT ${columns.toString} FROM $statement", params)
 
   private[ldbc] def asVector(): Vector[TableQuery[?]] =
     this match

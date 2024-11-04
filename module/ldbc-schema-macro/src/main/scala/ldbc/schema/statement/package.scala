@@ -1,11 +1,16 @@
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.schema
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Decoder
 
 // TODO: Scheduled to migrate to schema
 import ldbc.query.builder.Column
-import ldbc.query.builder.statement.Expression
 import ldbc.query.builder.statement.Query as QuerySQL
 import ldbc.query.builder.statement.Command as CommandSQL
 
