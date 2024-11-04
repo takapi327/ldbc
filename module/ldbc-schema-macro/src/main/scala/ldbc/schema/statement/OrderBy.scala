@@ -28,7 +28,7 @@ case class OrderBy[A, B](
 
 object OrderBy:
   
-  trait Order[T]:
+  sealed trait Order[T]:
     def statement: String
     
   object Order extends TwiddleSyntax[Order]:

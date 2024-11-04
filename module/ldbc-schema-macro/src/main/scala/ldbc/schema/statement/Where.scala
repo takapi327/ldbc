@@ -46,7 +46,7 @@ object Where:
                           columns: Column[B],
                           statement: String,
                           params: List[Parameter.Dynamic]
-                        ) extends Where[A], Query[A, B], Limit.QueryProvider[A, B]:
+                        ) extends Where[A], Query[A, B], OrderBy.Provider[A, B], Limit.QueryProvider[A, B]:
 
     override type Self = Q[A, B]
 
