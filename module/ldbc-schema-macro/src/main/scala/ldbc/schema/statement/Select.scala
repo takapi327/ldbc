@@ -17,7 +17,7 @@ case class Select[A, B](
   columns: Column[B],
   statement: String,
   params: List[Parameter.Dynamic]
-) extends Query[A, B]:
+) extends Query[A, B], Limit.QueryProvider[A, B]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
