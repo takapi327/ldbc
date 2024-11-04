@@ -599,6 +599,11 @@ trait Column[T]:
 
 object Column extends TwiddleSyntax[Column]:
 
+  type Extract[T] <: Tuple = T match
+    case Column[t] => t *: EmptyTuple
+    case Column[t] *: EmptyTuple => t *: EmptyTuple
+    case Column[t] *: ts => t *: Extract[ts]
+
   given Applicative[Column] with
     override def pure[A](x: A): Column[A] = Pure(x)
     override def ap[A, B](ff: Column[A => B])(fa: Column[A]): Column[B] =
@@ -607,11 +612,6 @@ object Column extends TwiddleSyntax[Column]:
         resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None)),
         resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None))
       ))
-
-  type Extract[T] <: Tuple = T match
-    case Column[t]               => t *: EmptyTuple
-    case Column[t] *: EmptyTuple => t *: EmptyTuple
-    case Column[t] *: ts         => t *: Extract[ts]
 
   case class Pure[T](value: T) extends Column[T]:
     override def name:  String         = ""
