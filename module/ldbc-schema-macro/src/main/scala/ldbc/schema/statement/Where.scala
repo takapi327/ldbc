@@ -56,3 +56,11 @@ object Where:
 
     override private[ldbc] def union(label: String, expression: Expression): Q[A, B] =
       this.copy(statement = statement ++ s" $label ${expression.statement}", params = params ++ expression.parameter)
+      
+    def groupBy[C](func: A => Column[C]): GroupBy[A, B] =
+      GroupBy[A, B](
+        table = table,
+        columns = columns,
+        statement = statement ++ s" GROUP BY ${ func(table).toString }",
+        params = params
+      )
