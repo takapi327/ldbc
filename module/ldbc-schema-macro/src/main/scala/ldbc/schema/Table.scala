@@ -13,9 +13,7 @@ import ldbc.query.builder.Column
 
 trait Table[T](private[ldbc] val _name: String):
   
-  private[ldbc] def alias: String = s"$$$_name"
-
-  protected def column[A](name: String)(using Decoder.Elem[A]): Column[A] = Column.Impl[A](name, Some(alias))
+  protected def column[A](name: String)(using Decoder.Elem[A]): Column[A] = Column.Impl[A](name, Some(_name))
 
   @targetName("all")
   def * : Column[T]
