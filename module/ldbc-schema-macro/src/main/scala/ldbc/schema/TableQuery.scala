@@ -7,15 +7,13 @@
 package ldbc.schema
 
 import ldbc.dsl.Parameter
-import ldbc.query.builder.statement.Expression
-import ldbc.query.builder.Column
 import ldbc.schema.internal.QueryConcat
 import ldbc.schema.statement.*
 
 trait TableQuery[A]:
 
   private[ldbc] def table: A
-  
+
   private[ldbc] def params: List[Parameter.Dynamic]
 
   def statement: String

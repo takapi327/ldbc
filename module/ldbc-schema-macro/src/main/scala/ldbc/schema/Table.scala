@@ -9,7 +9,6 @@ package ldbc.schema
 import scala.annotation.targetName
 
 import ldbc.dsl.codec.Decoder
-import ldbc.query.builder.Column
 
 trait Table[T](private[ldbc] val _name: String):
   

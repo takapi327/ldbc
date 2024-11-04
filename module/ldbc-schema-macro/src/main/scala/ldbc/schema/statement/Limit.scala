@@ -10,7 +10,7 @@ import scala.annotation.targetName
 
 import ldbc.dsl.{Parameter, SQL}
 import ldbc.dsl.codec.Encoder
-import ldbc.query.builder.Column
+import ldbc.schema.Column
 
 trait Limit
 

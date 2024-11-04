@@ -9,7 +9,7 @@ package ldbc.schema.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{Parameter, SQL}
-import ldbc.query.builder.Column
+import ldbc.schema.Column
 
 case class Offset[A, B](
   table: A,

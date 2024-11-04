@@ -9,15 +9,14 @@ package ldbc.schema.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{Parameter, SQL}
-import ldbc.query.builder.Column
-import ldbc.query.builder.statement.Expression
+import ldbc.schema.Column
 
 case class Select[A, B](
   table: A,
   columns: Column[B],
   statement: String,
   params: List[Parameter.Dynamic]
-) extends Query[A, B], Limit.QueryProvider[A, B]:
+) extends Query[A, B], OrderBy.Provider[A, B], Limit.QueryProvider[A, B]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =

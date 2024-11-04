@@ -10,7 +10,6 @@ import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Decoder
 
 // TODO: Scheduled to migrate to schema
-import ldbc.query.builder.Column
 import ldbc.query.builder.statement.Query as QuerySQL
 import ldbc.query.builder.statement.Command as CommandSQL
 

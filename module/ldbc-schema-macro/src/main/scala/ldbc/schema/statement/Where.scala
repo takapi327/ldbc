@@ -9,8 +9,7 @@ package ldbc.schema.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{Parameter, SQL}
-import ldbc.query.builder.Column
-import ldbc.query.builder.statement.Expression
+import ldbc.schema.Column
 
 trait Where[A]:
 
