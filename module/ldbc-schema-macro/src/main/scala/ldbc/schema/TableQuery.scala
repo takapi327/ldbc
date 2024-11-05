@@ -25,6 +25,8 @@ trait TableQuery[A]:
     val columns = func(table)
     Select(table, columns, s"SELECT ${columns.toString} FROM $statement", params)
 
+  def update: Update[A] = Update[A](table, s"UPDATE $statement", params)
+
   private[ldbc] def asVector(): Vector[TableQuery[?]] =
     this match
       case TableQuery.Join.On(left, right, _, _, _) => left.asVector() ++ right.asVector()

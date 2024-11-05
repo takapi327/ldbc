@@ -19,7 +19,7 @@ trait CommandSyntax[F[_]]:
      *
      * {{{
      *   Table[User]
-     *     .update("id", 1L)
+     *     .update
      *     .set("name", "Alice")
      *     .set("age", 20)
      *     .where(_.id === 1L)
