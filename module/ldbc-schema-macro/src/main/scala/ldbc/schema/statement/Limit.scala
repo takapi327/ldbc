@@ -12,7 +12,13 @@ import ldbc.dsl.{Parameter, SQL}
 import ldbc.dsl.codec.Encoder
 import ldbc.schema.Column
 
-trait Limit
+trait Limit:
+
+  /** SQL statement string */
+  def statement: String
+
+  /** A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index only. */
+  def params: List[Parameter.Dynamic]
 
 object Limit:
 
@@ -45,4 +51,21 @@ object Limit:
         columns = self.columns,
         statement = self.statement ++ " LIMIT ?",
         params    = self.params :+ Parameter.Dynamic(length)
+      )
+      
+  case class C(
+                statement: String,
+                params: List[Parameter.Dynamic]
+              ) extends Limit, Command:
+    
+    @targetName("combine")
+    override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
+
+  transparent trait CommandProvider:
+    self: Command =>
+
+    def limit(length: Long): Encoder[Long] ?=> Limit.C =
+      Limit.C(
+        statement = statement ++ " LIMIT ?",
+        params    = params :+ Parameter.Dynamic(length)
       )
