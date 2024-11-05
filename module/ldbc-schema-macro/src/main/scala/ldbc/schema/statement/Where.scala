@@ -64,3 +64,18 @@ object Where:
         statement = statement ++ s" GROUP BY ${ func(table).toString }",
         params = params
       )
+      
+  case class C[A](
+                      table: A,
+                      statement: String,
+                      params: List[Parameter.Dynamic]
+                    ) extends Where[A], Command, Limit.CommandProvider:
+    
+    override type Self = C[A]
+    
+    @targetName("combine")
+    override def ++(sql: SQL): SQL =
+      this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
+      
+    override private[ldbc] def union(label: String, expression: Expression): C[A] =
+      this.copy(statement = statement ++ s" $label ${expression.statement}", params = params ++ expression.parameter)
