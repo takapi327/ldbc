@@ -101,7 +101,7 @@ lazy val schemaMacro = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     "org.typelevel" %%% "twiddles-core"     % "0.8.0",
     "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
   ))
-  .dependsOn(queryBuilder,  connector)
+  .dependsOn(dsl, connector)
   .enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
