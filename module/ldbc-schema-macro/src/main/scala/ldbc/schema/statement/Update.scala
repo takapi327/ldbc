@@ -15,16 +15,19 @@ import ldbc.schema.Column
 case class Update[A](
   table:     A,
   statement: String,
-  params:    List[Parameter.Dynamic]
+  params:    List[Parameter.Dynamic],
+  isFirst:   Boolean = true
 ) extends Command:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
   def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A] =
+    val set = if isFirst then " SET" else ","
     this.copy(
-      statement = statement ++ s" SET ${ column(table).name } = ?",
-      params    = params :+ Parameter.Dynamic(value)
+      statement = statement ++ s"$set ${ column(table).name } = ?",
+      params    = params :+ Parameter.Dynamic(value),
+      isFirst   = false
     )
 
   def set[B](column: A => Column[B], value: Option[B])(using Encoder[B]): Update[A] =
