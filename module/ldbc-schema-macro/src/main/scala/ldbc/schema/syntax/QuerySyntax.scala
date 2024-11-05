@@ -26,7 +26,7 @@ trait QuerySyntax[F[_]]:
      * @return
      *   A [[ldbc.dsl.Query]] instance
      */
-    def query: DslQuery[F, A]
+    def query: DslQuery[F, B]
 
     /**
      * A method to convert a query to a [[ldbc.dsl.Query]].
