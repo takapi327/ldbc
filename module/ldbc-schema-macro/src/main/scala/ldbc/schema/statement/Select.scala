@@ -8,15 +8,17 @@ package ldbc.schema.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 import ldbc.schema.Column
 
 case class Select[A, B](
-  table: A,
-  columns: Column[B],
+  table:     A,
+  columns:   Column[B],
   statement: String,
-  params: List[Parameter.Dynamic]
-) extends Query[A, B], OrderBy.Provider[A, B], Limit.QueryProvider[A, B]:
+  params:    List[Parameter.Dynamic]
+) extends Query[A, B],
+          OrderBy.Provider[A, B],
+          Limit.QueryProvider[A, B]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =
@@ -25,16 +27,16 @@ case class Select[A, B](
   def where(func: A => Expression): Where.Q[A, B] =
     val expression = func(table)
     Where.Q[A, B](
-      table = table,
-      columns = columns,
+      table     = table,
+      columns   = columns,
       statement = statement ++ s" WHERE ${ expression.statement }",
-      params = params ++ expression.parameter
-   )
+      params    = params ++ expression.parameter
+    )
 
   def groupBy[C](func: A => Column[C]): GroupBy[A, B] =
     GroupBy[A, B](
-      table = table,
-      columns = columns,
-      statement = statement ++ s" GROUP BY ${func(table).toString}",
-      params = params
+      table     = table,
+      columns   = columns,
+      statement = statement ++ s" GROUP BY ${ func(table).toString }",
+      params    = params
     )

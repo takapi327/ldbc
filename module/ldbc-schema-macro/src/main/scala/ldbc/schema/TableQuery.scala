@@ -23,7 +23,7 @@ trait TableQuery[A]:
 
   def select[C](func: A => Column[C]): Select[A, C] =
     val columns = func(table)
-    Select(table, columns, s"SELECT ${columns.toString} FROM $statement", params)
+    Select(table, columns, s"SELECT ${ columns.toString } FROM $statement", params)
 
   def update: Update[A] = Update[A](table, s"UPDATE $statement", params)
 
@@ -31,37 +31,38 @@ trait TableQuery[A]:
     this match
       case TableQuery.Join.On(left, right, _, _, _) => left.asVector() ++ right.asVector()
       case TableQuery.Join(left, right)             => left.asVector() ++ right.asVector()
-      case r: TableQuery[?]             => Vector(r)
+      case r: TableQuery[?]                         => Vector(r)
 
 object TableQuery:
 
   def apply[T <: Table[?]](table: T): TableQuery[T] = Impl(table, table.statement, List.empty)
 
   private[ldbc] case class Impl[A](
-                                      table: A,
-                                      statement: String,
-                                      params: List[Parameter.Dynamic]
-                                    ) extends TableQuery[A]
+    table:     A,
+    statement: String,
+    params:    List[Parameter.Dynamic]
+  ) extends TableQuery[A]
 
   case class Join[A, B, AB](
-                             left: TableQuery[A],
-                             right: TableQuery[B]
-                            ) extends TableQuery[AB]:
+    left:  TableQuery[A],
+    right: TableQuery[B]
+  ) extends TableQuery[AB]:
 
-    override def table: AB = Tuple.fromArray((left.asVector() ++ right.asVector()).map(_.table).toArray).asInstanceOf[AB]
-    override def statement: String = s"${left.statement} JOIN ${right.statement}"
-    override def params: List[Parameter.Dynamic] = left.params ++ right.params
+    override def table: AB =
+      Tuple.fromArray((left.asVector() ++ right.asVector()).map(_.table).toArray).asInstanceOf[AB]
+    override def statement: String                  = s"${ left.statement } JOIN ${ right.statement }"
+    override def params:    List[Parameter.Dynamic] = left.params ++ right.params
 
     def on(expression: AB => Expression): TableQuery[AB] =
       val expr = expression(table)
-      Join.On(left, right, table, s"$statement ON ${expr.statement}", params ++ expr.parameter)
+      Join.On(left, right, table, s"$statement ON ${ expr.statement }", params ++ expr.parameter)
 
   object Join:
 
     case class On[A, B, AB](
-                             left: TableQuery[A],
-                             right: TableQuery[B],
-                             table: AB,
-                             statement: String,
-                             params: List[Parameter.Dynamic]
-                           ) extends TableQuery[AB]
+      left:      TableQuery[A],
+      right:     TableQuery[B],
+      table:     AB,
+      statement: String,
+      params:    List[Parameter.Dynamic]
+    ) extends TableQuery[AB]

@@ -8,7 +8,7 @@ package ldbc.schema.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Encoder
 import ldbc.schema.Column
 
@@ -23,10 +23,10 @@ trait Limit:
 object Limit:
 
   case class Q[A, B](
-                      table: A,
-                      columns: Column[B],
-                      statement: String,
-                      params: List[Parameter.Dynamic]
+    table:     A,
+    columns:   Column[B],
+    statement: String,
+    params:    List[Parameter.Dynamic]
   ) extends Limit,
             Query[A, B]:
 
@@ -36,8 +36,8 @@ object Limit:
 
     def offset(length: Long): Encoder[Long] ?=> Offset[A, B] =
       Offset(
-        table = table,
-        columns = columns,
+        table     = table,
+        columns   = columns,
         statement = statement ++ " OFFSET ?",
         params    = params :+ Parameter.Dynamic(length)
       )
@@ -47,17 +47,18 @@ object Limit:
 
     def limit(length: Long): Encoder[Long] ?=> Limit.Q[A, B] =
       Limit.Q(
-        table = self.table,
-        columns = self.columns,
+        table     = self.table,
+        columns   = self.columns,
         statement = self.statement ++ " LIMIT ?",
         params    = self.params :+ Parameter.Dynamic(length)
       )
-      
+
   case class C(
-                statement: String,
-                params: List[Parameter.Dynamic]
-              ) extends Limit, Command:
-    
+    statement: String,
+    params:    List[Parameter.Dynamic]
+  ) extends Limit,
+            Command:
+
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 

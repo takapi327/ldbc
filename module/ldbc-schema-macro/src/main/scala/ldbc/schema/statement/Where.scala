@@ -8,7 +8,7 @@ package ldbc.schema.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 import ldbc.schema.Column
 
 trait Where[A]:
@@ -42,11 +42,14 @@ trait Where[A]:
 object Where:
 
   case class Q[A, B](
-                          table: A,
-                          columns: Column[B],
-                          statement: String,
-                          params: List[Parameter.Dynamic]
-                        ) extends Where[A], Query[A, B], OrderBy.Provider[A, B], Limit.QueryProvider[A, B]:
+    table:     A,
+    columns:   Column[B],
+    statement: String,
+    params:    List[Parameter.Dynamic]
+  ) extends Where[A],
+            Query[A, B],
+            OrderBy.Provider[A, B],
+            Limit.QueryProvider[A, B]:
 
     override type Self = Q[A, B]
 
@@ -55,27 +58,29 @@ object Where:
       this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
     override private[ldbc] def union(label: String, expression: Expression): Q[A, B] =
-      this.copy(statement = statement ++ s" $label ${expression.statement}", params = params ++ expression.parameter)
-      
+      this.copy(statement = statement ++ s" $label ${ expression.statement }", params = params ++ expression.parameter)
+
     def groupBy[C](func: A => Column[C]): GroupBy[A, B] =
       GroupBy[A, B](
-        table = table,
-        columns = columns,
+        table     = table,
+        columns   = columns,
         statement = statement ++ s" GROUP BY ${ func(table).toString }",
-        params = params
+        params    = params
       )
-      
+
   case class C[A](
-                      table: A,
-                      statement: String,
-                      params: List[Parameter.Dynamic]
-                    ) extends Where[A], Command, Limit.CommandProvider:
-    
+    table:     A,
+    statement: String,
+    params:    List[Parameter.Dynamic]
+  ) extends Where[A],
+            Command,
+            Limit.CommandProvider:
+
     override type Self = C[A]
-    
+
     @targetName("combine")
     override def ++(sql: SQL): SQL =
       this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
-      
+
     override private[ldbc] def union(label: String, expression: Expression): C[A] =
-      this.copy(statement = statement ++ s" $label ${expression.statement}", params = params ++ expression.parameter)
+      this.copy(statement = statement ++ s" $label ${ expression.statement }", params = params ++ expression.parameter)

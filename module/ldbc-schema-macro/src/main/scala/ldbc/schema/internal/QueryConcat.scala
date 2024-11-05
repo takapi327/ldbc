@@ -64,13 +64,17 @@ trait LowPriorityTupleConcat3 extends LowPriorityTupleConcat2:
       override type Out = A
       override def leftArity: Int = ta.arity
       override def rightArity: Int = 0
-*/
+ */
 
 trait LowPriorityTupleConcat2 extends LowPriorityTupleConcat1:
-  given concatTuples[A, B, AB](using to: TupleOps.JoinAux[A, B, AB], ta: TupleArity[A], tb: TupleArity[B]): Aux[A, B, AB] =
+  given concatTuples[A, B, AB](using
+    to: TupleOps.JoinAux[A, B, AB],
+    ta: TupleArity[A],
+    tb: TupleArity[B]
+  ): Aux[A, B, AB] =
     new QueryConcat[A, B]:
       override type Out = AB
-      override def leftArity: Int = ta.arity
+      override def leftArity:  Int = ta.arity
       override def rightArity: Int = tb.arity
 
 trait LowPriorityTupleConcat1 extends LowPriorityTupleConcat0:
@@ -78,13 +82,13 @@ trait LowPriorityTupleConcat1 extends LowPriorityTupleConcat0:
   given concatSingleAndTuple[A, B, AB](using to: TupleOps.JoinAux[Tuple1[A], B, AB], ta: TupleArity[B]): Aux[A, B, AB] =
     new QueryConcat[A, B]:
       override type Out = AB
-      override def leftArity: Int = 1
+      override def leftArity:  Int = 1
       override def rightArity: Int = ta.arity
 
   given concatTupleAndSingle[A, B, AB](using tc: TupleOps.JoinAux[A, Tuple1[B], AB], ta: TupleArity[A]): Aux[A, B, AB] =
     new QueryConcat[A, B]:
       override type Out = AB
-      override def leftArity: Int = ta.arity
+      override def leftArity:  Int = ta.arity
       override def rightArity: Int = 1
 
 trait LowPriorityTupleConcat0:
@@ -94,5 +98,5 @@ trait LowPriorityTupleConcat0:
   given concatSingleAndSingle[A, B, AB](using TupleOps.JoinAux[Tuple1[A], Tuple1[B], AB]): Aux[A, B, AB] =
     new QueryConcat[A, B]:
       override type Out = AB
-      override def leftArity: Int = 1
+      override def leftArity:  Int = 1
       override def rightArity: Int = 1

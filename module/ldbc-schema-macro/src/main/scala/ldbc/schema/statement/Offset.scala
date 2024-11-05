@@ -8,14 +8,14 @@ package ldbc.schema.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 import ldbc.schema.Column
 
 case class Offset[A, B](
-  table: A,
-  columns: Column[B],
+  table:     A,
+  columns:   Column[B],
   statement: String,
-  params: List[Parameter.Dynamic]
+  params:    List[Parameter.Dynamic]
 ) extends Query[A, B]:
 
   @targetName("combine")

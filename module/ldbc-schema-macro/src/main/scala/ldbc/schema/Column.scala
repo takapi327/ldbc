@@ -16,7 +16,7 @@ import ldbc.sql.ResultSet
 import ldbc.dsl.*
 import ldbc.dsl.codec.{ Encoder, Decoder }
 import ldbc.schema.interpreter.Extract
-import ldbc.schema.statement.{OrderBy, Expression}
+import ldbc.schema.statement.{ OrderBy, Expression }
 import ldbc.schema.statement.Expression.*
 
 /**
@@ -600,30 +600,32 @@ trait Column[T]:
 object Column extends TwiddleSyntax[Column]:
 
   type Extract[T] <: Tuple = T match
-    case Column[t] => t *: EmptyTuple
+    case Column[t]               => t *: EmptyTuple
     case Column[t] *: EmptyTuple => t *: EmptyTuple
-    case Column[t] *: ts => t *: Extract[ts]
+    case Column[t] *: ts         => t *: Extract[ts]
 
   given Applicative[Column] with
     override def pure[A](x: A): Column[A] = Pure(x)
     override def ap[A, B](ff: Column[A => B])(fa: Column[A]): Column[B] =
-      val name = if ff.toString.isEmpty then fa.toString else s"${ff.toString}, ${fa.toString}"
-      Impl[B](name, None)(using Decoder.Elem(
-        resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None)),
-        resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None))
-      ))
+      val name = if ff.toString.isEmpty then fa.toString else s"${ ff.toString }, ${ fa.toString }"
+      Impl[B](name, None)(using
+        Decoder.Elem(
+          resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None)),
+          resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None))
+        )
+      )
 
   case class Pure[T](value: T) extends Column[T]:
-    override def name:  String         = ""
-    override def alias: Option[String] = None
-    override def as(name: String): Column[T] = this
+    override def name:             String         = ""
+    override def alias:            Option[String] = None
+    override def as(name: String): Column[T]      = this
     override def decoder: Decoder[T] =
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => value)
 
   private[ldbc] case class Impl[T](
-                                    name:  String,
-                                    alias: Option[String]
-                                  )(using elem: Decoder.Elem[T])
+    name:  String,
+    alias: Option[String]
+  )(using elem: Decoder.Elem[T])
     extends Column[T]:
     override def as(name: String): Column[T] = Impl[T](this.name, Some(name))
     override def decoder: Decoder[T] =
@@ -633,10 +635,10 @@ object Column extends TwiddleSyntax[Column]:
       )
 
   private[ldbc] case class Opt[T](
-                                   name:     String,
-                                   alias:    Option[String],
-                                   _decoder: Decoder[T]
-                                 ) extends Column[Option[T]]:
+    name:     String,
+    alias:    Option[String],
+    _decoder: Decoder[T]
+  ) extends Column[Option[T]]:
     override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(name), _decoder)
     override def decoder: Decoder[Option[T]] =
       new Decoder[Option[T]]((resultSet: ResultSet, prefix: Option[String]) =>
@@ -644,11 +646,11 @@ object Column extends TwiddleSyntax[Column]:
       )
 
   private[ldbc] case class MultiColumn[T](
-                                           flag:  String,
-                                           left:  Column[T],
-                                           right: Column[T],
-                                           alias: Option[String] = None
-                                         )(using elem: Decoder.Elem[T])
+    flag:  String,
+    left:  Column[T],
+    right: Column[T],
+    alias: Option[String] = None
+  )(using elem: Decoder.Elem[T])
     extends Column[T]:
     override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this.copy(alias = Some(name))

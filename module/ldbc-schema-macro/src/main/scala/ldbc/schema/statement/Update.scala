@@ -8,23 +8,23 @@ package ldbc.schema.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Encoder
 import ldbc.schema.Column
 
 case class Update[A](
-                      table: A, 
-                      statement: String, 
-                      params:    List[Parameter.Dynamic]
-                    ) extends Command:
-  
+  table:     A,
+  statement: String,
+  params:    List[Parameter.Dynamic]
+) extends Command:
+
   @targetName("combine")
   override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
   def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A] =
     this.copy(
-      statement = statement ++ s" SET ${column(table).name} = ?",
-      params = params :+ Parameter.Dynamic(value)
+      statement = statement ++ s" SET ${ column(table).name } = ?",
+      params    = params :+ Parameter.Dynamic(value)
     )
 
   def set[B](column: A => Column[B], value: Option[B])(using Encoder[B]): Update[A] =
@@ -32,11 +32,11 @@ case class Update[A](
 
   def set[B](column: A => Column[B], value: B, bool: Boolean)(using Encoder[B]): Update[A] =
     if bool then set(column, value) else this
-    
+
   def where(func: A => Expression): Where.C[A] =
     val expression = func(table)
     Where.C[A](
-      table = table,
+      table     = table,
       statement = statement ++ s" WHERE ${ expression.statement }",
-      params = params ++ expression.parameter
+      params    = params ++ expression.parameter
     )

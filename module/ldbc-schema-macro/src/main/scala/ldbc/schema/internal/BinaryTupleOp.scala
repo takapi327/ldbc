@@ -7,5 +7,5 @@
 package ldbc.schema.internal
 
 trait BinaryTupleOp:
-  def leftArity: Int
+  def leftArity:  Int
   def rightArity: Int

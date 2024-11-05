@@ -15,13 +15,13 @@ import cats.effect.*
 
 import ldbc.sql.*
 
-import ldbc.dsl.{Query as DslQuery, SyncSyntax as DslSyntax, *}
+import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 import ldbc.dsl.codec.Decoder
 
-import ldbc.schema.statement.{Query, Command}
+import ldbc.schema.statement.{ Query, Command }
 
 package object syntax:
-  
+
   private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F]:
 
     extension [A, B](query: Query[A, B])
@@ -29,10 +29,10 @@ package object syntax:
       def query: DslQuery[F, B] = DslQuery.Impl[F, B](query.statement, query.params, query.decoder)
 
       inline def queryTo[P <: Product](using
-                                       m1:    Mirror.ProductOf[P],
-                                       m2:    Mirror.ProductOf[A],
-                                       check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
-                                      ): DslQuery[F, P] =
+        m1:    Mirror.ProductOf[P],
+        m2:    Mirror.ProductOf[A],
+        check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
+      ): DslQuery[F, P] =
         inline erasedValue[P] match
           case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(m1))
           case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(m1))
@@ -46,8 +46,8 @@ package object syntax:
             for
               prepareStatement <- connection.prepareStatement(command.statement)
               result <- command.params.zipWithIndex.traverse {
-                case (param, index) => param.bind[F](prepareStatement, index + 1)
-              } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+                          case (param, index) => param.bind[F](prepareStatement, index + 1)
+                        } >> prepareStatement.executeUpdate() <* prepareStatement.close()
             yield result
         )
 
@@ -61,8 +61,8 @@ package object syntax:
             for
               prepareStatement <- connection.prepareStatement(command.statement, Statement.RETURN_GENERATED_KEYS)
               resultSet <- command.params.zipWithIndex.traverse {
-                case (param, index) => param.bind[F](prepareStatement, index + 1)
-              } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+                             case (param, index) => param.bind[F](prepareStatement, index + 1)
+                           } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
               result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
             yield result
         )
