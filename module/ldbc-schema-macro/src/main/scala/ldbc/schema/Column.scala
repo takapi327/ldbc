@@ -608,11 +608,13 @@ object Column extends TwiddleSyntax[Column]:
     override def pure[A](x: A): Column[A] = Pure(x)
     override def ap[A, B](ff: Column[A => B])(fa: Column[A]): Column[B] =
       val name = if ff.toString.isEmpty then fa.toString else s"${ ff.toString }, ${ fa.toString }"
-      Impl[B](name, None)(using
-        Decoder.Elem(
-          resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None)),
-          resultSet => _ => ff.decoder.decode(resultSet, None)(fa.decoder.decode(resultSet, None))
-        )
+      val decoder = new Decoder[B]((resultSet: ResultSet, prefix: Option[String]) =>
+        ff.decoder.decode(resultSet, prefix)(fa.decoder.decode(resultSet, prefix))
+      )
+      Impl[B](
+        name = name,
+        alias = None,
+        decoder = decoder
       )
 
   case class Pure[T](value: T) extends Column[T]:
@@ -621,18 +623,27 @@ object Column extends TwiddleSyntax[Column]:
     override def as(name: String): Column[T]      = this
     override def decoder: Decoder[T] =
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => value)
+      
+  def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
+    val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
+      val column = prefix.map(_ + ".").getOrElse("") + name
+      elem.decode(resultSet, column)
+    )
+    Impl[T](name, None, decoder)
+
+  def apply[T](name: String, alias: String)(using elem: Decoder.Elem[T]): Column[T] =
+    val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
+      val column = prefix.orElse(Some(alias)).map(_ + ".").getOrElse("") + name
+      elem.decode(resultSet, column)
+    )
+    Impl[T](name, Some(alias), decoder)
 
   private[ldbc] case class Impl[T](
     name:  String,
-    alias: Option[String]
-  )(using elem: Decoder.Elem[T])
-    extends Column[T]:
-    override def as(name: String): Column[T] = Impl[T](this.name, Some(name))
-    override def decoder: Decoder[T] =
-      new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
-        val column = prefix.orElse(alias).map(_ + ".").getOrElse("") + name
-        elem.decode(resultSet, column)
-      )
+    alias: Option[String],
+    decoder: Decoder[T]
+  ) extends Column[T]:
+    override def as(name: String): Column[T] = this.copy(alias = Some(name))
 
   private[ldbc] case class Opt[T](
     name:     String,
