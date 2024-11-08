@@ -154,8 +154,7 @@ object Expression:
     right: Column[?]
   ) extends Expression:
 
-    override def statement = s"${ left.alias.fold(left.name)(alias => s"$alias.${ left.name }") } $flag ${ right.alias
-        .fold(right.name)(alias => s"$alias.${ right.name }") }"
+    override def statement = s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }"
     override def parameter: List[Parameter.Dynamic] = List.empty
 
   /** comparison operator */

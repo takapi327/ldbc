@@ -36,8 +36,8 @@ object OrderBy:
 
     private[ldbc] case class Impl[T](statement: String) extends Order[T]
 
-    def asc[T](column:  Column[T]): Order[T] = Impl(s"${ column.toString } ASC")
-    def desc[T](column: Column[T]): Order[T] = Impl(s"${ column.toString } DESC")
+    def asc[T](column:  Column[T]): Order[T] = Impl(s"${ column.alias.getOrElse(column.name) } ASC")
+    def desc[T](column: Column[T]): Order[T] = Impl(s"${ column.alias.getOrElse(column.name) } DESC")
 
     given Applicative[Order] with
       override def pure[A](x: A): Order[A] = Impl("")

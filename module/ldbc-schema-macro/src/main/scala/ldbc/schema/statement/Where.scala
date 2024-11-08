@@ -61,10 +61,11 @@ object Where:
       this.copy(statement = statement ++ s" $label ${ expression.statement }", params = params ++ expression.parameter)
 
     def groupBy[C](func: A => Column[C]): GroupBy[A, B] =
+      val conditions = func(table)
       GroupBy[A, B](
         table     = table,
         columns   = columns,
-        statement = statement ++ s" GROUP BY ${ func(table).toString }",
+        statement = statement ++ s" GROUP BY ${ conditions.alias.getOrElse(conditions.name) }",
         params    = params
       )
 

@@ -12,7 +12,7 @@ import ldbc.dsl.codec.Decoder
 
 trait Table[T](private[ldbc] val _name: String):
 
-  protected def column[A](name: String)(using Decoder.Elem[A]): Column[A] = Column.Impl[A](name, Some(_name))
+  protected def column[A](name: String)(using Decoder.Elem[A]): Column[A] = Column[A](name, _name)
 
   @targetName("all")
   def * : Column[T]
