@@ -81,6 +81,16 @@ sealed trait TableQuery[A]:
    */
   def delete: Delete[A] = Delete[A](table, s"DELETE FROM $statement", params)
 
+  /**
+   * Method to construct a query to drop a table.
+   */
+  def dropTable: Command = Command.Pure(s"DROP TABLE $statement", List.empty)
+
+  /**
+   * Method to construct a query to truncate a table.
+   */
+  def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $statement", List.empty)
+
   private[ldbc] def asVector(): Vector[TableQuery[?]] =
     this match
       case TableQuery.Join.On(left, right, _, _, _) => left.asVector() ++ right.asVector()
