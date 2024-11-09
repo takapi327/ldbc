@@ -6,6 +6,8 @@
 
 package ldbc.schema
 
+import scala.annotation.targetName
+
 import ldbc.dsl.SQL
 import ldbc.dsl.codec.Decoder
 
@@ -20,3 +22,7 @@ package object statement:
     def decoder: Decoder[B] = columns.decoder
 
   trait Command extends SQL
+  object Command:
+    case class Pure(statement: String, params: List[Parameter.Dynamic]) extends Command:
+      @targetName("combine")
+      override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
