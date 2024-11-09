@@ -8,7 +8,7 @@ package ldbc.schema.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 
 /**
  * A model for constructing DELETE statements in MySQL.
@@ -23,10 +23,11 @@ import ldbc.dsl.{Parameter, SQL}
  *   Type representing Table
  */
 case class Delete[A](
-                   table:     A,
-                   statement: String,
-                   params:    List[Parameter.Dynamic],
-                 ) extends Command, Limit.CommandProvider:
+  table:     A,
+  statement: String,
+  params:    List[Parameter.Dynamic]
+) extends Command,
+          Limit.CommandProvider:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)

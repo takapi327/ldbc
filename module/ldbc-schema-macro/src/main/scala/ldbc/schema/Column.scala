@@ -46,7 +46,7 @@ trait Column[T]:
   def statement: String = name
 
   /** Used in Insert statement `(Column, Column) VALUES (?,?)` used in the Insert statement */
-  def insertStatement: String = s"($name) VALUES (${List.fill(values)("?").mkString(",")})"
+  def insertStatement: String = s"($name) VALUES (${ List.fill(values)("?").mkString(",") })"
 
   /** Used in Update statement `SET Column = ?, Column = ?` used in the Update statement */
   def updateStatement: String
@@ -619,19 +619,19 @@ object Column extends TwiddleSyntax[Column]:
     override def pure[A](x: A): Column[A] = Pure(x)
     override def ap[A, B](ff: Column[A => B])(fa: Column[A]): Column[B] =
       new Column[B]:
-        override def name:             String         = if ff.name.isEmpty then fa.name else s"${ ff.name }, ${ fa.name }"
-        override def alias:            Option[String] =
+        override def name: String = if ff.name.isEmpty then fa.name else s"${ ff.name }, ${ fa.name }"
+        override def alias: Option[String] =
           (ff.alias, fa.alias) match
             case (Some(ff), Some(fa)) => Some(s"$ff, $fa")
             case (Some(ff), None)     => Some(s"$ff")
             case (None, Some(fa))     => Some(s"$fa")
-            case (None, None)                   => None
-        override def as(name: String): Column[B]      = this
-        override def decoder: Decoder[B]              = new Decoder[B]((resultSet: ResultSet, prefix: Option[String]) =>
+            case (None, None)         => None
+        override def as(name: String): Column[B] = this
+        override def decoder: Decoder[B] = new Decoder[B]((resultSet: ResultSet, prefix: Option[String]) =>
           ff.decoder.decode(resultSet, prefix)(fa.decoder.decode(resultSet, prefix))
         )
-        override def updateStatement: String          =
-          if ff.name.isEmpty then s"SET ${fa.name} = ?" else s"SET ${ff.name} = ?, ${fa.name} = ?"
+        override def updateStatement: String =
+          if ff.name.isEmpty then s"SET ${ fa.name } = ?" else s"SET ${ ff.name } = ?, ${ fa.name } = ?"
         override def values: Int = ff.values + fa.values
 
   case class Pure[T](value: T) extends Column[T]:
@@ -642,7 +642,7 @@ object Column extends TwiddleSyntax[Column]:
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => value)
     override def insertStatement: String = ""
     override def updateStatement: String = ""
-    override def values: Int = 0
+    override def values:          Int    = 0
 
   def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
     val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
@@ -659,19 +659,19 @@ object Column extends TwiddleSyntax[Column]:
     Impl[T](name, Some(s"$alias.$name"), decoder)
 
   private[ldbc] case class Impl[T](
-    name:  String,
-    alias: Option[String],
-    decoder: Decoder[T],
+    name:    String,
+    alias:   Option[String],
+    decoder: Decoder[T]
   ) extends Column[T]:
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
-    override def updateStatement: String = s"SET $name = ?"
+    override def updateStatement:  String    = s"SET $name = ?"
 
   private[ldbc] case class Opt[T](
     name:     String,
     alias:    Option[String],
     _decoder: Decoder[T]
   ) extends Column[Option[T]]:
-    override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(s"$name.${this.name}"), _decoder)
+    override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(s"$name.${ this.name }"), _decoder)
     override def decoder: Decoder[Option[T]] =
       new Decoder[Option[T]]((resultSet: ResultSet, prefix: Option[String]) =>
         Option(_decoder.decode(resultSet, prefix.orElse(alias)))
@@ -697,10 +697,10 @@ object Column extends TwiddleSyntax[Column]:
   private[ldbc] case class Count(_name: String)(using elem: Decoder.Elem[Int]) extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
     override def alias:            Option[String] = None
-    override def as(name: String): Column[Int]    = this.copy(s"$name.${_name}")
+    override def as(name: String): Column[Int]    = this.copy(s"$name.${ _name }")
     override def decoder: Decoder[Int] = new Decoder[Int]((resultSet: ResultSet, prefix: Option[String]) =>
       elem.decode(resultSet, name)
     )
-    override def toString: String = name
+    override def toString:        String = name
     override def insertStatement: String = ""
     override def updateStatement: String = ""
