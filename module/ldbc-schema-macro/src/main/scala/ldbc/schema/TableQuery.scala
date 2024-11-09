@@ -61,7 +61,7 @@ sealed trait TableQuery[A]:
       case p: Mirror.ProductOf[Entity] => derivedProduct(value, p)
 
   private inline def derivedProduct[P](value: P, mirror: Mirror.ProductOf[P]): Insert[A] =
-    val tuples = Tuple.fromProduct(value.asInstanceOf[Product]) *: EmptyTuple
+    val tuples = Tuple.fromProduct(value.asInstanceOf[Product]).asInstanceOf[mirror.MirroredElemTypes]
     val parameterBinders = tuples
       .zip(Encoder.fold[mirror.MirroredElemTypes])
       .toList

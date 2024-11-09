@@ -8,7 +8,7 @@ package ldbc.schema
 
 import scala.annotation.targetName
 
-import ldbc.dsl.SQL
+import ldbc.dsl.{SQL, Parameter}
 import ldbc.dsl.codec.Decoder
 
 package object statement:
