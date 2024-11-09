@@ -76,6 +76,11 @@ sealed trait TableQuery[A]:
 
   def update: Update[A] = Update[A](table, s"UPDATE $statement", params)
 
+  /**
+   * Method to construct a query to delete a table.
+   */
+  def delete: Delete[A] = Delete[A](table, s"DELETE FROM $statement", params)
+
   private[ldbc] def asVector(): Vector[TableQuery[?]] =
     this match
       case TableQuery.Join.On(left, right, _, _, _) => left.asVector() ++ right.asVector()
