@@ -112,16 +112,12 @@ object TableQuery:
     column:    Column[Extract[A]],
     statement: String,
     params:    List[Parameter.Dynamic]
-  ) extends TableQuery[A] // :
-
-  // override type Entity = B
+  ) extends TableQuery[A]
 
   case class Join[A, B, AB](
     left:  TableQuery[A],
     right: TableQuery[B]
   ) extends TableQuery[AB]:
-
-    // override type Entity = left.Entity *: right.Entity *: EmptyTuple
 
     override def table: AB =
       Tuple.fromArray((left.asVector() ++ right.asVector()).map(_.table).toArray).asInstanceOf[AB]
@@ -142,7 +138,5 @@ object TableQuery:
       statement: String,
       params:    List[Parameter.Dynamic]
     ) extends TableQuery[AB]:
-
-      // override type Entity = left.Entity *: right.Entity *: EmptyTuple
 
       override def column: Column[Entity] = (left.column *: right.column).asInstanceOf[Column[Entity]]
