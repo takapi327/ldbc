@@ -75,7 +75,7 @@ sealed trait TableQuery[A]:
       params    = params ++ parameterBinders
     )
 
-  def update: Update[A] = Update[A](table, s"UPDATE $statement", params)
+  def update: Update[A] = Update.Impl[A](table, s"UPDATE $statement", params)
 
   /**
    * Method to construct a query to delete a table.
@@ -124,6 +124,8 @@ object TableQuery:
     override def column:    Column[Entity]          = (left.column *: right.column).asInstanceOf[Column[Entity]]
     override def statement: String                  = s"${ left.statement } JOIN ${ right.statement }"
     override def params:    List[Parameter.Dynamic] = left.params ++ right.params
+    
+    override def update: Update[AB] = Update.Join[AB](table, s"UPDATE $statement", params)
 
     def on(expression: AB => Expression): TableQuery[AB] =
       val expr = expression(table)
@@ -140,3 +142,5 @@ object TableQuery:
     ) extends TableQuery[AB]:
 
       override def column: Column[Entity] = (left.column *: right.column).asInstanceOf[Column[Entity]]
+
+      override def update: Update[AB] = Update.Join[AB](table, s"UPDATE $statement", params)
