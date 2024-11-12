@@ -124,8 +124,12 @@ object TableQuery:
     override def column:    Column[Entity]          = (left.column *: right.column).asInstanceOf[Column[Entity]]
     override def statement: String                  = s"${ left.statement } JOIN ${ right.statement }"
     override def params:    List[Parameter.Dynamic] = left.params ++ right.params
-    
+
     override def update: Update[AB] = Update.Join[AB](table, s"UPDATE $statement", params)
+
+    override def delete: Delete[AB] =
+      val main = (left.asVector() ++ right.asVector()).headOption.getOrElse(throw new IllegalStateException("No table found."))
+      Delete[AB](table, s"DELETE ${main.statement} FROM $statement", params)
 
     def on(expression: AB => Expression): TableQuery[AB] =
       val expr = expression(table)
@@ -144,3 +148,7 @@ object TableQuery:
       override def column: Column[Entity] = (left.column *: right.column).asInstanceOf[Column[Entity]]
 
       override def update: Update[AB] = Update.Join[AB](table, s"UPDATE $statement", params)
+
+      override def delete: Delete[AB] =
+        val main = (left.asVector() ++ right.asVector()).headOption.getOrElse(throw new IllegalStateException("No table found."))
+        Delete[AB](table, s"DELETE ${main.statement} FROM $statement", params)
