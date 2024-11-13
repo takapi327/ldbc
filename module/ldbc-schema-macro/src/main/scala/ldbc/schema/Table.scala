@@ -12,11 +12,11 @@ import ldbc.dsl.codec.Decoder
 
 trait Table[T](private[ldbc] val _name: String):
 
-  protected def column[A](name: String)(using Decoder.Elem[A]): Column[A] = Column[A](name, _name)
+  protected final def column[A](name: String)(using Decoder.Elem[A]): Column[A] = Column[A](name, _name)
 
   @targetName("all")
   def * : Column[T]
 
-  def statement: String = _name
+  final def statement: String = _name
 
   override def toString: String = s"Table($_name)"
