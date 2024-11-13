@@ -33,6 +33,8 @@ sealed trait TableQuery[A]:
     val columns = func(table)
     Select(table, columns, s"SELECT ${ columns.alias.getOrElse(columns.name) } FROM $statement", params)
 
+  def selectAll: Select[A, Entity] = Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $statement", params)
+
   private type ToTuple[T] <: Tuple = T match
     case h *: EmptyTuple => Tuple1[h]
     case h *: t          => h *: ToTuple[t]
@@ -95,7 +97,6 @@ sealed trait TableQuery[A]:
   private[ldbc] def asVector(): Vector[TableQuery[?]] =
     this match
       case TableQuery.Join.On(left, right, _, _, _) => left.asVector() ++ right.asVector()
-      case TableQuery.Join(left, right)             => left.asVector() ++ right.asVector()
       case r: TableQuery[?]                         => Vector(r)
 
 object TableQuery:
@@ -105,9 +106,9 @@ object TableQuery:
     case Table[t] *: tn => t *: Extract[tn]
 
   def apply[E <: Product, T <: Table[E]](table: T): TableQuery[T] =
-    Impl[T, E](table, table.*, table.statement, List.empty)
+    Impl[T](table, table.*, table.statement, List.empty)
 
-  private[ldbc] case class Impl[A, B <: Product](
+  private[ldbc] case class Impl[A](
     table:     A,
     column:    Column[Extract[A]],
     statement: String,
@@ -117,19 +118,12 @@ object TableQuery:
   case class Join[A, B, AB](
     left:  TableQuery[A],
     right: TableQuery[B]
-  ) extends TableQuery[AB]:
+  ):
 
-    override def table: AB =
+    private val table: AB =
       Tuple.fromArray((left.asVector() ++ right.asVector()).map(_.table).toArray).asInstanceOf[AB]
-    override def column:    Column[Entity]          = (left.column *: right.column).asInstanceOf[Column[Entity]]
-    override def statement: String                  = s"${ left.statement } JOIN ${ right.statement }"
-    override def params:    List[Parameter.Dynamic] = left.params ++ right.params
-
-    override def update: Update[AB] = Update.Join[AB](table, s"UPDATE $statement", params)
-
-    override def delete: Delete[AB] =
-      val main = (left.asVector() ++ right.asVector()).headOption.getOrElse(throw new IllegalStateException("No table found."))
-      Delete[AB](table, s"DELETE ${main.statement} FROM $statement", params)
+    val statement: String                  = s"${ left.statement } JOIN ${ right.statement }"
+    private val params:    List[Parameter.Dynamic] = left.params ++ right.params
 
     def on(expression: AB => Expression): TableQuery[AB] =
       val expr = expression(table)
