@@ -105,8 +105,22 @@ object TableQuery:
     case Table[t]       => t
     case Table[t] *: tn => t *: Extract[tn]
 
-  def apply[E <: Product, T <: Table[E]](table: T): TableQuery[T] =
+  def apply[E, T <: Table[E]](table: T): TableQuery[T] =
     Impl[T](table, table.*, table.statement, List.empty)
+
+  import scala.quoted.*
+
+  inline def apply[T <: Table[?]]: TableQuery[T] = ${ applyImpl[T] }
+
+  private def applyImpl[T <: Table[?]](using qctx: Quotes, tpe: Type[T]): Expr[TableQuery[T]] =
+    import qctx.reflect.*
+    val tableType = TypeRepr.of[T]
+    val table = Select
+      .unique(New(TypeIdent(tableType.typeSymbol)), "<init>")
+      .appliedToArgs(List.empty)
+      .asExprOf[T]
+
+    '{ apply[Extract[T], T]($table) }
 
   private[ldbc] case class Impl[A](
     table:     A,
