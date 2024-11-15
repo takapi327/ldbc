@@ -8,6 +8,7 @@ package ldbc.schema
 
 import scala.deriving.Mirror
 import scala.compiletime.*
+import scala.quoted.*
 
 import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Encoder
@@ -108,12 +109,10 @@ object TableQuery:
   def apply[E, T <: Table[E]](table: T): TableQuery[T] =
     Impl[T](table, table.*, table.statement, List.empty)
 
-  import scala.quoted.*
-
   inline def apply[T <: Table[?]]: TableQuery[T] = ${ applyImpl[T] }
 
-  private def applyImpl[T <: Table[?]](using qctx: Quotes, tpe: Type[T]): Expr[TableQuery[T]] =
-    import qctx.reflect.*
+  private def applyImpl[T <: Table[?]](using quotes: Quotes, tpe: Type[T]): Expr[TableQuery[T]] =
+    import quotes.reflect.*
     val tableType = TypeRepr.of[T]
     val table = Select
       .unique(New(TypeIdent(tableType.typeSymbol)), "<init>")
