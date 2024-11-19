@@ -18,7 +18,7 @@ import ldbc.sql.*
 import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 import ldbc.dsl.codec.Decoder
 
-import ldbc.schema.statement.{ Query, Command }
+import ldbc.statement.{ Query, Command }
 
 package object syntax:
 
@@ -26,7 +26,7 @@ package object syntax:
 
     extension [A, B](query: Query[A, B])
 
-      def query: DslQuery[F, B] = DslQuery.Impl[F, B](query.statement, query.params, query.decoder)
+      def query: DslQuery[F, B] = DslQuery.Impl[F, B](query.statement, query.params, query.columns.decoder)
 
       inline def queryTo[P <: Product](using
         m1:    Mirror.ProductOf[P],
