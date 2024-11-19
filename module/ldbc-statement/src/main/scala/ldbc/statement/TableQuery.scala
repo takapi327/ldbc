@@ -91,7 +91,7 @@ trait TableQuery[A]:
    */
   def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $name", List.empty)
 
-  def join[B, AB](other: TableQuery[B])(using QueryConcat.Aux[A, B, AB]): TableQuery.Join[A, B, AB]
+  def join[B, AB](other: TableQuery[B])(using QueryConcat.Aux[A, B, AB]): Join[A, B, AB]
 
   private[ldbc] def asVector(): Vector[TableQuery[?]]
 
@@ -100,9 +100,3 @@ object TableQuery:
   type Extract[T] = T match
     case AbstractTable[t]       => t
     case AbstractTable[t] *: tn => t *: Extract[tn]
-
-  trait Join[A, B, AB]:
-    def left:  TableQuery[A]
-    def right: TableQuery[B]
-
-    def on(expression: AB => Expression): TableQuery[AB]
