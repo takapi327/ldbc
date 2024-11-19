@@ -15,12 +15,12 @@ import org.typelevel.twiddles.TwiddleSyntax
 import ldbc.dsl.{ Parameter, SQL }
 
 case class OrderBy[A, B](
-                          table:     A,
-                          columns:   Column[B],
-                          statement: String,
-                          params:    List[Parameter.Dynamic]
-                        ) extends Query[A, B],
-  Limit.QueryProvider[A, B]:
+  table:     A,
+  columns:   Column[B],
+  statement: String,
+  params:    List[Parameter.Dynamic]
+) extends Query[A, B],
+          Limit.QueryProvider[A, B]:
 
   @targetName("combine")
   override def ++(sql: SQL): SQL =

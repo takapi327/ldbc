@@ -9,7 +9,7 @@ package ldbc.statement
 import ldbc.dsl.SQL
 
 trait Query[A, B] extends SQL:
-  
+
   def table: A
 
   def columns: Column[B]

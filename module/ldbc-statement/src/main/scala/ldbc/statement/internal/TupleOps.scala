@@ -7,7 +7,7 @@
 package ldbc.statement.internal
 
 import ldbc.statement.internal.BinaryPolyFunc.Case
-import ldbc.statement.internal.TupleOps.{AppendOne, FoldLeft}
+import ldbc.statement.internal.TupleOps.{ AppendOne, FoldLeft }
 
 // copied from tapir:
 // https://github.com/softwaremill/tapir/blob/master/core/src/main/boilerplate-gen/sttp/tapir/typelevel/TupleOps.scala

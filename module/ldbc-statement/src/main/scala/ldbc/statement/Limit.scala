@@ -22,12 +22,12 @@ trait Limit:
 object Limit:
 
   case class Q[A, B](
-                      table:     A,
-                      columns:   Column[B],
-                      statement: String,
-                      params:    List[Parameter.Dynamic]
-                    ) extends Limit,
-    Query[A, B]:
+    table:     A,
+    columns:   Column[B],
+    statement: String,
+    params:    List[Parameter.Dynamic]
+  ) extends Limit,
+            Query[A, B]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL =
@@ -53,10 +53,10 @@ object Limit:
       )
 
   case class C(
-                statement: String,
-                params:    List[Parameter.Dynamic]
-              ) extends Limit,
-    Command:
+    statement: String,
+    params:    List[Parameter.Dynamic]
+  ) extends Limit,
+            Command:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)

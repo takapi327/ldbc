@@ -27,36 +27,37 @@ trait TableQuery[A]:
 
   def select[C](func: A => Column[C]): Select[A, C] =
     val columns = func(table)
-    Select(table, columns, s"SELECT ${columns.alias.getOrElse(columns.name)} FROM $name", params)
+    Select(table, columns, s"SELECT ${ columns.alias.getOrElse(columns.name) } FROM $name", params)
 
-  def selectAll: Select[A, Entity] = Select(table, column, s"SELECT ${column.alias.getOrElse(column.name)} FROM $name", params)
+  def selectAll: Select[A, Entity] =
+    Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $name", params)
 
   private type ToTuple[T] <: Tuple = T match
     case h *: EmptyTuple => Tuple1[h]
-    case h *: t => h *: ToTuple[t]
-    case Any => Tuple1[T]
+    case h *: t          => h *: ToTuple[t]
+    case Any             => Tuple1[T]
 
   inline def insert[C](func: A => Column[C], values: C): Insert[A] =
     val columns = func(table)
     val parameterBinders = (values match
       case h *: EmptyTuple => h *: EmptyTuple
-      case h *: t => h *: t *: EmptyTuple
-      case h => h *: EmptyTuple
-      )
-      .zip(Encoder.fold[ToTuple[C]])
+      case h *: t          => h *: t *: EmptyTuple
+      case h               => h *: EmptyTuple
+    )
+    .zip(Encoder.fold[ToTuple[C]])
       .toList
       .map {
         case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
       }
     Insert.Impl(
-      table = table,
-      statement = s"INSERT INTO $name ${columns.insertStatement}",
-      params = params ++ parameterBinders
+      table     = table,
+      statement = s"INSERT INTO $name ${ columns.insertStatement }",
+      params    = params ++ parameterBinders
     )
 
   inline def insert(value: Entity)(using mirror: Mirror.Of[Entity]): Insert[A] =
     inline mirror match
-      case s: Mirror.SumOf[Entity] => error("Sum type is not supported.")
+      case s: Mirror.SumOf[Entity]     => error("Sum type is not supported.")
       case p: Mirror.ProductOf[Entity] => derivedProduct(value, p)
 
   private inline def derivedProduct[P](value: P, mirror: Mirror.ProductOf[P]): Insert[A] =
@@ -68,9 +69,9 @@ trait TableQuery[A]:
         case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
       }
     Insert.Impl(
-      table = table,
-      statement = s"INSERT INTO $name ${column.insertStatement}",
-      params = params ++ parameterBinders
+      table     = table,
+      statement = s"INSERT INTO $name ${ column.insertStatement }",
+      params    = params ++ parameterBinders
     )
 
   def update: Update[A] = Update.Impl[A](table, s"UPDATE $name", params)

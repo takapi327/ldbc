@@ -7,7 +7,7 @@
 package ldbc.statement
 
 trait AbstractTable[T]:
-  
+
   def $name: String
 
   def statement: String

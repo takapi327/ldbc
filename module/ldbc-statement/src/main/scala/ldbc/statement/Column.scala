@@ -658,18 +658,18 @@ object Column extends TwiddleSyntax[Column]:
     Impl[T](name, Some(s"$alias.$name"), decoder)
 
   private[ldbc] case class Impl[T](
-                                    name:    String,
-                                    alias:   Option[String],
-                                    decoder: Decoder[T]
-                                  ) extends Column[T]:
+    name:    String,
+    alias:   Option[String],
+    decoder: Decoder[T]
+  ) extends Column[T]:
     override def as(name: String): Column[T] = this.copy(alias = Some(name))
     override def updateStatement:  String    = s"SET $name = ?"
 
   private[ldbc] case class Opt[T](
-                                   name:     String,
-                                   alias:    Option[String],
-                                   _decoder: Decoder[T]
-                                 ) extends Column[Option[T]]:
+    name:     String,
+    alias:    Option[String],
+    _decoder: Decoder[T]
+  ) extends Column[Option[T]]:
     override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(s"$name.${ this.name }"), _decoder)
     override def decoder: Decoder[Option[T]] =
       new Decoder[Option[T]]((resultSet: ResultSet, prefix: Option[String]) =>
@@ -678,11 +678,11 @@ object Column extends TwiddleSyntax[Column]:
     override def updateStatement: String = s"SET $name = ?"
 
   private[ldbc] case class MultiColumn[T](
-                                           flag:  String,
-                                           left:  Column[T],
-                                           right: Column[T],
-                                           alias: Option[String] = None
-                                         )(using elem: Decoder.Elem[T])
+    flag:  String,
+    left:  Column[T],
+    right: Column[T],
+    alias: Option[String] = None
+  )(using elem: Decoder.Elem[T])
     extends Column[T]:
     override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def as(name: String): Column[T] = this

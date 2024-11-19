@@ -8,7 +8,7 @@ package ldbc.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{Parameter, SQL}
+import ldbc.dsl.{ Parameter, SQL }
 
 /**
  * A model for constructing DELETE statements in MySQL.
