@@ -6,8 +6,10 @@
 
 package ldbc.statement
 
-trait AbstractTable:
+trait AbstractTable[T]:
   
   def $name: String
 
   def statement: String
+
+  def * : Column[T]
