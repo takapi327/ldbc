@@ -91,18 +91,24 @@ trait TableQuery[A, O]:
    */
   def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $name", List.empty)
 
-  def join[B, BO, AB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, B, AB], QueryConcat.Aux[O, BO, OO]): Join[A, B, AB, OO]
+  def join[B, BO, AB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, B, AB], QueryConcat.Aux[O, BO, OO]): Join[A, B, AB, OO] =
+    Join(this, other)
 
-  def leftJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, BO, OB], QueryConcat.Aux[O, BO, OO]): Join[A, B, OB, OO]
+  def leftJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, BO, OB], QueryConcat.Aux[O, BO, OO]): Join[A, B, OB, OO] =
+    Join.lef(this, other.toOption)
 
   def rightJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using
                                                      QueryConcat.Aux[O, B, OB],
                                                          QueryConcat.Aux[O, BO, OO]
-  ): Join[A, B, OB, OO]
+  ): Join[A, B, OB, OO] =
+    Join.right(this.toOption, other)
 
   private[ldbc] def toOption: TableQuery[A, O]
 
-  private[ldbc] def asVector(): Vector[TableQuery[?, ?]]
+  private[ldbc] def asVector(): Vector[TableQuery[?, ?]] =
+    this match
+      case Join.On(left, right, _, _, _) => left.asVector() ++ right.asVector()
+      case r: TableQuery[?, ?] => Vector(r)
 
 object TableQuery:
 
