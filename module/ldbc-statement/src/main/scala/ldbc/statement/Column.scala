@@ -644,26 +644,38 @@ object Column extends TwiddleSyntax[Column]:
     override def values:          Int    = 0
 
   def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
-    val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
-      val column = prefix.map(_ + ".").getOrElse("") + name
-      elem.decode(resultSet, column)
-    )
-    Impl[T](name, None, decoder)
+    Impl[T](name)
 
   def apply[T](name: String, alias: String)(using elem: Decoder.Elem[T]): Column[T] =
-    val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
-      val column = prefix.orElse(Some(alias)).map(_ + ".").getOrElse("") + name
-      elem.decode(resultSet, column)
-    )
-    Impl[T](name, Some(s"$alias.$name"), decoder)
+    Impl[T](name, s"$alias.$name")
 
   private[ldbc] case class Impl[T](
     name:    String,
     alias:   Option[String],
     decoder: Decoder[T]
   ) extends Column[T]:
-    override def as(name: String): Column[T] = this.copy(alias = Some(name))
+    override def as(name: String): Column[T] =
+      this.copy(
+        alias = Some(name),
+        decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
+          decoder.decode(resultSet, Some(name))
+        )
+      )
     override def updateStatement:  String    = s"SET $name = ?"
+
+  object Impl:
+    def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
+      val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
+        val column = prefix.map(_ + ".").getOrElse("") + name
+        elem.decode(resultSet, column)
+      )
+      Impl[T](name, None, decoder)
+
+    def apply[T](name: String, alias: String)(using elem: Decoder.Elem[T]): Column[T] =
+      val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
+        elem.decode(resultSet, prefix.getOrElse(alias))
+      )
+      Impl[T](name, Some(alias), decoder)
 
   private[ldbc] case class Opt[T](
     name:     String,
