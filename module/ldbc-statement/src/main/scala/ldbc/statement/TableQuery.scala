@@ -13,7 +13,7 @@ import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Encoder
 import ldbc.statement.internal.QueryConcat
 
-trait TableQuery[A]:
+trait TableQuery[A, O]:
 
   type Entity = TableQuery.Extract[A]
 
@@ -91,9 +91,18 @@ trait TableQuery[A]:
    */
   def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $name", List.empty)
 
-  def join[B, AB](other: TableQuery[B])(using QueryConcat.Aux[A, B, AB]): Join[A, B, AB]
+  def join[B, BO, AB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, B, AB], QueryConcat.Aux[O, BO, OO]): Join[A, B, AB, OO]
 
-  private[ldbc] def asVector(): Vector[TableQuery[?]]
+  def leftJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, BO, OB], QueryConcat.Aux[O, BO, OO]): Join[A, B, OB, OO]
+
+  def rightJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using
+                                                     QueryConcat.Aux[O, B, OB],
+                                                         QueryConcat.Aux[O, BO, OO]
+  ): Join[A, B, OB, OO]
+
+  private[ldbc] def toOption: TableQuery[A, O]
+
+  private[ldbc] def asVector(): Vector[TableQuery[?, ?]]
 
 object TableQuery:
 
