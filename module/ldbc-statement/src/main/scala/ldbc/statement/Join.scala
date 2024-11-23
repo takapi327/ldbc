@@ -6,10 +6,10 @@
 
 package ldbc.statement
 
-trait Join[A, B, AB]:
+trait Join[A, B, AB, OO]:
 
-  def left: TableQuery[A]
+  def left: TableQuery[A, ?]
 
-  def right: TableQuery[B]
+  def right: TableQuery[B, ?]
 
-  def on(expression: AB => Expression): TableQuery[AB]
+  def on(expression: AB => Expression): TableQuery[AB, OO]
