@@ -6,10 +6,56 @@
 
 package ldbc.statement
 
-trait Join[A, B, AB, OO]:
+import ldbc.dsl.Parameter
 
-  def left: TableQuery[A, ?]
+case class Join[A, B, AB, OO](
+                                   typed: "JOIN" | "LEFT JOIN" | "RIGHT JOIN",
+                                   left: TableQuery[A, ?],
+                                   right: TableQuery[B, ?]
+                                 ):
 
-  def right: TableQuery[B, ?]
+  private val table: AB =
+    Tuple.fromArray((left.asVector() ++ right.asVector()).map(_.table).toArray).asInstanceOf[AB]
+  val statement: String = s"${left.name} $typed ${right.name}"
+  private val params: List[Parameter.Dynamic] = left.params ++ right.params
 
-  def on(expression: AB => Expression): TableQuery[AB, OO]
+  def on(expression: AB => Expression): TableQuery[AB, OO] =
+    val expr = expression(table)
+    Join.On(left, right, table, s"$statement ON ${expr.statement}", params ++ expr.parameter)
+
+object Join:
+
+  def apply[A, B, AB, OO](
+                           left: TableQuery[A, ?],
+                           right: TableQuery[B, ?]
+                         ): Join[A, B, AB, OO] = Join("JOIN", left, right)
+
+  def lef[A, B, AB, OO](
+                         left: TableQuery[A, ?],
+                         right: TableQuery[B, ?]
+                       ): Join[A, B, AB, OO] = Join("LEFT JOIN", left, right)
+
+  def right[A, B, AB, OO](
+                           left: TableQuery[A, ?],
+                           right: TableQuery[B, ?]
+                         ): Join[A, B, AB, OO] = Join("RIGHT JOIN", left, right)
+
+  case class On[A, B, AB, OO](
+                               left: TableQuery[A, ?],
+                               right: TableQuery[B, ?],
+                               table: AB,
+                               name: String,
+                               params: List[Parameter.Dynamic]
+                             ) extends TableQuery[AB, OO]:
+
+    override def column: Column[Entity] = (left.column *: right.column).asInstanceOf[Column[Entity]]
+
+    override def update: Update[AB] = Update.Join[AB](table, s"UPDATE $name", params)
+
+    override def delete: Delete[AB] =
+      val main =
+        (left.asVector() ++ right.asVector()).headOption.getOrElse(throw new IllegalStateException("No table found."))
+      Delete[AB](table, s"DELETE ${main.name} FROM $name", params)
+
+    override private[ldbc] def toOption: TableQuery[AB, OO] =
+      this.copy(left.toOption, right.toOption)
