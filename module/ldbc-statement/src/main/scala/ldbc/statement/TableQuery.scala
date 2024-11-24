@@ -56,6 +56,25 @@ trait TableQuery[A, O]:
       params    = params ++ parameterBinders
     )
 
+  inline def insert[C](func: A => Column[C], values: List[C]): Insert[A] =
+    val columns = func(table)
+    val parameterBinders = values
+      .map {
+        case h *: EmptyTuple => h *: EmptyTuple
+        case h *: t          => h *: t *: EmptyTuple
+        case h               => h *: EmptyTuple
+      }
+      .flatMap(_.zip(Encoder.fold[ToTuple[C]]).toList.map {
+          case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+        }
+        .toList)
+
+    Insert.Impl(
+      table     = table,
+      statement = s"INSERT INTO $name (${column.name}) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
+      params    = params ++ parameterBinders
+    )
+
   inline def insert(using mirror: Mirror.Of[Entity])(
     values: mirror.MirroredElemTypes*
   ): Insert[A] =
@@ -67,7 +86,7 @@ trait TableQuery[A, O]:
       .toList
     Insert.Impl(
       table = table,
-      statement = s"INSERT INTO $name ${ column.insertStatement }",
+      statement = s"INSERT INTO $name (${column.name}) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
       params    = params ++ parameterBinders
     )
 
