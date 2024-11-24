@@ -4,8 +4,6 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.query.builder.interpreter
-
 /** A type function to pull a type parameter it has from a type with one type parameter. */
 type Extract[T] = T match
   case Option[t] => Extract[t]

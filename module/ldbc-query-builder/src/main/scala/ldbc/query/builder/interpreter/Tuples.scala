@@ -4,8 +4,6 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.query.builder.interpreter
-
 import scala.compiletime.ops.int.S
 
 import ldbc.query.builder.*

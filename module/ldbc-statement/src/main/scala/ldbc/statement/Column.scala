@@ -47,8 +47,11 @@ trait Column[T]:
   /** Used in Insert statement `(Column, Column) VALUES (?,?)` used in the Insert statement */
   def insertStatement: String = s"($name) VALUES (${ List.fill(values)("?").mkString(",") })"
 
-  /** Used in Update statement `SET Column = ?, Column = ?` used in the Update statement */
+  /** Used in Update statement `Column = ?, Column = ?` used in the Update statement */
   def updateStatement: String
+
+  /** Used in Update statement `Column = Column, Column = Column` used in the Duplicate Key Update statement */
+  def duplicateKeyUpdateStatement: String
 
   def opt: Column[Option[T]] = Column.Opt[T](name, alias, decoder)
 
@@ -630,7 +633,10 @@ object Column extends TwiddleSyntax[Column]:
           ff.decoder.decode(resultSet, prefix)(fa.decoder.decode(resultSet, prefix))
         )
         override def updateStatement: String =
-          if ff.name.isEmpty then s"SET ${ fa.name } = ?" else s"SET ${ ff.name } = ?, ${ fa.name } = ?"
+          if ff.name.isEmpty then fa.updateStatement else s"${ ff.updateStatement }, ${ fa.updateStatement }"
+        override def duplicateKeyUpdateStatement: String =
+          if ff.name.isEmpty then fa.duplicateKeyUpdateStatement
+          else s"${ ff.duplicateKeyUpdateStatement }, ${ fa.duplicateKeyUpdateStatement }"
         override def values: Int = ff.values + fa.values
 
   case class Pure[T](value: T) extends Column[T]:
@@ -641,6 +647,7 @@ object Column extends TwiddleSyntax[Column]:
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => value)
     override def insertStatement: String = ""
     override def updateStatement: String = ""
+    override def duplicateKeyUpdateStatement: String = ""
     override def values:          Int    = 0
 
   def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
@@ -652,7 +659,8 @@ object Column extends TwiddleSyntax[Column]:
   private[ldbc] case class Impl[T](
     name:    String,
     alias:   Option[String],
-    decoder: Decoder[T]
+    decoder: Decoder[T],
+    length: Option[Int] = None
   ) extends Column[T]:
     override def as(name: String): Column[T] =
       this.copy(
@@ -661,7 +669,9 @@ object Column extends TwiddleSyntax[Column]:
           decoder.decode(resultSet, Some(name))
         )
       )
-    override def updateStatement:  String    = s"SET $name = ?"
+    override def values: Int = length.getOrElse(1)
+    override def updateStatement:  String    = s"$name = ?"
+    override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
 
   object Impl:
     def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
@@ -687,7 +697,8 @@ object Column extends TwiddleSyntax[Column]:
       new Decoder[Option[T]]((resultSet: ResultSet, prefix: Option[String]) =>
         Option(_decoder.decode(resultSet, prefix.orElse(alias)))
       )
-    override def updateStatement: String = s"SET $name = ?"
+    override def updateStatement: String = s"$name = ?"
+    override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
 
   private[ldbc] case class MultiColumn[T](
     flag:  String,
@@ -704,6 +715,7 @@ object Column extends TwiddleSyntax[Column]:
       )
     override def insertStatement: String = ""
     override def updateStatement: String = ""
+    override def duplicateKeyUpdateStatement: String = ""
 
   private[ldbc] case class Count(_name: String)(using elem: Decoder.Elem[Int]) extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
@@ -715,3 +727,4 @@ object Column extends TwiddleSyntax[Column]:
     override def toString:        String = name
     override def insertStatement: String = ""
     override def updateStatement: String = ""
+    override def duplicateKeyUpdateStatement: String = ""
