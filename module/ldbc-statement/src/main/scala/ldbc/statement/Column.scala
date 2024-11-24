@@ -55,7 +55,7 @@ trait Column[T]:
 
   def opt: Column[Option[T]] = Column.Opt[T](name, alias, decoder)
 
-  def count(using decoder: Decoder.Elem[Int]): Column.Count = Column.Count(name)
+  def count(using decoder: Decoder.Elem[Int]): Column.Count = Column.Count(name, alias)
 
   def asc:  OrderBy.Order[T] = OrderBy.Order.asc(this)
   def desc: OrderBy.Order[T] = OrderBy.Order.desc(this)
@@ -638,6 +638,14 @@ object Column extends TwiddleSyntax[Column]:
           if ff.name.isEmpty then fa.duplicateKeyUpdateStatement
           else s"${ ff.duplicateKeyUpdateStatement }, ${ fa.duplicateKeyUpdateStatement }"
         override def values: Int = ff.values + fa.values
+        override def opt: Column[Option[B]] =
+          val decoder = new Decoder[Option[B]]((resultSet: ResultSet, prefix: Option[String]) =>
+            for
+              v1 <- ff.opt.decoder.decode(resultSet, prefix)
+              v2 <- fa.opt.decoder.decode(resultSet, prefix)
+            yield v1(v2)
+          )
+          Impl[Option[B]](name, alias, decoder, Some(values), Some(updateStatement))
 
   case class Pure[T](value: T) extends Column[T]:
     override def name:             String         = ""
@@ -705,10 +713,10 @@ object Column extends TwiddleSyntax[Column]:
     flag:  String,
     left:  Column[T],
     right: Column[T],
-    alias: Option[String] = None
   )(using elem: Decoder.Elem[T])
     extends Column[T]:
     override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
+    override def alias:            Option[String] = Some(s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }")
     override def as(name: String): Column[T] = this
     override def decoder: Decoder[T] =
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
@@ -718,12 +726,12 @@ object Column extends TwiddleSyntax[Column]:
     override def updateStatement: String = ""
     override def duplicateKeyUpdateStatement: String = ""
 
-  private[ldbc] case class Count(_name: String)(using elem: Decoder.Elem[Int]) extends Column[Int]:
+  private[ldbc] case class Count(_name: String, _alias: Option[String])(using elem: Decoder.Elem[Int]) extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
-    override def alias:            Option[String] = None
+    override def alias:            Option[String] = _alias.map(a => s"COUNT($a)")
     override def as(name: String): Column[Int]    = this.copy(s"$name.${ _name }")
     override def decoder: Decoder[Int] = new Decoder[Int]((resultSet: ResultSet, prefix: Option[String]) =>
-      elem.decode(resultSet, name)
+      elem.decode(resultSet, alias.getOrElse(name))
     )
     override def toString:        String = name
     override def insertStatement: String = ""
