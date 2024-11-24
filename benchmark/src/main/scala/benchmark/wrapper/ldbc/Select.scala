@@ -18,7 +18,7 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.Connection
-import ldbc.query.builder.Table
+import ldbc.query.builder.{Table, TableQuery}
 import ldbc.query.builder.syntax.io.*
 
 import benchmark.City
@@ -32,7 +32,7 @@ class Select:
   var connection: Resource[IO, Connection[IO]] = uninitialized
 
   @volatile
-  var query: Table[City] = uninitialized
+  var query = TableQuery[City]("city")
 
   @Setup
   def setup(): Unit =
@@ -47,8 +47,6 @@ class Select:
 
     connection = Resource.make(datasource.getConnection)(_.close())
 
-    query = Table[City]("city")
-
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
@@ -57,7 +55,7 @@ class Select:
     connection
       .use { conn =>
         query
-          .select(city => (city.id, city.name, city.countryCode))
+          .select(city => city.id *: city.name *: city.countryCode)
           .limit(len)
           .query
           .to[List]
