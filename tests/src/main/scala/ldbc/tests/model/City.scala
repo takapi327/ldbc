@@ -6,13 +6,13 @@
 
 package ldbc.tests.model
 
-import ldbc.query.builder.Table
+import ldbc.query.builder.{Table, Column}
 import ldbc.query.builder.formatter.Naming
 
 given Naming = Naming.PASCAL
 
 case class City(
-  id:          Int,
+  @Column("ID") id:          Int,
   name:        String,
   countryCode: String,
   district:    String,
