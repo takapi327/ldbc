@@ -17,7 +17,7 @@ case class TableQueryImpl[A](
   name:   String,
   params: List[Parameter.Dynamic]
 ) extends AbstractTableQuery[A, A]:
-  
+
   override private[ldbc] def toOption: AbstractTableQuery[A, A] = this
 
 object TableQuery:

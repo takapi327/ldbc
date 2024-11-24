@@ -8,11 +8,11 @@ package ldbc.tests.model
 
 import java.time.LocalDate
 
-import ldbc.query.builder.{Table, Column}
+import ldbc.query.builder.{ Table, Column }
 
 case class GovernmentOffice(
-  @Column("ID") id:                Int,
-  @Column("CityID") cityId:            Int,
-  name:              String,
-  establishmentDate: Option[LocalDate]
+  @Column("ID") id:         Int,
+  @Column("CityID") cityId: Int,
+  name:                     String,
+  establishmentDate:        Option[LocalDate]
 ) derives Table

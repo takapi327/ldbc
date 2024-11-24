@@ -653,10 +653,10 @@ object Column extends TwiddleSyntax[Column]:
     override def as(name: String): Column[T]      = this
     override def decoder: Decoder[T] =
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => value)
-    override def insertStatement: String = ""
-    override def updateStatement: String = ""
+    override def insertStatement:             String = ""
+    override def updateStatement:             String = ""
     override def duplicateKeyUpdateStatement: String = ""
-    override def values:          Int    = 0
+    override def values:                      Int    = 0
 
   def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
     Impl[T](name)
@@ -668,18 +668,17 @@ object Column extends TwiddleSyntax[Column]:
     name:    String,
     alias:   Option[String],
     decoder: Decoder[T],
-    length: Option[Int] = None,
-    update: Option[String] = None
+    length:  Option[Int]    = None,
+    update:  Option[String] = None
   ) extends Column[T]:
     override def as(name: String): Column[T] =
       this.copy(
         alias = Some(name),
-        decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
-          decoder.decode(resultSet, Some(name))
-        )
+        decoder =
+          new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => decoder.decode(resultSet, Some(name)))
       )
-    override def values: Int = length.getOrElse(1)
-    override def updateStatement:  String    = update.getOrElse(s"$name = ?")
+    override def values:                      Int    = length.getOrElse(1)
+    override def updateStatement:             String = update.getOrElse(s"$name = ?")
     override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
 
   object Impl:
@@ -706,34 +705,37 @@ object Column extends TwiddleSyntax[Column]:
       new Decoder[Option[T]]((resultSet: ResultSet, prefix: Option[String]) =>
         Option(_decoder.decode(resultSet, prefix.orElse(alias)))
       )
-    override def updateStatement: String = s"$name = ?"
+    override def updateStatement:             String = s"$name = ?"
     override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
 
   private[ldbc] case class MultiColumn[T](
     flag:  String,
     left:  Column[T],
-    right: Column[T],
+    right: Column[T]
   )(using elem: Decoder.Elem[T])
     extends Column[T]:
-    override def name:             String    = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
-    override def alias:            Option[String] = Some(s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }")
+    override def name: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
+    override def alias: Option[String] = Some(
+      s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }"
+    )
     override def as(name: String): Column[T] = this
     override def decoder: Decoder[T] =
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
         elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
       )
-    override def insertStatement: String = ""
-    override def updateStatement: String = ""
+    override def insertStatement:             String = ""
+    override def updateStatement:             String = ""
     override def duplicateKeyUpdateStatement: String = ""
 
-  private[ldbc] case class Count(_name: String, _alias: Option[String])(using elem: Decoder.Elem[Int]) extends Column[Int]:
+  private[ldbc] case class Count(_name: String, _alias: Option[String])(using elem: Decoder.Elem[Int])
+    extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
     override def alias:            Option[String] = _alias.map(a => s"COUNT($a)")
     override def as(name: String): Column[Int]    = this.copy(s"$name.${ _name }")
     override def decoder: Decoder[Int] = new Decoder[Int]((resultSet: ResultSet, prefix: Option[String]) =>
       elem.decode(resultSet, alias.getOrElse(name))
     )
-    override def toString:        String = name
-    override def insertStatement: String = ""
-    override def updateStatement: String = ""
+    override def toString:                    String = name
+    override def insertStatement:             String = ""
+    override def updateStatement:             String = ""
     override def duplicateKeyUpdateStatement: String = ""

@@ -63,15 +63,19 @@ trait TableQuery[A, O]:
         case h *: t          => h *: t
         case h               => h *: EmptyTuple
       }
-      .flatMap(_.zip(Encoder.fold[ToTuple[C]]).toList.map {
-          case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-        }
-        .toList)
+      .flatMap(
+        _.zip(Encoder.fold[ToTuple[C]]).toList
+          .map {
+            case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+          }
+          .toList
+      )
 
     Insert.Impl(
-      table     = table,
-      statement = s"INSERT INTO $name (${columns.name}) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
-      params    = params ++ parameterBinders
+      table = table,
+      statement =
+        s"INSERT INTO $name (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
+      params = params ++ parameterBinders
     )
 
   inline def insert(using mirror: Mirror.Of[Entity])(
@@ -85,8 +89,9 @@ trait TableQuery[A, O]:
       .toList
     Insert.Impl(
       table = table,
-      statement = s"INSERT INTO $name (${column.name}) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
-      params    = params ++ parameterBinders
+      statement =
+        s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
+      params = params ++ parameterBinders
     )
 
   @targetName("insertProduct")
@@ -142,15 +147,19 @@ trait TableQuery[A, O]:
    */
   def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $name", List.empty)
 
-  def join[B, BO, AB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, B, AB], QueryConcat.Aux[O, BO, OO]): Join[A, B, AB, OO] =
+  def join[B, BO, AB, OO](
+    other: TableQuery[B, BO]
+  )(using QueryConcat.Aux[A, B, AB], QueryConcat.Aux[O, BO, OO]): Join[A, B, AB, OO] =
     Join(this, other)
 
-  def leftJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using QueryConcat.Aux[A, BO, OB], QueryConcat.Aux[O, BO, OO]): Join[A, B, OB, OO] =
+  def leftJoin[B, BO, OB, OO](
+    other: TableQuery[B, BO]
+  )(using QueryConcat.Aux[A, BO, OB], QueryConcat.Aux[O, BO, OO]): Join[A, B, OB, OO] =
     Join.lef(this, other.toOption)
 
   def rightJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using
-                                                     QueryConcat.Aux[O, B, OB],
-                                                         QueryConcat.Aux[O, BO, OO]
+    QueryConcat.Aux[O, B, OB],
+    QueryConcat.Aux[O, BO, OO]
   ): Join[A, B, OB, OO] =
     Join.right(this.toOption, other)
 
@@ -159,7 +168,7 @@ trait TableQuery[A, O]:
   private[ldbc] def asVector(): Vector[TableQuery[?, ?]] =
     this match
       case Join.On(left, right, _, _, _) => left.asVector() ++ right.asVector()
-      case r: TableQuery[?, ?] => Vector(r)
+      case r: TableQuery[?, ?]           => Vector(r)
 
 object TableQuery:
 
@@ -173,39 +182,40 @@ object TableQueryMacro:
 
   @targetName("insertProducts")
   private[ldbc] inline def ++=[A, B <: Product](
-                                      table: A,
-                                      name: String,
-                                      column: Column[B],
-                                      params: List[Parameter.Dynamic],
-                                      values: List[B]
-                                    ): Insert[A] =
+    table:  A,
+    name:   String,
+    column: Column[B],
+    params: List[Parameter.Dynamic],
+    values: List[B]
+  ): Insert[A] =
     ${ derivedProducts('table, 'name, 'column, 'params, 'values) }
 
   private[ldbc] def derivedProducts[A: Type, B <: Product](
-                                           table: Expr[A],
-                                           name: Expr[String],
-                                           column: Expr[Column[B]],
-                                           params: Expr[List[Parameter.Dynamic]],
-                                           values: Expr[List[B]]
-                                         )(using quotes: Quotes, tpe: Type[B]): Expr[Insert[A]] =
+    table:  Expr[A],
+    name:   Expr[String],
+    column: Expr[Column[B]],
+    params: Expr[List[Parameter.Dynamic]],
+    values: Expr[List[B]]
+  )(using quotes: Quotes, tpe: Type[B]): Expr[Insert[A]] =
     import quotes.reflect.*
 
     val symbol = TypeRepr.of[B].typeSymbol
 
-    val encodes = Expr.ofSeq(symbol
-      .caseFields
-      .map { field =>
-        field.tree match
-          case ValDef(name, tpt, _) =>
-            tpt.tpe.asType match
-              case '[tpe] =>
-                val encoder = Expr.summon[Encoder[tpe]].getOrElse {
-                  report.errorAndAbort(s"Encoder for type $tpe not found")
-                }
-                encoder.asExprOf[Encoder[tpe]]
-              case _ =>
-                report.errorAndAbort(s"Type $tpt is not a type")
-      })
+    val encodes = Expr.ofSeq(
+      symbol.caseFields
+        .map { field =>
+          field.tree match
+            case ValDef(name, tpt, _) =>
+              tpt.tpe.asType match
+                case '[tpe] =>
+                  val encoder = Expr.summon[Encoder[tpe]].getOrElse {
+                    report.errorAndAbort(s"Encoder for type $tpe not found")
+                  }
+                  encoder.asExprOf[Encoder[tpe]]
+                case _ =>
+                  report.errorAndAbort(s"Type $tpt is not a type")
+        }
+    )
 
     val lists: Expr[List[Tuple]] = '{
       $values
@@ -214,8 +224,7 @@ object TableQueryMacro:
 
     val parameterBinders = '{
       $lists.flatMap(list =>
-        list
-          .toList
+        list.toList
           .zip($encodes)
           .map {
             case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
@@ -226,7 +235,8 @@ object TableQueryMacro:
     '{
       Insert.Impl(
         table = $table,
-        statement = s"INSERT INTO ${ $name } (${$column.name}) VALUES ${$lists.map(list => s"(${list.toList.map(_ => "?").mkString(",")})").mkString(",")}",
+        statement =
+          s"INSERT INTO ${ $name } (${ $column.name }) VALUES ${ $lists.map(list => s"(${ list.toList.map(_ => "?").mkString(",") })").mkString(",") }",
         params = $params ++ $parameterBinders
       )
     }

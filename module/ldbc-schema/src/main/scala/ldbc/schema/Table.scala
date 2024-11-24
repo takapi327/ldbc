@@ -15,10 +15,12 @@ import ldbc.schema.interpreter.*
 
 private[ldbc] case class Table[P <: Product](
   $name:          String,
-  columns: List[Column[?]],
+  columns:        List[Column[?]],
   keyDefinitions: List[Key],
-  options:        List[TableOption | Character | Collate[String]],
-)(using mirror: Mirror.ProductOf[P]) extends AbstractTable[P], Dynamic:
+  options:        List[TableOption | Character | Collate[String]]
+)(using mirror: Mirror.ProductOf[P])
+  extends AbstractTable[P],
+          Dynamic:
 
   override def statement: String = $name
 
@@ -37,7 +39,7 @@ private[ldbc] case class Table[P <: Product](
       if alias.isEmpty then None else Some(alias),
       decoder,
       Some(columns.length),
-      Some(columns.map(column => s"${column.name} = ?").mkString(", "))
+      Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
     )
 
   /**
@@ -53,18 +55,19 @@ private[ldbc] case class Table[P <: Product](
    * Type with a single instance
    */
   transparent inline def selectDynamic[Tag <: Singleton](
-                                                          tag: Tag
-                                                        )(using
-                                                          mirror: Mirror.Of[P],
-                                                          index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-                                                        ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
-    columns.apply(index.value)
+    tag: Tag
+  )(using
+    mirror: Mirror.Of[P],
+    index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+  ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
+    columns
+      .apply(index.value)
       .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
 
   def setName(name: String): Table[P] =
     this.copy(
-      $name = name,
-      columns = columns.map(column => column.as(s"$name.${column.name}"))
+      $name   = name,
+      columns = columns.map(column => column.as(s"$name.${ column.name }"))
     )
 
   /**
@@ -148,8 +151,8 @@ object Table:
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
   ): Table[P] =
     Table[P](
-      $name   = name,
-      columns = columns.toList.asInstanceOf[List[Column[?]]],
+      $name          = name,
+      columns        = columns.toList.asInstanceOf[List[Column[?]]],
       keyDefinitions = List.empty,
-      options        = List.empty,
+      options        = List.empty
     )

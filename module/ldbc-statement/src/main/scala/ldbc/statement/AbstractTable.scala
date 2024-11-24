@@ -15,5 +15,5 @@ trait AbstractTable[T]:
   def * : Column[T]
 
 object AbstractTable:
-  
+
   trait Opt[T] extends AbstractTable[Option[T]]

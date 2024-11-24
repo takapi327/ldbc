@@ -6,7 +6,13 @@
 
 package ldbc.schema
 
-import java.sql.DatabaseMetaData.{importedKeyCascade, importedKeyNoAction, importedKeyRestrict, importedKeySetDefault, importedKeySetNull}
+import java.sql.DatabaseMetaData.{
+  importedKeyCascade,
+  importedKeyNoAction,
+  importedKeyRestrict,
+  importedKeySetDefault,
+  importedKeySetNull
+}
 
 import ldbc.schema.interpreter.*
 

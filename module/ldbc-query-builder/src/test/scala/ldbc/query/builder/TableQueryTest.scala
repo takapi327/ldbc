@@ -68,75 +68,94 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .join(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
+        .join(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
         .select((test, joinTest) => test.p2 *: joinTest.p2)
         .statement === "SELECT test.p2, join_test.p2 FROM test JOIN join_test ON test.p1 = join_test.p1"
     )
     assert(
       query
-        .leftJoin(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
+        .leftJoin(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
         .select((test, joinTest) => test.p2 *: joinTest.p2)
         .statement === "SELECT test.p2, join_test.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1"
     )
     assert(
       query
-        .rightJoin(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
+        .rightJoin(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
         .select((test, joinTest) => test.p2 *: joinTest.p2)
         .statement === "SELECT test.p2, join_test.p2 FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1"
     )
     assert(
       query
-        .join(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .join(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .join(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .join(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
-        .join(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .leftJoin(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .join(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .leftJoin(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
-        .join(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .rightJoin(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .join(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .rightJoin(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
-        .leftJoin(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .join(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .leftJoin(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .join(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
-        .rightJoin(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .join(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .rightJoin(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .join(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1 JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
-        .rightJoin(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .leftJoin(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .rightJoin(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .leftJoin(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test RIGHT JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
-        .leftJoin(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .leftJoin(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .leftJoin(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .leftJoin(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 LEFT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
     assert(
       query
-        .leftJoin(joinQuery).on((test, joinTest) => test.p1 === joinTest.p1)
-        .rightJoin(joinQuery2).on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
+        .leftJoin(joinQuery)
+        .on((test, joinTest) => test.p1 === joinTest.p1)
+        .rightJoin(joinQuery2)
+        .on((_, joinTest, joinTest2) => joinTest.p1 === joinTest2.p1)
         .select((test, joinTest, joinTest2) => test.p2 *: joinTest.p2 *: joinTest2.p2)
         .statement === "SELECT test.p2, join_test.p2, join_test2.p2 FROM test LEFT JOIN join_test ON test.p1 = join_test.p1 RIGHT JOIN join_test2 ON join_test.p1 = join_test2.p1"
     )
@@ -167,10 +186,14 @@ class TableQueryTest extends AnyFlatSpec:
       (query += Test(1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
     )
     assert(
-      (query.++=(List(
-        Test(1L, "p2", Some("p3")),
-        Test(2L, "p2", None)
-      ))).statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
+      (query
+        .++=(
+          List(
+            Test(1L, "p2", Some("p3")),
+            Test(2L, "p2", None)
+          )
+        ))
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(
       query
@@ -194,14 +217,12 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1"
     )
     assert(
-      (query += Test(1L, "p2", Some("p3")))
-        .onDuplicateKeyUpdate
+      (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate
         .setThis(_.p1)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1"
     )
     assert(
-      (query += Test(1L, "p2", Some("p3")))
-        .onDuplicateKeyUpdate
+      (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate
         .setThis(v => v.p1 *: v.p2 *: v.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1, p2 = test.p2, p3 = test.p3"
     )
@@ -225,8 +246,7 @@ class TableQueryTest extends AnyFlatSpec:
 
   it should "The update query statement generated from Table is equal to the specified query statement." in {
     assert(
-      query
-        .update
+      query.update
         .set(_.p1, 1L)
         .set(_.p2, "p2")
         .set(_.p3, Some("p3"))
@@ -234,8 +254,7 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE test.p1 = ?"
     )
     assert(
-      query
-        .update
+      query.update
         .set(_.p1, 1L)
         .set(_.p2, "p2")
         .where(_.p1 === 1L)
@@ -248,8 +267,7 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE test.p1 = ?"
     )
     assert(
-      query
-        .update
+      query.update
         .set(_.p1, 1L)
         .set(_.p2, "p2")
         .set(_.p3, Some("p3"))
@@ -265,8 +283,7 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE test.p1 = ? LIMIT ?"
     )
     assert(
-      query
-        .update
+      query.update
         .set(_.p1, 1L)
         .set(_.p2, "p2", false)
         .where(_.p1 === 1L)
@@ -274,8 +291,7 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "UPDATE test SET p1 = ? WHERE test.p1 = ? LIMIT ?"
     )
     assert(
-      query
-        .update
+      query.update
         .set(_.p1, 1L)
         .set(_.p2, "p2", true)
         .where(_.p1 === 1L)
@@ -283,8 +299,7 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "UPDATE test SET p1 = ?, p2 = ? WHERE test.p1 = ? LIMIT ?"
     )
     assert(
-      query
-        .update
+      query.update
         .set(_.p1, 1L)
         .set(_.p2, "p2", false)
         .set(_.p3, Some("p3"))

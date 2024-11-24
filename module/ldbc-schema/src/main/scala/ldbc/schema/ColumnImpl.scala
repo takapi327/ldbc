@@ -37,14 +37,12 @@ case class ColumnImpl[T](
 
   override def as(name: String): Column[T] =
     this.copy(
-      alias = Some(name),
-      decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
-        decoder.decode(resultSet, Some(name))
-      )
+      alias   = Some(name),
+      decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => decoder.decode(resultSet, Some(name)))
     )
 
-  override def updateStatement: String = s"`$name` = ?"
-  override def duplicateKeyUpdateStatement: String = s"$name = ${alias.getOrElse(name)}"
+  override def updateStatement:             String = s"`$name` = ?"
+  override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
 
   /**
    * Define SQL query string for each Column

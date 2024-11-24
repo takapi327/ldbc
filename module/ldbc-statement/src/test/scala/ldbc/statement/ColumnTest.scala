@@ -10,8 +10,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class ColumnTest extends AnyFlatSpec:
 
-  private val id1 = Column.Impl[Long]("id")
-  private val id2 = Column.Impl[Option[Long]]("id")
+  private val id1   = Column.Impl[Long]("id")
+  private val id2   = Column.Impl[Option[Long]]("id")
   private val name1 = Column.Impl[String]("name")
   private val name2 = Column.Impl[Option[String]]("name")
 
