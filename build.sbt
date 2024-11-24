@@ -139,7 +139,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
-  .dependsOn(schema)
+  .dependsOn(queryBuilder, schema)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -234,7 +234,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, schema.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
