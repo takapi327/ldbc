@@ -42,8 +42,8 @@ object Insert:
         params    = params :+ Parameter.Dynamic(value)
       )
 
-    def setThis[B](func: A => Column[B])(using Encoder[B]): Insert.DuplicateKeyUpdate[A] =
+    def setThis[B](func: A => Column[B]): Insert.DuplicateKeyUpdate[A] =
       val columns = func(table)
       this.copy(
-        statement = s"$statement ${ columns.name } = ${ columns.name }"
+        statement = s"$statement ${ columns.duplicateKeyUpdateStatement }"
       )
