@@ -60,7 +60,7 @@ trait TableQuery[A, O]:
     val parameterBinders = values
       .map {
         case h *: EmptyTuple => h *: EmptyTuple
-        case h *: t          => h *: t *: EmptyTuple
+        case h *: t          => h *: t
         case h               => h *: EmptyTuple
       }
       .flatMap(_.zip(Encoder.fold[ToTuple[C]]).toList.map {
@@ -70,7 +70,7 @@ trait TableQuery[A, O]:
 
     Insert.Impl(
       table     = table,
-      statement = s"INSERT INTO $name (${column.name}) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
+      statement = s"INSERT INTO $name (${columns.name}) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
       params    = params ++ parameterBinders
     )
 
