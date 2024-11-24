@@ -11,7 +11,6 @@ import scala.deriving.Mirror
 
 import ldbc.dsl.codec.Decoder
 import ldbc.statement.{ AbstractTable, Column }
-import ldbc.query.builder.interpreter.Tuples
 import ldbc.schema.interpreter.*
 
 private[ldbc] case class Table[P <: Product](
