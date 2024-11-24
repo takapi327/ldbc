@@ -36,13 +36,12 @@ trait TableQuery[A, O]:
   private type ToTuple[T] <: Tuple = T match
     case h *: EmptyTuple => Tuple1[h]
     case h *: t          => h *: ToTuple[t]
-    case Any             => Tuple1[T]
 
   inline def insert[C](func: A => Column[C], values: C): Insert[A] =
     val columns = func(table)
     val parameterBinders = (values match
       case h *: EmptyTuple => h *: EmptyTuple
-      case h *: t          => h *: t *: EmptyTuple
+      case h *: t          => h *: t
       case h               => h *: EmptyTuple
     )
     .zip(Encoder.fold[ToTuple[C]])
