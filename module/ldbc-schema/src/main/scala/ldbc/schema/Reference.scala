@@ -6,16 +6,9 @@
 
 package ldbc.schema
 
-import java.sql.DatabaseMetaData.{
-  importedKeyCascade,
-  importedKeyRestrict,
-  importedKeySetNull,
-  importedKeyNoAction,
-  importedKeySetDefault
-}
+import java.sql.DatabaseMetaData.{importedKeyCascade, importedKeyNoAction, importedKeyRestrict, importedKeySetDefault, importedKeySetNull}
 
-import ldbc.query.builder.Table
-import ldbc.query.builder.interpreter.Tuples
+import ldbc.schema.interpreter.*
 
 /**
  * A model for setting reference options used for foreign key constraints, etc.
@@ -34,12 +27,12 @@ case class Reference[T <: Tuple](
   keyPart:  T,
   onDelete: Option[Reference.ReferenceOption],
   onUpdate: Option[Reference.ReferenceOption]
-)(using Tuples.IsColumn[T] =:= true):
+)(using IsColumn[T] =:= true):
 
   private val label: String = "REFERENCES"
 
   def queryString: String =
-    s"$label `${ table._name }` (${ keyPart.toList.mkString(", ") })"
+    s"$label `${ table.$name }` (${ keyPart.toList.mkString(", ") })"
       + onDelete.fold("")(v => s" ON DELETE ${ v.label }")
       + onUpdate.fold("")(v => s" ON UPDATE ${ v.label }")
 

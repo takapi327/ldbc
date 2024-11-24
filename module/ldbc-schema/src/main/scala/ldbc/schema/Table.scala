@@ -6,34 +6,67 @@
 
 package ldbc.schema
 
-import scala.annotation.targetName
 import scala.language.dynamics
 import scala.deriving.Mirror
 
-import ldbc.sql.ResultSet
 import ldbc.dsl.codec.Decoder
-import ldbc.query.builder.{ Table, Column }
+import ldbc.statement.{ AbstractTable, Column }
+import ldbc.query.builder.interpreter.Tuples
 import ldbc.schema.interpreter.*
 
-private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes0 <: Tuple](
-  _name:          String,
-  _alias:         Option[String],
-  columns:        Tuple.Map[ElemTypes0, Column],
-  columnNames:    List[String],
+private[ldbc] case class Table[P <: Product](
+  $name:          String,
+  columns: List[Column[?]],
   keyDefinitions: List[Key],
   options:        List[TableOption | Character | Collate[String]],
-  decoder:        Decoder[P]
-) extends Table[P]:
+)(using mirror: Mirror.ProductOf[P]) extends AbstractTable[P], Dynamic:
 
-  override type ElemLabels = ElemLabels0
-  override type ElemTypes  = ElemTypes0
+  override def statement: String = $name
 
-  @targetName("all")
-  override def * : Tuple.Map[ElemTypes, Column] = columns
+  override def * : Column[P] =
+    val decoder: Decoder[P] = new Decoder[P]((resultSet, prefix) =>
+      mirror.fromTuple(
+        Tuple
+          .fromArray(columns.map(_.decoder.decode(resultSet, prefix)).toArray)
+          .asInstanceOf[mirror.MirroredElemTypes]
+      )
+    )
 
-  override def as(name: String): Table[P] = this.copy(_alias = Some(name))
+    val alias = columns.flatMap(_.alias).mkString(", ")
+    Column.Impl[P](
+      columns.map(_.name).mkString(", "),
+      if alias.isEmpty then None else Some(alias),
+      decoder,
+      Some(columns.length),
+      Some(columns.map(column => s"${column.name} = ?").mkString(", "))
+    )
 
-  override def setName(name: String): Table[P] = this.copy(_name = name)
+  /**
+   * A method to get a specific column defined in the table.
+   *
+   * @param tag
+   * A type with a single instance. Here, Column is passed.
+   * @param mirror
+   * product isomorphism map
+   * @param index
+   * Position of the specified type in tuple X
+   * @tparam Tag
+   * Type with a single instance
+   */
+  transparent inline def selectDynamic[Tag <: Singleton](
+                                                          tag: Tag
+                                                        )(using
+                                                          mirror: Mirror.Of[P],
+                                                          index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+                                                        ): Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]] =
+    columns.apply(index.value)
+      .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+
+  def setName(name: String): Table[P] =
+    this.copy(
+      $name = name,
+      columns = columns.map(column => column.as(s"$name.${column.name}"))
+    )
 
   /**
    * Methods for setting key information for tables.
@@ -41,7 +74,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def keySet(func: TableImpl[P, ElemLabels0, ElemTypes0] => Key): TableImpl[P, ElemLabels0, ElemTypes0] =
+  def keySet(func: Table[P] => Key): Table[P] =
     this.copy(keyDefinitions = List(func(this)))
 
   /**
@@ -50,7 +83,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param func
    *   Function to construct an expression using the columns that Table has.
    */
-  def keySets(func: TableImpl[P, ElemLabels0, ElemTypes0] => List[Key]): TableImpl[P, ElemLabels0, ElemTypes0] =
+  def keySets(func: Table[P] => List[Key]): Table[P] =
     this.copy(keyDefinitions = func(this))
 
   /**
@@ -59,7 +92,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param option
    *   Additional information to be given to the table.
    */
-  def setOption(option: TableOption | Character | Collate[String]): TableImpl[P, ElemLabels0, ElemTypes0] =
+  def setOption(option: TableOption | Character | Collate[String]): Table[P] =
     this.copy(options = options :+ option)
 
   /**
@@ -68,7 +101,7 @@ private[ldbc] case class TableImpl[P <: Product, ElemLabels0 <: Tuple, ElemTypes
    * @param options
    *   Additional information to be given to the table.
    */
-  def setOptions(options: List[TableOption]): TableImpl[P, ElemLabels0, ElemTypes0] =
+  def setOptions(options: List[TableOption]): Table[P] =
     this.copy(options = this.options ++ options)
 
 object Table:
@@ -94,7 +127,7 @@ object Table:
     converter: ColumnTupleConverter[mirror.MirroredElemTypes, Column]
   )(name: String)(
     columns: ColumnTuples[mirror.MirroredElemTypes, Column]
-  ): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
+  ): Table[P] =
     fromTupleMap[P](name, ColumnTupleConverter.convert(columns))
 
   /**
@@ -114,24 +147,10 @@ object Table:
   )(
     name:    String,
     columns: Tuple.Map[mirror.MirroredElemTypes, Column]
-  ): TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes] =
-    val decoder: Decoder[P] = new Decoder[P]((resultSet: ResultSet, prefix: Option[String]) =>
-      mirror.fromTuple(
-        Tuple
-          .fromArray(columns.toArray.map {
-            case column: Column[?] => column.decoder.decode(resultSet, prefix.orElse(Some(name)))
-          })
-          .asInstanceOf[mirror.MirroredElemTypes]
-      )
-    )
-    TableImpl[P, mirror.MirroredElemLabels, mirror.MirroredElemTypes](
-      _name   = name,
-      _alias  = None,
-      columns = columns,
-      columnNames = columns.toList.map {
-        case column: Column[?] => column.name
-      },
+  ): Table[P] =
+    Table[P](
+      $name   = name,
+      columns = columns.toList.asInstanceOf[List[Column[?]]],
       keyDefinitions = List.empty,
       options        = List.empty,
-      decoder        = decoder
     )

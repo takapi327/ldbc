@@ -6,8 +6,8 @@
 
 package ldbc.schema
 
-import ldbc.query.builder.Column
-import ldbc.query.builder.interpreter.Tuples
+import ldbc.statement.Column
+import ldbc.schema.interpreter.*
 
 /**
  * Key to be set for the table
@@ -206,7 +206,7 @@ private[ldbc] case class ForeignKey[T <: Tuple](
   indexName: Option[String],
   columns:   T,
   reference: Reference[T]
-)(using Tuples.IsColumn[T] =:= true)
+)(using IsColumn[T] =:= true)
   extends Key:
 
   override val label: String = "FOREIGN KEY"
