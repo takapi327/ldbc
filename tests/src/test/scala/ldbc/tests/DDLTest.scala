@@ -101,8 +101,8 @@ trait DDLTest extends CatsEffectSuite:
           .insert(
             user => user.name *: user.age,
             List(
-              ("Alice", Some(20)), 
-              ("Bob", Some(25)), 
+              ("Alice", Some(20)),
+              ("Bob", Some(25)),
               ("Charlie", None)
             )
           )
