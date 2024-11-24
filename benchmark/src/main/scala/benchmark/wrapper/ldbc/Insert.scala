@@ -21,7 +21,7 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.Connection
 import ldbc.dsl.SQL
-import ldbc.query.builder.{Table, TableQuery}
+import ldbc.query.builder.Table
 import ldbc.query.builder.syntax.io.*
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -33,7 +33,7 @@ class Insert:
   var connection: Resource[IO, Connection[IO]] = uninitialized
 
   @volatile
-  var query = TableQuery[Test]("ldbc_wrapper_query_test")
+  var query: TableQuery[Test] = uninitialized
 
   @volatile
   var records: NonEmptyList[(Int, String)] = uninitialized
@@ -55,6 +55,8 @@ class Insert:
     connection = Resource.make(datasource.getConnection)(_.close())
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
+
+    query = TableQuery[Test]("ldbc_wrapper_query_test")
 
   @Param(Array("10"))
   var len: Int = uninitialized

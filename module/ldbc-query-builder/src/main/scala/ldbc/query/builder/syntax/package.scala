@@ -23,6 +23,9 @@ import ldbc.statement.{ Query, Command }
 package object syntax:
 
   private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F]:
+    
+    type TableQuery[T] = ldbc.statement.TableQuery[Table[T], Table.Opt[T]]
+    val TableQuery = ldbc.query.builder.TableQuery
 
     extension [A, B](query: Query[A, B])
 
