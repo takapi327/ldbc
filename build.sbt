@@ -100,7 +100,7 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("schema", "Type safety schema construction project")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .settings(Test / scalacOptions -= "-Werror")
-  .dependsOn(queryBuilder)
+  .dependsOn(statement)
 
 lazy val schemaMacro = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
