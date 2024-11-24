@@ -8,6 +8,7 @@ package ldbc.statement
 
 import scala.deriving.Mirror
 import scala.compiletime.*
+import scala.annotation.targetName
 
 import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Encoder
@@ -55,7 +56,23 @@ trait TableQuery[A, O]:
       params    = params ++ parameterBinders
     )
 
-  inline def insert(value: Entity)(using mirror: Mirror.Of[Entity]): Insert[A] =
+  inline def insert(using mirror: Mirror.Of[Entity])(
+    values: mirror.MirroredElemTypes*
+  ): Insert[A] =
+    val parameterBinders = values
+      .flatMap(_.zip(Encoder.fold[mirror.MirroredElemTypes]).toList)
+      .map {
+        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+      }
+      .toList
+    Insert.Impl(
+      table = table,
+      statement = s"INSERT INTO $name ${ column.insertStatement }",
+      params    = params ++ parameterBinders
+    )
+
+  @targetName("insertProduct")
+  inline def +=(value: Entity)(using mirror: Mirror.Of[Entity]): Insert[A] =
     inline mirror match
       case s: Mirror.SumOf[Entity]     => error("Sum type is not supported.")
       case p: Mirror.ProductOf[Entity] => derivedProduct(value, p)
@@ -73,6 +90,10 @@ trait TableQuery[A, O]:
       statement = s"INSERT INTO $name ${ column.insertStatement }",
       params    = params ++ parameterBinders
     )
+
+  @targetName("insertProducts")
+  inline def ++=[P <: Product](values: List[P])(using check: P =:= Entity): Insert[A] =
+    TableQueryMacro.++=[A, P](table, name, column.asInstanceOf[Column[P]], params, values)
 
   def update: Update[A] = Update.Impl[A](table, s"UPDATE $name", params)
 
@@ -115,3 +136,67 @@ object TableQuery:
   type Extract[T] = T match
     case AbstractTable[t]       => t
     case AbstractTable[t] *: tn => t *: Extract[tn]
+
+object TableQueryMacro:
+
+  import scala.quoted.*
+
+  @targetName("insertProducts")
+  private[ldbc] inline def ++=[A, B <: Product](
+                                      table: A,
+                                      name: String,
+                                      column: Column[B],
+                                      params: List[Parameter.Dynamic],
+                                      values: List[B]
+                                    ): Insert[A] =
+    ${ derivedProducts('table, 'name, 'column, 'params, 'values) }
+
+  private[ldbc] def derivedProducts[A: Type, B <: Product](
+                                           table: Expr[A],
+                                           name: Expr[String],
+                                           column: Expr[Column[B]],
+                                           params: Expr[List[Parameter.Dynamic]],
+                                           values: Expr[List[B]]
+                                         )(using quotes: Quotes, tpe: Type[B]): Expr[Insert[A]] =
+    import quotes.reflect.*
+
+    val symbol = TypeRepr.of[B].typeSymbol
+
+    val encodes = Expr.ofSeq(symbol
+      .caseFields
+      .map { field =>
+        field.tree match
+          case ValDef(name, tpt, _) =>
+            tpt.tpe.asType match
+              case '[tpe] =>
+                val encoder = Expr.summon[Encoder[tpe]].getOrElse {
+                  report.errorAndAbort(s"Encoder for type $tpe not found")
+                }
+                encoder.asExprOf[Encoder[tpe]]
+              case _ =>
+                report.errorAndAbort(s"Type $tpt is not a type")
+      })
+
+    val lists: Expr[List[Tuple]] = '{
+      $values
+        .map(value => Tuple.fromProduct(value))
+    }
+
+    val parameterBinders = '{
+      $lists.flatMap(list =>
+        list
+          .toList
+          .zip($encodes)
+          .map {
+            case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+          }
+      )
+    }
+
+    '{
+      Insert.Impl(
+        table = $table,
+        statement = s"INSERT INTO ${ $name } (${$column.name}) VALUES ${$lists.map(list => s"(${list.toList.map(_ => "?").mkString(",")})").mkString(",")}",
+        params = $params ++ $parameterBinders
+      )
+    }
