@@ -82,7 +82,8 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("statement", "Project for building type-safe statements")
   .settings(libraryDependencies ++= Seq(
-    "org.typelevel" %%% "twiddles-core" % "0.8.0"
+    "org.typelevel" %%% "twiddles-core" % "0.8.0",
+    "org.scalatest" %%% "scalatest" % "3.2.18" % Test
   ))
   .dependsOn(dsl)
 

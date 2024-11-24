@@ -4,15 +4,16 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.query.builder
+package ldbc.statement
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-class ColumnQueryTest extends AnyFlatSpec:
-  private val id1   = Column.Impl[Long]("id", None)
-  private val id2   = Column.Impl[Option[Long]]("id", None)
-  private val name1 = Column.Impl[String]("name", None)
-  private val name2 = Column.Impl[Option[String]]("name", None)
+class ColumnTest extends AnyFlatSpec:
+
+  private val id1 = Column.Impl[Long]("id")
+  private val id2 = Column.Impl[Option[Long]]("id")
+  private val name1 = Column.Impl[String]("name")
+  private val name2 = Column.Impl[Option[String]]("name")
 
   it should "The string of the expression syntax that constructs the match with the specified value matches the specified string." in {
     assert((id1 === 1L).statement === "id = ?")
@@ -186,6 +187,6 @@ class ColumnQueryTest extends AnyFlatSpec:
   }
 
   it should "The query string of the combined expression matches the specified string." in {
-    val age = Column.Impl[Option[Int]]("age", None)
+    val age = Column.Impl[Option[Int]]("age")
     assert((id1 === 1L && name1 === "name" || age > 25).statement === "(id = ? AND name = ? OR age > ?)")
   }
