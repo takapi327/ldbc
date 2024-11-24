@@ -660,7 +660,8 @@ object Column extends TwiddleSyntax[Column]:
     name:    String,
     alias:   Option[String],
     decoder: Decoder[T],
-    length: Option[Int] = None
+    length: Option[Int] = None,
+    update: Option[String] = None
   ) extends Column[T]:
     override def as(name: String): Column[T] =
       this.copy(
@@ -670,7 +671,7 @@ object Column extends TwiddleSyntax[Column]:
         )
       )
     override def values: Int = length.getOrElse(1)
-    override def updateStatement:  String    = s"$name = ?"
+    override def updateStatement:  String    = update.getOrElse(s"$name = ?")
     override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
 
   object Impl:

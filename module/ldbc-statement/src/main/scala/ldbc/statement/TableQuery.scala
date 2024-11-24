@@ -116,6 +116,18 @@ trait TableQuery[A, O]:
 
   def update: Update[A] = Update.Impl[A](table, s"UPDATE $name", params)
 
+  inline def update[P <: Product](value: P)(using mirror: Mirror.ProductOf[P], check: P =:= Entity): Update[A] =
+    val parameterBinders = Tuple
+      .fromProductTyped(value)
+      .zip(Encoder.fold[mirror.MirroredElemTypes])
+      .toList
+      .map {
+        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+      }
+    val statement =
+      s"UPDATE $name SET ${ column.updateStatement }"
+    Update.Impl[A](table, statement, params ++ parameterBinders)
+
   /**
    * Method to construct a query to delete a table.
    */
