@@ -8,7 +8,7 @@ package ldbc.query.builder.syntax
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.Decoder
-import ldbc.query.builder.statement.Command
+import ldbc.statement.Command
 
 trait CommandSyntax[F[_]]:
 

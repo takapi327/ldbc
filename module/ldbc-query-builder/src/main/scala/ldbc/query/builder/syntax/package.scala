@@ -18,19 +18,19 @@ import ldbc.sql.*
 import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 import ldbc.dsl.codec.Decoder
 
-import ldbc.query.builder.statement.{ Query, Command }
+import ldbc.statement.{ Query, Command }
 
 package object syntax:
 
   private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F]:
 
-    extension [T](query: Query[T])
+    extension [A, B](query: Query[A, B])
 
-      def query: DslQuery[F, T] = DslQuery.Impl[F, T](query.statement, query.params, query.decoder)
+      def query: DslQuery[F, B] = DslQuery.Impl[F, B](query.statement, query.params, query.columns.decoder)
 
       inline def queryTo[P <: Product](using
         m1:    Mirror.ProductOf[P],
-        m2:    Mirror.ProductOf[T],
+        m2:    Mirror.ProductOf[B],
         check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
       ): DslQuery[F, P] =
         inline erasedValue[P] match
