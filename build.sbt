@@ -81,19 +81,23 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("statement", "Project for building type-safe statements")
-  .settings(libraryDependencies ++= Seq(
-    "org.typelevel" %%% "twiddles-core" % "0.8.0",
-    "org.scalatest" %%% "scalatest" % "3.2.18" % Test
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "twiddles-core" % "0.8.0",
+      "org.scalatest" %%% "scalatest"     % "3.2.18" % Test
+    )
+  )
   .dependsOn(dsl)
 
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
-  .settings(libraryDependencies ++= Seq(
-    "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-    "org.scalatest" %%% "scalatest" % "3.2.18" % Test
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "twiddles-core" % "0.8.0",
+      "org.scalatest" %%% "scalatest"     % "3.2.18" % Test
+    )
+  )
   .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
@@ -106,11 +110,13 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val schemaMacro = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("schema-macro", "Type safety schema construction project")
-  .settings(libraryDependencies ++= Seq(
-    "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
+    )
+  )
   .dependsOn(statement, connector)
-  //.enablePlugins(spray.boilerplate.BoilerplatePlugin)
+//.enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
