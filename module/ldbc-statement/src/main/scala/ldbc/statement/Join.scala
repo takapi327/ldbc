@@ -50,20 +50,6 @@ object Join:
 
     override def column: Column[Entity] = (left.column *: right.column).asInstanceOf[Column[Entity]]
 
-    // override inline def update[C](func: AB => Column[C], values: C): Update[AB] =
-    //  val columns = func(table)
-    //  val parameterBinders = (values match
-    //    case h *: EmptyTuple => h *: EmptyTuple
-    //    case h *: t          => h *: t
-    //    case h               => h *: EmptyTuple
-    //    )
-    //    .zip(Encoder.fold[ToTuple[C]])
-    //    .toList
-    //    .map {
-    //      case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-    //    }
-    //  Update.Join[AB](table, s"UPDATE $name SET ${columns.updateStatement}", params ++ parameterBinders)
-
     override def delete: Delete[AB] =
       val main =
         (left.asVector() ++ right.asVector()).headOption.getOrElse(throw new IllegalStateException("No table found."))

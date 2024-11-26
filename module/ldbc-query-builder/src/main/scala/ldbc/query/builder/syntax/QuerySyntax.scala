@@ -20,7 +20,7 @@ trait QuerySyntax[F[_]]:
      * A method to convert a query to a [[ldbc.dsl.Query]].
      * 
      * {{{
-     *   Table[User].select(v => (v.name, v.age)).query
+     *   TableQuery[User].select(v => v.name *: v.age).query
      * }}}
      *
      * @return
@@ -32,7 +32,7 @@ trait QuerySyntax[F[_]]:
      * A method to convert a query to a [[ldbc.dsl.Query]].
      *
      * {{{
-     *   Table[User].selectAll.queryTo[User]
+     *   TableQuery[User].selectAll.queryTo[User]
      * }}}
      *
      * @return

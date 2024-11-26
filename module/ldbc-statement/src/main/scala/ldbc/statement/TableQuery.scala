@@ -57,9 +57,10 @@ trait TableQuery[A, O]:
               .toList
           )
         Insert.Impl(
-          table     = table,
-          statement = s"INSERT INTO $name ${ columns.insertStatement }",
-          params    = params ++ parameterBinders
+          table = table,
+          statement =
+            s"INSERT INTO $name (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
+          params = params ++ parameterBinders
         )
 
   inline def insert(using mirror: Mirror.Of[Entity])(
