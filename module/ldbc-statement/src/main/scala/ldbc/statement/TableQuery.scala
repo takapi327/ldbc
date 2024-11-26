@@ -33,9 +33,10 @@ trait TableQuery[A, O]:
   def selectAll: Select[A, Entity] =
     Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $name", params)
 
-  private type ToTuple[T] <: Tuple = T match
+  protected type ToTuple[T] <: Tuple = T match
     case h *: EmptyTuple => Tuple1[h]
     case h *: t          => h *: ToTuple[t]
+    case _               => Tuple1[T]
 
   inline def insert[C](func: A => Column[C], values: C): Insert[A] =
     val columns = func(table)
@@ -118,7 +119,19 @@ trait TableQuery[A, O]:
   inline def ++=[P <: Product](values: List[P])(using check: P =:= Entity): Insert[A] =
     TableQueryMacro.++=[A, P](table, name, column.asInstanceOf[Column[P]], params, values)
 
-  def update: Update[A] = Update.Impl[A](table, s"UPDATE $name", params)
+  inline def update[C](func: A => Column[C], values: C): Update[A] =
+    val columns = func(table)
+    val parameterBinders = (values match
+      case h *: EmptyTuple => h *: EmptyTuple
+      case h *: t          => h *: t
+      case h               => h *: EmptyTuple
+      )
+      .zip(Encoder.fold[ToTuple[C]])
+      .toList
+      .map {
+        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+      }
+    Update.Impl[A](table, s"UPDATE $name SET ${columns.updateStatement}", params ++ parameterBinders)
 
   inline def update[P <: Product](value: P)(using mirror: Mirror.ProductOf[P], check: P =:= Entity): Update[A] =
     val parameterBinders = Tuple
