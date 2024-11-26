@@ -174,12 +174,12 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .insert(v => v.p1 *: v.p2 *: v.p3)((1L, "p2", Some("p3")))
+        .insertInto(v => v.p1 *: v.p2 *: v.p3)((1L, "p2", Some("p3")))
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
     )
     assert(
       query
-        .insert(v => v.p1 *: v.p2 *: v.p3)(List((1L, "p2", Some("p3")), (2L, "p2", None)))
+        .insertInto(v => v.p1 *: v.p2 *: v.p3)(List((1L, "p2", Some("p3")), (2L, "p2", None)))
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(
@@ -197,21 +197,21 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .inserts((1L, "p2", Some("p3")))
+        .insert((1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate
         .setValues(t => t.p1 *: t.p2 *: t.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       query
-        .inserts(values*)
+        .insert(values*)
         .onDuplicateKeyUpdate
         .setValues(t => t.p1 *: t.p2 *: t.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       query
-        .inserts((1L, "p2", Some("p3")))
+        .insert((1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate
         .setValues(_.p1)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"

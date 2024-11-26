@@ -98,7 +98,7 @@ trait DDLTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         tableQuery
-          .insert(user => user.name *: user.age)(
+          .insertInto(user => user.name *: user.age)(
             List(
               ("Alice", Some(20)),
               ("Bob", Some(25)),

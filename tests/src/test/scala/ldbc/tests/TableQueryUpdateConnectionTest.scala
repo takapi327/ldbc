@@ -73,7 +73,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         country
-          .inserts(
+          .insert(
             (
               code(1),
               s"${ prefix }_Test1",
@@ -105,7 +105,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         country
-          .inserts(
+          .insert(
             List(
               (
                 code(2),
@@ -231,7 +231,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .insert(v => v.name *: v.countryCode *: v.district *: v.population)(("Test", code(1), "T", 1))
+          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(("Test", code(1), "T", 1))
           .update
           .commit(conn)
       },
@@ -245,7 +245,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .insert(v => v.name *: v.countryCode *: v.district *: v.population)(
+          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(
             List(("Test2", code(2), "T", 1), ("Test3", code(3), "T3", 2))
           )
           .update
@@ -337,7 +337,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         (for
           _ <-
             city
-              .inserts((1638, "update Kofu", "JPN", "Yamanashi", 199753))
+              .insert((1638, "update Kofu", "JPN", "Yamanashi", 199753))
               .onDuplicateKeyUpdate
               .setValues(_.name)
               .update
@@ -374,7 +374,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         (for
           length <- city.select(_.id.count).query.unsafe.map(_ + 1)
           empty  <- city.selectAll.where(_.id _equals length).query.to[Option]
-          _    <- city.inserts((length, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate.setValues(_.name).update
+          _    <- city.insert((length, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate.setValues(_.name).update
           data <- city.selectAll.where(_.id _equals length).query.to[Option]
         yield empty.isEmpty & data.nonEmpty)
           .transaction(conn)
@@ -390,7 +390,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         (for
           length <- city.select(_.id.count).query.unsafe.map(_ + 1)
           result <- city
-                      .insert(v => v.name *: v.countryCode *: v.district *: v.population)(("Test4", code(4), "T", 1))
+                      .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(("Test4", code(4), "T", 1))
                       .returning[Int]
         yield result === length)
           .commit(conn)

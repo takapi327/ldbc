@@ -38,7 +38,7 @@ trait TableQuery[A, O]:
     case h *: t          => h *: ToTuple[t]
     case _               => Tuple1[T]
 
-  inline def insert[C](func: A => Column[C])(values: C): Insert[A] =
+  inline def insertInto[C](func: A => Column[C])(values: C): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
@@ -59,7 +59,7 @@ trait TableQuery[A, O]:
           params    = params ++ parameterBinders
         )
 
-  inline def insert[C](func: A => Column[C])(values: List[C]): Insert[A] =
+  inline def insertInto[C](func: A => Column[C])(values: List[C]): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
@@ -85,7 +85,7 @@ trait TableQuery[A, O]:
           params = params ++ parameterBinders
         )
 
-  inline def inserts(using mirror: Mirror.Of[Entity])(
+  inline def insert(using mirror: Mirror.Of[Entity])(
     values: mirror.MirroredElemTypes*
   ): Insert[A] =
     inline this match
