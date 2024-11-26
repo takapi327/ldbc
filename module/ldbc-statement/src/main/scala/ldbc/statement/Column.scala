@@ -50,7 +50,7 @@ trait Column[T]:
   /** Used in Update statement `Column = ?, Column = ?` used in the Update statement */
   def updateStatement: String
 
-  /** Used in Update statement `Column = Column, Column = Column` used in the Duplicate Key Update statement */
+  /** Used in Update statement `Column = VALUES(Column), Column = VALUES(Column)` used in the Duplicate Key Update statement */
   def duplicateKeyUpdateStatement: String
 
   def opt: Column[Option[T]] = Column.Opt[T](name, alias, decoder)
@@ -679,7 +679,7 @@ object Column extends TwiddleSyntax[Column]:
       )
     override def values:                      Int    = length.getOrElse(1)
     override def updateStatement:             String = update.getOrElse(s"$name = ?")
-    override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
+    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
   object Impl:
     def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
@@ -706,7 +706,7 @@ object Column extends TwiddleSyntax[Column]:
         Option(_decoder.decode(resultSet, prefix.orElse(alias)))
       )
     override def updateStatement:             String = s"$name = ?"
-    override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
+    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
   private[ldbc] case class MultiColumn[T](
     flag:  String,
