@@ -41,8 +41,8 @@ case class ColumnImpl[T](
       decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => decoder.decode(resultSet, Some(name)))
     )
 
-  override def updateStatement:             String = s"`$name` = ?"
-  override def duplicateKeyUpdateStatement: String = s"$name = ${ alias.getOrElse(name) }"
+  override def updateStatement:             String = s"$name = ?"
+  override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
   /**
    * Define SQL query string for each Column
@@ -51,10 +51,8 @@ case class ColumnImpl[T](
    *   SQL query string
    */
   def queryString: String =
-    val str = s"`$name` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
+    val str = s"$name ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
     alias.fold(str)(name => s"$name.$str")
-
-  override def toString: String = alias.fold(s"`$name`")(name => s"$name.`${ this.name }`")
 
 object Column:
 
