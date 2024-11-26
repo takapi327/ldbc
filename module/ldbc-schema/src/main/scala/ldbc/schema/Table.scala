@@ -35,7 +35,8 @@ private[ldbc] case class Table[P <: Product](
   keyDefinitions: List[Key],
   options:        List[TableOption | Character | Collate[String]]
 )(using mirror: Mirror.ProductOf[P])
-  extends SharedTable, AbstractTable[P]:
+  extends SharedTable,
+          AbstractTable[P]:
 
   override type Self = Table[P]
 
@@ -126,26 +127,27 @@ private[ldbc] case class Table[P <: Product](
 object Table:
 
   private[ldbc] case class Opt[P](
-                                    $name: String,
-                                    columns: List[Column[?]],
-                                    * : Column[Option[P]]
-                                  ) extends SharedTable, AbstractTable.Opt[P]:
+    $name:   String,
+    columns: List[Column[?]],
+    *      : Column[Option[P]]
+  ) extends SharedTable,
+            AbstractTable.Opt[P]:
 
     override type Self = Opt[P]
 
     override def statement: String = $name
 
     override def setName(name: String): Self = this.copy(
-      $name = name,
-      columns = columns.map(column => column.as(s"$name.${column.name}"))
+      $name   = name,
+      columns = columns.map(column => column.as(s"$name.${ column.name }"))
     )
 
     transparent inline def selectDynamic[Tag <: Singleton](
-                                                            tag: Tag
-                                                          )(using
-                                                            mirror: Mirror.Of[P],
-                                                            index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
-                                                          ): Column[
+      tag: Tag
+    )(using
+      mirror: Mirror.Of[P],
+      index:  ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+    ): Column[
       Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
     ] =
       columns

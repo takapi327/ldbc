@@ -13,11 +13,11 @@ import ldbc.dsl.codec.Decoder
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
 private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <: Product](
-                                                                                            table:  A,
-                                                                                            column: Column[AbstractTableQuery.Extract[A]],
-                                                                                            name:   String,
-                                                                                            params: List[Parameter.Dynamic]
-                                                                                          )(using mirror: Mirror.ProductOf[B])
+  table:  A,
+  column: Column[AbstractTableQuery.Extract[A]],
+  name:   String,
+  params: List[Parameter.Dynamic]
+)(using mirror: Mirror.ProductOf[B])
   extends AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]:
 
   override private[ldbc] def toOption: AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]] =
@@ -40,7 +40,7 @@ private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <
         if alias.isEmpty then None else Some(alias),
         decoder,
         Some(table.columns.length),
-        Some(table.columns.map(column => s"${column.name} = ?").mkString(", "))
+        Some(table.columns.map(column => s"${ column.name } = ?").mkString(", "))
       )
 
     val opt = Table.Opt[AbstractTableQuery.Extract[A]](
@@ -52,11 +52,11 @@ private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <
       .asInstanceOf[AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]]
 
 private[ldbc] case class TableQueryOpt[A, O <: SharedTable](
-                                                             table: O,
-                                                             column: Column[AbstractTableQuery.Extract[O]],
-                                                             name: String,
-                                                             params: List[Parameter.Dynamic]
-                                                           ) extends AbstractTableQuery[O, A]:
+  table:  O,
+  column: Column[AbstractTableQuery.Extract[O]],
+  name:   String,
+  params: List[Parameter.Dynamic]
+) extends AbstractTableQuery[O, A]:
 
   override private[ldbc] def toOption: AbstractTableQuery[O, A] = this
 
