@@ -4,12 +4,11 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.query.builder.syntax
+package ldbc.statement.syntax
 
 import scala.deriving.Mirror
 
-import ldbc.dsl.{ Query as DslQuery, * }
-
+import ldbc.dsl.{Query as DslQuery, *}
 import ldbc.statement.Query
 
 trait QuerySyntax[F[_]]:

@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.query.builder.syntax
+package ldbc.statement.syntax
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.Decoder
