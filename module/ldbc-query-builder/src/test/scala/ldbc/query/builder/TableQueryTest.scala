@@ -164,12 +164,12 @@ class TableQueryTest extends AnyFlatSpec:
 
   it should "The insert query statement generated from Table is equal to the specified query statement." in {
     assert(
-      query.inserts((1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
+      query.insert((1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
     )
     val values: List[(Long, String, Option[String])] = List((1L, "p2", Some("p3")), (2L, "p2", None))
     assert(
       query
-        .inserts(values*)
+        .insert(values*)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(
