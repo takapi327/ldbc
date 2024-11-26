@@ -8,7 +8,7 @@ package ldbc.statement.syntax
 
 import scala.deriving.Mirror
 
-import ldbc.dsl.{Query as DslQuery, *}
+import ldbc.dsl.{ Query as DslQuery, * }
 import ldbc.statement.Query
 
 trait QuerySyntax[F[_]]:

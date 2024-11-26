@@ -18,7 +18,7 @@ import ldbc.sql.*
 import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 import ldbc.dsl.codec.Decoder
 
-import ldbc.statement.{Query, Command}
+import ldbc.statement.{ Query, Command }
 import ldbc.statement.syntax.*
 
 package object syntax:
