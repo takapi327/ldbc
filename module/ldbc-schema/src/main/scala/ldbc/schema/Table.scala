@@ -201,7 +201,7 @@ object Table:
   ): Table[P] =
     Table[P](
       $name          = name,
-      columns        = columns.toList.asInstanceOf[List[Column[?]]].map(column => column.as(s"$name.${column.name}")),
+      columns        = columns.toList.asInstanceOf[List[Column[?]]].map(column => column.as(s"$name.${ column.name }")),
       keyDefinitions = List.empty,
       options        = List.empty
     )
