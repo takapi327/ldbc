@@ -37,7 +37,7 @@ object Update:
     override def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A] =
       this.copy(
         statement = statement ++ s", ${ column(table).updateStatement }",
-        params    = params :+ Parameter.Dynamic(value),
+        params    = params :+ Parameter.Dynamic(value)
       )
 
     override def set[B](column: A => Column[B], value: Option[B])(using Encoder[B]): Update[A] =

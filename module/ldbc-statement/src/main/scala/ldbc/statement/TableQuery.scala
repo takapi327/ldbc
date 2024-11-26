@@ -125,13 +125,13 @@ trait TableQuery[A, O]:
       case h *: EmptyTuple => h *: EmptyTuple
       case h *: t          => h *: t
       case h               => h *: EmptyTuple
-      )
-      .zip(Encoder.fold[ToTuple[C]])
+    )
+    .zip(Encoder.fold[ToTuple[C]])
       .toList
       .map {
         case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
       }
-    Update.Impl[A](table, s"UPDATE $name SET ${columns.updateStatement}", params ++ parameterBinders)
+    Update.Impl[A](table, s"UPDATE $name SET ${ columns.updateStatement }", params ++ parameterBinders)
 
   inline def update[P <: Product](value: P)(using mirror: Mirror.ProductOf[P], check: P =:= Entity): Update[A] =
     val parameterBinders = Tuple

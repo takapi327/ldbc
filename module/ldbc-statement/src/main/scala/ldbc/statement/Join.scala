@@ -50,7 +50,7 @@ object Join:
 
     override def column: Column[Entity] = (left.column *: right.column).asInstanceOf[Column[Entity]]
 
-    //override inline def update[C](func: AB => Column[C], values: C): Update[AB] =
+    // override inline def update[C](func: AB => Column[C], values: C): Update[AB] =
     //  val columns = func(table)
     //  val parameterBinders = (values match
     //    case h *: EmptyTuple => h *: EmptyTuple
