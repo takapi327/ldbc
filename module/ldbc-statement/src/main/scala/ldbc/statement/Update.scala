@@ -53,36 +53,3 @@ object Update:
         statement = statement ++ s" WHERE ${ expression.statement }",
         params    = params ++ expression.parameter
       )
-
-  private[ldbc] case class Join[A](
-    table:     A,
-    statement: String,
-    params:    List[Parameter.Dynamic],
-    isFirst:   Boolean = true
-  ) extends Update[A]:
-
-    @targetName("combine")
-    override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
-
-    override def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A] =
-      val set = if isFirst then " SET" else ","
-      val col = column(table)
-      this.copy(
-        statement = statement ++ s"$set ${ col.alias.getOrElse(col.name) } = ?",
-        params    = params :+ Parameter.Dynamic(value),
-        isFirst   = false
-      )
-
-    override def set[B](column: A => Column[B], value: Option[B])(using Encoder[B]): Update[A] =
-      value.fold(this)(v => set(column, v))
-
-    override def set[B](column: A => Column[B], value: B, bool: Boolean)(using Encoder[B]): Update[A] =
-      if bool then set(column, value) else this
-
-    override def where(func: A => Expression): Where.C[A] =
-      val expression = func(table)
-      Where.C[A](
-        table     = table,
-        statement = statement ++ s" WHERE ${ expression.statement }",
-        params    = params ++ expression.parameter
-      )
