@@ -92,12 +92,7 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core" % "0.8.0",
-      "org.scalatest" %%% "scalatest"     % "3.2.18" % Test
-    )
-  )
+  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
