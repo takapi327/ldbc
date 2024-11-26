@@ -389,9 +389,10 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       IO.sleep(5.seconds) >> connection.use { conn =>
         (for
           length <- city.select(_.id.count).query.unsafe.map(_ + 1)
-          result <- city
-                      .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(("Test4", code(4), "T", 1))
-                      .returning[Int]
+          result <-
+            city
+              .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(("Test4", code(4), "T", 1))
+              .returning[Int]
         yield result === length)
           .commit(conn)
       }
