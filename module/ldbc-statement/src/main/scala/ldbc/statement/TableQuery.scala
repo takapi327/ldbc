@@ -122,7 +122,7 @@ trait TableQuery[A, O]:
   inline def update[C](func: A => Column[C], values: C): Update[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Update processing.")
-      case _                      =>
+      case _ =>
         val columns = func(table)
         val parameterBinders = (values match
           case h *: EmptyTuple => h *: EmptyTuple
