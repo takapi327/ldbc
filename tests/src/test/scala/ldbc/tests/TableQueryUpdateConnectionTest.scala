@@ -262,7 +262,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .update(_.district, "Tokyo-test")
+          .update(_.district)("Tokyo-test")
           .where(_.name _equals "Tokyo")
           .update
           .commit(conn)
@@ -299,8 +299,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .update(
-            c => c.name *: c.countryCode *: c.district *: c.population,
+          .update(c => c.name *: c.countryCode *: c.district *: c.population)(
             ("Jokohama [Yokohama]", "JPN", "Kanagawa", 2)
           )
           .where(_.name _equals "Jokohama [Yokohama]")
@@ -318,7 +317,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           _ <- city
-                 .update(_.name, "update Odawara")
+                 .update(_.name)("update Odawara")
                  .set(_.district, "not update Kanagawa", false)
                  .where(_.id _equals 1637)
                  .update
@@ -416,7 +415,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
                       case None => Executor.pure[IO, Int](0)
                       case Some(code) =>
                         city
-                          .update(c => c.name *: c.district *: c.population, ("update New York", "TT", 2))
+                          .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))
                           .where(v => v.name _equals "New York" and (v.countryCode _equals code))
                           .update
         yield result)
@@ -432,7 +431,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         countryLanguage
-          .update(_.isOfficial, CountryLanguage.IsOfficial.T)
+          .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
           .where(_.countryCode _equals "JPN")
           .update
           .commit(conn)
@@ -447,7 +446,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         countryLanguage
-          .update(_.isOfficial, CountryLanguage.IsOfficial.T)
+          .update(_.isOfficial)(CountryLanguage.IsOfficial.T)
           .where(_.countryCode _equals "JPN")
           .limit(3)
           .update

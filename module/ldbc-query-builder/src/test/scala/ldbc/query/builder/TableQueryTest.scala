@@ -250,16 +250,14 @@ class TableQueryTest extends AnyFlatSpec:
   it should "The update query statement generated from Table is equal to the specified query statement." in {
     assert(
       query
-        .update(
-          q => q.p1 *: q.p2 *: q.p3,
+        .update(q => q.p1 *: q.p2 *: q.p3)(
           (1L, "p2", Some("p3"))
         )
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ?"
     )
     assert(
       query
-        .update(
-          q => q.p1 *: q.p2,
+        .update(q => q.p1 *: q.p2)(
           (1L, "p2")
         )
         .where(_.p1 === 1L)
@@ -273,8 +271,7 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .update(
-          q => q.p1 *: q.p2 *: q.p3,
+        .update(q => q.p1 *: q.p2 *: q.p3)(
           (1L, "p2", Some("p3"))
         )
         .where(_.p1 === 1L)
@@ -290,7 +287,7 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .update(_.p1, 1L)
+        .update(_.p1)(1L)
         .set(_.p2, "p2", false)
         .where(_.p1 === 1L)
         .limit(1)
@@ -298,7 +295,7 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .update(_.p1, 1L)
+        .update(_.p1)(1L)
         .set(_.p2, "p2", true)
         .where(_.p1 === 1L)
         .limit(1)
@@ -306,8 +303,7 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .update(
-          q => q.p1 *: q.p3,
+        .update(q => q.p1 *: q.p3)(
           (1L, Some("p3"))
         )
         .set(_.p2, "p2", false)

@@ -111,7 +111,7 @@ trait TableQuery[A, O]:
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ => TableQueryMacro.++=[A, P](table, name, column.asInstanceOf[Column[P]], params, values)
 
-  inline def update[C](func: A => Column[C], values: C): Update[A] =
+  inline def update[C](func: A => Column[C])(values: C): Update[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Update processing.")
       case _ =>
