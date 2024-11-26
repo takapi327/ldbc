@@ -13,14 +13,31 @@ import ldbc.dsl.codec.Decoder
 import ldbc.statement.{ AbstractTable, Column }
 import ldbc.schema.interpreter.*
 
+trait SharedTable extends Dynamic:
+
+  type Self
+
+  def columns: List[Column[?]]
+
+  /**
+   * Function for setting table names.
+   *
+   * @param name
+   * Table name
+   * @return
+   * Table with table name
+   */
+  def setName(name: String): Self
+
 private[ldbc] case class Table[P <: Product](
   $name:          String,
   columns:        List[Column[?]],
   keyDefinitions: List[Key],
   options:        List[TableOption | Character | Collate[String]]
 )(using mirror: Mirror.ProductOf[P])
-  extends AbstractTable[P],
-          Dynamic:
+  extends SharedTable, AbstractTable[P]:
+
+  override type Self = Table[P]
 
   override def statement: String = $name
 
@@ -64,7 +81,7 @@ private[ldbc] case class Table[P <: Product](
       .apply(index.value)
       .asInstanceOf[Column[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
 
-  def setName(name: String): Table[P] =
+  override def setName(name: String): Table[P] =
     this.copy(
       $name   = name,
       columns = columns.map(column => column.as(s"$name.${ column.name }"))
@@ -107,6 +124,36 @@ private[ldbc] case class Table[P <: Product](
     this.copy(options = this.options ++ options)
 
 object Table:
+
+  private[ldbc] case class Opt[P](
+                                    $name: String,
+                                    columns: List[Column[?]],
+                                    * : Column[Option[P]]
+                                  ) extends SharedTable, AbstractTable.Opt[P]:
+
+    override type Self = Opt[P]
+
+    override def statement: String = $name
+
+    override def setName(name: String): Self = this.copy(
+      $name = name,
+      columns = columns.map(column => column.as(s"$name.${column.name}"))
+    )
+
+    transparent inline def selectDynamic[Tag <: Singleton](
+                                                            tag: Tag
+                                                          )(using
+                                                            mirror: Mirror.Of[P],
+                                                            index: ValueOf[Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]
+                                                          ): Column[
+      Option[ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]]
+    ] =
+      columns
+        .apply(index.value)
+        .asInstanceOf[Column[
+          ExtractOption[Tuple.Elem[mirror.MirroredElemTypes, Tuples.IndexOf[mirror.MirroredElemLabels, Tag]]]
+        ]]
+        .opt
 
   /**
    * Methods for static Table construction using Dynamic.
