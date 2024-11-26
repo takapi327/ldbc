@@ -336,7 +336,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           _ <-
-            city.inserts((1638, "update Kofu", "JPN", "Yamanashi", 199753)).onDuplicateKeyUpdate.setValues(_.name).update
+            city
+              .inserts((1638, "update Kofu", "JPN", "Yamanashi", 199753))
+              .onDuplicateKeyUpdate
+              .setValues(_.name)
+              .update
           updated <- city.select(v => v.name *: v.district).where(_.id _equals 1638).query.unsafe
         yield updated)
           .transaction(conn)
