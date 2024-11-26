@@ -39,67 +39,79 @@ trait TableQuery[A, O]:
     case _               => Tuple1[T]
 
   inline def insert[C](func: A => Column[C], values: C): Insert[A] =
-    val columns = func(table)
-    val parameterBinders = (values match
-      case h *: EmptyTuple => h *: EmptyTuple
-      case h *: t          => h *: t
-      case h               => h *: EmptyTuple
-    )
-    .zip(Encoder.fold[ToTuple[C]])
-      .toList
-      .map {
-        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-      }
-    Insert.Impl(
-      table     = table,
-      statement = s"INSERT INTO $name ${ columns.insertStatement }",
-      params    = params ++ parameterBinders
-    )
-
-  inline def insert[C](func: A => Column[C], values: List[C]): Insert[A] =
-    val columns = func(table)
-    val parameterBinders = values
-      .map {
-        case h *: EmptyTuple => h *: EmptyTuple
-        case h *: t          => h *: t
-        case h               => h *: EmptyTuple
-      }
-      .flatMap(
-        _.zip(Encoder.fold[ToTuple[C]]).toList
+    inline this match
+      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
+      case _ =>
+        val columns = func(table)
+        val parameterBinders = (values match
+          case h *: EmptyTuple => h *: EmptyTuple
+          case h *: t          => h *: t
+          case h               => h *: EmptyTuple
+        )
+        .zip(Encoder.fold[ToTuple[C]])
+          .toList
           .map {
             case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
           }
-          .toList
-      )
+        Insert.Impl(
+          table     = table,
+          statement = s"INSERT INTO $name ${ columns.insertStatement }",
+          params    = params ++ parameterBinders
+        )
 
-    Insert.Impl(
-      table = table,
-      statement =
-        s"INSERT INTO $name (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
-      params = params ++ parameterBinders
-    )
+  inline def insert[C](func: A => Column[C], values: List[C]): Insert[A] =
+    inline this match
+      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
+      case _ =>
+        val columns = func(table)
+        val parameterBinders = values
+          .map {
+            case h *: EmptyTuple => h *: EmptyTuple
+            case h *: t          => h *: t
+            case h               => h *: EmptyTuple
+          }
+          .flatMap(
+            _.zip(Encoder.fold[ToTuple[C]]).toList
+              .map {
+                case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+              }
+              .toList
+          )
+
+        Insert.Impl(
+          table = table,
+          statement =
+            s"INSERT INTO $name (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
+          params = params ++ parameterBinders
+        )
 
   inline def insert(using mirror: Mirror.Of[Entity])(
     values: mirror.MirroredElemTypes*
   ): Insert[A] =
-    val parameterBinders = values
-      .flatMap(_.zip(Encoder.fold[mirror.MirroredElemTypes]).toList)
-      .map {
-        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-      }
-      .toList
-    Insert.Impl(
-      table = table,
-      statement =
-        s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
-      params = params ++ parameterBinders
-    )
+    inline this match
+      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
+      case _ =>
+        val parameterBinders = values
+          .flatMap(_.zip(Encoder.fold[mirror.MirroredElemTypes]).toList)
+          .map {
+            case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+          }
+          .toList
+        Insert.Impl(
+          table = table,
+          statement =
+            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
+          params = params ++ parameterBinders
+        )
 
   @targetName("insertProduct")
   inline def +=(value: Entity)(using mirror: Mirror.Of[Entity]): Insert[A] =
-    inline mirror match
-      case s: Mirror.SumOf[Entity]     => error("Sum type is not supported.")
-      case p: Mirror.ProductOf[Entity] => derivedProduct(value, p)
+    inline this match
+      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
+      case _ =>
+        inline mirror match
+          case s: Mirror.SumOf[Entity]     => error("Sum type is not supported.")
+          case p: Mirror.ProductOf[Entity] => derivedProduct(value, p)
 
   private inline def derivedProduct[P](value: P, mirror: Mirror.ProductOf[P]): Insert[A] =
     val tuples = Tuple.fromProduct(value.asInstanceOf[Product]).asInstanceOf[mirror.MirroredElemTypes]
@@ -117,7 +129,9 @@ trait TableQuery[A, O]:
 
   @targetName("insertProducts")
   inline def ++=[P <: Product](values: List[P])(using check: P =:= Entity): Insert[A] =
-    TableQueryMacro.++=[A, P](table, name, column.asInstanceOf[Column[P]], params, values)
+    inline this match
+      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
+      case _ => TableQueryMacro.++=[A, P](table, name, column.asInstanceOf[Column[P]], params, values)
 
   inline def update[C](func: A => Column[C], values: C): Update[A] =
     inline this match
