@@ -330,38 +330,38 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     )
   }
 
-  // test(
-  //  "If the primary key is duplicated, the data is updated."
-  // ) {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      (for
-  //        _ <-
-  //          city.insert((1638, "update Kofu", "JPN", "Yamanashi", 199753)).onDuplicateKeyUpdate.setThis(_.name).update
-  //        updated <- city.select(v => v.name *: v.district).where(_.id _equals 1638).query.unsafe
-  //      yield updated)
-  //        .transaction(conn)
-  //    },
-  //    ("update Kofu", "Yamanashi")
-  //  )
-  // }
-//
-  // test(
-  //  "If there are duplicate primary keys, only the specified columns are updated."
-  // ) {
-  //  assertIO(
-  //    connection.use { conn =>
-  //      (for
-  //        _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608)).onDuplicateKeyUpdate
-  //               .setThis(_.name)
-  //               .update
-  //        updated <- city.select(v => v.name *: v.district).where(_.id _equals 1639).query.unsafe
-  //      yield updated)
-  //        .transaction(conn)
-  //    },
-  //    ("update Kushiro", "Hokkaido")
-  //  )
-  // }
+  test(
+   "If the primary key is duplicated, the data is updated."
+  ) {
+   assertIO(
+     connection.use { conn =>
+       (for
+         _ <-
+           city.insert((1638, "update Kofu", "JPN", "Yamanashi", 199753)).onDuplicateKeyUpdate.setValues(_.name).update
+         updated <- city.select(v => v.name *: v.district).where(_.id _equals 1638).query.unsafe
+       yield updated)
+         .transaction(conn)
+     },
+     ("update Kofu", "Yamanashi")
+   )
+  }
+
+  test(
+   "If there are duplicate primary keys, only the specified columns are updated."
+  ) {
+   assertIO(
+     connection.use { conn =>
+       (for
+         _ <- (city += City(1639, "update Kushiro", "JPN", "not update Hokkaido", 197608)).onDuplicateKeyUpdate
+                .setValues(_.name)
+                .update
+         updated <- city.select(v => v.name *: v.district).where(_.id _equals 1639).query.unsafe
+       yield updated)
+         .transaction(conn)
+     },
+     ("update Kushiro", "Hokkaido")
+   )
+  }
 
   test(
     "Data is added if the primary key is not duplicated."
@@ -371,7 +371,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
         (for
           length <- city.select(_.id.count).query.unsafe.map(_ + 1)
           empty  <- city.selectAll.where(_.id _equals length).query.to[Option]
-          _      <- city.insert((length, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate.setThis(_.name).update
+          _      <- city.insert((length, "Nishinomiya", "JPN", "Hyogo", 0)).onDuplicateKeyUpdate.setValues(_.name).update
           data   <- city.selectAll.where(_.id _equals length).query.to[Option]
         yield empty.isEmpty & data.nonEmpty)
           .transaction(conn)
