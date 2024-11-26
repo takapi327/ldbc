@@ -38,28 +38,7 @@ trait TableQuery[A, O]:
     case h *: t          => h *: ToTuple[t]
     case _               => Tuple1[T]
 
-  inline def insertInto[C](func: A => Column[C])(values: C): Insert[A] =
-    inline this match
-      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ =>
-        val columns = func(table)
-        val parameterBinders = (values match
-          case h *: EmptyTuple => h *: EmptyTuple
-          case h *: t          => h *: t
-          case h               => h *: EmptyTuple
-        )
-        .zip(Encoder.fold[ToTuple[C]])
-          .toList
-          .map {
-            case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-          }
-        Insert.Impl(
-          table     = table,
-          statement = s"INSERT INTO $name ${ columns.insertStatement }",
-          params    = params ++ parameterBinders
-        )
-
-  inline def insertInto[C](func: A => Column[C])(values: List[C]): Insert[A] =
+  inline def insertInto[C](func: A => Column[C])(values: C*): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
@@ -77,12 +56,10 @@ trait TableQuery[A, O]:
               }
               .toList
           )
-
         Insert.Impl(
-          table = table,
-          statement =
-            s"INSERT INTO $name (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
-          params = params ++ parameterBinders
+          table     = table,
+          statement = s"INSERT INTO $name ${ columns.insertStatement }",
+          params    = params ++ parameterBinders
         )
 
   inline def insert(using mirror: Mirror.Of[Entity])(

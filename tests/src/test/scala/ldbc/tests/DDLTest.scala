@@ -99,11 +99,9 @@ trait DDLTest extends CatsEffectSuite:
       connection.use { conn =>
         tableQuery
           .insertInto(user => user.name *: user.age)(
-            List(
-              ("Alice", Some(20)),
-              ("Bob", Some(25)),
-              ("Charlie", None)
-            )
+            ("Alice", Some(20)),
+            ("Bob", Some(25)),
+            ("Charlie", None)
           )
           .update
           .commit(conn)

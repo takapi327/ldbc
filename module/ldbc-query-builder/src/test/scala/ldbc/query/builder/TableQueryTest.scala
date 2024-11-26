@@ -179,7 +179,10 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .insertInto(v => v.p1 *: v.p2 *: v.p3)(List((1L, "p2", Some("p3")), (2L, "p2", None)))
+        .insertInto(v => v.p1 *: v.p2 *: v.p3)(
+          (1L, "p2", Some("p3")),
+          (2L, "p2", None)
+        )
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(

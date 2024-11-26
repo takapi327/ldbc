@@ -246,7 +246,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         city
           .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(
-            List(("Test2", code(2), "T", 1), ("Test3", code(3), "T3", 2))
+            ("Test2", code(2), "T", 1),
+            ("Test3", code(3), "T3", 2)
           )
           .update
           .commit(conn)
