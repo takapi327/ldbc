@@ -261,7 +261,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        city.update(_.district, "Tokyo-test")
+        city
+          .update(_.district, "Tokyo-test")
           .where(_.name _equals "Tokyo")
           .update
           .commit(conn)
@@ -299,7 +300,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         city
           .update(
-            c => c.name *: c.countryCode *: c.district *: c.population, 
+            c => c.name *: c.countryCode *: c.district *: c.population,
             ("Jokohama [Yokohama]", "JPN", "Kanagawa", 2)
           )
           .where(_.name _equals "Jokohama [Yokohama]")
@@ -329,9 +330,9 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     )
   }
 
-  //test(
+  // test(
   //  "If the primary key is duplicated, the data is updated."
-  //) {
+  // ) {
   //  assertIO(
   //    connection.use { conn =>
   //      (for
@@ -343,11 +344,11 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   //    },
   //    ("update Kofu", "Yamanashi")
   //  )
-  //}
+  // }
 //
-  //test(
+  // test(
   //  "If there are duplicate primary keys, only the specified columns are updated."
-  //) {
+  // ) {
   //  assertIO(
   //    connection.use { conn =>
   //      (for
@@ -360,7 +361,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   //    },
   //    ("update Kushiro", "Hokkaido")
   //  )
-  //}
+  // }
 
   test(
     "Data is added if the primary key is not duplicated."
@@ -409,7 +410,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
           result <- codeOpt match
                       case None => Executor.pure[IO, Int](0)
                       case Some(code) =>
-                        city.update(c => c.name *: c.district *: c.population, ("update New York", "TT", 2))
+                        city
+                          .update(c => c.name *: c.district *: c.population, ("update New York", "TT", 2))
                           .where(v => v.name _equals "New York" and (v.countryCode _equals code))
                           .update
         yield result)
@@ -424,7 +426,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.update(_.isOfficial, CountryLanguage.IsOfficial.T)
+        countryLanguage
+          .update(_.isOfficial, CountryLanguage.IsOfficial.T)
           .where(_.countryCode _equals "JPN")
           .update
           .commit(conn)
@@ -438,7 +441,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.update(_.isOfficial, CountryLanguage.IsOfficial.T)
+        countryLanguage
+          .update(_.isOfficial, CountryLanguage.IsOfficial.T)
           .where(_.countryCode _equals "JPN")
           .limit(3)
           .update
