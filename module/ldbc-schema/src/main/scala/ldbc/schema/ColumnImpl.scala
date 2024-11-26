@@ -51,7 +51,7 @@ case class ColumnImpl[T](
    *   SQL query string
    */
   def queryString: String =
-    val str = s"$name ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
+    val str = s"`$name` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
     alias.fold(str)(name => s"$name.$str")
 
 object Column:
