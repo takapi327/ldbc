@@ -11,7 +11,7 @@ import scala.annotation.targetName
 import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Encoder
 
-trait Update[A] extends Command:
+sealed trait Update[A] extends Command:
 
   def table: A
 
@@ -25,22 +25,19 @@ trait Update[A] extends Command:
 
 object Update:
 
-  case class Impl[A](
+  private[ldbc] case class Impl[A](
     table:     A,
     statement: String,
-    params:    List[Parameter.Dynamic],
-    isFirst:   Boolean = true
+    params:    List[Parameter.Dynamic]
   ) extends Update[A]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
     override def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A] =
-      val set = if isFirst then " SET" else ","
       this.copy(
-        statement = statement ++ s"$set ${ column(table).name } = ?",
+        statement = statement ++ s", ${ column(table).updateStatement }",
         params    = params :+ Parameter.Dynamic(value),
-        isFirst   = false
       )
 
     override def set[B](column: A => Column[B], value: Option[B])(using Encoder[B]): Update[A] =
@@ -57,7 +54,7 @@ object Update:
         params    = params ++ expression.parameter
       )
 
-  case class Join[A](
+  private[ldbc] case class Join[A](
     table:     A,
     statement: String,
     params:    List[Parameter.Dynamic],
