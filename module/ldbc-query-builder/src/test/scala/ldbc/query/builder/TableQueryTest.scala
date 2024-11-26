@@ -164,22 +164,22 @@ class TableQueryTest extends AnyFlatSpec:
 
   it should "The insert query statement generated from Table is equal to the specified query statement." in {
     assert(
-      query.insert((1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
+      query.inserts((1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
     )
     val values: List[(Long, String, Option[String])] = List((1L, "p2", Some("p3")), (2L, "p2", None))
     assert(
       query
-        .insert(values*)
+        .inserts(values*)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(
       query
-        .insert(v => v.p1 *: v.p2 *: v.p3, (1L, "p2", Some("p3")))
+        .insert(v => v.p1 *: v.p2 *: v.p3)((1L, "p2", Some("p3")))
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
     )
     assert(
       query
-        .insert(v => v.p1 *: v.p2 *: v.p3, List((1L, "p2", Some("p3")), (2L, "p2", None)))
+        .insert(v => v.p1 *: v.p2 *: v.p3)(List((1L, "p2", Some("p3")), (2L, "p2", None)))
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(
@@ -197,50 +197,50 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .insert((1L, "p2", Some("p3")))
+        .inserts((1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate
-        .setThis(t => t.p1 *: t.p2 *: t.p3)
-        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1, p2 = test.p2, p3 = test.p3"
+        .setValues(t => t.p1 *: t.p2 *: t.p3)
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       query
-        .insert(values*)
+        .inserts(values*)
         .onDuplicateKeyUpdate
-        .setThis(t => t.p1 *: t.p2 *: t.p3)
-        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1, p2 = test.p2, p3 = test.p3"
+        .setValues(t => t.p1 *: t.p2 *: t.p3)
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       query
-        .insert((1L, "p2", Some("p3")))
+        .inserts((1L, "p2", Some("p3")))
         .onDuplicateKeyUpdate
-        .setThis(_.p1)
-        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1"
+        .setValues(_.p1)
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"
     )
     assert(
       (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate
-        .setThis(_.p1)
-        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1"
+        .setValues(_.p1)
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"
     )
     assert(
       (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate
-        .setThis(v => v.p1 *: v.p2 *: v.p3)
-        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1, p2 = test.p2, p3 = test.p3"
+        .setValues(v => v.p1 *: v.p2 *: v.p3)
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
       )).onDuplicateKeyUpdate
-        .setThis(_.p1)
-        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1"
+        .setValues(_.p1)
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
       )).onDuplicateKeyUpdate
-        .setThis(v => v.p1 *: v.p2 *: v.p3)
-        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = test.p1, p2 = test.p2, p3 = test.p3"
+        .setValues(v => v.p1 *: v.p2 *: v.p3)
+        .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
   }
 
