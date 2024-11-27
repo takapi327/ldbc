@@ -14,6 +14,14 @@ import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Encoder
 import ldbc.statement.internal.QueryConcat
 
+/**
+ * Trait for constructing SQL Statement from Table information.
+ *
+ * @tparam A
+ *   The type of Table. in the case of Join, it is a Tuple of type Table.
+ * @tparam O
+ *   The type of Optional Table. in the case of Join, it is a Tuple of type Optional Table.
+ */
 trait TableQuery[A, O]:
 
   type Entity = TableQuery.Extract[A]
@@ -24,12 +32,34 @@ trait TableQuery[A, O]:
 
   private[ldbc] def params: List[Parameter.Dynamic]
 
+  /** Name of Table */
   def name: String
 
+  /**
+   * Method to construct a query to select a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(city => city.id *: city.name)
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   * @tparam C
+   *   Scala types to be converted by Decoder
+   */
   def select[C](func: A => Column[C]): Select[A, C] =
     val columns = func(table)
     Select(table, columns, s"SELECT ${ columns.alias.getOrElse(columns.name) } FROM $name", params)
 
+  /**
+   * Method to construct a query to select all columns of a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .selectAll
+   * }}}
+   */
   def selectAll: Select[A, Entity] =
     Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $name", params)
 
@@ -38,6 +68,21 @@ trait TableQuery[A, O]:
     case h *: t          => h *: ToTuple[t]
     case _               => Tuple1[T]
 
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .insertInto(city => city.id *: city.name)((1L, "Tokyo"))
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   * @param values
+   *   Value to be inserted into the table
+   * @tparam C
+   *   Scala types to be converted by Encoder
+   */
   inline def insertInto[C](func: A => Column[C])(values: C*): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
@@ -63,6 +108,19 @@ trait TableQuery[A, O]:
           params = params ++ parameterBinders
         )
 
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .insert((1L, "Tokyo"))
+   * }}}
+   *
+   * @param mirror
+   *   Mirror of Entity
+   * @param values
+   *   Value to be inserted into the table
+   */
   inline def insert(using mirror: Mirror.Of[Entity])(
     values: mirror.MirroredElemTypes*
   ): Insert[A] =
@@ -82,6 +140,18 @@ trait TableQuery[A, O]:
           params = params ++ parameterBinders
         )
 
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City] += City(1L, "Tokyo")
+   * }}}
+   *
+   * @param value
+   *   Value to be inserted into the table
+   * @param mirror
+   *   Mirror of Entity
+   */
   @targetName("insertProduct")
   inline def +=(value: Entity)(using mirror: Mirror.Of[Entity]): Insert[A] =
     inline this match
@@ -105,12 +175,41 @@ trait TableQuery[A, O]:
       params    = params ++ parameterBinders
     )
 
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City] ++= List(City(1L, "Tokyo"), City(2L, "Osaka"))
+   * }}}
+   *
+   * @param values
+   *   Value to be inserted into the table
+   * @param check
+   *   Check if the type of the value is the same as the Entity
+   * @tparam P
+   *   Scala types to be converted by Encoder
+   */
   @targetName("insertProducts")
   inline def ++=[P <: Product](values: List[P])(using check: P =:= Entity): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ => TableQueryMacro.++=[A, P](table, name, column.asInstanceOf[Column[P]], params, values)
 
+  /**
+   * Method to construct a query to update a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .update(city => city.id *: city.name)((1L, "Tokyo"))
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   * @param values
+   *   Value to be updated in the table
+   * @tparam C
+   *   Scala types to be converted by Encoder
+   */
   inline def update[C](func: A => Column[C])(values: C): Update[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Update processing.")
@@ -128,6 +227,23 @@ trait TableQuery[A, O]:
           }
         Update.Impl[A](table, s"UPDATE $name SET ${ columns.updateStatement }", params ++ parameterBinders)
 
+  /**
+   * Method to construct a query to update a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .update(City(1L, "Tokyo"))
+   * }}}
+   *
+   * @param value
+   *   Value to be updated in the table
+   * @param mirror
+   *   Mirror of Entity
+   * @param check
+   *   Check if the type of the value is the same as the Entity
+   * @tparam P
+   *   Scala types to be converted by Encoder
+   */
   inline def update[P <: Product](value: P)(using mirror: Mirror.ProductOf[P], check: P =:= Entity): Update[A] =
     val parameterBinders = Tuple
       .fromProductTyped(value)
@@ -142,29 +258,71 @@ trait TableQuery[A, O]:
 
   /**
    * Method to construct a query to delete a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .delete
+   * }}}
    */
   def delete: Delete[A] = Delete[A](table, s"DELETE FROM $name", params)
 
   /**
    * Method to construct a query to drop a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .dropTable
+   * }}}
    */
   def dropTable: Command = Command.Pure(s"DROP TABLE $name", List.empty)
 
   /**
    * Method to construct a query to truncate a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .truncateTable
+   * }}}
    */
   def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $name", List.empty)
 
+  /**
+   * Method to construct a query to join a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .join(TableQuery[Country])
+   *     .on((city, country) => city.countryId === country.id)
+   * }}}
+   */
   def join[B, BO, AB, OO](
     other: TableQuery[B, BO]
   )(using QueryConcat.Aux[A, B, AB], QueryConcat.Aux[O, BO, OO]): Join[A, B, AB, OO] =
     Join(this, other)
 
+  /**
+   * Method to construct a query to left join a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .leftJoin(TableQuery[Country])
+   *     .on((city, country) => city.countryId === country.id)
+   * }}}
+   */
   def leftJoin[B, BO, OB, OO](
     other: TableQuery[B, BO]
   )(using QueryConcat.Aux[A, BO, OB], QueryConcat.Aux[O, BO, OO]): Join[A, B, OB, OO] =
     Join.lef(this, other.toOption)
 
+  /**
+   * Method to construct a query to right join a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .rightJoin(TableQuery[Country])
+   *     .on((city, country) => city.countryId === country.id)
+   * }}}
+   */
   def rightJoin[B, BO, OB, OO](other: TableQuery[B, BO])(using
     QueryConcat.Aux[O, B, OB],
     QueryConcat.Aux[O, BO, OO]
@@ -184,7 +342,7 @@ object TableQuery:
     case AbstractTable[t]       => t
     case AbstractTable[t] *: tn => t *: Extract[tn]
 
-object TableQueryMacro:
+private[ldbc] object TableQueryMacro:
 
   import scala.quoted.*
 

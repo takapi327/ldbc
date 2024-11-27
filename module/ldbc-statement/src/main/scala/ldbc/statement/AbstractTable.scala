@@ -6,14 +6,19 @@
 
 package ldbc.statement
 
+/** A trait for building a table model. */
 trait AbstractTable[T]:
 
+  /** The name of the table. */
   def $name: String
 
+  /** SQL statement string */
   def statement: String
 
+  /** All columns that the table has.*/
   def * : Column[T]
 
 object AbstractTable:
 
+  /** A trait for building a table model with an Option type. */
   trait Opt[T] extends AbstractTable[Option[T]]

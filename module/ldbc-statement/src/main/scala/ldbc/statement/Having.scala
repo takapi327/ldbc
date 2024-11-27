@@ -10,6 +10,23 @@ import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
 
+/**
+ * A model for constructing HAVING statements in MySQL.
+ *
+ * @param table
+ *   Trait for generating SQL table information.
+ * @param columns
+ *   Union-type column list
+ * @param statement
+ *   SQL statement string
+ * @param params
+ *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+ *   only.
+ * @tparam A
+ *   The type of Table. in the case of Join, it is a Tuple of type Table.
+ * @tparam B
+ *   Scala types to be converted by Decoder
+ */
 case class Having[A, B](
   table:     A,
   columns:   Column[B],

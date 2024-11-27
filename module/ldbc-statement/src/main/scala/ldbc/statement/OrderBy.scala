@@ -14,6 +14,23 @@ import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.dsl.{ Parameter, SQL }
 
+/**
+ * A model for constructing ORDER BY statements in MySQL.
+ *
+ * @param table
+ *   Trait for generating SQL table information.
+ * @param columns
+ *   Union-type column list
+ * @param statement
+ *   SQL statement string
+ * @param params
+ *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+ *   only.
+ * @tparam A
+ *   The type of Table. in the case of Join, it is a Tuple of type Table.
+ * @tparam B
+ *   Scala types to be converted by Decoder
+ */
 case class OrderBy[A, B](
   table:     A,
   columns:   Column[B],
@@ -44,9 +61,29 @@ object OrderBy:
         val statement = if ff.statement.isEmpty then fa.statement else s"${ ff.statement }, ${ fa.statement }"
         Impl(statement)
 
+  /**
+   * Transparent Trait to provide orderBy method.
+   *
+   * @tparam A
+   *   The type of Table. in the case of Join, it is a Tuple of type Table.
+   * @tparam B
+   *   Scala types to be converted by Decoder
+   */
   private[ldbc] transparent trait Provider[A, B]:
     self: Query[A, B] =>
 
+    /**
+     * A method for setting the ORDER BY condition in a statement.
+     * 
+     * {{{
+     *  TableQuery[City]
+     *    .select(_.population)
+     *    .orderBy(_.population.desc)
+     * }}}
+     * 
+     * @param func
+     *   Function to construct an expression using the columns that Table has.
+     */
     def orderBy[C](func: A => Order[C]): OrderBy[A, B] =
       OrderBy[A, B](
         table     = self.table,

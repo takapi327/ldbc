@@ -34,6 +34,10 @@ case class Delete[A](
 
   /**
    * A method for setting the WHERE condition in a DELETE statement.
+   * 
+   * {{{
+   *   TableQuery[City].delete.where(_.name === "Tokyo")
+   * }}}
    *
    * @param func
    *   Function to construct an expression using the columns that Table has.

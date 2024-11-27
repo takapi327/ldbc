@@ -11,7 +11,8 @@ import scala.annotation.targetName
 import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Encoder
 
-trait Limit:
+/** A trait for constructing LIMIT statements in MySQL. */
+sealed trait Limit:
 
   /** SQL statement string */
   def statement: String
@@ -21,6 +22,23 @@ trait Limit:
 
 object Limit:
 
+  /**
+   * A model for constructing read-only query LIMIT statements in MySQL.
+   *
+   * @param table
+   *   Trait for generating SQL table information.
+   * @param columns
+   *   Union-type column list
+   * @param statement
+   *   SQL statement string
+   * @param params
+   *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+   *   only.
+   * @tparam A
+   *   The type of Table. in the case of Join, it is a Tuple of type Table.
+   * @tparam B
+   *   Scala types to be converted by Decoder
+   */
   case class Q[A, B](
     table:     A,
     columns:   Column[B],
@@ -44,6 +62,18 @@ object Limit:
   transparent trait QueryProvider[A, B]:
     self: Query[A, B] =>
 
+    /**
+     * A method for setting the LIMIT condition in a SELECT statement.
+     * 
+     * {{{
+     *   TableQuery[City]
+     *     .select(_.population)
+     *     .limit(10)
+     * }}}
+     *
+     * @param length
+     *   The number of rows to return.
+     */
     def limit(length: Long): Encoder[Long] ?=> Limit.Q[A, B] =
       Limit.Q(
         table     = self.table,
@@ -52,6 +82,15 @@ object Limit:
         params    = self.params :+ Parameter.Dynamic(length)
       )
 
+  /**
+   * A model for constructing write-only query LIMIT statements in MySQL.
+   *
+   * @param statement
+   *   SQL statement string
+   * @param params
+   *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
+   *   only.
+   */
   case class C(
     statement: String,
     params:    List[Parameter.Dynamic]
@@ -64,6 +103,18 @@ object Limit:
   transparent trait CommandProvider:
     self: Command =>
 
+    /**
+     * A method for setting the LIMIT condition in a UPDATE/DELETE statement.
+     * 
+     * {{{
+     *   TableQuery[City]
+     *     .delete
+     *     .limit(10)
+     * }}}
+     *
+     * @param length
+     *   The number of rows to return.
+     */
     def limit(length: Long): Encoder[Long] ?=> Limit.C =
       Limit.C(
         statement = statement ++ " LIMIT ?",

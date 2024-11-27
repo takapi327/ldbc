@@ -8,6 +8,16 @@ package ldbc.statement
 
 import ldbc.dsl.Parameter
 
+/**
+ * A model for constructing JOIN statements in MySQL.
+ * 
+ * @param typed
+ *   Type of JOIN statement
+ * @param left
+ *   Left table
+ * @param right
+ *   Right table
+ */
 case class Join[A, B, AB, OO](
   typed: "JOIN" | "LEFT JOIN" | "RIGHT JOIN",
   left:  TableQuery[A, ?],
@@ -19,6 +29,12 @@ case class Join[A, B, AB, OO](
   val statement:      String                  = s"${ left.name } $typed ${ right.name }"
   private val params: List[Parameter.Dynamic] = left.params ++ right.params
 
+  /**
+   * A method for combining ON statements.
+   * 
+   * @param expression
+   *   Trait for the syntax of expressions available in MySQL.
+   */
   def on(expression: AB => Expression): TableQuery[AB, OO] =
     val expr = expression(table)
     Join.On(left, right, table, s"$statement ON ${ expr.statement }", params ++ expr.parameter)

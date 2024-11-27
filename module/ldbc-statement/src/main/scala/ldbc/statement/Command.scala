@@ -10,6 +10,9 @@ import scala.annotation.targetName
 
 import ldbc.dsl.{ SQL, Parameter }
 
+/**
+ * Trait represents a command in MySQL.
+ */
 trait Command extends SQL
 
 object Command:
