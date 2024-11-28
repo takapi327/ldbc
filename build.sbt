@@ -102,9 +102,10 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(Test / scalacOptions -= "-Werror")
   .dependsOn(statement)
 
-lazy val schemaMacro = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+// TODO: Scheduled to be replaced with schema after renewal. It will not be published under this project name.
+lazy val renewalSchema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
-  .module("schema-macro", "Type safety schema construction project")
+  .module("renewal-schema", "Type safety schema construction project")
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test

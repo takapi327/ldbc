@@ -9,16 +9,14 @@ package ldbc.schema
 import scala.deriving.Mirror
 import scala.compiletime.erasedValue
 
-import cats.syntax.all.*
-
 import cats.effect.*
 
+import cats.syntax.all.*
+
 import ldbc.sql.*
-
-import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 import ldbc.dsl.codec.Decoder
-
-import ldbc.statement.{ Query, Command }
+import ldbc.dsl.{Query as DslQuery, SyncSyntax as DslSyntax, *}
+import ldbc.statement.{Command, Query}
 
 package object syntax:
 
