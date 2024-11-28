@@ -269,7 +269,6 @@ lazy val ldbc = tlCrossRootProject
     statement,
     queryBuilder,
     schema,
-    schemaMacro,
     codegen,
     plugin,
     tests,
