@@ -88,6 +88,9 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     )
   )
   .dependsOn(dsl)
+  .platformsEnablePlugins(JVMPlatform, JSPlatform, NativePlatform)(
+    spray.boilerplate.BoilerplatePlugin
+  )
 
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -107,12 +110,12 @@ lazy val renewalSchema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("renewal-schema", "Type safety schema construction project")
   .settings(
+    publish / skip := true,
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
   )
   .dependsOn(statement, connector)
-//.enablePlugins(spray.boilerplate.BoilerplatePlugin)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
@@ -270,6 +273,7 @@ lazy val ldbc = tlCrossRootProject
     statement,
     queryBuilder,
     schema,
+    renewalSchema,
     codegen,
     plugin,
     tests,
