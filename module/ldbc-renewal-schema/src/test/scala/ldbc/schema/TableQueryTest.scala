@@ -13,22 +13,22 @@ case class JoinTest(p1: Long, p2: String, p3: Option[String])
 case class JoinTest2(p1: Long, p2: String, p3: Option[String])
 
 class TestTable extends Table[Test]("test"):
-  def p1: Column[Long] = column[Long]("p1")
-  def p2: Column[String] = column[String]("p2")
+  def p1: Column[Long]           = column[Long]("p1")
+  def p2: Column[String]         = column[String]("p2")
   def p3: Column[Option[String]] = column[Option[String]]("p3")
 
   override def * : Column[Test] = (p1 *: p2 *: p3).to[Test]
-  
+
 class JoinTestTable extends Table[JoinTest]("join_test"):
-  def p1: Column[Long] = column[Long]("p1")
-  def p2: Column[String] = column[String]("p2")
+  def p1: Column[Long]           = column[Long]("p1")
+  def p2: Column[String]         = column[String]("p2")
   def p3: Column[Option[String]] = column[Option[String]]("p3")
 
   override def * : Column[JoinTest] = (p1 *: p2 *: p3).to[JoinTest]
 
 class JoinTest2Table extends Table[JoinTest2]("join_test2"):
-  def p1: Column[Long] = column[Long]("p1")
-  def p2: Column[String] = column[String]("p2")
+  def p1: Column[Long]           = column[Long]("p1")
+  def p2: Column[String]         = column[String]("p2")
   def p3: Column[Option[String]] = column[Option[String]]("p3")
 
   override def * : Column[JoinTest2] = (p1 *: p2 *: p3).to[JoinTest2]
@@ -188,7 +188,7 @@ class TableQueryTest extends AnyFlatSpec:
     val values: List[(Long, String, Option[String])] = List((1L, "p2", Some("p3")), (2L, "p2", None))
     assert(
       query
-        .insert(values *)
+        .insert(values*)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(
@@ -226,7 +226,7 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .insert(values *)
+        .insert(values*)
         .onDuplicateKeyUpdate
         .setValues(t => t.p1 *: t.p2 *: t.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
