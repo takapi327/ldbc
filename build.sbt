@@ -111,9 +111,7 @@ lazy val renewalSchema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("renewal-schema", "Type safety schema construction project")
   .settings(
     publish / skip := true,
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
-    )
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test
   )
   .dependsOn(statement, connector)
 
