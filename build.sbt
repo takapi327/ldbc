@@ -109,11 +109,9 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
 lazy val renewalSchema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("renewal-schema", "Type safety schema construction project")
-  .settings(
-    publish / skip := true,
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test
-  )
+  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .dependsOn(statement, connector)
+  .enablePlugins(NoPublishPlugin)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
