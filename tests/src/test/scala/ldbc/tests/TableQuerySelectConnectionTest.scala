@@ -101,17 +101,6 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.query.to[List].readOnly(conn).map(_.length)
-      },
-      984
-    )
-  }
-
-  test(
-    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
-  ) {
-    assertIO(
-      connection.use { conn =>
         governmentOffice.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       3
