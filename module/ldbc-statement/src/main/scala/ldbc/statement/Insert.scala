@@ -53,8 +53,8 @@ object Insert:
       val parameterBinders = values
         .map {
           case h *: EmptyTuple => h *: EmptyTuple
-          case h *: t => h *: t
-          case h => h *: EmptyTuple
+          case h *: t          => h *: t
+          case h               => h *: EmptyTuple
         }
         .flatMap(
           _.zip(Encoder.fold[B]).toList
@@ -65,15 +65,15 @@ object Insert:
         )
       Values(
         table,
-        s"$statement (${columns.name}) VALUES ${List.fill(values.length)(s"(${List.fill(columns.values)("?").mkString(",")})").mkString(",")}",
+        s"$statement (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
         parameterBinders.toList
       )
 
   case class Values[A](
-                      table: A,
-                     statement: String,
-                     params: List[Parameter.Dynamic]
-                   ) extends Insert[A]:
+    table:     A,
+    statement: String,
+    params:    List[Parameter.Dynamic]
+  ) extends Insert[A]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)

@@ -87,7 +87,7 @@ trait TableQuery[A, O]:
   inline def insertInto[C](func: A => Column[C]): Insert.Into[A, C] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ => Insert.Into(table, s"INSERT INTO $name", func(table))
+      case _                      => Insert.Into(table, s"INSERT INTO $name", func(table))
 
   /**
    * Method to construct a query to insert a table.
