@@ -69,6 +69,18 @@ object Insert:
 
   case class Into[A, B](table: A, statement: String, columns: Column[B]):
 
+    /**
+     * Method for constructing INSERT ... VALUES statements.
+     *
+     * {{{
+     *   TableQuery[City]
+     *     .insertInto(city => city.id *: city.name)
+     *     .values(1L, "Tokyo")
+     * }}}
+     *
+     * @param values
+     *   The values to be inserted.
+     */
     inline def values(values: B*): Values[A] =
       val parameterBinders = values
         .map {
@@ -87,6 +99,55 @@ object Insert:
         table,
         s"$statement (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
         parameterBinders.toList
+      )
+
+    /**
+     * Method for constructing INSERT ... SELECT statements.
+     *
+     * {{{
+     *   TableQuery[City]
+     *     .insertInto(city => city.id *: city.name)
+     *     .select(
+     *       TableQuery[Country]
+     *         .select(country => country.id *: country.name)
+     *     )
+     * }}}
+     *
+     * @param select
+     *   The SELECT statement to be inserted.
+     * @tparam C
+     *   The type of the column to be inserted.
+     */
+    def select[C](select: Select[C, B]): Values[A] =
+      Values(
+        table,
+        s"$statement (${ columns.name }) ${ select.statement }",
+        select.params
+      )
+
+    /**
+     * Method for constructing INSERT ... SELECT statements.
+     *
+     * {{{
+     *   TableQuery[City]
+     *     .insertInto(city => city.id *: city.name)
+     *     .select(
+     *       TableQuery[Country]
+     *         .select(country => country.id *: country.name)
+     *         .where(_.name === "Japan")
+     *     )
+     * }}}
+     *
+     * @param where
+     *   The WHERE statement to be inserted.
+     * @tparam C
+     *   The type of the column to be inserted.
+     */
+    def select[C](where: Where.Q[C, B]): Values[A] =
+      Values(
+        table,
+        s"$statement (${ columns.name }) ${ where.statement }",
+        where.params
       )
 
   case class Values[A](
