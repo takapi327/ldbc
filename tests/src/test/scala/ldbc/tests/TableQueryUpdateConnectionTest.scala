@@ -400,6 +400,23 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       }
     )
   }
+  
+  test("") {
+    assertIO(
+      connection.use { conn =>
+        city
+          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+          .select(
+            country
+              .select(c => c.name *: c.code *: c.region *: c.population)
+              .where(_.code _equals "JPN")
+          )
+          .update
+          .commit(conn)
+      },
+      1
+    )
+  }
 
   test(
     "The update succeeds in the combined processing of multiple queries."

@@ -242,6 +242,30 @@ class TableQueryTest extends AnyFlatSpec:
       )).onDuplicateKeyUpdate(v => v.p1 *: v.p2 *: v.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
+    assert(
+      query
+        .insertInto(v => v.p1 *: v.p2 *: v.p3)
+        .select(joinQuery.select(v => v.p1 *: v.p2 *: v.p3))
+        .statement === "INSERT INTO test (p1, p2, p3) SELECT join_test.p1, join_test.p2, join_test.p3 FROM join_test"
+    )
+    assert(
+      query
+        .insertInto(v => v.p1 *: v.p2 *: v.p3)
+        .select(joinQuery.select(v => v.p1 *: v.p2 *: v.p3).where(_.p1 > 1))
+        .statement === "INSERT INTO test (p1, p2, p3) SELECT join_test.p1, join_test.p2, join_test.p3 FROM join_test WHERE join_test.p1 > ?"
+    )
+    assert(
+      query
+        .insertInto(v => v.p1 *: v.p2 *: v.p3)
+        .select(
+          query
+            .join(joinQuery)
+            .on((t, j) => t.p1 === j.p1)
+            .select((t, j) => t.p1 *: t.p2 *: j.p3)
+            .where((_, j) => j.p1 > 1)
+        )
+        .statement === "INSERT INTO test (p1, p2, p3) SELECT test.p1, test.p2, join_test.p3 FROM test JOIN join_test ON test.p1 = join_test.p1 WHERE join_test.p1 > ?"
+    )
   }
 
   it should "The update query statement generated from Table is equal to the specified query statement." in {

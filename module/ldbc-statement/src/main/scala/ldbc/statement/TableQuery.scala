@@ -84,8 +84,23 @@ trait TableQuery[A, O]:
    */
   inline def insertInto[C](func: A => Column[C]): Insert.Into[A, C] =
     inline this match
-      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _                      => Insert.Into(table, s"INSERT INTO $name", func(table))
+      case Join.On(_, _, _, _, _) => error("""
+          |Insert operations are not supported for tables using Join.
+          |Instead, consider inserting the result of a join query to the Insert statement below.
+          |
+          |```scala
+          |TableQuery[City]
+          |  .insertInto(city => city.id *: city.name)
+          |  .select(
+          |    TableQuery[Country]
+          |      .join(TableQuery[City])
+          |      .on((country, city) => country.id === city.countryId)
+          |      .select((country, city) => country.id *: city.name)
+          |      .where((country, city) => city.population > 1000000)
+          |  )
+          |```
+          |""".stripMargin)
+      case _ => Insert.Into(table, s"INSERT INTO $name", func(table))
 
   /**
    * Method to construct a query to insert a table.
