@@ -66,7 +66,8 @@ class Insert:
     connection
       .use { conn =>
         query
-          .insertInto(test => test.c1 *: test.c2)(records.toList*)
+          .insertInto(test => test.c1 *: test.c2)
+          .values(records.toList*)
           .update
           .commit(conn)
       }
