@@ -28,10 +28,21 @@ sealed trait Insert[A] extends Command:
    * {{{
    *   TableQuery[City]
    *     .insert((1L, "Tokyo"))
-   *     .onDuplicateKeyUpdate
+   *     .onDuplicateKeyUpdate(_.name)
    * }}}
    */
-  def onDuplicateKeyUpdate: Insert.DuplicateKeyUpdate[A]
+  def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A]
+
+  /**
+   * Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .insert((1L, "Tokyo"))
+   *     .onDuplicateKeyUpdate(_.name, "Osaka")
+   * }}}
+   */
+  def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using Encoder[B]): Insert.DuplicateKeyUpdate[A]
 
 object Insert:
 
@@ -40,11 +51,18 @@ object Insert:
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-    override def onDuplicateKeyUpdate: Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A] =
       Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE",
+        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).duplicateKeyUpdateStatement }",
         params
+      )
+
+    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using Encoder[B]): Insert.DuplicateKeyUpdate[A] =
+      Insert.DuplicateKeyUpdate(
+        table,
+        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).name } = ?",
+        params :+ Parameter.Dynamic(value)
       )
 
   case class Into[A, B](table: A, statement: String, columns: Column[B]):
@@ -78,61 +96,21 @@ object Insert:
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-    override def onDuplicateKeyUpdate: Insert.DuplicateKeyUpdate[A] =
-      DuplicateKeyUpdate(
+    override def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A] =
+      Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE",
+        s"$statement ON DUPLICATE KEY UPDATE ${columns(table).duplicateKeyUpdateStatement}",
         params
+      )
+
+    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using Encoder[B]): Insert.DuplicateKeyUpdate[A] =
+      Insert.DuplicateKeyUpdate(
+        table,
+        s"$statement ON DUPLICATE KEY UPDATE ${columns(table).name} = ?",
+        params :+ Parameter.Dynamic(value)
       )
 
   case class DuplicateKeyUpdate[A](table: A, statement: String, params: List[Parameter.Dynamic]) extends Command:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
-
-    /**
-     * A method for setting the value of a column in a table.
-     *
-     * {{{
-     *   TableQuery[City]
-     *     .insertInto(city => city.name *: city.population)
-     *     .values(("Tokyo", 13929286))
-     *     .onDuplicateKeyUpdate
-     *     .set(_.population, 13929286)
-     * }}}
-     * 
-     * @param func
-     *   Function to construct an expression using the columns that Table has.
-     * @param value
-     *   The value to be set in the column.
-     * @tparam B
-     *   Scala types to be converted by Encoder
-     */
-    def set[B](func: A => Column[B], value: B)(using Encoder[B]): Insert.DuplicateKeyUpdate[A] =
-      val columns = func(table)
-      this.copy(
-        statement = s"$statement ${ columns.name } = ?",
-        params    = params :+ Parameter.Dynamic(value)
-      )
-
-    /**
-     * A method for setting the value of a column in a table.
-     *
-     * {{{
-     *   TableQuery[City]
-     *     .insertInto(city => city.name *: city.population)
-     *     .values(("Tokyo", 13929286))
-     *     .onDuplicateKeyUpdate
-     *     .setValues(_.population)
-     * }}}
-     * 
-     * @param func
-     *   Function to construct an expression using the columns that Table has.
-     * @tparam B
-     *   Scala types to be converted by Encoder
-     */
-    def setValues[B](func: A => Column[B]): Insert.DuplicateKeyUpdate[A] =
-      val columns = func(table)
-      this.copy(
-        statement = s"$statement ${ columns.duplicateKeyUpdateStatement }"
-      )
