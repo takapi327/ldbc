@@ -203,48 +203,43 @@ class TableQueryTest extends AnyFlatSpec:
     assert(
       query
         .insert((1L, "p2", Some("p3")))
-        .onDuplicateKeyUpdate
-        .setValues(t => t.p1 *: t.p2 *: t.p3)
+        .onDuplicateKeyUpdate(t => t.p1 *: t.p2 *: t.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       query
         .insert(values*)
-        .onDuplicateKeyUpdate
-        .setValues(t => t.p1 *: t.p2 *: t.p3)
+        .onDuplicateKeyUpdate(t => t.p1 *: t.p2 *: t.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       query
         .insert((1L, "p2", Some("p3")))
-        .onDuplicateKeyUpdate
-        .setValues(_.p1)
+        .onDuplicateKeyUpdate(_.p1)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"
     )
     assert(
-      (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate
-        .setValues(_.p1)
+      (query += Test(1L, "p2", Some("p3")))
+        .onDuplicateKeyUpdate(_.p1)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"
     )
     assert(
-      (query += Test(1L, "p2", Some("p3"))).onDuplicateKeyUpdate
-        .setValues(v => v.p1 *: v.p2 *: v.p3)
+      (query += Test(1L, "p2", Some("p3")))
+        .onDuplicateKeyUpdate(v => v.p1 *: v.p2 *: v.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
-      )).onDuplicateKeyUpdate
-        .setValues(_.p1)
+      )).onDuplicateKeyUpdate(_.p1)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"
     )
     assert(
       (query ++= List(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
-      )).onDuplicateKeyUpdate
-        .setValues(v => v.p1 *: v.p2 *: v.p3)
+      )).onDuplicateKeyUpdate(v => v.p1 *: v.p2 *: v.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
   }
