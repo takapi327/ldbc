@@ -231,7 +231,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(("Test", code(1), "T", 1))
+          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+          .values(("Test", code(1), "T", 1))
           .update
           .commit(conn)
       },
@@ -245,7 +246,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(
+          .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+          .values(
             ("Test2", code(2), "T", 1),
             ("Test3", code(3), "T3", 2)
           )
@@ -391,7 +393,8 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
           length <- city.select(_.id.count).query.unsafe.map(_ + 1)
           result <-
             city
-              .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)(("Test4", code(4), "T", 1))
+              .insertInto(v => v.name *: v.countryCode *: v.district *: v.population)
+              .values(("Test4", code(4), "T", 1))
               .returning[Int]
         yield result === length)
           .commit(conn)
