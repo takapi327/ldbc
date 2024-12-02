@@ -400,7 +400,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       }
     )
   }
-  
+
   test("") {
     assertIO(
       connection.use { conn =>
