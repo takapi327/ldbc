@@ -27,25 +27,65 @@ sealed trait Insert[A] extends Command:
    * 
    * {{{
    *   TableQuery[City]
-   *     .insertInto(city => city.name *: city.population)(("Tokyo", 13929286))
+   *     .insert((1L, "Tokyo"))
    *     .onDuplicateKeyUpdate
    * }}}
    */
-  def onDuplicateKeyUpdate: Insert.DuplicateKeyUpdate[A] =
-    Insert.DuplicateKeyUpdate(
-      table,
-      s"$statement ON DUPLICATE KEY UPDATE",
-      params
-    )
+  def onDuplicateKeyUpdate: Insert.DuplicateKeyUpdate[A]
 
 object Insert:
 
-  case class Impl[A](table: A, statement: String, params: List[Parameter.Dynamic]) extends Insert[A]:
+  case class Impl[A, B](table: A, statement: String, params: List[Parameter.Dynamic]) extends Insert[A]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-  case class DuplicateKeyUpdate[A](table: A, statement: String, params: List[Parameter.Dynamic]) extends Insert[A]:
+    override def onDuplicateKeyUpdate: Insert.DuplicateKeyUpdate[A] =
+      Insert.DuplicateKeyUpdate(
+        table,
+        s"$statement ON DUPLICATE KEY UPDATE",
+        params
+      )
+
+  case class Into[A, B](table: A, statement: String, columns: Column[B]):
+
+    inline def values(values: B*): Values[A] =
+      val parameterBinders = values
+        .map {
+          case h *: EmptyTuple => h *: EmptyTuple
+          case h *: t => h *: t
+          case h => h *: EmptyTuple
+        }
+        .flatMap(
+          _.zip(Encoder.fold[B]).toList
+            .map {
+              case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
+            }
+            .toList
+        )
+      Values(
+        table,
+        s"$statement (${columns.name}) VALUES ${List.fill(values.length)(s"(${List.fill(columns.values)("?").mkString(",")})").mkString(",")}",
+        parameterBinders.toList
+      )
+
+  case class Values[A](
+                      table: A,
+                     statement: String,
+                     params: List[Parameter.Dynamic]
+                   ) extends Insert[A]:
+
+    @targetName("combine")
+    override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
+
+    override def onDuplicateKeyUpdate: Insert.DuplicateKeyUpdate[A] =
+      DuplicateKeyUpdate(
+        table,
+        s"$statement ON DUPLICATE KEY UPDATE",
+        params
+      )
+
+  case class DuplicateKeyUpdate[A](table: A, statement: String, params: List[Parameter.Dynamic]) extends Command:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)

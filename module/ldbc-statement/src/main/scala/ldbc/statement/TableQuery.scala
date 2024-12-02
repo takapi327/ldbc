@@ -73,7 +73,8 @@ trait TableQuery[A, O]:
    *
    * {{{
    *   TableQuery[City]
-   *     .insertInto(city => city.id *: city.name)((1L, "Tokyo"))
+   *     .insertInto(city => city.id *: city.name)
+   *     .values((1L, "Tokyo"))
    * }}}
    *
    * @param func
@@ -83,30 +84,10 @@ trait TableQuery[A, O]:
    * @tparam C
    *   Scala types to be converted by Encoder
    */
-  inline def insertInto[C](func: A => Column[C])(values: C*): Insert[A] =
+  inline def insertInto[C](func: A => Column[C]): Insert.Into[A, C] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ =>
-        val columns = func(table)
-        val parameterBinders = values
-          .map {
-            case h *: EmptyTuple => h *: EmptyTuple
-            case h *: t          => h *: t
-            case h               => h *: EmptyTuple
-          }
-          .flatMap(
-            _.zip(Encoder.fold[ToTuple[C]]).toList
-              .map {
-                case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-              }
-              .toList
-          )
-        Insert.Impl(
-          table = table,
-          statement =
-            s"INSERT INTO $name (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
-          params = params ++ parameterBinders
-        )
+      case _ => Insert.Into(table, s"INSERT INTO $name", func(table))
 
   /**
    * Method to construct a query to insert a table.
