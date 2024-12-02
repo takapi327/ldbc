@@ -95,7 +95,8 @@ object Insert:
      *
      * {{{
      *   TableQuery[City]
-     *     .insertInto(city => city.name *: city.population)(("Tokyo", 13929286))
+     *     .insertInto(city => city.name *: city.population)
+     *     .values(("Tokyo", 13929286))
      *     .onDuplicateKeyUpdate
      *     .set(_.population, 13929286)
      * }}}
@@ -119,7 +120,8 @@ object Insert:
      *
      * {{{
      *   TableQuery[City]
-     *     .insertInto(city => city.name *: city.population)(("Tokyo", 13929286))
+     *     .insertInto(city => city.name *: city.population)
+     *     .values(("Tokyo", 13929286))
      *     .onDuplicateKeyUpdate
      *     .setValues(_.population)
      * }}}

@@ -22,7 +22,7 @@ case class TableQueryImpl[A](
 
 object TableQuery:
 
-  def apply[T <: AbstractTable[?]](table: T): AbstractTableQuery[T, T] =
+  def apply[E, T <: AbstractTable[E]](table: T): AbstractTableQuery[T, T] =
     TableQueryImpl[T](table, table.*, table.$name, List.empty)
 
   inline def apply[T <: AbstractTable[?]]: AbstractTableQuery[T, T] = ${ applyImpl[T] }
@@ -35,4 +35,4 @@ object TableQuery:
       .appliedToArgs(List.empty)
       .asExprOf[T]
 
-    '{ apply[T]($table) }
+    '{ apply[AbstractTableQuery.Extract[T], T]($table) }

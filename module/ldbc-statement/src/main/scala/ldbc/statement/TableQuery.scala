@@ -79,8 +79,6 @@ trait TableQuery[A, O]:
    *
    * @param func
    *   Function to construct an expression using the columns that Table has.
-   * @param values
-   *   Value to be inserted into the table
    * @tparam C
    *   Scala types to be converted by Encoder
    */
