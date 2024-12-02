@@ -58,7 +58,9 @@ object Insert:
         params
       )
 
-    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using Encoder[B]): Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using
+      Encoder[B]
+    ): Insert.DuplicateKeyUpdate[A] =
       Insert.DuplicateKeyUpdate(
         table,
         s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).name } = ?",
@@ -99,14 +101,16 @@ object Insert:
     override def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A] =
       Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE ${columns(table).duplicateKeyUpdateStatement}",
+        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).duplicateKeyUpdateStatement }",
         params
       )
 
-    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using Encoder[B]): Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using
+      Encoder[B]
+    ): Insert.DuplicateKeyUpdate[A] =
       Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE ${columns(table).name} = ?",
+        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).name } = ?",
         params :+ Parameter.Dynamic(value)
       )
 
