@@ -81,14 +81,14 @@ trait TableQuery[A, O]:
    * 
    * {{{
    *    TableQuery[City]
-   *    .insertInto(city => city.id *: city.name)
-   *    .select(
-   *      TableQuery[Country]
-   *        .join(TableQuery[City])
-   *        .on((country, city) => country.id === city.countryId)
-   *        .select((country, city) => country.id *: city.name)
-   *        .where((country, city) => city.population > 1000000)
-   *    )
+   *      .insertInto(city => city.id *: city.name)
+   *      .select(
+   *        TableQuery[Country]
+   *          .join(TableQuery[City])
+   *          .on((country, city) => country.id === city.countryId)
+   *          .select((country, city) => country.id *: city.name)
+   *          .where((country, city) => city.population > 1000000)
+   *      )
    * }}}
    *
    * @param func
