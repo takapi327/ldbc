@@ -35,7 +35,7 @@ case class Join[A, B, AB, OO](
    * @param expression
    *   Trait for the syntax of expressions available in MySQL.
    */
-  def on(expression: AB => Expression): TableQuery[AB, OO] =
+  def on(expression: AB => Expression): Join.On[A, B, AB, OO] =
     val expr = expression(table)
     Join.On(left, right, table, s"$statement ON ${ expr.statement }", params ++ expr.parameter)
 

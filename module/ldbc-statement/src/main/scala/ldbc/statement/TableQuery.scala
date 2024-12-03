@@ -76,6 +76,20 @@ trait TableQuery[A, O]:
    *     .insertInto(city => city.id *: city.name)
    *     .values((1L, "Tokyo"))
    * }}}
+   * 
+   * If you want to use a join, consider using select as follows
+   * 
+   * {{{
+   *    TableQuery[City]
+   *    .insertInto(city => city.id *: city.name)
+   *    .select(
+   *      TableQuery[Country]
+   *        .join(TableQuery[City])
+   *        .on((country, city) => country.id === city.countryId)
+   *        .select((country, city) => country.id *: city.name)
+   *        .where((country, city) => city.population > 1000000)
+   *    )
+   * }}}
    *
    * @param func
    *   Function to construct an expression using the columns that Table has.
@@ -84,22 +98,7 @@ trait TableQuery[A, O]:
    */
   inline def insertInto[C](func: A => Column[C]): Insert.Into[A, C] =
     inline this match
-      case Join.On(_, _, _, _, _) => error("""
-          |Insert operations are not supported for tables using Join.
-          |Instead, consider inserting the result of a join query to the Insert statement below.
-          |
-          |```scala
-          |TableQuery[City]
-          |  .insertInto(city => city.id *: city.name)
-          |  .select(
-          |    TableQuery[Country]
-          |      .join(TableQuery[City])
-          |      .on((country, city) => country.id === city.countryId)
-          |      .select((country, city) => country.id *: city.name)
-          |      .where((country, city) => city.population > 1000000)
-          |  )
-          |```
-          |""".stripMargin)
+      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ => Insert.Into(table, s"INSERT INTO $name", func(table))
 
   /**
