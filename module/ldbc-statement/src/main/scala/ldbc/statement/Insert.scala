@@ -75,7 +75,7 @@ object Insert:
      * {{{
      *   TableQuery[City]
      *     .insertInto(city => city.id *: city.name)
-     *     .values(1L, "Tokyo")
+     *     .values((1L, "Tokyo"))
      * }}}
      *
      * @param values

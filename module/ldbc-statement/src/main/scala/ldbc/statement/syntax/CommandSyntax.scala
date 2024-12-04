@@ -19,9 +19,7 @@ trait CommandSyntax[F[_]]:
      *
      * {{{
      *   TableQuery[User]
-     *     .update(user => user.id *: user.name *: user.age)(
-     *       (1L, "Alice", 20)
-     *     )
+     *     .update(user => user.id *: user.name *: user.age)((1L, "Alice", 20))
      *     .where(_.id === 1L)
      *     .update
      * }}}
@@ -36,9 +34,8 @@ trait CommandSyntax[F[_]]:
      *
      * {{{
      *   TableQuery[User]
-     *     .insertInto(user => user.name *: user.age)(
-     *       ("Alice", 20)
-     *     )
+     *     .insertInto(user => user.name *: user.age)
+     *     .values(("Alice", 20))
      *     .returning[Long]
      * }}}
      *

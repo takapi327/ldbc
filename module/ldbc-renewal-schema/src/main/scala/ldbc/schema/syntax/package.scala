@@ -14,9 +14,12 @@ import cats.effect.*
 import cats.syntax.all.*
 
 import ldbc.sql.*
-import ldbc.dsl.codec.Decoder
+
 import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
+import ldbc.dsl.codec.Decoder
+
 import ldbc.statement.{ Command, Query }
+import ldbc.statement.syntax.*
 
 package object syntax:
 
@@ -28,7 +31,7 @@ package object syntax:
 
       inline def queryTo[P <: Product](using
         m1:    Mirror.ProductOf[P],
-        m2:    Mirror.ProductOf[A],
+        m2:    Mirror.ProductOf[B],
         check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
       ): DslQuery[F, P] =
         inline erasedValue[P] match
