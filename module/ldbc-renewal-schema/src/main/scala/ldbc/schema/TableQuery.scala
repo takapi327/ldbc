@@ -36,11 +36,11 @@ case class TableQueryImpl[A <: AbstractTable[?]](
       .asInstanceOf[AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]]
 
 private[ldbc] case class TableQueryOpt[A, O](
-                                                             table: O,
-                                                             column: Column[AbstractTableQuery.Extract[O]],
-                                                             name: String,
-                                                             params: List[Parameter.Dynamic]
-                                                           ) extends AbstractTableQuery[O, A]:
+  table:  O,
+  column: Column[AbstractTableQuery.Extract[O]],
+  name:   String,
+  params: List[Parameter.Dynamic]
+) extends AbstractTableQuery[O, A]:
 
   override private[ldbc] def toOption: AbstractTableQuery[O, A] = this
 
@@ -49,9 +49,14 @@ object TableQuery:
   def apply[E, T <: AbstractTable[E]](table: T): AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]] =
     TableQueryImpl[T](table, table.*, table.$name, List.empty)
 
-  inline def apply[T <: AbstractTable[?]]: AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]] = ${ applyImpl[T] }
+  inline def apply[T <: AbstractTable[?]]: AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]] = ${
+    applyImpl[T]
+  }
 
-  private def applyImpl[T <: AbstractTable[?]](using quotes: Quotes, tpe: Type[T]): Expr[AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]]] =
+  private def applyImpl[T <: AbstractTable[?]](using
+    quotes: Quotes,
+    tpe:    Type[T]
+  ): Expr[AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]]] =
     import quotes.reflect.*
     val tableType = TypeRepr.of[T]
     val table = Select
