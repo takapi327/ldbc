@@ -8,7 +8,7 @@ import ScalaVersions.*
 
 object Dependencies {
 
-  val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.6"
+  val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.7"
 
   val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
 
