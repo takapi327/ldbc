@@ -62,6 +62,8 @@ trait Column[T]:
 
   private lazy val noBagQuotLabel: String = alias.getOrElse(name)
 
+  private[ldbc] def list: List[Column[?]] = List(this)
+
   def _equals(value: Extract[T])(using Encoder[Extract[T]]): MatchCondition[T] =
     MatchCondition[T](noBagQuotLabel, false, value)
 
@@ -646,6 +648,8 @@ object Column extends TwiddleSyntax[Column]:
             yield v1(v2)
           )
           Impl[Option[B]](name, alias, decoder, Some(values), Some(updateStatement))
+        override private[ldbc] def list: List[Column[?]] =
+          if ff.name.isEmpty then fa.list else ff.list ++ fa.list 
 
   case class Pure[T](value: T) extends Column[T]:
     override def name:             String         = ""
@@ -657,6 +661,7 @@ object Column extends TwiddleSyntax[Column]:
     override def updateStatement:             String = ""
     override def duplicateKeyUpdateStatement: String = ""
     override def values:                      Int    = 0
+    override private[ldbc] def list: List[Column[?]] = List.empty
 
   def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
     Impl[T](name)
