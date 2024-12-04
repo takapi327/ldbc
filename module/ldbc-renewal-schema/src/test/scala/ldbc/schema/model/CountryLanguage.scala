@@ -10,11 +10,11 @@ import ldbc.dsl.codec.*
 import ldbc.schema.*
 
 case class CountryLanguage(
-                            countryCode: String,
-                            language: String,
-                            isOfficial: CountryLanguage.IsOfficial,
-                            percentage: BigDecimal
-                          )
+  countryCode: String,
+  language:    String,
+  isOfficial:  CountryLanguage.IsOfficial,
+  percentage:  BigDecimal
+)
 
 object CountryLanguage:
 
@@ -31,9 +31,9 @@ object CountryLanguage:
 
 class CountryLanguageTable extends Table[CountryLanguage]("countrylanguage"):
 
-  def countryCode: Column[String] = column[String]("CountryCode")
-  def language: Column[String] = column[String]("Language")
-  def isOfficial: Column[CountryLanguage.IsOfficial] = column[CountryLanguage.IsOfficial]("IsOfficial")
-  def percentage: Column[BigDecimal] = column[BigDecimal]("Percentage")
+  def countryCode: Column[String]                     = column[String]("CountryCode")
+  def language:    Column[String]                     = column[String]("Language")
+  def isOfficial:  Column[CountryLanguage.IsOfficial] = column[CountryLanguage.IsOfficial]("IsOfficial")
+  def percentage:  Column[BigDecimal]                 = column[BigDecimal]("Percentage")
 
   override def * : Column[CountryLanguage] = (countryCode *: language *: isOfficial *: percentage).to[CountryLanguage]

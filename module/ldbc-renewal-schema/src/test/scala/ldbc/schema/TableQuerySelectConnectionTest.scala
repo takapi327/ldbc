@@ -22,19 +22,19 @@ class TableQuerySelectConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
-  private val country = TableQuery[CountryTable]
-  private val city = TableQuery[CityTable]
-  private val countryLanguage = TableQuery[CountryLanguageTable]
+  private val country          = TableQuery[CountryTable]
+  private val city             = TableQuery[CityTable]
+  private val countryLanguage  = TableQuery[CountryLanguageTable]
   private val governmentOffice = TableQuery[GovernmentOfficeTable]
 
   val connection = Connection[IO](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
-      password = Some("password"),
-      database = Some("world"),
-      ssl = SSL.Trusted
-    )
+    host     = "127.0.0.1",
+    port     = 13306,
+    user     = "ldbc",
+    password = Some("password"),
+    database = Some("world"),
+    ssl      = SSL.Trusted
+  )
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
@@ -286,13 +286,13 @@ class TableQuerySelectConnectionTest extends CatsEffectSuite:
         (for
           codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
           cities <- codeOpt match
-            case None => Executor.pure[IO, List[(String, String)]](List.empty)
-            case Some(code) =>
-              city
-                .select(v => v.name *: v.countryCode)
-                .where(_.countryCode _equals code)
-                .query
-                .to[List]
+                      case None => Executor.pure[IO, List[(String, String)]](List.empty)
+                      case Some(code) =>
+                        city
+                          .select(v => v.name *: v.countryCode)
+                          .where(_.countryCode _equals code)
+                          .query
+                          .to[List]
         yield cities.length).readOnly(conn)
       },
       248
@@ -493,22 +493,22 @@ class TableQuerySelectConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         (for
           _ <- (country += Country(
-            "XXX",
-            "XXX",
-            Country.Continent.Asia,
-            "XXX",
-            BigDecimal(0),
-            None,
-            0,
-            None,
-            None,
-            None,
-            "XXX",
-            "XXX",
-            None,
-            None,
-            "XX"
-          )).update
+                 "XXX",
+                 "XXX",
+                 Country.Continent.Asia,
+                 "XXX",
+                 BigDecimal(0),
+                 None,
+                 0,
+                 None,
+                 None,
+                 None,
+                 "XXX",
+                 "XXX",
+                 None,
+                 None,
+                 "XX"
+               )).update
           result <-
             (governmentOffice rightJoin city)
               .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)

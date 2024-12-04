@@ -11,17 +11,17 @@ import java.time.LocalDate
 import ldbc.schema.*
 
 case class GovernmentOffice(
-                             id: Int,
-                             cityId: Int,
-                             name: String,
-                             establishmentDate: Option[LocalDate]
-                           )
+  id:                Int,
+  cityId:            Int,
+  name:              String,
+  establishmentDate: Option[LocalDate]
+)
 
 class GovernmentOfficeTable extends Table[GovernmentOffice]("government_office"):
 
-  def id: Column[Int] = column[Int]("ID")
-  def cityId: Column[Int] = column[Int]("CityID")
-  def name: Column[String] = column[String]("Name")
+  def id:                Column[Int]               = column[Int]("ID")
+  def cityId:            Column[Int]               = column[Int]("CityID")
+  def name:              Column[String]            = column[String]("Name")
   def establishmentDate: Column[Option[LocalDate]] = column[Option[LocalDate]]("EstablishmentDate")
 
   override def * : Column[GovernmentOffice] = (id *: cityId *: name *: establishmentDate).to[GovernmentOffice]
