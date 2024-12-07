@@ -49,7 +49,7 @@ private[ldbc] trait Alias:
     PrimaryKey(Some(indexType), columns, None)
 
   def PRIMARY_KEY[T](
-    columns:   Column[T],
+    columns:     Column[T],
     indexOption: Index.IndexOption
   ): PrimaryKey & Index[T] =
     PrimaryKey(None, columns, Some(indexOption))
@@ -70,14 +70,14 @@ private[ldbc] trait Alias:
 
   def UNIQUE_KEY[T](
     indexName: String,
-    columns: Column[T]
+    columns:   Column[T]
   ): UniqueKey & Index[T] =
     UniqueKey(Some(indexName), None, columns, None)
 
   def UNIQUE_KEY[T](
     indexName: String,
     indexType: Index.Type,
-    columns: Column[T]
+    columns:   Column[T]
   ): UniqueKey & Index[T] =
     UniqueKey(Some(indexName), Some(indexType), columns, None)
 
@@ -85,57 +85,57 @@ private[ldbc] trait Alias:
     indexName:   String,
     indexType:   Index.Type,
     indexOption: Index.IndexOption,
-    columns: Column[T]
+    columns:     Column[T]
   ): UniqueKey & Index[T] = UniqueKey(Some(indexName), Some(indexType), columns, Some(indexOption))
 
   def UNIQUE_KEY[T](
     indexName:   Option[String],
     indexType:   Option[Index.Type],
     indexOption: Option[Index.IndexOption],
-    columns: Column[T]
+    columns:     Column[T]
   ): UniqueKey & Index[T] = UniqueKey(indexName, indexType, columns, indexOption)
 
   def INDEX_KEY[T](columns: Column[T]): IndexKey[T] =
     IndexKey(None, None, columns, None)
 
   def INDEX_KEY[T](
-                 indexName: Option[String],
-                 indexType: Option[Index.Type],
-                 indexOption: Option[Index.IndexOption],
-                 columns: Column[T]
-               ): IndexKey[T] =
+    indexName:   Option[String],
+    indexType:   Option[Index.Type],
+    indexOption: Option[Index.IndexOption],
+    columns:     Column[T]
+  ): IndexKey[T] =
     IndexKey(indexName, indexType, columns, indexOption)
 
   def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey[?]): Constraint = Constraint(None, key)
 
   def CONSTRAINT(
-                  symbol: String,
-                  key: PrimaryKey | UniqueKey | ForeignKey[?]
-                ): Constraint = Constraint(Some(symbol), key)
+    symbol: String,
+    key:    PrimaryKey | UniqueKey | ForeignKey[?]
+  ): Constraint = Constraint(Some(symbol), key)
 
   def FOREIGN_KEY[T](
-                      columns: Column[T],
-                      reference: Reference[T]
-                    ): ForeignKey[T] = FOREIGN_KEY(None, columns, reference)
+    columns:   Column[T],
+    reference: Reference[T]
+  ): ForeignKey[T] = FOREIGN_KEY(None, columns, reference)
 
   def FOREIGN_KEY[T](
-                      name: Option[String],
-                      columns: Column[T],
-                      reference: Reference[T]
-                    ): ForeignKey[T] =
+    name:      Option[String],
+    columns:   Column[T],
+    reference: Reference[T]
+  ): ForeignKey[T] =
     ForeignKey(name, columns, reference)
 
   def FOREIGN_KEY[T](
-                      name: String,
-                      columns: Column[T],
-                      reference: Reference[T]
-                    ): ForeignKey[T] =
+    name:      String,
+    columns:   Column[T],
+    reference: Reference[T]
+  ): ForeignKey[T] =
     FOREIGN_KEY(Some(name), columns, reference)
 
   def REFERENCE[T](
-                    table: Table[?],
-                    columns: Column[T]
-                  ): Reference[T] = Reference(table, columns, None, None)
+    table:   Table[?],
+    columns: Column[T]
+  ): Reference[T] = Reference(table, columns, None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
 
