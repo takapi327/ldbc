@@ -7,7 +7,6 @@
 package ldbc.schema
 
 import ldbc.statement.Column
-import ldbc.schema.interpreter.*
 
 /**
  * Key to be set for the table

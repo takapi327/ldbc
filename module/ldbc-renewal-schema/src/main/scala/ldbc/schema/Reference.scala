@@ -8,8 +8,6 @@ package ldbc.schema
 
 import java.sql.DatabaseMetaData.*
 
-import ldbc.schema.interpreter.*
-
 /**
  * A model for setting reference options used for foreign key constraints, etc.
  *
