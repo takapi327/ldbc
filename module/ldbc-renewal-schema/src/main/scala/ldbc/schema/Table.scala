@@ -12,13 +12,27 @@ import scala.deriving.Mirror
 import ldbc.dsl.codec.Decoder
 import ldbc.statement.{ AbstractTable, Column }
 import ldbc.schema.interpreter.*
+import ldbc.schema.attribute.Attribute
 
-trait Table[T](val $name: String) extends AbstractTable[T]:
+trait Table[T](val $name: String) extends AbstractTable[T], Alias:
 
-  type Column[A] = ldbc.statement.Column[A]
+  protected final def column[A](name: String)(using elem: Decoder.Elem[A]): Column[A] =
+    val decoder = new Decoder[A]((resultSet, prefix) =>
+      elem.decode(resultSet, prefix.getOrElse(s"$$name.$name"))
+    )
+    ColumnImpl[A](name, Some(s"$$name.$name"), decoder, None, List.empty)
 
-  protected final def column[A](name: String)(using Decoder.Elem[A]): Column[A] =
-    ldbc.statement.Column[A](name, $name)
+  protected final def column[A](name: String, dataType: DataType[A])(using elem: Decoder.Elem[A]): Column[A] =
+    val decoder = new Decoder[A]((resultSet, prefix) =>
+      elem.decode(resultSet, prefix.getOrElse(s"$$name.$name"))
+    )
+    ColumnImpl[A](name, Some(s"$$name.$name"), decoder, Some(dataType), List.empty)
+
+  protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using elem: Decoder.Elem[A]): Column[A] =
+    val decoder = new Decoder[A]((resultSet, prefix) =>
+      elem.decode(resultSet, prefix.getOrElse(s"$$name.$name"))
+    )
+    ColumnImpl[A](name, Some(s"$$name.$name"), decoder, Some(dataType), attributes.toList)
 
   override final def statement: String = $name
 
