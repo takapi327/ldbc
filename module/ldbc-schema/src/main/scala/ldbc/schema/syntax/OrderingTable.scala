@@ -6,7 +6,7 @@
 
 package ldbc.schema.syntax
 
-import ldbc.schema.{ Constraint, ForeignKey, TableImpl }
+import ldbc.schema.{ Constraint, ForeignKey, Table }
 
 /**
  * Trait that provides for sorting an array of tables.
@@ -19,7 +19,7 @@ trait OrderingTable:
    * @param table
    *   Trait for generating SQL table information.
    */
-  private def calculateWeightByReference(table: TableImpl[?, ?, ?]): Int =
+  private def calculateWeightByReference(table: Table[?]): Int =
     if table.keyDefinitions.nonEmpty then
       table.keyDefinitions.map {
         case _: ForeignKey[?] => 1
@@ -31,9 +31,9 @@ trait OrderingTable:
       }.sum
     else 0
 
-  given Ordering[TableImpl[?, ?, ?]] with
+  given Ordering[Table[?]] with
 
-    override def compare(x: TableImpl[?, ?, ?], y: TableImpl[?, ?, ?]): Int =
+    override def compare(x: Table[?], y: Table[?]): Int =
       val calculateWeightX = calculateWeightByReference(x)
       val calculateWeightY = calculateWeightByReference(y)
       if calculateWeightX < calculateWeightY then -1

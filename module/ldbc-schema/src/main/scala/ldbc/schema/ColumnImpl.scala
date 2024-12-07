@@ -8,7 +8,7 @@ package ldbc.schema
 
 import ldbc.sql.ResultSet
 import ldbc.dsl.codec.Decoder
-import ldbc.query.builder.Column
+import ldbc.statement.Column
 import ldbc.schema.attribute.Attribute
 
 /**
@@ -35,7 +35,14 @@ case class ColumnImpl[T](
   decoder:    Decoder[T]
 ) extends Column[T]:
 
-  override def as(name: String): Column[T] = ColumnImpl[T](this.name, Some(name), dataType, attributes, decoder)
+  override def as(name: String): Column[T] =
+    this.copy(
+      alias   = Some(name),
+      decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => decoder.decode(resultSet, Some(name)))
+    )
+
+  override def updateStatement:             String = s"$name = ?"
+  override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
   /**
    * Define SQL query string for each Column
@@ -46,8 +53,6 @@ case class ColumnImpl[T](
   def queryString: String =
     val str = s"`$name` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
     alias.fold(str)(name => s"$name.$str")
-
-  override def toString: String = alias.fold(s"`$name`")(name => s"$name.`${ this.name }`")
 
 object Column:
 

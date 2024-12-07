@@ -78,18 +78,41 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .dependsOn(sql)
 
+lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("statement", "Project for building type-safe statements")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "twiddles-core" % "0.8.0",
+      "org.scalatest" %%% "scalatest"     % "3.2.18" % Test
+    )
+  )
+  .dependsOn(dsl)
+  .platformsEnablePlugins(JVMPlatform, JSPlatform, NativePlatform)(
+    spray.boilerplate.BoilerplatePlugin
+  )
+
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
-  .dependsOn(dsl)
+  .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("schema", "Type safety schema construction project")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .settings(Test / scalacOptions -= "-Werror")
-  .dependsOn(queryBuilder)
+  .dependsOn(statement)
+
+// TODO: Scheduled to be replaced with schema after renewal. It will not be published under this project name.
+lazy val renewalSchema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("renewal-schema", "Type safety schema construction project")
+  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
+  .settings(libraryDependencies += "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test)
+  .dependsOn(statement, connector)
+  .enablePlugins(NoPublishPlugin)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
@@ -118,7 +141,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
-  .dependsOn(schema)
+  .dependsOn(queryBuilder, schema)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -213,7 +236,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, schema.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
@@ -244,8 +267,10 @@ lazy val ldbc = tlCrossRootProject
     jdbcConnector,
     connector,
     dsl,
+    statement,
     queryBuilder,
     schema,
+    renewalSchema,
     codegen,
     plugin,
     tests,

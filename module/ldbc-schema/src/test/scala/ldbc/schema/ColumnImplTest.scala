@@ -6,7 +6,6 @@
 
 package ldbc.schema
 
-import ldbc.schema.Character.*
 import ldbc.schema.DataType.*
 import ldbc.schema.attribute.AutoInc
 

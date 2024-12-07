@@ -10,13 +10,12 @@ import java.time.*
 import java.time.Year as JYear
 
 import ldbc.dsl.codec.Decoder
-import ldbc.query.builder.interpreter.Tuples
 import ldbc.schema.attribute.*
+import ldbc.schema.interpreter.*
 
 private[ldbc] trait Alias:
 
-  type Table[P <: Product] = ldbc.query.builder.Table[P]
-  type Column[T]           = ldbc.query.builder.Column[T]
+  type Column[T] = ldbc.statement.Column[T]
 
   def column[T](
     label:    String,
@@ -185,21 +184,21 @@ private[ldbc] trait Alias:
   def FOREIGN_KEY[T <: Tuple](
     columns:   T,
     reference: Reference[T]
-  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+  )(using IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](None, columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
     name:      String,
     columns:   T,
     reference: Reference[T]
-  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+  )(using IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](Some(name), columns, reference)
 
   def FOREIGN_KEY[T <: Tuple](
     name:      Option[String],
     columns:   T,
     reference: Reference[T]
-  )(using Tuples.IsColumn[T] =:= true): ForeignKey[T] =
+  )(using IsColumn[T] =:= true): ForeignKey[T] =
     ForeignKey[T](name, columns, reference)
 
   def REFERENCE[T](
@@ -210,7 +209,7 @@ private[ldbc] trait Alias:
   def REFERENCE[T <: Tuple](
     table:   Table[?],
     columns: T
-  )(using Tuples.IsColumn[T] =:= true): Reference[T] =
+  )(using IsColumn[T] =:= true): Reference[T] =
     Reference[T](table, columns, None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]

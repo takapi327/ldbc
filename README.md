@@ -39,6 +39,7 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 | `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
 | `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
 | `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
@@ -149,7 +150,7 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "latest"
 
 ldbc uses classes to construct queries.
 
-```scala
+```scala 3
 import ldbc.query.builder.Table
 
 case class User(
@@ -162,9 +163,9 @@ case class User(
 The next step is to create a Table using the classes you have created.
 
 ```scala
-import ldbc.query.builder.Table
+import ldbc.query.builder.TableQuery
 
-val userTable = Table[User]
+val userTable = TableQuery[User]
 ```
 
 Finally, you can use the query builder to create a query.
@@ -196,7 +197,7 @@ The next step is to create a schema for use by the query builder.
 
 ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
 
-```scala
+```scala 3
 import ldbc.schema.*
 
 case class User(
@@ -205,16 +206,18 @@ case class User(
   age: Option[Int],
 )
 
-val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)                                                    // )
+object User:
+  val table = Table[User]("user")(                 // CREATE TABLE `user` (
+    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
+    column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
+  )                                                    // )
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
+val userTable = TableQuery[User](User.table)
 val result: IO[List[User]] = connection.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
