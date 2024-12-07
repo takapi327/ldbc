@@ -39,92 +39,103 @@ private[ldbc] trait Alias:
   def PRIMARY_KEY[T]: PrimaryKey & Attribute[T] = new PrimaryKey with Attribute[T]:
     override def queryString: String = label
 
-  def PRIMARY_KEY(keyPart: Column[?]): PrimaryKey & Index =
-    PrimaryKey(None, List(keyPart), None)
+  def PRIMARY_KEY[T](columns: Column[T]): PrimaryKey & Index[T] =
+    PrimaryKey(None, columns, None)
 
-  def PRIMARY_KEY(keyPart: Column[?]*): PrimaryKey & Index =
-    require(
-      keyPart.nonEmpty,
-      "At least one column must always be specified."
-    )
-    PrimaryKey(None, keyPart.toList, None)
-
-  def PRIMARY_KEY(
+  def PRIMARY_KEY[T](
     indexType: Index.Type,
-    keyPart:   Column[?]*
-  ): PrimaryKey & Index =
-    require(
-      keyPart.nonEmpty,
-      "At least one column must always be specified."
-    )
-    PrimaryKey(Some(indexType), keyPart.toList, None)
+    columns:   Column[T]
+  ): PrimaryKey & Index[T] =
+    PrimaryKey(Some(indexType), columns, None)
 
-  def PRIMARY_KEY(
-    keyPart:     List[Column[?]],
+  def PRIMARY_KEY[T](
+    columns:   Column[T],
     indexOption: Index.IndexOption
-  ): PrimaryKey & Index =
-    require(
-      keyPart.nonEmpty,
-      "At least one column must always be specified."
-    )
-    PrimaryKey(None, keyPart, Some(indexOption))
+  ): PrimaryKey & Index[T] =
+    PrimaryKey(None, columns, Some(indexOption))
 
-  def PRIMARY_KEY(
+  def PRIMARY_KEY[T](
     indexType:   Index.Type,
     indexOption: Index.IndexOption,
-    keyPart:     Column[?]*
-  ): PrimaryKey & Index =
-    require(
-      keyPart.nonEmpty,
-      "At least one column must always be specified."
-    )
-    PrimaryKey(Some(indexType), keyPart.toList, Some(indexOption))
+    columns:     Column[T]
+  ): PrimaryKey & Index[T] =
+    PrimaryKey(Some(indexType), columns, Some(indexOption))
 
   def UNIQUE_KEY[T]: UniqueKey & Attribute[T] = new UniqueKey with Attribute[T]:
     override def indexName:   Option[String] = None
     override def queryString: String         = label
 
-  def UNIQUE_KEY(keyPart: Column[?]*): UniqueKey & Index =
-    require(
-      keyPart.nonEmpty,
-      "At least one column must always be specified."
-    )
-    UniqueKey(None, None, keyPart.toList, None)
+  def UNIQUE_KEY[T](columns: Column[T]): UniqueKey & Index[T] =
+    UniqueKey(None, None, columns, None)
 
-  def UNIQUE_KEY(
+  def UNIQUE_KEY[T](
     indexName: String,
-    keyPart:   Column[?]*
-  ): UniqueKey & Index =
-    require(
-      keyPart.nonEmpty,
-      "At least one column must always be specified."
-    )
-    UniqueKey(Some(indexName), None, keyPart.toList, None)
+    columns: Column[T]
+  ): UniqueKey & Index[T] =
+    UniqueKey(Some(indexName), None, columns, None)
 
-  def UNIQUE_KEY(
+  def UNIQUE_KEY[T](
     indexName: String,
     indexType: Index.Type,
-    keyPart:   Column[?]*
-  ): UniqueKey & Index =
-    require(
-      keyPart.nonEmpty,
-      "At least one column must always be specified."
-    )
-    UniqueKey(Some(indexName), Some(indexType), keyPart.toList, None)
+    columns: Column[T]
+  ): UniqueKey & Index[T] =
+    UniqueKey(Some(indexName), Some(indexType), columns, None)
 
-  def UNIQUE_KEY(
+  def UNIQUE_KEY[T](
     indexName:   String,
     indexType:   Index.Type,
     indexOption: Index.IndexOption,
-    keyPart:     Column[?]*
-  ): UniqueKey & Index = UniqueKey(Some(indexName), Some(indexType), keyPart.toList, Some(indexOption))
+    columns: Column[T]
+  ): UniqueKey & Index[T] = UniqueKey(Some(indexName), Some(indexType), columns, Some(indexOption))
 
-  def UNIQUE_KEY(
+  def UNIQUE_KEY[T](
     indexName:   Option[String],
     indexType:   Option[Index.Type],
     indexOption: Option[Index.IndexOption],
-    keyPart:     Column[?]*
-  ): UniqueKey & Index = UniqueKey(indexName, indexType, keyPart.toList, indexOption)
+    columns: Column[T]
+  ): UniqueKey & Index[T] = UniqueKey(indexName, indexType, columns, indexOption)
+
+  def INDEX_KEY[T](columns: Column[T]): IndexKey[T] =
+    IndexKey(None, None, columns, None)
+
+  def INDEX_KEY[T](
+                 indexName: Option[String],
+                 indexType: Option[Index.Type],
+                 indexOption: Option[Index.IndexOption],
+                 columns: Column[T]
+               ): IndexKey[T] =
+    IndexKey(indexName, indexType, columns, indexOption)
+
+  def CONSTRAINT(key: PrimaryKey | UniqueKey | ForeignKey[?]): Constraint = Constraint(None, key)
+
+  def CONSTRAINT(
+                  symbol: String,
+                  key: PrimaryKey | UniqueKey | ForeignKey[?]
+                ): Constraint = Constraint(Some(symbol), key)
+
+  def FOREIGN_KEY[T](
+                      columns: Column[T],
+                      reference: Reference[T]
+                    ): ForeignKey[T] = FOREIGN_KEY(None, columns, reference)
+
+  def FOREIGN_KEY[T](
+                      name: Option[String],
+                      columns: Column[T],
+                      reference: Reference[T]
+                    ): ForeignKey[T] =
+    ForeignKey(name, columns, reference)
+
+  def FOREIGN_KEY[T](
+                      name: String,
+                      columns: Column[T],
+                      reference: Reference[T]
+                    ): ForeignKey[T] =
+    FOREIGN_KEY(Some(name), columns, reference)
+
+  def REFERENCE[T](
+                    table: Table[?],
+                    columns: Column[T]
+                  ): Reference[T] = Reference(table, columns, None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
 

@@ -30,6 +30,11 @@ trait Table[T](val $name: String) extends AbstractTable[T], Alias:
     val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, Some(dataType), attributes.toList)
 
+  /**
+   * Methods for setting key information for tables.
+   */
+  def keys: List[Key] = List.empty
+
   override final def statement: String = $name
 
   override def toString: String = s"Table($$name)"
