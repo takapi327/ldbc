@@ -14,9 +14,9 @@ class AliasTest extends AnyFlatSpec, Matchers:
   case class Test(id: Long, subId: String, status: Int)
 
   class TestTable extends Table[Test]("test"):
-    def id: Column[Long] = column[Long]("id", BIGINT)
-    def subId: Column[String] = column[String]("sub_id", VARCHAR(255))
-    def status: Column[Int] = column[Int]("status", INT)
+    def id:     Column[Long]   = column[Long]("id", BIGINT)
+    def subId:  Column[String] = column[String]("sub_id", VARCHAR(255))
+    def status: Column[Int]    = column[Int]("status", INT)
 
     override def * = (id *: subId *: status).to[Test]
 
@@ -97,8 +97,8 @@ class AliasTest extends AnyFlatSpec, Matchers:
     case class SubTest(id: String, status: Int)
 
     class SubTestTable extends Table[SubTest]("sub_test"):
-      def id: Column[String] = column[String]("id", VARCHAR(255))
-      def status: Column[Int] = column[Int]("status", INT)
+      def id:     Column[String] = column[String]("id", VARCHAR(255))
+      def status: Column[Int]    = column[Int]("status", INT)
 
       override def * = (id *: status).to[SubTest]
 

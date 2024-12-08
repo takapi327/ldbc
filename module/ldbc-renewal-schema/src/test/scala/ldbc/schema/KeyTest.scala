@@ -9,14 +9,14 @@ package ldbc.schema
 import org.scalatest.flatspec.AnyFlatSpec
 
 class KeyTest extends AnyFlatSpec:
-  
+
   case class Test(id: Long, subId: Long)
   class TestTable extends Table[Test]("test"):
-    def id: Column[Long] = column[Long]("id", BIGINT)
+    def id:    Column[Long] = column[Long]("id", BIGINT)
     def subId: Column[Long] = column[Long]("sub_id", BIGINT)
-    
+
     override def * = (id *: subId).to[Test]
-    
+
   val testTable = new TestTable
 
   it should "[1] The query string of the generated IndexKey model matches the specified string." in {
