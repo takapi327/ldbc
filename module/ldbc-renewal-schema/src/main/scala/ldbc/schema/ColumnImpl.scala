@@ -30,14 +30,3 @@ private[ldbc] case class ColumnImpl[T](
       .mkString("")
   override def updateStatement:             String = s"$name = ?"
   override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
-
-  /**
-   * Define SQL query string for each Column
-   *
-   * @return
-   *   SQL query string
-   */
-  def queryString: String =
-    dataType.fold(s"`$name`")(dataType => s"`$name` ${ dataType.queryString }") + attributes
-      .map(v => s" ${ v.queryString }")
-      .mkString("")
