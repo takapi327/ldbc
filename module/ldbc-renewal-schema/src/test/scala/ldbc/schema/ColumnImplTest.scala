@@ -15,14 +15,17 @@ import ldbc.schema.attribute.*
 class ColumnImplTest extends AnyFlatSpec:
 
   private def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-                                                                                elem: Decoder.Elem[A]
+    elem: Decoder.Elem[A]
   ): Column[A] =
     val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(name)))
     ColumnImpl[A](name, None, decoder, Some(dataType), attributes.toList)
 
   it should "The query string of the Column model generated with only label and DataType matches the specified string." in {
     column[Long]("id", BIGINT).statement === "id BIGINT NOT NULL" &&
-    column[String]("name", VARCHAR(255).CHARACTER_SET(Character.ascii)).statement === "name VARCHAR(255) CHARACTER SET ascii NOT NULL"
+    column[String](
+      "name",
+      VARCHAR(255).CHARACTER_SET(Character.ascii)
+    ).statement === "name VARCHAR(255) CHARACTER SET ascii NOT NULL"
   }
 
   it should "The query string of the Column model generated with only label and DataType and comment matches the specified string." in {
@@ -31,17 +34,17 @@ class ColumnImplTest extends AnyFlatSpec:
       BIGINT,
       COMMENT("identifier")
     ).statement === "id BIGINT NOT NULL COMMENT 'identifier'" &&
-      column[String](
-        "name",
-        VARCHAR(255).CHARACTER_SET(Character.ascii),
-        COMMENT("name")
-      ).statement === "name VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'" &&
-      column[String](
-        "name",
-        VARCHAR(255).CHARACTER_SET(Character.ascii).COLLATE(Collate.ascii_bin),
-        COMMENT("name")
-      ).statement === "name VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'" &&
-      column[BigInt]("id", SERIAL).statement === "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY"
+    column[String](
+      "name",
+      VARCHAR(255).CHARACTER_SET(Character.ascii),
+      COMMENT("name")
+    ).statement === "name VARCHAR(255) CHARACTER SET ascii NOT NULL COMMENT 'name'" &&
+    column[String](
+      "name",
+      VARCHAR(255).CHARACTER_SET(Character.ascii).COLLATE(Collate.ascii_bin),
+      COMMENT("name")
+    ).statement === "name VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'" &&
+    column[BigInt]("id", SERIAL).statement === "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY"
   }
 
   it should "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {

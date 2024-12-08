@@ -24,9 +24,10 @@ private[ldbc] case class ColumnImpl[T](
       decoder = new Decoder[T]((resultSet, prefix) => decoder.decode(resultSet, Some(name)))
     )
 
-  override def statement: String = dataType.fold(s"`$name`")(dataType => s"`$name` ${ dataType.queryString }") + attributes
-    .map(v => s" ${ v.queryString }")
-    .mkString("")
+  override def statement: String =
+    dataType.fold(s"`$name`")(dataType => s"`$name` ${ dataType.queryString }") + attributes
+      .map(v => s" ${ v.queryString }")
+      .mkString("")
   override def updateStatement:             String = s"$name = ?"
   override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
