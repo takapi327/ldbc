@@ -33,11 +33,11 @@ class AliasTest extends AnyFlatSpec, Matchers:
       testTable.id *: testTable.subId
     )
 
-    p1.queryString === "PRIMARY KEY" &&
-    p2.queryString === "PRIMARY KEY (id)" &&
-    p3.queryString === "PRIMARY KEY (id, sub_id)" &&
-    p4.queryString === "PRIMARY KEY (id, sub_id) USING BTREE" &&
-    p5.queryString === "PRIMARY KEY (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1"
+    assert(p1.queryString === "PRIMARY KEY")
+    assert(p2.queryString === "PRIMARY KEY (sub_id)")
+    assert(p3.queryString === "PRIMARY KEY (id, sub_id)")
+    assert(p4.queryString === "PRIMARY KEY (id, sub_id) USING BTREE")
+    assert(p5.queryString === "PRIMARY KEY (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1")
   }
 
   it should "UNIQUE_KEY call succeeds" in {
@@ -55,13 +55,13 @@ class AliasTest extends AnyFlatSpec, Matchers:
     )
     val p7 = UNIQUE_KEY(None, None, None, testTable.id *: testTable.subId)
 
-    p1.queryString === "UNIQUE KEY" &&
-    p2.queryString === "UNIQUE KEY (id)" &&
-    p3.queryString === "UNIQUE KEY (id, sub_id)" &&
-    p4.queryString === "UNIQUE KEY `index` (id, sub_id)" &&
-    p5.queryString === "UNIQUE KEY `index` (id, sub_id) USING BTREE" &&
-    p6.queryString === "UNIQUE KEY `index` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1" &&
-    p7.queryString === "UNIQUE KEY (id, sub_id)"
+    assert(p1.queryString === "UNIQUE KEY")
+    assert(p2.queryString === "UNIQUE KEY (sub_id)")
+    assert(p3.queryString === "UNIQUE KEY (id, sub_id)")
+    assert(p4.queryString === "UNIQUE KEY `index` (id, sub_id)")
+    assert(p5.queryString === "UNIQUE KEY `index` (id, sub_id) USING BTREE")
+    assert(p6.queryString === "UNIQUE KEY `index` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1")
+    assert(p7.queryString === "UNIQUE KEY (id, sub_id)")
   }
 
   it should "INDEX_KEY call succeeds" in {
@@ -84,12 +84,12 @@ class AliasTest extends AnyFlatSpec, Matchers:
       testTable.id *: testTable.subId
     )
 
-    p1.queryString === "INDEX (id)" &&
-    p2.queryString === "INDEX (id, sub_id)" &&
-    p3.queryString === "INDEX (id, sub_id)" &&
-    p4.queryString === "INDEX `index` (id, sub_id)" &&
-    p5.queryString === "INDEX `index` (id, sub_id) USING BTREE" &&
-    p6.queryString === "INDEX `index` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1"
+    assert(p1.queryString === "INDEX (sub_id)")
+    assert(p2.queryString === "INDEX (id, sub_id)")
+    assert(p3.queryString === "INDEX (id, sub_id)")
+    assert(p4.queryString === "INDEX `index` (id, sub_id)")
+    assert(p5.queryString === "INDEX `index` (id, sub_id) USING BTREE")
+    assert(p6.queryString === "INDEX `index` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1")
   }
 
   it should "FOREIGN_KEY call succeeds" in {
@@ -110,6 +110,6 @@ class AliasTest extends AnyFlatSpec, Matchers:
       REFERENCE(subTestTable, subTestTable.id *: subTestTable.status)
     )
 
-    p1.queryString === "FOREIGN KEY (sub_id) REFERENCES sub_test (id)" &&
-    p2.queryString === "FOREIGN KEY (sub_id, status) REFERENCES sub_test (id, status)"
+    assert(p1.queryString === "FOREIGN KEY (sub_id) REFERENCES sub_test (id)")
+    assert(p2.queryString === "FOREIGN KEY (sub_id, status) REFERENCES sub_test (id, status)")
   }

@@ -30,7 +30,7 @@ case class Reference[T](
   private val label: String = "REFERENCES"
 
   def queryString: String =
-    s"$label `${ table.$name }` (${ columns.name })"
+    s"$label ${ table.$name } (${ columns.name })"
       + onDelete.fold("")(v => s" ON DELETE ${ v.label }")
       + onUpdate.fold("")(v => s" ON UPDATE ${ v.label }")
 
