@@ -61,7 +61,9 @@ class KeyTest extends AnyFlatSpec:
       testTable.id *: testTable.subId,
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), None, None, None))
     )
-    assert(key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser")
+    assert(
+      key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser"
+    )
   }
 
   it should "[7] The query string of the generated IndexKey model matches the specified string." in {
@@ -71,7 +73,9 @@ class KeyTest extends AnyFlatSpec:
       testTable.id *: testTable.subId,
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), Some("comment"), None, None))
     )
-    assert(key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment'")
+    assert(
+      key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment'"
+    )
   }
 
   it should "[8] The query string of the generated IndexKey model matches the specified string." in {
@@ -81,5 +85,7 @@ class KeyTest extends AnyFlatSpec:
       testTable.id *: testTable.subId,
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), Some("comment"), Some("InnoDB"), None))
     )
-    assert(key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment' ENGINE_ATTRIBUTE = 'InnoDB'")
+    assert(
+      key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment' ENGINE_ATTRIBUTE = 'InnoDB'"
+    )
   }
