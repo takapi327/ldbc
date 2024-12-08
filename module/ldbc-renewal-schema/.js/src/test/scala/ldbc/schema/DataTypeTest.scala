@@ -30,31 +30,39 @@ class DataTypeTest extends AnyFlatSpec:
     assert(TINYINT[Byte](1).queryString === "TINYINT(1) NOT NULL")
     assert(TINYINT[Byte](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NOT NULL")
     assert(TINYINT[Byte](64).DEFAULT("byte".getBytes.head).queryString === "TINYINT(64) NOT NULL DEFAULT '98'")
-    assert(TINYINT[Byte](64)
-      .DEFAULT("byte".getBytes.head)
-      .UNSIGNED
-      .queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT '98'")
+    assert(
+      TINYINT[Byte](64)
+        .DEFAULT("byte".getBytes.head)
+        .UNSIGNED
+        .queryString === "TINYINT(64) UNSIGNED NOT NULL DEFAULT '98'"
+    )
     assert(TINYINT[Option[Byte]](1).queryString === "TINYINT(1) NULL")
     assert(TINYINT[Option[Byte]](1).UNSIGNED.queryString === "TINYINT(1) UNSIGNED NULL")
     assert(TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL")
-    assert(TINYINT[Option[Byte]](64)
-      .DEFAULT("byte".getBytes.headOption)
-      .queryString === "TINYINT(64) NULL DEFAULT '98'")
+    assert(
+      TINYINT[Option[Byte]](64)
+        .DEFAULT("byte".getBytes.headOption)
+        .queryString === "TINYINT(64) NULL DEFAULT '98'"
+    )
     assert(TINYINT[Option[Byte]](64).DEFAULT(None).queryString === "TINYINT(64) NULL DEFAULT NULL")
     assert(TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL")
     assert(TINYINT[Byte].queryString === "TINYINT NOT NULL")
     assert(TINYINT[Byte].UNSIGNED.queryString === "TINYINT UNSIGNED NOT NULL")
     assert(TINYINT[Byte].DEFAULT("byte".getBytes.head).queryString === "TINYINT NOT NULL DEFAULT '98'")
-    assert(TINYINT[Byte]
-      .DEFAULT("byte".getBytes.head)
-      .UNSIGNED
-      .queryString === "TINYINT UNSIGNED NOT NULL DEFAULT '98'")
+    assert(
+      TINYINT[Byte]
+        .DEFAULT("byte".getBytes.head)
+        .UNSIGNED
+        .queryString === "TINYINT UNSIGNED NOT NULL DEFAULT '98'"
+    )
     assert(TINYINT[Option[Byte]].queryString === "TINYINT NULL")
     assert(TINYINT[Option[Byte]].UNSIGNED.queryString === "TINYINT UNSIGNED NULL")
     assert(TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL")
-    assert(TINYINT[Option[Byte]]
-      .DEFAULT("byte".getBytes.headOption)
-      .queryString === "TINYINT NULL DEFAULT '98'")
+    assert(
+      TINYINT[Option[Byte]]
+        .DEFAULT("byte".getBytes.headOption)
+        .queryString === "TINYINT NULL DEFAULT '98'"
+    )
     assert(TINYINT[Option[Byte]].DEFAULT(None).queryString === "TINYINT NULL DEFAULT NULL")
     assert(TINYINT[Option[Byte]].DEFAULT(None).UNSIGNED.queryString === "TINYINT UNSIGNED NULL DEFAULT NULL")
   }
@@ -68,7 +76,9 @@ class DataTypeTest extends AnyFlatSpec:
     assert(SMALLINT[Option[Short]](0).UNSIGNED.queryString === "SMALLINT(0) UNSIGNED NULL")
     assert(SMALLINT[Option[Short]](255).DEFAULT(None).queryString === "SMALLINT(255) NULL DEFAULT NULL")
     assert(SMALLINT[Option[Short]](255).DEFAULT(Some(2)).queryString === "SMALLINT(255) NULL DEFAULT 2")
-    assert(SMALLINT[Option[Short]](255).DEFAULT(None).UNSIGNED.queryString === "SMALLINT(255) UNSIGNED NULL DEFAULT NULL")
+    assert(
+      SMALLINT[Option[Short]](255).DEFAULT(None).UNSIGNED.queryString === "SMALLINT(255) UNSIGNED NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the Mediumint DataType model matches the specified one." in {
@@ -136,14 +146,18 @@ class DataTypeTest extends AnyFlatSpec:
 
   it should "The query string generated from the Decimal DataType model matches the specified one." in {
     assert(DECIMAL[BigDecimal](10, 7).queryString === "DECIMAL(10, 7) NOT NULL")
-    assert(DECIMAL[BigDecimal](10, 7)
-      .DEFAULT(BigDecimal(10, 7))
-      .queryString === "DECIMAL(10, 7) NOT NULL DEFAULT '0.0000010'")
+    assert(
+      DECIMAL[BigDecimal](10, 7)
+        .DEFAULT(BigDecimal(10, 7))
+        .queryString === "DECIMAL(10, 7) NOT NULL DEFAULT '0.0000010'"
+    )
     assert(DECIMAL[Option[BigDecimal]](10, 7).queryString === "DECIMAL(10, 7) NULL")
     assert(DECIMAL[Option[BigDecimal]](10, 7).DEFAULT(None).queryString === "DECIMAL(10, 7) NULL DEFAULT NULL")
-    assert(DECIMAL[Option[BigDecimal]](10, 7)
-      .DEFAULT(Some(BigDecimal(10, 7)))
-      .queryString === "DECIMAL(10, 7) NULL DEFAULT '0.0000010'")
+    assert(
+      DECIMAL[Option[BigDecimal]](10, 7)
+        .DEFAULT(Some(BigDecimal(10, 7)))
+        .queryString === "DECIMAL(10, 7) NULL DEFAULT '0.0000010'"
+    )
   }
 
   it should "The query string generated from the Float DataType model matches the specified one." in {
@@ -167,9 +181,11 @@ class DataTypeTest extends AnyFlatSpec:
     assert(VARCHAR[String](0).DEFAULT("test").queryString === "VARCHAR(0) NOT NULL DEFAULT 'test'")
     assert(VARCHAR[Option[String]](0).queryString === "VARCHAR(0) NULL")
     assert(VARCHAR[Option[String]](0).DEFAULT(None).queryString === "VARCHAR(0) NULL DEFAULT NULL")
-    assert(VARCHAR[Option[String]](0)
-      .DEFAULT(Some("test"))
-      .queryString === "VARCHAR(0) NULL DEFAULT 'test'")
+    assert(
+      VARCHAR[Option[String]](0)
+        .DEFAULT(Some("test"))
+        .queryString === "VARCHAR(0) NULL DEFAULT 'test'"
+    )
   }
 
   it should "The query string generated from the Binary DataType model matches the specified one." in {
@@ -236,26 +252,34 @@ class DataTypeTest extends AnyFlatSpec:
     object Status extends EnumDataType[Status]
 
     assert(ENUM[Status](using Status).queryString === "ENUM('Active','InActive') NOT NULL")
-    assert(ENUM[Status](using Status)
-      .DEFAULT(Status.Active)
-      .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'")
+    assert(
+      ENUM[Status](using Status)
+        .DEFAULT(Status.Active)
+        .queryString === "ENUM('Active','InActive') NOT NULL DEFAULT 'Active'"
+    )
     assert(ENUM[Option[Status]](using Status).queryString === "ENUM('Active','InActive') NULL")
-    assert(ENUM[Option[Status]](using Status).DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL")
+    assert(
+      ENUM[Option[Status]](using Status).DEFAULT(None).queryString === "ENUM('Active','InActive') NULL DEFAULT NULL"
+    )
   }
 
   it should "The query string generated from the Date DataType model matches the specified one." in {
     assert(DATE[LocalDate].queryString === "DATE NOT NULL")
-    assert(DATE[LocalDate]
-      .DEFAULT(LocalDate.of(2023, 2, 10))
-      .queryString === "DATE NOT NULL DEFAULT '2023-02-10'")
+    assert(
+      DATE[LocalDate]
+        .DEFAULT(LocalDate.of(2023, 2, 10))
+        .queryString === "DATE NOT NULL DEFAULT '2023-02-10'"
+    )
     assert(DATE[LocalDate].DEFAULT(0).queryString === "DATE NOT NULL DEFAULT 0")
     assert(DATE[LocalDate].DEFAULT("2023-02-10").queryString === "DATE NOT NULL DEFAULT '2023-02-10'")
     assert(DATE[LocalDate].DEFAULT_CURRENT_DATE().queryString === "DATE NOT NULL DEFAULT (CURRENT_DATE)")
     assert(DATE[Option[LocalDate]].queryString === "DATE NULL")
     assert(DATE[Option[LocalDate]].DEFAULT(None).queryString === "DATE NULL DEFAULT NULL")
-    assert(DATE[Option[LocalDate]]
-      .DEFAULT(Some(LocalDate.of(2023, 2, 10)))
-      .queryString === "DATE NULL DEFAULT '2023-02-10'")
+    assert(
+      DATE[Option[LocalDate]]
+        .DEFAULT(Some(LocalDate.of(2023, 2, 10)))
+        .queryString === "DATE NULL DEFAULT '2023-02-10'"
+    )
     assert(DATE[Option[LocalDate]].DEFAULT(0).queryString === "DATE NULL DEFAULT 0")
     assert(DATE[Option[LocalDate]].DEFAULT("2023-02-10").queryString === "DATE NULL DEFAULT '2023-02-10'")
     assert(DATE[Option[LocalDate]].DEFAULT_CURRENT_DATE().queryString === "DATE NULL DEFAULT (CURRENT_DATE)")
@@ -264,71 +288,103 @@ class DataTypeTest extends AnyFlatSpec:
   it should "The query string generated from the DateTime DataType model matches the specified one." in {
     assert(DATETIME[LocalDateTime].queryString === "DATETIME NOT NULL")
     assert(DATETIME[LocalDateTime](6).queryString === "DATETIME(6) NOT NULL")
-    assert(DATETIME[LocalDateTime]
-      .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
-      .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'")
+    assert(
+      DATETIME[LocalDateTime]
+        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
+        .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10T10:00'"
+    )
     assert(DATETIME[LocalDateTime].DEFAULT(0).queryString === "DATETIME NOT NULL DEFAULT 0")
-    assert(DATETIME[LocalDateTime]
-      .DEFAULT("2023-02-10 10:00:00")
-      .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10 10:00:00'")
+    assert(
+      DATETIME[LocalDateTime]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "DATETIME NOT NULL DEFAULT '2023-02-10 10:00:00'"
+    )
     assert(DATETIME[Option[LocalDateTime]].queryString === "DATETIME NULL")
     assert(DATETIME[Option[LocalDateTime]](6).queryString === "DATETIME(6) NULL")
     assert(DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL")
-    assert(DATETIME[Option[LocalDateTime]]
-      .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
-      .queryString === "DATETIME NULL DEFAULT '2023-02-10T10:00'")
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
+        .queryString === "DATETIME NULL DEFAULT '2023-02-10T10:00'"
+    )
     assert(DATETIME[Option[LocalDateTime]].DEFAULT(None).queryString === "DATETIME NULL DEFAULT NULL")
     assert(DATETIME[Option[LocalDateTime]].DEFAULT(0).queryString === "DATETIME NULL DEFAULT 0")
-    assert(DATETIME[Option[LocalDateTime]]
-      .DEFAULT("2023-02-10 10:00:00")
-      .queryString === "DATETIME NULL DEFAULT '2023-02-10 10:00:00'")
-    assert(DATETIME[Option[LocalDateTime]]
-      .DEFAULT_CURRENT_TIMESTAMP()
-      .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP")
-    assert(DATETIME[Option[LocalDateTime]](6)
-      .DEFAULT_CURRENT_TIMESTAMP()
-      .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6)")
-    assert(DATETIME[Option[LocalDateTime]]
-      .DEFAULT_CURRENT_TIMESTAMP(true)
-      .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    assert(DATETIME[Option[LocalDateTime]](6)
-      .DEFAULT_CURRENT_TIMESTAMP(true)
-      .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "DATETIME NULL DEFAULT '2023-02-10 10:00:00'"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6)"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+    )
+    assert(
+      DATETIME[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "DATETIME(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
+    )
   }
 
   it should "The query string generated from the TimeStamp DataType model matches the specified one." in {
     assert(TIMESTAMP[LocalDateTime].queryString === "TIMESTAMP NOT NULL")
     assert(TIMESTAMP[LocalDateTime](6).queryString === "TIMESTAMP(6) NOT NULL")
-    assert(TIMESTAMP[LocalDateTime]
-      .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
-      .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'")
+    assert(
+      TIMESTAMP[LocalDateTime]
+        .DEFAULT(LocalDateTime.of(2023, 2, 10, 10, 0))
+        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10T10:00'"
+    )
     assert(TIMESTAMP[LocalDateTime].DEFAULT(0).queryString === "TIMESTAMP NOT NULL DEFAULT 0")
-    assert(TIMESTAMP[LocalDateTime]
-      .DEFAULT("2023-02-10 10:00:00")
-      .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10 10:00:00'")
+    assert(
+      TIMESTAMP[LocalDateTime]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "TIMESTAMP NOT NULL DEFAULT '2023-02-10 10:00:00'"
+    )
     assert(TIMESTAMP[Option[LocalDateTime]].queryString === "TIMESTAMP NULL")
     assert(TIMESTAMP[Option[LocalDateTime]](5).queryString === "TIMESTAMP(5) NULL")
     assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL")
-    assert(TIMESTAMP[Option[LocalDateTime]]
-      .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
-      .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10T10:00'")
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT(Some(LocalDateTime.of(2023, 2, 10, 10, 0)))
+        .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10T10:00'"
+    )
     assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(None).queryString === "TIMESTAMP NULL DEFAULT NULL")
     assert(TIMESTAMP[Option[LocalDateTime]].DEFAULT(0).queryString === "TIMESTAMP NULL DEFAULT 0")
-    assert(TIMESTAMP[Option[LocalDateTime]]
-      .DEFAULT("2023-02-10 10:00:00")
-      .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10 10:00:00'")
-    assert(TIMESTAMP[Option[LocalDateTime]]
-      .DEFAULT_CURRENT_TIMESTAMP()
-      .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP")
-    assert(TIMESTAMP[Option[LocalDateTime]](6)
-      .DEFAULT_CURRENT_TIMESTAMP()
-      .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6)")
-    assert(TIMESTAMP[Option[LocalDateTime]]
-      .DEFAULT_CURRENT_TIMESTAMP(true)
-      .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    assert(TIMESTAMP[Option[LocalDateTime]](6)
-      .DEFAULT_CURRENT_TIMESTAMP(true)
-      .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT("2023-02-10 10:00:00")
+        .queryString === "TIMESTAMP NULL DEFAULT '2023-02-10 10:00:00'"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP()
+        .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6)"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]]
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+    )
+    assert(
+      TIMESTAMP[Option[LocalDateTime]](6)
+        .DEFAULT_CURRENT_TIMESTAMP(true)
+        .queryString === "TIMESTAMP(6) NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
+    )
   }
 
   it should "The query string generated from the Time DataType model matches the specified one." in {
@@ -338,9 +394,11 @@ class DataTypeTest extends AnyFlatSpec:
     assert(TIME[LocalTime].DEFAULT("23:59:59").queryString === "TIME NOT NULL DEFAULT '23:59:59'")
     assert(TIME[Option[LocalTime]].queryString === "TIME NULL")
     assert(TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL")
-    assert(TIME[Option[LocalTime]]
-      .DEFAULT(Some(LocalTime.of(10, 0, 0)))
-      .queryString === "TIME NULL DEFAULT '10:00'")
+    assert(
+      TIME[Option[LocalTime]]
+        .DEFAULT(Some(LocalTime.of(10, 0, 0)))
+        .queryString === "TIME NULL DEFAULT '10:00'"
+    )
     assert(TIME[Option[LocalTime]].DEFAULT(None).queryString === "TIME NULL DEFAULT NULL")
     assert(TIME[Option[LocalTime]].DEFAULT(0).queryString === "TIME NULL DEFAULT 0")
     assert(TIME[Option[LocalTime]].DEFAULT("23:59:59").queryString === "TIME NULL DEFAULT '23:59:59'")
