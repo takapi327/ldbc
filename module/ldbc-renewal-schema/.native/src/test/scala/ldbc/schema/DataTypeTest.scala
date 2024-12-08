@@ -162,10 +162,10 @@ class DataTypeTest extends AnyFlatSpec:
 
   it should "The query string generated from the Float DataType model matches the specified one." in {
     assert(FLOAT[Float](0).queryString === "FLOAT(0) NOT NULL")
-    assert(FLOAT[Float](0).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT 1.2000000476837158")
+    assert(FLOAT[Float](0).DEFAULT(1.2f).queryString === "FLOAT(0) NOT NULL DEFAULT 1.2")
     assert(FLOAT[Option[Float]](0).queryString === "FLOAT(0) NULL")
     assert(FLOAT[Option[Float]](0).DEFAULT(None).queryString === "FLOAT(0) NULL DEFAULT NULL")
-    assert(FLOAT[Option[Float]](0).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT 1.2000000476837158")
+    assert(FLOAT[Option[Float]](0).DEFAULT(Some(1.2f)).queryString === "FLOAT(0) NULL DEFAULT 1.2")
   }
 
   it should "The query string generated from the Char DataType model matches the specified one." in {
