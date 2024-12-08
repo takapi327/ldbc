@@ -11,34 +11,35 @@ import scala.deriving.Mirror
 
 import ldbc.dsl.codec.Decoder
 import ldbc.statement.{ AbstractTable, Column }
-import ldbc.schema.interpreter.Tuples
+import ldbc.schema.interpreter.*
+import ldbc.schema.attribute.Attribute
 
-trait Table[T](val $name: String) extends AbstractTable[T]:
+trait Table[T](val $name: String) extends AbstractTable[T], Alias:
 
-  type Column[A] = ldbc.statement.Column[A]
+  protected final def column[A](name: String)(using elem: Decoder.Elem[A]): Column[A] =
+    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
+    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, None, List.empty)
 
-  protected final def column[A](name: String)(using Decoder.Elem[A]): Column[A] =
-    ldbc.statement.Column[A](name, $name)
+  protected final def column[A](name: String, dataType: DataType[A])(using elem: Decoder.Elem[A]): Column[A] =
+    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
+    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, Some(dataType), List.empty)
+
+  protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
+    elem: Decoder.Elem[A]
+  ): Column[A] =
+    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
+    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, Some(dataType), attributes.toList)
+
+  /**
+   * Methods for setting key information for tables.
+   */
+  def keys: List[Key] = List.empty
 
   override final def statement: String = $name
 
   override def toString: String = s"Table($$name)"
 
 object Table:
-
-  /** A type function to pull a type parameter it has from a type with one type parameter. */
-  type Extract[T] = T match
-    case Option[t] => Extract[t]
-    case Array[t]  => Extract[t]
-    case List[t]   => Extract[t]
-    case Seq[t]    => Extract[t]
-    case Set[t]    => Extract[t]
-    case _         => T
-
-  /** A type function that derives its type from the type parameters that Option has. */
-  type ExtractOption[T] = T match
-    case Option[t] => Extract[t]
-    case _         => T
 
   private[ldbc] case class Opt[T](
     $name:   String,
