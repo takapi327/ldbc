@@ -13,7 +13,6 @@ import java.nio.charset.Charset
 import ldbc.query.builder.formatter.Naming
 import ldbc.codegen.parser.Parser
 import ldbc.codegen.parser.yml.Parser as YmlParser
-import ldbc.codegen.model.{ Database, Table }
 
 private[ldbc] object LdbcGenerator:
 
@@ -59,7 +58,7 @@ private[ldbc] object LdbcGenerator:
       .flatMap { (name, list) =>
         val statements = list.flatMap(_._2).toSet
         statements.map {
-          case statement: Table.CreateStatement =>
+          statement =>
             val customTables = custom.find(_.database.name == name).map(_.database.tables)
             TableModelGenerator.generate(
               name,
@@ -68,21 +67,6 @@ private[ldbc] object LdbcGenerator:
               propertyNameFormatter,
               sourceManaged,
               customTables,
-              packageName
-            )
-          case statement: Database.CreateStatement =>
-            val tableStatements = statements.flatMap {
-              case statement: Table.CreateStatement =>
-                Some(s"${ classNameFormatter.format(statement.tableName) }.table")
-              case _: Database.CreateStatement => None
-            }.toList
-
-            DatabaseModelGenerator.generate(
-              statement,
-              tableStatements,
-              classNameFormatter,
-              propertyNameFormatter,
-              sourceManaged,
               packageName
             )
         }
