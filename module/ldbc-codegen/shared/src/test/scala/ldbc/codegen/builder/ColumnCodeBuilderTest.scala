@@ -19,12 +19,12 @@ object ColumnCodeBuilderTest extends Specification:
   "Testing the ColumnCodeBuilder" should {
     "The construction of Column into a code string matches the specified string." in {
       val column = ColumnDefinition("p1", DataType.VARCHAR(255, None, None), None)
-      builder.build(column, None) === "column(\"p1\", VARCHAR[Option[String]](255))"
+      builder.build(column, None) === "def p1: Column[Option[String]] = column[Option[String]](\"p1\", VARCHAR[Option[String]](255))"
     }
 
     "The construction of Column into a code string matches the specified string." in {
       val column = ColumnDefinition("p1", DataType.VARCHAR(255, None, None), Some(List(Attribute.Condition(false))))
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
+      builder.build(column, None) === "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255))"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -39,7 +39,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY)"
+      builder.build(column, None) === "def p1: Column[Long] = column[Long](\"p1\", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -53,7 +53,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", BIGINT[Long], COMMENT(\"identifier\"))"
+      builder.build(column, None) === "def p1: Column[Long] = column[Long](\"p1\", BIGINT[Long], COMMENT(\"identifier\"))"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -67,7 +67,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), Collate.utf8mb4_bin)"
+      builder.build(column, None) === "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), Collate.utf8mb4_bin)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -81,7 +81,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), VISIBLE)"
+      builder.build(column, None) === "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), VISIBLE)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -95,7 +95,7 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), COLUMN_FORMAT.FIXED)"
+      builder.build(column, None) === "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), COLUMN_FORMAT.FIXED)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
@@ -109,11 +109,11 @@ object ColumnCodeBuilderTest extends Specification:
           )
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), STORAGE.DISK)"
+      builder.build(column, None) === "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), STORAGE.DISK)"
     }
 
     "The construction of Column into a code string matches the specified string." in {
       val column = ColumnDefinition("p1", DataType.SERIAL(), None)
-      builder.build(column, None) === "column(\"p1\", SERIAL[BigInt])"
+      builder.build(column, None) === "def p1: Column[Option[BigInt]] = column[Option[BigInt]](\"p1\", SERIAL[BigInt])"
     }
   }
