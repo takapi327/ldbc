@@ -24,7 +24,9 @@ case class ColumnCodeBuilder(formatter: Naming):
     val builder  = DataTypeCodeBuilder(scalaType, formatter)
     val dataType = builder.build(column.dataType)
 
-    s"def ${Naming.toCamel(column.name)}: Column[$scalaType] = column[$scalaType](\"${column.name}\", $dataType" + buildDefault(column).getOrElse("") + column._attributes + ")"
+    s"def ${ Naming.toCamel(column.name) }: Column[$scalaType] = column[$scalaType](\"${ column.name }\", $dataType" + buildDefault(
+      column
+    ).getOrElse("") + column._attributes + ")"
 
   private def buildScalaType(column: ColumnDefinition, customColumn: Option[Parser.Column]): String =
     val code = customColumn match

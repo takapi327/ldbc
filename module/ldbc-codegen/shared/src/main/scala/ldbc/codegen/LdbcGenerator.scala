@@ -57,18 +57,17 @@ private[ldbc] object LdbcGenerator:
       .groupBy(_._1)
       .flatMap { (name, list) =>
         val statements = list.flatMap(_._2).toSet
-        statements.map {
-          statement =>
-            val customTables = custom.find(_.database.name == name).map(_.database.tables)
-            TableModelGenerator.generate(
-              name,
-              statement,
-              classNameFormatter,
-              propertyNameFormatter,
-              sourceManaged,
-              customTables,
-              packageName
-            )
+        statements.map { statement =>
+          val customTables = custom.find(_.database.name == name).map(_.database.tables)
+          TableModelGenerator.generate(
+            name,
+            statement,
+            classNameFormatter,
+            propertyNameFormatter,
+            sourceManaged,
+            customTables,
+            packageName
+          )
         }
       }
       .toArray
