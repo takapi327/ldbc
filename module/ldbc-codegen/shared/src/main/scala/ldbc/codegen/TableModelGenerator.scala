@@ -86,11 +86,7 @@ private[ldbc] object TableModelGenerator:
       outputFile.createNewFile()
 
     val keyDefinitions = statement.keyDefinitions.map(key =>
-      s".keySet(table => ${ key.toCode("table", classNameFormatter, propertyNameFormatter) })"
-    )
-
-    val tableOptions = statement.options.fold("")(
-      _.map(option => s".setOption(${ Table.buildTableOptionCode(option) })").mkString("\n  ")
+      key.toCode("table", classNameFormatter, propertyNameFormatter)
     )
 
     val builder = ColumnCodeBuilder(classNameFormatter)
@@ -101,6 +97,8 @@ private[ldbc] object TableModelGenerator:
     val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
 
     val objectExtends = custom.flatMap(_.`object`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
+
+    val allColumns = statement.columnDefinitions.map(column => Naming.toCamel(column.name))
 
     val scalaSource =
       s"""
@@ -115,11 +113,17 @@ private[ldbc] object TableModelGenerator:
          |object $className$objectExtends:
          |
          |  ${ objects.mkString("\n  ") }
-         |  val table: Table[$className] = Table[$className]("${ statement.tableName }")(
-         |    ${ columns.mkString(",\n    ") }
+         |  val table = TableQuery[${className}Table]
+         |end $className$objectExtends
+         |
+         |class ${className}Table extends Table[$className]("${statement.tableName}"):
+         |  ${columns.mkString("\n  ")}
+         |
+         |  override def * : Column[$className] = (${allColumns.mkString(" *: ")}).to[$className]
+         |
+         |  override def keys: List[Key] = List(
+         |    ${keyDefinitions.mkString(",\n    ")}
          |  )
-         |  ${ keyDefinitions.mkString("\n  ") }
-         |  $tableOptions
          |""".stripMargin
 
     Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
