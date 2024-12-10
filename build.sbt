@@ -142,7 +142,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
-  .dependsOn(queryBuilder, schema)
+  .dependsOn(queryBuilder, renewalSchema)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
