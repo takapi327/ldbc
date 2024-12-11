@@ -38,8 +38,8 @@ case class ColumnCodeBuilder(formatter: Naming):
 
     (column.isOptional, column.dataType) match
       case (_, _: DataType.SERIAL) => code
-      case (true, _) => s"Option[$code]"
-      case (false , _) => code
+      case (true, _)               => s"Option[$code]"
+      case (false, _)              => code
 
   private def buildDefault(column: ColumnDefinition): Option[String] =
     column.attributes.fold(None)(attribute =>
