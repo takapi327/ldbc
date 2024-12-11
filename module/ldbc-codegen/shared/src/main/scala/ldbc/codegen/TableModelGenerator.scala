@@ -85,9 +85,6 @@ private[ldbc] object TableModelGenerator:
       outputFile.getParentFile.mkdirs()
       outputFile.createNewFile()
 
-    val keyDefinitions =
-      statement.keyDefinitions.map(key => key.toCode("table", classNameFormatter, propertyNameFormatter))
-
     val builder = ColumnCodeBuilder(classNameFormatter)
 
     val columns =
@@ -113,16 +110,11 @@ private[ldbc] object TableModelGenerator:
          |
          |  ${ objects.mkString("\n  ") }
          |  val table = TableQuery[${ className }Table]
-         |end $className$objectExtends
          |
-         |class ${ className }Table extends Table[$className]("${ statement.tableName }"):
-         |  ${ columns.mkString("\n  ") }
+         |  class ${ className }Table extends Table[$className]("${ statement.tableName }"):
+         |    ${ columns.mkString("\n    ") }
          |
-         |  override def * : Column[$className] = (${ allColumns.mkString(" *: ") }).to[$className]
-         |
-         |  override def keys: List[Key] = List(
-         |    ${ keyDefinitions.mkString(",\n    ") }
-         |  )
+         |    override def * : Column[$className] = (${ allColumns.mkString(" *: ") }).to[$className]
          |""".stripMargin
 
     Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))
