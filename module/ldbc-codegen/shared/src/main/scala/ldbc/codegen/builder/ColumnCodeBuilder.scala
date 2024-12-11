@@ -8,7 +8,7 @@ package ldbc.codegen.builder
 
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
-import ldbc.query.builder.formatter.Naming
+import ldbc.codegen.formatter.Naming
 
 /**
  * Column model for constructing code strings.
@@ -24,7 +24,9 @@ case class ColumnCodeBuilder(formatter: Naming):
     val builder  = DataTypeCodeBuilder(scalaType, formatter)
     val dataType = builder.build(column.dataType)
 
-    s"column(\"${ column.name }\", $dataType" + buildDefault(column).getOrElse("") + column._attributes + ")"
+    s"def ${ Naming.toCamel(column.name) }: Column[$scalaType] = column[$scalaType](\"${ column.name }\", $dataType" + buildDefault(
+      column
+    ).getOrElse("") + column._attributes + ")"
 
   private def buildScalaType(column: ColumnDefinition, customColumn: Option[Parser.Column]): String =
     val code = customColumn match
@@ -34,7 +36,10 @@ case class ColumnCodeBuilder(formatter: Naming):
           case ScalaType.Enum(_) => formatter.format(column.name)
           case _                 => column.dataType.scalaType.code
 
-    if column.isOptional then s"Option[$code]" else code
+    (column.isOptional, column.dataType) match
+      case (_, _: DataType.SERIAL) => code
+      case (true, _)               => s"Option[$code]"
+      case (false, _)              => code
 
   private def buildDefault(column: ColumnDefinition): Option[String] =
     column.attributes.fold(None)(attribute =>

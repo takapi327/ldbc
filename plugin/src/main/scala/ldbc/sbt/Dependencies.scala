@@ -14,6 +14,7 @@ trait Dependencies {
   val ldbcCore         = component("ldbc-core")
   val ldbcSql          = component("ldbc-sql")
   val ldbcDsl          = component("ldbc-dsl")
+  val ldbcStatement    = component("ldbc-statement")
   val ldbcQueryBuilder = component("ldbc-query-builder")
   val ldbcSchema       = component("ldbc-schema")
   val ldbcCodegen      = component("ldbc-codegen")
