@@ -132,6 +132,6 @@ object ColumnCodeBuilderTest extends Specification:
 
     "The construction of Column into a code string matches the specified string." in {
       val column = ColumnDefinition("p1", DataType.SERIAL(), None)
-      builder.build(column, None) === "def p1: Column[Option[BigInt]] = column[Option[BigInt]](\"p1\", SERIAL[BigInt])"
+      builder.build(column, None) === "def p1: Column[BigInt] = column[BigInt](\"p1\", SERIAL[BigInt])"
     }
   }
