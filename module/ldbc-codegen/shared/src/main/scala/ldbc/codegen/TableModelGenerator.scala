@@ -11,7 +11,7 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
 import ldbc.codegen.builder.ColumnCodeBuilder

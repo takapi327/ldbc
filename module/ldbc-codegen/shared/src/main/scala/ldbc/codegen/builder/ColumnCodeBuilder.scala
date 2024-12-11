@@ -8,7 +8,7 @@ package ldbc.codegen.builder
 
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
-import ldbc.query.builder.formatter.Naming
+import ldbc.codegen.formatter.Naming
 
 /**
  * Column model for constructing code strings.

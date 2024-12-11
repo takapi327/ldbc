@@ -10,7 +10,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.charset.Charset
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.codegen.formatter.Naming
 import ldbc.codegen.parser.Parser
 import ldbc.codegen.parser.yml.Parser as YmlParser
 
