@@ -34,7 +34,7 @@ class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
-      database = Some("world2"),
+      database = Some("world"),
       ssl      = SSL.Trusted
     )
 
@@ -43,7 +43,7 @@ class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
   val ds = new MysqlDataSource()
   ds.setServerName("127.0.0.1")
   ds.setPortNumber(13306)
-  ds.setDatabaseName("world2")
+  ds.setDatabaseName("world")
   ds.setUser("ldbc")
   ds.setPassword("password")
 
@@ -64,8 +64,8 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
   private final val countryLanguage = TableQuery[CountryLanguageTable]
 
   private def code(index: Int): String = prefix match
-    case "jdbc" => s"SJ$index"
-    case "ldbc" => s"SL$index"
+    case "jdbc" => s"J$index"
+    case "ldbc" => s"L$index"
 
   test(
     "New data can be registered with the value of Tuple."
