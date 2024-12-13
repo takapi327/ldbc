@@ -34,7 +34,7 @@ class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
       port     = 13306,
       user     = "ldbc",
       password = Some("password"),
-      database = Some("world"),
+      database = Some("world3"),
       ssl      = SSL.Trusted
     )
 
@@ -43,7 +43,7 @@ class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
   val ds = new MysqlDataSource()
   ds.setServerName("127.0.0.1")
   ds.setPortNumber(13306)
-  ds.setDatabaseName("world")
+  ds.setDatabaseName("world3")
   ds.setUser("ldbc")
   ds.setPassword("password")
 
