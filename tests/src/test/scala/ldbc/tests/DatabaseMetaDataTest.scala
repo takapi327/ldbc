@@ -1477,7 +1477,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
           while resultSet.next() do builder += resultSet.getString("TABLE_CAT")
           builder.result()
       },
-      List("benchmark", "connector_test", "information_schema", "mysql", "performance_schema", "sys", "world", "world2")
+      List("benchmark", "connector_test", "information_schema", "mysql", "performance_schema", "sys", "world", "world2", "world3")
     )
   }
 
