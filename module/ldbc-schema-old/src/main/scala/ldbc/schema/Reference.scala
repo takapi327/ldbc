@@ -6,31 +6,39 @@
 
 package ldbc.schema
 
-import java.sql.DatabaseMetaData.*
+import java.sql.DatabaseMetaData.{
+  importedKeyCascade,
+  importedKeyNoAction,
+  importedKeyRestrict,
+  importedKeySetDefault,
+  importedKeySetNull
+}
+
+import ldbc.schema.interpreter.*
 
 /**
  * A model for setting reference options used for foreign key constraints, etc.
  *
  * @param table
  *   Referenced table model
- * @param columns
+ * @param keyPart
  *   List of columns for which the Index key is set
  * @param onDelete
  *   Reference action on delete
  * @param onUpdate
  *   Reference action on update
  */
-case class Reference[T](
+case class Reference[T <: Tuple](
   table:    Table[?],
-  columns:  Column[T],
+  keyPart:  T,
   onDelete: Option[Reference.ReferenceOption],
   onUpdate: Option[Reference.ReferenceOption]
-):
+)(using IsColumn[T] =:= true):
 
   private val label: String = "REFERENCES"
 
   def queryString: String =
-    s"$label ${ table.$name } (${ columns.name })"
+    s"$label `${ table.$name }` (${ keyPart.toList.mkString(", ") })"
       + onDelete.fold("")(v => s" ON DELETE ${ v.label }")
       + onUpdate.fold("")(v => s" ON UPDATE ${ v.label }")
 

@@ -8,36 +8,33 @@ package ldbc.schema
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-case class Test(p1: Long, p2: String, p3: Option[String])
-case class JoinTest(p1: Long, p2: String, p3: Option[String])
-case class JoinTest2(p1: Long, p2: String, p3: Option[String])
-
-class TestTable extends Table[Test]("test"):
-  def p1: Column[Long]           = column[Long]("p1")
-  def p2: Column[String]         = column[String]("p2")
-  def p3: Column[Option[String]] = column[Option[String]]("p3")
-
-  override def * : Column[Test] = (p1 *: p2 *: p3).to[Test]
-
-class JoinTestTable extends Table[JoinTest]("join_test"):
-  def p1: Column[Long]           = column[Long]("p1")
-  def p2: Column[String]         = column[String]("p2")
-  def p3: Column[Option[String]] = column[Option[String]]("p3")
-
-  override def * : Column[JoinTest] = (p1 *: p2 *: p3).to[JoinTest]
-
-class JoinTest2Table extends Table[JoinTest2]("join_test2"):
-  def p1: Column[Long]           = column[Long]("p1")
-  def p2: Column[String]         = column[String]("p2")
-  def p3: Column[Option[String]] = column[Option[String]]("p3")
-
-  override def * : Column[JoinTest2] = (p1 *: p2 *: p3).to[JoinTest2]
-
 class TableQueryTest extends AnyFlatSpec:
 
-  private val query      = TableQuery[TestTable]
-  private val joinQuery  = TableQuery[JoinTestTable]
-  private val joinQuery2 = TableQuery[JoinTest2Table]
+  case class Test(p1: Long, p2: String, p3: Option[String])
+  object Test:
+    val table = Table[Test]("test")(
+      column("p1", BIGINT),
+      column("p2", VARCHAR(255)),
+      column("p3", VARCHAR(255))
+    )
+  case class JoinTest(p1: Long, p2: String, p3: Option[String])
+  object JoinTest:
+    val table = Table[JoinTest]("join_test")(
+      column("p1", BIGINT),
+      column("p2", VARCHAR(255)),
+      column("p3", VARCHAR(255))
+    )
+  case class JoinTest2(p1: Long, p2: String, p3: Option[String])
+  object JoinTest2:
+    val table = Table[JoinTest2]("join_test2")(
+      column("p1", BIGINT),
+      column("p2", VARCHAR(255)),
+      column("p3", VARCHAR(255))
+    )
+
+  private val query      = TableQuery[Test](Test.table)
+  private val joinQuery  = TableQuery[JoinTest](JoinTest.table)
+  private val joinQuery2 = TableQuery[JoinTest2](JoinTest2.table)
 
   it should "The select query statement generated from Table is equal to the specified query statement." in {
     assert(query.select(_.p1).statement === "SELECT test.p1 FROM test")

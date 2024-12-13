@@ -7,6 +7,7 @@
 package ldbc.schema
 
 import ldbc.statement.Column
+import ldbc.schema.interpreter.*
 
 /**
  * Key to be set for the table
@@ -27,13 +28,13 @@ private[ldbc] trait Key:
 /**
  * Trait for generating SQL keys that will become Indexes
  */
-private[ldbc] trait Index[T] extends Key:
+private[ldbc] trait Index extends Key:
 
   /** Value that is the type of Index */
   def indexType: Option[Index.Type]
 
   /** List of columns for which the Index key is set */
-  def columns: Column[T]
+  def keyPart: List[Column[?]]
 
   /** Additional indexing options */
   def indexOption: Option[Index.IndexOption]
@@ -86,24 +87,24 @@ object Index:
  *   Unique name for key
  * @param indexType
  *   Value that is the type of Index
- * @param columns
+ * @param keyPart
  *   List of columns for which the Index key is set
  * @param indexOption
  *   Additional indexing options
  */
-private[ldbc] case class IndexKey[T](
+private[ldbc] case class IndexKey(
   indexName:   Option[String],
   indexType:   Option[Index.Type],
-  columns:     Column[T],
+  keyPart:     List[Column[?]],
   indexOption: Option[Index.IndexOption]
-) extends Index[T]:
+) extends Index:
 
   override def label: String = "INDEX"
 
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${ columns.name })"
+      + s" (${ keyPart.map(column => s"`${ column.name }`").mkString(", ") })"
       + indexType.fold("")(index => s" USING $index")
       + indexOption.fold("")(option => s"${ option.queryString }")
 
@@ -112,14 +113,14 @@ private[ldbc] case class IndexKey[T](
  *
  * @param indexName
  *   Unique name for key
- * @param columns
+ * @param keyPart
  *   List of columns for which the Index key is set
  * @param indexOption
  *   Additional indexing options
  */
-private[ldbc] case class Fulltext[T](
+private[ldbc] case class Fulltext(
   indexName:   Option[String],
-  columns:     Column[T],
+  keyPart:     List[Column[?]],
   indexOption: Option[Index.IndexOption]
 ) extends Key:
 
@@ -128,7 +129,7 @@ private[ldbc] case class Fulltext[T](
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${ columns.name })"
+      + s" (${ keyPart.map(column => s"`${ column.name }`").mkString(", ") })"
       + indexOption.fold("")(option => s"${ option.queryString }")
 
 /** Trait for representing SQL primary key information. */
@@ -139,21 +140,21 @@ private[ldbc] trait PrimaryKey:
   def queryString: String
 
 object PrimaryKey:
-  def apply[T](
+  def apply(
     _indexType:   Option[Index.Type],
-    _columns:     Column[T],
+    _keyPart:     List[Column[?]],
     _indexOption: Option[Index.IndexOption]
-  ): PrimaryKey & Index[T] = new PrimaryKey with Index[T]:
+  ): PrimaryKey & Index = new PrimaryKey with Index:
 
     override def indexType: Option[Index.Type] = _indexType
 
-    override def columns: Column[T] = _columns
+    override def keyPart: List[Column[?]] = _keyPart
 
     override def indexOption: Option[Index.IndexOption] = _indexOption
 
     override def queryString: String =
       label
-        + s" (${ columns.name })"
+        + s" (${ keyPart.map(column => s"`${ column.name }`").mkString(", ") })"
         + indexType.fold("")(index => s" USING $index")
         + indexOption.fold("")(option => s"${ option.queryString }")
 
@@ -169,25 +170,25 @@ private[ldbc] trait UniqueKey:
 
 object UniqueKey:
 
-  def apply[T](
+  def apply(
     _indexName:   Option[String],
     _indexType:   Option[Index.Type],
-    _columns:     Column[T],
+    _keyPart:     List[Column[?]],
     _indexOption: Option[Index.IndexOption]
-  ): UniqueKey & Index[T] = new UniqueKey with Index[T]:
+  ): UniqueKey & Index = new UniqueKey with Index:
 
     override def indexName: Option[String] = _indexName
 
     override def indexType: Option[Index.Type] = _indexType
 
-    override def columns: Column[T] = _columns
+    override def keyPart: List[Column[?]] = _keyPart
 
     override def indexOption: Option[Index.IndexOption] = _indexOption
 
     override def queryString: String =
       label
         + indexName.fold("")(str => s" `$str`")
-        + s" (${ columns.name })"
+        + s" (${ keyPart.map(column => s"`${ column.name }`").mkString(", ") })"
         + indexType.fold("")(index => s" USING $index")
         + indexOption.fold("")(option => s"${ option.queryString }")
 
@@ -201,18 +202,19 @@ object UniqueKey:
  * @param reference
  *   A model for setting reference options used for foreign key constraints, etc.
  */
-private[ldbc] case class ForeignKey[T](
+private[ldbc] case class ForeignKey[T <: Tuple](
   indexName: Option[String],
-  columns:   Column[T],
+  columns:   T,
   reference: Reference[T]
-) extends Key:
+)(using IsColumn[T] =:= true)
+  extends Key:
 
   override val label: String = "FOREIGN KEY"
 
   override def queryString: String =
     label
       + indexName.fold("")(str => s" `$str`")
-      + s" (${ columns.name })"
+      + s" (${ columns.toList.mkString(", ") })"
       + s" ${ reference.queryString }"
 
 /**

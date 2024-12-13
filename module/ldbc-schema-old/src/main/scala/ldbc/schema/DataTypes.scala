@@ -6,21 +6,13 @@
 
 package ldbc.schema
 
-import java.time.{
-  Instant,
-  LocalDate,
-  LocalDateTime,
-  LocalTime,
-  OffsetDateTime,
-  OffsetTime,
-  ZonedDateTime,
-  Year as JYear
-}
+import java.time.{ Instant, LocalTime, LocalDate, LocalDateTime, OffsetTime, OffsetDateTime, ZonedDateTime }
+import java.time.Year as JYear
 
-import scala.compiletime.{ erasedValue, error }
+import scala.compiletime.{ error, erasedValue }
 
 import ldbc.schema.DataType.*
-import ldbc.schema.model.{ EnumDataType, Enum as EnumModel }
+import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
 
 /**
  * A set of methods for constructing DataType

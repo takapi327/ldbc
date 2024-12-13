@@ -102,14 +102,6 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("schema", "Type safety schema construction project")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
-  .settings(Test / scalacOptions -= "-Werror")
-  .dependsOn(statement)
-
-// TODO: Scheduled to be replaced with schema after renewal. It will not be published under this project name.
-lazy val renewalSchema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Pure)
-  .module("renewal-schema", "Type safety schema construction project")
-  .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .settings(libraryDependencies += "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test)
   .settings(Test / scalacOptions -= "-Werror")
   .dependsOn(statement, connector)
@@ -141,7 +133,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
-  .dependsOn(renewalSchema)
+  .dependsOn(schema)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
@@ -270,7 +262,6 @@ lazy val ldbc = tlCrossRootProject
     statement,
     queryBuilder,
     schema,
-    renewalSchema,
     codegen,
     plugin,
     tests,

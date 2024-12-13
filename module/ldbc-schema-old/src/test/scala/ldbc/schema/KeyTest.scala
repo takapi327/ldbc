@@ -10,82 +10,70 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class KeyTest extends AnyFlatSpec:
 
-  case class Test(id: Long, subId: Long)
-  class TestTable extends Table[Test]("test"):
-    def id:    Column[Long] = column[Long]("id", BIGINT)
-    def subId: Column[Long] = column[Long]("sub_id", BIGINT)
-
-    override def * = (id *: subId).to[Test]
-
-  val testTable = new TestTable
+  private val column1 = column[Long]("id", BIGINT(64))
+  private val column2 = column[String]("name", VARCHAR(255))
 
   it should "[1] The query string of the generated IndexKey model matches the specified string." in {
-    val key = IndexKey(None, None, testTable.id *: testTable.subId, None)
-    assert(key.queryString === "INDEX (id, sub_id)")
+    val key = IndexKey(None, None, List(column1, column2), None)
+    key.queryString === "INDEX (`id`, `name`)"
   }
 
   it should "[2] The query string of the generated IndexKey model matches the specified string." in {
-    val key = IndexKey(Some("key_id"), None, testTable.id *: testTable.subId, None)
-    assert(key.queryString === "INDEX `key_id` (id, sub_id)")
+    val key = IndexKey(Some("key_id"), None, List(column1, column2), None)
+    key.queryString === "INDEX `key_id` (`id`, `name`)"
   }
 
   it should "[3] The query string of the generated IndexKey model matches the specified string." in {
-    val key = IndexKey(Some("key_id"), Some(Index.Type.BTREE), testTable.id *: testTable.subId, None)
-    assert(key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE")
+    val key = IndexKey(Some("key_id"), Some(Index.Type.BTREE), List(column1, column2), None)
+    key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE"
   }
 
   it should "[4] The query string of the generated IndexKey model matches the specified string." in {
     val key = IndexKey(
       Some("key_id"),
       Some(Index.Type.BTREE),
-      testTable.id *: testTable.subId,
+      List(column1, column2),
       Some(Index.IndexOption(Some(1), None, None, None, None, None))
     )
-    assert(key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1")
+    key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1"
   }
 
   it should "[5] The query string of the generated IndexKey model matches the specified string." in {
     val key = IndexKey(
       Some("key_id"),
       Some(Index.Type.BTREE),
-      testTable.id *: testTable.subId,
+      List(column1, column2),
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), None, None, None, None))
     )
-    assert(key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE")
+    key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE"
   }
 
   it should "[6] The query string of the generated IndexKey model matches the specified string." in {
     val key = IndexKey(
       Some("key_id"),
       Some(Index.Type.BTREE),
-      testTable.id *: testTable.subId,
+      List(column1, column2),
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), None, None, None))
     )
-    assert(
-      key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser"
-    )
+    key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser"
   }
 
   it should "[7] The query string of the generated IndexKey model matches the specified string." in {
     val key = IndexKey(
       Some("key_id"),
       Some(Index.Type.BTREE),
-      testTable.id *: testTable.subId,
+      List(column1, column2),
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), Some("comment"), None, None))
     )
-    assert(
-      key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment'"
-    )
+    key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment'"
   }
 
   it should "[8] The query string of the generated IndexKey model matches the specified string." in {
     val key = IndexKey(
       Some("key_id"),
       Some(Index.Type.BTREE),
-      testTable.id *: testTable.subId,
+      List(column1, column2),
       Some(Index.IndexOption(Some(1), Some(Index.Type.BTREE), Some("parser"), Some("comment"), Some("InnoDB"), None))
     )
-    assert(
-      key.queryString === "INDEX `key_id` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment' ENGINE_ATTRIBUTE = 'InnoDB'"
-    )
+    key.queryString === "INDEX `key_id` (`id`, `name`) USING BTREE KEY_BLOCK_SIZE = 1 USING BTREE WITH PARSER parser COMMENT 'comment' ENGINE_ATTRIBUTE = 'InnoDB'"
   }

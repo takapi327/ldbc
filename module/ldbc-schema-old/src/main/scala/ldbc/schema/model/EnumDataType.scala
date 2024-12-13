@@ -7,7 +7,7 @@
 package ldbc.schema.model
 
 /**
- * Trait for using enum with ldbc. It will be unnecessary if enums can be identified by type parameters.
+ * Trait for using enum with Ldbc. It will be unnecessary if enums can be identified by type parameters.
  *
  * example:
  * {{{
@@ -28,7 +28,7 @@ trait Enum:
  * can be identified by type parameters.
  *
  * @tparam T
- *   Trait for using enum with ldbc.
+ *   Trait for using enum with Ldbc.
  */
 trait EnumDataType[T <: Enum]:
 

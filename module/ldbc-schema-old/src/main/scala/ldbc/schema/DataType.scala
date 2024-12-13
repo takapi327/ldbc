@@ -1592,7 +1592,7 @@ object DataType:
       override def isOptional: Boolean = false
 
       override val queryString: String =
-        s"$typeName UNSIGNED $nullType ${ attributes.map(_.queryString).mkString(" ") }"
+        s"$typeName UNSIGNED $nullType"
 
       override def default: Option[Default] = None
 
