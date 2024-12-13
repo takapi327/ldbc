@@ -102,9 +102,8 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("schema", "Type safety schema construction project")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
-  .settings(libraryDependencies += "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test)
   .settings(Test / scalacOptions -= "-Werror")
-  .dependsOn(statement, connector)
+  .dependsOn(statement)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
