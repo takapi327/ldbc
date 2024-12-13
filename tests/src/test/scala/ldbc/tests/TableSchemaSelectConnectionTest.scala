@@ -46,7 +46,7 @@ class JdbcTableQuerySelectConnectionTest extends TableSchemaSelectConnectionTest
 
 trait TableSchemaSelectConnectionTest extends TableQuerySelectConnectionTest:
 
-  override private val country = TableQuery[CountryTable]
-  override private val city = TableQuery[CityTable]
-  override private val countryLanguage = TableQuery[CountryLanguageTable]
+  override private val country          = TableQuery[CountryTable]
+  override private val city             = TableQuery[CityTable]
+  override private val countryLanguage  = TableQuery[CountryLanguageTable]
   override private val governmentOffice = TableQuery[GovernmentOfficeTable]
