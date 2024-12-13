@@ -212,7 +212,7 @@ lazy val tests = crossProject(JVMPlatform)
       mysql            % Test
     )
   )
-  .dependsOn(jdbcConnector, connector, queryBuilder)
+  .dependsOn(jdbcConnector, connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
