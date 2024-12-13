@@ -113,7 +113,6 @@ lazy val renewalSchema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(libraryDependencies += "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test)
   .settings(Test / scalacOptions -= "-Werror")
   .dependsOn(statement, connector)
-  .enablePlugins(NoPublishPlugin)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
@@ -142,7 +141,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .platformsSettings(JSPlatform, NativePlatform)(
     libraryDependencies += "com.armanbilge" %%% "circe-scala-yaml" % "0.0.4"
   )
-  .dependsOn(queryBuilder, schema)
+  .dependsOn(renewalSchema)
 
 lazy val jdbcConnector = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)

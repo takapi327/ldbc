@@ -8,7 +8,7 @@ package ldbc.codegen.builder
 
 import org.specs2.mutable.Specification
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.DataType
 
 object DataTypeCodeBuilderTest extends Specification:
