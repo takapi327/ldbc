@@ -14,7 +14,7 @@ import ldbc.statement.{ AbstractTable, Column }
 import ldbc.schema.interpreter.*
 import ldbc.schema.attribute.Attribute
 
-trait Table[T](val $name: String) extends AbstractTable[T], Alias:
+trait Table[T](val $name: String) extends AbstractTable[T]:
 
   protected final def column[A](name: String)(using elem: Decoder.Elem[A]): Column[A] =
     val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
