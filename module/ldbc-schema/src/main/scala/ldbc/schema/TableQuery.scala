@@ -46,7 +46,7 @@ private[ldbc] case class TableQueryOpt[A, O](
 
 object TableQuery:
 
-  def apply[E, T <: AbstractTable[E]](table: T): AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]] =
+  def apply[E, T <: AbstractTable[E]](table: T): AbstractTableQuery[T, Table.Opt[E]] =
     TableQueryImpl[T](table, table.*, table.$name, List.empty)
 
   inline def apply[T <: AbstractTable[?]]: AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]] = ${
