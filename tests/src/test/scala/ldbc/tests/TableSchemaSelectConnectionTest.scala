@@ -59,10 +59,10 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
 
   def connection: Resource[IO, Connection[IO]]
 
-  private final val country          = TableQuery[CountryTable]
-  private final val city             = TableQuery[CityTable]
-  private final val countryLanguage  = TableQuery[CountryLanguageTable]
-  private final val governmentOffice = TableQuery[GovernmentOfficeTable]
+  private final val country: TableQuery[CountryTable]          = TableQuery[CountryTable]
+  private final val city: TableQuery[CityTable]             = TableQuery[CityTable]
+  private final val countryLanguage: TableQuery[CountryLanguageTable]  = TableQuery[CountryLanguageTable]
+  private final val governmentOffice: TableQuery[GovernmentOfficeTable] = TableQuery[GovernmentOfficeTable]
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
