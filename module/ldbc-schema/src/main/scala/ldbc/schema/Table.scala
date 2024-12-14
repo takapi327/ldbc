@@ -16,6 +16,8 @@ import ldbc.schema.attribute.Attribute
 
 trait Table[T](val $name: String) extends AbstractTable[T]:
 
+  type Column[A] = ldbc.statement.Column[A]
+
   protected final def column[A](name: String)(using elem: Decoder.Elem[A]): Column[A] =
     val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, None, List.empty)
