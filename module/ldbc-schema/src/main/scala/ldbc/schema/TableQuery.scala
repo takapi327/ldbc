@@ -6,52 +6,36 @@
 
 package ldbc.schema
 
-import scala.deriving.Mirror
+import scala.quoted.*
 
 import ldbc.dsl.Parameter
-import ldbc.dsl.codec.Decoder
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
-private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <: Product](
+private[ldbc] case class TableQueryImpl[A <: AbstractTable[?]](
   table:  A,
   column: Column[AbstractTableQuery.Extract[A]],
   name:   String,
   params: List[Parameter.Dynamic]
-)(using mirror: Mirror.ProductOf[B])
-  extends AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]:
+) extends AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]:
 
   override private[ldbc] def toOption: AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]] =
-    val columnOpt =
-      val decoder: Decoder[Option[B]] = new Decoder[Option[B]]((resultSet, prefix) =>
-        val decoded = table.columns.map(_.opt.decoder.decode(resultSet, prefix))
-        if decoded.flatten.length == table.columns.length then
-          Option(
-            mirror.fromTuple(
-              Tuple
-                .fromArray(decoded.flatten.toArray)
-                .asInstanceOf[mirror.MirroredElemTypes]
-            )
-          )
-        else None
-      )
-      val alias = table.columns.flatMap(_.alias).mkString(", ")
-      Column.Impl[Option[B]](
-        table.columns.map(_.name).mkString(", "),
-        if alias.isEmpty then None else Some(alias),
-        decoder,
-        Some(table.columns.length),
-        Some(table.columns.map(column => s"${ column.name } = ?").mkString(", "))
-      )
-
+    val columnOpt = Column.Impl[Option[AbstractTableQuery.Extract[A]]](
+      column.name,
+      column.alias,
+      column.opt.decoder,
+      Some(column.values),
+      Some(column.updateStatement)
+    )
     val opt = Table.Opt[AbstractTableQuery.Extract[A]](
       name,
-      table.columns,
-      columnOpt.asInstanceOf[Column[Option[AbstractTableQuery.Extract[A]]]]
+      column.list,
+      columnOpt
     )
-    TableQueryOpt[A, Table.Opt[AbstractTableQuery.Extract[A]]](opt, opt.*, opt.$name, params)
+
+    TableQueryOpt[A, Table.Opt[AbstractTableQuery.Extract[A]]](opt, opt.*, name, params)
       .asInstanceOf[AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]]
 
-private[ldbc] case class TableQueryOpt[A, O <: SharedTable](
+private[ldbc] case class TableQueryOpt[A, O](
   table:  O,
   column: Column[AbstractTableQuery.Extract[O]],
   name:   String,
@@ -62,5 +46,22 @@ private[ldbc] case class TableQueryOpt[A, O <: SharedTable](
 
 object TableQuery:
 
-  def apply[P <: Product](table: Table[P])(using Mirror.ProductOf[P]): AbstractTableQuery[Table[P], Table.Opt[P]] =
-    TableQueryImpl[Table[P], P](table, table.*, table.$name, List.empty)
+  def apply[E, T <: AbstractTable[E]](table: T): AbstractTableQuery[T, Table.Opt[E]] =
+    TableQueryImpl[T](table, table.*, table.$name, List.empty)
+
+  inline def apply[T <: AbstractTable[?]]: AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]] = ${
+    applyImpl[T]
+  }
+
+  private def applyImpl[T <: AbstractTable[?]](using
+    quotes: Quotes,
+    tpe:    Type[T]
+  ): Expr[AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]]] =
+    import quotes.reflect.*
+    val tableType = TypeRepr.of[T]
+    val table = Select
+      .unique(New(TypeIdent(tableType.typeSymbol)), "<init>")
+      .appliedToArgs(List.empty)
+      .asExprOf[T]
+
+    '{ apply[AbstractTableQuery.Extract[T], T]($table) }

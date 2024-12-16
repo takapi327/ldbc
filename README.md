@@ -195,7 +195,8 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "latest"
 
 The next step is to create a schema for use by the query builder.
 
-ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+ldbc maintains a one-to-one mapping between Scala models and database table definitions.
+Implementers simply define columns and write mappings to the model, similar to Slick.
 
 ```scala 3
 import ldbc.schema.*
@@ -206,18 +207,18 @@ case class User(
   age: Option[Int],
 )
 
-object User:
-  val table = Table[User]("user")(                 // CREATE TABLE `user` (
-    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-    column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-  )                                                    // )
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id")
+  def name: Column[String] = column[String]("name")
+  def age: Column[Option[Int]] = column[Option[Int]]("age")
+
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
-val userTable = TableQuery[User](User.table)
+val userTable: TableQuery[UserTable] = TableQuery[UserTable]
 val result: IO[List[User]] = connection.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"

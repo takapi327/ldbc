@@ -4,7 +4,9 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.schema
+package ldbc.tests
+
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.syntax.all.*
 
@@ -14,27 +16,53 @@ import org.typelevel.otel4s.trace.Tracer
 
 import munit.*
 
-import ldbc.connector.*
-import ldbc.schema.model.*
+import ldbc.sql.*
+import ldbc.connector.SSL
+import ldbc.schema.TableQuery
 import ldbc.schema.syntax.io.*
 
-class TableQuerySelectConnectionTest extends CatsEffectSuite:
+import ldbc.tests.model.*
+
+class LdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest:
+
+  override def prefix: "jdbc" | "ldbc" = "ldbc"
+
+  override def connection: Resource[IO, Connection[IO]] =
+    ldbc.connector.Connection[IO](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      database = Some("world"),
+      ssl      = SSL.Trusted
+    )
+
+class JdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest:
+
+  val ds = new MysqlDataSource()
+  ds.setServerName("127.0.0.1")
+  ds.setPortNumber(13306)
+  ds.setDatabaseName("world")
+  ds.setUser("ldbc")
+  ds.setPassword("password")
+
+  override def prefix: "jdbc" | "ldbc" = "jdbc"
+
+  override def connection: Resource[IO, Connection[IO]] =
+    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+
+trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
-  private val country          = TableQuery[CountryTable]
-  private val city             = TableQuery[CityTable]
-  private val countryLanguage  = TableQuery[CountryLanguageTable]
-  private val governmentOffice = TableQuery[GovernmentOfficeTable]
+  def prefix: "jdbc" | "ldbc"
 
-  val connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
-    database = Some("world"),
-    ssl      = SSL.Trusted
-  )
+  def connection: Resource[IO, Connection[IO]]
+
+  private final val country:          TableQuery[CountryTable]          = TableQuery[CountryTable]
+  private final val city:             TableQuery[CityTable]             = TableQuery[CityTable]
+  private final val countryLanguage:  TableQuery[CountryLanguageTable]  = TableQuery[CountryLanguageTable]
+  private final val governmentOffice: TableQuery[GovernmentOfficeTable] = TableQuery[GovernmentOfficeTable]
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."

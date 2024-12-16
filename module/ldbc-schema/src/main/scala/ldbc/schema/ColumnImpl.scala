@@ -6,80 +6,27 @@
 
 package ldbc.schema
 
-import ldbc.sql.ResultSet
 import ldbc.dsl.codec.Decoder
 import ldbc.statement.Column
 import ldbc.schema.attribute.Attribute
 
-/**
- * Case class for representing SQL Column
- *
- * @param name
- *   Column Field Name
- * @param alias
- *   Column alias name
- * @param dataType
- *   Column data type
- * @param attributes
- *   Extra attribute of column
- * @param decoder
- *   Decoder for converting SQL data to Scala data
- * @tparam T
- *   Scala types that match SQL DataType
- */
-case class ColumnImpl[T](
+private[ldbc] case class ColumnImpl[T](
   name:       String,
   alias:      Option[String],
-  dataType:   DataType[T],
-  attributes: List[Attribute[T]],
-  decoder:    Decoder[T]
+  decoder:    Decoder[T],
+  dataType:   Option[DataType[T]],
+  attributes: List[Attribute[T]]
 ) extends Column[T]:
 
   override def as(name: String): Column[T] =
     this.copy(
       alias   = Some(name),
-      decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => decoder.decode(resultSet, Some(name)))
+      decoder = new Decoder[T]((resultSet, prefix) => decoder.decode(resultSet, Some(name)))
     )
 
+  override def statement: String =
+    dataType.fold(s"`$name`")(dataType => s"`$name` ${ dataType.queryString }") + attributes
+      .map(v => s" ${ v.queryString }")
+      .mkString("")
   override def updateStatement:             String = s"$name = ?"
   override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
-
-  /**
-   * Define SQL query string for each Column
-   *
-   * @return
-   *   SQL query string
-   */
-  def queryString: String =
-    val str = s"`$name` ${ dataType.queryString }" + attributes.map(v => s" ${ v.queryString }").mkString("")
-    alias.fold(str)(name => s"$name.$str")
-
-object Column:
-
-  def apply[T](
-    name:     String,
-    dataType: DataType[T]
-  )(using Decoder.Elem[T]): ColumnImpl[T] =
-    val attributes: List[Attribute[T]] = dataType match
-      case data: DataType.Alias[T] => data.attributes
-      case _                       => List.empty
-    this.apply(name, dataType, attributes*)
-
-  def apply[T](
-    name:       String,
-    dataType:   DataType[T],
-    attributes: Attribute[T]*
-  )(using Decoder.Elem[T]): ColumnImpl[T] =
-    this.apply(name, dataType, attributes, None)
-
-  private[ldbc] def apply[T](
-    name:       String,
-    dataType:   DataType[T],
-    attributes: Seq[Attribute[T]],
-    alias:      Option[String]
-  )(using elem: Decoder.Elem[T]): ColumnImpl[T] =
-    val decoder: Decoder[T] =
-      new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
-        elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
-      )
-    ColumnImpl[T](name, alias, dataType, attributes.toList, decoder)

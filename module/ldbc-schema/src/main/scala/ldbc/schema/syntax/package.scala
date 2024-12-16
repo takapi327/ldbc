@@ -9,23 +9,21 @@ package ldbc.schema
 import scala.deriving.Mirror
 import scala.compiletime.erasedValue
 
-import cats.syntax.all.*
-
 import cats.effect.*
+
+import cats.syntax.all.*
 
 import ldbc.sql.*
 
 import ldbc.dsl.{ Query as DslQuery, SyncSyntax as DslSyntax, * }
 import ldbc.dsl.codec.Decoder
 
-import ldbc.statement.{ Query, Command }
+import ldbc.statement.{ Command, Query }
 import ldbc.statement.syntax.*
 
-package object syntax extends OrderingTable:
+package object syntax:
 
   private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F]:
-
-    type TableQuery[P <: Product] = ldbc.statement.TableQuery[Table[P], Table.Opt[P]]
 
     extension [A, B](query: Query[A, B])
 
@@ -79,4 +77,4 @@ package object syntax extends OrderingTable:
    *   import ldbc.schema.syntax.io.*
    * }}}
    */
-  val io: SyncSyntax[IO] = new SyncSyntax[IO] {}
+  val io: SyncSyntax[IO] & Alias & DataTypes = new SyncSyntax[IO] with Alias with DataTypes {}
