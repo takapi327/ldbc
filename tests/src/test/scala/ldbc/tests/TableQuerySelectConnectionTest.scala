@@ -58,10 +58,10 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
 
-  private final val country          = TableQuery[Country]("country")
-  private final val city             = TableQuery[City]("city")
-  private final val countryLanguage  = TableQuery[CountryLanguage]("countrylanguage")
-  private final val governmentOffice = TableQuery[GovernmentOffice]("government_office")
+  private final val country          = TableQuery[Country]
+  private final val city             = TableQuery[City]
+  private final val countryLanguage  = TableQuery[CountryLanguage]
+  private final val governmentOffice = TableQuery[GovernmentOffice]
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."

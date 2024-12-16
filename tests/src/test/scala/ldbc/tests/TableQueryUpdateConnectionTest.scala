@@ -59,9 +59,9 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
   def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
 
-  private final val country         = TableQuery[Country]("country")
-  private final val city            = TableQuery[City]("city")
-  private final val countryLanguage = TableQuery[CountryLanguage]("countrylanguage")
+  private final val country         = TableQuery[Country]
+  private final val city            = TableQuery[City]
+  private final val countryLanguage = TableQuery[CountryLanguage]
 
   private def code(index: Int): String = prefix match
     case "jdbc" => s"J$index"

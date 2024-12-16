@@ -16,7 +16,11 @@ case class GovernmentOffice(
   @Column("CityID") cityId: Int,
   name:                     String,
   establishmentDate:        Option[LocalDate]
-) derives Table
+)
+
+object GovernmentOffice:
+  
+  given Table[GovernmentOffice] = Table.derived[GovernmentOffice]("government_office")
 
 class GovernmentOfficeTable extends SchemaTable[GovernmentOffice]("government_office"):
 
