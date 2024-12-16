@@ -19,7 +19,7 @@ case class GovernmentOffice(
 )
 
 object GovernmentOffice:
-  
+
   given Table[GovernmentOffice] = Table.derived[GovernmentOffice]("government_office")
 
 class GovernmentOfficeTable extends SchemaTable[GovernmentOffice]("government_office"):

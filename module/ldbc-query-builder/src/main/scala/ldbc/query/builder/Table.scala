@@ -75,7 +75,7 @@ object Table:
         Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
       )
 
-  inline def derived[P <: Product]: Table[P] = ${ derivedImpl[P] }
+  inline def derived[P <: Product]:               Table[P] = ${ derivedImpl[P] }
   inline def derived[P <: Product](name: String): Table[P] = ${ derivedWithNameImpl[P]('name) }
 
   private def derivedImpl[P <: Product](using
@@ -142,8 +142,8 @@ object Table:
     }
 
   private def derivedWithNameImpl[P <: Product](name: Expr[String])(using
-                                                                    quotes: Quotes,
-                                                                    tpe:    Type[P]
+    quotes: Quotes,
+    tpe:    Type[P]
   ): Expr[Table[P]] =
 
     import quotes.reflect.*
@@ -154,7 +154,7 @@ object Table:
 
     val naming = Expr.summon[Naming] match
       case Some(naming) => naming
-      case None => '{ Naming.SNAKE }
+      case None         => '{ Naming.SNAKE }
 
     val mirror = Expr.summon[Mirror.ProductOf[P]].getOrElse {
       report.errorAndAbort(s"Mirror for type $tpe not found")
