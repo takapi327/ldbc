@@ -93,4 +93,7 @@ case class City(
   countryCode: String,
   district:    String,
   population:  Int
-) derives Table
+)
+
+object City:
+  given Table[City] = Table.derived[City]("city")

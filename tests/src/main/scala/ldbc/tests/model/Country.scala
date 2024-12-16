@@ -27,7 +27,7 @@ case class Country(
   headOfState:    Option[String],
   capital:        Option[Int],
   code2:          String
-) derives Table
+)
 
 object Country:
 
@@ -47,6 +47,8 @@ object Country:
 
   given Decoder.Elem[Continent] =
     Decoder.Elem.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
+
+  given Table[Country] = Table.derived[Country]("country")
 
 class CountryTable extends SchemaTable[Country]("country"):
 

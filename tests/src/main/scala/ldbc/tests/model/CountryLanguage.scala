@@ -16,7 +16,7 @@ case class CountryLanguage(
   language:    String,
   isOfficial:  CountryLanguage.IsOfficial,
   percentage:  BigDecimal
-) derives Table
+)
 
 object CountryLanguage:
 
@@ -30,6 +30,8 @@ object CountryLanguage:
 
   given Decoder.Elem[IsOfficial] =
     Decoder.Elem.mapping[String, IsOfficial](str => IsOfficial.valueOf(str))
+
+  given Table[CountryLanguage] = Table.derived[CountryLanguage]("countrylanguage")
 
 class CountryLanguageTable extends SchemaTable[CountryLanguage]("countrylanguage"):
 

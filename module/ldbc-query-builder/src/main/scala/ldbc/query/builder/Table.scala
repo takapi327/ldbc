@@ -22,16 +22,6 @@ trait SharedTable extends Dynamic:
 
   def columns: List[Column[?]]
 
-  /**
-   * Function for setting table names.
-   *
-   * @param name
-   * Table name
-   * @return
-   * Table with table name
-   */
-  def setName(name: String): Self
-
 trait Table[P] extends SharedTable, AbstractTable[P]:
 
   override type Self = Table[P]
@@ -68,12 +58,6 @@ object Table:
 
     override def statement: String = $name
 
-    override def setName(name: String): Self =
-      this.copy(
-        $name   = name,
-        columns = columns.map(column => column.as(s"$name.${ column.name }"))
-      )
-
     override def * : Column[P] =
       val decoder: Decoder[P] = new Decoder[P]((resultSet, prefix) =>
         mirror.fromTuple(
@@ -91,7 +75,8 @@ object Table:
         Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
       )
 
-  inline def derived[P <: Product]: Table[P] = ${ derivedImpl[P] }
+  inline def derived[P <: Product]:               Table[P] = ${ derivedImpl[P] }
+  inline def derived[P <: Product](name: String): Table[P] = ${ derivedWithNameImpl[P]('name) }
 
   private def derivedImpl[P <: Product](using
     quotes: Quotes,
@@ -156,6 +141,67 @@ object Table:
       )(using $mirror)
     }
 
+  private def derivedWithNameImpl[P <: Product](name: Expr[String])(using
+    quotes: Quotes,
+    tpe:    Type[P]
+  ): Expr[Table[P]] =
+
+    import quotes.reflect.*
+
+    val symbol = TypeRepr.of[P].typeSymbol
+
+    val annot = TypeRepr.of[ColumnAnnotation].typeSymbol
+
+    val naming = Expr.summon[Naming] match
+      case Some(naming) => naming
+      case None         => '{ Naming.SNAKE }
+
+    val mirror = Expr.summon[Mirror.ProductOf[P]].getOrElse {
+      report.errorAndAbort(s"Mirror for type $tpe not found")
+    }
+
+    val labels = symbol.primaryConstructor.paramSymss.flatten
+      .collect {
+        case sym if sym.hasAnnotation(annot) =>
+          val annotExpr = sym.getAnnotation(annot).get.asExprOf[ColumnAnnotation]
+          '{ $annotExpr.name }
+        case sym =>
+          val name = Expr(sym.name)
+          '{ $naming.format($name) }
+      }
+
+    val decodes = Expr.ofSeq(
+      symbol.caseFields
+        .map { field =>
+          field.tree match
+            case ValDef(name, tpt, _) =>
+              tpt.tpe.asType match
+                case '[tpe] =>
+                  val decoder = Expr.summon[Decoder.Elem[tpe]].getOrElse {
+                    report.errorAndAbort(s"Decoder for type $tpe not found")
+                  }
+                  decoder.asExprOf[Decoder.Elem[?]]
+                case _ =>
+                  report.errorAndAbort(s"Type $tpt is not a type")
+        }
+    )
+
+    val columns = '{
+      ${ Expr.ofSeq(labels) }
+        .zip($decodes)
+        .map {
+          case (label: String, decoder: Decoder.Elem[t]) => Column[t](label, $name)(using decoder)
+        }
+        .toList
+    }
+
+    '{
+      Impl[P](
+        $name,
+        $columns
+      )(using $mirror)
+    }
+
   trait Opt[P] extends SharedTable, AbstractTable.Opt[P]:
 
     override type Self = Opt[P]
@@ -184,8 +230,3 @@ object Table:
     ) extends Opt[P]:
 
       override def statement: String = $name
-
-      override def setName(name: String): Self = this.copy(
-        $name   = name,
-        columns = columns.map(column => column.as(s"$name.${ column.name }"))
-      )

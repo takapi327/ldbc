@@ -67,9 +67,3 @@ object TableQuery:
     mirror: Mirror.ProductOf[P]
   ): AbstractTableQuery[Table[P], Table.Opt[P]] =
     TableQueryImpl[Table[P], P](table, table.*, table.$name, List.empty)
-
-  def apply[P <: Product](
-    name: String
-  )(using table: Table[P], mirror: Mirror.ProductOf[P]): AbstractTableQuery[Table[P], Table.Opt[P]] =
-    val alias = table.setName(name)
-    TableQueryImpl[Table[P], P](alias, alias.*, alias.$name, List.empty)
