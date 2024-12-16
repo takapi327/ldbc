@@ -22,16 +22,6 @@ trait SharedTable extends Dynamic:
 
   def columns: List[Column[?]]
 
-  /**
-   * Function for setting table names.
-   *
-   * @param name
-   * Table name
-   * @return
-   * Table with table name
-   */
-  def setName(name: String): Self
-
 trait Table[P] extends SharedTable, AbstractTable[P]:
 
   override type Self = Table[P]
@@ -67,12 +57,6 @@ object Table:
     extends Table[P]:
 
     override def statement: String = $name
-
-    override def setName(name: String): Self =
-      this.copy(
-        $name   = name,
-        columns = columns.map(column => column.as(s"$name.${ column.name }"))
-      )
 
     override def * : Column[P] =
       val decoder: Decoder[P] = new Decoder[P]((resultSet, prefix) =>
@@ -246,8 +230,3 @@ object Table:
     ) extends Opt[P]:
 
       override def statement: String = $name
-
-      override def setName(name: String): Self = this.copy(
-        $name   = name,
-        columns = columns.map(column => column.as(s"$name.${ column.name }"))
-      )
