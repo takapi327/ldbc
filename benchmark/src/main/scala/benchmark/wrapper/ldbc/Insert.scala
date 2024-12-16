@@ -56,7 +56,7 @@ class Insert:
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
-    query = TableQuery[Test]("ldbc_wrapper_query_test")
+    query = TableQuery[Test]
 
   @Param(Array("10"))
   var len: Int = uninitialized
@@ -82,4 +82,6 @@ class Insert:
       }
       .unsafeRunSync()
 
-case class Test(c0: Option[Int], c1: Int, c2: String) derives Table
+case class Test(c0: Option[Int], c1: Int, c2: String)
+object Test:
+  given Table[Test] = Table.derived[Test]("ldbc_wrapper_query_test")

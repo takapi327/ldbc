@@ -46,7 +46,7 @@ class Select:
 
     connection = Resource.make(datasource.getConnection)(_.close())
 
-    query = TableQuery[City]("city")
+    query = TableQuery[City]
 
   @Param(Array("10", "100", "1000", "2000", "4000"))
   var len: Int = uninitialized
