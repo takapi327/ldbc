@@ -71,8 +71,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values match in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id === 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` = ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id === 1L)
+   *   // SELECT name, age FROM user WHERE id = ?
    * }}}
    *
    * @param value
@@ -90,8 +90,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are greater than or equal to in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id >= 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` >= ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id >= 1L)
+   *   // SELECT name, age FROM user WHERE id >= ?
    * }}}
    *
    * @param value
@@ -109,8 +109,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are greater than in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id > 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` > ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id > 1L)
+   *   // SELECT name, age FROM user WHERE id > ?
    * }}}
    *
    * @param value
@@ -128,8 +128,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are less than or equal to in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id <= 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` <= ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id <= 1L)
+   *   // SELECT name, age FROM user WHERE id <= ?
    * }}}
    *
    * @param value
@@ -147,8 +147,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are less than in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id < 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` < ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id < 1L)
+   *   // SELECT name, age FROM user WHERE id < ?
    * }}}
    *
    * @param value
@@ -166,8 +166,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are not equal in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id <> 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` <> ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id <> 1L)
+   *   // SELECT name, age FROM user WHERE id <> ?
    * }}}
    *
    * @param value
@@ -182,8 +182,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are not equal in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id !== 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` != ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id !== 1L)
+   *   // SELECT name, age FROM user WHERE id != ?
    * }}}
    *
    * @param value
@@ -199,8 +199,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id IS "NULL")
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` IS NULL
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id IS "NULL")
+   *   // SELECT name, age FROM user WHERE id IS NULL
    * }}}
    *
    * @param value
@@ -220,8 +220,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id <=> 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` <=> ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id <=> 1L)
+   *   // SELECT name, age FROM user WHERE id <=> ?
    * }}}
    *
    * @param value
@@ -236,8 +236,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id IN (1L, 2L, 3L))
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` IN (?, ?, ?)
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id IN (1L, 2L, 3L))
+   *   // SELECT name, age FROM user WHERE id IN (?, ?, ?)
    * }}}
    *
    * @param value
@@ -252,8 +252,8 @@ trait Column[T]:
    * A function that sets a WHERE condition to check whether a value is included in a specified range in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.updateAt BETWEEN (LocalDateTime.now(), LocalDateTime.now()))
-   *   // SELECT `name`, `age` FROM `user` WHERE `updateAt` BETWEEN ? AND ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.updateAt BETWEEN (LocalDateTime.now(), LocalDateTime.now()))
+   *   // SELECT name, age FROM user WHERE update_at BETWEEN ? AND ?
    * }}}
    *
    * @param start
@@ -270,8 +270,8 @@ trait Column[T]:
    * A function to set a WHERE condition to check a value with an ambiguous search in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.name LIKE "Tak%")
-   *   // SELECT `name`, `age` FROM `user` WHERE `name` LIKE ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.name LIKE "Tak%")
+   *   // SELECT name, age FROM user WHERE name LIKE ?
    * }}}
    *
    * @param value
@@ -286,8 +286,8 @@ trait Column[T]:
    * A function to set a WHERE condition to check a value with an ambiguous search in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.name LIKE "Tak%" ESCAPE "!")
-   *   // SELECT `name`, `age` FROM `user` WHERE `name` LIKE ? ESCAPE ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.name LIKE "Tak%" ESCAPE "!")
+   *   // SELECT name, age FROM user WHERE name LIKE ? ESCAPE ?
    * }}}
    *
    * @param like
@@ -304,8 +304,8 @@ trait Column[T]:
    * A function to set a WHERE condition to check values in a regular expression in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.name REGEXP "Tak.*")
-   *   // SELECT `name`, `age` FROM `user` WHERE `name` REGEXP ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.name REGEXP "Tak.*")
+   *   // SELECT name, age FROM user WHERE name REGEXP ?
    * }}}
    *
    * @param value
@@ -323,8 +323,8 @@ trait Column[T]:
    * A function to set a WHERE condition to check whether the values are shifted to the left in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id << 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` << ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id << 1L)
+   *   // SELECT name, age FROM user WHERE id << ?
    * }}}
    *
    * @param value
@@ -342,8 +342,8 @@ trait Column[T]:
    * A function to set a WHERE condition to check whether the values are shifted to the right in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id >> 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` >> ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id >> 1L)
+   *   // SELECT name, age FROM user WHERE id >> ?
    * }}}
    *
    * @param value
@@ -358,8 +358,8 @@ trait Column[T]:
    * A function to set a WHERE condition to check whether the values are added in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id DIV(1L, 2L))
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` DIV ? = ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id DIV(1L, 2L))
+   *   // SELECT name, age FROM user WHERE id DIV ? = ?
    * }}}
    *
    * @param cond
@@ -376,8 +376,8 @@ trait Column[T]:
    * A function to set the WHERE condition for modulo operations in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id MOD(1L, 2L))
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` MOD ? = ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id MOD(1L, 2L))
+   *   // SELECT name, age FROM user WHERE id MOD ? = ?
    * }}}
    *
    * @param cond
@@ -397,8 +397,8 @@ trait Column[T]:
    * A function to set the WHERE condition for modulo operations in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id %(1L, 2L))
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` % ? = ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id %(1L, 2L))
+   *   // SELECT name, age FROM user WHERE id % ? = ?
    * }}}
    *
    * @param cond
@@ -418,8 +418,8 @@ trait Column[T]:
    * A function to set the WHERE condition for bitwise XOR operations in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id ^ 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` ^ ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id ^ 1L)
+   *   // SELECT name, age FROM user WHERE id ^ ?
    * }}}
    *
    * @param value
@@ -437,8 +437,8 @@ trait Column[T]:
    * A function to set the WHERE condition for bitwise NOT operations in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => (user.name, user.age)).where(_.id ~ 1L)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` ~ ?
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id ~ 1L)
+   *   // SELECT name, age FROM user WHERE id ~ ?
    * }}}
    *
    * @param value
@@ -455,8 +455,8 @@ trait Column[T]:
    * A function to combine columns in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => user.name ++ user.age)
-   *   // SELECT `name` + `age` FROM `user`
+   *   TableQuery[User].select(user => user.name ++ user.age)
+   *   // SELECT name + age FROM user
    * }}}
    *
    * @param other
@@ -473,8 +473,8 @@ trait Column[T]:
    * A function to subtract columns in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => user.name -- user.age)
-   *   // SELECT `name` - `age` FROM `user`
+   *   TableQuery[User].select(user => user.name -- user.age)
+   *   // SELECT name - age FROM user
    * }}}
    *
    * @param other
@@ -492,8 +492,8 @@ trait Column[T]:
    * A function to multiply columns in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => user.name * user.age)
-   *   // SELECT `name` * `age` FROM `user`
+   *   TableQuery[User].select(user => user.name * user.age)
+   *   // SELECT name * age FROM user
    * }}}
    *
    * @param other
@@ -510,8 +510,8 @@ trait Column[T]:
    * A function to divide columns in a SELECT statement.
    *
    * {{{
-   *   Table[User].select(user => user.name / user.age)
-   *   // SELECT `name` / `age` FROM `user`
+   *   TableQuery[User].select(user => user.name / user.age)
+   *   // SELECT name / age FROM user
    * }}}
    *
    * @param other
@@ -531,8 +531,8 @@ trait Column[T]:
    *
    * {{{
    *   val sub: SQL = ???
-   *   Table[User].select(user => (user.name, user.age)).where(_.id === sub)
-   *   // SELECT `name`, `age` FROM `user` WHERE `id` = (SELECT ...)
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id === sub)
+   *   // SELECT name, age FROM user WHERE id = (SELECT ...)
    * }}}
    *
    * @param value
