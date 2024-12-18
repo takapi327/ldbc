@@ -93,14 +93,4 @@ object Encoder:
     case h *: EmptyTuple => Encoder[h] *: EmptyTuple
     case h *: t          => Encoder[h] *: MapToTuple[t]
 
-  inline def infer[T]: Encoder[T] =
-    summonFrom[Encoder[T]] {
-      case parameter: Encoder[T] => parameter
-      case _                     => error("Parameter cannot be inferred")
-    }
-
-  inline def fold[T]: MapToTuple[T] =
-    inline erasedValue[T] match
-      case _: EmptyTuple        => EmptyTuple
-      case _: (h *: EmptyTuple) => infer[h] *: EmptyTuple
-      case _: (h *: t)          => infer[h] *: fold[t]
+  inline def fold[T]: MapToTuple[T] = summonAll[MapToTuple[T]]
