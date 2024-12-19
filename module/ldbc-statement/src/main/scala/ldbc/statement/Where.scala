@@ -16,7 +16,8 @@ import scala.annotation.targetName
  * @tparam A
  *   The type of Table. in the case of Join, it is a Tuple of type Table.
  */
-sealed trait Where[A]:
+sealed transparent trait Where[A]:
+  self: Self =>
 
   type Self
 
@@ -41,6 +42,7 @@ sealed trait Where[A]:
    *     .select(_.name)
    *     .where(_.population > 1000000)
    *     .and(_.name == "Tokyo")
+   *   // SELECT name FROM city WHERE population > ? AND name = ?
    * }}}
    * 
    * @param func
@@ -50,12 +52,32 @@ sealed trait Where[A]:
 
   /**
    * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .and(_.name == "Tokyo", false)
+   *   // SELECT name FROM city WHERE population > ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   * @param bool
+   *   Determine whether to add to the conditions. If false, the AND condition is not added to the query.
+   */
+  def and(func: A => Expression, bool: Boolean): Self =
+    if bool then and(func) else self
+
+  /**
+   * Function to set additional conditions on WHERE statement.
    * 
    * {{{
    *   TableQuery[City]
    *     .select(_.name)
    *     .where(_.population > 1000000)
    *     .or(_.name == "Tokyo")
+   *   // SELECT name FROM city WHERE population > ? OR name = ?
    * }}}
    * 
    * @param func
@@ -63,8 +85,31 @@ sealed trait Where[A]:
    */
   def or(func: A => Expression): Self = union("OR", func(table))
 
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .or(_.name == "Tokyo", false)
+   *   // SELECT name FROM city WHERE population > ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   * @param bool
+   *   Determine whether to add to the conditions. If false, the OR condition is not added to the query.
+   */
+  def or(func: A => Expression, bool: Boolean): Self =
+    if bool then or(func) else self
+
   @targetName("OR")
   def ||(func: A => Expression): Self = union("||", func(table))
+
+  @targetName("OR")
+  def ||(func: A => Expression, bool: Boolean): Self =
+    if bool then ||(func) else self
 
   /**
    * Function to set additional conditions on WHERE statement.
@@ -74,6 +119,7 @@ sealed trait Where[A]:
    *     .select(_.name)
    *     .where(_.population > 1000000)
    *     .xor(_.name == "Tokyo")
+   *   // SELECT name FROM city WHERE population > ? XOR name = ?
    * }}}
    * 
    * @param func
@@ -81,8 +127,31 @@ sealed trait Where[A]:
    */
   def xor(func: A => Expression): Self = union("XOR", func(table))
 
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .xor(_.name == "Tokyo", false)
+   *   // SELECT name FROM city WHERE population > ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   * @param bool
+   *   Determine whether to add to the conditions. If false, the XOR condition is not added to the query.
+   */
+  def xor(func: A => Expression, bool: Boolean): Self =
+    if bool then xor(func) else self
+
   @targetName("AND")
   def &&(func: A => Expression): Self = union("&&", func(table))
+
+  @targetName("AND")
+  def &&(func: A => Expression, bool: Boolean): Self =
+    if bool then &&(func) else self
 
 object Where:
 

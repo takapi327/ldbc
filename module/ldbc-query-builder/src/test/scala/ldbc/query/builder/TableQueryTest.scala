@@ -33,6 +33,13 @@ class TableQueryTest extends AnyFlatSpec:
     assert(
       query
         .select(_.p1)
+        .where(_.p1 >= 1)
+        .and(_.p2 === "test", false)
+        .statement === "SELECT test.p1 FROM test WHERE test.p1 >= ?"
+    )
+    assert(
+      query
+        .select(_.p1)
         .where(v => v.p1 > 1 || v.p2 === "test")
         .statement === "SELECT test.p1 FROM test WHERE (test.p1 > ? OR test.p2 = ?)"
     )
@@ -42,6 +49,13 @@ class TableQueryTest extends AnyFlatSpec:
         .where(v => v.p1 > 1 && v.p2 === "test")
         .or(_.p3 === "test")
         .statement === "SELECT test.p1 FROM test WHERE (test.p1 > ? AND test.p2 = ?) OR test.p3 = ?"
+    )
+    assert(
+      query
+        .select(_.p1)
+        .where(v => v.p1 > 1 && v.p2 === "test")
+        .or(_.p3 === "test", false)
+        .statement === "SELECT test.p1 FROM test WHERE (test.p1 > ? AND test.p2 = ?)"
     )
     assert(query.select(_.p1).groupBy(_.p1).statement === "SELECT test.p1 FROM test GROUP BY p1")
     assert(
