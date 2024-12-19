@@ -6,96 +6,96 @@
 
 package ldbc.codegen.parser.yml
 
-import org.specs2.mutable.Specification
+import munit.CatsEffectSuite
 
-object ParserTest extends Specification:
+class ParserTest extends CatsEffectSuite:
 
-  "Testing the Custom" should {
-
-    "The model generated from the Yaml string matches the specified model." in {
-      val parser = Parser(
-        Parser.Database(
-          "test",
-          Seq(
-            Parser.Table(
-              "test",
-              Some(Seq(Parser.Column("id", "Long"))),
-              Some(Parser.Extend(Seq("ldbc.custom.extend"))),
-              Some(Parser.Extend(Seq("ldbc.custom.extend")))
-            )
+  test("The model generated from the Yaml string matches the specified model.") {
+    val parser = Parser(
+      Parser.Database(
+        "test",
+        Seq(
+          Parser.Table(
+            "test",
+            Some(Seq(Parser.Column("id", "Long"))),
+            Some(Parser.Extend(Seq("ldbc.custom.extend"))),
+            Some(Parser.Extend(Seq("ldbc.custom.extend")))
           )
         )
       )
-      val parsed = Parser.parse("""
-          |database:
-          |  name: 'test'
-          |  tables:
-          |    - name: 'test'
-          |      columns:
-          |        - name: 'id'
-          |          type: 'Long'
-          |      object:
-          |        extends:
-          |          - ldbc.custom.extend
-          |      class:
-          |        extends:
-          |          - ldbc.custom.extend
-          |""".stripMargin)
-      parsed === parser
-    }
+    )
+    val parsed = Parser.parse(
+      """
+        |database:
+        |  name: 'test'
+        |  tables:
+        |    - name: 'test'
+        |      columns:
+        |        - name: 'id'
+        |          type: 'Long'
+        |      object:
+        |        extends:
+        |          - ldbc.custom.extend
+        |      class:
+        |        extends:
+        |          - ldbc.custom.extend
+        |""".stripMargin)
+    assertEquals(parsed, parser)
+  }
 
-    "The model generated from the Yaml string matches the specified model." in {
-      val parser = Parser(
-        Parser.Database(
-          "test",
-          Seq(
-            Parser.Table(
-              "test",
-              Some(Seq(Parser.Column("id", "Long"))),
-              None,
-              None
-            )
+  test("The model generated from the Yaml string matches the specified model.") {
+    val parser = Parser(
+      Parser.Database(
+        "test",
+        Seq(
+          Parser.Table(
+            "test",
+            Some(Seq(Parser.Column("id", "Long"))),
+            None,
+            None
           )
         )
       )
-      val parsed = Parser.parse("""
-          |database:
-          |  name: 'test'
-          |  tables:
-          |    - name: 'test'
-          |      columns:
-          |        - name: 'id'
-          |          type: 'Long'
-          |""".stripMargin)
-      parsed === parser
-    }
+    )
+    val parsed = Parser.parse(
+      """
+        |database:
+        |  name: 'test'
+        |  tables:
+        |    - name: 'test'
+        |      columns:
+        |        - name: 'id'
+        |          type: 'Long'
+        |""".stripMargin)
+    assertEquals(parsed, parser)
+  }
 
-    "The model generated from the Yaml string matches the specified model." in {
-      val parser = Parser(
-        Parser.Database(
-          "test",
-          Seq(
-            Parser.Table(
-              "test",
-              None,
-              Some(Parser.Extend(Seq("ldbc.custom.extend"))),
-              Some(Parser.Extend(Seq("ldbc.custom.extend")))
-            )
+  test("The model generated from the Yaml string matches the specified model.") {
+    val parser = Parser(
+      Parser.Database(
+        "test",
+        Seq(
+          Parser.Table(
+            "test",
+            None,
+            Some(Parser.Extend(Seq("ldbc.custom.extend"))),
+            Some(Parser.Extend(Seq("ldbc.custom.extend")))
           )
         )
       )
-      val parsed = Parser.parse("""
-          |database:
-          |  name: 'test'
-          |  tables:
-          |    - name: 'test'
-          |      object:
-          |        extends:
-          |          - ldbc.custom.extend
-          |      class:
-          |        extends:
-          |          - ldbc.custom.extend
-          |""".stripMargin)
-      parsed === parser
-    }
+    )
+    val parsed = Parser.parse(
+      """
+        |database:
+        |  name: 'test'
+        |  tables:
+        |    - name: 'test'
+        |      object:
+        |        extends:
+        |          - ldbc.custom.extend
+        |      class:
+        |        extends:
+        |          - ldbc.custom.extend
+        |""".stripMargin)
+    assertEquals(parsed, parser)
   }
