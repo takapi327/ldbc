@@ -6,13 +6,13 @@
 
 package ldbc.codegen.parser
 
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.CatsEffectSuite
 
-class ColumnParserTest extends AnyFlatSpec, ColumnParser:
+class ColumnParserTest extends CatsEffectSuite, ColumnParser:
 
   override def fileName: String = "test.sql"
 
-  it should "Column parsing test succeeds." in {
+  test("Column parsing test succeeds.") {
     assert(parseAll(columnDefinition, "`id` BIGINT(64)").successful)
     assert(parseAll(columnDefinition, "id BIGINT").successful)
     assert(
@@ -49,7 +49,7 @@ class ColumnParserTest extends AnyFlatSpec, ColumnParser:
     )
   }
 
-  it should "Column parsing test fails." in {
+  test("Column parsing test fails.") {
     assert(!parseAll(columnDefinition, "Column parsing test fails.").successful)
     assert(!parseAll(columnDefinition, "`id`").successful)
     assert(!parseAll(columnDefinition, "'id' BIGINT").successful)
