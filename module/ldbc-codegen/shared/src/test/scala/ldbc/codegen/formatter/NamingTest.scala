@@ -6,67 +6,66 @@
 
 package ldbc.codegen.formatter
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import munit.CatsEffectSuite
 
-class NamingTest extends AnyFlatSpec, Matchers:
+class NamingTest extends CatsEffectSuite:
 
-  "Naming.toCamel" should "convert COLUMN to column" in {
-    Naming.toCamel("COLUMN") shouldEqual "column"
+  test("Naming.toCamel: convert COLUMN to column") {
+    assertEquals(Naming.toCamel("COLUMN"), "column")
   }
 
-  it should "convert camelCase to camelCase" in {
-    Naming.toCamel("camelCase") shouldEqual "camelCase"
+  test("Naming.toCamel: convert camelCase to camelCase") {
+    assertEquals(Naming.toCamel("camelCase"), "camelCase")
   }
 
-  it should "convert PascalCase to pascalCase" in {
-    Naming.toCamel("PascalCase") shouldEqual "pascalCase"
+  test("Naming.toCamel: convert PascalCase to pascalCase") {
+    assertEquals(Naming.toCamel("PascalCase"), "pascalCase")
   }
 
-  it should "convert snake_case to snakeCase" in {
-    Naming.toCamel("snake_case") shouldEqual "snakeCase"
+  test("Naming.toCamel: convert snake_case to snakeCase") {
+    assertEquals(Naming.toCamel("snake_case"), "snakeCase")
   }
 
-  it should "convert kebab-case to kebabCase" in {
-    Naming.toCamel("kebab-case") shouldEqual "kebabCase"
+  test("Naming.toCamel: convert kebab-case to kebabCase") {
+    assertEquals(Naming.toCamel("kebab-case"), "kebabCase")
   }
 
-  "Naming.toPascal" should "convert COLUMN to Column" in {
-    Naming.toPascal("COLUMN") shouldEqual "Column"
+  test("Naming.toPascal: convert COLUMN to Column") {
+    assertEquals(Naming.toPascal("COLUMN"), "Column")
   }
 
-  it should "convert camelCase to CamelCase" in {
-    Naming.toPascal("camelCase") shouldEqual "CamelCase"
+  test("Naming.toPascal: convert camelCase to CamelCase") {
+    assertEquals(Naming.toPascal("camelCase"), "CamelCase")
   }
 
-  it should "convert PascalCase to PascalCase" in {
-    Naming.toPascal("PascalCase") shouldEqual "PascalCase"
+  test("Naming.toPascal: convert PascalCase to PascalCase") {
+    assertEquals(Naming.toPascal("PascalCase"), "PascalCase")
   }
 
-  it should "convert snake_case to SnakeCase" in {
-    Naming.toPascal("snake_case") shouldEqual "SnakeCase"
+  test("Naming.toPascal: convert snake_case to SnakeCase") {
+    assertEquals(Naming.toPascal("snake_case"), "SnakeCase")
   }
 
-  it should "convert kebab-case to KebabCase" in {
-    Naming.toPascal("kebab-case") shouldEqual "KebabCase"
+  test("Naming.toPascal: convert kebab-case to KebabCase") {
+    assertEquals(Naming.toPascal("kebab-case"), "KebabCase")
   }
 
-  "Naming.toSnake" should "convert COLUMN to column" in {
-    Naming.toSnake("COLUMN") shouldEqual "column"
+  test("Naming.toSnake: convert COLUMN to column") {
+    assertEquals(Naming.toSnake("COLUMN"), "column")
   }
 
-  it should "convert camelCase to camel_case" in {
-    Naming.toSnake("camelCase") shouldEqual "camel_case"
+  test("Naming.toSnake: convert camelCase to camel_case") {
+    assertEquals(Naming.toSnake("camelCase"), "camel_case")
   }
 
-  it should "convert PascalCase to pascal_case" in {
-    Naming.toSnake("PascalCase") shouldEqual "pascal_case"
+  test("Naming.toSnake: convert PascalCase to pascal_case") {
+    assertEquals(Naming.toSnake("PascalCase"), "pascal_case")
   }
 
-  it should "convert snake_case to snake_case" in {
-    Naming.toSnake("snake_case") shouldEqual "snake_case"
+  test("Naming.toSnake: convert snake_case to snake_case") {
+    assertEquals(Naming.toSnake("snake_case"), "snake_case")
   }
 
-  it should "convert kebab-case to kebab_case" in {
-    Naming.toSnake("kebab-case") shouldEqual "kebab_case"
+  test("Naming.toSnake: convert kebab-case to kebab_case") {
+    assertEquals(Naming.toSnake("kebab-case"), "kebab_case")
   }
