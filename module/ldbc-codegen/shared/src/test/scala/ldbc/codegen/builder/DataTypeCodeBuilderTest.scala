@@ -133,10 +133,19 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType2 = DataType.CHAR(255, Some("utf8mb4"), None)
     val dataType3 = DataType.CHAR(255, None, Some("utf8mb4_bin"))
     val dataType4 = DataType.CHAR(255, None, None)
-    assertEquals(builder("String").build(dataType1), "CHAR[String](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType1), "CHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("String").build(dataType1),
+      "CHAR[String](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
+    assertEquals(
+      builder("Option[String]").build(dataType1),
+      "CHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType2), "CHAR[String](255).CHARACTER_SET(Character.utf8mb4)")
-    assertEquals(builder("Option[String]").build(dataType2), "CHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4)")
+    assertEquals(
+      builder("Option[String]").build(dataType2),
+      "CHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4)"
+    )
     assertEquals(builder("String").build(dataType3), "CHAR[String](255).COLLATE(Collate.utf8mb4_bin)")
     assertEquals(builder("Option[String]").build(dataType3), "CHAR[Option[String]](255).COLLATE(Collate.utf8mb4_bin)")
     assertEquals(builder("String").build(dataType4), "CHAR[String](255)")
@@ -148,12 +157,24 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType2 = DataType.VARCHAR(255, Some("utf8mb4"), None)
     val dataType3 = DataType.VARCHAR(255, None, Some("utf8mb4_bin"))
     val dataType4 = DataType.VARCHAR(255, None, None)
-    assertEquals(builder("String").build(dataType1), "VARCHAR[String](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType1), "VARCHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("String").build(dataType1),
+      "VARCHAR[String](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
+    assertEquals(
+      builder("Option[String]").build(dataType1),
+      "VARCHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType2), "VARCHAR[String](255).CHARACTER_SET(Character.utf8mb4)")
-    assertEquals(builder("Option[String]").build(dataType2), "VARCHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4)")
+    assertEquals(
+      builder("Option[String]").build(dataType2),
+      "VARCHAR[Option[String]](255).CHARACTER_SET(Character.utf8mb4)"
+    )
     assertEquals(builder("String").build(dataType3), "VARCHAR[String](255).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType3), "VARCHAR[Option[String]](255).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("Option[String]").build(dataType3),
+      "VARCHAR[Option[String]](255).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType4), "VARCHAR[String](255)")
     assertEquals(builder("Option[String]").build(dataType4), "VARCHAR[Option[String]](255)")
   }
@@ -181,10 +202,19 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType2 = DataType.TINYTEXT(Some("utf8mb4"), None)
     val dataType3 = DataType.TINYTEXT(None, Some("utf8mb4_bin"))
     val dataType4 = DataType.TINYTEXT(None, None)
-    assertEquals(builder("String").build(dataType1), "TINYTEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType1), "TINYTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("String").build(dataType1),
+      "TINYTEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
+    assertEquals(
+      builder("Option[String]").build(dataType1),
+      "TINYTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType2), "TINYTEXT[String]().CHARACTER_SET(Character.utf8mb4)")
-    assertEquals(builder("Option[String]").build(dataType2), "TINYTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)")
+    assertEquals(
+      builder("Option[String]").build(dataType2),
+      "TINYTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)"
+    )
     assertEquals(builder("String").build(dataType3), "TINYTEXT[String]().COLLATE(Collate.utf8mb4_bin)")
     assertEquals(builder("Option[String]").build(dataType3), "TINYTEXT[Option[String]]().COLLATE(Collate.utf8mb4_bin)")
     assertEquals(builder("String").build(dataType4), "TINYTEXT[String]()")
@@ -196,12 +226,24 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType2 = DataType.ENUM(List("Active", "InActive"), Some("utf8mb4"), None)
     val dataType3 = DataType.ENUM(List("Active", "InActive"), None, Some("utf8mb4_bin"))
     val dataType4 = DataType.ENUM(List("Active", "InActive"), None, None)
-    assertEquals(builder("Status").build(dataType1), "ENUM[Status](using Status).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[Status]").build(dataType1), "ENUM[Option[Status]](using Status).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("Status").build(dataType1),
+      "ENUM[Status](using Status).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
+    assertEquals(
+      builder("Option[Status]").build(dataType1),
+      "ENUM[Option[Status]](using Status).CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("Status").build(dataType2), "ENUM[Status](using Status).CHARACTER_SET(Character.utf8mb4)")
-    assertEquals(builder("Option[Status]").build(dataType2), "ENUM[Option[Status]](using Status).CHARACTER_SET(Character.utf8mb4)")
+    assertEquals(
+      builder("Option[Status]").build(dataType2),
+      "ENUM[Option[Status]](using Status).CHARACTER_SET(Character.utf8mb4)"
+    )
     assertEquals(builder("Status").build(dataType3), "ENUM[Status](using Status).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[Status]").build(dataType3), "ENUM[Option[Status]](using Status).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("Option[Status]").build(dataType3),
+      "ENUM[Option[Status]](using Status).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("Status").build(dataType4), "ENUM[Status](using Status)")
     assertEquals(builder("Option[Status]").build(dataType4), "ENUM[Option[Status]](using Status)")
   }
@@ -220,8 +262,14 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType2 = DataType.TEXT(None, Some("utf8mb4"), None)
     val dataType3 = DataType.TEXT(Some(255), None, Some("utf8mb4_bin"))
     val dataType4 = DataType.TEXT(None, None, None)
-    assertEquals(builder("String").build(dataType1), "TEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType1), "TEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("String").build(dataType1),
+      "TEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
+    assertEquals(
+      builder("Option[String]").build(dataType1),
+      "TEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType2), "TEXT[String]().CHARACTER_SET(Character.utf8mb4)")
     assertEquals(builder("Option[String]").build(dataType2), "TEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)")
     assertEquals(builder("String").build(dataType3), "TEXT[String]().COLLATE(Collate.utf8mb4_bin)")
@@ -241,12 +289,24 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType2 = DataType.MEDIUMTEXT(Some("utf8mb4"), None)
     val dataType3 = DataType.MEDIUMTEXT(None, Some("utf8mb4_bin"))
     val dataType4 = DataType.MEDIUMTEXT(None, None)
-    assertEquals(builder("String").build(dataType1), "MEDIUMTEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType1), "MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("String").build(dataType1),
+      "MEDIUMTEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
+    assertEquals(
+      builder("Option[String]").build(dataType1),
+      "MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType2), "MEDIUMTEXT[String]().CHARACTER_SET(Character.utf8mb4)")
-    assertEquals(builder("Option[String]").build(dataType2), "MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)")
+    assertEquals(
+      builder("Option[String]").build(dataType2),
+      "MEDIUMTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)"
+    )
     assertEquals(builder("String").build(dataType3), "MEDIUMTEXT[String]().COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType3), "MEDIUMTEXT[Option[String]]().COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("Option[String]").build(dataType3),
+      "MEDIUMTEXT[Option[String]]().COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType4), "MEDIUMTEXT[String]()")
     assertEquals(builder("Option[String]").build(dataType4), "MEDIUMTEXT[Option[String]]()")
   }
@@ -262,10 +322,19 @@ class DataTypeCodeBuilderTest extends CatsEffectSuite:
     val dataType2 = DataType.LONGTEXT(Some("utf8mb4"), None)
     val dataType3 = DataType.LONGTEXT(None, Some("utf8mb4_bin"))
     val dataType4 = DataType.LONGTEXT(None, None)
-    assertEquals(builder("String").build(dataType1), "LONGTEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
-    assertEquals(builder("Option[String]").build(dataType1), "LONGTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)")
+    assertEquals(
+      builder("String").build(dataType1),
+      "LONGTEXT[String]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
+    assertEquals(
+      builder("Option[String]").build(dataType1),
+      "LONGTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4).COLLATE(Collate.utf8mb4_bin)"
+    )
     assertEquals(builder("String").build(dataType2), "LONGTEXT[String]().CHARACTER_SET(Character.utf8mb4)")
-    assertEquals(builder("Option[String]").build(dataType2), "LONGTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)")
+    assertEquals(
+      builder("Option[String]").build(dataType2),
+      "LONGTEXT[Option[String]]().CHARACTER_SET(Character.utf8mb4)"
+    )
     assertEquals(builder("String").build(dataType3), "LONGTEXT[String]().COLLATE(Collate.utf8mb4_bin)")
     assertEquals(builder("Option[String]").build(dataType3), "LONGTEXT[Option[String]]().COLLATE(Collate.utf8mb4_bin)")
     assertEquals(builder("String").build(dataType4), "LONGTEXT[String]()")

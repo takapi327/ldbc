@@ -24,8 +24,7 @@ class ParserTest extends CatsEffectSuite:
         )
       )
     )
-    val parsed = Parser.parse(
-      """
+    val parsed = Parser.parse("""
         |database:
         |  name: 'test'
         |  tables:
@@ -57,8 +56,7 @@ class ParserTest extends CatsEffectSuite:
         )
       )
     )
-    val parsed = Parser.parse(
-      """
+    val parsed = Parser.parse("""
         |database:
         |  name: 'test'
         |  tables:
@@ -84,8 +82,7 @@ class ParserTest extends CatsEffectSuite:
         )
       )
     )
-    val parsed = Parser.parse(
-      """
+    val parsed = Parser.parse("""
         |database:
         |  name: 'test'
         |  tables:

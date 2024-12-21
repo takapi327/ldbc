@@ -34,7 +34,7 @@ class ColumnCodeBuilderTest extends CatsEffectSuite:
       "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255))"
     )
   }
-  
+
   test("The construction of Column into a code string matches the specified string.") {
     val column = ColumnDefinition(
       "p1",
@@ -55,7 +55,7 @@ class ColumnCodeBuilderTest extends CatsEffectSuite:
       "def p1: Column[Long] = column[Long](\"p1\", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY)"
     )
   }
-  
+
   test("The construction of Column into a code string matches the specified string.") {
     val column = ColumnDefinition(
       "p1",
@@ -75,7 +75,7 @@ class ColumnCodeBuilderTest extends CatsEffectSuite:
       "def p1: Column[Long] = column[Long](\"p1\", BIGINT[Long], COMMENT(\"identifier\"))"
     )
   }
-  
+
   test("The construction of Column into a code string matches the specified string.") {
     val column = ColumnDefinition(
       "p1",
@@ -95,7 +95,7 @@ class ColumnCodeBuilderTest extends CatsEffectSuite:
       "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), Collate.utf8mb4_bin)"
     )
   }
-  
+
   test("The construction of Column into a code string matches the specified string.") {
     val column = ColumnDefinition(
       "p1",
@@ -112,7 +112,7 @@ class ColumnCodeBuilderTest extends CatsEffectSuite:
       "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), VISIBLE)"
     )
   }
-  
+
   test("The construction of Column into a code string matches the specified string.") {
     val column = ColumnDefinition(
       "p1",
@@ -132,7 +132,7 @@ class ColumnCodeBuilderTest extends CatsEffectSuite:
       "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), COLUMN_FORMAT.FIXED)"
     )
   }
-  
+
   test("The construction of Column into a code string matches the specified string.") {
     val column = ColumnDefinition(
       "p1",
@@ -152,7 +152,7 @@ class ColumnCodeBuilderTest extends CatsEffectSuite:
       "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), STORAGE.DISK)"
     )
   }
-  
+
   test("The construction of Column into a code string matches the specified string.") {
     val column = ColumnDefinition("p1", DataType.SERIAL(), None)
     assertEquals(
