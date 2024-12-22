@@ -15,12 +15,13 @@
 
 **新たなパッケージ**
 
-新たに2種類のパッケージが追加されました。
+新たに3種類のパッケージが追加されました。
 
-| Module / Platform    | JVM | Scala Native | Scala.js |  
-|----------------------|:---:|:------------:|:--------:|
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
+| Module / Platform | JVM | Scala Native | Scala.js |  
+|-------------------|:---:|:------------:|:--------:|
+| `ldbc-connector`  |  ✅  |      ✅       |    ✅     | 
+| `jdbc-connector`  |  ✅  |      ❌       |    ❌     | 
+| `ldbc-statement`  |  ✅  |      ✅       |    ✅     | 
 
 **全てのパッケージ**
 
@@ -30,6 +31,7 @@
 | `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
 | `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
 | `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
@@ -222,7 +224,7 @@ case class User(
 ```scala 3
 import ldbc.query.builder.Table
 
-val userTable = Table[User]
+val userTable = TableQuery[User]
 ```
 
 最後にクエリ構築を行うことで利用可能となります。
@@ -232,6 +234,61 @@ val result: IO[List[User]] = connection.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
+```
+
+#### Schemaを使用したクエリビルダーの構築
+
+以前までのスキーマを模したTableの構築方法は、Schemaプロジェクトを使用してテーブル型を構築する方法に変わります。
+以下では、Userモデルに対応するTable型の構築について見ていきます。
+
+```scala 3
+case class User(
+  id: Long,
+  name: String,
+  age: Option[Int],
+)
+```
+
+**Before**
+
+これまでは、Tableのインスタンスを直接作成する必要があった。Tableの引数には、Userクラスが持つプロパティと同じ順序で対応するカラムを渡す必要があり、カラムのデータ型も設定することが必須だった。
+
+このテーブル型を使ったTableQueryは、型安全なアクセスが可能なDynamicを使って実装したが、開発ツールでは補完ができなかった。
+
+また、この構築方法は、クラス生成に比べてコンパイル時間が少し遅かった。
+
+```scala 3
+val userTable = Table[User]("user")(
+  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
+  column("name", VARCHAR(255)),
+  column("age", INT.UNSIGNED.DEFAULT(None)),
+)
+```
+
+**After**
+
+今回の修正では、Table型の生成は、Tableを継承してクラスを作成する方法に変更された。また、カラムのデータ型は必須ではなくなり、実装者が任意に設定できるようになった。
+
+このようにSlickと同様の構築方法に変更することで、実装者にとってより馴染みやすいものになった。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id")
+  def name: Column[String] = column[String]("name")
+  def age: Column[Option[Int]] = column[Option[Int]]("age")
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+カラムのデータ型はまだ設定できます。この設定は、たとえば、このテーブル・クラスを使ってスキーマを生成するときに使われます。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+  def name: Column[String] = column[String]("name", VARCHAR(255))
+  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
 ### カスタムデータ型のサポート
@@ -246,7 +303,7 @@ val result: IO[List[User]] = connection.use { conn =>
 
 これにより、ユーザはEffect Typeを受け取るための冗長な処理を記述する必要がなくなり、よりシンプルな実装とカスタムデータ型のパラメータとしての使用が可能になります。
 
-```scala
+```scala 3
 enum Status(val code: Int, val name: String):
   case Active   extends Status(1, "Active")
   case InActive extends Status(2, "InActive")
@@ -254,7 +311,7 @@ enum Status(val code: Int, val name: String):
 
 **Before**
 
-```scala
+```scala 3
 given Parameter[Status] with
   override def bind[F[_]](
     statement: PreparedStatement[F],
@@ -265,7 +322,7 @@ given Parameter[Status] with
 
 **After**
 
-```scala
+```scala 3
 given Encoder[Status] with
   override def encode(status: Status): Int = status.done
 ```
@@ -297,7 +354,6 @@ given Encoder[Status] with
 
 これにより、ユーザーは取得したレコードをネストした階層データに変換できる。
 
-
 ```scala
 case class City(id: Int, name: String, countryCode: String)
 case class Country(code: String, name: String)
@@ -308,21 +364,127 @@ sql"SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM
 
 **Using Query Builder**
 
-```scala
+```scala 3
 case class City(id: Int, name: String, countryCode: String) derives Table
 case class Country(code: String, name: String) derives Table
 
 val city = Table[City]
 val country = Table[Country]
 
-city.join(country).join((city, country) => city.countryCode === country.code)
+city.join(country).on((city, country) => city.countryCode === country.code)
   .select((city, country) => (city.name, country.name))
   .query // (String, String)
   .to[Option]
-  
 
-city.join(country).join((city, country) => city.countryCode === country.code)
+city.join(country).on((city, country) => city.countryCode === country.code)
   .selectAll
   .query // (City, Country)
   .to[Option]
+```
+
+### 列の絞り込み方法の変更
+
+これまで、列の絞り込みは単にタプルとして使用される列をグループ化してきました。
+
+```scala 3
+cityTable.select(city => (city.id, city.name))
+```
+
+しかし、これには問題がありました。カラムは1つの型パラメータを持つ型です。Scala2ではTupleの数に制限があったため、ボイラープレートか何かでTupleの数をすべて扱えるものを作る必要がありました。
+この場合、動的TupleはTupleまたはTuple.Mapとして扱われるため、Column型にアクセスしたい場合、その型はTupleとしてしか扱えないため、asInstanceOfを使って型をキャストする必要がありました。
+型をキャストすると、もちろん型の安全性が失われコードが複雑になってしまいます。
+
+この問題を解決するために、同じTypeLevelプロジェクトの一つである[twiddles](https://github.com/typelevel/twiddles)を採用することにしました。
+
+twiddlesを使うことで、カラムをより簡単に合成することができるようになります。
+
+```scala 3
+cityTable.select(city => city.id *: city.name)
+```
+
+また、内部コードではTupleの代わりに`Column[T]`を使用すればよいので、安全でない型キャストは必要なくなります。
+
+Twiddlesはまた、合成結果を別の型に変換することを容易にします。
+
+```scala 3
+case class City(id: Long, name: String)
+
+def id: Column[Int] = column[Int]("ID")
+def name: Column[String] = column[String]("Name")
+
+def city: Column[City] = (id *: name).to[City]
+```
+
+### TableからTableQueryへの変更
+
+これまでは、同じTable型を使って、モデルからテーブル型とテーブル情報を使ってクエリを構築していました。
+
+```scala 3
+case class City(id: Long, name: String) derives Table
+val cityTable = Table[City]
+```
+
+しかしこの実装は、同じ型が2つのものを表すのに使われるため間違った実装をするのは簡単でした。
+
+```scala 3
+cityTable.select(city => city.insert(???))
+```
+
+IDEのような開発ツールは、利用可能なすべてのAPIを補完するため実装者に少なからぬ混乱を引き起こす可能性があります。
+
+この問題を解決するために、Table型とTableQuery型を分離しました。
+
+```scala 3
+case class City(id: Long, name: String) derives Table
+val cityTable = TableQuery[City]
+```
+
+**テーブル名のカスタマイズはTableのderivedで行うことができます**
+
+```scala 3
+case class City(
+  id: Int,
+  name:             String,
+  countryCode:      String,
+  district:         String,
+  population:       Int
+)
+
+object City:
+  given Table[City] = Table.derived[City]("city")
+```
+
+### アップデート文の構築方法変更
+
+以前は、Update Statementは更新するカラムごとに1つずつ設定する必要がありました。この実装は、いくつかのカラムを個別に更新したい場合には便利ですが、更新したいカラムが追加されるたびにセットを記述するのは非常に面倒です。
+
+```scala 3
+cityTable
+  .update("id", 1L)
+  .set("name", "Tokyo")
+  .set("population", 1, false)
+```
+
+今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになりました。
+
+```scala 3
+cityTable
+  .update(city => city.id *: city.name)((1L, "Tokyo"))
+  .set(_.population, 1, false)
+```
+
+今回のアップデートにより、カラムを組み合わせることができるようになり、複数のカラムを一緒に指定して更新処理を行うことができるようになった。setを使用して特定の列のみを更新することは可能です。また、set を使用して更新条件を設定できるため、条件が正の場合にのみ追加カラムを更新するクエリを作成できます。
+
+### テーブル結合の構築方法の変更
+
+以前は、テーブル結合は第2引数に結合条件を設定することで構築されていました。
+
+```scala 3
+cityTable.join(countryTable)((c, co) => c.countryCode === co.code)
+```
+
+この変更により、テーブルの結合条件は`on`APIで設定する必要があります。この変更は内部的な実装変更の結果です。
+
+```scala 3
+cityTable.join(countryTable).on((c, co) => c.countryCode === co.code)
 ```
