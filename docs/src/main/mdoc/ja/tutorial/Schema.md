@@ -17,25 +17,36 @@
 
 ```scala 3
 import ldbc.schema.*
-import ldbc.schema.attribute.*
 ```
 
-ldbcは、Scalaモデルとデータベースのテーブル定義を1対1のマッピングで管理します。モデルが保持するプロパティとテーブルが保持するカラムのマッピングは、定義順に行われます。テーブル定義は、Create文の構造と非常によく似ています。このため、テーブル定義の構築はユーザーにとって直感的なものとなります。
+ldbcは、Scalaモデルとデータベースのテーブル定義を1対1のマッピングで管理します。
 
-ldbc は、このテーブル定義をさまざまな目的で使用します。型安全なクエリの生成、ドキュメントの生成など。
+実装者はSlickと同様にカラムを定義し、モデルへのマッピングを記述するだけです。
 
 ```scala 3
 case class User(
   id:    Int,
   name:  String,
-  email: String,
+  age: Option[Int],
 )
 
-val table = Table[User]("user")(                  // CREATE TABLE `user` (
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(50)),                    //   `name` VARCHAR(50) NOT NULL,
-  column("email", VARCHAR(100)),                  //   `email` VARCHAR(100) NOT NULL,
-)                                                 // );
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id")
+  def name: Column[String] = column[String]("name")
+  def age: Column[Option[Int]] = column[Option[Int]]("age")
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+カラムにはデータ型を設定することもできます。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+  def name: Column[String] = column[String]("name", VARCHAR(255))
+  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
 すべてのカラムはcolumnメソッドで定義されます。各カラムにはカラム名、データ型、属性があります。以下のプリミティブ型が標準でサポートされており、すぐに使用できます。
