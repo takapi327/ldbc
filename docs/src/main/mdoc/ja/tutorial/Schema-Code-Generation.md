@@ -80,11 +80,14 @@ case class Country(
 )
 
 object Country:
-  val table = Table[Country]("country")(
-    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("name", VARCHAR(255)),
-    column("code", INT)
-  )
+  val table = TableQuery[CountryTable]
+  
+  class CountryTable extends Table[Country]("country"):
+    def id: Column[Long] = column[Long]("id")
+    def name: Column[String] = column[String]("name")
+    def code: Column[Int] = column[Int]("code")
+    
+    override def * : Column[Country] = (id *: name *: code).to[Country]
 ```
 
 Compileでコードを生成した場合、その生成されたファイルはキャッシュされるので、SQLファイルを変更していない場合再度生成されることはありません。SQLファイルを変更した場合もしくは、cleanコマンドを実行してキャッシュを削除した場合はCompileを実行すると再度コードが生成されます。
@@ -168,38 +171,13 @@ case class Country(
 )
 
 object Country extends /*{package.name.}*/CustomMapping:
-  val table = Table[Country]("country")(
-    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("name", VARCHAR(255)),
-    column("code", INT)
-  )
-```
+  
+  val table = TableQuery[CountryTable]
 
-データベースモデルに関してもSQLファイルから自動生成が行われています。
+  class CountryTable extends Table[Country]("country"):
+    def id: Column[Long] = column[Long]("id")
+    def name: Column[String] = column[String]("name")
+    def code: Column[Int] = column[Int]("code")
 
-```scala 3
-package ldbc.generated.location
-
-import ldbc.schema.*
-
-case class LocationDatabase(
-  schemaMeta: Option[String] = None,
-  catalog: Option[String] = Some("def"),
-  host: String = "127.0.0.1",
-  port: Int = 3306
-) extends Database:
-
-  override val databaseType: Database.Type = Database.Type.MySQL
-
-  override val name: String = "location"
-
-  override val schema: String = "location"
-
-  override val character: Option[Character] = None
-
-  override val collate: Option[Collate] = None
-
-  override val tables = Set(
-    Country.table
-  )
+    override def * : Column[Country] = (id *: name *: code).to[Country]
 ```
