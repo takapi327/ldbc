@@ -11,7 +11,7 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
 import ldbc.codegen.builder.ColumnCodeBuilder
@@ -85,14 +85,6 @@ private[ldbc] object TableModelGenerator:
       outputFile.getParentFile.mkdirs()
       outputFile.createNewFile()
 
-    val keyDefinitions = statement.keyDefinitions.map(key =>
-      s".keySet(table => ${ key.toCode("table", classNameFormatter, propertyNameFormatter) })"
-    )
-
-    val tableOptions = statement.options.fold("")(
-      _.map(option => s".setOption(${ Table.buildTableOptionCode(option) })").mkString("\n  ")
-    )
-
     val builder = ColumnCodeBuilder(classNameFormatter)
 
     val columns =
@@ -101,6 +93,8 @@ private[ldbc] object TableModelGenerator:
     val classExtends = custom.flatMap(_.`class`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
 
     val objectExtends = custom.flatMap(_.`object`.map(_.`extends`.mkString(", "))).fold("")(str => s" extends $str")
+
+    val allColumns = statement.columnDefinitions.map(column => Naming.toCamel(column.name))
 
     val scalaSource =
       s"""
@@ -115,11 +109,12 @@ private[ldbc] object TableModelGenerator:
          |object $className$objectExtends:
          |
          |  ${ objects.mkString("\n  ") }
-         |  val table: Table[$className] = Table[$className]("${ statement.tableName }")(
-         |    ${ columns.mkString(",\n    ") }
-         |  )
-         |  ${ keyDefinitions.mkString("\n  ") }
-         |  $tableOptions
+         |  val table = TableQuery[${ className }Table]
+         |
+         |  class ${ className }Table extends Table[$className]("${ statement.tableName }"):
+         |    ${ columns.mkString("\n    ") }
+         |
+         |    override def * : Column[$className] = (${ allColumns.mkString(" *: ") }).to[$className]
          |""".stripMargin
 
     Files.write(outputFile.toPath, scalaSource.getBytes(summon[Codec].name))

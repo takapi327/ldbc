@@ -33,7 +33,7 @@ class Insert:
   var connection: Resource[IO, Connection[IO]] = uninitialized
 
   @volatile
-  var query: Table[Test] = uninitialized
+  var query: TableQuery[Test] = uninitialized
 
   @volatile
   var records: NonEmptyList[(Int, String)] = uninitialized
@@ -56,7 +56,7 @@ class Insert:
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
-    query = Table[Test]("ldbc_wrapper_query_test")
+    query = TableQuery[Test]
 
   @Param(Array("10"))
   var len: Int = uninitialized
@@ -66,8 +66,8 @@ class Insert:
     connection
       .use { conn =>
         query
-          .insertInto(test => (test.c1, test.c2))
-          .values(records.toList)
+          .insertInto(test => test.c1 *: test.c2)
+          .values(records.toList*)
           .update
           .commit(conn)
       }
@@ -82,4 +82,6 @@ class Insert:
       }
       .unsafeRunSync()
 
-case class Test(c0: Option[Int], c1: Int, c2: String) derives Table
+case class Test(c0: Option[Int], c1: Int, c2: String)
+object Test:
+  given Table[Test] = Table.derived[Test]("ldbc_wrapper_query_test")

@@ -71,24 +71,38 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.5.4",
+      "org.typelevel" %%% "cats-effect"       % "3.5.7",
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
   )
   .dependsOn(sql)
 
+lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .module("statement", "Project for building type-safe statements")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "twiddles-core" % "0.8.0",
+      "org.scalatest" %%% "scalatest"     % "3.2.18" % Test
+    )
+  )
+  .dependsOn(dsl)
+  .platformsEnablePlugins(JVMPlatform, JSPlatform, NativePlatform)(
+    spray.boilerplate.BoilerplatePlugin
+  )
+
 lazy val queryBuilder = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("query-builder", "Project to build type-safe queries")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
-  .dependsOn(dsl)
+  .dependsOn(statement)
 
 lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("schema", "Type safety schema construction project")
   .settings(libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test)
   .settings(Test / scalacOptions -= "-Werror")
-  .dependsOn(queryBuilder)
+  .dependsOn(statement)
 
 lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
   .settings(
@@ -104,8 +118,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
-      "org.scalatest"          %%% "scalatest"                % "3.2.18" % Test,
-      "org.specs2"             %%% "specs2-core"              % "4.20.5" % Test
+      "org.typelevel"          %%% "munit-cats-effect"        % "2.0.0" % Test
     )
   )
   .jvmSettings(
@@ -137,13 +150,13 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.5.4",
+      "org.typelevel" %%% "cats-effect"       % "3.5.7",
       "co.fs2"        %%% "fs2-core"          % "3.11.0",
       "co.fs2"        %%% "fs2-io"            % "3.11.0",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
       "org.scodec"    %%% "scodec-core"       % "2.2.2",
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
-      "org.typelevel" %%% "otel4s-core-trace" % "0.10.0",
+      "org.typelevel" %%% "otel4s-core-trace" % "0.11.2",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
@@ -196,7 +209,7 @@ lazy val tests = crossProject(JVMPlatform)
       mysql            % Test
     )
   )
-  .dependsOn(jdbcConnector, connector, queryBuilder)
+  .dependsOn(jdbcConnector, connector, queryBuilder, schema)
   .enablePlugins(NoPublishPlugin)
 
 lazy val benchmark = (project in file("benchmark"))
@@ -212,7 +225,7 @@ lazy val benchmark = (project in file("benchmark"))
       slick
     )
   )
-  .dependsOn(jdbcConnector.jvm, connector.jvm, schema.jvm)
+  .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
 lazy val docs = (project in file("docs"))
@@ -243,6 +256,7 @@ lazy val ldbc = tlCrossRootProject
     jdbcConnector,
     connector,
     dsl,
+    statement,
     queryBuilder,
     schema,
     codegen,

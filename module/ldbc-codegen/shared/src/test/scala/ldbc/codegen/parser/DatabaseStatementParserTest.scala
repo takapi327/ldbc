@@ -6,13 +6,13 @@
 
 package ldbc.codegen.parser
 
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.CatsEffectSuite
 
-class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
+class DatabaseStatementParserTest extends CatsEffectSuite, DatabaseStatementParser:
 
   override def fileName: String = "test.sql"
 
-  it should "Database create statement parsing test succeeds." in {
+  test("Database create statement parsing test succeeds.") {
     assert(parseAll(databaseStatements, "CREATE DATABASE `database`;").successful)
     assert(parseAll(databaseStatements, "CREATE DATABASE `database` DEFAULT CHARACTER SET utf8mb4;").successful)
     assert(parseAll(databaseStatements, "CREATE DATABASE `database` COLLATE utf8mb4_bin;").successful)
@@ -50,7 +50,7 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
     )
   }
 
-  it should "Database create statement parsing test fails." in {
+  test("Database create statement parsing test fails.") {
     assert(!parseAll(databaseStatements, "CREATE DATABASE;").successful)
     assert(!parseAll(databaseStatements, "CREATE DATABASE /* comment */;").successful)
     assert(!parseAll(databaseStatements, "CREATE DATABASE `database` ENCRYPTION X;").successful)
@@ -59,7 +59,7 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
     assert(!parseAll(databaseStatements, "CREATE SCHEMA `database` ENCRYPTION X;").successful)
   }
 
-  it should "Database drop statement parsing test succeeds." in {
+  test("Database drop statement parsing test succeeds.") {
     assert(parseAll(databaseStatements, "DROP DATABASE `database`;").successful)
     assert(parseAll(databaseStatements, "DROP DATABASE IF EXISTS `database`;").successful)
     assert(parseAll(databaseStatements, "DROP DATABASE IF NOT EXISTS `database`;").successful)
@@ -71,19 +71,19 @@ class DatabaseStatementParserTest extends AnyFlatSpec, DatabaseStatementParser:
     assert(parseAll(databaseStatements, "/* comment */ DROP /* comment */ SCHEMA /* comment */ `database`;").successful)
   }
 
-  it should "Database drop statement parsing test fails." in {
+  test("Database drop statement parsing test fails.") {
     assert(!parseAll(databaseStatements, "DROP DATABASE;").successful)
     assert(!parseAll(databaseStatements, "/* comment */ DROP /* comment */;").successful)
     assert(!parseAll(databaseStatements, "DROP SCHEMA;").successful)
     assert(!parseAll(databaseStatements, "/* comment */ DROP /* comment */;").successful)
   }
 
-  it should "Database use statement parsing test succeeds." in {
+  test("Database use statement parsing test succeeds.") {
     assert(parseAll(databaseStatements, "USE `database`;").successful)
     assert(parseAll(databaseStatements, "/* comment */ USE /* comment */ `database`;").successful)
   }
 
-  it should "Database use statement parsing test fails." in {
+  test("Database use statement parsing test fails.") {
     assert(!parseAll(databaseStatements, "USE;").successful)
     assert(!parseAll(databaseStatements, "/* comment */ USE /* comment */;").successful)
   }

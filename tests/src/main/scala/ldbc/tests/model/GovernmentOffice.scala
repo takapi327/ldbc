@@ -8,11 +8,25 @@ package ldbc.tests.model
 
 import java.time.LocalDate
 
-import ldbc.query.builder.Table
+import ldbc.query.builder.{ Table, Column }
+import ldbc.schema.Table as SchemaTable
 
 case class GovernmentOffice(
-  id:                Int,
-  cityId:            Int,
-  name:              String,
-  establishmentDate: Option[LocalDate]
-) derives Table
+  @Column("ID") id:         Int,
+  @Column("CityID") cityId: Int,
+  name:                     String,
+  establishmentDate:        Option[LocalDate]
+)
+
+object GovernmentOffice:
+
+  given Table[GovernmentOffice] = Table.derived[GovernmentOffice]("government_office")
+
+class GovernmentOfficeTable extends SchemaTable[GovernmentOffice]("government_office"):
+
+  def id:                Column[Int]               = column[Int]("ID")
+  def cityId:            Column[Int]               = column[Int]("CityID")
+  def name:              Column[String]            = column[String]("Name")
+  def establishmentDate: Column[Option[LocalDate]] = column[Option[LocalDate]]("EstablishmentDate")
+
+  override def * : Column[GovernmentOffice] = (id *: cityId *: name *: establishmentDate).to[GovernmentOffice]

@@ -1022,7 +1022,8 @@ class ConnectionTest extends FTestPlatform:
         "Table Catalog: def, Table Schema: performance_schema",
         "Table Catalog: def, Table Schema: sys",
         "Table Catalog: def, Table Schema: world",
-        "Table Catalog: def, Table Schema: world2"
+        "Table Catalog: def, Table Schema: world2",
+        "Table Catalog: def, Table Schema: world3"
       )
     )
   }
@@ -1055,7 +1056,8 @@ class ConnectionTest extends FTestPlatform:
         "Table Catalog: performance_schema",
         "Table Catalog: sys",
         "Table Catalog: world",
-        "Table Catalog: world2"
+        "Table Catalog: world2",
+        "Table Catalog: world3"
       )
     )
   }

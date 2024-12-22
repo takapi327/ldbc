@@ -6,25 +6,25 @@
 
 package ldbc.codegen.parser
 
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.CatsEffectSuite
 
-class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
+class DataTypeParserTest extends CatsEffectSuite, DataTypeParser:
 
   override def fileName: String = "test.sql"
 
-  it should "BIT data type parsing test succeeds." in {
+  test("BIT data type parsing test succeeds.") {
     assert(parseAll(bitType, "bit").successful)
     assert(parseAll(bitType, "Bit(1)").successful)
     assert(parseAll(bitType, "BIT(64)").successful)
   }
 
-  it should "BIT data type parsing test fails." in {
+  test("BIT data type parsing test fails.") {
     assert(!parseAll(bitType, "failed").successful)
     assert(!parseAll(bitType, "Bit(0)").successful)
     assert(!parseAll(bitType, "BIT(65)").successful)
   }
 
-  it should "TINYINT data type parsing test succeeds." in {
+  test("TINYINT data type parsing test succeeds.") {
     assert(parseAll(tinyintType, "tinyint").successful)
     assert(parseAll(tinyintType, "Tinyint").successful)
     assert(parseAll(tinyintType, "Tinyint(1)").successful)
@@ -34,7 +34,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(tinyintType, "TINYINT(255) UNSIGNED ZEROFILL").successful)
   }
 
-  it should "TINYINT data type parsing test fails." in {
+  test("TINYINT data type parsing test fails.") {
     assert(!parseAll(tinyintType, "failed").successful)
     assert(!parseAll(tinyintType, "Tinyint(0)").successful)
     assert(!parseAll(tinyintType, "TINYINT(256)").successful)
@@ -42,7 +42,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(tinyintType, "TINYINT(255) ZEROFILL UNSIGNED").successful)
   }
 
-  it should "SMALLINT data type parsing test succeeds." in {
+  test("SMALLINT data type parsing test succeeds.") {
     assert(parseAll(smallintType, "smallint").successful)
     assert(parseAll(smallintType, "Smallint").successful)
     assert(parseAll(smallintType, "Smallint(1)").successful)
@@ -52,7 +52,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(smallintType, "SMALLINT(255) UNSIGNED ZEROFILL").successful)
   }
 
-  it should "SMALLINT data type parsing test fails." in {
+  test("SMALLINT data type parsing test fails.") {
     assert(!parseAll(smallintType, "failed").successful)
     assert(!parseAll(smallintType, "Smallint(0)").successful)
     assert(!parseAll(smallintType, "SMALLINT(256)").successful)
@@ -60,7 +60,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(smallintType, "SMALLINT(255) ZEROFILL UNSIGNED").successful)
   }
 
-  it should "MEDIUMINT data type parsing test succeeds." in {
+  test("MEDIUMINT data type parsing test succeeds.") {
     assert(parseAll(mediumintType, "mediumint").successful)
     assert(parseAll(mediumintType, "Mediumint").successful)
     assert(parseAll(mediumintType, "Mediumint(1)").successful)
@@ -70,7 +70,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(mediumintType, "MEDIUMINT(255) UNSIGNED ZEROFILL").successful)
   }
 
-  it should "MEDIUMINT data type parsing test fails." in {
+  test("MEDIUMINT data type parsing test fails.") {
     assert(!parseAll(mediumintType, "failed").successful)
     assert(!parseAll(mediumintType, "Mediumint(0)").successful)
     assert(!parseAll(mediumintType, "MEDIUMINT(256)").successful)
@@ -78,7 +78,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(mediumintType, "MEDIUMINT(255) ZEROFILL UNSIGNED").successful)
   }
 
-  it should "INT data type parsing test succeeds." in {
+  test("INT data type parsing test succeeds.") {
     assert(parseAll(intType, "int").successful)
     assert(parseAll(intType, "Int(1)").successful)
     assert(parseAll(intType, "INT(255)").successful)
@@ -93,7 +93,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(intType, "INTEGER(255) UNSIGNED ZEROFILL").successful)
   }
 
-  it should "INT data type parsing test fails." in {
+  test("INT data type parsing test fails.") {
     assert(!parseAll(intType, "failed").successful)
     assert(!parseAll(intType, "Int(0)").successful)
     assert(!parseAll(intType, "INT(256)").successful)
@@ -105,7 +105,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(intType, "INTEGER(255) ZEROFILL UNSIGNED").successful)
   }
 
-  it should "BIGINT data type parsing test succeeds." in {
+  test("BIGINT data type parsing test succeeds.") {
     assert(parseAll(bigIntType, "bigint").successful)
     assert(parseAll(bigIntType, "Bigint(1)").successful)
     assert(parseAll(bigIntType, "BIGINT(255)").successful)
@@ -114,7 +114,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(bigIntType, "BIGINT(255) UNSIGNED ZEROFILL").successful)
   }
 
-  it should "BIGINT data type parsing test fails." in {
+  test("BIGINT data type parsing test fails.") {
     assert(!parseAll(bigIntType, "failed").successful)
     assert(!parseAll(bigIntType, "Bigint(0)").successful)
     assert(!parseAll(bigIntType, "BIGINT(256)").successful)
@@ -122,7 +122,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(bigIntType, "BIGINT(255) ZEROFILL UNSIGNED").successful)
   }
 
-  it should "DECIMAL data type parsing test succeeds." in {
+  test("DECIMAL data type parsing test succeeds.") {
     assert(parseAll(decimalType, "decimal").successful)
     assert(parseAll(decimalType, "Decimal(1)").successful)
     assert(parseAll(decimalType, "DECIMAL(65, 5)").successful)
@@ -137,7 +137,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(decimalType, "DEC(65, 30) UNSIGNED ZEROFILL").successful)
   }
 
-  it should "DECIMAL data type parsing test fails." in {
+  test("DECIMAL data type parsing test fails.") {
     assert(!parseAll(decimalType, "failed").successful)
     assert(!parseAll(decimalType, "Decimal(-1)").successful)
     assert(!parseAll(decimalType, "DECIMAL(66, 0)").successful)
@@ -151,7 +151,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(decimalType, "DEC(10, 5) ZEROFILL UNSIGNED").successful)
   }
 
-  it should "FLOAT data type parsing test succeeds." in {
+  test("FLOAT data type parsing test succeeds.") {
     assert(parseAll(floatType, "float").successful)
     assert(parseAll(floatType, "float(0)").successful)
     assert(parseAll(floatType, "Float(24)").successful)
@@ -160,7 +160,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(floatType, "FLOAT(10) UNSIGNED ZEROFILL").successful)
   }
 
-  it should "FLOAT data type parsing test fails." in {
+  test("FLOAT data type parsing test fails.") {
     assert(!parseAll(floatType, "failed").successful)
     assert(!parseAll(floatType, "Float(-1)").successful)
     assert(!parseAll(floatType, "Float(25)").successful)
@@ -168,7 +168,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(floatType, "FLOAT(10) ZEROFILL UNSIGNED").successful)
   }
 
-  it should "DOUBLE data type parsing test succeeds." in {
+  test("DOUBLE data type parsing test succeeds.") {
     assert(parseAll(doubleType, "double").successful)
     assert(parseAll(doubleType, "Double(24, 24)").successful)
     assert(parseAll(doubleType, "DOUBLE(53, 53)").successful)
@@ -183,7 +183,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(doubleType, "REAL UNSIGNED ZEROFILL").successful)
   }
 
-  it should "DOUBLE data type parsing test fails." in {
+  test("DOUBLE data type parsing test fails.") {
     assert(!parseAll(doubleType, "failed").successful)
     assert(!parseAll(doubleType, "double(23, 24)").successful)
     assert(!parseAll(doubleType, "Double(24, 23)").successful)
@@ -197,7 +197,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(doubleType, "REAL ZEROFILL UNSIGNED").successful)
   }
 
-  it should "CHAR data type parsing test succeeds." in {
+  test("CHAR data type parsing test succeeds.") {
     assert(parseAll(charType, "char").successful)
     assert(parseAll(charType, "Char(0)").successful)
     assert(parseAll(charType, "CHAR(255)").successful)
@@ -225,7 +225,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(charType, "NATIONAL CHARACTER CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
   }
 
-  it should "CHAR data type parsing test fails." in {
+  test("CHAR data type parsing test fails.") {
     assert(!parseAll(charType, "failed").successful)
     assert(!parseAll(charType, "failed Char").successful)
     assert(!parseAll(charType, "CHAR(-1)").successful)
@@ -235,7 +235,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(charType, "CHARACTER(255) CHARACTER SET utf8mb4 COLLATE").successful)
   }
 
-  it should "VARCHAR data type parsing test succeeds." in {
+  test("VARCHAR data type parsing test succeeds.") {
     assert(parseAll(varcharType, "Varchar(0)").successful)
     assert(parseAll(varcharType, "VARCHAR(255)").successful)
     assert(parseAll(varcharType, "VARCHAR(0) CHARACTER SET utf8mb4").successful)
@@ -249,7 +249,7 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(varcharType, "NATIONAL VARCHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
   }
 
-  it should "VARCHAR data type parsing test fails." in {
+  test("VARCHAR data type parsing test fails.") {
     assert(!parseAll(varcharType, "failed").successful)
     assert(!parseAll(varcharType, "failed Varchar").successful)
     assert(!parseAll(varcharType, "NATIONAL VARCHAR").successful)
@@ -261,41 +261,41 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(!parseAll(varcharType, "NATIONAL VARCHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_bin").successful)
   }
 
-  it should "BINARY data type parsing test succeeds." in {
+  test("BINARY data type parsing test succeeds.") {
     assert(parseAll(binaryType, "binary").successful)
     assert(parseAll(binaryType, "Binary(0)").successful)
     assert(parseAll(binaryType, "BINARY(255)").successful)
   }
 
-  it should "BINARY data type parsing test fails." in {
+  test("BINARY data type parsing test fails.") {
     assert(!parseAll(binaryType, "failed").successful)
     assert(!parseAll(binaryType, "binary(-1)").successful)
     assert(!parseAll(binaryType, "Binary(256)").successful)
   }
 
-  it should "VARBINARY data type parsing test succeeds." in {
+  test("VARBINARY data type parsing test succeeds.") {
     assert(parseAll(varbinaryType, "Varbinary(0)").successful)
     assert(parseAll(varbinaryType, "VARBINARY(255)").successful)
   }
 
-  it should "VARBINARY data type parsing test fails." in {
+  test("VARBINARY data type parsing test fails.") {
     assert(!parseAll(varbinaryType, "failed").successful)
     assert(!parseAll(varbinaryType, "varbinary").successful)
     assert(!parseAll(varbinaryType, "varbinary(-1)").successful)
   }
 
-  it should "TINYBLOB data type parsing test succeeds." in {
+  test("TINYBLOB data type parsing test succeeds.") {
     assert(parseAll(tinyblobType, "tinyblob").successful)
     assert(parseAll(tinyblobType, "Tinyblob").successful)
     assert(parseAll(tinyblobType, "TINYBLOB").successful)
   }
 
-  it should "TINYBLOB data type parsing test fails." in {
+  test("TINYBLOB data type parsing test fails.") {
     assert(!parseAll(tinyblobType, "failed").successful)
     assert(!parseAll(tinyblobType, "tinyblob(1)").successful)
   }
 
-  it should "TINYTEXT data type parsing test succeeds." in {
+  test("TINYTEXT data type parsing test succeeds.") {
     assert(parseAll(tinytextType, "tinytext").successful)
     assert(parseAll(tinytextType, "Tinytext").successful)
     assert(parseAll(tinytextType, "TINYTEXT CHARACTER SET utf8mb4").successful)
@@ -308,24 +308,24 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(tinytextType, "TINYTEXT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
   }
 
-  it should "TINYTEXT data type parsing test fails." in {
+  test("TINYTEXT data type parsing test fails.") {
     assert(!parseAll(tinytextType, "failed").successful)
     assert(!parseAll(tinytextType, "Tinytext(-1)").successful)
     assert(!parseAll(tinytextType, "TINYTEXT CHARACTER utf8mb4").successful)
   }
 
-  it should "BLOB data type parsing test succeeds." in {
+  test("BLOB data type parsing test succeeds.") {
     assert(parseAll(blobType, "blob").successful)
     assert(parseAll(blobType, "Blob(0)").successful)
     assert(parseAll(blobType, "BLOB(255)").successful)
   }
 
-  it should "BLOB data type parsing test fails." in {
+  test("BLOB data type parsing test fails.") {
     assert(!parseAll(blobType, "failed").successful)
     assert(!parseAll(blobType, "Blob(-1)").successful)
   }
 
-  it should "TEXT data type parsing test succeeds." in {
+  test("TEXT data type parsing test succeeds.") {
     assert(parseAll(textType, "text").successful)
     assert(parseAll(textType, "Text(0)").successful)
     assert(parseAll(textType, "TEXT(255)").successful)
@@ -339,25 +339,25 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(textType, "TEXT(255) CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
   }
 
-  it should "TEXT data type parsing test fails." in {
+  test("TEXT data type parsing test fails.") {
     assert(!parseAll(textType, "failed").successful)
     assert(!parseAll(textType, "text(-1)").successful)
     assert(!parseAll(textType, "Text(256)").successful)
     assert(!parseAll(textType, "TEXT(0) CHARACTER utf8mb4").successful)
   }
 
-  it should "MEDIUMBLOB data type parsing test succeeds." in {
+  test("MEDIUMBLOB data type parsing test succeeds.") {
     assert(parseAll(mediumblobType, "mediumblob").successful)
     assert(parseAll(mediumblobType, "Mediumblob").successful)
     assert(parseAll(mediumblobType, "MEDIUMBLOB").successful)
   }
 
-  it should "MEDIUMBLOB data type parsing test fails." in {
+  test("MEDIUMBLOB data type parsing test fails.") {
     assert(!parseAll(mediumblobType, "failed").successful)
     assert(!parseAll(mediumblobType, "mediumblob(1)").successful)
   }
 
-  it should "MEDIUMTEXT data type parsing test succeeds." in {
+  test("MEDIUMTEXT data type parsing test succeeds.") {
     assert(parseAll(mediumtextType, "mediumtext").successful)
     assert(parseAll(mediumtextType, "Mediumtext").successful)
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARACTER SET utf8mb4").successful)
@@ -370,24 +370,24 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(mediumtextType, "MEDIUMTEXT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
   }
 
-  it should "MEDIUMTEXT data type parsing test fails." in {
+  test("MEDIUMTEXT data type parsing test fails.") {
     assert(!parseAll(mediumtextType, "failed").successful)
     assert(!parseAll(mediumtextType, "mediumtext(-1)").successful)
     assert(!parseAll(mediumtextType, "MEDIUMTEXT CHARACTER utf8mb4").successful)
   }
 
-  it should "LONGBLOB data type parsing test succeeds." in {
+  test("LONGBLOB data type parsing test succeeds.") {
     assert(parseAll(longblobType, "longblob").successful)
     assert(parseAll(longblobType, "Longblob").successful)
     assert(parseAll(longblobType, "LONGBLOB").successful)
   }
 
-  it should "LONGBLOB data type parsing test fails." in {
+  test("LONGBLOB data type parsing test fails.") {
     assert(!parseAll(longblobType, "failed").successful)
     assert(!parseAll(longblobType, "longblob(1)").successful)
   }
 
-  it should "LONGTEXT data type parsing test succeeds." in {
+  test("LONGTEXT data type parsing test succeeds.") {
     assert(parseAll(longtextType, "longtext").successful)
     assert(parseAll(longtextType, "Longtext").successful)
     assert(parseAll(longtextType, "LONGTEXT CHARACTER SET utf8mb4").successful)
@@ -400,96 +400,96 @@ class DataTypeParserTest extends AnyFlatSpec, DataTypeParser:
     assert(parseAll(longtextType, "LONGTEXT CHARACTER SET=utf8mb4 COLLATE=utf8mb4_bin").successful)
   }
 
-  it should "LONGTEXT data type parsing test fails." in {
+  test("LONGTEXT data type parsing test fails.") {
     assert(!parseAll(longtextType, "failed").successful)
     assert(!parseAll(longtextType, "longtext(-1)").successful)
     assert(!parseAll(longtextType, "LONGTEXT CHARACTER utf8mb4").successful)
   }
 
-  it should "ENUM data type parsing test succeeds." in {
+  test("ENUM data type parsing test succeeds.") {
     assert(parseAll(enumType, "ENUM('Active', 'InActive')").successful)
     assert(parseAll(enumType, "ENUM('Active')").successful)
   }
 
-  it should "ENUM data type parsing test fails." in {
+  test("ENUM data type parsing test fails.") {
     assert(!parseAll(enumType, "failed").successful)
     assert(!parseAll(enumType, "ENUM").successful)
     assert(!parseAll(enumType, "ENUM()").successful)
     assert(!parseAll(enumType, "ENUM(Active)").successful)
   }
 
-  it should "DATE data type parsing test succeeds." in {
+  test("DATE data type parsing test succeeds.") {
     assert(parseAll(dateType, "date").successful)
     assert(parseAll(dateType, "Date").successful)
     assert(parseAll(dateType, "DATE").successful)
   }
 
-  it should "DATE data type parsing test fails." in {
+  test("DATE data type parsing test fails.") {
     assert(!parseAll(dateType, "failed").successful)
     assert(!parseAll(dateType, "DATE(1)").successful)
   }
 
-  it should "DATETIME data type parsing test succeeds." in {
+  test("DATETIME data type parsing test succeeds.") {
     assert(parseAll(datetimeType, "datetime").successful)
     assert(parseAll(datetimeType, "Datetime(0)").successful)
     assert(parseAll(datetimeType, "DATETIME(6)").successful)
   }
 
-  it should "DATETIME data type parsing test fails." in {
+  test("DATETIME data type parsing test fails.") {
     assert(!parseAll(datetimeType, "failed").successful)
     assert(!parseAll(datetimeType, "Datetime(-1)").successful)
     assert(!parseAll(datetimeType, "DATETIME(7)").successful)
   }
 
-  it should "TIMESTAMP data type parsing test succeeds." in {
+  test("TIMESTAMP data type parsing test succeeds.") {
     assert(parseAll(timestampType, "timestamp").successful)
     assert(parseAll(timestampType, "Timestamp(0)").successful)
     assert(parseAll(timestampType, "TIMESTAMP(6)").successful)
   }
 
-  it should "TIMESTAMP data type parsing test fails." in {
+  test("TIMESTAMP data type parsing test fails.") {
     assert(!parseAll(timestampType, "failed").successful)
     assert(!parseAll(timestampType, "Timestamp(-1)").successful)
     assert(!parseAll(timestampType, "TIMESTAMP(7)").successful)
   }
 
-  it should "TIME data type parsing test succeeds." in {
+  test("TIME data type parsing test succeeds.") {
     assert(parseAll(timeType, "time").successful)
     assert(parseAll(timeType, "Time(0)").successful)
     assert(parseAll(timeType, "TIME(6)").successful)
   }
 
-  it should "TIME data type parsing test fails." in {
+  test("TIME data type parsing test fails.") {
     assert(!parseAll(timeType, "failed").successful)
     assert(!parseAll(timeType, "Time(-1)").successful)
     assert(!parseAll(timeType, "TIME(7)").successful)
   }
 
-  it should "YEAR data type parsing test succeeds." in {
+  test("YEAR data type parsing test succeeds.") {
     assert(parseAll(yearType, "year").successful)
     assert(parseAll(yearType, "YEAR(4)").successful)
   }
 
-  it should "YEAR data type parsing test fails." in {
+  test("YEAR data type parsing test fails.") {
     assert(!parseAll(yearType, "failed").successful)
     assert(!parseAll(yearType, "YEAR(0)").successful)
   }
 
-  it should "SERIAL data type parsing test succeeds." in {
+  test("SERIAL data type parsing test succeeds.") {
     assert(parseAll(serialType, "SERIAL").successful)
   }
 
-  it should "SERIAL data type parsing test fails." in {
+  test("SERIAL data type parsing test fails.") {
     assert(!parseAll(serialType, "failed").successful)
     assert(!parseAll(serialType, "SERIAL(0)").successful)
   }
 
-  it should "BOOLEAN data type parsing test succeeds." in {
+  test("BOOLEAN data type parsing test succeeds.") {
     assert(parseAll(booleanType, "boolean").successful)
     assert(parseAll(booleanType, "bool").successful)
   }
 
-  it should "BOOLEAN data type parsing test fails." in {
+  test("BOOLEAN data type parsing test fails.") {
     assert(!parseAll(booleanType, "failed").successful)
     assert(!parseAll(booleanType, "tinyint(1)").successful)
   }

@@ -9,7 +9,7 @@
 [![Scala Version](https://img.shields.io/badge/scala-v3.3.x-red)](https://github.com/lampepfl/dotty)
 [![Typelevel Affiliate Project](https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg)](https://typelevel.org/projects/affiliate/)
 [![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
-[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-beta8/jar)
+[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-beta9/jar)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
@@ -36,6 +36,7 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 | `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
 | `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
 | `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
@@ -146,7 +147,7 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "latest"
 
 ldbc uses classes to construct queries.
 
-```scala
+```scala 3
 import ldbc.query.builder.Table
 
 case class User(
@@ -159,9 +160,9 @@ case class User(
 The next step is to create a Table using the classes you have created.
 
 ```scala
-import ldbc.query.builder.Table
+import ldbc.query.builder.TableQuery
 
-val userTable = Table[User]
+val userTable = TableQuery[User]
 ```
 
 Finally, you can use the query builder to create a query.
@@ -191,9 +192,10 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-schema" % "latest"
 
 The next step is to create a schema for use by the query builder.
 
-ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+ldbc maintains a one-to-one mapping between Scala models and database table definitions.
+Implementers simply define columns and write mappings to the model, similar to Slick.
 
-```scala
+```scala 3
 import ldbc.schema.*
 
 case class User(
@@ -202,16 +204,18 @@ case class User(
   age: Option[Int],
 )
 
-val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)                                                    // )
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id")
+  def name: Column[String] = column[String]("name")
+  def age: Column[Option[Int]] = column[Option[Int]]("age")
+
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
+val userTable: TableQuery[UserTable] = TableQuery[UserTable]
 val result: IO[List[User]] = connection.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"

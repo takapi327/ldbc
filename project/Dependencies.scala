@@ -8,7 +8,7 @@ import ScalaVersions.*
 
 object Dependencies {
 
-  val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.4"
+  val catsEffect = "org.typelevel" %% "cats-effect" % "3.5.7"
 
   val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
 
@@ -19,7 +19,7 @@ object Dependencies {
 
   val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
 
-  val hikariCP = "com.zaxxer" % "HikariCP" % "5.1.0"
+  val hikariCP = "com.zaxxer" % "HikariCP" % "6.2.1"
 
   val scala3Compiler = "org.scala-lang" %% "scala3-compiler" % scala3
 

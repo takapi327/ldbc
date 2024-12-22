@@ -12,5 +12,4 @@ object Format {
   case object CAMEL  extends Format
   case object PASCAL extends Format
   case object SNAKE  extends Format
-  case object KEBAB  extends Format
 }
