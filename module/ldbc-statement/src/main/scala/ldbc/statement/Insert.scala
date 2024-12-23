@@ -10,6 +10,7 @@ import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Encoder
+import ldbc.statement.interpreter.ToTuple
 
 /**
  * Trait for building Statements to be added.
@@ -89,7 +90,7 @@ object Insert:
           case h               => h *: EmptyTuple
         }
         .flatMap(
-          _.zip(Encoder.fold[B]).toList
+          _.zip(Encoder.fold[ToTuple[B]]).toList
             .map {
               case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
             }
