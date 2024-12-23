@@ -13,6 +13,7 @@ import scala.annotation.targetName
 import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Encoder
 import ldbc.statement.internal.QueryConcat
+import ldbc.statement.interpreter.ToTuple
 
 /**
  * Trait for constructing SQL Statement from Table information.
@@ -62,11 +63,6 @@ trait TableQuery[A, O]:
    */
   def selectAll: Select[A, Entity] =
     Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $name", params)
-
-  protected type ToTuple[T] <: Tuple = T match
-    case h *: EmptyTuple => Tuple1[h]
-    case h *: t          => h *: ToTuple[t]
-    case _               => Tuple1[T]
 
   /**
    * Method to construct a query to insert a table.
