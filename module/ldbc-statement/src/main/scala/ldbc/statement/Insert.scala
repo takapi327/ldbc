@@ -31,7 +31,7 @@ sealed trait Insert[A] extends Command:
    *     .onDuplicateKeyUpdate(_.name)
    * }}}
    */
-  def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A]
+  def onDuplicateKeyUpdate[B](columns: A => Column[B]): Insert.DuplicateKeyUpdate[A]
 
   /**
    * Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements.
