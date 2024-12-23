@@ -31,7 +31,7 @@ sealed trait Insert[A] extends Command:
    *     .onDuplicateKeyUpdate(_.name)
    * }}}
    */
-  def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A]
+  def onDuplicateKeyUpdate[B](columns: A => Column[B]): Insert.DuplicateKeyUpdate[A]
 
   /**
    * Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements.
@@ -46,12 +46,12 @@ sealed trait Insert[A] extends Command:
 
 object Insert:
 
-  case class Impl[A, B](table: A, statement: String, params: List[Parameter.Dynamic]) extends Insert[A]:
+  case class Impl[A](table: A, statement: String, params: List[Parameter.Dynamic]) extends Insert[A]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-    override def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[B](columns: A => Column[B]): Insert.DuplicateKeyUpdate[A] =
       Insert.DuplicateKeyUpdate(
         table,
         s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).duplicateKeyUpdateStatement }",
