@@ -191,6 +191,7 @@ package object dsl:
       orderByOpt((s1 :: s2 :: ss.toList).flatten)
 
     type DBIO[T] = ldbc.dsl.DBIO[F, T]
+    val DBIO = ldbc.dsl.DBIO
 
     export ldbc.dsl.logging.LogHandler
 

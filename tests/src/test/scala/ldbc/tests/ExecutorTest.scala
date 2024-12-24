@@ -115,7 +115,7 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#attempt#Left") {
-    val program: DBIO[IO, Int] = DBIO.raiseError[IO, Int](new Exception("error"))
+    val program: DBIO[Int] = DBIO.raiseError[IO, Int](new Exception("error"))
     assertIOBoolean(
       connection.use { conn =>
         program.attempt.execute(conn).map(_.isLeft)
