@@ -20,7 +20,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #program
-  val program: Executor[IO, Option[Int]] = sql"SELECT 2".query[Int].to[Option]
+  val program: DBIO[IO, Option[Int]] = sql"SELECT 2".query[Int].to[Option]
   // #program
 
   // #connection

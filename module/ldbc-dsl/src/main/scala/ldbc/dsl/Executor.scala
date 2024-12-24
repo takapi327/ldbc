@@ -24,7 +24,7 @@ import ldbc.dsl.logging.*
  * @tparam T
  *   The result type of the query
  */
-trait Executor[F[_]: Temporal, T]:
+trait DBIO[F[_]: Temporal, T]:
 
   private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[T]
 
@@ -64,60 +64,60 @@ trait Executor[F[_]: Temporal, T]:
       .makeCase(acquire)(release)
       .use(execute)
 
-object Executor:
+object DBIO:
 
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
     params:    List[Parameter],
     run:       Connection[F] => F[T]
-  ) extends Executor[F, T]:
+  ) extends DBIO[F, T]:
 
     private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
       run(connection)
         .onError(ex => logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex)))
         <* logHandler.run(LogEvent.Success(statement, params.map(_.value)))
 
-  def pure[F[_]: Temporal, T](value: T): Executor[F, T] =
-    new Executor[F, T]:
+  def pure[F[_]: Temporal, T](value: T): DBIO[F, T] =
+    new DBIO[F, T]:
       override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
       override def readOnly(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
       override def commit(connection:                Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
       override def rollback(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
       override def transaction(connection:           Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
 
-  def raiseError[F[_]: Temporal, A](e: Throwable): Executor[F, A] =
-    new Executor[F, A]:
+  def raiseError[F[_]: Temporal, A](e: Throwable): DBIO[F, A] =
+    new DBIO[F, A]:
       override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
         MonadError[F, Throwable].raiseError(e)
 
-  given [F[_]: Temporal]: Functor[[T] =>> Executor[F, T]] with
-    override def map[A, B](fa: Executor[F, A])(f: A => B): Executor[F, B] =
-      new Executor[F, B]:
+  given [F[_]: Temporal]: Functor[[T] =>> DBIO[F, T]] with
+    override def map[A, B](fa: DBIO[F, A])(f: A => B): DBIO[F, B] =
+      new DBIO[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[B] =
           fa.execute(connection).map(f)
 
-  given [F[_]: Temporal]: MonadError[[T] =>> Executor[F, T], Throwable] with
-    override def pure[A](x: A): Executor[F, A] = Executor.pure(x)
+  given [F[_]: Temporal]: MonadError[[T] =>> DBIO[F, T], Throwable] with
+    override def pure[A](x: A): DBIO[F, A] = DBIO.pure(x)
 
-    override def flatMap[A, B](fa: Executor[F, A])(f: A => Executor[F, B]): Executor[F, B] =
-      new Executor[F, B]:
+    override def flatMap[A, B](fa: DBIO[F, A])(f: A => DBIO[F, B]): DBIO[F, B] =
+      new DBIO[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[B] =
           fa.execute(connection).flatMap(a => f(a).execute(connection))
 
-    override def tailRecM[A, B](a: A)(f: A => Executor[F, Either[A, B]]): Executor[F, B] =
-      new Executor[F, B]:
+    override def tailRecM[A, B](a: A)(f: A => DBIO[F, Either[A, B]]): DBIO[F, B] =
+      new DBIO[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
           MonadError[F, Throwable].tailRecM(a)(a => f(a).execute(connection))
 
-    override def ap[A, B](ff: Executor[F, A => B])(fa: Executor[F, A]): Executor[F, B] =
-      new Executor[F, B]:
+    override def ap[A, B](ff: DBIO[F, A => B])(fa: DBIO[F, A]): DBIO[F, B] =
+      new DBIO[F, B]:
         override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
           (ff.execute(connection), fa.execute(connection)).mapN(_(_))
 
-    override def raiseError[A](e: Throwable): Executor[F, A] =
-      Executor.raiseError(e)
+    override def raiseError[A](e: Throwable): DBIO[F, A] =
+      DBIO.raiseError(e)
 
-    override def handleErrorWith[A](fa: Executor[F, A])(f: Throwable => Executor[F, A]): Executor[F, A] =
-      new Executor[F, A]:
+    override def handleErrorWith[A](fa: DBIO[F, A])(f: Throwable => DBIO[F, A]): DBIO[F, A] =
+      new DBIO[F, A]:
         override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
           fa.execute(connection).handleErrorWith(e => f(e).execute(connection))

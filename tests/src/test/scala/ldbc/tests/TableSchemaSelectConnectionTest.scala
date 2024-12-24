@@ -314,7 +314,7 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
         (for
           codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
           cities <- codeOpt match
-                      case None => Executor.pure[IO, List[(String, String)]](List.empty)
+                      case None => DBIO.pure[IO, List[(String, String)]](List.empty)
                       case Some(code) =>
                         city
                           .select(v => v.name *: v.countryCode)

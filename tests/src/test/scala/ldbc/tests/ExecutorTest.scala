@@ -17,7 +17,7 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.connector.*
 import ldbc.dsl.io.*
 
-class ExecutorTest extends CatsEffectSuite:
+class DBIOTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
 
@@ -29,8 +29,8 @@ class ExecutorTest extends CatsEffectSuite:
     ssl      = SSL.Trusted
   )
 
-  test("Executor#pure") {
-    val program = Executor.pure[IO, Int](1)
+  test("DBIO#pure") {
+    val program = DBIO.pure[IO, Int](1)
     assertIO(
       connection.use { conn =>
         program.execute(conn)
@@ -39,9 +39,9 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#ap") {
-    val program1 = Executor.pure[IO, Int](1)
-    val program2 = Executor.pure[IO, Int => Int](_ + 1)
+  test("DBIO#ap") {
+    val program1 = DBIO.pure[IO, Int](1)
+    val program2 = DBIO.pure[IO, Int => Int](_ + 1)
     val program3 = program2.ap(program1)
     assertIO(
       connection.use { conn =>
@@ -51,8 +51,8 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#map") {
-    val program1 = Executor.pure[IO, Int](1)
+  test("DBIO#map") {
+    val program1 = DBIO.pure[IO, Int](1)
     val program2 = program1.map(_ + 1)
     assertIO(
       connection.use { conn =>
@@ -62,9 +62,9 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#flatMap") {
-    val program1 = Executor.pure[IO, Int](1)
-    val program2 = program1.flatMap(n => Executor.pure[IO, Int](n + 1))
+  test("DBIO#flatMap") {
+    val program1 = DBIO.pure[IO, Int](1)
+    val program2 = program1.flatMap(n => DBIO.pure[IO, Int](n + 1))
     assertIO(
       connection.use { conn =>
         program2.execute(conn)
@@ -73,9 +73,9 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#tailRecM") {
-    val program1 = Executor.pure[IO, Int](1)
-    val program2 = program1.tailRecM[ExecutorIO, String](_.map(n => Right(n.toString)))
+  test("DBIO#tailRecM") {
+    val program1 = DBIO.pure[IO, Int](1)
+    val program2 = program1.tailRecM[DBIO, String](_.map(n => Right(n.toString)))
     assertIO(
       connection.use { conn =>
         program2.execute(conn)
@@ -84,8 +84,8 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#raiseError") {
-    val program = Executor.raiseError[IO, Int](new Exception("error"))
+  test("DBIO#raiseError") {
+    val program = DBIO.raiseError[IO, Int](new Exception("error"))
     interceptMessageIO[Exception]("error")(
       connection.use { conn =>
         program.execute(conn)
@@ -93,9 +93,9 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#handleErrorWith") {
-    val program1 = Executor.raiseError[IO, Int](new Exception("error"))
-    val program2 = program1.handleErrorWith(e => Executor.pure[IO, Int](0))
+  test("DBIO#handleErrorWith") {
+    val program1 = DBIO.raiseError[IO, Int](new Exception("error"))
+    val program2 = program1.handleErrorWith(e => DBIO.pure[IO, Int](0))
     assertIO(
       connection.use { conn =>
         program2.execute(conn)
@@ -104,8 +104,8 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#attempt#Right") {
-    val program = Executor.pure[IO, Int](1)
+  test("DBIO#attempt#Right") {
+    val program = DBIO.pure[IO, Int](1)
     assertIO(
       connection.use { conn =>
         program.attempt.execute(conn)
@@ -114,8 +114,8 @@ class ExecutorTest extends CatsEffectSuite:
     )
   }
 
-  test("Executor#attempt#Left") {
-    val program: Executor[IO, Int] = Executor.raiseError[IO, Int](new Exception("error"))
+  test("DBIO#attempt#Left") {
+    val program: DBIO[IO, Int] = DBIO.raiseError[IO, Int](new Exception("error"))
     assertIOBoolean(
       connection.use { conn =>
         program.attempt.execute(conn).map(_.isLeft)

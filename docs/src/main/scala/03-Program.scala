@@ -22,7 +22,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #program
-  val program: Executor[IO, (List[Int], Option[Int], Int)] =
+  val program: DBIO[IO, (List[Int], Option[Int], Int)] =
     for
       result1 <- sql"SELECT 1".query[Int].to[List]
       result2 <- sql"SELECT 2".query[Int].to[Option]

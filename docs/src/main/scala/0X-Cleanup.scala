@@ -20,7 +20,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #cleanupDatabase
-  val dropDatabase: Executor[IO, Int] =
+  val dropDatabase: DBIO[IO, Int] =
     sql"DROP DATABASE IF EXISTS sandbox_db".update
   // #cleanupDatabase
 
