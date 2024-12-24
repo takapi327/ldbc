@@ -39,7 +39,7 @@ package object syntax:
           case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(m1))
 
     extension (command: Command)
-      def update: DBIO[F, Int] =
+      def update: DBIO[Int] =
         DBIO.Impl[F, Int](
           command.statement,
           command.params,
@@ -52,7 +52,7 @@ package object syntax:
             yield result
         )
 
-      def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): DBIO[F, T] =
+      def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): DBIO[T] =
         given Decoder[T] = Decoder.one[T]
 
         DBIO.Impl[F, T](
