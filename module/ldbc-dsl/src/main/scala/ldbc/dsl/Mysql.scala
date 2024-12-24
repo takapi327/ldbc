@@ -72,8 +72,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * The number of rows updated
    */
-  def update: Executor[F, Int] =
-    Executor.Impl[F, Int](
+  def update: DBIO[F, Int] =
+    DBIO.Impl[F, Int](
       statement,
       params,
       connection =>
@@ -97,10 +97,10 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    *   The primary key value
    */
-  def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): Executor[F, T] =
+  def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): DBIO[F, T] =
     given Decoder[T] = Decoder.one[T]
 
-    Executor.Impl[F, T](
+    DBIO.Impl[F, T](
       statement,
       params,
       connection =>

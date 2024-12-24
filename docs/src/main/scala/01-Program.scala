@@ -19,7 +19,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #program
-  val program: Executor[IO, Int] = Executor.pure[IO, Int](1)
+  val program: DBIO[Int] = DBIO.pure[IO, Int](1)
   // #program
 
   // #connection

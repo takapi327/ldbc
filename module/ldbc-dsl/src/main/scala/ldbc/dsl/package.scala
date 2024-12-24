@@ -190,8 +190,8 @@ package object dsl:
     def orderByOpt(s1: Option[SQL], s2: Option[SQL], ss: Option[SQL]*): Mysql[F] =
       orderByOpt((s1 :: s2 :: ss.toList).flatten)
 
-    type ExecutorIO[T] = ldbc.dsl.Executor[F, T]
-    export ldbc.dsl.Executor
+    type DBIO[T] = ldbc.dsl.DBIO[F, T]
+    val DBIO = ldbc.dsl.DBIO
 
     export ldbc.dsl.logging.LogHandler
 
