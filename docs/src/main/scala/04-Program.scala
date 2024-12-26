@@ -20,7 +20,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #program
-  val program: Executor[IO, Int] =
+  val program: DBIO[Int] =
     sql"INSERT INTO user (name, email) VALUES ('Carol', 'carol@example.com')".update
   // #program
 

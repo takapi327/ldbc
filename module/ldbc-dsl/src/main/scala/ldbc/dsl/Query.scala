@@ -27,13 +27,13 @@ trait Query[F[_], T]:
   /**
    * Functions for safely retrieving data from a database in an array or Option type.
    */
-  def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]]
+  def to[G[_]](using FactoryCompat[T, G[T]]): DBIO[F, G[T]]
 
   /**
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
    * raised. Use the [[to]] method if you want to retrieve individual data.
    */
-  def unsafe: Executor[F, T]
+  def unsafe: DBIO[F, T]
 
 object Query:
 
@@ -45,8 +45,8 @@ object Query:
 
     given Decoder[T] = decoder
 
-    override def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]] =
-      Executor.Impl[F, G[T]](
+    override def to[G[_]](using FactoryCompat[T, G[T]]): DBIO[F, G[T]] =
+      DBIO.Impl[F, G[T]](
         statement,
         params,
         connection =>
@@ -59,8 +59,8 @@ object Query:
           yield result
       )
 
-    override def unsafe: Executor[F, T] =
-      Executor.Impl[F, T](
+    override def unsafe: DBIO[F, T] =
+      DBIO.Impl[F, T](
         statement,
         params,
         connection =>

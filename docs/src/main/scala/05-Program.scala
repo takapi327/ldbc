@@ -28,7 +28,7 @@ import ldbc.dsl.codec.*
       case Status.Active   => true
       case Status.InActive => false
 
-  val program1: Executor[IO, Int] =
+  val program1: DBIO[Int] =
     sql"INSERT INTO user (name, email, status) VALUES (${ "user 1" }, ${ "user@example.com" }, ${ Status.Active })".update
 
   given Decoder.Elem[Status] = Decoder.Elem.mapping[Boolean, Status] {
@@ -36,7 +36,7 @@ import ldbc.dsl.codec.*
     case false => Status.InActive
   }
 
-  val program2: Executor[IO, (String, String, Status)] =
+  val program2: DBIO[(String, String, Status)] =
     sql"SELECT name, email, status FROM user WHERE id = 1".query[(String, String, Status)].unsafe
 
   def connection = Connection[IO](
