@@ -81,7 +81,7 @@ object Insert:
      * @param values
      *   The values to be inserted.
      */
-    inline def values(values: B*): Values[A] =
+    def values(values: B*): Values[A] =
       val parameterBinders: List[Parameter.Dynamic] = values.flatMap { value =>
         Parameter.Dynamic.many(columns.encoder.encode(value))
       }.toList
