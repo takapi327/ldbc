@@ -42,8 +42,7 @@ object Country:
 
     override def toString: String = value
 
-  given Encoder[Continent] with
-    override def encode(continent: Continent): String = continent.value
+  given Encoder[Continent] = Encoder[String].contramap(_.value)
 
   given Decoder.Elem[Continent] =
     Decoder.Elem.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
