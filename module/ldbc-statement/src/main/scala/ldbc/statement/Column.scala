@@ -8,7 +8,7 @@ package ldbc.statement
 
 import scala.annotation.targetName
 
-import cats.Applicative
+import cats.InvariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax
 
@@ -25,6 +25,7 @@ import ldbc.statement.Expression.*
  *   Scala types that match SQL DataType
  */
 trait Column[T]:
+  self =>
 
   /** Column Field Name */
   def name: String
@@ -37,6 +38,9 @@ trait Column[T]:
 
   /** Function to get a value of type T from a ResultSet */
   def decoder: Decoder[T]
+
+  /** Function to set a value of type T to a PreparedStatement */
+  def encoder: Encoder[T]
 
   /** Indicator of how many columns are specified */
   def values: Int = 1
@@ -53,7 +57,7 @@ trait Column[T]:
   /** Used in Update statement `Column = VALUES(Column), Column = VALUES(Column)` used in the Duplicate Key Update statement */
   def duplicateKeyUpdateStatement: String
 
-  def opt: Column[Option[T]] = Column.Opt[T](name, alias, decoder)
+  def opt: Column[Option[T]] = Column.Opt[T](name, alias, decoder, encoder)
 
   def count(using decoder: Decoder.Elem[Int]): Column.Count = Column.Count(name, alias)
 
@@ -63,6 +67,55 @@ trait Column[T]:
   private lazy val noBagQuotLabel: String = alias.getOrElse(name)
 
   private[ldbc] def list: List[Column[?]] = List(this)
+
+  def imap[B](f: T => B)(g: B => T): Column[B] =
+    new Column[B]:
+      override def name: String = self.name
+      override def alias: Option[String] = self.alias
+      override def as(name: String): Column[B] = this
+      override def decoder: Decoder[B] =
+        new Decoder[B]((resultSet: ResultSet, prefix: Option[String]) => f(self.decoder.decode(resultSet, prefix)))
+      override def encoder: Encoder[B] =
+        (value: B) => self.encoder.encode(g(value))
+      override def updateStatement: String = self.updateStatement
+      override def duplicateKeyUpdateStatement: String = self.duplicateKeyUpdateStatement
+      override def values: Int = self.values
+      override private[ldbc] def list: List[Column[?]] = self.list
+
+  def product[B](fb: Column[B]): Column[(T, B)] =
+    new Column[(T, B)]:
+      override def name: String = s"${ self.name }, ${ fb.name }"
+      override def alias: Option[String] = (self.alias, fb.alias) match
+        case (Some(a), Some(b)) => Some(s"$a, $b")
+        case (Some(a), None)    => Some(a)
+        case (None, Some(b))    => Some(b)
+        case (None, None)                  => None
+      override def as(name: String): Column[(T, B)] = this
+      override def decoder: Decoder[(T, B)] = self.decoder.product(fb.decoder)
+      override def encoder: Encoder[(T, B)] = self.encoder.product(fb.encoder)
+      override def updateStatement: String = s"${ self.updateStatement }, ${ fb.updateStatement }"
+      override def duplicateKeyUpdateStatement: String = s"${ self.duplicateKeyUpdateStatement }, ${ fb.duplicateKeyUpdateStatement }"
+      override def values: Int = self.values + fb.values
+      override def opt: Column[Option[(T, B)]] =
+        val decoder = new Decoder[Option[(T, B)]]((resultSet: ResultSet, prefix: Option[String]) =>
+          for
+            v1 <- self.opt.decoder.decode(resultSet, prefix)
+            v2 <- fb.opt.decoder.decode(resultSet, prefix)
+          yield (v1, v2)
+        )
+        val encoder: Encoder[Option[(T, B)]] = {
+          case Some((v1, v2)) => self.opt.encoder.encode(Some(v1)).product(fb.opt.encoder.encode(Some(v2)))
+          case None => self.opt.encoder.encode(None).product(fb.opt.encoder.encode(None))
+        }
+        Column.Impl[Option[(T, B)]](
+          name,
+          alias,
+          decoder,
+          encoder,
+          Some(values),
+          Some(updateStatement)
+        )
+      override private[ldbc] def list: List[Column[?]] = self.list ++ fb.list
 
   def _equals(value: Extract[T])(using Encoder[Extract[T]]): MatchCondition[T] =
     MatchCondition[T](noBagQuotLabel, false, value)
@@ -449,7 +502,7 @@ trait Column[T]:
   @targetName("_bitFlip")
   def ~(value: Extract[T])(using Encoder[Extract[T]]): BitFlip[T] = bitFlip(value)
 
-  def combine(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("+", this, other)
+  def combine(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("+", this, other)
 
   /**
    * A function to combine columns in a SELECT statement.
@@ -465,9 +518,9 @@ trait Column[T]:
    *   A query to combine columns in a SELECT statement
    */
   @targetName("_combine")
-  def ++(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = combine(other)
+  def ++(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] = combine(other)
 
-  def deduct(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("-", this, other)
+  def deduct(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("-", this, other)
 
   /**
    * A function to subtract columns in a SELECT statement.
@@ -483,9 +536,9 @@ trait Column[T]:
    *   A query to subtract columns in a SELECT statement
    */
   @targetName("_deduct")
-  def --(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = deduct(other)
+  def --(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] = deduct(other)
 
-  def multiply(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] =
+  def multiply(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] =
     Column.MultiColumn[T]("*", this, other)
 
   /**
@@ -502,9 +555,9 @@ trait Column[T]:
    *   A query to multiply columns in a SELECT statement
    */
   @targetName("_multiply")
-  def *(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = multiply(other)
+  def *(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] = multiply(other)
 
-  def smash(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("/", this, other)
+  def smash(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] = Column.MultiColumn[T]("/", this, other)
 
   /**
    * A function to divide columns in a SELECT statement.
@@ -520,7 +573,7 @@ trait Column[T]:
    *   A query to divide columns in a SELECT statement
    */
   @targetName("_smash")
-  def /(other: Column[T])(using Decoder.Elem[T]): Column.MultiColumn[T] = smash(other)
+  def /(other: Column[T])(using Decoder.Elem[T], Encoder[T]): Column.MultiColumn[T] = smash(other)
 
   /** List of sub query methods */
   def _equals(value: SQL): SubQuery[T] =
@@ -619,37 +672,9 @@ object Column extends TwiddleSyntax[Column]:
     case Column[t] *: EmptyTuple => t *: EmptyTuple
     case Column[t] *: ts         => t *: Extract[ts]
 
-  given Applicative[Column] with
-    override def pure[A](x: A): Column[A] = Pure(x)
-    override def ap[A, B](ff: Column[A => B])(fa: Column[A]): Column[B] =
-      new Column[B]:
-        override def name: String = if ff.name.isEmpty then fa.name else s"${ ff.name }, ${ fa.name }"
-        override def alias: Option[String] =
-          (ff.alias, fa.alias) match
-            case (Some(ff), Some(fa)) => Some(s"$ff, $fa")
-            case (Some(ff), None)     => Some(s"$ff")
-            case (None, Some(fa))     => Some(s"$fa")
-            case (None, None)         => None
-        override def as(name: String): Column[B] = this
-        override def decoder: Decoder[B] = new Decoder[B]((resultSet: ResultSet, prefix: Option[String]) =>
-          ff.decoder.decode(resultSet, prefix)(fa.decoder.decode(resultSet, prefix))
-        )
-        override def updateStatement: String =
-          if ff.name.isEmpty then fa.updateStatement else s"${ ff.updateStatement }, ${ fa.updateStatement }"
-        override def duplicateKeyUpdateStatement: String =
-          if ff.name.isEmpty then fa.duplicateKeyUpdateStatement
-          else s"${ ff.duplicateKeyUpdateStatement }, ${ fa.duplicateKeyUpdateStatement }"
-        override def values: Int = ff.values + fa.values
-        override def opt: Column[Option[B]] =
-          val decoder = new Decoder[Option[B]]((resultSet: ResultSet, prefix: Option[String]) =>
-            for
-              v1 <- ff.opt.decoder.decode(resultSet, prefix)
-              v2 <- fa.opt.decoder.decode(resultSet, prefix)
-            yield v1(v2)
-          )
-          Impl[Option[B]](name, alias, decoder, Some(values), Some(updateStatement))
-        override private[ldbc] def list: List[Column[?]] =
-          if ff.name.isEmpty then fa.list else ff.list ++ fa.list
+  given InvariantSemigroupal[Column] with
+    override def imap[A, B](fa: Column[A])(f: A => B)(g: B => A): Column[B] = fa.imap(f)(g)
+    override def product[A, B](fa: Column[A], fb: Column[B]): Column[(A, B)] = fa product fb
 
   case class Pure[T](value: T) extends Column[T]:
     override def name:             String         = ""
@@ -657,22 +682,24 @@ object Column extends TwiddleSyntax[Column]:
     override def as(name: String): Column[T]      = this
     override def decoder: Decoder[T] =
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) => value)
+    override def encoder: Encoder[T] = (value: T) => Encoder.Encoded.success(List.empty)
     override def insertStatement:             String          = ""
     override def updateStatement:             String          = ""
     override def duplicateKeyUpdateStatement: String          = ""
     override def values:                      Int             = 0
     override private[ldbc] def list:          List[Column[?]] = List.empty
 
-  def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
+  def apply[T](name: String)(using elem: Decoder.Elem[T], encoder: Encoder[T]): Column[T] =
     Impl[T](name)
 
-  def apply[T](name: String, alias: String)(using elem: Decoder.Elem[T]): Column[T] =
+  def apply[T](name: String, alias: String)(using elem: Decoder.Elem[T], encoder: Encoder[T]): Column[T] =
     Impl[T](name, s"$alias.$name")
 
   private[ldbc] case class Impl[T](
     name:    String,
     alias:   Option[String],
     decoder: Decoder[T],
+    encoder: Encoder[T],
     length:  Option[Int]    = None,
     update:  Option[String] = None
   ) extends Column[T]:
@@ -687,29 +714,31 @@ object Column extends TwiddleSyntax[Column]:
     override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
   object Impl:
-    def apply[T](name: String)(using elem: Decoder.Elem[T]): Column[T] =
+    def apply[T](name: String)(using elem: Decoder.Elem[T], encoder: Encoder[T]): Column[T] =
       val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
         val column = prefix.map(_ + ".").getOrElse("") + name
         elem.decode(resultSet, column)
       )
-      Impl[T](name, None, decoder)
+      Impl[T](name, None, decoder, encoder)
 
-    def apply[T](name: String, alias: String)(using elem: Decoder.Elem[T]): Column[T] =
+    def apply[T](name: String, alias: String)(using elem: Decoder.Elem[T], encoder: Encoder[T]): Column[T] =
       val decoder = new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
         elem.decode(resultSet, prefix.getOrElse(alias))
       )
-      Impl[T](name, Some(alias), decoder)
+      Impl[T](name, Some(alias), decoder, encoder)
 
   private[ldbc] case class Opt[T](
     name:     String,
     alias:    Option[String],
-    _decoder: Decoder[T]
+    _decoder: Decoder[T],
+    _encoder: Encoder[T]
   ) extends Column[Option[T]]:
-    override def as(name: String): Column[Option[T]] = Opt[T](this.name, Some(s"$name.${ this.name }"), _decoder)
-    override def decoder: Decoder[Option[T]] =
-      new Decoder[Option[T]]((resultSet: ResultSet, prefix: Option[String]) =>
-        Option(_decoder.decode(resultSet, prefix.orElse(alias)))
-      )
+    override def as(name: String): Column[Option[T]] = this.copy(alias = Some(s"$name.${ this.name }"))
+    override def decoder: Decoder[Option[T]] = _decoder.opt
+    override def encoder: Encoder[Option[T]] = {
+      case Some(v) => _encoder.encode(v)
+      case None => Encoder.Encoded.success(List(None))
+    }
     override def updateStatement:             String = s"$name = ?"
     override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
@@ -717,7 +746,7 @@ object Column extends TwiddleSyntax[Column]:
     flag:  String,
     left:  Column[T],
     right: Column[T]
-  )(using elem: Decoder.Elem[T])
+  )(using elem: Decoder.Elem[T], _encoder: Encoder[T])
     extends Column[T]:
     override def name: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def alias: Option[String] = Some(
@@ -728,11 +757,12 @@ object Column extends TwiddleSyntax[Column]:
       new Decoder[T]((resultSet: ResultSet, prefix: Option[String]) =>
         elem.decode(resultSet, prefix.map(_ + ".").getOrElse("") + name)
       )
+    override def encoder: Encoder[T] = _encoder
     override def insertStatement:             String = ""
     override def updateStatement:             String = ""
     override def duplicateKeyUpdateStatement: String = ""
 
-  private[ldbc] case class Count(_name: String, _alias: Option[String])(using elem: Decoder.Elem[Int])
+  private[ldbc] case class Count(_name: String, _alias: Option[String])(using elem: Decoder.Elem[Int], _encoder: Encoder[Int])
     extends Column[Int]:
     override def name:             String         = s"COUNT($_name)"
     override def alias:            Option[String] = _alias.map(a => s"COUNT($a)")
@@ -740,6 +770,7 @@ object Column extends TwiddleSyntax[Column]:
     override def decoder: Decoder[Int] = new Decoder[Int]((resultSet: ResultSet, prefix: Option[String]) =>
       elem.decode(resultSet, alias.getOrElse(name))
     )
+    override def encoder: Encoder[Int] = _encoder
     override def toString:                    String = name
     override def insertStatement:             String = ""
     override def updateStatement:             String = ""
