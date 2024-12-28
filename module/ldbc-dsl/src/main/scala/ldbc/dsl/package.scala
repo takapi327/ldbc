@@ -87,7 +87,6 @@ package object dsl:
         List.fill(params.size)("?").mkString(","),
         (Tuple.fromProduct(v).toList zip params).flatMap {
           case (value, param) =>
-            // Parameter.Dynamic(value.asInstanceOf[Any])(using param.asInstanceOf[Encoder[Any]])
             Parameter.Dynamic.many(param.asInstanceOf[Encoder[Any]].encode(value.asInstanceOf[Any]))
         }
       )
