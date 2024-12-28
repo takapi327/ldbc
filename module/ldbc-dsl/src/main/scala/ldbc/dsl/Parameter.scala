@@ -6,12 +6,8 @@
 
 package ldbc.dsl
 
-import java.time.*
-
-import cats.MonadThrow
 import cats.syntax.all.*
 
-import ldbc.sql.PreparedStatement
 import ldbc.dsl.codec.Encoder
 
 /**
@@ -27,73 +23,22 @@ object Parameter:
   case class Static(value: String) extends Parameter:
     override def toString: String = value
 
-  trait Dynamic extends Parameter:
-
-    /**
-     * Methods for setting Scala and Java values to the specified position in PreparedStatement.
-     *
-     * @param statement
-     *   An object that represents a precompiled SQL statement.
-     * @param index
-     *   the parameter value
-     */
-    def bind[F[_]](statement: PreparedStatement[F], index: Int)(using ev: MonadThrow[F]): F[Unit]
-
+  trait Dynamic extends Parameter
   object Dynamic:
+    case class Success(encoded: Encoder.Supported) extends Dynamic:
+      override def value: String = encoded.toString
+    case class Failure(errors: List[String]) extends Dynamic:
+      override def value: String = errors.mkString(", ")
 
     def many[A](encoded: Encoder.Encoded): List[Dynamic] =
       encoded match
-        case Encoder.Encoded.Success(list) =>
-          list.map { v =>
-            new Dynamic:
-              override def value: String = v.toString
-              override def bind[F[_]](statement: PreparedStatement[F], index: Int)(using ev: MonadThrow[F]): F[Unit] =
-                v match
-                  case value: Boolean       => statement.setBoolean(index, value)
-                  case value: Byte          => statement.setByte(index, value)
-                  case value: Short         => statement.setShort(index, value)
-                  case value: Int           => statement.setInt(index, value)
-                  case value: Long          => statement.setLong(index, value)
-                  case value: Float         => statement.setFloat(index, value)
-                  case value: Double        => statement.setDouble(index, value)
-                  case value: BigDecimal    => statement.setBigDecimal(index, value)
-                  case value: String        => statement.setString(index, value)
-                  case value: Array[Byte]   => statement.setBytes(index, value)
-                  case value: LocalTime     => statement.setTime(index, value)
-                  case value: LocalDate     => statement.setDate(index, value)
-                  case value: LocalDateTime => statement.setTimestamp(index, value)
-                  case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
-          }
-        case Encoder.Encoded.Failure(errors) =>
-          throw new IllegalArgumentException(errors.toList.mkString(", "))
+        case Encoder.Encoded.Success(list) => list.map(value => Success(value))
+        case Encoder.Encoded.Failure(errors) => List(Failure(errors.toList))
 
-    def apply[A](_value: A)(using encoder: Encoder[A]): Dynamic =
-      new Dynamic:
-        override def value: String = _value.toString
-        override def bind[F[_]](statement: PreparedStatement[F], index: Int)(using ev: MonadThrow[F]): F[Unit] =
-          encoder.encode(_value) match
-            case Encoder.Encoded.Success(list) =>
-              list.foldLeft(ev.unit) {
-                case (acc, value) =>
-                  acc.flatMap(_ =>
-                    value match
-                      case value: Boolean       => statement.setBoolean(index, value)
-                      case value: Byte          => statement.setByte(index, value)
-                      case value: Short         => statement.setShort(index, value)
-                      case value: Int           => statement.setInt(index, value)
-                      case value: Long          => statement.setLong(index, value)
-                      case value: Float         => statement.setFloat(index, value)
-                      case value: Double        => statement.setDouble(index, value)
-                      case value: BigDecimal    => statement.setBigDecimal(index, value)
-                      case value: String        => statement.setString(index, value)
-                      case value: Array[Byte]   => statement.setBytes(index, value)
-                      case value: LocalTime     => statement.setTime(index, value)
-                      case value: LocalDate     => statement.setDate(index, value)
-                      case value: LocalDateTime => statement.setTimestamp(index, value)
-                      case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
-                  )
-              }
-            case Encoder.Encoded.Failure(e) => ev.raiseError(new IllegalArgumentException(e.toList.mkString(", ")))
-
-  given [A](using Encoder[A]): Conversion[A, Dynamic] with
-    override def apply(value: A): Dynamic = Dynamic(value)
+  given [A](using encoder: Encoder[A]): Conversion[A, Dynamic] with
+    override def apply(value: A): Dynamic = encoder.encode(value) match
+      case Encoder.Encoded.Success(list) =>
+        list match
+          case head :: Nil => Dynamic.Success(head)
+          case _ => Dynamic.Failure(List("Multiple values are not allowed"))
+      case Encoder.Encoded.Failure(errors) => Dynamic.Failure(errors.toList)
