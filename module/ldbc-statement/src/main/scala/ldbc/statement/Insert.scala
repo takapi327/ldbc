@@ -87,7 +87,7 @@ object Insert:
       }.toList
       Values(
         table,
-        s"$statement (${columns.name}) VALUES ${List.fill(values.length)(s"(${List.fill(columns.values)("?").mkString(",")})").mkString(",")}",
+        s"$statement (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
         parameterBinders
       )
 

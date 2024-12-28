@@ -8,15 +8,15 @@ package ldbc.schema
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import ldbc.dsl.codec.{Decoder, Encoder}
+import ldbc.dsl.codec.{ Decoder, Encoder }
 import ldbc.schema.DataType.*
 import ldbc.schema.attribute.*
 
 class ColumnImplTest extends AnyFlatSpec:
 
   private def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-    elem: Decoder.Elem[A],
-                                                                                        encoder: Encoder[A]
+    elem:    Decoder.Elem[A],
+    encoder: Encoder[A]
   ): Column[A] =
     val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(name)))
     ColumnImpl[A](name, None, decoder, encoder, Some(dataType), attributes.toList)

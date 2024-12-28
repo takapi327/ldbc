@@ -143,13 +143,13 @@ trait TableQuery[A, O]:
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
         inline mirror match
-          case s: Mirror.SumOf[Entity]     => error("Sum type is not supported.")
+          case s: Mirror.SumOf[Entity] => error("Sum type is not supported.")
           case p: Mirror.ProductOf[Entity] =>
             val parameterBinders: List[Parameter.Dynamic] = Parameter.Dynamic.many(column.encoder.encode(value))
             Insert.Impl(
-              table = table,
-              statement = s"INSERT INTO $name ${column.insertStatement}",
-              params = params ++ parameterBinders
+              table     = table,
+              statement = s"INSERT INTO $name ${ column.insertStatement }",
+              params    = params ++ parameterBinders
             )
 
   inline def derivedProduct[P](value: P, mirror: Mirror.ProductOf[P]): Insert[A] =
@@ -190,7 +190,8 @@ trait TableQuery[A, O]:
         }
         Insert.Impl(
           table = table,
-          statement = s"INSERT INTO $name (${column.name}) VALUES ${ values.map(_ => s"(${List.fill(column.values)("?").mkString(",")})").mkString(",") }",
+          statement =
+            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(_ => s"(${ List.fill(column.values)("?").mkString(",") })").mkString(",") }",
           params = params ++ parameterBinders
         )
 
@@ -213,9 +214,9 @@ trait TableQuery[A, O]:
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Update processing.")
       case _ =>
-        val columns = func(table)
+        val columns          = func(table)
         val parameterBinders = Parameter.Dynamic.many(columns.encoder.encode(values))
-        Update.Impl[A](table, s"UPDATE $name SET ${columns.updateStatement}", params ++ parameterBinders)
+        Update.Impl[A](table, s"UPDATE $name SET ${ columns.updateStatement }", params ++ parameterBinders)
 
   /**
    * Method to construct a query to update a table.

@@ -69,16 +69,17 @@ object Table:
 
       val encoder: Encoder[P] = (value: P) =>
         val list: List[(Any, Column[?])] = Tuple.fromProduct(value).toList.zip(columns)
-        list.map { case (value, column) => column.encoder.encode(value.asInstanceOf) }
+        list
+          .map { case (value, column) => column.encoder.encode(value.asInstanceOf) }
           .foldLeft(Encoder.Encoded.success(List.empty[Encoder.Supported])) {
             case (Encoder.Encoded.Success(fs1), Encoder.Encoded.Success(fs2)) =>
               Encoder.Encoded.success(fs1 ::: fs2)
             case (Encoder.Encoded.Failure(e1), Encoder.Encoded.Failure(e2)) =>
-              Encoder.Encoded.failure(e1.head, (e1.tail ++ e2.toList): _*)
+              Encoder.Encoded.failure(e1.head, (e1.tail ++ e2.toList)*)
             case (Encoder.Encoded.Failure(e), _) =>
-              Encoder.Encoded.failure(e.head, e.tail: _*)
+              Encoder.Encoded.failure(e.head, e.tail*)
             case (_, Encoder.Encoded.Failure(e)) =>
-              Encoder.Encoded.failure(e.head, e.tail: _*)
+              Encoder.Encoded.failure(e.head, e.tail*)
           }
 
       val alias = columns.flatMap(_.alias).mkString(", ")
@@ -148,7 +149,8 @@ object Table:
       ${ Expr.ofSeq(labels) }
         .zip($codecs)
         .map {
-          case (label: String, codec: (Decoder.Elem[t], Encoder[_])) => Column[t](label, $naming.format($name))(using codec._1, codec._2.asInstanceOf[Encoder[t]])
+          case (label: String, codec: (Decoder.Elem[t], Encoder[?])) =>
+            Column[t](label, $naming.format($name))(using codec._1, codec._2.asInstanceOf[Encoder[t]])
         }
         .toList
     }
@@ -212,7 +214,8 @@ object Table:
       ${ Expr.ofSeq(labels) }
         .zip($codecs)
         .map {
-          case (label: String, codec: (Decoder.Elem[t], Encoder[_])) => Column[t](label, $name)(using codec._1, codec._2.asInstanceOf[Encoder[t]])
+          case (label: String, codec: (Decoder.Elem[t], Encoder[?])) =>
+            Column[t](label, $name)(using codec._1, codec._2.asInstanceOf[Encoder[t]])
         }
         .toList
     }

@@ -40,7 +40,7 @@ object Parameter:
     def bind[F[_]](statement: PreparedStatement[F], index: Int)(using ev: MonadThrow[F]): F[Unit]
 
   object Dynamic:
-    
+
     def many[A](encoded: Encoder.Encoded): List[Dynamic] =
       encoded match
         case Encoder.Encoded.Success(list) =>
@@ -49,20 +49,20 @@ object Parameter:
               override def value: String = v.toString
               override def bind[F[_]](statement: PreparedStatement[F], index: Int)(using ev: MonadThrow[F]): F[Unit] =
                 v match
-                  case value: Boolean => statement.setBoolean(index, value)
-                  case value: Byte => statement.setByte(index, value)
-                  case value: Short => statement.setShort(index, value)
-                  case value: Int => statement.setInt(index, value)
-                  case value: Long => statement.setLong(index, value)
-                  case value: Float => statement.setFloat(index, value)
-                  case value: Double => statement.setDouble(index, value)
-                  case value: BigDecimal => statement.setBigDecimal(index, value)
-                  case value: String => statement.setString(index, value)
-                  case value: Array[Byte] => statement.setBytes(index, value)
-                  case value: LocalTime => statement.setTime(index, value)
-                  case value: LocalDate => statement.setDate(index, value)
+                  case value: Boolean       => statement.setBoolean(index, value)
+                  case value: Byte          => statement.setByte(index, value)
+                  case value: Short         => statement.setShort(index, value)
+                  case value: Int           => statement.setInt(index, value)
+                  case value: Long          => statement.setLong(index, value)
+                  case value: Float         => statement.setFloat(index, value)
+                  case value: Double        => statement.setDouble(index, value)
+                  case value: BigDecimal    => statement.setBigDecimal(index, value)
+                  case value: String        => statement.setString(index, value)
+                  case value: Array[Byte]   => statement.setBytes(index, value)
+                  case value: LocalTime     => statement.setTime(index, value)
+                  case value: LocalDate     => statement.setDate(index, value)
                   case value: LocalDateTime => statement.setTimestamp(index, value)
-                  case None => statement.setNull(index, ldbc.sql.Types.NULL)
+                  case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
           }
         case Encoder.Encoded.Failure(errors) =>
           throw new IllegalArgumentException(errors.toList.mkString(", "))
@@ -72,25 +72,28 @@ object Parameter:
         override def value: String = _value.toString
         override def bind[F[_]](statement: PreparedStatement[F], index: Int)(using ev: MonadThrow[F]): F[Unit] =
           encoder.encode(_value) match
-            case Encoder.Encoded.Success(list) => list.foldLeft(ev.unit) { case (acc, value) =>
-              acc.flatMap(_ => value match
-                case value: Boolean       => statement.setBoolean(index, value)
-                case value: Byte          => statement.setByte(index, value)
-                case value: Short         => statement.setShort(index, value)
-                case value: Int           => statement.setInt(index, value)
-                case value: Long          => statement.setLong(index, value)
-                case value: Float         => statement.setFloat(index, value)
-                case value: Double        => statement.setDouble(index, value)
-                case value: BigDecimal    => statement.setBigDecimal(index, value)
-                case value: String        => statement.setString(index, value)
-                case value: Array[Byte]   => statement.setBytes(index, value)
-                case value: LocalTime     => statement.setTime(index, value)
-                case value: LocalDate     => statement.setDate(index, value)
-                case value: LocalDateTime => statement.setTimestamp(index, value)
-                case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
-              )
-            }
-            case Encoder.Encoded.Failure(e)  => ev.raiseError(new IllegalArgumentException(e.toList.mkString(", ")))
+            case Encoder.Encoded.Success(list) =>
+              list.foldLeft(ev.unit) {
+                case (acc, value) =>
+                  acc.flatMap(_ =>
+                    value match
+                      case value: Boolean       => statement.setBoolean(index, value)
+                      case value: Byte          => statement.setByte(index, value)
+                      case value: Short         => statement.setShort(index, value)
+                      case value: Int           => statement.setInt(index, value)
+                      case value: Long          => statement.setLong(index, value)
+                      case value: Float         => statement.setFloat(index, value)
+                      case value: Double        => statement.setDouble(index, value)
+                      case value: BigDecimal    => statement.setBigDecimal(index, value)
+                      case value: String        => statement.setString(index, value)
+                      case value: Array[Byte]   => statement.setBytes(index, value)
+                      case value: LocalTime     => statement.setTime(index, value)
+                      case value: LocalDate     => statement.setDate(index, value)
+                      case value: LocalDateTime => statement.setTimestamp(index, value)
+                      case None                 => statement.setNull(index, ldbc.sql.Types.NULL)
+                  )
+              }
+            case Encoder.Encoded.Failure(e) => ev.raiseError(new IllegalArgumentException(e.toList.mkString(", ")))
 
   given [A](using Encoder[A]): Conversion[A, Dynamic] with
     override def apply(value: A): Dynamic = Dynamic(value)

@@ -6,7 +6,7 @@
 
 package ldbc.schema
 
-import ldbc.dsl.codec.{Decoder, Encoder}
+import ldbc.dsl.codec.{ Decoder, Encoder }
 import ldbc.statement.Column
 import ldbc.schema.attribute.Attribute
 
@@ -14,7 +14,7 @@ private[ldbc] case class ColumnImpl[T](
   name:       String,
   alias:      Option[String],
   decoder:    Decoder[T],
-  encoder: Encoder[T],
+  encoder:    Encoder[T],
   dataType:   Option[DataType[T]],
   attributes: List[Attribute[T]]
 ) extends Column[T]:

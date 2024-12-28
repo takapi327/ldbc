@@ -130,13 +130,13 @@ object Encoder:
   object Encoded:
     case class Success(value: List[Encoder.Supported]) extends Encoded:
       override def product(that: Encoded): Encoded = that match
-        case Success(value) => Success(this.value ::: value)
+        case Success(value)  => Success(this.value ::: value)
         case Failure(errors) => Failure(errors)
     case class Failure(errors: NonEmptyList[String]) extends Encoded:
       override def product(that: Encoded): Encoded = that match
-        case Success(value) => Failure(errors)
+        case Success(value)  => Failure(errors)
         case Failure(errors) => Failure(errors ::: this.errors)
-  
+
     def success(value: List[Encoder.Supported]): Encoded = Success(value)
     def failure(error: String, errors: String*): Encoded =
       Failure(NonEmptyList(error, errors.toList))
