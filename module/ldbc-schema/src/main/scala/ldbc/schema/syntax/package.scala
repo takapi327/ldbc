@@ -46,7 +46,9 @@ package object syntax:
           connection =>
             for
               prepareStatement <- connection.prepareStatement(command.statement)
-              result <- paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() <* prepareStatement.close()
+              result <-
+                paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() <* prepareStatement
+                  .close()
             yield result
         )
 
@@ -59,7 +61,9 @@ package object syntax:
           connection =>
             for
               prepareStatement <- connection.prepareStatement(command.statement, Statement.RETURN_GENERATED_KEYS)
-              resultSet <- paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+              resultSet <-
+                paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() >> prepareStatement
+                  .getGeneratedKeys()
               result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
             yield result
         )
