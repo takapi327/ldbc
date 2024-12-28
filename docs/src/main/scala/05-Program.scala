@@ -23,10 +23,10 @@ import ldbc.dsl.codec.*
   enum Status:
     case Active, InActive
 
-  given Encoder[Status] with
-    override def encode(value: Status): Boolean = value match
-      case Status.Active   => true
-      case Status.InActive => false
+  given Encoder[Status] = Encoder[Boolean].contramap {
+    case Status.Active   => true
+    case Status.InActive => false
+  }
 
   val program1: DBIO[Int] =
     sql"INSERT INTO user (name, email, status) VALUES (${ "user 1" }, ${ "user@example.com" }, ${ Status.Active })".update
