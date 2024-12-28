@@ -6,6 +6,8 @@
 
 package ldbc
 
+import java.time.*
+
 import scala.deriving.Mirror
 
 import cats.{ Foldable, Functor, Reducible }
@@ -18,6 +20,37 @@ import ldbc.dsl.syntax.*
 import ldbc.dsl.codec.Encoder
 
 package object dsl:
+  
+  private [ldbc] trait ParamBinder[F[_]: Temporal]:
+    protected def paramBind(
+                             prepareStatement: ldbc.sql.PreparedStatement[F],
+                             params: List[Parameter.Dynamic]
+                           ): F[Unit] =
+      val encoded = params.foldLeft(Temporal[F].pure(List.empty[ldbc.dsl.codec.Encoder.Supported])) { case (acc, param) =>
+        for
+          acc$ <- acc
+          value <- param match
+            case Parameter.Dynamic.Success(value) => Temporal[F].pure(value)
+            case Parameter.Dynamic.Failure(errors) => Temporal[F].raiseError(new Exception(errors.mkString(", ")))
+        yield acc$ :+ value
+      }
+      encoded.flatMap(_.zipWithIndex.foldLeft(Temporal[F].unit) { case (acc, (value, index)) =>
+        acc *> (value match
+          case value: Boolean => prepareStatement.setBoolean(index + 1, value)
+          case value: Byte => prepareStatement.setByte(index + 1, value)
+          case value: Short => prepareStatement.setShort(index + 1, value)
+          case value: Int => prepareStatement.setInt(index + 1, value)
+          case value: Long => prepareStatement.setLong(index + 1, value)
+          case value: Float => prepareStatement.setFloat(index + 1, value)
+          case value: Double => prepareStatement.setDouble(index + 1, value)
+          case value: BigDecimal => prepareStatement.setBigDecimal(index + 1, value)
+          case value: String => prepareStatement.setString(index + 1, value)
+          case value: Array[Byte] => prepareStatement.setBytes(index + 1, value)
+          case value: LocalDate => prepareStatement.setDate(index + 1, value)
+          case value: LocalTime => prepareStatement.setTime(index + 1, value)
+          case value: LocalDateTime => prepareStatement.setTimestamp(index + 1, value)
+          case None => prepareStatement.setNull(index + 1, ldbc.sql.Types.NULL))
+      })
 
   private[ldbc] trait SyncSyntax[F[_]: Temporal] extends StringContextSyntax[F]:
 
@@ -47,9 +80,10 @@ package object dsl:
       val params = tuple.toList
       Mysql[F](
         List.fill(params.size)("?").mkString(","),
-        (Tuple.fromProduct(v).toList zip params).map {
+        (Tuple.fromProduct(v).toList zip params).flatMap {
           case (value, param) =>
-            Parameter.Dynamic(value.asInstanceOf[Any])(using param.asInstanceOf[Encoder[Any]])
+            //Parameter.Dynamic(value.asInstanceOf[Any])(using param.asInstanceOf[Encoder[Any]])
+            Parameter.Dynamic.many(param.asInstanceOf[Encoder[Any]].encode(value.asInstanceOf[Any]))
         }
       )
 
