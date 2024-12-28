@@ -10,7 +10,6 @@ import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
 import ldbc.dsl.codec.Encoder
-import ldbc.statement.interpreter.ToTuple
 
 /**
  * Trait for building Statements to be added.
@@ -83,23 +82,13 @@ object Insert:
      *   The values to be inserted.
      */
     inline def values(values: B*): Values[A] =
-      val parameterBinders = values
-        .map {
-          case h *: EmptyTuple => h *: EmptyTuple
-          case h *: t          => h *: t
-          case h               => h *: EmptyTuple
-        }
-        .flatMap(
-          _.zip(Encoder.fold[ToTuple[B]]).toList
-            .map {
-              case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-            }
-            .toList
-        )
+      val parameterBinders: List[Parameter.Dynamic] = values.flatMap { value =>
+        Parameter.Dynamic.many(columns.encoder.encode(value))
+      }.toList
       Values(
         table,
-        s"$statement (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
-        parameterBinders.toList
+        s"$statement (${columns.name}) VALUES ${List.fill(values.length)(s"(${List.fill(columns.values)("?").mkString(",")})").mkString(",")}",
+        parameterBinders
       )
 
     /**
