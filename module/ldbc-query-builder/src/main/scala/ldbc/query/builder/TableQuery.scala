@@ -9,7 +9,7 @@ package ldbc.query.builder
 import scala.deriving.Mirror
 
 import ldbc.dsl.Parameter
-import ldbc.dsl.codec.Decoder
+import ldbc.dsl.codec.*
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
 private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <: Product](
@@ -39,6 +39,7 @@ private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <
         table.columns.map(_.name).mkString(", "),
         if alias.isEmpty then None else Some(alias),
         decoder,
+        column.opt.encoder.asInstanceOf[Encoder[Option[B]]],
         Some(table.columns.length),
         Some(table.columns.map(column => s"${ column.name } = ?").mkString(", "))
       )
