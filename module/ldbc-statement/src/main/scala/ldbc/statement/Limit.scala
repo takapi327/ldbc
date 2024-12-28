@@ -56,7 +56,7 @@ object Limit:
         table     = table,
         columns   = columns,
         statement = statement ++ " OFFSET ?",
-        params    = params :+ Parameter.Dynamic(length)
+        params    = params ++ Parameter.Dynamic.many(summon[Encoder[Long]].encode(length))
       )
 
   transparent trait QueryProvider[A, B]:
@@ -79,7 +79,7 @@ object Limit:
         table     = self.table,
         columns   = self.columns,
         statement = self.statement ++ " LIMIT ?",
-        params    = self.params :+ Parameter.Dynamic(length)
+        params    = self.params ++ Parameter.Dynamic.many(summon[Encoder[Long]].encode(length))
       )
 
   /**
@@ -118,5 +118,5 @@ object Limit:
     def limit(length: Long): Encoder[Long] ?=> Limit.C =
       Limit.C(
         statement = statement ++ " LIMIT ?",
-        params    = params :+ Parameter.Dynamic(length)
+        params    = params ++ Parameter.Dynamic.many(summon[Encoder[Long]].encode(length))
       )
