@@ -151,5 +151,6 @@ private[ldbc] object TableModelGenerator:
            |    given ldbc.dsl.codec.Decoder.Elem[$enumName] = new ldbc.dsl.codec.Decoder.Elem[$enumName]:
            |      override def decode(resultSet: ldbc.sql.ResultSet, columnLabel: String): $enumName = $enumName.fromOrdinal(resultSet.getInt(columnLabel))
            |      override def decode(resultSet: ldbc.sql.ResultSet, index: Int): $enumName = $enumName.fromOrdinal(resultSet.getInt(index))
+           |    given Encoder[$enumName] = Encoder[Int].contramap(_.ordinal)
            |""".stripMargin)
       case _ => None
