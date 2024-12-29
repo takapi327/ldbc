@@ -680,13 +680,13 @@ object Column extends TwiddleSyntax[Column]:
     override def imap[A, B](fa:    Column[A])(f:  A => B)(g: B => A): Column[B]      = fa.imap(f)(g)
     override def product[A, B](fa: Column[A], fb: Column[B]):         Column[(A, B)] = fa product fb
 
-  case class Pure[A](value: T) extends Column[A]:
+  case class Pure[A](value: A) extends Column[A]:
     override def name:             String         = ""
     override def alias:            Option[String] = None
     override def as(name: String): Column[A]      = this
     override def decoder: Decoder[A] =
       new Decoder[A]((resultSet: ResultSet, prefix: Option[String]) => value)
-    override def encoder:                     Encoder[A]      = (value: T) => Encoder.Encoded.success(List.empty)
+    override def encoder:                     Encoder[A]      = (value: A) => Encoder.Encoded.success(List.empty)
     override def insertStatement:             String          = ""
     override def updateStatement:             String          = ""
     override def duplicateKeyUpdateStatement: String          = ""
