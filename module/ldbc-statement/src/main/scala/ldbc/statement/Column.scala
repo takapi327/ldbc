@@ -671,7 +671,7 @@ trait Column[A]:
 
 object Column extends TwiddleSyntax[Column]:
 
-  type Extract[A] <: Tuple = T match
+  type Extract[A] <: Tuple = A match
     case Column[A]               => t *: EmptyTuple
     case Column[A] *: EmptyTuple => t *: EmptyTuple
     case Column[A] *: ts         => t *: Extract[ts]
