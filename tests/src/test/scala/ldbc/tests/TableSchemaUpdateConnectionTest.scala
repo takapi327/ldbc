@@ -6,8 +6,6 @@
 
 package ldbc.tests
 
-import scala.concurrent.duration.DurationInt
-
 import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.syntax.all.*
@@ -387,7 +385,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
     "The value of AutoIncrement obtained during insert matches the specified value."
   ) {
     assertIOBoolean(
-      IO.sleep(5.seconds) >> connection.use { conn =>
+      connection.use { conn =>
         (for
           length <- city.select(_.id.count).query.unsafe.map(_ + 1)
           result <-
@@ -401,7 +399,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("") {
+  test("The value of AutoIncrement obtained during insert matches the specified value.") {
     assertIO(
       connection.use { conn =>
         city

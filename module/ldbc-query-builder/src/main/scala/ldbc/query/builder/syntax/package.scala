@@ -23,7 +23,7 @@ import ldbc.statement.syntax.*
 
 package object syntax:
 
-  private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F]:
+  private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F], ParamBinder[F]:
 
     type TableQuery[T] = ldbc.statement.TableQuery[Table[T], Table.Opt[T]]
     val TableQuery = ldbc.query.builder.TableQuery
@@ -49,9 +49,9 @@ package object syntax:
           connection =>
             for
               prepareStatement <- connection.prepareStatement(command.statement)
-              result <- command.params.zipWithIndex.traverse {
-                          case (param, index) => param.bind[F](prepareStatement, index + 1)
-                        } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+              result <-
+                paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() <* prepareStatement
+                  .close()
             yield result
         )
 
@@ -64,9 +64,9 @@ package object syntax:
           connection =>
             for
               prepareStatement <- connection.prepareStatement(command.statement, Statement.RETURN_GENERATED_KEYS)
-              resultSet <- command.params.zipWithIndex.traverse {
-                             case (param, index) => param.bind[F](prepareStatement, index + 1)
-                           } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+              resultSet <-
+                paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() >> prepareStatement
+                  .getGeneratedKeys()
               result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
             yield result
         )

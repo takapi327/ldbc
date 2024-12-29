@@ -10,7 +10,7 @@ import scala.language.dynamics
 import scala.deriving.Mirror
 import scala.quoted.*
 
-import ldbc.dsl.codec.Decoder
+import ldbc.dsl.codec.*
 import ldbc.statement.{ AbstractTable, Column }
 import ldbc.query.builder.formatter.Naming
 import ldbc.query.builder.interpreter.*
@@ -66,11 +66,28 @@ object Table:
             .asInstanceOf[mirror.MirroredElemTypes]
         )
       )
+
+      val encoder: Encoder[P] = (value: P) =>
+        val list: List[(Any, Column[?])] = Tuple.fromProduct(value).toList.zip(columns)
+        list
+          .map { case (value, column) => column.encoder.encode(value.asInstanceOf) }
+          .foldLeft(Encoder.Encoded.success(List.empty[Encoder.Supported])) {
+            case (Encoder.Encoded.Success(fs1), Encoder.Encoded.Success(fs2)) =>
+              Encoder.Encoded.success(fs1 ::: fs2)
+            case (Encoder.Encoded.Failure(e1), Encoder.Encoded.Failure(e2)) =>
+              Encoder.Encoded.failure(e1.head, (e1.tail ++ e2.toList)*)
+            case (Encoder.Encoded.Failure(e), _) =>
+              Encoder.Encoded.failure(e.head, e.tail*)
+            case (_, Encoder.Encoded.Failure(e)) =>
+              Encoder.Encoded.failure(e.head, e.tail*)
+          }
+
       val alias = columns.flatMap(_.alias).mkString(", ")
       Column.Impl[P](
         columns.map(_.name).mkString(", "),
         if alias.isEmpty then None else Some(alias),
         decoder,
+        encoder,
         Some(columns.length),
         Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
       )
@@ -107,7 +124,7 @@ object Table:
           '{ $naming.format($name) }
       }
 
-    val decodes = Expr.ofSeq(
+    val codecs = Expr.ofSeq(
       symbol.caseFields
         .map { field =>
           field.tree match
@@ -117,7 +134,10 @@ object Table:
                   val decoder = Expr.summon[Decoder.Elem[tpe]].getOrElse {
                     report.errorAndAbort(s"Decoder for type $tpe not found")
                   }
-                  decoder.asExprOf[Decoder.Elem[?]]
+                  val encoder = Expr.summon[Encoder[tpe]].getOrElse {
+                    report.errorAndAbort(s"Encoder for type $tpe not found")
+                  }
+                  '{ ($decoder, $encoder) }
                 case _ =>
                   report.errorAndAbort(s"Type $tpt is not a type")
         }
@@ -127,9 +147,10 @@ object Table:
 
     val columns = '{
       ${ Expr.ofSeq(labels) }
-        .zip($decodes)
+        .zip($codecs)
         .map {
-          case (label: String, decoder: Decoder.Elem[t]) => Column[t](label, $naming.format($name))(using decoder)
+          case (label: String, codec: (Decoder.Elem[t], Encoder[?])) =>
+            Column[t](label, $naming.format($name))(using codec._1, codec._2.asInstanceOf[Encoder[t]])
         }
         .toList
     }
@@ -170,7 +191,7 @@ object Table:
           '{ $naming.format($name) }
       }
 
-    val decodes = Expr.ofSeq(
+    val codecs = Expr.ofSeq(
       symbol.caseFields
         .map { field =>
           field.tree match
@@ -180,7 +201,10 @@ object Table:
                   val decoder = Expr.summon[Decoder.Elem[tpe]].getOrElse {
                     report.errorAndAbort(s"Decoder for type $tpe not found")
                   }
-                  decoder.asExprOf[Decoder.Elem[?]]
+                  val encoder = Expr.summon[Encoder[tpe]].getOrElse {
+                    report.errorAndAbort(s"Encoder for type $tpe not found")
+                  }
+                  '{ ($decoder, $encoder) }
                 case _ =>
                   report.errorAndAbort(s"Type $tpt is not a type")
         }
@@ -188,9 +212,10 @@ object Table:
 
     val columns = '{
       ${ Expr.ofSeq(labels) }
-        .zip($decodes)
+        .zip($codecs)
         .map {
-          case (label: String, decoder: Decoder.Elem[t]) => Column[t](label, $name)(using decoder)
+          case (label: String, codec: (Decoder.Elem[t], Encoder[?])) =>
+            Column[t](label, $name)(using codec._1, codec._2.asInstanceOf[Encoder[t]])
         }
         .toList
     }

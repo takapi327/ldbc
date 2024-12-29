@@ -9,7 +9,6 @@ package ldbc.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
-import ldbc.dsl.codec.Encoder
 
 /** 
  * Trait for building Statements to be updated.
@@ -36,7 +35,7 @@ sealed trait Update[A] extends Command:
    * @param value
    *   The value to be set
    */
-  def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A]
+  def set[B](column: A => Column[B], value: B): Update[A]
 
   /** 
    * Methods for setting the value of a column in a table.
@@ -55,7 +54,7 @@ sealed trait Update[A] extends Command:
    * @param bool
    *   A boolean value that determines whether to update
    */
-  def set[B](column: A => Column[B], value: B, bool: Boolean)(using Encoder[B]): Update[A]
+  def set[B](column: A => Column[B], value: B, bool: Boolean): Update[A]
 
   /** 
    * A method for setting the WHERE condition in a Update statement.
@@ -83,13 +82,14 @@ object Update:
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-    override def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A] =
+    override def set[B](column: A => Column[B], value: B): Update[A] =
+      val columns = column(table)
       this.copy(
-        statement = statement ++ s", ${ column(table).updateStatement }",
-        params    = params :+ Parameter.Dynamic(value)
+        statement = statement ++ s", ${ columns.updateStatement }",
+        params    = params ++ Parameter.Dynamic.many(columns.encoder.encode(value))
       )
 
-    override def set[B](column: A => Column[B], value: B, bool: Boolean)(using Encoder[B]): Update[A] =
+    override def set[B](column: A => Column[B], value: B, bool: Boolean): Update[A] =
       if bool then set(column, value) else this
 
     override def where(func: A => Expression): Where.C[A] =

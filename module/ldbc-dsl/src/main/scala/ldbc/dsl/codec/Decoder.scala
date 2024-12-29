@@ -35,6 +35,17 @@ class Decoder[A](f: (resultSet: ResultSet, prefix: Option[String]) => A):
    */
   def decode(resultSet: ResultSet, prefix: Option[String]): A = f(resultSet, prefix)
 
+  /** `Decoder` is semigroupal: a pair of decoders make a decoder for a pair. */
+  def product[B](fb: Decoder[B]): Decoder[(A, B)] =
+    new Decoder((resultSet, prefix) => (this.decode(resultSet, None), fb.decode(resultSet, None)))
+
+  /** Lift this `Decoder` into `Option`. */
+  def opt: Decoder[Option[A]] =
+    new Decoder((resultSet, prefix) =>
+      val value = this.decode(resultSet, prefix)
+      if resultSet.wasNull() then None else Some(value)
+    )
+
 object Decoder:
 
   given Functor[[A] =>> Decoder[A]] with

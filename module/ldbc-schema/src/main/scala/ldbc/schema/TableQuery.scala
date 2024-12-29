@@ -23,6 +23,7 @@ private[ldbc] case class TableQueryImpl[A <: AbstractTable[?]](
       column.name,
       column.alias,
       column.opt.decoder,
+      column.opt.encoder,
       Some(column.values),
       Some(column.updateStatement)
     )

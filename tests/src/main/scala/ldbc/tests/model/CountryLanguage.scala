@@ -25,8 +25,7 @@ object CountryLanguage:
 
   object IsOfficial
 
-  given Encoder[IsOfficial] with
-    override def encode(isOfficial: IsOfficial): String = isOfficial.toString
+  given Encoder[IsOfficial] = Encoder[String].contramap(_.toString)
 
   given Decoder.Elem[IsOfficial] =
     Decoder.Elem.mapping[String, IsOfficial](str => IsOfficial.valueOf(str))

@@ -41,7 +41,8 @@ object Query:
     statement: String,
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[T]
-  ) extends Query[F, T]:
+  ) extends Query[F, T],
+            ParamBinder[F]:
 
     given Decoder[T] = decoder
 
@@ -52,10 +53,8 @@ object Query:
         connection =>
           for
             prepareStatement <- connection.prepareStatement(statement)
-            resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind(prepareStatement, index + 1)
-                         } >> prepareStatement.executeQuery()
-            result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
+            resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
+            result           <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
           yield result
       )
 
@@ -66,9 +65,7 @@ object Query:
         connection =>
           for
             prepareStatement <- connection.prepareStatement(statement)
-            resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind(prepareStatement, index + 1)
-                         } >> prepareStatement.executeQuery()
-            result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
+            resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
+            result           <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
           yield result
       )
