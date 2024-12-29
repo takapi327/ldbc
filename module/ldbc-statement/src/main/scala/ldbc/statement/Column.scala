@@ -672,9 +672,9 @@ trait Column[A]:
 object Column extends TwiddleSyntax[Column]:
 
   type Extract[A] <: Tuple = A match
-    case Column[A]               => t *: EmptyTuple
-    case Column[A] *: EmptyTuple => t *: EmptyTuple
-    case Column[A] *: ts         => t *: Extract[ts]
+    case Column[t]               => t *: EmptyTuple
+    case Column[t] *: EmptyTuple => t *: EmptyTuple
+    case Column[t] *: ts         => t *: Extract[ts]
 
   given InvariantSemigroupal[Column] with
     override def imap[A, B](fa:    Column[A])(f:  A => B)(g: B => A): Column[B]      = fa.imap(f)(g)
