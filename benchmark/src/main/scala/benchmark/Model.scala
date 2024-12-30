@@ -70,7 +70,7 @@ object Model20:
       Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
       Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
       Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int]
-    ).to[Model20]
+  ).to[Model20]
   given Decoder[Model20] = (
     Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
       Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
