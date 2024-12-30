@@ -63,7 +63,7 @@ object Table:
       Column.Impl[P](
         columns.map(_.name).mkString(", "),
         if alias.isEmpty then None else Some(alias),
-        decoder.to[P],
+        decoder,
         encoder,
         Some(columns.length),
         Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
