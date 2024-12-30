@@ -18,22 +18,19 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
 
   type Column[A] = ldbc.statement.Column[A]
 
-  protected final def column[A](name: String)(using elem: Decoder.Elem[A], encoder: Encoder[A]): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
+  protected final def column[A](name: String)(using decoder: Decoder[A], encoder: Encoder[A]): Column[A] =
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, None, List.empty)
 
   protected final def column[A](name: String, dataType: DataType[A])(using
-    elem:    Decoder.Elem[A],
+                                                                     decoder:    Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, Some(dataType), List.empty)
 
   protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-    elem:    Decoder.Elem[A],
+                                                                                                decoder:    Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, Some(dataType), attributes.toList)
 
   /**
