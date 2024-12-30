@@ -9,6 +9,7 @@ package ldbc.dsl.codec
 import java.time.*
 
 import scala.compiletime.*
+import scala.deriving.Mirror
 
 import cats.ContravariantSemigroupal
 import cats.data.NonEmptyList
@@ -53,7 +54,7 @@ object Encoder extends TwiddleSyntax[Encoder]:
     LocalTime | LocalDate | LocalDateTime | None.type
 
   def apply[A](using encoder: Encoder[A]): Encoder[A] = encoder
-  
+
   given ContravariantSemigroupal[Encoder] with
     override def contramap[A, B](fa: Encoder[A])(f: B => A): Encoder[B] = fa.contramap(f)
     override def product[A, B](fa: Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
@@ -125,6 +126,15 @@ object Encoder extends TwiddleSyntax[Encoder]:
       value match
         case Some(value) => encoder.encode(value)
         case None        => Encoded.success(List(None))
+
+  given [A, B](using ea: Encoder[A], eb: Encoder[B]): Encoder[(A, B)] =
+    ea.product(eb)
+
+  given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
+    eh.product(et).contramap { case h *: t => (h, t) }
+
+  given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
+    encoder.to[P]
 
   type MapToTuple[T] <: Tuple = T match
     case EmptyTuple      => EmptyTuple
