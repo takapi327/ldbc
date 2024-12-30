@@ -44,8 +44,7 @@ object Country:
 
   given Encoder[Continent] = Encoder[String].contramap(_.value)
 
-  given Decoder.Elem[Continent] =
-    Decoder.Elem.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
+  given Decoder[Continent] = Decoder[String].map(str => Continent.valueOf(str.replace(" ", "_")))
 
   given Table[Country] = Table.derived[Country]("country")
 
