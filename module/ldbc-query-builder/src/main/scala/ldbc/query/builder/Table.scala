@@ -140,7 +140,7 @@ object Table:
       Impl[P](
         $naming.format($name),
         $columns
-      )(using $decoder.to[P], $encoder)
+      )(using $decoder, $encoder)
     }
 
   private def derivedWithNameImpl[P <: Product](name: Expr[String])(using
