@@ -72,7 +72,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("dsl", "Projects that provide a way to connect to the database")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core" % "0.8.0",
+      "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "cats-effect"       % "3.5.7",
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
@@ -84,8 +84,7 @@ lazy val statement = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .module("statement", "Project for building type-safe statements")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "twiddles-core" % "0.8.0",
-      "org.scalatest" %%% "scalatest"     % "3.2.18" % Test
+      "org.scalatest" %%% "scalatest" % "3.2.18" % Test
     )
   )
   .dependsOn(dsl)
