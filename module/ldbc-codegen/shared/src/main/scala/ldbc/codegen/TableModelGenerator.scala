@@ -148,7 +148,7 @@ private[ldbc] object TableModelGenerator:
         Some(s"""enum $enumName extends model.Enum:
            |    case ${ types.mkString(", ") }
            |  object $enumName extends model.EnumDataType[$enumName]:
-           |    given ldbc.dsl.codec.Decoder[$enumName] = new ldbc.dsl.codec.Decoder[$enumName].map($enumName.fromOrdinal)
+           |    given ldbc.dsl.codec.Decoder[$enumName] = new ldbc.dsl.codec.Decoder[Int].map($enumName.fromOrdinal)
            |    given ldbc.dsl.codec.Encoder[$enumName] = ldbc.dsl.codec.Encoder[Int].contramap(_.ordinal)
            |""".stripMargin)
       case _ => None

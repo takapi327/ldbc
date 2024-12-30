@@ -15,7 +15,7 @@ import ldbc.schema.attribute.*
 class ColumnImplTest extends AnyFlatSpec:
 
   private def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-    decoder:    Decoder[A],
+    decoder: Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
     ColumnImpl[A](name, None, decoder, encoder, Some(dataType), attributes.toList)
