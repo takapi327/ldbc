@@ -31,7 +31,7 @@ import ldbc.dsl.codec.*
   val program1: DBIO[Int] =
     sql"INSERT INTO user (name, email, status) VALUES (${ "user 1" }, ${ "user@example.com" }, ${ Status.Active })".update
 
-  given Decoder.Elem[Status] = Decoder.Elem.mapping[Boolean, Status] {
+  given Decoder[Status] = Decoder[Boolean].map {
     case true  => Status.Active
     case false => Status.InActive
   }
