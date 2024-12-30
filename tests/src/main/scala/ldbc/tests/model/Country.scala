@@ -46,6 +46,12 @@ object Country:
 
   given Decoder[Continent] = Decoder[String].map(str => Continent.valueOf(str.replace(" ", "_")))
 
+  given Decoder[Country] = (
+    Decoder[String] *: Decoder[String] *: Decoder[Continent] *: Decoder[String] *: Decoder[BigDecimal] *:
+      Decoder[Option[Short]] *: Decoder[Int] *: Decoder[Option[BigDecimal]] *: Decoder[Option[BigDecimal]] *:
+      Decoder[Option[BigDecimal]] *: Decoder[String] *: Decoder[String] *: Decoder[Option[String]] *:
+      Decoder[Option[Int]] *: Decoder[String]
+  ).to[Country]
   given Table[Country] = Table.derived[Country]("country")
 
 class CountryTable extends SchemaTable[Country]("country"):
