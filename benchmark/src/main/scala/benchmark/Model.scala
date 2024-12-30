@@ -65,6 +65,12 @@ case class Model20(
 ) derives Table
 
 object Model20:
+  given Encoder[Model20] = (
+    Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
+      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
+      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
+      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int]
+    ).to[Model20]
   given Decoder[Model20] = (
     Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
       Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
