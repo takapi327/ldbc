@@ -201,7 +201,8 @@ lazy val tests = crossProject(JVMPlatform)
   .settings(
     name        := "tests",
     description := "Projects for testing",
-    Test / fork := true
+    Test / fork := true,
+    scalacOptions += "-Ximplicit-search-limit:100000"
   )
   .defaultSettings
   .settings(
