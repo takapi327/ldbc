@@ -7,7 +7,6 @@
 package ldbc.query.builder
 
 import scala.deriving.Mirror
-import scala.compiletime.erasedValue
 
 import cats.syntax.all.*
 
@@ -32,14 +31,13 @@ package object syntax:
 
       def query: DslQuery[F, B] = DslQuery.Impl[F, B](query.statement, query.params, query.columns.decoder)
 
-      inline def queryTo[P <: Product](using
+      def queryTo[P <: Product](using
         m1:    Mirror.ProductOf[P],
         m2:    Mirror.ProductOf[B],
-        check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
+        check: m1.MirroredElemTypes =:= m2.MirroredElemTypes,
+                                       decoder: Decoder[P]
       ): DslQuery[F, P] =
-        inline erasedValue[P] match
-          case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(m1))
-          case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(m1))
+        DslQuery.Impl[F, P](query.statement, query.params, decoder)
 
     extension (command: Command)
       def update: DBIO[Int] =
@@ -55,9 +53,7 @@ package object syntax:
             yield result
         )
 
-      def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): DBIO[T] =
-        given Decoder[T] = Decoder.one[T]
-
+      def returning[T <: String | Int | Long](using Decoder[T]): DBIO[T] =
         DBIO.Impl[F, T](
           command.statement,
           command.params,

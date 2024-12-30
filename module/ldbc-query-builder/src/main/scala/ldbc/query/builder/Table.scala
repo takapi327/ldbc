@@ -53,40 +53,17 @@ object Table:
   private[ldbc] case class Impl[P <: Product](
     $name:   String,
     columns: List[Column[?]]
-  )(using mirror: Mirror.ProductOf[P])
+  )(using decoder: Decoder[P], encoder: Encoder[P])
     extends Table[P]:
 
     override def statement: String = $name
 
     override def * : Column[P] =
-      val decoder: Decoder[P] = new Decoder[P]((resultSet, prefix) =>
-        mirror.fromTuple(
-          Tuple
-            .fromArray(columns.map(_.decoder.decode(resultSet, prefix)).toArray)
-            .asInstanceOf[mirror.MirroredElemTypes]
-        )
-      )
-
-      val encoder: Encoder[P] = (value: P) =>
-        val list: List[(Any, Column[?])] = Tuple.fromProduct(value).toList.zip(columns)
-        list
-          .map { case (value, column) => column.encoder.encode(value.asInstanceOf) }
-          .foldLeft(Encoder.Encoded.success(List.empty[Encoder.Supported])) {
-            case (Encoder.Encoded.Success(fs1), Encoder.Encoded.Success(fs2)) =>
-              Encoder.Encoded.success(fs1 ::: fs2)
-            case (Encoder.Encoded.Failure(e1), Encoder.Encoded.Failure(e2)) =>
-              Encoder.Encoded.failure(e1.head, (e1.tail ++ e2.toList)*)
-            case (Encoder.Encoded.Failure(e), _) =>
-              Encoder.Encoded.failure(e.head, e.tail*)
-            case (_, Encoder.Encoded.Failure(e)) =>
-              Encoder.Encoded.failure(e.head, e.tail*)
-          }
-
       val alias = columns.flatMap(_.alias).mkString(", ")
       Column.Impl[P](
         columns.map(_.name).mkString(", "),
         if alias.isEmpty then None else Some(alias),
-        decoder,
+        decoder.to[P],
         encoder,
         Some(columns.length),
         Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
@@ -110,8 +87,12 @@ object Table:
       case Some(naming) => naming
       case None         => '{ Naming.SNAKE }
 
-    val mirror = Expr.summon[Mirror.ProductOf[P]].getOrElse {
-      report.errorAndAbort(s"Mirror for type $tpe not found")
+    val decoder = Expr.summon[Decoder[P]].getOrElse {
+      report.errorAndAbort(s"Decoder for type $tpe not found")
+    }
+
+    val encoder = Expr.summon[Encoder[P]].getOrElse {
+      report.errorAndAbort(s"Encoder for type $tpe not found")
     }
 
     val labels = symbol.primaryConstructor.paramSymss.flatten
@@ -131,7 +112,7 @@ object Table:
             case ValDef(name, tpt, _) =>
               tpt.tpe.asType match
                 case '[tpe] =>
-                  val decoder = Expr.summon[Decoder.Elem[tpe]].getOrElse {
+                  val decoder = Expr.summon[Decoder[tpe]].getOrElse {
                     report.errorAndAbort(s"Decoder for type $tpe not found")
                   }
                   val encoder = Expr.summon[Encoder[tpe]].getOrElse {
@@ -149,7 +130,7 @@ object Table:
       ${ Expr.ofSeq(labels) }
         .zip($codecs)
         .map {
-          case (label: String, codec: (Decoder.Elem[t], Encoder[?])) =>
+          case (label: String, codec: (Decoder[t], Encoder[?])) =>
             Column[t](label, $naming.format($name))(using codec._1, codec._2.asInstanceOf[Encoder[t]])
         }
         .toList
@@ -159,7 +140,7 @@ object Table:
       Impl[P](
         $naming.format($name),
         $columns
-      )(using $mirror)
+      )(using $decoder.to[P], $encoder)
     }
 
   private def derivedWithNameImpl[P <: Product](name: Expr[String])(using
@@ -177,8 +158,12 @@ object Table:
       case Some(naming) => naming
       case None         => '{ Naming.SNAKE }
 
-    val mirror = Expr.summon[Mirror.ProductOf[P]].getOrElse {
-      report.errorAndAbort(s"Mirror for type $tpe not found")
+    val decoder = Expr.summon[Decoder[P]].getOrElse {
+      report.errorAndAbort(s"Decoder for type $tpe not found")
+    }
+
+    val encoder = Expr.summon[Encoder[P]].getOrElse {
+      report.errorAndAbort(s"Encoder for type $tpe not found")
     }
 
     val labels = symbol.primaryConstructor.paramSymss.flatten
@@ -198,7 +183,7 @@ object Table:
             case ValDef(name, tpt, _) =>
               tpt.tpe.asType match
                 case '[tpe] =>
-                  val decoder = Expr.summon[Decoder.Elem[tpe]].getOrElse {
+                  val decoder = Expr.summon[Decoder[tpe]].getOrElse {
                     report.errorAndAbort(s"Decoder for type $tpe not found")
                   }
                   val encoder = Expr.summon[Encoder[tpe]].getOrElse {
@@ -214,7 +199,7 @@ object Table:
       ${ Expr.ofSeq(labels) }
         .zip($codecs)
         .map {
-          case (label: String, codec: (Decoder.Elem[t], Encoder[?])) =>
+          case (label: String, codec: (Decoder[t], Encoder[?])) =>
             Column[t](label, $name)(using codec._1, codec._2.asInstanceOf[Encoder[t]])
         }
         .toList
@@ -224,7 +209,7 @@ object Table:
       Impl[P](
         $name,
         $columns
-      )(using $mirror)
+      )(using $decoder, $encoder)
     }
 
   trait Opt[P] extends SharedTable, AbstractTable.Opt[P]:
