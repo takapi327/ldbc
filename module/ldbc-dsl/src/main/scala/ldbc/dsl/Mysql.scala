@@ -7,8 +7,6 @@
 package ldbc.dsl
 
 import scala.annotation.targetName
-import scala.deriving.Mirror
-import scala.compiletime.erasedValue
 
 import cats.syntax.all.*
 
@@ -44,23 +42,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * A [[ldbc.dsl.Query]] instance
    */
-  inline def query[T](using decoder: Decoder.Elem[T]): Query[F, T] =
-    Query.Impl[F, T](statement, params, Decoder.one[T])
-
-  /**
-   * A method to convert a query to a [[ldbc.dsl.Query]].
-   *
-   * {{{
-   *   sql"SELECT `name`, `age` FROM user".query[User]
-   * }}}
-   *
-   * @return
-   *   A [[ldbc.dsl.Query]] instance
-   */
-  inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Query[F, P] =
-    inline erasedValue[P] match
-      case _: Tuple => Query.Impl[F, P](statement, params, Decoder.derivedTuple(mirror))
-      case _        => Query.Impl[F, P](statement, params, Decoder.derivedProduct(mirror))
+  def query[T](using decoder: Decoder[T]): Query[F, T] =
+    Query.Impl[F, T](statement, params, decoder)
 
   /**
    * A method to execute an update operation against the MySQL server.
@@ -95,9 +78,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    *   The primary key value
    */
-  def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): DBIO[F, T] =
-    given Decoder[T] = Decoder.one[T]
-
+  def returning[T <: String | Int | Long](using Decoder[T]): DBIO[F, T] =
     DBIO.Impl[F, T](
       statement,
       params,
