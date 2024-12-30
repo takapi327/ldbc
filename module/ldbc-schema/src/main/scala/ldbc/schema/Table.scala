@@ -22,13 +22,13 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, None, List.empty)
 
   protected final def column[A](name: String, dataType: DataType[A])(using
-                                                                     decoder:    Decoder[A],
+    decoder: Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, Some(dataType), List.empty)
 
   protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-                                                                                                decoder:    Decoder[A],
+    decoder: Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
     ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, Some(dataType), attributes.toList)

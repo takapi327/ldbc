@@ -56,8 +56,8 @@ object Encoder extends TwiddleSyntax[Encoder]:
   def apply[A](using encoder: Encoder[A]): Encoder[A] = encoder
 
   given ContravariantSemigroupal[Encoder] with
-    override def contramap[A, B](fa: Encoder[A])(f: B => A): Encoder[B] = fa.contramap(f)
-    override def product[A, B](fa: Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
+    override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)
+    override def product[A, B](fa:   Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
 
   given Encoder[Boolean] with
     override def encode(value: Boolean): Encoded =

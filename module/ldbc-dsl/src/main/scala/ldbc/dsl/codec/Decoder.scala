@@ -43,8 +43,8 @@ trait Decoder[A]:
 
   /** Map decoded results to a new type `B`, yielding a `Decoder[B]`. */
   def map[B](f: A => B): Decoder[B] = new Decoder[B]:
-    override def offset: Int = self.offset
-    override def decode(resultSet: ResultSet, index: Int): B = f(self.decode(resultSet, index))
+    override def offset:                                   Int = self.offset
+    override def decode(resultSet: ResultSet, index: Int): B   = f(self.decode(resultSet, index))
 
   /** `Decoder` is semigroupal: a pair of decoders make a decoder for a pair. */
   def product[B](fb: Decoder[B]): Decoder[(A, B)] = new Decoder[(A, B)]:
@@ -68,8 +68,8 @@ object Decoder extends TwiddleSyntax[Decoder]:
     override def ap[A, B](fab: Decoder[A => B])(fa: Decoder[A]): Decoder[B] =
       map(fab.product(fa)) { case (fabb, a) => fabb(a) }
     override def pure[A](x: A): Decoder[A] = new Decoder[A]:
-      override def offset: Int = 0
-      override def decode(resultSet: ResultSet, index: Int): A = x
+      override def offset:                                   Int = 0
+      override def decode(resultSet: ResultSet, index: Int): A   = x
 
   given Decoder[String]        = (resultSet: ResultSet, index: Int) => resultSet.getString(index)
   given Decoder[Boolean]       = (resultSet: ResultSet, index: Int) => resultSet.getBoolean(index)
@@ -101,6 +101,6 @@ object Decoder extends TwiddleSyntax[Decoder]:
 
   given [H, T <: Tuple](using dh: Decoder[H], dt: Decoder[T]): Decoder[H *: T] =
     dh.product(dt).map { case (h, t) => h *: t }
-    
+
   given [P <: Product](using mirror: Mirror.ProductOf[P], decoder: Decoder[mirror.MirroredElemTypes]): Decoder[P] =
     decoder.to[P]

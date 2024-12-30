@@ -70,11 +70,11 @@ trait Column[A]:
 
   def imap[B](f: A => B)(g: B => A): Column[B] =
     new Column[B]:
-      override def name:             String         = self.name
-      override def alias:            Option[String] = self.alias
-      override def as(name: String): Column[B]      = this
-      override def decoder: Decoder[B] = self.decoder.map(f)
-      override def encoder: Encoder[B] = (value: B) => self.encoder.encode(g(value))
+      override def name:                        String          = self.name
+      override def alias:                       Option[String]  = self.alias
+      override def as(name: String):            Column[B]       = this
+      override def decoder:                     Decoder[B]      = self.decoder.map(f)
+      override def encoder:                     Encoder[B]      = (value: B) => self.encoder.encode(g(value))
       override def updateStatement:             String          = self.updateStatement
       override def duplicateKeyUpdateStatement: String          = self.duplicateKeyUpdateStatement
       override def values:                      Int             = self.values
@@ -685,8 +685,8 @@ object Column extends TwiddleSyntax[Column]:
     override def alias:            Option[String] = None
     override def as(name: String): Column[A]      = this
     override def decoder: Decoder[A] = new Decoder[A]:
-      override def offset: Int = 0
-      override def decode(resultSet: ResultSet, index: Int): A = value
+      override def offset:                                   Int = 0
+      override def decode(resultSet: ResultSet, index: Int): A   = value
     override def encoder:                     Encoder[A]      = (value: A) => Encoder.Encoded.success(List.empty)
     override def insertStatement:             String          = ""
     override def updateStatement:             String          = ""
@@ -746,23 +746,23 @@ object Column extends TwiddleSyntax[Column]:
     override def alias: Option[String] = Some(
       s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }"
     )
-    override def as(name: String): Column[A] = this
-    override def decoder: Decoder[A] = _decoder
+    override def as(name: String):            Column[A]  = this
+    override def decoder:                     Decoder[A] = _decoder
     override def encoder:                     Encoder[A] = _encoder
     override def insertStatement:             String     = ""
     override def updateStatement:             String     = ""
     override def duplicateKeyUpdateStatement: String     = ""
 
   private[ldbc] case class Count(_name: String, _alias: Option[String])(using
-    _decoder:     Decoder[Int],
+    _decoder: Decoder[Int],
     _encoder: Encoder[Int]
   ) extends Column[Int]:
-    override def name:             String         = s"COUNT($_name)"
-    override def alias:            Option[String] = _alias.map(a => s"COUNT($a)")
-    override def as(name: String): Column[Int]    = this.copy(s"$name.${ _name }")
-    override def decoder: Decoder[Int] = _decoder
-    override def encoder:                     Encoder[Int] = _encoder
-    override def toString:                    String       = name
-    override def insertStatement:             String       = ""
-    override def updateStatement:             String       = ""
-    override def duplicateKeyUpdateStatement: String       = ""
+    override def name:                        String         = s"COUNT($_name)"
+    override def alias:                       Option[String] = _alias.map(a => s"COUNT($a)")
+    override def as(name: String):            Column[Int]    = this.copy(s"$name.${ _name }")
+    override def decoder:                     Decoder[Int]   = _decoder
+    override def encoder:                     Encoder[Int]   = _encoder
+    override def toString:                    String         = name
+    override def insertStatement:             String         = ""
+    override def updateStatement:             String         = ""
+    override def duplicateKeyUpdateStatement: String         = ""

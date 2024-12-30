@@ -20,7 +20,7 @@ private[ldbc] case class ColumnImpl[T](
 ) extends Column[T]:
 
   override def as(name: String): Column[T] =
-    this.copy(alias   = Some(name))
+    this.copy(alias = Some(name))
 
   override def statement: String =
     dataType.fold(s"`$name`")(dataType => s"`$name` ${ dataType.queryString }") + attributes

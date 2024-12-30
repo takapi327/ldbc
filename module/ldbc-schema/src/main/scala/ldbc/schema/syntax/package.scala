@@ -29,10 +29,10 @@ package object syntax:
       def query: DslQuery[F, B] = DslQuery.Impl[F, B](query.statement, query.params, query.columns.decoder)
 
       def queryTo[P <: Product](using
-        m1:    Mirror.ProductOf[P],
-        m2:    Mirror.ProductOf[B],
-        check: m1.MirroredElemTypes =:= m2.MirroredElemTypes,
-                                        decoder: Decoder[P]
+        m1:      Mirror.ProductOf[P],
+        m2:      Mirror.ProductOf[B],
+        check:   m1.MirroredElemTypes =:= m2.MirroredElemTypes,
+        decoder: Decoder[P]
       ): DslQuery[F, P] =
         DslQuery.Impl[F, P](query.statement, query.params, decoder)
 
