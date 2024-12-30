@@ -6,6 +6,7 @@
 
 package benchmark
 
+import ldbc.dsl.codec.*
 import ldbc.query.builder.Table
 import ldbc.query.builder.formatter.Naming
 
@@ -14,6 +15,10 @@ given Naming = Naming.PASCAL
 case class Model1(
   c1: Int
 ) derives Table
+
+object Model1:
+  given Encoder[Model1] = Encoder[Int].to[Model1]
+  given Decoder[Model1] = Decoder[Int].to[Model1]
 
 case class Model5(
   c1: Int,
@@ -59,6 +64,9 @@ case class Model20(
   c20: Int
 ) derives Table
 
+object Model20:
+  given Decoder[Model20] = (Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int]).to[Model20]
+
 case class Model25(
   c1:  Int,
   c2:  Int,
@@ -86,6 +94,9 @@ case class Model25(
   c24: Int,
   c25: Int
 ) derives Table
+
+object Model25:
+  given Decoder[Model25] = (Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int]).to[Model25]
 
 case class City(
   id:          Int,
