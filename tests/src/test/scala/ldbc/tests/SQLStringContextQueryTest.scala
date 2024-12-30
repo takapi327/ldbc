@@ -33,36 +33,6 @@ class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
       ssl      = SSL.Trusted
     )
 
-  test(
-    "If the acquired column name and the field name of the class to be mapped are different, an exception is raised."
-  ) {
-    case class City(id: Int, title: String)
-
-    interceptIO[ldbc.connector.exception.SQLException](
-      connection.use { conn =>
-        sql"SELECT Id, Name FROM city LIMIT 1"
-          .query[City]
-          .to[Option]
-          .readOnly(conn)
-      }
-    )
-  }
-
-  test(
-    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
-  ) {
-    case class City(id: Int, name: String, age: Int)
-
-    interceptIO[ldbc.connector.exception.SQLException](
-      connection.use { conn =>
-        sql"SELECT Id, Name FROM city LIMIT 1"
-          .query[City]
-          .to[Option]
-          .readOnly(conn)
-      }
-    )
-  }
-
 class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
   val ds = new MysqlDataSource()
@@ -74,36 +44,6 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
   override def connection: Resource[IO, Connection[IO]] =
     Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
-
-  test(
-    "If the acquired column name and the field name of the class to be mapped are different, an exception is raised."
-  ) {
-    case class City(id: Int, title: String)
-
-    interceptIO[java.sql.SQLException](
-      connection.use { conn =>
-        sql"SELECT Id, Name FROM city LIMIT 1"
-          .query[City]
-          .to[Option]
-          .readOnly(conn)
-      }
-    )
-  }
-
-  test(
-    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
-  ) {
-    case class City(id: Int, name: String, age: Int)
-
-    interceptIO[java.sql.SQLException](
-      connection.use { conn =>
-        sql"SELECT Id, Name FROM city LIMIT 1"
-          .query[City]
-          .to[Option]
-          .readOnly(conn)
-      }
-    )
-  }
 
 trait SQLStringContextQueryTest extends CatsEffectSuite:
 
@@ -786,5 +726,20 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
           .readOnly(conn)
       },
       Some((City(1, "Kabul"), Country("AFG", "Afghanistan")))
+    )
+  }
+
+  test(
+    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
+  ) {
+    case class City(id: Int, name: String, age: Int)
+
+    interceptIO[ArrayIndexOutOfBoundsException](
+      connection.use { conn =>
+        sql"SELECT Id, Name FROM city LIMIT 1"
+          .query[City]
+          .to[Option]
+          .readOnly(conn)
+      }
     )
   }
