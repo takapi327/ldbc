@@ -48,5 +48,5 @@ object Parameter:
       case Encoder.Encoded.Success(list) =>
         list match
           case head :: Nil => Dynamic.Success(head)
-          case _ => Dynamic.Failure(List("Multiple values are not allowed"))
+          case _           => Dynamic.Failure(List("Multiple values are not allowed"))
       case Encoder.Encoded.Failure(errors) => Dynamic.Failure(errors.toList)

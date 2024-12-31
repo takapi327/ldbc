@@ -24,7 +24,9 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
   protected final def column[A](name: String, dataType: DataType[A])(using codec: Codec[A]): Column[A] =
     ColumnImpl[A](name, Some(s"${ $name }.$name"), codec.asDecoder, codec.asEncoder, Some(dataType), List.empty)
 
-  protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using codec: Codec[A]): Column[A] =
+  protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
+    codec: Codec[A]
+  ): Column[A] =
     ColumnImpl[A](name, Some(s"${ $name }.$name"), codec.asDecoder, codec.asEncoder, Some(dataType), attributes.toList)
 
   /**
