@@ -8,8 +8,6 @@ package ldbc.dsl.codec
 
 import java.time.*
 
-import scala.deriving.Mirror
-
 import cats.ContravariantSemigroupal
 import cats.data.NonEmptyList
 import cats.syntax.all.*
@@ -58,82 +56,7 @@ object Encoder extends TwiddleSyntax[Encoder]:
     override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)
     override def product[A, B](fa:   Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
 
-  given Encoder[Boolean] with
-    override def encode(value: Boolean): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[Byte] with
-    override def encode(value: Byte): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[Short] with
-    override def encode(value: Short): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[Int] with
-    override def encode(value: Int): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[Long] with
-    override def encode(value: Long): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[Float] with
-    override def encode(value: Float): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[Double] with
-    override def encode(value: Double): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[BigDecimal] with
-    override def encode(value: BigDecimal): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[String] with
-    override def encode(value: String): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[Array[Byte]] with
-    override def encode(value: Array[Byte]): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[LocalTime] with
-    override def encode(value: LocalTime): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[LocalDate] with
-    override def encode(value: LocalDate): Encoded =
-      Encoded.success(List(value))
-
-  given Encoder[LocalDateTime] with
-    override def encode(value: LocalDateTime): Encoded =
-      Encoded.success(List(value))
-
-  given (using encoder: Encoder[String]): Encoder[Year] = encoder.contramap(_.toString)
-
-  given (using encoder: Encoder[String]): Encoder[YearMonth] = encoder.contramap(_.toString)
-
-  given (using encoder: Encoder[String]): Encoder[BigInt] = encoder.contramap(_.toString)
-
-  given Encoder[None.type] with
-    override def encode(value: None.type): Encoded =
-      Encoded.success(List(None))
-
-  given [A](using encoder: Encoder[A]): Encoder[Option[A]] with
-    override def encode(value: Option[A]): Encoded =
-      value match
-        case Some(value) => encoder.encode(value)
-        case None        => Encoded.success(List(None))
-
-  given [A, B](using ea: Encoder[A], eb: Encoder[B]): Encoder[(A, B)] =
-    ea.product(eb)
-
-  given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
-    eh.product(et).contramap { case h *: t => (h, t) }
-
-  given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
-    encoder.to[P]
+  given [A](using codec: Codec[A]): Encoder[A] = codec.asEncoder
 
   sealed trait Encoded:
     def product(that: Encoded): Encoded
