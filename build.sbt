@@ -25,7 +25,6 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / tlSiteKeepFiles                     := false // TODO: Deleted when publishing documentation for 0.3
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
