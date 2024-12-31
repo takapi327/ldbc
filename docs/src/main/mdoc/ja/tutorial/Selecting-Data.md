@@ -14,7 +14,7 @@
 ```scala
 sql"SELECT name FROM user"
   .query[String] // Query[IO, String]
-  .to[List] // Executor[IO, List[String]]
+  .to[List] // DBIO[IO, List[String]]
   .readOnly(conn) // IO[List[String]]
   .unsafeRunSync() // List[String]
   .foreach(println) // Unit
@@ -23,7 +23,7 @@ sql"SELECT name FROM user"
 これを少し分解してみよう。
 
 - `sql"SELECT name FROM user".query[String]`は`Query[IO, String]`を定義し、返される各行をStringにマップする1列のクエリです。このクエリは1列のクエリで、返される行をそれぞれStringにマップします。
-- `.to[List]`は、行をリストに蓄積する便利なメソッドで、この場合は`Executor[IO, List[String]]`を生成します。このメソッドは、CanBuildFromを持つすべてのコレクション・タイプで動作します。
+- `.to[List]`は、行をリストに蓄積する便利なメソッドで、この場合は`DBIO[IO, List[String]]`を生成します。このメソッドは、CanBuildFromを持つすべてのコレクション・タイプで動作します。
 - `readOnly(conn)`は`IO[List[String]]`を生成し、これを実行すると通常のScala `List[String]`が出力される。
 - `unsafeRunSync()`は、IOモナドを実行し、結果を取得する。これは、IOモナドを実行し、結果を取得するために使用される。
 - `foreach(println)`は、リストの各要素をプリントアウトする。
@@ -35,7 +35,7 @@ sql"SELECT name FROM user"
 ```scala
 sql"SELECT name, email FROM user"
   .query[(String, String)] // Query[IO, (String, String)]
-  .to[List] // Executor[IO, List[(String, String)]]
+  .to[List] // DBIO[IO, List[(String, String)]]
   .readOnly(conn) // IO[List[(String, String)]]
   .unsafeRunSync() // List[(String, String)]
   .foreach(println) // Unit
@@ -50,7 +50,7 @@ case class User(id: Long, name: String, email: String)
 
 sql"SELECT id, name, email FROM user"
   .query[User] // Query[IO, User]
-  .to[List] // Executor[IO, List[User]]
+  .to[List] // DBIO[IO, List[User]]
   .readOnly(conn) // IO[List[User]]
   .unsafeRunSync() // List[User]
   .foreach(println) // Unit
@@ -80,7 +80,7 @@ sql"""
   JOIN country ON city.country_code = country.code
 """
   .query[CityWithCountry] // Query[IO, CityWithCountry]
-  .to[List] // Executor[IO, List[CityWithCountry]]
+  .to[List] // DBIO[IO, List[CityWithCountry]]
   .readOnly(conn) // IO[List[CityWithCountry]]
   .unsafeRunSync() // List[CityWithCountry]
   .foreach(println) // Unit

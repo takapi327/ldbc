@@ -143,7 +143,10 @@ object Japan extends CountryCode:
   override val code: Int = 1
 
 trait CustomMapping: // 任意の名前
-  given Conversion[INT[Int], CountryCode] = DataType.mappingp[INT[Int], CountryCode]
+  given Codec[CountryCode] = Codec[Int].imap {
+    case 1 => Japan
+    case _ => throw new Exception("Not found")
+  }(_.code)
 ```
 
 カスタマイズを行うためのymlファイルに実装を行なった`CustomMapping`traitを設定し、対象のカラムの型をCountryCodeに変換してあげます。

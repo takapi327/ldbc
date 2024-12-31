@@ -1,9 +1,9 @@
 {%
-  laika.title = Migration Notes
+  laika.title = マイグレーションノート
   laika.metadata.language = ja
 %}
 
-# Migration Notes (Upgrading to 0.3.x from 0.2.x)
+# マイグレーションノート (0.2.xから0.3.xへの移行)
 
 ## パッケージ
 

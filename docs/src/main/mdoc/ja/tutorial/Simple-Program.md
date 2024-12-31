@@ -15,8 +15,8 @@
 
 それでは、`sql string interpolator`を使って、データベースに定数の計算を依頼する問い合わせを作成してみましょう。
 
-```scala
-val program: Executor[IO, Option[Int]] = sql"SELECT 2".query[Int].to[Option]
+```scala 3
+val program: DBIO[Option[Int]] = sql"SELECT 2".query[Int].to[Option]
 ```
 
 `sql string interpolator`を使って作成したクエリは`query`メソッドで取得する型の決定を行います。ここでは`Int`型を取得するため、`query[Int]`としています。また、`to`メソッドで取得する型を決定します。ここでは`Option`型を取得するため、`to[Option]`としています。
@@ -29,7 +29,7 @@ val program: Executor[IO, Option[Int]] = sql"SELECT 2".query[Int].to[Option]
 
 最後に、データベースに接続して値を返すプログラムを書きます。このプログラムは、データベースに接続し、クエリを実行し、結果を取得します。
 
-```scala
+```scala 3
 connection
   .use { conn =>
     program.readOnly(conn).map(println(_))
@@ -49,10 +49,10 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-P
 
 ## 2つめのプログラム
 
-一つの取引で複数のことをしたい場合はどうすればいいのか？簡単だ！Executorはモナドなので、for内包を使って2つの小さなプログラムを1つの大きなプログラムにすることができる。
+一つの取引で複数のことをしたい場合はどうすればいいのか？簡単だ！DBIOはモナドなので、for内包を使って2つの小さなプログラムを1つの大きなプログラムにすることができる。
 
-```scala
-val program: Executor[IO, (List[Int], Option[Int], Int)] =
+```scala 3
+val program: DBIO[(List[Int], Option[Int], Int)] =
   for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
@@ -62,7 +62,7 @@ val program: Executor[IO, (List[Int], Option[Int], Int)] =
 
 最後に、データベースに接続して値を返すプログラムを書く。このプログラムは、データベースに接続し、クエリを実行し、結果を取得する。
 
-```scala
+```scala 3
 connection
   .use { conn =>
     program.readOnly(conn).map(println(_))
@@ -82,14 +82,14 @@ scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-P
 
 データベースに対して書き込みを行うプログラムを書いてみよう。ここでは、データベースに接続し、クエリを実行し、データを挿入する。
 
-```scala
-val program: Executor[IO, Int] =
+```scala 3
+val program: DBIO[Int] =
   sql"INSERT INTO user (name, email) VALUES ('Carol', 'carol@example.com')".update
 ```
 
 先ほどと異なる点は、`commit`メソッドを呼び出すことである。これにより、トランザクションがコミットされ、データベースにデータが挿入される。
 
-```scala
+``` 3
 connection
   .use { conn =>
     program.commit(conn).map(println(_))

@@ -133,17 +133,17 @@ import cats.effect.*
 
 以下のコードは、トレーサーとログハンドラーを提供するがその実体は何もしない。
 
-```scala
+```scala 3
 given Tracer[IO]     = Tracer.noop[IO]
 given LogHandler[IO] = LogHandler.noop[IO]
 ```
 
-ldbc高レベルAPIで扱う最も一般的な型は`Executor[F, A]`という形式で、`{java | ldbc}.sql.Connection`が利用可能なコンテキストで行われる計算を指定し、最終的にA型の値を生成します。
+ldbc高レベルAPIで扱う最も一般的な型は`DBIO[F, A]`という形式で、`{java | ldbc}.sql.Connection`が利用可能なコンテキストで行われる計算を指定し、最終的にA型の値を生成します。
 
-では、定数を返すだけのExecutorプログラムから始めてみよう。
+では、定数を返すだけのDBIOプログラムから始めてみよう。
 
 ```scala
-val program: Executor[IO, Int] = Executor.pure[IO, Int](1)
+val program: DBIO[IO, Int] = DBIO.pure[IO, Int](1)
 ```
 
 次に、データベースに接続するためのコネクタを作成する。コネクタは、データベースへの接続を管理するためのリソースである。コネクタは、データベースへの接続を開始し、クエリを実行し、接続を閉じるためのリソースを提供する。
@@ -160,7 +160,7 @@ def connection = Connection[IO](
 )
 ```
 
-Executorは、データベースへの接続方法、接続の受け渡し方法、接続のクリーンアップ方法を知っているデータ型であり、この知識によってExecutorをIOへ変換し、実行可能なプログラムを得ることができる。具体的には、実行するとデータベースに接続し、単一のトランザクションを実行するIOが得られる。
+DBIOは、データベースへの接続方法、接続の受け渡し方法、接続のクリーンアップ方法を知っているデータ型であり、この知識によってExecutorをIOへ変換し、実行可能なプログラムを得ることができる。具体的には、実行するとデータベースに接続し、単一のトランザクションを実行するIOが得られる。
 
 ```scala
 connection
