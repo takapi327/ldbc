@@ -8,9 +8,13 @@ package ldbc.dsl.codec
 
 import java.time.*
 
-import scala.compiletime.*
+import scala.deriving.Mirror
 
+import cats.ContravariantSemigroupal
 import cats.data.NonEmptyList
+import cats.syntax.all.*
+
+import org.typelevel.twiddles.TwiddleSyntax
 
 /**
  * Trait for converting Scala types to types that can be handled by PreparedStatement.
@@ -42,13 +46,17 @@ trait Encoder[A]:
   /** `Encoder` is semigroupal: a pair of encoders make a encoder for a pair. */
   def product[B](that: Encoder[B]): Encoder[(A, B)] = (value: (A, B)) => encode(value._1) product that.encode(value._2)
 
-object Encoder:
+object Encoder extends TwiddleSyntax[Encoder]:
 
   /** Types that can be handled by PreparedStatement. */
   type Supported = Boolean | Byte | Short | Int | Long | Float | Double | BigDecimal | String | Array[Byte] |
     LocalTime | LocalDate | LocalDateTime | None.type
 
   def apply[A](using encoder: Encoder[A]): Encoder[A] = encoder
+
+  given ContravariantSemigroupal[Encoder] with
+    override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)
+    override def product[A, B](fa:   Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
 
   given Encoder[Boolean] with
     override def encode(value: Boolean): Encoded =
@@ -118,12 +126,14 @@ object Encoder:
         case Some(value) => encoder.encode(value)
         case None        => Encoded.success(List(None))
 
-  type MapToTuple[T] <: Tuple = T match
-    case EmptyTuple      => EmptyTuple
-    case h *: EmptyTuple => Encoder[h] *: EmptyTuple
-    case h *: t          => Encoder[h] *: MapToTuple[t]
+  given [A, B](using ea: Encoder[A], eb: Encoder[B]): Encoder[(A, B)] =
+    ea.product(eb)
 
-  inline def fold[T]: MapToTuple[T] = summonAll[MapToTuple[T]]
+  given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
+    eh.product(et).contramap { case h *: t => (h, t) }
+
+  given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
+    encoder.to[P]
 
   sealed trait Encoded:
     def product(that: Encoded): Encoded

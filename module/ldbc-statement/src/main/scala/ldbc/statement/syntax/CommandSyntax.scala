@@ -44,4 +44,4 @@ trait CommandSyntax[F[_]]:
      * @return
      *   The primary key value
      */
-    def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): DBIO[F, T]
+    def returning[T <: String | Int | Long](using Decoder[T]): DBIO[F, T]

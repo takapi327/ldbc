@@ -15,10 +15,9 @@ import ldbc.schema.attribute.*
 class ColumnImplTest extends AnyFlatSpec:
 
   private def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-    elem:    Decoder.Elem[A],
+    decoder: Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(name)))
     ColumnImpl[A](name, None, decoder, encoder, Some(dataType), attributes.toList)
 
   it should "The query string of the Column model generated with only label and DataType matches the specified string." in {

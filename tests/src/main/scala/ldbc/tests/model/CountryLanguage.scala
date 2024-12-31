@@ -27,8 +27,7 @@ object CountryLanguage:
 
   given Encoder[IsOfficial] = Encoder[String].contramap(_.toString)
 
-  given Decoder.Elem[IsOfficial] =
-    Decoder.Elem.mapping[String, IsOfficial](str => IsOfficial.valueOf(str))
+  given Decoder[IsOfficial] = Decoder[String].map(IsOfficial.valueOf)
 
   given Table[CountryLanguage] = Table.derived[CountryLanguage]("countrylanguage")
 

@@ -294,7 +294,7 @@ trait CodecTest extends CatsEffectSuite:
           (for
             _      <- sql"CREATE TABLE none_test (none INT)".update
             _      <- sql"INSERT INTO none_test (none) VALUES (NULL)".update
-            result <- sql"SELECT * FROM none_test WHERE none IS NULL".query[None.type].to[Option]
+            result <- sql"SELECT * FROM none_test WHERE none IS NULL".query[Option[String]].to[Option]
           yield result).transaction(conn)
       },
       Some(None)

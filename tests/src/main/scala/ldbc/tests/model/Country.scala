@@ -44,9 +44,20 @@ object Country:
 
   given Encoder[Continent] = Encoder[String].contramap(_.value)
 
-  given Decoder.Elem[Continent] =
-    Decoder.Elem.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
+  given Decoder[Continent] = Decoder[String].map(str => Continent.valueOf(str.replace(" ", "_")))
 
+  given Encoder[Country] = (
+    Encoder[String] *: Encoder[String] *: Encoder[Continent] *: Encoder[String] *: Encoder[BigDecimal] *:
+      Encoder[Option[Short]] *: Encoder[Int] *: Encoder[Option[BigDecimal]] *: Encoder[Option[BigDecimal]] *:
+      Encoder[Option[BigDecimal]] *: Encoder[String] *: Encoder[String] *: Encoder[Option[String]] *:
+      Encoder[Option[Int]] *: Encoder[String]
+  ).to[Country]
+  given Decoder[Country] = (
+    Decoder[String] *: Decoder[String] *: Decoder[Continent] *: Decoder[String] *: Decoder[BigDecimal] *:
+      Decoder[Option[Short]] *: Decoder[Int] *: Decoder[Option[BigDecimal]] *: Decoder[Option[BigDecimal]] *:
+      Decoder[Option[BigDecimal]] *: Decoder[String] *: Decoder[String] *: Decoder[Option[String]] *:
+      Decoder[Option[Int]] *: Decoder[String]
+  ).to[Country]
   given Table[Country] = Table.derived[Country]("country")
 
 class CountryTable extends SchemaTable[Country]("country"):

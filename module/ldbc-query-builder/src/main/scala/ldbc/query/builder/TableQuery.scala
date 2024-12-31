@@ -17,28 +17,15 @@ private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <
   column: Column[AbstractTableQuery.Extract[A]],
   name:   String,
   params: List[Parameter.Dynamic]
-)(using mirror: Mirror.ProductOf[B])
-  extends AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]:
+) extends AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]:
 
   override private[ldbc] def toOption: AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]] =
     val columnOpt =
-      val decoder: Decoder[Option[B]] = new Decoder[Option[B]]((resultSet, prefix) =>
-        val decoded = table.columns.map(_.opt.decoder.decode(resultSet, prefix))
-        if decoded.flatten.length == table.columns.length then
-          Option(
-            mirror.fromTuple(
-              Tuple
-                .fromArray(decoded.flatten.toArray)
-                .asInstanceOf[mirror.MirroredElemTypes]
-            )
-          )
-        else None
-      )
       val alias = table.columns.flatMap(_.alias).mkString(", ")
       Column.Impl[Option[B]](
         table.columns.map(_.name).mkString(", "),
         if alias.isEmpty then None else Some(alias),
-        decoder,
+        column.opt.decoder.asInstanceOf[Decoder[Option[B]]],
         column.opt.encoder.asInstanceOf[Encoder[Option[B]]],
         Some(table.columns.length),
         Some(table.columns.map(column => s"${ column.name } = ?").mkString(", "))
