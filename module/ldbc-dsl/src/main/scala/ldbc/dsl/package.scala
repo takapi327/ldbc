@@ -8,7 +8,7 @@ package ldbc
 
 import java.time.*
 
-import scala.deriving.Mirror
+//import scala.deriving.Mirror
 
 import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
@@ -72,24 +72,13 @@ package object dsl:
     // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
-    /** Returns `VALUES (v0), (v1), ...`. */
-    def values[M[_]: Reducible, T](vs: M[T])(using Encoder[T]): Mysql[F] =
-      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(p"$v")))
-
     /** Returns `VALUES (v0, v1), (v2, v3), ...`. */
-    inline def values[M[_]: Reducible, T <: Product](vs: M[T])(using Mirror.ProductOf[T]): Mysql[F] =
-      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values(v))))
+    def values[M[_]: Reducible, T <: Product](vs: M[T])(using Encoder[T]): Mysql[F] =
+      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values[T](v))))
 
-    private inline def values[T <: Product](v: T)(using mirror: Mirror.ProductOf[T]): Mysql[F] =
-      val tuple  = Encoder.fold[mirror.MirroredElemTypes]
-      val params = tuple.toList
-      Mysql[F](
-        List.fill(params.size)("?").mkString(","),
-        (Tuple.fromProduct(v).toList zip params).flatMap {
-          case (value, param) =>
-            Parameter.Dynamic.many(param.asInstanceOf[Encoder[Any]].encode(value.asInstanceOf[Any]))
-        }
-      )
+    private def values[T <: Product](v: T)(using encoder: Encoder[T]): Mysql[F] =
+      val params = Parameter.Dynamic.many(encoder.encode(v))
+      Mysql[F](List.fill(params.size)("?").mkString(","), params)
 
     /** Returns `(sql IN (v0, v1, ...))`. */
     def in[T](s: SQL, v0: T, v1: T, vs: T*)(using Encoder[T]): Mysql[F] =
