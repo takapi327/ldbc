@@ -42,7 +42,7 @@ object Country:
 
     override def toString: String = value
 
-  given Codec[Continent] = Codec[String].imap(Continent.valueOf)(_.value)
+  given Codec[Continent] = Codec[String].imap(str => Continent.valueOf(str.replace(" ", "_")))(_.value)
 
   given Codec[Country] = (
     Codec[String] *: Codec[String] *: Codec[Continent] *: Codec[String] *: Codec[BigDecimal] *:
