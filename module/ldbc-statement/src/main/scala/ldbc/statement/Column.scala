@@ -14,7 +14,7 @@ import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
 import ldbc.dsl.*
-import ldbc.dsl.codec.{ Encoder, Decoder }
+import ldbc.dsl.codec.*
 import ldbc.statement.interpreter.Extract
 import ldbc.statement.Expression.*
 
@@ -59,7 +59,7 @@ trait Column[A]:
 
   def opt: Column[Option[A]] = Column.Opt[A](name, alias, decoder, encoder)
 
-  def count(using Decoder[Int]): Column.Count = Column.Count(name, alias)
+  def count(using Decoder[Int], Encoder[Int]): Column.Count = Column.Count(name, alias)
 
   def asc:  OrderBy.Order[A] = OrderBy.Order.asc(this)
   def desc: OrderBy.Order[A] = OrderBy.Order.desc(this)
@@ -503,7 +503,7 @@ trait Column[A]:
   @targetName("_bitFlip")
   def ~(value: Extract[A])(using Encoder[Extract[A]]): BitFlip[A] = bitFlip(value)
 
-  def combine(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] =
+  def combine(other: Column[A])(using Codec[A]): Column.MultiColumn[A] =
     Column.MultiColumn[A]("+", this, other)
 
   /**
@@ -520,9 +520,9 @@ trait Column[A]:
    *   A query to combine columns in a SELECT statement
    */
   @targetName("_combine")
-  def ++(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] = combine(other)
+  def ++(other: Column[A])(using Codec[A]): Column.MultiColumn[A] = combine(other)
 
-  def deduct(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] =
+  def deduct(other: Column[A])(using Codec[A]): Column.MultiColumn[A] =
     Column.MultiColumn[A]("-", this, other)
 
   /**
@@ -539,9 +539,9 @@ trait Column[A]:
    *   A query to subtract columns in a SELECT statement
    */
   @targetName("_deduct")
-  def --(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] = deduct(other)
+  def --(other: Column[A])(using Codec[A]): Column.MultiColumn[A] = deduct(other)
 
-  def multiply(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] =
+  def multiply(other: Column[A])(using Codec[A]): Column.MultiColumn[A] =
     Column.MultiColumn[A]("*", this, other)
 
   /**
@@ -558,9 +558,9 @@ trait Column[A]:
    *   A query to multiply columns in a SELECT statement
    */
   @targetName("_multiply")
-  def *(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] = multiply(other)
+  def *(other: Column[A])(using Codec[A]): Column.MultiColumn[A] = multiply(other)
 
-  def smash(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] =
+  def smash(other: Column[A])(using Codec[A]): Column.MultiColumn[A] =
     Column.MultiColumn[A]("/", this, other)
 
   /**
@@ -577,7 +577,7 @@ trait Column[A]:
    *   A query to divide columns in a SELECT statement
    */
   @targetName("_smash")
-  def /(other: Column[A])(using Decoder[A], Encoder[A]): Column.MultiColumn[A] = smash(other)
+  def /(other: Column[A])(using Codec[A]): Column.MultiColumn[A] = smash(other)
 
   /** List of sub query methods */
   def _equals(value: SQL): SubQuery[A] =
@@ -740,28 +740,25 @@ object Column extends TwiddleSyntax[Column]:
     flag:  String,
     left:  Column[A],
     right: Column[A]
-  )(using _decoder: Decoder[A], _encoder: Encoder[A])
+  )(using codec: Codec[A])
     extends Column[A]:
     override def name: String = s"${ left.noBagQuotLabel } $flag ${ right.noBagQuotLabel }"
     override def alias: Option[String] = Some(
       s"${ left.alias.getOrElse(left.name) } $flag ${ right.alias.getOrElse(right.name) }"
     )
     override def as(name: String):            Column[A]  = this
-    override def decoder:                     Decoder[A] = _decoder
-    override def encoder:                     Encoder[A] = _encoder
+    override def decoder:                     Decoder[A] = codec.asDecoder
+    override def encoder:                     Encoder[A] = codec.asEncoder
     override def insertStatement:             String     = ""
     override def updateStatement:             String     = ""
     override def duplicateKeyUpdateStatement: String     = ""
 
-  private[ldbc] case class Count(_name: String, _alias: Option[String])(using
-    _decoder: Decoder[Int],
-    _encoder: Encoder[Int]
-  ) extends Column[Int]:
+  private[ldbc] case class Count(_name: String, _alias: Option[String])(using codec: Codec[Int]) extends Column[Int]:
     override def name:                        String         = s"COUNT($_name)"
     override def alias:                       Option[String] = _alias.map(a => s"COUNT($a)")
     override def as(name: String):            Column[Int]    = this.copy(s"$name.${ _name }")
-    override def decoder:                     Decoder[Int]   = _decoder
-    override def encoder:                     Encoder[Int]   = _encoder
+    override def decoder:                     Decoder[Int]   = codec.asDecoder
+    override def encoder:                     Encoder[Int]   = codec.asEncoder
     override def toString:                    String         = name
     override def insertStatement:             String         = ""
     override def updateStatement:             String         = ""

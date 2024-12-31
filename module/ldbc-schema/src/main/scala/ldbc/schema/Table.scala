@@ -9,7 +9,7 @@ package ldbc.schema
 import scala.language.dynamics
 import scala.deriving.Mirror
 
-import ldbc.dsl.codec.{ Decoder, Encoder }
+import ldbc.dsl.codec.Codec
 import ldbc.statement.{ AbstractTable, Column }
 import ldbc.schema.interpreter.*
 import ldbc.schema.attribute.Attribute
@@ -18,20 +18,14 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
 
   type Column[A] = ldbc.statement.Column[A]
 
-  protected final def column[A](name: String)(using decoder: Decoder[A], encoder: Encoder[A]): Column[A] =
-    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, None, List.empty)
+  protected final def column[A](name: String)(using codec: Codec[A]): Column[A] =
+    ColumnImpl[A](name, Some(s"${ $name }.$name"), codec.asDecoder, codec.asEncoder, None, List.empty)
 
-  protected final def column[A](name: String, dataType: DataType[A])(using
-    decoder: Decoder[A],
-    encoder: Encoder[A]
-  ): Column[A] =
-    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, Some(dataType), List.empty)
+  protected final def column[A](name: String, dataType: DataType[A])(using codec: Codec[A]): Column[A] =
+    ColumnImpl[A](name, Some(s"${ $name }.$name"), codec.asDecoder, codec.asEncoder, Some(dataType), List.empty)
 
-  protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-    decoder: Decoder[A],
-    encoder: Encoder[A]
-  ): Column[A] =
-    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, encoder, Some(dataType), attributes.toList)
+  protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using codec: Codec[A]): Column[A] =
+    ColumnImpl[A](name, Some(s"${ $name }.$name"), codec.asDecoder, codec.asEncoder, Some(dataType), attributes.toList)
 
   /**
    * Methods for setting key information for tables.

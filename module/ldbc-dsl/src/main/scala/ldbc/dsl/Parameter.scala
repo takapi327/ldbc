@@ -8,7 +8,7 @@ package ldbc.dsl
 
 import cats.syntax.all.*
 
-import ldbc.dsl.codec.Encoder
+import ldbc.dsl.codec.*
 
 /**
  * Trait for setting Scala and Java values to PreparedStatement.
@@ -35,10 +35,18 @@ object Parameter:
         case Encoder.Encoded.Success(list)   => list.map(value => Success(value))
         case Encoder.Encoded.Failure(errors) => List(Failure(errors.toList))
 
-  given [A](using encoder: Encoder[A]): Conversion[A, Dynamic] with
+  given convFromEncoder[A](using encoder: Encoder[A]): Conversion[A, Dynamic] with
     override def apply(value: A): Dynamic = encoder.encode(value) match
       case Encoder.Encoded.Success(list) =>
         list match
           case head :: Nil => Dynamic.Success(head)
           case _           => Dynamic.Failure(List("Multiple values are not allowed"))
+      case Encoder.Encoded.Failure(errors) => Dynamic.Failure(errors.toList)
+
+  given convFromCodec[A](using codec: Codec[A]): Conversion[A, Dynamic] with
+    override def apply(value: A): Dynamic = codec.encode(value) match
+      case Encoder.Encoded.Success(list) =>
+        list match
+          case head :: Nil => Dynamic.Success(head)
+          case _ => Dynamic.Failure(List("Multiple values are not allowed"))
       case Encoder.Encoded.Failure(errors) => Dynamic.Failure(errors.toList)

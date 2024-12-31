@@ -53,7 +53,7 @@ object Table:
   private[ldbc] case class Impl[P <: Product](
     $name:   String,
     columns: List[Column[?]]
-  )(using decoder: Decoder[P], encoder: Encoder[P])
+  )(using codec: Codec[P])
     extends Table[P]:
 
     override def statement: String = $name
@@ -63,8 +63,8 @@ object Table:
       Column.Impl[P](
         columns.map(_.name).mkString(", "),
         if alias.isEmpty then None else Some(alias),
-        decoder,
-        encoder,
+        codec.asDecoder,
+        codec.asEncoder,
         Some(columns.length),
         Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
       )
@@ -87,12 +87,8 @@ object Table:
       case Some(naming) => naming
       case None         => '{ Naming.SNAKE }
 
-    val decoder = Expr.summon[Decoder[P]].getOrElse {
-      report.errorAndAbort(s"Decoder for type $tpe not found")
-    }
-
-    val encoder = Expr.summon[Encoder[P]].getOrElse {
-      report.errorAndAbort(s"Encoder for type $tpe not found")
+    val codec = Expr.summon[Codec[P]].getOrElse {
+      report.errorAndAbort(s"Codec for type $tpe not found")
     }
 
     val labels = symbol.primaryConstructor.paramSymss.flatten
@@ -112,13 +108,9 @@ object Table:
             case ValDef(name, tpt, _) =>
               tpt.tpe.asType match
                 case '[tpe] =>
-                  val decoder = Expr.summon[Decoder[tpe]].getOrElse {
-                    report.errorAndAbort(s"Decoder for type $tpe not found")
+                  Expr.summon[Codec[tpe]].getOrElse {
+                    report.errorAndAbort(s"Codec for type $tpe not found")
                   }
-                  val encoder = Expr.summon[Encoder[tpe]].getOrElse {
-                    report.errorAndAbort(s"Encoder for type $tpe not found")
-                  }
-                  '{ ($decoder, $encoder) }
                 case _ =>
                   report.errorAndAbort(s"Type $tpt is not a type")
         }
@@ -130,8 +122,8 @@ object Table:
       ${ Expr.ofSeq(labels) }
         .zip($codecs)
         .map {
-          case (label: String, codec: (Decoder[t], Encoder[?])) =>
-            Column[t](label, $naming.format($name))(using codec._1, codec._2.asInstanceOf[Encoder[t]])
+          case (label: String, codec: Codec[t]) =>
+            Column[t](label, $naming.format($name))(using codec.asDecoder, codec.asEncoder)
         }
         .toList
     }
@@ -140,7 +132,7 @@ object Table:
       Impl[P](
         $naming.format($name),
         $columns
-      )(using $decoder, $encoder)
+      )(using $codec)
     }
 
   private def derivedWithNameImpl[P <: Product](name: Expr[String])(using
@@ -158,12 +150,8 @@ object Table:
       case Some(naming) => naming
       case None         => '{ Naming.SNAKE }
 
-    val decoder = Expr.summon[Decoder[P]].getOrElse {
-      report.errorAndAbort(s"Decoder for type $tpe not found")
-    }
-
-    val encoder = Expr.summon[Encoder[P]].getOrElse {
-      report.errorAndAbort(s"Encoder for type $tpe not found")
+    val codec = Expr.summon[Codec[P]].getOrElse {
+      report.errorAndAbort(s"Codec for type $tpe not found")
     }
 
     val labels = symbol.primaryConstructor.paramSymss.flatten
@@ -183,13 +171,9 @@ object Table:
             case ValDef(name, tpt, _) =>
               tpt.tpe.asType match
                 case '[tpe] =>
-                  val decoder = Expr.summon[Decoder[tpe]].getOrElse {
-                    report.errorAndAbort(s"Decoder for type $tpe not found")
+                  Expr.summon[Codec[tpe]].getOrElse {
+                    report.errorAndAbort(s"Codec for type $tpe not found")
                   }
-                  val encoder = Expr.summon[Encoder[tpe]].getOrElse {
-                    report.errorAndAbort(s"Encoder for type $tpe not found")
-                  }
-                  '{ ($decoder, $encoder) }
                 case _ =>
                   report.errorAndAbort(s"Type $tpt is not a type")
         }
@@ -199,8 +183,8 @@ object Table:
       ${ Expr.ofSeq(labels) }
         .zip($codecs)
         .map {
-          case (label: String, codec: (Decoder[t], Encoder[?])) =>
-            Column[t](label, $name)(using codec._1, codec._2.asInstanceOf[Encoder[t]])
+          case (label: String, codec: Codec[t]) =>
+            Column[t](label, $name)(using codec.asDecoder, codec.asEncoder)
         }
         .toList
     }
@@ -209,7 +193,7 @@ object Table:
       Impl[P](
         $name,
         $columns
-      )(using $decoder, $encoder)
+      )(using $codec)
     }
 
   trait Opt[P] extends SharedTable, AbstractTable.Opt[P]:
