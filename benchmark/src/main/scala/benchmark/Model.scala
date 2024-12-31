@@ -69,7 +69,7 @@ object Model20:
       Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
       Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
       Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int]
-    ).to[Model20]
+  ).to[Model20]
 
 case class Model25(
   c1:  Int,

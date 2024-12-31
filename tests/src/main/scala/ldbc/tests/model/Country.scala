@@ -49,7 +49,7 @@ object Country:
       Codec[Option[Short]] *: Codec[Int] *: Codec[Option[BigDecimal]] *: Codec[Option[BigDecimal]] *:
       Codec[Option[BigDecimal]] *: Codec[String] *: Codec[String] *: Codec[Option[String]] *:
       Codec[Option[Int]] *: Codec[String]
-    ).to[Country]
+  ).to[Country]
   given Table[Country] = Table.derived[Country]("country")
 
 class CountryTable extends SchemaTable[Country]("country"):
