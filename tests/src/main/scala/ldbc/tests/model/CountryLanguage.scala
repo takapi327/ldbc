@@ -7,7 +7,7 @@
 package ldbc.tests.model
 
 import ldbc.dsl.*
-import ldbc.dsl.codec.{ Encoder, Decoder }
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.Table
 import ldbc.schema.Table as SchemaTable
 
@@ -25,9 +25,7 @@ object CountryLanguage:
 
   object IsOfficial
 
-  given Encoder[IsOfficial] = Encoder[String].contramap(_.toString)
-
-  given Decoder[IsOfficial] = Decoder[String].map(IsOfficial.valueOf)
+  given Codec[IsOfficial] = Codec[String].imap(IsOfficial.valueOf)(_.toString)
 
   given Table[CountryLanguage] = Table.derived[CountryLanguage]("countrylanguage")
 

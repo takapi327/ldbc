@@ -6,8 +6,6 @@
 
 package ldbc.dsl.codec
 
-import java.time.*
-
 import scala.deriving.Mirror
 
 import cats.Applicative
@@ -17,7 +15,7 @@ import org.typelevel.twiddles.TwiddleSyntax
 import ldbc.sql.ResultSet
 
 /**
- * Class to get the DataType that matches the Scala type information from the ResultSet.
+ * Trait to get the DataType that matches the Scala type information from the ResultSet.
  *
  * @tparam A
  *   Scala types that match SQL DataType
@@ -71,28 +69,7 @@ object Decoder extends TwiddleSyntax[Decoder]:
       override def offset:                                   Int = 0
       override def decode(resultSet: ResultSet, index: Int): A   = x
 
-  given Decoder[String]        = (resultSet: ResultSet, index: Int) => resultSet.getString(index)
-  given Decoder[Boolean]       = (resultSet: ResultSet, index: Int) => resultSet.getBoolean(index)
-  given Decoder[Byte]          = (resultSet: ResultSet, index: Int) => resultSet.getByte(index)
-  given Decoder[Array[Byte]]   = (resultSet: ResultSet, index: Int) => resultSet.getBytes(index)
-  given Decoder[Short]         = (resultSet: ResultSet, index: Int) => resultSet.getShort(index)
-  given Decoder[Int]           = (resultSet: ResultSet, index: Int) => resultSet.getInt(index)
-  given Decoder[Long]          = (resultSet: ResultSet, index: Int) => resultSet.getLong(index)
-  given Decoder[Float]         = (resultSet: ResultSet, index: Int) => resultSet.getFloat(index)
-  given Decoder[Double]        = (resultSet: ResultSet, index: Int) => resultSet.getDouble(index)
-  given Decoder[LocalDate]     = (resultSet: ResultSet, index: Int) => resultSet.getDate(index)
-  given Decoder[LocalTime]     = (resultSet: ResultSet, index: Int) => resultSet.getTime(index)
-  given Decoder[LocalDateTime] = (resultSet: ResultSet, index: Int) => resultSet.getTimestamp(index)
-  given Decoder[BigDecimal]    = (resultSet: ResultSet, index: Int) => resultSet.getBigDecimal(index)
-
-  given (using decoder: Decoder[String]): Decoder[BigInt] =
-    decoder.map(str => if str == null then null else BigInt(str))
-
-  given (using decoder: Decoder[Int]): Decoder[Year] =
-    decoder.map(int => Year.of(int))
-
-  given (using decoder: Decoder[String]): Decoder[YearMonth] =
-    decoder.map(str => YearMonth.parse(str))
+  given [A](using codec: Codec[A]): Decoder[A] = codec.asDecoder
 
   given [A](using decoder: Decoder[A]): Decoder[Option[A]] = decoder.opt
 

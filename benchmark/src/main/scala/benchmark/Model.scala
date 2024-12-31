@@ -17,8 +17,7 @@ case class Model1(
 ) derives Table
 
 object Model1:
-  given Encoder[Model1] = Encoder[Int].to[Model1]
-  given Decoder[Model1] = Decoder[Int].to[Model1]
+  given Codec[Model1] = Codec[Int].to[Model1]
 
 case class Model5(
   c1: Int,
@@ -65,17 +64,11 @@ case class Model20(
 ) derives Table
 
 object Model20:
-  given Encoder[Model20] = (
-    Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
-      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
-      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
-      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int]
-  ).to[Model20]
-  given Decoder[Model20] = (
-    Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
-      Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
-      Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
-      Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int]
+  given Codec[Model20] = (
+    Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int]
   ).to[Model20]
 
 case class Model25(
@@ -107,19 +100,12 @@ case class Model25(
 ) derives Table
 
 object Model25:
-  given Encoder[Model25] = (
-    Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
-      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
-      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
-      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *:
-      Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int] *: Encoder[Int]
-  ).to[Model25]
-  given Decoder[Model25] = (
-    Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
-      Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
-      Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
-      Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *:
-      Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int] *: Decoder[Int]
+  given Codec[Model25] = (
+    Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int]
   ).to[Model25]
 
 case class City(

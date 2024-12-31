@@ -7,7 +7,7 @@
 package ldbc.tests.model
 
 import ldbc.dsl.*
-import ldbc.dsl.codec.{ Encoder, Decoder }
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.Table
 import ldbc.schema.Table as SchemaTable
 
@@ -42,21 +42,13 @@ object Country:
 
     override def toString: String = value
 
-  given Encoder[Continent] = Encoder[String].contramap(_.value)
+  given Codec[Continent] = Codec[String].imap(str => Continent.valueOf(str.replace(" ", "_")))(_.value)
 
-  given Decoder[Continent] = Decoder[String].map(str => Continent.valueOf(str.replace(" ", "_")))
-
-  given Encoder[Country] = (
-    Encoder[String] *: Encoder[String] *: Encoder[Continent] *: Encoder[String] *: Encoder[BigDecimal] *:
-      Encoder[Option[Short]] *: Encoder[Int] *: Encoder[Option[BigDecimal]] *: Encoder[Option[BigDecimal]] *:
-      Encoder[Option[BigDecimal]] *: Encoder[String] *: Encoder[String] *: Encoder[Option[String]] *:
-      Encoder[Option[Int]] *: Encoder[String]
-  ).to[Country]
-  given Decoder[Country] = (
-    Decoder[String] *: Decoder[String] *: Decoder[Continent] *: Decoder[String] *: Decoder[BigDecimal] *:
-      Decoder[Option[Short]] *: Decoder[Int] *: Decoder[Option[BigDecimal]] *: Decoder[Option[BigDecimal]] *:
-      Decoder[Option[BigDecimal]] *: Decoder[String] *: Decoder[String] *: Decoder[Option[String]] *:
-      Decoder[Option[Int]] *: Decoder[String]
+  given Codec[Country] = (
+    Codec[String] *: Codec[String] *: Codec[Continent] *: Codec[String] *: Codec[BigDecimal] *:
+      Codec[Option[Short]] *: Codec[Int] *: Codec[Option[BigDecimal]] *: Codec[Option[BigDecimal]] *:
+      Codec[Option[BigDecimal]] *: Codec[String] *: Codec[String] *: Codec[Option[String]] *:
+      Codec[Option[Int]] *: Codec[String]
   ).to[Country]
   given Table[Country] = Table.derived[Country]("country")
 
