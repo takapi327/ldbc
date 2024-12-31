@@ -132,7 +132,7 @@ database:
 `columns`には型を変更したいカラム名と変更したいScalaの型を文字列で記載を行います。`columns`には複数の値を設定できますが、nameに記載されたカラム名が対象のテーブルに含まれいてなければなりません。
 また、変換を行うScalaの型はカラムのData型がサポートしている型である必要があります。もしサポート対象外の型を指定したい場合は、`object`に対して暗黙の型変換を行う設定を持ったtraitやabstract classなどを渡してあげる必要があります。
 
-Data型がサポートしている型に関しては[こちら](/ja/tutorial/Custom-Data-Type.html)を、サポート対象外の型を設定する方法は[こちら](/ja/tutorial/Custom-Data-Type.html)を参照してください。
+Data型がサポートしている型に関しては[こちら](/ja/tutorial/Custom-Data-Type.md)を、サポート対象外の型を設定する方法は[こちら](/ja/tutorial/Custom-Data-Type.md)を参照してください。
 
 Int型をユーザー独自の型であるCountryCodeに変換する場合は、以下のような`CustomMapping`traitを実装します。
 
