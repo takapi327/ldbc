@@ -73,10 +73,10 @@ package object dsl:
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
     /** Returns `VALUES (v0, v1), (v2, v3), ...`. */
-    def values[M[_]: Reducible, T <: Product](vs: M[T])(using Encoder[T]): Mysql[F] =
-      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values[T](v))))
+    def values[M[_]: Reducible, T](vs: M[T])(using Encoder[T]): Mysql[F] =
+      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values(v))))
 
-    private def values[T <: Product](v: T)(using encoder: Encoder[T]): Mysql[F] =
+    private def values[T](v: T)(using encoder: Encoder[T]): Mysql[F] =
       val params = Parameter.Dynamic.many(encoder.encode(v))
       Mysql[F](List.fill(params.size)("?").mkString(","), params)
 
