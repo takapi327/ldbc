@@ -17,7 +17,7 @@ case class Model1(
 ) derives Table
 
 object Model1:
-  given Codec[Model1] = (Codec[Int]).to[Model1]
+  given Codec[Model1] = Codec[Int].to[Model1]
 
 case class Model5(
   c1: Int,
@@ -64,12 +64,9 @@ case class Model20(
 ) derives Table
 
 object Model20:
-  given Codec[Model20] = (
-    Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
-      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
-      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
-      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int]
-  ).to[Model20]
+  given Codec[Model20] =
+    Codec[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]
+      .to[Model20]
 
 case class Model25(
   c1:  Int,
@@ -100,13 +97,35 @@ case class Model25(
 ) derives Table
 
 object Model25:
-  given Codec[Model25] = (
-    Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
-      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
-      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
-      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
-      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int]
-  ).to[Model25]
+  given Codec[Model25] = Codec[
+    (
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int
+    )
+  ].to[Model25]
 
 case class City(
   id:          Int,

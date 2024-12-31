@@ -157,6 +157,3 @@ object Codec extends TwiddleSyntax[Codec]:
 
   given [P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
     codec.to[P]
-
-  given [A]: Conversion[Codec[A], Encoder[A]] = _.asEncoder
-  given [A]: Conversion[Codec[A], Decoder[A]] = _.asDecoder
