@@ -58,10 +58,10 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   def prefix:     "jdbc" | "ldbc"
   def connection: Resource[IO, Connection[IO]]
 
-  private final val country          = Table[Country]("country")
-  private final val city             = Table[City]("city")
-  private final val countryLanguage  = Table[CountryLanguage]("countrylanguage")
-  private final val governmentOffice = Table[GovernmentOffice]("government_office")
+  private final val country          = TableQuery[Country]
+  private final val city             = TableQuery[City]
+  private final val countryLanguage  = TableQuery[CountryLanguage]
+  private final val governmentOffice = TableQuery[GovernmentOffice]
 
   test(
     "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
@@ -101,17 +101,6 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        countryLanguage.selectAll.query.to[List].readOnly(conn).map(_.length)
-      },
-      984
-    )
-  }
-
-  test(
-    "The results of all cases retrieved are transformed into a model, and the number of cases matches the specified value."
-  ) {
-    assertIO(
-      connection.use { conn =>
         governmentOffice.selectAll.query.to[List].readOnly(conn).map(_.length)
       },
       3
@@ -122,7 +111,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .select(v => (v.name, v.countryCode))
+          .select(v => v.name *: v.countryCode)
           .where(_.countryCode _equals country.select(_.code).where(_.code _equals "JPN"))
           .query
           .to[List]
@@ -194,8 +183,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("The data retrieved by Join matches the specified model.") {
     assertIO(
       connection.use { conn =>
-        (city join country)((city, country) => city.countryCode _equals country.code)
-          .select((city, country) => (city.name, country.name))
+        (city join country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.name *: country.name)
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -209,8 +199,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("The data retrieved by Join matches the specified model.") {
     assertIO(
       connection.use { conn =>
-        (city join country)((city, country) => city.countryCode _equals country.code)
-          .select((city, country) => (city.name, country.name))
+        (city join country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.name *: country.name)
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -224,8 +215,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("The data retrieved by Left Join matches the specified model.") {
     assertIO(
       connection.use { conn =>
-        (city leftJoin country)((city, country) => city.countryCode _equals country.code)
-          .select((city, country) => (city.name, country.name))
+        (city leftJoin country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.name *: country.name)
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -239,8 +231,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("The data retrieved by Left Join matches the specified model.") {
     assertIO(
       connection.use { conn =>
-        (city leftJoin country)((city, country) => city.countryCode _equals country.code)
-          .select((city, country) => (city.name, country.name))
+        (city leftJoin country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.name *: country.name)
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -254,8 +247,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("The data retrieved by Right Join matches the specified model.") {
     assertIO(
       connection.use { conn =>
-        (city rightJoin country)((city, country) => city.countryCode _equals country.code)
-          .select((city, country) => (city.name, country.name))
+        (city rightJoin country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.name *: country.name)
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -269,8 +263,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("The data retrieved by Right Join matches the specified model.") {
     assertIO(
       connection.use { conn =>
-        (city rightJoin country)((city, country) => city.countryCode _equals country.code)
-          .select((city, country) => (city.name, country.name))
+        (city rightJoin country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.name *: country.name)
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -285,7 +280,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .select(v => (v.countryCode, v.id.count))
+          .select(v => v.countryCode *: v.id.count)
           .where(_.countryCode _equals "JPN")
           .query
           .to[Option]
@@ -299,8 +294,8 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         city
-          .select(v => (v.countryCode, v.id.count))
-          .groupBy(_._1)
+          .select(v => v.countryCode *: v.id.count)
+          .groupBy(_.countryCode)
           .query
           .to[List]
           .readOnly(conn)
@@ -318,10 +313,10 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
         (for
           codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
           cities <- codeOpt match
-                      case None => Executor.pure[IO, List[(String, String)]](List.empty)
-                      case Some(code *: EmptyTuple) =>
+                      case None => DBIO.pure[IO, List[(String, String)]](List.empty)
+                      case Some(code) =>
                         city
-                          .select(v => (v.name, v.countryCode))
+                          .select(v => v.name *: v.countryCode)
                           .where(_.countryCode _equals code)
                           .query
                           .to[List]
@@ -347,7 +342,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        (city join country)((city, country) => city.countryCode _equals country.code).selectAll
+        (city join country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.* *: country.*)
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -382,8 +379,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("Even if a column join is performed at join time, the retrieved data will match the specified values.") {
     assertIO(
       connection.use { conn =>
-        (city join country)((city, country) => city.countryCode _equals country.code)
-          .select((city, country) => (city.name, city.population ++ country.population))
+        (city join country)
+          .on((city, country) => city.countryCode _equals country.code)
+          .select((city, country) => city.name *: (city.population ++ country.population))
           .where((_, country) => country.code _equals "JPN")
           .and((city, _) => city.name _equals "Tokyo")
           .query
@@ -397,7 +395,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("If selectAll is performed with Left Join, the model with no value will be None.") {
     assertIO(
       connection.use { conn =>
-        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
+        (city leftJoin governmentOffice)
+          .on((city, governmentOffice) => city.id _equals governmentOffice.cityId)
+          .select((city, governmentOffice) => city.* *: governmentOffice.*)
           .where((city, _) => city.name _equals "Osaka")
           .query
           .to[Option]
@@ -415,7 +415,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("If you do selectAll with Left Join, the model with the value is wrapped in Some.") {
     assertIO(
       connection.use { conn =>
-        (city leftJoin governmentOffice)((city, governmentOffice) => city.id _equals governmentOffice.cityId).selectAll
+        (city leftJoin governmentOffice)
+          .on((city, governmentOffice) => city.id _equals governmentOffice.cityId)
+          .select((city, governmentOffice) => city.* *: governmentOffice.*)
           .where((city, _) => city.name _equals "Tokyo")
           .query
           .to[Option]
@@ -433,7 +435,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("If selectAll is performed with Right Join, the model with no value will be None.") {
     assertIO(
       connection.use { conn =>
-        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id).selectAll
+        (governmentOffice rightJoin city)
+          .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+          .select((governmentOffice, city) => governmentOffice.* *: city.*)
           .where((_, city) => city.id _equals 1534)
           .query
           .to[Option]
@@ -451,7 +455,9 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   test("If you do selectAll with Right Join, the model with the value is wrapped in Some.") {
     assertIO(
       connection.use { conn =>
-        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id).selectAll
+        (governmentOffice rightJoin city)
+          .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+          .select((governmentOffice, city) => governmentOffice.* *: city.*)
           .where((_, city) => city.id _equals 1532)
           .query
           .to[Option]
@@ -471,9 +477,11 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
   ) {
     assertIO(
       connection.use { conn =>
-        (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
-          .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
-          .selectAll
+        (governmentOffice rightJoin city)
+          .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+          .rightJoin(country)
+          .on((_, city, country) => country.code _equals city.countryCode)
+          .select((governmentOffice, city, country) => governmentOffice.* *: city.* *: country.*)
           .where((_, _, country) => country.code _equals "JPN")
           .query
           .to[Option]
@@ -529,9 +537,11 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
                  "XX"
                )).update
           result <-
-            (governmentOffice rightJoin city)((governmentOffice, city) => governmentOffice.cityId _equals city.id)
-              .rightJoin(country)((_, city, country) => country.code _equals city.countryCode)
-              .selectAll
+            (governmentOffice rightJoin city)
+              .on((governmentOffice, city) => governmentOffice.cityId _equals city.id)
+              .rightJoin(country)
+              .on((_, city, country) => country.code _equals city.countryCode)
+              .select((governmentOffice, city, country) => governmentOffice.* *: city.* *: country.*)
               .where((_, _, country) => country.code _equals "XXX")
               .query
               .to[Option]

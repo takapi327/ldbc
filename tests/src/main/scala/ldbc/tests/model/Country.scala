@@ -7,8 +7,9 @@
 package ldbc.tests.model
 
 import ldbc.dsl.*
-import ldbc.dsl.codec.{ Encoder, Decoder }
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.Table
+import ldbc.schema.Table as SchemaTable
 
 case class Country(
   code:           String,
@@ -26,7 +27,7 @@ case class Country(
   headOfState:    Option[String],
   capital:        Option[Int],
   code2:          String
-) derives Table
+)
 
 object Country:
 
@@ -41,8 +42,34 @@ object Country:
 
     override def toString: String = value
 
-  given Encoder[Continent] with
-    override def encode(continent: Continent): String = continent.value
+  given Codec[Continent] = Codec[String].imap(str => Continent.valueOf(str.replace(" ", "_")))(_.value)
 
-  given Decoder.Elem[Continent] =
-    Decoder.Elem.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
+  given Codec[Country] = (
+    Codec[String] *: Codec[String] *: Codec[Continent] *: Codec[String] *: Codec[BigDecimal] *:
+      Codec[Option[Short]] *: Codec[Int] *: Codec[Option[BigDecimal]] *: Codec[Option[BigDecimal]] *:
+      Codec[Option[BigDecimal]] *: Codec[String] *: Codec[String] *: Codec[Option[String]] *:
+      Codec[Option[Int]] *: Codec[String]
+  ).to[Country]
+  given Table[Country] = Table.derived[Country]("country")
+
+class CountryTable extends SchemaTable[Country]("country"):
+
+  def code:           Column[String]             = column[String]("Code")
+  def name:           Column[String]             = column[String]("Name")
+  def continent:      Column[Country.Continent]  = column[Country.Continent]("Continent")
+  def region:         Column[String]             = column[String]("Region")
+  def surfaceArea:    Column[BigDecimal]         = column[BigDecimal]("SurfaceArea")
+  def indepYear:      Column[Option[Short]]      = column[Option[Short]]("IndepYear")
+  def population:     Column[Int]                = column[Int]("Population")
+  def lifeExpectancy: Column[Option[BigDecimal]] = column[Option[BigDecimal]]("LifeExpectancy")
+  def gnp:            Column[Option[BigDecimal]] = column[Option[BigDecimal]]("GNP")
+  def gnpOld:         Column[Option[BigDecimal]] = column[Option[BigDecimal]]("GNPOld")
+  def localName:      Column[String]             = column[String]("LocalName")
+  def governmentForm: Column[String]             = column[String]("GovernmentForm")
+  def headOfState:    Column[Option[String]]     = column[Option[String]]("HeadOfState")
+  def capital:        Column[Option[Int]]        = column[Option[Int]]("Capital")
+  def code2:          Column[String]             = column[String]("Code2")
+
+  override def * : Column[Country] =
+    (code *: name *: continent *: region *: surfaceArea *: indepYear *: population *: lifeExpectancy *: gnp *: gnpOld *: localName *: governmentForm *: headOfState *: capital *: code2)
+      .to[Country]

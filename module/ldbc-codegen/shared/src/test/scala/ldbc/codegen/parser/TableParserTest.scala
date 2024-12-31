@@ -6,13 +6,13 @@
 
 package ldbc.codegen.parser
 
-import org.scalatest.flatspec.AnyFlatSpec
+import munit.CatsEffectSuite
 
-class TableParserTest extends AnyFlatSpec, TableParser:
+class TableParserTest extends CatsEffectSuite, TableParser:
 
   override def fileName: String = "test.sql"
 
-  it should "Table create statement parsing test succeeds." in {
+  test("Table create statement parsing test succeeds.") {
     assert(
       parseAll(
         createTableStatement,
@@ -240,7 +240,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
   }
 
-  it should "Table create statement parsing test fails." in {
+  test("Table create statement parsing test fails.") {
     assert(
       !parseAll(
         createTableStatement,
@@ -450,7 +450,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
   }
 
-  it should "Table drop statement parsing test succeeds." in {
+  test("Table drop statement parsing test succeeds.") {
     assert(parseAll(dropTableStatement, "DROP TABLE IF NOT EXISTS `table`;").successful)
     assert(parseAll(dropTableStatement, "DROP TABLE IF EXISTS `table`;").successful)
     assert(parseAll(dropTableStatement, "DROP TABLE `table`;").successful)
@@ -465,7 +465,7 @@ class TableParserTest extends AnyFlatSpec, TableParser:
     )
   }
 
-  it should "Table drop statement parsing test fails" in {
+  test("Table drop statement parsing test fails") {
     assert(!parseAll(dropTableStatement, "DROP `table`;").successful)
     assert(!parseAll(dropTableStatement, "DROP IF EXISTS;").successful)
     assert(!parseAll(dropTableStatement, "DROP IF NOT EXISTS;").successful)

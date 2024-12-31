@@ -6,114 +6,157 @@
 
 package ldbc.codegen.builder
 
-import org.specs2.mutable.Specification
+import munit.CatsEffectSuite
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.model.ColumnDefinition.*
 
-object ColumnCodeBuilderTest extends Specification:
+class ColumnCodeBuilderTest extends CatsEffectSuite:
 
   private val builder = ColumnCodeBuilder(Naming.PASCAL)
 
-  "Testing the ColumnCodeBuilder" should {
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition("p1", DataType.VARCHAR(255, None, None), None)
-      builder.build(column, None) === "column(\"p1\", VARCHAR[Option[String]](255))"
-    }
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition("p1", DataType.VARCHAR(255, None, None), None)
+    assertEquals(
+      builder.build(
+        column,
+        None
+      ),
+      "def p1: Column[Option[String]] = column[Option[String]](\"p1\", VARCHAR[Option[String]](255))"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition("p1", DataType.VARCHAR(255, None, None), Some(List(Attribute.Condition(false))))
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255))"
-    }
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition("p1", DataType.VARCHAR(255, None, None), Some(List(Attribute.Condition(false))))
+    assertEquals(
+      builder.build(column, None),
+      "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255))"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition(
-        "p1",
-        DataType.BIGINT(None, false, false),
-        Some(
-          List(
-            Attribute.Condition(false),
-            Attribute.Key("AUTO_INCREMENT"),
-            Attribute.Key("PRIMARY_KEY")
-          )
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition(
+      "p1",
+      DataType.BIGINT(None, false, false),
+      Some(
+        List(
+          Attribute.Condition(false),
+          Attribute.Key("AUTO_INCREMENT"),
+          Attribute.Key("PRIMARY_KEY")
         )
       )
-      builder.build(column, None) === "column(\"p1\", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY)"
-    }
+    )
+    assertEquals(
+      builder.build(
+        column,
+        None
+      ),
+      "def p1: Column[Long] = column[Long](\"p1\", BIGINT[Long], AUTO_INCREMENT, PRIMARY_KEY)"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition(
-        "p1",
-        DataType.BIGINT(None, false, false),
-        Some(
-          List(
-            Attribute.Condition(false),
-            CommentSet("identifier")
-          )
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition(
+      "p1",
+      DataType.BIGINT(None, false, false),
+      Some(
+        List(
+          Attribute.Condition(false),
+          CommentSet("identifier")
         )
       )
-      builder.build(column, None) === "column(\"p1\", BIGINT[Long], COMMENT(\"identifier\"))"
-    }
+    )
+    assertEquals(
+      builder.build(
+        column,
+        None
+      ),
+      "def p1: Column[Long] = column[Long](\"p1\", BIGINT[Long], COMMENT(\"identifier\"))"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition(
-        "p1",
-        DataType.VARCHAR(255, None, None),
-        Some(
-          List(
-            Attribute.Condition(false),
-            Attribute.Collate("utf8mb4_bin")
-          )
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition(
+      "p1",
+      DataType.VARCHAR(255, None, None),
+      Some(
+        List(
+          Attribute.Condition(false),
+          Attribute.Collate("utf8mb4_bin")
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), Collate.utf8mb4_bin)"
-    }
+    )
+    assertEquals(
+      builder.build(
+        column,
+        None
+      ),
+      "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), Collate.utf8mb4_bin)"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition(
-        "p1",
-        DataType.VARCHAR(255, None, None),
-        Some(
-          List(
-            Attribute.Condition(false),
-            Attribute.Visible("VISIBLE")
-          )
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition(
+      "p1",
+      DataType.VARCHAR(255, None, None),
+      Some(
+        List(
+          Attribute.Condition(false),
+          Attribute.Visible("VISIBLE")
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), VISIBLE)"
-    }
+    )
+    assertEquals(
+      builder.build(column, None),
+      "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), VISIBLE)"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition(
-        "p1",
-        DataType.VARCHAR(255, None, None),
-        Some(
-          List(
-            Attribute.Condition(false),
-            Attribute.ColumnFormat("FIXED")
-          )
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition(
+      "p1",
+      DataType.VARCHAR(255, None, None),
+      Some(
+        List(
+          Attribute.Condition(false),
+          Attribute.ColumnFormat("FIXED")
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), COLUMN_FORMAT.FIXED)"
-    }
+    )
+    assertEquals(
+      builder.build(
+        column,
+        None
+      ),
+      "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), COLUMN_FORMAT.FIXED)"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition(
-        "p1",
-        DataType.VARCHAR(255, None, None),
-        Some(
-          List(
-            Attribute.Condition(false),
-            Attribute.Storage("DISK")
-          )
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition(
+      "p1",
+      DataType.VARCHAR(255, None, None),
+      Some(
+        List(
+          Attribute.Condition(false),
+          Attribute.Storage("DISK")
         )
       )
-      builder.build(column, None) === "column(\"p1\", VARCHAR[String](255), STORAGE.DISK)"
-    }
+    )
+    assertEquals(
+      builder.build(
+        column,
+        None
+      ),
+      "def p1: Column[String] = column[String](\"p1\", VARCHAR[String](255), STORAGE.DISK)"
+    )
+  }
 
-    "The construction of Column into a code string matches the specified string." in {
-      val column = ColumnDefinition("p1", DataType.SERIAL(), None)
-      builder.build(column, None) === "column(\"p1\", SERIAL[BigInt])"
-    }
+  test("The construction of Column into a code string matches the specified string.") {
+    val column = ColumnDefinition("p1", DataType.SERIAL(), None)
+    assertEquals(
+      builder.build(column, None),
+      "def p1: Column[BigInt] = column[BigInt](\"p1\", SERIAL[BigInt])"
+    )
   }

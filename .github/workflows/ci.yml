@@ -24,30 +24,30 @@ concurrency:
 
 jobs:
   build:
-    name: Build and Test
+    name: Test
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        scala: [3.3.4, 3.5.1]
+        os: [ubuntu-22.04]
+        scala: [3.3.4, 3.5.2]
         java: [corretto@11, corretto@17]
         project: [ldbcJS, ldbcNative, ldbcJVM]
         exclude:
           - project: ldbcJS
             java: corretto@17
-          - scala: 3.5.1
+          - scala: 3.5.2
             java: corretto@17
           - project: ldbcNative
             java: corretto@17
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
@@ -86,7 +86,7 @@ jobs:
         run: sbt githubWorkflowCheck
 
       - name: Check headers and formatting
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: scalaJSLink
@@ -101,11 +101,11 @@ jobs:
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' test
 
       - name: Check binary compatibility
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' mimaReportBinaryIssues
 
       - name: Generate API documentation
-        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
+        if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-22.04'
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' doc
 
       - name: Stop MySQL on Docker
@@ -113,11 +113,11 @@ jobs:
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target module/ldbc-schema/.native/target core/jvm/target module/ldbc-dsl/.js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-dsl/.jvm/target project/target
+        run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target module/ldbc-statement/.native/target core/js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target module/ldbc-schema/.native/target module/ldbc-statement/.jvm/target core/jvm/target module/ldbc-dsl/.js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-statement/.js/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-dsl/.jvm/target project/target
 
       - name: Compress target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target core/js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target module/ldbc-schema/.native/target core/jvm/target module/ldbc-dsl/.js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-dsl/.jvm/target project/target
+        run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-codegen/native/target module/jdbc-connector/.jvm/target module/ldbc-query-builder/.native/target module/ldbc-codegen/jvm/target module/ldbc-query-builder/.jvm/target module/ldbc-dsl/.native/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/native/target module/ldbc-sql/.js/target module/ldbc-statement/.native/target core/js/target module/ldbc-schema/.js/target module/ldbc-sql/.native/target module/ldbc-schemaspy/target module/ldbc-schema/.native/target module/ldbc-statement/.jvm/target core/jvm/target module/ldbc-dsl/.js/target module/ldbc-hikari/target module/ldbc-sql/.jvm/target module/ldbc-statement/.js/target module/ldbc-connector/native/target module/ldbc-connector/jvm/target module/ldbc-schema/.jvm/target plugin/target module/ldbc-dsl/.jvm/target project/target
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
@@ -132,17 +132,17 @@ jobs:
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
@@ -200,32 +200,32 @@ jobs:
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.5.1, ldbcJS)
+      - name: Download target directories (3.5.2, ldbcJS)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.1-ldbcJS
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.2-ldbcJS
 
-      - name: Inflate target directories (3.5.1, ldbcJS)
+      - name: Inflate target directories (3.5.2, ldbcJS)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.5.1, ldbcNative)
+      - name: Download target directories (3.5.2, ldbcNative)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.1-ldbcNative
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.2-ldbcNative
 
-      - name: Inflate target directories (3.5.1, ldbcNative)
+      - name: Inflate target directories (3.5.2, ldbcNative)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.5.1, ldbcJVM)
+      - name: Download target directories (3.5.2, ldbcJVM)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.1-ldbcJVM
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.5.2-ldbcJVM
 
-      - name: Inflate target directories (3.5.1, ldbcJVM)
+      - name: Inflate target directories (3.5.2, ldbcJVM)
         run: |
           tar xf targets.tar
           rm targets.tar
@@ -259,17 +259,17 @@ jobs:
     if: github.event.repository.fork == false && github.event_name != 'pull_request'
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
@@ -307,7 +307,7 @@ jobs:
     name: Validate Steward Config
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [temurin@11]
     runs-on: ${{ matrix.os }}
     steps:
@@ -332,17 +332,17 @@ jobs:
     name: Generate Site
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
@@ -385,18 +385,18 @@ jobs:
     name: sbt scripted
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         scala: [3.3.4]
         java: [temurin@11, temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install sbt
-        uses: sbt/setup-sbt@v1
-
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11

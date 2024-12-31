@@ -8,7 +8,13 @@ package ldbc.dsl.codec
 
 import java.time.*
 
-import scala.compiletime.*
+import scala.deriving.Mirror
+
+import cats.ContravariantSemigroupal
+import cats.data.NonEmptyList
+import cats.syntax.all.*
+
+import org.typelevel.twiddles.TwiddleSyntax
 
 /**
  * Trait for converting Scala types to types that can be handled by PreparedStatement.
@@ -26,81 +32,55 @@ trait Encoder[A]:
    * @return
    *   Types that can be handled by PreparedStatement
    */
-  def encode(value: A): Encoder.Supported
+  def encode(value: A): Encoder.Encoded
 
-object Encoder:
+  /** Contramap inputs from a new type `B`, yielding an `Encoder[B]`. */
+  def contramap[B](func: B => A): Encoder[B] = (value: B) => encode(func(value))
+
+  /** Map outputs to a new type `B`, yielding an `Encoder[B]`. */
+  def either[B](func: B => Either[String, A]): Encoder[B] = (value: B) =>
+    func(value) match
+      case Right(value) => encode(value)
+      case Left(error)  => Encoder.Encoded.failure(error)
+
+  /** `Encoder` is semigroupal: a pair of encoders make a encoder for a pair. */
+  def product[B](that: Encoder[B]): Encoder[(A, B)] = (value: (A, B)) => encode(value._1) product that.encode(value._2)
+
+object Encoder extends TwiddleSyntax[Encoder]:
 
   /** Types that can be handled by PreparedStatement. */
   type Supported = Boolean | Byte | Short | Int | Long | Float | Double | BigDecimal | String | Array[Byte] |
     LocalTime | LocalDate | LocalDateTime | None.type
 
-  given Encoder[Boolean] with
-    override def encode(value: Boolean): Boolean = value
+  def apply[A](using encoder: Encoder[A]): Encoder[A] = encoder
 
-  given Encoder[Byte] with
-    override def encode(value: Byte): Byte = value
+  given ContravariantSemigroupal[Encoder] with
+    override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)
+    override def product[A, B](fa:   Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
 
-  given Encoder[Short] with
-    override def encode(value: Short): Short = value
+  given [A](using codec: Codec[A]): Encoder[A] = codec.asEncoder
 
-  given Encoder[Int] with
-    override def encode(value: Int): Int = value
+  given [A, B](using ea: Encoder[A], eb: Encoder[B]): Encoder[(A, B)] =
+    ea.product(eb)
 
-  given Encoder[Long] with
-    override def encode(value: Long): Long = value
+  given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
+    eh.product(et).contramap { case h *: t => (h, t) }
 
-  given Encoder[Float] with
-    override def encode(value: Float): Float = value
+  given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
+    encoder.to[P]
 
-  given Encoder[Double] with
-    override def encode(value: Double): Double = value
+  sealed trait Encoded:
+    def product(that: Encoded): Encoded
+  object Encoded:
+    case class Success(value: List[Encoder.Supported]) extends Encoded:
+      override def product(that: Encoded): Encoded = that match
+        case Success(value)  => Success(this.value ::: value)
+        case Failure(errors) => Failure(errors)
+    case class Failure(errors: NonEmptyList[String]) extends Encoded:
+      override def product(that: Encoded): Encoded = that match
+        case Success(value)  => Failure(errors)
+        case Failure(errors) => Failure(errors ::: this.errors)
 
-  given Encoder[BigDecimal] with
-    override def encode(value: BigDecimal): BigDecimal = value
-
-  given Encoder[String] with
-    override def encode(value: String): String = value
-
-  given Encoder[Array[Byte]] with
-    override def encode(value: Array[Byte]): Array[Byte] = value
-
-  given Encoder[LocalTime] with
-    override def encode(value: LocalTime): LocalTime = value
-
-  given Encoder[LocalDate] with
-    override def encode(value: LocalDate): LocalDate = value
-
-  given Encoder[LocalDateTime] with
-    override def encode(value: LocalDateTime): LocalDateTime = value
-
-  given Encoder[Year] with
-    override def encode(value: Year): String = value.toString
-
-  given Encoder[YearMonth] with
-    override def encode(value: YearMonth): String = value.toString
-
-  given Encoder[None.type] with
-    override def encode(value: None.type): None.type = value
-
-  given [A](using encoder: Encoder[A]): Encoder[Option[A]] with
-    override def encode(value: Option[A]): Encoder.Supported =
-      value match
-        case Some(value) => encoder.encode(value)
-        case None        => None
-
-  type MapToTuple[T] <: Tuple = T match
-    case EmptyTuple      => EmptyTuple
-    case h *: EmptyTuple => Encoder[h] *: EmptyTuple
-    case h *: t          => Encoder[h] *: MapToTuple[t]
-
-  inline def infer[T]: Encoder[T] =
-    summonFrom[Encoder[T]] {
-      case parameter: Encoder[T] => parameter
-      case _                     => error("Parameter cannot be inferred")
-    }
-
-  inline def fold[T]: MapToTuple[T] =
-    inline erasedValue[T] match
-      case _: EmptyTuple        => EmptyTuple
-      case _: (h *: EmptyTuple) => infer[h] *: EmptyTuple
-      case _: (h *: t)          => infer[h] *: fold[t]
+    def success(value: List[Encoder.Supported]): Encoded = Success(value)
+    def failure(error: String, errors: String*): Encoded =
+      Failure(NonEmptyList(error, errors.toList))

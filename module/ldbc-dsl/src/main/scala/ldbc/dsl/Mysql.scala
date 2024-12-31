@@ -7,8 +7,6 @@
 package ldbc.dsl
 
 import scala.annotation.targetName
-import scala.deriving.Mirror
-import scala.compiletime.erasedValue
 
 import cats.syntax.all.*
 
@@ -28,7 +26,7 @@ import ldbc.dsl.codec.Decoder
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynamic]) extends SQL:
+case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynamic]) extends SQL, ParamBinder[F]:
 
   @targetName("combine")
   override def ++(sql: SQL): Mysql[F] =
@@ -44,23 +42,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * A [[ldbc.dsl.Query]] instance
    */
-  inline def query[T](using decoder: Decoder.Elem[T]): Query[F, T] =
-    Query.Impl[F, T](statement, params, Decoder.one[T])
-
-  /**
-   * A method to convert a query to a [[ldbc.dsl.Query]].
-   *
-   * {{{
-   *   sql"SELECT `name`, `age` FROM user".query[User]
-   * }}}
-   *
-   * @return
-   *   A [[ldbc.dsl.Query]] instance
-   */
-  inline def query[P <: Product](using mirror: Mirror.ProductOf[P]): Query[F, P] =
-    inline erasedValue[P] match
-      case _: Tuple => Query.Impl[F, P](statement, params, Decoder.derivedTuple(mirror))
-      case _        => Query.Impl[F, P](statement, params, Decoder.derivedProduct(mirror))
+  def query[T](using decoder: Decoder[T]): Query[F, T] =
+    Query.Impl[F, T](statement, params, decoder)
 
   /**
    * A method to execute an update operation against the MySQL server.
@@ -72,16 +55,14 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * The number of rows updated
    */
-  def update: Executor[F, Int] =
-    Executor.Impl[F, Int](
+  def update: DBIO[F, Int] =
+    DBIO.Impl[F, Int](
       statement,
       params,
       connection =>
         for
           prepareStatement <- connection.prepareStatement(statement)
-          result <- params.zipWithIndex.traverse {
-                      case (param, index) => param.bind(prepareStatement, index + 1)
-                    } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+          result <- paramBind(prepareStatement, params) >> prepareStatement.executeUpdate() <* prepareStatement.close()
         yield result
     )
 
@@ -97,18 +78,15 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    *   The primary key value
    */
-  def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): Executor[F, T] =
-    given Decoder[T] = Decoder.one[T]
-
-    Executor.Impl[F, T](
+  def returning[T <: String | Int | Long](using Decoder[T]): DBIO[F, T] =
+    DBIO.Impl[F, T](
       statement,
       params,
       connection =>
         for
           prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
-          resultSet <- params.zipWithIndex.traverse {
-                         case (param, index) => param.bind(prepareStatement, index + 1)
-                       } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
+          resultSet <- paramBind(prepareStatement, params) >> prepareStatement.executeUpdate() >> prepareStatement
+                         .getGeneratedKeys()
           result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
         yield result
     )

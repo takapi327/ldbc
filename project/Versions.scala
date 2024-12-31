@@ -11,7 +11,7 @@ object LdbcVersions {
 object ScalaVersions {
   val scala2  = "2.12.19"
   val scala3  = "3.3.4"
-  val scala35 = "3.5.1"
+  val scala35 = "3.5.2"
 }
 
 object JavaVersions {

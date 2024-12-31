@@ -50,7 +50,7 @@ object ResultSetConsumer:
 
   given [F[_]: Monad, T](using decoder: Decoder[T]): ResultSetConsumer[F, Option[T]] with
     override def consume(resultSet: ResultSet): F[Option[T]] =
-      if resultSet.next() then Monad[F].pure(decoder.decode(resultSet, None).some) else Monad[F].pure(None)
+      if resultSet.next() then Monad[F].pure(decoder.decode(resultSet, 1).some) else Monad[F].pure(None)
 
   given [F[_]: Monad, T, G[_]](using
     decoder:       Decoder[T],
@@ -58,5 +58,5 @@ object ResultSetConsumer:
   ): ResultSetConsumer[F, G[T]] with
     override def consume(resultSet: ResultSet): F[G[T]] =
       val builder = factoryCompat.newBuilder
-      while resultSet.next() do builder += decoder.decode(resultSet, None)
+      while resultSet.next() do builder += decoder.decode(resultSet, 1)
       Monad[F].pure(builder.result())

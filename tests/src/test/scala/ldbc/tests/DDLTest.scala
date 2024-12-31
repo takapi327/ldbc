@@ -16,7 +16,7 @@ import munit.*
 
 import ldbc.sql.Connection
 import ldbc.connector.SSL
-import ldbc.query.builder.Table
+import ldbc.query.builder.*
 import ldbc.query.builder.syntax.io.*
 
 class LdbcDDLTest extends DDLTest:
@@ -55,7 +55,7 @@ trait DDLTest extends CatsEffectSuite:
     age:  Option[Int]
   ) derives Table
 
-  final val tableQuery = Table[User]
+  final val tableQuery = TableQuery[User]
 
   override def beforeAll(): Unit =
     connection
@@ -88,7 +88,7 @@ trait DDLTest extends CatsEffectSuite:
   test("When the table is created, the number of records is 0.") {
     assertIO(
       connection.use { conn =>
-        tableQuery.select(_.id.count).query.unsafe.readOnly(conn).map(_._1)
+        tableQuery.select(_.id.count).query.unsafe.readOnly(conn)
       },
       0
     )
@@ -98,13 +98,11 @@ trait DDLTest extends CatsEffectSuite:
     assertIO(
       connection.use { conn =>
         tableQuery
-          .insertInto(user => (user.name, user.age))
+          .insertInto(user => user.name *: user.age)
           .values(
-            List(
-              ("Alice", Some(20)),
-              ("Bob", Some(25)),
-              ("Charlie", None)
-            )
+            ("Alice", Some(20)),
+            ("Bob", Some(25)),
+            ("Charlie", None)
           )
           .update
           .commit(conn)

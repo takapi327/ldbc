@@ -11,117 +11,105 @@ import org.scalatest.matchers.should.Matchers
 
 class AliasTest extends AnyFlatSpec, Matchers:
 
-  case class Test(id: Long, status: Int)
-  private val table = Table[Test]("test")(column("id", BIGINT), column("status", INT))
+  case class Test(id: Long, subId: String, status: Int)
+
+  class TestTable extends Table[Test]("test"):
+    def id:     Column[Long]   = column[Long]("id", BIGINT)
+    def subId:  Column[String] = column[String]("sub_id", VARCHAR(255))
+    def status: Column[Int]    = column[Int]("status", INT)
+
+    override def * = (id *: subId *: status).to[Test]
+
+  val testTable = new TestTable
 
   it should "PRIMARY_KEY call succeeds" in {
-    val p1 = PRIMARY_KEY
-    val p2 = PRIMARY_KEY(column[String]("p1", VARCHAR(255)))
-    val p3 = PRIMARY_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
-    val p4 = PRIMARY_KEY(Index.Type.BTREE, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p1 = PRIMARY_KEY[Long]
+    val p2 = PRIMARY_KEY(testTable.subId)
+    val p3 = PRIMARY_KEY(testTable.id *: testTable.subId)
+    val p4 = PRIMARY_KEY(Index.Type.BTREE, testTable.id *: testTable.subId)
     val p5 = PRIMARY_KEY(
       Index.Type.BTREE,
       Index.IndexOption(Some(1), None, None, None, None, None),
-      column[String]("p1", VARCHAR(255)),
-      column[String]("p2", VARCHAR(255))
+      testTable.id *: testTable.subId
     )
 
-    p1.queryString === "PRIMARY KEY" &&
-    p2.queryString === "PRIMARY KEY (`p1`)" &&
-    p3.queryString === "PRIMARY KEY (`p1`, `p2`)" &&
-    p4.queryString === "PRIMARY KEY (`p1`, `p2`) USING BTREE" &&
-    p5.queryString === "PRIMARY KEY (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1"
-  }
-
-  it should "PRIMARY_KEY call failed" in {
-    an[IllegalArgumentException] must be thrownBy PRIMARY_KEY()
-    an[IllegalArgumentException] must be thrownBy PRIMARY_KEY(Index.Type.BTREE)
-    an[IllegalArgumentException] must be thrownBy PRIMARY_KEY(
-      Index.Type.BTREE,
-      Index.IndexOption(Some(1), None, None, None, None, None)
-    )
+    assert(p1.queryString === "PRIMARY KEY")
+    assert(p2.queryString === "PRIMARY KEY (sub_id)")
+    assert(p3.queryString === "PRIMARY KEY (id, sub_id)")
+    assert(p4.queryString === "PRIMARY KEY (id, sub_id) USING BTREE")
+    assert(p5.queryString === "PRIMARY KEY (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1")
   }
 
   it should "UNIQUE_KEY call succeeds" in {
-    val p1 = UNIQUE_KEY
-    val p2 = UNIQUE_KEY(column[String]("p1", VARCHAR(255)))
-    val p3 = UNIQUE_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
-    val p4 = UNIQUE_KEY("index", column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p1 = UNIQUE_KEY[Long]
+    val p2 = UNIQUE_KEY(testTable.subId)
+    val p3 = UNIQUE_KEY(testTable.id *: testTable.subId)
+    val p4 = UNIQUE_KEY("index", testTable.id *: testTable.subId)
     val p5 =
-      UNIQUE_KEY("index", Index.Type.BTREE, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+      UNIQUE_KEY("index", Index.Type.BTREE, testTable.id *: testTable.subId)
     val p6 = UNIQUE_KEY(
       "index",
       Index.Type.BTREE,
       Index.IndexOption(Some(1), None, None, None, None, None),
-      column[String]("p1", VARCHAR(255)),
-      column[String]("p2", VARCHAR(255))
+      testTable.id *: testTable.subId
     )
-    val p7 = UNIQUE_KEY(None, None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p7 = UNIQUE_KEY(None, None, None, testTable.id *: testTable.subId)
 
-    p1.queryString === "UNIQUE KEY" &&
-    p2.queryString === "UNIQUE KEY (`p1`)" &&
-    p3.queryString === "UNIQUE KEY (`p1`, `p2`)" &&
-    p4.queryString === "UNIQUE KEY `index` (`p1`, `p2`)" &&
-    p5.queryString === "UNIQUE KEY `index` (`p1`, `p2`) USING BTREE" &&
-    p6.queryString === "UNIQUE KEY `index` (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1" &&
-    p7.queryString === "UNIQUE KEY (`p1`, `p2`)"
-  }
-
-  it should "UNIQUE_KEY call failed" in {
-    an[IllegalArgumentException] must be thrownBy UNIQUE_KEY()
-    an[IllegalArgumentException] must be thrownBy UNIQUE_KEY("index")
-    an[IllegalArgumentException] must be thrownBy UNIQUE_KEY("index", Index.Type.BTREE)
+    assert(p1.queryString === "UNIQUE KEY")
+    assert(p2.queryString === "UNIQUE KEY (sub_id)")
+    assert(p3.queryString === "UNIQUE KEY (id, sub_id)")
+    assert(p4.queryString === "UNIQUE KEY `index` (id, sub_id)")
+    assert(p5.queryString === "UNIQUE KEY `index` (id, sub_id) USING BTREE")
+    assert(p6.queryString === "UNIQUE KEY `index` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1")
+    assert(p7.queryString === "UNIQUE KEY (id, sub_id)")
   }
 
   it should "INDEX_KEY call succeeds" in {
-    val p1 = INDEX_KEY(column[String]("p1", VARCHAR(255)))
-    val p2 = INDEX_KEY(column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
-    val p3 = INDEX_KEY(None, None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+    val p1 = INDEX_KEY(testTable.subId)
+    val p2 = INDEX_KEY(testTable.id *: testTable.subId)
+    val p3 = INDEX_KEY(None, None, None, testTable.id *: testTable.subId)
     val p4 =
-      INDEX_KEY(Some("index"), None, None, column[String]("p1", VARCHAR(255)), column[String]("p2", VARCHAR(255)))
+      INDEX_KEY(Some("index"), None, None, testTable.id *: testTable.subId)
     val p5 =
       INDEX_KEY(
         Some("index"),
         Some(Index.Type.BTREE),
         None,
-        column[String]("p1", VARCHAR(255)),
-        column[String]("p2", VARCHAR(255))
+        testTable.id *: testTable.subId
       )
     val p6 = INDEX_KEY(
       Some("index"),
       Some(Index.Type.BTREE),
       Some(Index.IndexOption(Some(1), None, None, None, None, None)),
-      column[String]("p1", VARCHAR(255)),
-      column[String]("p2", VARCHAR(255))
+      testTable.id *: testTable.subId
     )
 
-    p1.queryString === "INDEX (`p1`)" &&
-    p2.queryString === "INDEX (`p1`, `p2`)" &&
-    p3.queryString === "INDEX (`p1`, `p2`)" &&
-    p4.queryString === "INDEX `index` (`p1`, `p2`)" &&
-    p5.queryString === "INDEX `index` (`p1`, `p2`) USING BTREE" &&
-    p6.queryString === "INDEX `index` (`p1`, `p2`) USING BTREE KEY_BLOCK_SIZE = 1"
-  }
-
-  it should "INDEX_KEY call failed" in {
-    an[IllegalArgumentException] must be thrownBy INDEX_KEY()
-    an[IllegalArgumentException] must be thrownBy INDEX_KEY(None, None, None)
-    an[IllegalArgumentException] must be thrownBy INDEX_KEY(Some("index"), None, None)
-    an[IllegalArgumentException] must be thrownBy INDEX_KEY(Some("index"), Some(Index.Type.BTREE), None)
-    an[IllegalArgumentException] must be thrownBy INDEX_KEY(
-      Some("index"),
-      Some(Index.Type.BTREE),
-      Some(Index.IndexOption(Some(1), None, None, None, None, None))
-    )
+    assert(p1.queryString === "INDEX (sub_id)")
+    assert(p2.queryString === "INDEX (id, sub_id)")
+    assert(p3.queryString === "INDEX (id, sub_id)")
+    assert(p4.queryString === "INDEX `index` (id, sub_id)")
+    assert(p5.queryString === "INDEX `index` (id, sub_id) USING BTREE")
+    assert(p6.queryString === "INDEX `index` (id, sub_id) USING BTREE KEY_BLOCK_SIZE = 1")
   }
 
   it should "FOREIGN_KEY call succeeds" in {
-    val p1 = FOREIGN_KEY(column[Long]("test_id", BIGINT), REFERENCE(table, table.id))
+
+    case class SubTest(id: String, status: Int)
+
+    class SubTestTable extends Table[SubTest]("sub_test"):
+      def id:     Column[String] = column[String]("id", VARCHAR(255))
+      def status: Column[Int]    = column[Int]("status", INT)
+
+      override def * = (id *: status).to[SubTest]
+
+    val subTestTable = new SubTestTable
+
+    val p1 = FOREIGN_KEY(testTable.subId, REFERENCE(subTestTable, subTestTable.id))
     val p2 = FOREIGN_KEY(
-      (column[Long]("test_id", BIGINT), column[Int]("test_status", INT)),
-      REFERENCE(table, (table.id, table.status))
+      testTable.subId *: testTable.status,
+      REFERENCE(subTestTable, subTestTable.id *: subTestTable.status)
     )
 
-    p1.queryString === "FOREIGN KEY (`test_id`) REFERENCES `test` (`id`)" &&
-    p2.queryString === "FOREIGN KEY (`test_id`, `test_status`) REFERENCES `test` (`id`, `status`)"
+    assert(p1.queryString === "FOREIGN KEY (sub_id) REFERENCES sub_test (id)")
+    assert(p2.queryString === "FOREIGN KEY (sub_id, status) REFERENCES sub_test (id, status)")
   }

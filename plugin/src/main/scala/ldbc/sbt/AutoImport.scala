@@ -13,7 +13,6 @@ object AutoImport extends Dependencies {
   val CAMEL  = Format.CAMEL
   val PASCAL = Format.PASCAL
   val SNAKE  = Format.SNAKE
-  val KEBAB  = Format.KEBAB
 
   val parseFiles = SettingKey[List[File]](
     label       = "parseFiles",

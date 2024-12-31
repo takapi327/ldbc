@@ -18,7 +18,7 @@ case class Parser(fileName: String) extends DatabaseStatementParser, SetParser:
     Seq[Parser[Product | List[Product]]](comment <~ opt(";"), databaseStatements, tableStatements, setStatements)
       .reduceLeft(_ | _)
 
-  private type Statements = Table.CreateStatement | Database.CreateStatement
+  private type Statements = Table.CreateStatement
 
   private def parser: Parser[List[(String, List[Statements])]] =
     var currentDatabase: String = ""
@@ -27,7 +27,7 @@ case class Parser(fileName: String) extends DatabaseStatementParser, SetParser:
         case statement: Table.CreateStatement => Some(currentDatabase -> List(statement))
         case statement: Database.CreateStatement =>
           currentDatabase = statement.name
-          Some(currentDatabase -> List(statement))
+          None
         case _ => None
       }
     }

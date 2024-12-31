@@ -18,7 +18,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
         |val query = user.selectAll.query.to[List]
         |""".stripMargin
@@ -33,7 +33,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
         |case class FailedUser(id: Long, name: String, age: Option[Int])
         |val query = user.selectAll.queryTo[FailedUser].to[List]
@@ -45,15 +45,14 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import cats.effect.IO
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
-        |val query: Executor[IO, List[User]] = user.selectAll.query.to[List]
+        |val query: DBIO[List[User]] = user.selectAll.query.to[List]
         |""".stripMargin
     )
   }
@@ -66,7 +65,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
         |val query = user.selectAll.where(_.id === 1).query.to[Option]
         |""".stripMargin
@@ -81,7 +80,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
         |case class FailedUser(id: Long, name: String, age: Option[Int])
         |val query = user.selectAll.where(_.id === 1).queryTo[FailedUser].to[Option]
@@ -94,15 +93,14 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
-        |val query: Executor[IO, Option[User]] = user.selectAll.where(_.id === 1).query.to[Option]
+        |val query: DBIO[Option[User]] = user.selectAll.where(_.id === 1).query.to[Option]
         |""".stripMargin
     )
   }
@@ -112,15 +110,14 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
-        |val query: Executor[IO, User] = user.selectAll.where(_.id === 1).query.unsafe
+        |val query: DBIO[User] = user.selectAll.where(_.id === 1).query.unsafe
         |""".stripMargin
     )
   }
@@ -133,7 +130,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
         |case class FailedUser(id: Long, name: String, age: Option[Int])
         |val query = user.selectAll.where(_.id === 1).query[FailedUser].unsafe
@@ -146,15 +143,14 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
-        |val user = Table[User]
+        |val user = TableQuery[User]
         |
-        |val query: Executor[IO, User] = user.selectAll.where(_.id === 1).query.unsafe
+        |val query: DBIO[User] = user.selectAll.where(_.id === 1).query.unsafe
         |""".stripMargin
     )
   }
@@ -164,7 +160,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -172,13 +167,13 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class Category(id: Long, name: String) derives Table
         |
-        |val user = Table[User]
-        |val category = Table[Category]
+        |val user = TableQuery[User]
+        |val category = TableQuery[Category]
         |
         |case class UserCategory(userName: String, categoryName: String)
         |
-        |val query: Executor[IO, List[(String, String)]] = (user join category)((user, category) => user.categoryId === category.id)
-        |  .select((user, category) => (user.name, category.name))
+        |val query: DBIO[List[(String, String)]] = (user join category).on((user, category) => user.categoryId === category.id)
+        |  .select((user, category) => user.name *: category.name)
         |  .query
         |  .to[List]
         |""".stripMargin
@@ -190,7 +185,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -198,13 +192,13 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |case class Category(id: Long, name: String) derives Table
         |
-        |val user = Table[User]
-        |val category = Table[Category]
+        |val user = TableQuery[User]
+        |val category = TableQuery[Category]
         |
         |case class UserCategory(userName: String, categoryName: String)
         |
-        |val query = (user join category)((user, category) => user.categoryId === category.id)
-        |  .select((user, category) => (user.name, category.name))
+        |val query = (user join category).on((user, category) => user.categoryId === category.id)
+        |  .select((user, category) => user.name *: category.name)
         |  .queryTo[UserCategory]
         |  .to[List]
         |""".stripMargin
@@ -216,7 +210,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -229,13 +222,13 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |  language:    String
         |) derives Table
         |
-        |val countryQuery = Table[Country]
-        |val cityQuery = Table[City]
-        |val countryLanguageQuery = Table[CountryLanguage]
+        |val countryQuery = TableQuery[Country]
+        |val cityQuery = TableQuery[City]
+        |val countryLanguageQuery = TableQuery[CountryLanguage]
         |
-        |val query: Executor[IO, List[(String, String, Option[String])]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
-        |  .leftJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
-        |  .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language))
+        |val query: DBIO[List[(String, String, Option[String])]] = (countryQuery join cityQuery).on((country, city) => country.code === city.countryCode)
+        |  .leftJoin(countryLanguageQuery).on((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
+        |  .select((country, city, countryLanguage) => country.name *: city.name *: countryLanguage.language)
         |  .query
         |  .to[List]
         |""".stripMargin
@@ -247,7 +240,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -260,13 +252,13 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |  language:    String
         |) derives Table
         |
-        |val countryQuery = Table[Country]
-        |val cityQuery = Table[City]
-        |val countryLanguageQuery = Table[CountryLanguage]
+        |val countryQuery = TableQuery[Country]
+        |val cityQuery = TableQuery[City]
+        |val countryLanguageQuery = TableQuery[CountryLanguage]
         |
-        |val query: Executor[IO, List[(Option[String], Option[String], String)]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
-        |  .rightJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
-        |  .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language))
+        |val query: DBIO[List[(Option[String], Option[String], String)]] = (countryQuery join cityQuery).on((country, city) => country.code === city.countryCode)
+        |  .rightJoin(countryLanguageQuery).on((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
+        |  .select((country, city, countryLanguage) => country.name *: city.name *: countryLanguage.language)
         |  .query
         |  .to[List]
         |""".stripMargin
@@ -278,7 +270,6 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
-        |import ldbc.dsl.Executor
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -291,13 +282,13 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |  language:    Option[String]
         |) derives Table
         |
-        |val countryQuery = Table[Country]
-        |val cityQuery = Table[City]
-        |val countryLanguageQuery = Table[CountryLanguage]
+        |val countryQuery = TableQuery[Country]
+        |val cityQuery = TableQuery[City]
+        |val countryLanguageQuery = TableQuery[CountryLanguage]
         |
-        |val query: Executor[IO, List[(String, String, Option[String])]] = (countryQuery join cityQuery)((country, city) => country.code === city.countryCode)
-        |  .leftJoin(countryLanguageQuery)((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
-        |  .select((country, city, countryLanguage) => (country.name, city.name, countryLanguage.language))
+        |val query: DBIO[List[(String, String, Option[String])]] = (countryQuery join cityQuery).on((country, city) => country.code === city.countryCode)
+        |  .leftJoin(countryLanguageQuery).on((_, city, countryLanguage) => city.countryCode === countryLanguage.countryCode)
+        |  .select((country, city, countryLanguage) => country.name *: city.name *: countryLanguage.language)
         |  .query
         |  .to[List]
         |""".stripMargin
