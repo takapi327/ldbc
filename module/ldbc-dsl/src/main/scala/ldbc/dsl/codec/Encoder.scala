@@ -8,7 +8,6 @@ package ldbc.dsl.codec
 
 import java.time.*
 
-import scala.compiletime.*
 import scala.deriving.Mirror
 
 import cats.ContravariantSemigroupal
@@ -135,13 +134,6 @@ object Encoder extends TwiddleSyntax[Encoder]:
 
   given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
     encoder.to[P]
-
-  type MapToTuple[T] <: Tuple = T match
-    case EmptyTuple      => EmptyTuple
-    case h *: EmptyTuple => Encoder[h] *: EmptyTuple
-    case h *: t          => Encoder[h] *: MapToTuple[t]
-
-  inline def fold[T]: MapToTuple[T] = summonAll[MapToTuple[T]]
 
   sealed trait Encoded:
     def product(that: Encoded): Encoded
