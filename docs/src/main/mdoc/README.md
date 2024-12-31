@@ -40,14 +40,15 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 |----------------------|:---:|:------------:|:--------:|
 | `ldbc-core`          |  ✅  |      ✅       |    ✅     |
 | `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
-| `ldbc-connector`     |  ✅  |      ✅       |    ✅     |
-| `jdbc-connector`     |  ✅  |      ❌       |    ❌     |
+| `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
+| `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-dsl`           |  ✅  |      ✅       |    ✅     |
+| `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     |
+| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
-| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     |
+| `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
 | `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
 ## Quick Start
@@ -124,7 +125,7 @@ val connection: Resource[IO, Connection[IO]] =
 
 The connection process to the database can be carried out using the connections established by each of these methods.
 
-```scala
+```scala 3
 val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
   (for
     result1 <- sql"SELECT 1".toList[Int]
@@ -152,7 +153,7 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "${versi
 
 ldbc uses classes to construct queries.
 
-```scala
+```scala 3
 import ldbc.query.builder.Table
 
 case class User(
@@ -165,9 +166,9 @@ case class User(
 The next step is to create a Table using the classes you have created.
 
 ```scala
-import ldbc.query.builder.Table
+import ldbc.query.builder.TableQuery
 
-val userTable = Table[User]
+val userTable = TableQuery[User]
 ```
 
 Finally, you can use the query builder to create a query.
@@ -197,9 +198,10 @@ libraryDependencies += "@ORGANIZATION@" %%% "ldbc-schema" % "@VERSION@"
 
 The next step is to create a schema for use by the query builder.
 
-ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in definition order. Table definitions are very similar to the structure of Create statements. This makes the construction of table definitions intuitive for the user.
+ldbc maintains a one-to-one mapping between Scala models and database table definitions.
+Implementers simply define columns and write mappings to the model, similar to Slick.
 
-```scala
+```scala 3
 import ldbc.schema.*
 
 case class User(
@@ -208,16 +210,18 @@ case class User(
   age: Option[Int],
 )
 
-val userTable = Table[User]("user")(                 // CREATE TABLE `user` (
-  column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(255)),                      //   `name` VARCHAR(255) NOT NULL,
-  column("age", INT.UNSIGNED.DEFAULT(None)),         //   `age` INT unsigned DEFAULT NULL
-)                                                    // )
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = column[Long]("id")
+  def name: Column[String] = column[String]("name")
+  def age: Column[Option[Int]] = column[Option[Int]]("age")
+
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
 Finally, you can use the query builder to create a query.
 
 ```scala
+val userTable: TableQuery[UserTable] = TableQuery[UserTable]
 val result: IO[List[User]] = connection.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"

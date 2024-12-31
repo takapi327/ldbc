@@ -24,9 +24,27 @@ case class User(id: Int, name: String, email: String) derives Table
 `User`クラスは`Table`トレイトを継承しています。`Table`トレイトは`Table`クラスを継承しているため、`Table`クラスのメソッドを使用してクエリを構築することができます。
 
 ```scala
-val query = Table[User]
-  .select(user => (user.id, user.name, user.email))
+val query = TableQuery[User]
+  .select(user => user.id *: user.name *: user.email)
   .where(_.email === "alice@example.com")
+```
+
+カラム名の変更は`@Column`アノテーションを使用して行います。
+
+```scala 3
+case class User(
+  id: Int,
+  @Column("full_name") name: String,
+  email: String
+) derives Table
+```
+
+テーブル名の変更は`Table`の`derived`に引数を渡すことで行います。
+
+```scala 3
+case class User(id: Int, name: String, email: String)
+object User:
+  given Table[User] = Table.derived("users")
 ```
 
 ## SELECT
@@ -36,7 +54,7 @@ val query = Table[User]
 特定のカラムのみ取得を行うSELECT文を構築するには`select`メソッドで取得したいカラムを指定するだけです。
 
 ```scala
-val select = Table[User].select(_.id)
+val select = TableQuery[User].select(_.id)
 
 select.statement === "SELECT id FROM user"
 ```
@@ -44,7 +62,7 @@ select.statement === "SELECT id FROM user"
 複数のカラムを指定する場合は`select`メソッドで取得したいカラムを指定して指定したカラムのタプルを返すだけです。
 
 ```scala
-val select = Table[User].select(user => (user.id, user.name))
+val select = TableQuery[User].select(user => user.id *: user.name)
 
 select.statement === "SELECT id, name FROM user"
 ```
@@ -52,7 +70,7 @@ select.statement === "SELECT id, name FROM user"
 全てのカラムを指定したい場合はTableが提供する`selectAll`メソッドを使用することで構築できます。
 
 ```scala
-val select = Table[User].selectAll
+val select = TableQuery[User].selectAll
 
 select.statement === "SELECT id, name, email FROM user"
 ```
@@ -60,7 +78,7 @@ select.statement === "SELECT id, name, email FROM user"
 特定のカラムの数を取得したい場合は、指定したカラムで`count`を使用することで構築できます。　
 
 ```scala
-val select = Table[User].select(_.id.count)
+val select = TableQuery[User].select(_.id.count)
 
 select.statement === "SELECT COUNT(id) FROM user"
 ```
@@ -70,7 +88,7 @@ select.statement === "SELECT COUNT(id) FROM user"
 クエリに型安全にWhere条件を設定する方法は`where`メソッドを使用することです。
     
 ```scala
-val where = Table[User].selectAll.where(_.email === "alice@example.com")
+val where = TableQuery[User].selectAll.where(_.email === "alice@example.com")
 
 where.statement === "SELECT id, name, email FROM user WHERE email = ?"
 ```
@@ -107,8 +125,8 @@ where.statement === "SELECT id, name, email FROM user WHERE email = ?"
 `groupBy`を使用することで`select`でデータを取得する時に指定したカラム名の値を基準にグループ化することができます。
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
+val select = TableQuery[User]
+  .select(user => user.id *: user.name)
   .groupBy(_._2)
 
 select.statement === "SELECT id, name FROM user GROUP BY name"
@@ -119,8 +137,8 @@ select.statement === "SELECT id, name FROM user GROUP BY name"
 `having`を使用すると`groupBy`によってグループ化されて取得したデータに関して、取得する条件を設定することができます。
     
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
+val select = TableQuery[User]
+  .select(user => user.id *: user.name)
   .groupBy(_._2)
   .having(_._1 > 1)
 
@@ -134,8 +152,8 @@ select.statement === "SELECT id, name FROM user GROUP BY name HAVING id > ?"
 `orderBy`を使用することで`select`でデータを取得する時に指定したカラム名の値を基準に昇順、降順で並び替えることができます。
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
+val select = TableQuery[User]
+  .select(user => user.id *: user.name)
   .orderBy(_.id)
 
 select.statement === "SELECT id, name FROM user ORDER BY id"
@@ -144,8 +162,8 @@ select.statement === "SELECT id, name FROM user ORDER BY id"
 昇順/降順を指定したい場合は、それぞれカラムに対して `asc`/`desc`を呼び出すだけです。
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
+val select = TableQuery[User]
+  .select(user => user.id *: user.name)
   .orderBy(_.id.asc)
 
 select.statement === "SELECT id, name FROM user ORDER BY id ASC"
@@ -158,8 +176,8 @@ select.statement === "SELECT id, name FROM user ORDER BY id ASC"
 `limit`を設定すると`select`を実行した時に取得するデータの行数の上限を設定することができ、`offset`を設定すると何番目からのデータを取得するのかを指定することができます。
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
+val select = TableQuery[User]
+  .select(user => user.id *: user.name)
   .limit(1)
   .offset(1)
     
@@ -183,9 +201,9 @@ case class Order(
   quantity:  Int
 ) derives Table
 
-val userTable    = Table[User]
-val productTable = Table[Product]
-val orderTable   = Table[Order]
+val userTable    = TableQuery[User]
+val productTable = TableQuery[Product]
+val orderTable   = TableQuery[Order]
 ```
 
 まずシンプルなJoinを行いたい場合は、`join`を使用します。
@@ -194,8 +212,8 @@ val orderTable   = Table[Order]
 Join後の`select`は2つのテーブルからカラムを指定することになります。
     
 ```scala
-val join = userTable.join(orderTable)((user, order) => user.id === order.userId)
-  .select((user, order) => (user.name, order.quantity))
+val join = userTable.join(orderTable).on((user, order) => user.id === order.userId)
+  .select((user, order) => user.name *: order.quantity)
 
 join.statement = "SELECT user.`name`, order.`quantity` FROM user JOIN order ON user.id = order.user_id"
 ```
@@ -204,8 +222,8 @@ join.statement = "SELECT user.`name`, order.`quantity` FROM user JOIN order ON u
 `join`が`leftJoin`に変わっただけで実装自体はシンプルなJoinの時と同じになります。
 
 ```scala 3
-val leftJoin = userTable.leftJoin(orderTable)((user, order) => user.id === order.userId)
-  .select((user, order) => (user.name, order.quantity))
+val leftJoin = userTable.leftJoin(orderTable).on((user, order) => user.id === order.userId)
+  .select((user, order) => user.name *: order.quantity)
 
 join.statement = "SELECT user.`name`, order.`quantity` FROM user LEFT JOIN order ON user.id = order.user_id"
 ```
@@ -215,16 +233,16 @@ join.statement = "SELECT user.`name`, order.`quantity` FROM user LEFT JOIN order
 そのためldbcでは`leftJoin`に渡されたテーブルから取得するカラムのレコードは全てOption型になります。
 
 ```scala 3
-val leftJoin = userTable.leftJoin(orderTable)((user, order) => user.id === order.userId)
-  .select((user, order) => (user.name, order.quantity)) // (String, Option[Int])
+val leftJoin = userTable.leftJoin(orderTable).on((user, order) => user.id === order.userId)
+  .select((user, order) => user.name *: order.quantity) // (String, Option[Int])
 ```
 
 次に右外部結合であるRight Joinを行いたい場合は、`rightJoin`を使用します。
 こちらも`join`が`rightJoin`に変わっただけで実装自体はシンプルなJoinの時と同じになります。
 
 ```scala 3
-val rightJoin = orderTable.rightJoin(userTable)((order, user) => order.userId === user.id)
-  .select((order, user) => (order.quantity, user.name))
+val rightJoin = orderTable.rightJoin(userTable).on((order, user) => order.userId === user.id)
+  .select((order, user) => order.quantity *: user.name)
 
 join.statement = "SELECT order.`quantity`, user.`name` FROM order RIGHT JOIN user ON order.user_id = user.id"
 ```
@@ -234,17 +252,17 @@ join.statement = "SELECT order.`quantity`, user.`name` FROM order RIGHT JOIN use
 そのためldbcでは`rightJoin`を使用した結合元のテーブルから取得するカラムのレコードは全てOption型になります。
 
 ```scala 3
-val rightJoin = orderTable.rightJoin(userTable)((order, user) => order.userId === user.id)
-  .select((order, user) => (order.quantity, user.name)) // (Option[Int], String)
+val rightJoin = orderTable.rightJoin(userTable).on((order, user) => order.userId === user.id)
+  .select((order, user) => order.quantity *: user.name) // (Option[Int], String)
 ```
 
 複数のJoinを行いたい場合は、メソッドチェーンで任意のJoinメソッドを呼ぶことで実現することができます。
 
 ```scala 3
 val join = 
-  (productTable join orderTable)((product, order) => product.id === order.productId)
-    .rightJoin(userTable)((_, order, user) => order.userId === user.id)
-    .select((product, order, user) => (product.name, order.quantity, user.name)) // (Option[String], Option[Int], String)]
+  (productTable join orderTable).on((product, order) => product.id === order.productId)
+    .rightJoin(userTable).on((_, order, user) => order.userId === user.id)
+    .select((product, order, user) => product.name *: order.quantity *: user.name) // (Option[String], Option[Int], String)]
 
 join.statement =
   """
@@ -294,7 +312,7 @@ insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), 
 これはAutoIncrementやDefault値を持つカラムへのデータ挿入を除外したい場合などに使用できます。
 
 ```scala 3
-val insert = user.insertInto(user => (user.name, user.email)).values(("name 3", "email+3@example.com"))
+val insert = user.insertInto(user => user.name *: user.email).values(("name 3", "email+3@example.com"))
 
 insert.statement === "INSERT INTO user (`name`, `email`) VALUES(?, ?)"
 ```
@@ -302,7 +320,7 @@ insert.statement === "INSERT INTO user (`name`, `email`) VALUES(?, ?)"
 複数のデータを挿入したい場合は、`values`にタプルの配列を渡すことで構築できます。
 
 ```scala 3
-val insert = user.insertInto(user => (user.name, user.email)).values(List(("name 4", "email+4@example.com"), ("name 5", "email+5@example.com")))
+val insert = user.insertInto(user => user.name *: user.email).values(List(("name 4", "email+4@example.com"), ("name 5", "email+5@example.com")))
 
 insert.statement === "INSERT INTO user (`name`, `email`) VALUES(?, ?), (?, ?)"
 ```
@@ -334,7 +352,7 @@ ON DUPLICATE KEY UPDATE 句を指定し行を挿入すると、UNIQUEインデ�
 ldbcでこの処理を実現する方法は、`Insert`に対して`onDuplicateKeyUpdate`を使用することです。
 
 ```scala
-val insert = user.insert((9, "name", "email+9@example.com")).onDuplicateKeyUpdate(v => (v.name, v.email))
+val insert = user.insert((9, "name", "email+9@example.com")).onDuplicateKeyUpdate(v => v.name *: v.email)
 
 insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `name` = new_user.`name`, `email` = new_user.`email`"
 ```
@@ -346,29 +364,23 @@ insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?) A
 `update`メソッドの第1引数にはテーブルのカラム名ではなくモデルのプロパティ名を指定し、第2引数に更新したい値を渡します。第2引数に渡す値の型は第1引数で指定したプロパティの型と同じである必要があります。
 
 ```scala
-val update = user.update("name", "update name")
+val update = user.update(_.name, "update name")
 
 update.statement === "UPDATE user SET name = ?"
-```
-
-第1引数に存在しないプロパティ名を指定した場合コンパイルエラーとなります。
-
-```scala 3
-val update = user.update("hoge", "update name") // Compile error
 ```
 
 複数のカラムを更新したい場合は`set`メソッドを使用します。
 
 ```scala 3
-val update = user.update("name", "update name").set("email", "update-email@example.com")
+val update = user.update(u => u.name *: u.email, ("update name", "update-email@example.com"))
 
 update.statement === "UPDATE user SET name = ?, email = ?"
 ```
 
-`set`メソッドには条件に応じてクエリを生成させないようにすることもできます。
+`set`メソッドでは条件に応じてクエリを生成させないようにすることもできます。
 
 ```scala 3
-val update = user.update("name", "update name").set("email", "update-email@example.com", false)
+val update = user.update(_.name, "update name").set(_.email, "update-email@example.com", false)
 
 update.statement === "UPDATE user SET name = ?"
 ```
