@@ -16,6 +16,12 @@ import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
 
+/**
+ * Symmetric encoder and decoder of MySQL data to and from Scala types.
+ *
+ * @tparam A
+ *   Types handled in Scala
+ */
 trait Codec[A] extends Encoder[A], Decoder[A]:
   self =>
 

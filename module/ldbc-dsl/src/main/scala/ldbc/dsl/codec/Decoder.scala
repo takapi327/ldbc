@@ -17,7 +17,7 @@ import org.typelevel.twiddles.TwiddleSyntax
 import ldbc.sql.ResultSet
 
 /**
- * Class to get the DataType that matches the Scala type information from the ResultSet.
+ * Trait to get the DataType that matches the Scala type information from the ResultSet.
  *
  * @tparam A
  *   Scala types that match SQL DataType
