@@ -11,19 +11,18 @@ package ldbc.dsl.exception
  */
 class DecodeFailureException(
   message: String,
-  offset: Int
+  offset:  Int
 ) extends LdbcException(
-  message,
-  Some(s"An attempt to read a value from the ${offset}th position of the ResultSet failed due to an error."),
-  Some(
-    """
+    message,
+    Some(s"An attempt to read a value from the ${ offset }th position of the ResultSet failed due to an error."),
+    Some("""
       |      The number of records retrieved from MySQL may not match the number of Decoders.
       |      Try building a Decoder that matches the number and type of cases to be acquired as follows.
       |
       |      given Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
       |      sql"SELECT c1, c2 FROM table".query[(Int, String)]
       |""".stripMargin)
-):
+  ):
 
   override def title: String = "Decode Failure Exception"
   override protected def width = 180

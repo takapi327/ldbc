@@ -12,10 +12,10 @@ import cats.syntax.all.*
  * The superclass of all exceptions thrown by the ldbc DSL.
  */
 class LdbcException(
-                     message: String,
-                     detail:     Option[String]            = None,
-                     hint:       Option[String]            = None,
-                   ) extends Exception:
+  message: String,
+  detail:  Option[String] = None,
+  hint:    Option[String] = None
+) extends Exception:
 
   def title: String = "ldbc Exception"
 
@@ -34,22 +34,25 @@ class LdbcException(
     else
       "\n|" +
         label + Console.CYAN + wrap(
-        width - label.length,
-        s,
-        s"${Console.RESET}\n${Console.CYAN}" + label.map(_ => ' ')
-      ) + Console.RESET
+          width - label.length,
+          s,
+          s"${ Console.RESET }\n${ Console.CYAN }" + label.map(_ => ' ')
+        ) + Console.RESET
 
   protected def header: String = title
 
   protected def body: String =
     s"""
-       |${ labeled("  Problem: ", message) }${ labeled("  Detail: ", detail.orEmpty) }${ labeled("    Hint: ", hint.orEmpty) }
+       |${ labeled("  Problem: ", message) }${ labeled("  Detail: ", detail.orEmpty) }${ labeled(
+        "    Hint: ",
+        hint.orEmpty
+      ) }
        |""".stripMargin
-  
+
   protected def sections: List[String] =
     List(header, body)
 
   final override def getMessage: String =
     sections.combineAll.linesIterator
       .map("🔥  " + _)
-      .mkString("\n", "\n", s"\n\n${getClass.getName}: $message")
+      .mkString("\n", "\n", s"\n\n${ getClass.getName }: $message")
