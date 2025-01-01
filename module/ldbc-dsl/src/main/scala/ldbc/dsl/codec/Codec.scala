@@ -49,9 +49,9 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
       self.decode(resultSet, index).map(f)
 
   /** Contramap inputs from, and map decoded results to a new type `B` or an error, yielding a `Codec[B]`. */
-  def eimap[B](f: A => Either[String, B])(g: B => Either[String, A]): Codec[B] = new Codec[B]:
+  def eimap[B](f: A => Either[String, B])(g: B => A): Codec[B] = new Codec[B]:
     override def offset:           Int             = self.offset
-    override def encode(value: B): Encoder.Encoded = g(value).fold(Encoder.Encoded.failure(_), self.encode)
+    override def encode(value: B): Encoder.Encoded = self.encode(g(value))
     override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, B] =
       self.decode(resultSet, index).flatMap(f(_).leftMap(Decoder.Error(offset, _)))
 
