@@ -12,6 +12,7 @@ import cats.syntax.all.*
 import ldbc.sql.ResultSet
 import ldbc.dsl.util.FactoryCompat
 import ldbc.dsl.codec.Decoder
+import ldbc.dsl.exception.DecodeFailureException
 
 /**
  * Trait for generating the specified data type from a ResultSet.
@@ -36,8 +37,6 @@ trait ResultSetConsumer[F[_], T]:
 
 object ResultSetConsumer:
 
-  type Read[T] = ResultSet => T
-
   private val FIRST_OFFSET = 1
 
   given [F[_]: Monad, T](using
@@ -55,7 +54,7 @@ object ResultSetConsumer:
       if resultSet.next() then
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => Monad[F].pure(Some(value))
-          case Left(error)  => ev.raiseError(new IllegalArgumentException(error.message))
+          case Left(error)  => ev.raiseError(new DecodeFailureException(error.message, error.offset))
       else Monad[F].pure(None)
 
   given [F[_]: Monad, T, G[_]](using
@@ -67,5 +66,5 @@ object ResultSetConsumer:
       while resultSet.next() do
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => builder += value
-          case Left(error)  => throw new IllegalArgumentException(error.message)
+          case Left(error)  => throw new DecodeFailureException(error.message, error.offset)
       Monad[F].pure(builder.result())

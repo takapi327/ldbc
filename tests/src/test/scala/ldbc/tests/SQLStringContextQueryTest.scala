@@ -20,6 +20,7 @@ import munit.CatsEffectSuite
 
 import ldbc.sql.Connection
 import ldbc.connector.SSL
+import ldbc.dsl.exception.DecodeFailureException
 import ldbc.dsl.io.*
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
@@ -734,7 +735,7 @@ trait SQLStringContextQueryTest extends CatsEffectSuite:
   ) {
     case class City(id: Int, name: String, age: Int)
 
-    interceptIO[IllegalArgumentException](
+    interceptIO[DecodeFailureException](
       connection.use { conn =>
         sql"SELECT Id, Name FROM city LIMIT 1"
           .query[City]
