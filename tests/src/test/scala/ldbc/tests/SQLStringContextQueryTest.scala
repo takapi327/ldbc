@@ -45,11 +45,6 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Resource[IO, Connection[IO]] =
     Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
 
-  test(
-    "If the number of columns retrieved is different from the number of fields in the class to be mapped, an exception is raised."
-  ) {
-    case class City(id: Int, name: String, age: Int)
-
 trait SQLStringContextQueryTest extends CatsEffectSuite:
 
   given Tracer[IO] = Tracer.noop[IO]
