@@ -13,7 +13,7 @@ class DecodeFailureException(
   message:   String,
   offset:    Int,
   statement: String,
-  cause: Option[Throwable] = None
+  cause:     Option[Throwable] = None
 ) extends LdbcException(
     message,
     cause.map(_ => s"""
@@ -23,7 +23,7 @@ class DecodeFailureException(
          |      ${ Console.GREEN + statement + Console.RESET }
          |""".stripMargin),
     cause.map(_ =>
-    s"""${ Console.CYAN }Try building a Decoder that matches the number and type of cases to be acquired as follows.
+      s"""${ Console.CYAN }Try building a Decoder that matches the number and type of cases to be acquired as follows.
       |
       |      given Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
       |      ${ Console.RED + " " * 28 }^${ Console.RESET }${ Console.RED + " " * 8 }^${ Console.CYAN }
