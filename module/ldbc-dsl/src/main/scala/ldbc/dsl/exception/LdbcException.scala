@@ -43,7 +43,7 @@ class LdbcException(
 
   protected def body: String =
     s"""
-       |${ labeled("  Problem: ", message) }${ "\n|  Detail: " + detail.orEmpty }${ "\n|    Hint: " + hint.orEmpty }
+       |${ labeled("  Problem: ", message) }${ detail.map(str => "\n|  Detail: " + str).getOrElse("") }${ hint.map(str => "\n|    Hint: " + str).getOrElse("") }
        |""".stripMargin
 
   protected def sections: List[String] =

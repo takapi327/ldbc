@@ -56,7 +56,7 @@ object ResultSetConsumer:
       if resultSet.next() then
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => Monad[F].pure(Some(value))
-          case Left(error)  => ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement))
+          case Left(error)  => ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
       else Monad[F].pure(None)
 
   given [F[_]: Monad, T, G[_]](using
@@ -68,5 +68,5 @@ object ResultSetConsumer:
       while resultSet.next() do
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => builder += value
-          case Left(error)  => throw new DecodeFailureException(error.message, decoder.offset, statement)
+          case Left(error)  => throw new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
       Monad[F].pure(builder.result())

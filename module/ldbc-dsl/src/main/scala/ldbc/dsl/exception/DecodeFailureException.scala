@@ -12,17 +12,18 @@ package ldbc.dsl.exception
 class DecodeFailureException(
   message:   String,
   offset:    Int,
-  statement: String
+  statement: String,
+  cause: Option[Throwable] = None
 ) extends LdbcException(
     message,
-    Some(s"""
+    cause.map(_ => s"""
          |    ${ Console.CYAN }I tried to read a value from the ${ Console.RED + offset + Console.CYAN } th position of the ResultSet,
          |    but it does not seem to match the number I am trying to retrieve from the database.
          |
          |      ${ Console.GREEN + statement + Console.RESET }
          |""".stripMargin),
-    Some(
-      s"""${ Console.CYAN }Try building a Decoder that matches the number and type of cases to be acquired as follows.
+    cause.map(_ =>
+    s"""${ Console.CYAN }Try building a Decoder that matches the number and type of cases to be acquired as follows.
       |
       |      given Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
       |      ${ Console.RED + " " * 28 }^${ Console.RESET }${ Console.RED + " " * 8 }^${ Console.CYAN }
