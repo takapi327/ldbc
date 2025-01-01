@@ -60,7 +60,8 @@ package object syntax:
               resultSet <-
                 paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() >> prepareStatement
                   .getGeneratedKeys()
-              result <- summon[ResultSetConsumer[F, T]].consume(resultSet, command.statement) <* prepareStatement.close()
+              result <-
+                summon[ResultSetConsumer[F, T]].consume(resultSet, command.statement) <* prepareStatement.close()
             yield result
         )
 
