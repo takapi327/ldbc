@@ -37,12 +37,12 @@ trait ResultSetConsumer[F[_], T]:
 object ResultSetConsumer:
 
   type Read[T] = ResultSet => T
-  
+
   private val FIRST_OFFSET = 1
 
   given [F[_]: Monad, T](using
     consumer: ResultSetConsumer[F, Option[T]],
-                         ev:    MonadThrow[F]
+    ev:       MonadThrow[F]
   ): ResultSetConsumer[F, T] with
     override def consume(resultSet: ResultSet): F[T] =
       consumer.consume(resultSet).flatMap {
@@ -55,7 +55,7 @@ object ResultSetConsumer:
       if resultSet.next() then
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => Monad[F].pure(Some(value))
-          case Left(error)      => ev.raiseError(new IllegalArgumentException(error.message))
+          case Left(error)  => ev.raiseError(new IllegalArgumentException(error.message))
       else Monad[F].pure(None)
 
   given [F[_]: Monad, T, G[_]](using
@@ -67,5 +67,5 @@ object ResultSetConsumer:
       while resultSet.next() do
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => builder += value
-          case Left(error)      => throw new IllegalArgumentException(error.message)
+          case Left(error)  => throw new IllegalArgumentException(error.message)
       Monad[F].pure(builder.result())

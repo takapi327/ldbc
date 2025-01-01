@@ -685,8 +685,8 @@ object Column extends TwiddleSyntax[Column]:
     override def alias:            Option[String] = None
     override def as(name: String): Column[A]      = this
     override def decoder: Decoder[A] = new Decoder[A]:
-      override def offset:                                   Int = 0
-      override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, A]   = Right(value)
+      override def offset:                                   Int                      = 0
+      override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, A] = Right(value)
     override def encoder:                     Encoder[A]      = (value: A) => Encoder.Encoded.success(List.empty)
     override def insertStatement:             String          = ""
     override def updateStatement:             String          = ""
