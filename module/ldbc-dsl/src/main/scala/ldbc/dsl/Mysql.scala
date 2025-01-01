@@ -87,6 +87,6 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
           prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
           resultSet <- paramBind(prepareStatement, params) >> prepareStatement.executeUpdate() >> prepareStatement
                          .getGeneratedKeys()
-          result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
+          result <- summon[ResultSetConsumer[F, T]].consume(resultSet, statement) <* prepareStatement.close()
         yield result
     )

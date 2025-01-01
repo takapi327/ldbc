@@ -7,20 +7,27 @@
 package ldbc.dsl.exception
 
 /**
- * The subclass of [[LdbcException]] thrown when an attempt to read a value from the {@code ResultSet} failed due to an error.
+ * The subclass of [[LdbcException]] thrown when an attempt to read a value from the [[ldbc.sql.ResultSet]] failed due to an error.
  */
 class DecodeFailureException(
   message: String,
-  offset:  Int
+  offset:  Int,
+  statement: String
 ) extends LdbcException(
     message,
-    Some(s"An attempt to read a value from the ${ offset }th position of the ResultSet failed due to an error."),
-    Some("""
-      |      The number of records retrieved from MySQL may not match the number of Decoders.
-      |      Try building a Decoder that matches the number and type of cases to be acquired as follows.
+    Some(
+      s"""
+         |    ${Console.CYAN}I tried to read a value from the ${Console.RED + offset + Console.CYAN} th position of the ResultSet,
+         |    but it does not seem to match the number I am trying to retrieve from the database.
+         |
+         |      ${Console.GREEN + statement +Console.RESET}
+         |""".stripMargin),
+    Some(s"""${Console.CYAN}Try building a Decoder that matches the number and type of cases to be acquired as follows.
       |
       |      given Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
-      |      sql"SELECT c1, c2 FROM table".query[(Int, String)]
+      |      ${Console.RED + " " * 28}^${Console.RESET}${Console.RED + " " * 8}^${Console.CYAN}
+      |      sql"SELECT c1, c2 FROM table".query[(Int, String)]${Console.RESET}
+      |      ${Console.RED + " " * 22}^${Console.RESET}${Console.RED + " " * 3}^${Console.RESET}
       |""".stripMargin)
   ):
 

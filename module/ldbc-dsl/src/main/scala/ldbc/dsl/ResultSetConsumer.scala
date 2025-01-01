@@ -33,7 +33,7 @@ trait ResultSetConsumer[F[_], T]:
    * @return
    *   Type you want to build with data obtained from ResultSet
    */
-  def consume(resultSet: ResultSet): F[T]
+  def consume(resultSet: ResultSet, statement: String): F[T]
 
 object ResultSetConsumer:
 
@@ -43,28 +43,28 @@ object ResultSetConsumer:
     consumer: ResultSetConsumer[F, Option[T]],
     ev:       MonadThrow[F]
   ): ResultSetConsumer[F, T] with
-    override def consume(resultSet: ResultSet): F[T] =
-      consumer.consume(resultSet).flatMap {
+    override def consume(resultSet: ResultSet, statement: String): F[T] =
+      consumer.consume(resultSet, statement).flatMap {
         case Some(value) => ev.pure(value)
         case None        => ev.raiseError(new NoSuchElementException(""))
       }
 
   given [F[_]: Monad, T](using decoder: Decoder[T], ev: MonadThrow[F]): ResultSetConsumer[F, Option[T]] with
-    override def consume(resultSet: ResultSet): F[Option[T]] =
+    override def consume(resultSet: ResultSet, statement: String): F[Option[T]] =
       if resultSet.next() then
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => Monad[F].pure(Some(value))
-          case Left(error)  => ev.raiseError(new DecodeFailureException(error.message, error.offset))
+          case Left(error)  => ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement))
       else Monad[F].pure(None)
 
   given [F[_]: Monad, T, G[_]](using
     decoder:       Decoder[T],
     factoryCompat: FactoryCompat[T, G[T]]
   ): ResultSetConsumer[F, G[T]] with
-    override def consume(resultSet: ResultSet): F[G[T]] =
+    override def consume(resultSet: ResultSet, statement: String): F[G[T]] =
       val builder = factoryCompat.newBuilder
       while resultSet.next() do
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => builder += value
-          case Left(error)  => throw new DecodeFailureException(error.message, error.offset)
+          case Left(error)  => throw new DecodeFailureException(error.message, decoder.offset, statement)
       Monad[F].pure(builder.result())
