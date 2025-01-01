@@ -9,6 +9,7 @@ package ldbc.dsl.codec
 import scala.deriving.Mirror
 
 import cats.{Applicative, Eq}
+import cats.syntax.all.*
 
 import org.typelevel.twiddles.TwiddleSyntax
 
@@ -43,6 +44,11 @@ trait Decoder[A]:
   def map[B](f: A => B): Decoder[B] = new Decoder[B]:
     override def offset:                                   Int = self.offset
     override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, B]   = self.decode(resultSet, index).map(f)
+
+  /** Map decoded results to a new type `B` or an error, yielding a `Decoder[B]`. */
+  def emap[B](f: A => Either[String, B]): Decoder[B] = new Decoder[B]:
+    override def offset:                                   Int = self.offset
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, B]   = self.decode(resultSet, index).flatMap(f(_).leftMap(Decoder.Error(offset, _)))
 
   /** `Decoder` is semigroupal: a pair of decoders make a decoder for a pair. */
   def product[B](fb: Decoder[B]): Decoder[(A, B)] = new Decoder[(A, B)]:
