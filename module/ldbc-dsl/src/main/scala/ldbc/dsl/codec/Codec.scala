@@ -11,6 +11,7 @@ import java.time.*
 import scala.deriving.Mirror
 
 import cats.InvariantSemigroupal
+import cats.syntax.all.*
 
 import org.typelevel.twiddles.TwiddleSyntax
 
@@ -36,97 +37,122 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
     private val pe = self.asEncoder product fb.asEncoder
     private val pd = self.asDecoder product fb.asDecoder
 
-    override def offset:                                   Int             = self.offset + fb.offset
-    override def encode(value:     (A, B)):                Encoder.Encoded = pe.encode(value)
-    override def decode(resultSet: ResultSet, index: Int): (A, B)          = pd.decode(resultSet, index)
+    override def offset:                                   Int                           = self.offset + fb.offset
+    override def encode(value:     (A, B)):                Encoder.Encoded               = pe.encode(value)
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, (A, B)] = pd.decode(resultSet, index)
 
   /** Contramap inputs from, and map outputs to, a new type `B`, yielding a `Codec[B]`. */
   def imap[B](f: A => B)(g: B => A): Codec[B] = new Codec[B]:
-    override def offset:                                   Int             = self.offset
-    override def encode(value:     B):                     Encoder.Encoded = self.encode(g(value))
-    override def decode(resultSet: ResultSet, index: Int): B               = f(self.decode(resultSet, index))
+    override def offset:           Int             = self.offset
+    override def encode(value: B): Encoder.Encoded = self.encode(g(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, B] =
+      self.decode(resultSet, index).map(f)
+
+  /** Contramap inputs from, and map decoded results to a new type `B` or an error, yielding a `Codec[B]`. */
+  def eimap[B](f: A => Either[String, B])(g: B => A): Codec[B] = new Codec[B]:
+    override def offset:           Int             = self.offset
+    override def encode(value: B): Encoder.Encoded = self.encode(g(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, B] =
+      self.decode(resultSet, index).flatMap(f(_).leftMap(Decoder.Error(offset, _)))
 
   /** Lift this `Codec` into `Option`, where `None` is mapped to and from a vector of `NULL`. */
   override def opt: Codec[Option[A]] = new Codec[Option[A]]:
     override def offset: Int = self.offset
     override def encode(value: Option[A]): Encoder.Encoded =
       value.fold(Encoder.Encoded.success(List(None)))(self.encode)
-    override def decode(resultSet: ResultSet, index: Int): Option[A] =
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Option[A]] =
       val value = self.decode(resultSet, index)
-      if resultSet.wasNull() then None else Some(value)
+      if resultSet.wasNull() then Right(None) else value.map(Some(_))
 
 object Codec extends TwiddleSyntax[Codec]:
 
   def apply[A](using codec: Codec[A]): Codec[A] = codec
+
+  private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
+    try Right(func)
+    catch case ex: Throwable => Left(Decoder.Error(offset, ex.getMessage, Some(ex)))
 
   given InvariantSemigroupal[Codec] with
     override def imap[A, B](fa:    Codec[A])(f:  A => B)(g: B => A): Codec[B]      = fa.imap(f)(g)
     override def product[A, B](fa: Codec[A], fb: Codec[B]):          Codec[(A, B)] = fa product fb
 
   given Codec[Boolean] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Boolean):               Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Boolean         = resultSet.getBoolean(index)
+    override def offset:                 Int             = 1
+    override def encode(value: Boolean): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Boolean] =
+      readCatchError(offset, resultSet.getBoolean(index))
 
   given Codec[Byte] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Byte):                  Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Byte            = resultSet.getByte(index)
+    override def offset:              Int             = 1
+    override def encode(value: Byte): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Byte] =
+      readCatchError(offset, resultSet.getByte(index))
 
   given Codec[Short] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Short):                 Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Short           = resultSet.getShort(index)
+    override def offset:               Int             = 1
+    override def encode(value: Short): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Short] =
+      readCatchError(offset, resultSet.getShort(index))
 
   given Codec[Int] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Int):                   Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Int             = resultSet.getInt(index)
+    override def offset:             Int             = 1
+    override def encode(value: Int): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Int] =
+      readCatchError(offset, resultSet.getInt(index))
 
   given Codec[Long] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Long):                  Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Long            = resultSet.getLong(index)
+    override def offset:              Int             = 1
+    override def encode(value: Long): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Long] =
+      readCatchError(offset, resultSet.getLong(index))
 
   given Codec[Float] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Float):                 Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Float           = resultSet.getFloat(index)
+    override def offset:               Int             = 1
+    override def encode(value: Float): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Float] =
+      readCatchError(offset, resultSet.getFloat(index))
 
   given Codec[Double] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Double):                Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Double          = resultSet.getDouble(index)
+    override def offset:                Int             = 1
+    override def encode(value: Double): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Double] =
+      readCatchError(offset, resultSet.getDouble(index))
 
   given Codec[BigDecimal] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     BigDecimal):            Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): BigDecimal      = resultSet.getBigDecimal(index)
+    override def offset:                    Int             = 1
+    override def encode(value: BigDecimal): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, BigDecimal] =
+      readCatchError(offset, resultSet.getBigDecimal(index))
 
   given Codec[String] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     String):                Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): String          = resultSet.getString(index)
+    override def offset:                Int             = 1
+    override def encode(value: String): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, String] =
+      readCatchError(offset, resultSet.getString(index))
 
   given Codec[Array[Byte]] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     Array[Byte]):           Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): Array[Byte]     = resultSet.getBytes(index)
+    override def offset:                     Int             = 1
+    override def encode(value: Array[Byte]): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, Array[Byte]] =
+      readCatchError(offset, resultSet.getBytes(index))
 
   given Codec[LocalTime] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     LocalTime):             Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): LocalTime       = resultSet.getTime(index)
+    override def offset:                   Int             = 1
+    override def encode(value: LocalTime): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, LocalTime] =
+      readCatchError(offset, resultSet.getTime(index))
 
   given Codec[LocalDate] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     LocalDate):             Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): LocalDate       = resultSet.getDate(index)
+    override def offset:                   Int             = 1
+    override def encode(value: LocalDate): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, LocalDate] =
+      readCatchError(offset, resultSet.getDate(index))
 
   given Codec[LocalDateTime] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     LocalDateTime):         Encoder.Encoded = Encoder.Encoded.success(List(value))
-    override def decode(resultSet: ResultSet, index: Int): LocalDateTime   = resultSet.getTimestamp(index)
+    override def offset:                       Int             = 1
+    override def encode(value: LocalDateTime): Encoder.Encoded = Encoder.Encoded.success(List(value))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, LocalDateTime] =
+      readCatchError(offset, resultSet.getTimestamp(index))
 
   given [A](using codec: Codec[Int]): Codec[Year] =
     codec.imap(Year.of)(_.getValue)
@@ -138,9 +164,9 @@ object Codec extends TwiddleSyntax[Codec]:
     codec.imap(str => if str == null then null else BigInt(str))(_.toString)
 
   given Codec[None.type] with
-    override def offset:                                   Int             = 1
-    override def encode(value:     None.type):             Encoder.Encoded = Encoder.Encoded.success(List(None))
-    override def decode(resultSet: ResultSet, index: Int): None.type       = None
+    override def offset:                   Int             = 1
+    override def encode(value: None.type): Encoder.Encoded = Encoder.Encoded.success(List(None))
+    override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, None.type] = Right(None)
 
   given [A](using codec: Codec[A]): Codec[Option[A]] = codec.opt
 

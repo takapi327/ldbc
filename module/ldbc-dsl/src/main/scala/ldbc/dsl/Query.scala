@@ -54,7 +54,7 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
-            result           <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
+            result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet, statement) <* prepareStatement.close()
           yield result
       )
 
@@ -66,6 +66,6 @@ object Query:
           for
             prepareStatement <- connection.prepareStatement(statement)
             resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
-            result           <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
+            result <- summon[ResultSetConsumer[F, T]].consume(resultSet, statement) <* prepareStatement.close()
           yield result
       )

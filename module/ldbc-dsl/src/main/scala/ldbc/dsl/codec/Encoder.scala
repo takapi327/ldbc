@@ -38,7 +38,7 @@ trait Encoder[A]:
   def contramap[B](func: B => A): Encoder[B] = (value: B) => encode(func(value))
 
   /** Map outputs to a new type `B`, yielding an `Encoder[B]`. */
-  def either[B](func: B => Either[String, A]): Encoder[B] = (value: B) =>
+  def contraemap[B](func: B => Either[String, A]): Encoder[B] = (value: B) =>
     func(value) match
       case Right(value) => encode(value)
       case Left(error)  => Encoder.Encoded.failure(error)
