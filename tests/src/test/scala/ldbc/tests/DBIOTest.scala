@@ -33,7 +33,7 @@ class DBIOTest extends CatsEffectSuite:
     val program = DBIO.pure[IO, Int](1)
     assertIO(
       connection.use { conn =>
-        program.execute(conn)
+        program.run(conn)
       },
       1
     )
@@ -45,7 +45,7 @@ class DBIOTest extends CatsEffectSuite:
     val program3 = program2.ap(program1)
     assertIO(
       connection.use { conn =>
-        program3.execute(conn)
+        program3.run(conn)
       },
       2
     )
@@ -56,7 +56,7 @@ class DBIOTest extends CatsEffectSuite:
     val program2 = program1.map(_ + 1)
     assertIO(
       connection.use { conn =>
-        program2.execute(conn)
+        program2.run(conn)
       },
       2
     )
@@ -67,7 +67,7 @@ class DBIOTest extends CatsEffectSuite:
     val program2 = program1.flatMap(n => DBIO.pure[IO, Int](n + 1))
     assertIO(
       connection.use { conn =>
-        program2.execute(conn)
+        program2.run(conn)
       },
       2
     )
@@ -78,7 +78,7 @@ class DBIOTest extends CatsEffectSuite:
     val program2 = program1.tailRecM[DBIO, String](_.map(n => Right(n.toString)))
     assertIO(
       connection.use { conn =>
-        program2.execute(conn)
+        program2.run(conn)
       },
       "1"
     )
@@ -88,7 +88,7 @@ class DBIOTest extends CatsEffectSuite:
     val program = DBIO.raiseError[IO, Int](new Exception("error"))
     interceptMessageIO[Exception]("error")(
       connection.use { conn =>
-        program.execute(conn)
+        program.run(conn)
       }
     )
   }
@@ -98,7 +98,7 @@ class DBIOTest extends CatsEffectSuite:
     val program2 = program1.handleErrorWith(e => DBIO.pure[IO, Int](0))
     assertIO(
       connection.use { conn =>
-        program2.execute(conn)
+        program2.run(conn)
       },
       0
     )
@@ -108,7 +108,7 @@ class DBIOTest extends CatsEffectSuite:
     val program = DBIO.pure[IO, Int](1)
     assertIO(
       connection.use { conn =>
-        program.attempt.execute(conn)
+        program.attempt.run(conn)
       },
       Right(1)
     )
@@ -118,7 +118,7 @@ class DBIOTest extends CatsEffectSuite:
     val program: DBIO[Int] = DBIO.raiseError[IO, Int](new Exception("error"))
     assertIOBoolean(
       connection.use { conn =>
-        program.attempt.execute(conn).map(_.isLeft)
+        program.attempt.run(conn).map(_.isLeft)
       }
     )
   }
