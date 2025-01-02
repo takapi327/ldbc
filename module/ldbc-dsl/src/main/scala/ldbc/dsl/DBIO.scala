@@ -6,7 +6,7 @@
 
 package ldbc.dsl
 
-import cats.{ Functor, Monad, MonadError }
+import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -24,100 +24,199 @@ import ldbc.dsl.logging.*
  * @tparam T
  *   The result type of the query
  */
-trait DBIO[F[_]: Temporal, T]:
+trait DBIO[F[_], T]:
 
-  private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[T]
+  /**
+   * The function that actually executes the query.
+   *
+   * @param connection
+   *   The connection to the database
+   * @param logHandler
+   *   The log handler
+   * @return
+   *   The result of the query
+   */
+  def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[T]
 
   /**
    * Functions for managing the processing of connections in a read-only manner.
    */
-  def readOnly(connection: Connection[F])(using LogHandler[F]): F[T] =
-    connection.setReadOnly(true) *> execute(connection) <* connection.setReadOnly(false)
+  def readOnly(connection: Connection[F])(using LogHandler[F]): F[T]
 
   /**
    * Functions to manage the processing of connections for writing.
    */
-  def commit(connection: Connection[F])(using LogHandler[F]): F[T] =
-    connection.setReadOnly(false) *> connection.setAutoCommit(true) *> execute(connection)
+  def commit(connection: Connection[F])(using LogHandler[F]): F[T]
 
   /**
    * Functions to manage the processing of connections, always rolling back.
    */
-  def rollback(connection: Connection[F])(using LogHandler[F]): F[T] =
-    connection.setReadOnly(false) *> connection.setAutoCommit(false) *> execute(connection) <* connection
-      .rollback() <* connection.setAutoCommit(true)
+  def rollback(connection: Connection[F])(using LogHandler[F]): F[T]
 
   /**
    * Functions to manage the processing of connections in a transaction.
    */
-  def transaction(connection: Connection[F])(using LogHandler[F]): F[T] =
-    val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
-
-    val release = (connection: Connection[F], exitCase: ExitCase) =>
-      (exitCase match
-        case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
-        case _                                       => connection.commit()
-      )
-        *> connection.setAutoCommit(true)
-
-    Resource
-      .makeCase(acquire)(release)
-      .use(execute)
+  def transaction(connection: Connection[F])(using LogHandler[F]): F[T]
 
 object DBIO:
 
   private[ldbc] case class Impl[F[_]: Temporal, T](
     statement: String,
     params:    List[Parameter],
-    run:       Connection[F] => F[T]
+    func:       Connection[F] => F[T]
   ) extends DBIO[F, T]:
 
-    private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
-      run(connection)
+    override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[T] =
+      func(connection)
         .onError(ex => logHandler.run(LogEvent.ProcessingFailure(statement, params.map(_.value), ex)))
         <* logHandler.run(LogEvent.Success(statement, params.map(_.value)))
 
-  def pure[F[_]: Temporal, T](value: T): DBIO[F, T] =
-    new DBIO[F, T]:
-      override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def readOnly(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def commit(connection:                Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def rollback(connection:              Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
-      override def transaction(connection:           Connection[F])(using LogHandler[F]): F[T] = Monad[F].pure(value)
+    override def readOnly(connection: Connection[F])(using LogHandler[F]): F[T] =
+      connection.setReadOnly(true) *> run(connection) <* connection.setReadOnly(false)
 
-  def raiseError[F[_]: Temporal, A](e: Throwable): DBIO[F, A] =
+    override def commit(connection: Connection[F])(using LogHandler[F]): F[T] =
+      connection.setReadOnly(false) *> connection.setAutoCommit(true) *> run(connection)
+
+    override def rollback(connection: Connection[F])(using LogHandler[F]): F[T] =
+      connection.setReadOnly(false) *> connection.setAutoCommit(false) *> run(connection) <* connection.rollback() <* connection.setAutoCommit(true)
+
+    override def transaction(connection: Connection[F])(using LogHandler[F]): F[T] =
+      val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+
+      val release = (connection: Connection[F], exitCase: ExitCase) =>
+        (exitCase match
+          case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
+          case _ => connection.commit()
+          )
+          *> connection.setAutoCommit(true)
+
+      Resource
+        .makeCase(acquire)(release)
+        .use(run)
+
+  def pure[F[_]: Monad, A](value: A): DBIO[F, A] =
     new DBIO[F, A]:
-      override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
-        MonadError[F, Throwable].raiseError(e)
+      override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[A] = Monad[F].pure(value)
+      override def readOnly(connection:              Connection[F])(using LogHandler[F]): F[A] = Monad[F].pure(value)
+      override def commit(connection:                Connection[F])(using LogHandler[F]): F[A] = Monad[F].pure(value)
+      override def rollback(connection:              Connection[F])(using LogHandler[F]): F[A] = Monad[F].pure(value)
+      override def transaction(connection:           Connection[F])(using LogHandler[F]): F[A] = Monad[F].pure(value)
 
-  given [F[_]: Temporal]: Functor[[T] =>> DBIO[F, T]] with
-    override def map[A, B](fa: DBIO[F, A])(f: A => B): DBIO[F, B] =
-      new DBIO[F, B]:
-        override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[B] =
-          fa.execute(connection).map(f)
+  def raiseError[F[_], A](e: Throwable)(using ev: MonadThrow[F]): DBIO[F, A] =
+    new DBIO[F, A]:
+      override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[A] = ev.raiseError(e)
+      override def readOnly(connection: Connection[F])(using LogHandler[F]): F[A] = ev.raiseError(e)
+      override def commit(connection: Connection[F])(using LogHandler[F]): F[A] = ev.raiseError(e)
+      override def rollback(connection: Connection[F])(using LogHandler[F]): F[A] = ev.raiseError(e)
+      override def transaction(connection: Connection[F])(using LogHandler[F]): F[A] = ev.raiseError(e)
 
   given [F[_]: Temporal]: MonadError[[T] =>> DBIO[F, T], Throwable] with
     override def pure[A](x: A): DBIO[F, A] = DBIO.pure(x)
 
     override def flatMap[A, B](fa: DBIO[F, A])(f: A => DBIO[F, B]): DBIO[F, B] =
       new DBIO[F, B]:
-        override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[B] =
-          fa.execute(connection).flatMap(a => f(a).execute(connection))
+        override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] = fa.run(connection).flatMap(a => f(a).run(connection))
+        override def readOnly(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(true) *> run(connection) <* connection.setReadOnly(false)
+        override def commit(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(true) *> run(connection)
+        override def rollback(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(false) *> run(connection) <* connection.rollback() <* connection.setAutoCommit(true)
+        override def transaction(connection: Connection[F])(using LogHandler[F]): F[B] =
+          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+          val release = (connection: Connection[F], exitCase: ExitCase) =>
+            (exitCase match
+              case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
+              case _ => connection.commit()
+              )
+              *> connection.setAutoCommit(true)
+          Resource
+            .makeCase(acquire)(release)
+            .use(run)
 
     override def tailRecM[A, B](a: A)(f: A => DBIO[F, Either[A, B]]): DBIO[F, B] =
       new DBIO[F, B]:
-        override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
-          MonadError[F, Throwable].tailRecM(a)(a => f(a).execute(connection))
+        override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
+          Temporal[F].tailRecM(a)(a => f(a).run(connection))
+
+        override def readOnly(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(true) *> run(connection) <* connection.setReadOnly(false)
+
+        override def commit(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(true) *> run(connection)
+
+        override def rollback(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(false) *> run(connection) <* connection.rollback() <* connection.setAutoCommit(true)
+
+        override def transaction(connection: Connection[F])(using LogHandler[F]): F[B] =
+          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+
+          val release = (connection: Connection[F], exitCase: ExitCase) =>
+            (exitCase match
+              case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
+              case _ => connection.commit()
+              )
+              *> connection.setAutoCommit(true)
+
+          Resource
+            .makeCase(acquire)(release)
+            .use(run)
 
     override def ap[A, B](ff: DBIO[F, A => B])(fa: DBIO[F, A]): DBIO[F, B] =
       new DBIO[F, B]:
-        override private[ldbc] def execute(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
-          (ff.execute(connection), fa.execute(connection)).mapN(_(_))
+        override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
+          (ff.run(connection), fa.run(connection)).mapN(_(_))
+
+        override def readOnly(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(true) *> run(connection) <* connection.setReadOnly(false)
+
+        override def commit(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(true) *> run(connection)
+
+        override def rollback(connection: Connection[F])(using LogHandler[F]): F[B] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(false) *> run(connection) <* connection.rollback() <* connection.setAutoCommit(true)
+
+        override def transaction(connection: Connection[F])(using LogHandler[F]): F[B] =
+          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+
+          val release = (connection: Connection[F], exitCase: ExitCase) =>
+            (exitCase match
+              case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
+              case _ => connection.commit()
+              )
+              *> connection.setAutoCommit(true)
+
+          Resource
+            .makeCase(acquire)(release)
+            .use(run)
 
     override def raiseError[A](e: Throwable): DBIO[F, A] =
       DBIO.raiseError(e)
 
     override def handleErrorWith[A](fa: DBIO[F, A])(f: Throwable => DBIO[F, A]): DBIO[F, A] =
       new DBIO[F, A]:
-        override private[ldbc] def execute(connection: Connection[F])(using LogHandler[F]): F[A] =
-          fa.execute(connection).handleErrorWith(e => f(e).execute(connection))
+        override def run(connection: Connection[F])(using LogHandler[F]): F[A] =
+          fa.run(connection).handleErrorWith(e => f(e).run(connection))
+
+        override def readOnly(connection: Connection[F])(using LogHandler[F]): F[A] =
+          connection.setReadOnly(true) *> run(connection) <* connection.setReadOnly(false)
+
+        override def commit(connection: Connection[F])(using LogHandler[F]): F[A] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(true) *> run(connection)
+
+        override def rollback(connection: Connection[F])(using LogHandler[F]): F[A] =
+          connection.setReadOnly(false) *> connection.setAutoCommit(false) *> run(connection) <* connection.rollback() <* connection.setAutoCommit(true)
+
+        override def transaction(connection: Connection[F])(using LogHandler[F]): F[A] =
+          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+
+          val release = (connection: Connection[F], exitCase: ExitCase) =>
+            (exitCase match
+              case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
+              case _ => connection.commit()
+              )
+              *> connection.setAutoCommit(true)
+
+          Resource
+            .makeCase(acquire)(release)
+            .use(run)
