@@ -54,6 +54,33 @@ case class Delete[A](
    * A method for setting the WHERE condition in a DELETE statement.
    *
    * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City].delete.whereOpt(city => opt.map(value => city.name === value))
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def whereOpt(func: A => Option[Expression]): Where.C[A] =
+    func(table) match
+      case Some(expression) =>
+        Where.C(
+          table = table,
+          statement = statement ++ s" WHERE ${expression.statement}",
+          params = params ++ expression.parameter
+        )
+      case None =>
+        Where.C(
+          table = table,
+          statement = statement,
+          params = params,
+          isFirst = true
+        )
+
+  /**
+   * A method for setting the WHERE condition in a DELETE statement.
+   *
+   * {{{
    *   TableQuery[City].delete.where(_.name === "Tokyo")
    * }}}
    *
