@@ -52,9 +52,44 @@ class TableQueryTest extends AnyFlatSpec:
     assert(
       query
         .select(_.p1)
+        .whereOpt(Some(1))((test, value) => test.p1 orMore value)
+        .and(_.p2 === "test")
+        .statement === "SELECT test.p1 FROM test WHERE test.p1 >= ? AND test.p2 = ?"
+    )
+    assert(
+      query
+        .select(_.p1)
+        .whereOpt[Int](None)((test, value) => test.p1 orMore value)
+        .and(_.p2 === "test")
+        .statement === "SELECT test.p1 FROM test WHERE test.p2 = ?"
+    )
+    assert(
+      query
+        .select(_.p1)
         .where(_.p1 >= 1)
         .and(_.p2 === "test", false)
         .statement === "SELECT test.p1 FROM test WHERE test.p1 >= ?"
+    )
+    assert(
+      query
+        .select(_.p1)
+        .where(_.p1 >= 1)
+        .andOpt(Some("test"))((test, value) => test.p2 _equals value)
+        .statement === "SELECT test.p1 FROM test WHERE test.p1 >= ? AND test.p2 = ?"
+    )
+    assert(
+      query
+        .select(_.p1)
+        .where(_.p1 >= 1)
+        .andOpt[String](None)((test, value) => test.p2 _equals value)
+        .statement === "SELECT test.p1 FROM test WHERE test.p1 >= ?"
+    )
+    assert(
+      query
+        .select(_.p1)
+        .whereOpt[Int](None)((test, value) => test.p1 orMore value)
+        .andOpt[String](None)((test, value) => test.p2 _equals value)
+        .statement === "SELECT test.p1 FROM test"
     )
     assert(
       query
@@ -325,6 +360,18 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
+        .update(Test(1L, "p2", Some("p3")))
+        .whereOpt(Some(1L))((test, value) => test.p1 === value)
+        .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE test.p1 = ?"
+    )
+    assert(
+      query
+        .update(Test(1L, "p2", Some("p3")))
+        .whereOpt[Long](None)((test, value) => test.p1 === value)
+        .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ?"
+    )
+    assert(
+      query
         .update(q => q.p1 *: q.p2 *: q.p3)(
           (1L, "p2", Some("p3"))
         )
@@ -370,6 +417,8 @@ class TableQueryTest extends AnyFlatSpec:
   it should "The delete query statement generated from Table is equal to the specified query statement." in {
     assert(query.delete.statement === "DELETE FROM test")
     assert(query.delete.where(_.p1 === 1L).statement === "DELETE FROM test WHERE test.p1 = ?")
+    assert(query.delete.whereOpt(Some(1L))((test, value) => test.p1 === value).statement === "DELETE FROM test WHERE test.p1 = ?")
+    assert(query.delete.whereOpt[Long](None)((test, value) => test.p1 === value).statement === "DELETE FROM test")
     assert(query.delete.limit(1).statement === "DELETE FROM test LIMIT ?")
     assert(query.delete.where(_.p1 === 1L).limit(1).statement === "DELETE FROM test WHERE test.p1 = ? LIMIT ?")
   }
