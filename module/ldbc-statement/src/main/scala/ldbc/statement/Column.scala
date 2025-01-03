@@ -259,13 +259,13 @@ trait Column[A]:
    *
    * @param value
    *   Value to compare
-   * @tparam A
+   * @tparam B
    *   Type of value to compare
    * @return
    *   Query to check whether values are equal in a Where statement.
    */
-  def IS[A <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: A): Is[A] =
-    Is[A](noBagQuotLabel, false, value)
+  def IS[B <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: B): Is[B] =
+    Is[B](noBagQuotLabel, false, value)
 
   def nullSafeEqual(value: Extract[A])(using Encoder[Extract[A]]): NullSafeEqual[A] =
     NullSafeEqual[A](noBagQuotLabel, false, value)
