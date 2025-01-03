@@ -130,7 +130,7 @@ object Update:
         statement = statement ++ s" WHERE ${ expression.statement }",
         params    = params ++ expression.parameter
       )
-      
+
     override def whereOpt(func: A => Option[Expression]): Where.C[A] =
       func(table) match
         case Some(expression) =>

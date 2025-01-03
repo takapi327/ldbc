@@ -65,16 +65,16 @@ case class Delete[A](
     func(table) match
       case Some(expression) =>
         Where.C(
-          table = table,
-          statement = statement ++ s" WHERE ${expression.statement}",
-          params = params ++ expression.parameter
+          table     = table,
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter
         )
       case None =>
         Where.C(
-          table = table,
+          table     = table,
           statement = statement,
-          params = params,
-          isFirst = true
+          params    = params,
+          isFirst   = true
         )
 
   /**

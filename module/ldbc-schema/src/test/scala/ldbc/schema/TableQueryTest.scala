@@ -438,7 +438,11 @@ class TableQueryTest extends AnyFlatSpec:
   it should "The delete query statement generated from Table is equal to the specified query statement." in {
     assert(query.delete.statement === "DELETE FROM test")
     assert(query.delete.where(_.p1 === 1L).statement === "DELETE FROM test WHERE test.p1 = ?")
-    assert(query.delete.whereOpt(test => Some(1L).map(v => test.p1 _equals v)).statement === "DELETE FROM test WHERE test.p1 = ?")
+    assert(
+      query.delete
+        .whereOpt(test => Some(1L).map(v => test.p1 _equals v))
+        .statement === "DELETE FROM test WHERE test.p1 = ?"
+    )
     assert(
       query.delete
         .whereOpt(Some(1L))((test, value) => test.p1 === value)
