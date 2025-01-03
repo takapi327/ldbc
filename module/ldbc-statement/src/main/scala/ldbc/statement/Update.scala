@@ -71,6 +71,21 @@ sealed trait Update[A] extends Command:
    */
   def where(func: A => Expression): Where.C[A]
 
+  /**
+   * A method for setting the WHERE condition in a Update statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .update(...)
+   *     .set(_.population, 13929286)
+   *     .whereOpt(Some("Tokyo"))((city, value) => city.name === value)
+   * }}}
+   *
+   * @param func
+   *   A function that takes a column and returns an expression.
+   */
+  def whereOpt[B](opt: Option[B])(func: (A, B) => Expression): Where.C[A]
+
 object Update:
 
   private[ldbc] case class Impl[A](
@@ -99,3 +114,20 @@ object Update:
         statement = statement ++ s" WHERE ${ expression.statement }",
         params    = params ++ expression.parameter
       )
+
+    override def whereOpt[B](opt: Option[B])(func: (A, B) => Expression): Where.C[A] =
+      opt match
+        case Some(value) =>
+          val expression = func(table, value)
+          Where.C[A](
+            table     = table,
+            statement = statement ++ s" WHERE ${ expression.statement }",
+            params    = params ++ expression.parameter
+          )
+        case None        =>
+          Where.C[A](
+            table = table,
+            statement = statement,
+            params = params,
+            isFirst = true
+          )
