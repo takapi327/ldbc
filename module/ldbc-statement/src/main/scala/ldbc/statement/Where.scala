@@ -230,7 +230,7 @@ object Where:
     columns:   Column[B],
     statement: String,
     params:    List[Parameter.Dynamic],
-    isFirst:  Boolean = false
+    isFirst:   Boolean = false
   ) extends Where[A],
             Query[A, B],
             OrderBy.Provider[A, B],
@@ -244,8 +244,16 @@ object Where:
 
     override private[ldbc] def union(label: String, expression: Expression): Q[A, B] =
       if isFirst then
-        this.copy(statement = statement ++ s" WHERE ${ expression.statement }", params = params ++ expression.parameter, isFirst = false)
-      else this.copy(statement = statement ++ s" $label ${ expression.statement }", params = params ++ expression.parameter)
+        this.copy(
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter,
+          isFirst   = false
+        )
+      else
+        this.copy(
+          statement = statement ++ s" $label ${ expression.statement }",
+          params    = params ++ expression.parameter
+        )
 
     /**
      * A method for setting the GROUP BY condition in a SELECT statement.
@@ -283,7 +291,7 @@ object Where:
     table:     A,
     statement: String,
     params:    List[Parameter.Dynamic],
-    isFirst:  Boolean = false
+    isFirst:   Boolean = false
   ) extends Where[A],
             Command,
             Limit.CommandProvider:
@@ -296,5 +304,13 @@ object Where:
 
     override private[ldbc] def union(label: String, expression: Expression): C[A] =
       if isFirst then
-        this.copy(statement = statement ++ s" WHERE ${ expression.statement }", params = params ++ expression.parameter, isFirst = false)
-      else this.copy(statement = statement ++ s" $label ${ expression.statement }", params = params ++ expression.parameter)
+        this.copy(
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter,
+          isFirst   = false
+        )
+      else
+        this.copy(
+          statement = statement ++ s" $label ${ expression.statement }",
+          params    = params ++ expression.parameter
+        )

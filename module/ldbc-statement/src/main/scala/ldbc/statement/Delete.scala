@@ -69,9 +69,10 @@ case class Delete[A](
           statement = statement ++ s" WHERE ${ expression.statement }",
           params    = params ++ expression.parameter
         )
-      case None        => Where.C(
-        table,
-        statement,
-        params,
-        isFirst = true
-      )
+      case None =>
+        Where.C(
+          table,
+          statement,
+          params,
+          isFirst = true
+        )

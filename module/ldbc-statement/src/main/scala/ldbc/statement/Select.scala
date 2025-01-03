@@ -78,18 +78,18 @@ case class Select[A, B](
       case Some(value) =>
         val expression = func(table, value)
         Where.Q[A, B](
-          table = table,
-          columns = columns,
-          statement = statement ++ s" WHERE ${expression.statement}",
-          params = params ++ expression.parameter
+          table     = table,
+          columns   = columns,
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter
         )
-      case None        =>
+      case None =>
         Where.Q[A, B](
-          table = table,
-          columns = columns,
+          table     = table,
+          columns   = columns,
           statement = statement,
-          params = params,
-          isFirst = true
+          params    = params,
+          isFirst   = true
         )
 
   /**

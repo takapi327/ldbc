@@ -124,10 +124,10 @@ object Update:
             statement = statement ++ s" WHERE ${ expression.statement }",
             params    = params ++ expression.parameter
           )
-        case None        =>
+        case None =>
           Where.C[A](
-            table = table,
+            table     = table,
             statement = statement,
-            params = params,
-            isFirst = true
+            params    = params,
+            isFirst   = true
           )
