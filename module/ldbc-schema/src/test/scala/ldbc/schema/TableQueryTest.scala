@@ -52,6 +52,21 @@ class TableQueryTest extends AnyFlatSpec:
     assert(
       query
         .select(_.p1)
+        .whereOpt(test => Some(1).map(v => test.p1 >= v))
+        .and(_.p2 === "test")
+        .statement === "SELECT test.p1 FROM test WHERE test.p1 >= ? AND test.p2 = ?"
+    )
+    val opt: Option[Int] = None
+    assert(
+      query
+        .select(_.p1)
+        .whereOpt(test => opt.map(v => test.p1 orMore v))
+        .and(_.p2 === "test")
+        .statement === "SELECT test.p1 FROM test WHERE test.p2 = ?"
+    )
+    assert(
+      query
+        .select(_.p1)
         .whereOpt(Some(1))((test, value) => test.p1 orMore value)
         .and(_.p2 === "test")
         .statement === "SELECT test.p1 FROM test WHERE test.p1 >= ? AND test.p2 = ?"
@@ -361,6 +376,12 @@ class TableQueryTest extends AnyFlatSpec:
     assert(
       query
         .update(Test(1L, "p2", Some("p3")))
+        .whereOpt(test => Some(1L).map(v => test.p1 _equals v))
+        .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE test.p1 = ?"
+    )
+    assert(
+      query
+        .update(Test(1L, "p2", Some("p3")))
         .whereOpt(Some(1L))((test, value) => test.p1 === value)
         .statement === "UPDATE test SET p1 = ?, p2 = ?, p3 = ? WHERE test.p1 = ?"
     )
@@ -417,6 +438,7 @@ class TableQueryTest extends AnyFlatSpec:
   it should "The delete query statement generated from Table is equal to the specified query statement." in {
     assert(query.delete.statement === "DELETE FROM test")
     assert(query.delete.where(_.p1 === 1L).statement === "DELETE FROM test WHERE test.p1 = ?")
+    assert(query.delete.whereOpt(test => Some(1L).map(v => test.p1 _equals v)).statement === "DELETE FROM test WHERE test.p1 = ?")
     assert(
       query.delete
         .whereOpt(Some(1L))((test, value) => test.p1 === value)
