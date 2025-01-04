@@ -54,6 +54,24 @@ sealed transparent trait Where[A]:
    * Function to set additional conditions on WHERE statement.
    *
    * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .andOpt((city => opt.map(value => city.name === value))
+   *   // SELECT name FROM city WHERE population > ? AND name = ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def andOpt(func: A => Option[Expression]): Self =
+    func(table).fold(self)(expression => union("AND", expression))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
    *   TableQuery[City]
    *     .select(_.name)
    *     .where(_.population > 1000000)
@@ -101,6 +119,24 @@ sealed transparent trait Where[A]:
    *   Function to construct an expression using the columns that Table has.
    */
   def or(func: A => Expression): Self = union("OR", func(table))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .orOpt((city => opt.map(value => city.name === value))
+   *   // SELECT name FROM city WHERE population > ? OR name = ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def orOpt(func: A => Option[Expression]): Self =
+    func(table).fold(self)(expression => union("OR", expression))
 
   /**
    * Function to set additional conditions on WHERE statement.
@@ -160,6 +196,24 @@ sealed transparent trait Where[A]:
    *   Function to construct an expression using the columns that Table has.
    */
   def xor(func: A => Expression): Self = union("XOR", func(table))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .xorOpt((city => opt.map(value => city.name === value))
+   *   // SELECT name FROM city WHERE population > ? XOR name = ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def xorOpt(func: A => Option[Expression]): Self =
+    func(table).fold(self)(expression => union("XOR", expression))
 
   /**
    * Function to set additional conditions on WHERE statement.
