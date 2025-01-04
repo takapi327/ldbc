@@ -54,6 +54,41 @@ sealed transparent trait Where[A]:
    * Function to set additional conditions on WHERE statement.
    *
    * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .andOpt((city => opt.map(value => city.name === value))
+   *   // SELECT name FROM city WHERE population > ? AND name = ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def andOpt(func: A => Option[Expression]): Self =
+    func(table).fold(self)(expression => union("AND", expression))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .andOpt(Some("Tokyo"))((city, value) => city.name == value)
+   *   // SELECT name FROM city WHERE population > ? AND name = ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def andOpt[B](opt: Option[B])(func: (A, B) => Expression): Self =
+    opt.fold(self)(value => union("AND", func(table, value)))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
    *   TableQuery[City]
    *     .select(_.name)
    *     .where(_.population > 1000000)
@@ -84,6 +119,41 @@ sealed transparent trait Where[A]:
    *   Function to construct an expression using the columns that Table has.
    */
   def or(func: A => Expression): Self = union("OR", func(table))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .orOpt((city => opt.map(value => city.name === value))
+   *   // SELECT name FROM city WHERE population > ? OR name = ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def orOpt(func: A => Option[Expression]): Self =
+    func(table).fold(self)(expression => union("OR", expression))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .orOpt(Some("Tokyo"))((city, value) => city.name == value)
+   *   // SELECT name FROM city WHERE population > ? OR name = ?
+   * }}}
+   *
+   * @param func
+   * Function to construct an expression using the columns that Table has.
+   */
+  def orOpt[B](opt: Option[B])(func: (A, B) => Expression): Self =
+    opt.fold(self)(value => union("OR", func(table, value)))
 
   /**
    * Function to set additional conditions on WHERE statement.
@@ -131,6 +201,41 @@ sealed transparent trait Where[A]:
    * Function to set additional conditions on WHERE statement.
    *
    * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .xorOpt((city => opt.map(value => city.name === value))
+   *   // SELECT name FROM city WHERE population > ? XOR name = ?
+   * }}}
+   *
+   * @param func
+   *   Function to construct an expression using the columns that Table has.
+   */
+  def xorOpt(func: A => Option[Expression]): Self =
+    func(table).fold(self)(expression => union("XOR", expression))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .where(_.population > 1000000)
+   *     .xorOpt(Some("Tokyo"))((city, value) => city.name == value)
+   *   // SELECT name FROM city WHERE population > ? XOR name = ?
+   * }}}
+   *
+   * @param func
+   * Function to construct an expression using the columns that Table has.
+   */
+  def xorOpt[B](opt: Option[B])(func: (A, B) => Expression): Self =
+    opt.fold(self)(value => union("XOR", func(table, value)))
+
+  /**
+   * Function to set additional conditions on WHERE statement.
+   *
+   * {{{
    *   TableQuery[City]
    *     .select(_.name)
    *     .where(_.population > 1000000)
@@ -167,6 +272,8 @@ object Where:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    *   only.
+   * @param isFirst
+   *   If True, this condition is added first, so the specified join condition is ignored and a WHERE statement is started.
    * @tparam A
    *   The type of Table. in the case of Join, it is a Tuple of type Table.
    * @tparam B
@@ -176,7 +283,8 @@ object Where:
     table:     A,
     columns:   Column[B],
     statement: String,
-    params:    List[Parameter.Dynamic]
+    params:    List[Parameter.Dynamic],
+    isFirst:   Boolean = false
   ) extends Where[A],
             Query[A, B],
             OrderBy.Provider[A, B],
@@ -189,7 +297,17 @@ object Where:
       this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
     override private[ldbc] def union(label: String, expression: Expression): Q[A, B] =
-      this.copy(statement = statement ++ s" $label ${ expression.statement }", params = params ++ expression.parameter)
+      if isFirst then
+        this.copy(
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter,
+          isFirst   = false
+        )
+      else
+        this.copy(
+          statement = statement ++ s" $label ${ expression.statement }",
+          params    = params ++ expression.parameter
+        )
 
     /**
      * A method for setting the GROUP BY condition in a SELECT statement.
@@ -218,13 +336,16 @@ object Where:
    * @param params
    *   A list of Traits that generate values from Parameter, allowing PreparedStatement to be set to a value by index
    *   only.
+   * @param isFirst
+   *   If True, this condition is added first, so the specified join condition is ignored and a WHERE statement is started.
    * @tparam A
    * The type of Table. in the case of Join, it is a Tuple of type Table.
    */
   case class C[A](
     table:     A,
     statement: String,
-    params:    List[Parameter.Dynamic]
+    params:    List[Parameter.Dynamic],
+    isFirst:   Boolean = false
   ) extends Where[A],
             Command,
             Limit.CommandProvider:
@@ -236,4 +357,14 @@ object Where:
       this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
     override private[ldbc] def union(label: String, expression: Expression): C[A] =
-      this.copy(statement = statement ++ s" $label ${ expression.statement }", params = params ++ expression.parameter)
+      if isFirst then
+        this.copy(
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter,
+          isFirst   = false
+        )
+      else
+        this.copy(
+          statement = statement ++ s" $label ${ expression.statement }",
+          params    = params ++ expression.parameter
+        )
