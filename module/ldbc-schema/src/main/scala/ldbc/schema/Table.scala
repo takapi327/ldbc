@@ -40,7 +40,7 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
 
 object Table:
 
-  private[ldbc] case class Opt[T](
+  case class Opt[T](
     $name:   String,
     columns: List[Column[?]],
     *      : Column[Option[T]]
