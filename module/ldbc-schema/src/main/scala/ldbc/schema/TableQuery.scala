@@ -11,7 +11,7 @@ import scala.quoted.*
 import ldbc.dsl.Parameter
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
-private[ldbc] case class TableQueryImpl[A <: AbstractTable[?]](
+case class TableQueryImpl[A <: AbstractTable[?]](
   table:  A,
   column: Column[AbstractTableQuery.Extract[A]],
   name:   String,

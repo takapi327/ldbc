@@ -12,7 +12,7 @@ import ldbc.dsl.Parameter
 import ldbc.dsl.codec.*
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
-private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <: Product](
+case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <: Product](
   table:  A,
   column: Column[AbstractTableQuery.Extract[A]],
   name:   String,
@@ -39,7 +39,7 @@ private[ldbc] case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <
     TableQueryOpt[A, Table.Opt[AbstractTableQuery.Extract[A]]](opt, opt.*, opt.$name, params)
       .asInstanceOf[AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]]
 
-private[ldbc] case class TableQueryOpt[A, O <: SharedTable](
+case class TableQueryOpt[A, O <: SharedTable](
   table:  O,
   column: Column[AbstractTableQuery.Extract[O]],
   name:   String,
