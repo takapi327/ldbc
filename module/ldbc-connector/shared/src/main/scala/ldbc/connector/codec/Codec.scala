@@ -11,7 +11,7 @@ import cats.syntax.all.*
 
 import org.typelevel.twiddles.TwiddleSyntax
 
-import ldbc.connector.data.{ Type, Encoded }
+import ldbc.connector.data.{ Encoded, Type }
 
 trait Codec[A] extends Decoder[A], Encoder[A]:
   outer =>

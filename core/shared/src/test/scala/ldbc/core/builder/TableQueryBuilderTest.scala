@@ -9,9 +9,9 @@ package ldbc.core.builder
 import java.time.*
 import java.time.Year as JYear
 
-import org.specs2.mutable.Specification
-
 import ldbc.core.*
+
+import org.specs2.mutable.Specification
 
 object TableQueryBuilderTest extends Specification:
 

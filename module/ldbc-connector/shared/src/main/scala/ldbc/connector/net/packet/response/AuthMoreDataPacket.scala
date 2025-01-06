@@ -9,6 +9,7 @@ package response
 
 import scodec.*
 import scodec.codecs.*
+
 import cats.syntax.all.*
 
 /**

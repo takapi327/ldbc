@@ -14,14 +14,16 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import munit.*
-
 import ldbc.sql.*
-import ldbc.connector.SSL
-import ldbc.schema.TableQuery
+
 import ldbc.schema.syntax.io.*
+import ldbc.schema.TableQuery
+
+import ldbc.connector.SSL
 
 import ldbc.tests.model.*
+
+import munit.*
 
 class LdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTest:
 

@@ -6,16 +6,17 @@
 
 package ldbc.tests
 
-import munit.CatsEffectSuite
-
 import cats.syntax.all.*
 
 import cats.effect.IO
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
 import ldbc.dsl.io.*
+
+import ldbc.connector.*
+
+import munit.CatsEffectSuite
 
 class DBIOTest extends CatsEffectSuite:
 

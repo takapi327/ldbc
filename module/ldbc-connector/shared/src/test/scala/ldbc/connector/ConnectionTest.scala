@@ -6,14 +6,15 @@
 
 package ldbc.connector
 
-import org.typelevel.otel4s.trace.Tracer
-
-import com.comcast.ip4s.UnknownHostException
-
 import cats.effect.*
 
+import org.typelevel.otel4s.trace.Tracer
+
 import ldbc.sql.DatabaseMetaData
+
 import ldbc.connector.exception.*
+
+import com.comcast.ip4s.UnknownHostException
 
 class ConnectionTest extends FTestPlatform:
 

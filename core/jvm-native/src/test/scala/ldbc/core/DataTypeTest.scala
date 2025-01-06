@@ -8,10 +8,10 @@ package ldbc.core
 
 import java.time.{ LocalDate, LocalDateTime, LocalTime, Year as JYear }
 
-import org.specs2.mutable.Specification
-
-import ldbc.core.DataType.*
 import ldbc.core.model.EnumDataType
+import ldbc.core.DataType.*
+
+import org.specs2.mutable.Specification
 
 object DataTypeTest extends Specification:
 

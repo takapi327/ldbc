@@ -9,9 +9,9 @@ package ldbc.connector
 import ldbc.sql.ResultSetMetaData
 
 import ldbc.connector.data.*
-import ldbc.connector.util.Version
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.util.Version
 
 private[ldbc] class ResultSetMetaDataImpl(
   columns:         Vector[ColumnDefinitionPacket],

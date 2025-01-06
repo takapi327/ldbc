@@ -9,8 +9,9 @@ package ldbc.schema
 import org.scalatest.flatspec.AnyFlatSpec
 
 import ldbc.dsl.codec.{ Decoder, Encoder }
-import ldbc.schema.DataType.*
+
 import ldbc.schema.attribute.*
+import ldbc.schema.DataType.*
 
 class ColumnImplTest extends AnyFlatSpec:
 

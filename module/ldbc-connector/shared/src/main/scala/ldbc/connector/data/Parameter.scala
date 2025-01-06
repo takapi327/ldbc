@@ -6,14 +6,14 @@
 
 package ldbc.connector.data
 
-import java.util.Arrays.copyOf
 import java.time.*
-
-import cats.syntax.all.*
+import java.util.Arrays.copyOf
 
 import scodec.bits.BitVector
 import scodec.codecs.*
 import scodec.interop.cats.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.Formatter.*
 

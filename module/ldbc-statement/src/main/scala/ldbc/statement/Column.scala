@@ -13,8 +13,10 @@ import cats.InvariantSemigroupal
 import org.typelevel.twiddles.TwiddleSyntax
 
 import ldbc.sql.ResultSet
+
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
+
 import ldbc.statement.interpreter.Extract
 import ldbc.statement.Expression.*
 

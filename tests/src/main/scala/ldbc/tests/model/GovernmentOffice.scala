@@ -8,7 +8,8 @@ package ldbc.tests.model
 
 import java.time.LocalDate
 
-import ldbc.query.builder.{ Table, Column }
+import ldbc.query.builder.{ Column, Table }
+
 import ldbc.schema.Table as SchemaTable
 
 case class GovernmentOffice(

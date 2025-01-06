@@ -10,8 +10,8 @@ import java.time.*
 
 import scala.deriving.Mirror
 
-import cats.InvariantSemigroupal
 import cats.syntax.all.*
+import cats.InvariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax
 

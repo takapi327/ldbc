@@ -6,13 +6,15 @@
 
 package ldbc.schema
 
-import scala.language.dynamics
 import scala.deriving.Mirror
+import scala.language.dynamics
 
 import ldbc.dsl.codec.Codec
+
 import ldbc.statement.{ AbstractTable, Column }
-import ldbc.schema.interpreter.*
+
 import ldbc.schema.attribute.Attribute
+import ldbc.schema.interpreter.*
 
 trait Table[T](val $name: String) extends AbstractTable[T]:
 

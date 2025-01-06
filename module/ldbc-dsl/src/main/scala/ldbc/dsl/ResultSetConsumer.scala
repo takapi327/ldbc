@@ -10,9 +10,10 @@ import cats.*
 import cats.syntax.all.*
 
 import ldbc.sql.ResultSet
-import ldbc.dsl.util.FactoryCompat
+
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.exception.DecodeFailureException
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for generating the specified data type from a ResultSet.

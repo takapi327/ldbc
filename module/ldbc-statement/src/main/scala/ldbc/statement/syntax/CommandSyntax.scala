@@ -8,6 +8,7 @@ package ldbc.statement.syntax
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.Decoder
+
 import ldbc.statement.Command
 
 trait CommandSyntax[F[_]]:

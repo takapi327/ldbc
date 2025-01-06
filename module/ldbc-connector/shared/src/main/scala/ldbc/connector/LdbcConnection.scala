@@ -9,8 +9,8 @@ package ldbc.connector
 import ldbc.sql.Connection
 
 import ldbc.connector.net.*
-import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.net.protocol.*
 
 /**
  * A connection (session) with a specific database. SQL statements are executed and results are returned within the context of a connection.

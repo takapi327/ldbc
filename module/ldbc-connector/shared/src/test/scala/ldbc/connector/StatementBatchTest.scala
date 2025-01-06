@@ -6,13 +6,13 @@
 
 package ldbc.connector
 
-import org.typelevel.otel4s.trace.Tracer
-
 import cats.effect.*
 
-import munit.AnyFixture
+import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.connector.exception.*
+
+import munit.AnyFixture
 
 class StatementBatchTest extends FTestPlatform:
 

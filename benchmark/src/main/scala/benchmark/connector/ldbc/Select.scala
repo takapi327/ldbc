@@ -6,8 +6,8 @@
 
 package benchmark.connector.ldbc
 
-import java.util.concurrent.TimeUnit
 import java.time.*
+import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 
@@ -21,6 +21,7 @@ import cats.effect.unsafe.implicits.global
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.ResultSet
+
 import ldbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))

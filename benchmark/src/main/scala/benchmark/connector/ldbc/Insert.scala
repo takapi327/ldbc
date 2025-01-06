@@ -6,8 +6,8 @@
 
 package benchmark.connector.ldbc
 
-import java.util.concurrent.TimeUnit
 import java.time.*
+import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 

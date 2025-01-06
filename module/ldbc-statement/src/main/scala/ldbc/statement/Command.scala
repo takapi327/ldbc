@@ -8,7 +8,7 @@ package ldbc.statement
 
 import scala.annotation.targetName
 
-import ldbc.dsl.{ SQL, Parameter }
+import ldbc.dsl.{ Parameter, SQL }
 
 /**
  * Trait represents a command in MySQL.

@@ -7,7 +7,6 @@
 package ldbc.sbt
 
 import sbt._
-
 import scala.Console._
 
 /**

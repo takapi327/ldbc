@@ -6,8 +6,8 @@
 
 package ldbc.connector.net.protocol
 
-import cats.ApplicativeError
 import cats.syntax.all.*
+import cats.ApplicativeError
 
 import cats.effect.Temporal
 

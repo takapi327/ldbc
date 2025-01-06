@@ -8,18 +8,18 @@ package ldbc.connector.codec
 
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.time.temporal.TemporalAccessor
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.OffsetTime
 import java.time.Year
-import java.time.temporal.TemporalAccessor
 
 import cats.syntax.all.*
 
-import ldbc.connector.data.Type
 import ldbc.connector.data.Formatter.*
+import ldbc.connector.data.Type
 
 trait TemporalCodecs:
 

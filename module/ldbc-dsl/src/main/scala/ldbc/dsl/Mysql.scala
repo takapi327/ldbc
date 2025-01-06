@@ -13,6 +13,7 @@ import cats.syntax.all.*
 import cats.effect.Temporal
 
 import ldbc.sql.*
+
 import ldbc.dsl.codec.Decoder
 
 /**

@@ -8,17 +8,16 @@ package benchmark.wrapper.slick
 
 import java.util.concurrent.TimeUnit
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.compiletime.uninitialized
-
-import com.mysql.cj.jdbc.MysqlDataSource
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
 
 import org.openjdk.jmh.annotations.*
 
-import slick.jdbc.MySQLProfile.api.*
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import benchmark.City
+import slick.jdbc.MySQLProfile.api.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)

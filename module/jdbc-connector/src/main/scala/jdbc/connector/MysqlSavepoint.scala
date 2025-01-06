@@ -6,9 +6,9 @@
 
 package jdbc.connector
 
-import ldbc.sql.Savepoint
-
 import java.sql
+
+import ldbc.sql.Savepoint
 
 case class MysqlSavepoint(name: String) extends Savepoint:
   override def getSavepointId():   Int    = throw new java.sql.SQLException("Only named savepoints are supported.")

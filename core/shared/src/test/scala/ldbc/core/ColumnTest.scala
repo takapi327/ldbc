@@ -6,11 +6,11 @@
 
 package ldbc.core
 
-import org.specs2.mutable.Specification
-
-import ldbc.core.DataType.*
-import ldbc.core.Character.*
 import ldbc.core.attribute.AutoInc
+import ldbc.core.Character.*
+import ldbc.core.DataType.*
+
+import org.specs2.mutable.Specification
 
 object ColumnTest extends Specification:
 

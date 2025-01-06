@@ -6,11 +6,11 @@
 
 package ldbc.schemaspy.builder
 
-import org.schemaspy.model.TableColumn
 import org.schemaspy.model.Table as SchemaspyTable
+import org.schemaspy.model.TableColumn
 
-import ldbc.core.Column
 import ldbc.core.attribute.Comment
+import ldbc.core.Column
 
 /**
  * Object to generate a TableColumn model for SchemaSpy.

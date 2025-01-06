@@ -13,17 +13,17 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{ Tracer, Span }
 
-import ldbc.sql.{ Statement, ResultSet }
+import ldbc.sql.{ ResultSet, Statement }
 
-import ldbc.connector.ResultSetImpl
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
-import ldbc.connector.net.Protocol
-import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
+import ldbc.connector.net.packet.response.*
+import ldbc.connector.net.Protocol
+import ldbc.connector.ResultSetImpl
 
 private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
   protocol:             Protocol[F],

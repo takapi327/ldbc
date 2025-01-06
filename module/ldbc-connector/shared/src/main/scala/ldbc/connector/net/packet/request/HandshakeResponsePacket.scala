@@ -7,8 +7,8 @@
 package ldbc.connector.net.packet
 package request
 
-import scodec.codecs.uint32L
 import scodec.bits.*
+import scodec.codecs.uint32L
 
 import ldbc.connector.data.CapabilitiesFlags
 

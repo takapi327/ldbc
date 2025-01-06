@@ -9,6 +9,7 @@ package ldbc.schema
 import scala.quoted.*
 
 import ldbc.dsl.Parameter
+
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
 case class TableQueryImpl[A <: AbstractTable[?]](

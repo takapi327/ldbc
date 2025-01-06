@@ -11,8 +11,8 @@ import java.time.*
 import scala.annotation.tailrec
 
 import scodec.*
-import scodec.codecs.*
 import scodec.bits.BitVector
+import scodec.codecs.*
 
 import ldbc.connector.data.ColumnDataType
 

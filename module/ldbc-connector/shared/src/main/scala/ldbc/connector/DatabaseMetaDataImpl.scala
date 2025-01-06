@@ -17,18 +17,18 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.{ Connection, Statement, PreparedStatement, ResultSet, DatabaseMetaData, RowIdLifetime }
+import ldbc.sql.{ Connection, DatabaseMetaData, PreparedStatement, ResultSet, RowIdLifetime, Statement }
 import ldbc.sql.Types.*
 
-import ldbc.connector.util.Version
 import ldbc.connector.data.*
 import ldbc.connector.data.Constants.*
 import ldbc.connector.exception.*
-import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
-import ldbc.connector.net.Protocol
+import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
+import ldbc.connector.net.Protocol
 import ldbc.connector.util.StringHelper
+import ldbc.connector.util.Version
 
 private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   protocol:                      Protocol[F],

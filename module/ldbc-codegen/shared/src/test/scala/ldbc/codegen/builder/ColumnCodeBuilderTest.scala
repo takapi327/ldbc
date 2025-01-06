@@ -6,11 +6,11 @@
 
 package ldbc.codegen.builder
 
-import munit.CatsEffectSuite
-
 import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.model.ColumnDefinition.*
+
+import munit.CatsEffectSuite
 
 class ColumnCodeBuilderTest extends CatsEffectSuite:
 

@@ -7,8 +7,8 @@
 package ldbc.connector.net.protocol
 
 import ldbc.connector.authenticator.*
-import ldbc.connector.util.Version
 import ldbc.connector.exception.*
+import ldbc.connector.util.Version
 
 /**
  * Protocol to handle the Authentication Phase

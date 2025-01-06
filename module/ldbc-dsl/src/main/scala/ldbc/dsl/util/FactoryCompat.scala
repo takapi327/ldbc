@@ -7,8 +7,8 @@
 package ldbc.dsl.util
 
 import scala.annotation.implicitNotFound
-import scala.collection.Factory
 import scala.collection.mutable
+import scala.collection.Factory
 
 @implicitNotFound(msg = "Cannot construct a factory of type ${C} with elements of type ${A}.")
 trait FactoryCompat[-A, +C]:

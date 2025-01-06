@@ -8,10 +8,10 @@ package ldbc.core
 
 import java.sql.DatabaseMetaData.{
   importedKeyCascade,
-  importedKeyRestrict,
-  importedKeySetNull,
   importedKeyNoAction,
-  importedKeySetDefault
+  importedKeyRestrict,
+  importedKeySetDefault,
+  importedKeySetNull
 }
 
 import ldbc.core.interpreter.Tuples

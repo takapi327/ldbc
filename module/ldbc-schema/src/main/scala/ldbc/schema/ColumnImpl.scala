@@ -7,7 +7,9 @@
 package ldbc.schema
 
 import ldbc.dsl.codec.{ Decoder, Encoder }
+
 import ldbc.statement.Column
+
 import ldbc.schema.attribute.Attribute
 
 private[ldbc] case class ColumnImpl[T](

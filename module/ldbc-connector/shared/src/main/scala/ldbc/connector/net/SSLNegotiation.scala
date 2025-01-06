@@ -11,9 +11,9 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import fs2.Chunk
 import fs2.io.net.*
 import fs2.io.net.tls.*
+import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.packet.request.SSLRequestPacket

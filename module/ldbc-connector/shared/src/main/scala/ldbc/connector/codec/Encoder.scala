@@ -10,7 +10,7 @@ import cats.syntax.all.*
 
 import org.typelevel.twiddles.TwiddleSyntax
 
-import ldbc.connector.data.{ Type, Encoded }
+import ldbc.connector.data.{ Encoded, Type }
 
 /**
  * Encoder of MySQL text-format data from Scala types.

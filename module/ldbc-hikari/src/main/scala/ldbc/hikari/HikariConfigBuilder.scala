@@ -6,14 +6,15 @@
 
 package ldbc.hikari
 
-import java.util.Properties
 import java.util.concurrent.{ ScheduledExecutorService, ThreadFactory, TimeUnit }
+import java.util.Properties
+
 import javax.sql.DataSource as JDataSource
 
 import scala.concurrent.duration.Duration
 
-import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.metrics.MetricsTrackerFactory
+import com.zaxxer.hikari.HikariConfig
 
 /**
  * Build the Configuration of HikariCP.

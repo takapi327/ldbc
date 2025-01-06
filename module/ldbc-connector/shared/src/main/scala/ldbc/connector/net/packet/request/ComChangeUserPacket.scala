@@ -7,11 +7,11 @@
 package ldbc.connector.net.packet
 package request
 
-import cats.syntax.all.*
-
 import scodec.*
 import scodec.bits.BitVector
 import scodec.interop.cats.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.*
 
