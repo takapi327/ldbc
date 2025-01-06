@@ -6,10 +6,10 @@
 
 package ldbc.hikari
 
+import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
+
 import cats.effect.*
 import cats.effect.implicits.*
-
-import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
 
 /**
  * A model for building a database. HikariCP construction, thread pool generation for database connection, test

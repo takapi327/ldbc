@@ -6,10 +6,10 @@
 
 package ldbc.connector.codec
 
+import munit.FunSuite
+
 import ldbc.connector.codec.text.*
 import ldbc.connector.data.*
-
-import munit.FunSuite
 
 class TextCodecsTest extends FunSuite {
   test("char encode successfully") {

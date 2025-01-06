@@ -16,13 +16,13 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
+import munit.*
+
 import ldbc.sql.*
 
 import ldbc.dsl.io.*
 
 import ldbc.connector.SSL
-
-import munit.*
 
 class LdbcCodecTest extends CodecTest:
 

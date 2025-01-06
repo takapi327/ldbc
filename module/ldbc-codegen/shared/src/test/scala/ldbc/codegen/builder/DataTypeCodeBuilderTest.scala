@@ -6,10 +6,10 @@
 
 package ldbc.codegen.builder
 
+import munit.CatsEffectSuite
+
 import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.DataType
-
-import munit.CatsEffectSuite
 
 class DataTypeCodeBuilderTest extends CatsEffectSuite:
 

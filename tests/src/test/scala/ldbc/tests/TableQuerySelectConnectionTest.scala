@@ -14,6 +14,8 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
+import munit.*
+
 import ldbc.sql.*
 
 import ldbc.query.builder.*
@@ -22,8 +24,6 @@ import ldbc.query.builder.syntax.io.*
 import ldbc.connector.SSL
 
 import ldbc.tests.model.*
-
-import munit.*
 
 class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 

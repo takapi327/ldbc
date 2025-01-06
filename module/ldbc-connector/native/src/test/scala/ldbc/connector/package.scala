@@ -8,8 +8,9 @@ package ldbc
 
 import cats.effect.unsafe.IORuntime
 
-import epollcat.unsafe.EpollRuntime
 import munit.CatsEffectSuite
+
+import epollcat.unsafe.EpollRuntime
 
 package object connector:
 

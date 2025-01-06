@@ -16,8 +16,9 @@ import org.openjdk.jmh.annotations.*
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
-import benchmark.City
 import slick.jdbc.MySQLProfile.api.*
+
+import benchmark.City
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)

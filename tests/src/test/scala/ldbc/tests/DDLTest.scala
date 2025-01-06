@@ -12,14 +12,14 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
+import munit.*
+
 import ldbc.sql.Connection
 
 import ldbc.query.builder.*
 import ldbc.query.builder.syntax.io.*
 
 import ldbc.connector.SSL
-
-import munit.*
 
 class LdbcDDLTest extends DDLTest:
 

@@ -10,9 +10,9 @@ import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.exception.*
-
 import munit.AnyFixture
+
+import ldbc.connector.exception.*
 
 class StatementBatchTest extends FTestPlatform:
 

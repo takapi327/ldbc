@@ -8,10 +8,10 @@ package ldbc.connector.codec
 
 import scodec.bits.BitVector
 
+import munit.FunSuite
+
 import ldbc.connector.codec.all.*
 import ldbc.connector.data.*
-
-import munit.FunSuite
 
 class NumericCodecsTest extends FunSuite:
 

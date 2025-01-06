@@ -12,11 +12,11 @@ import cats.effect.IO
 
 import org.typelevel.otel4s.trace.Tracer
 
+import munit.CatsEffectSuite
+
 import ldbc.dsl.io.*
 
 import ldbc.connector.*
-
-import munit.CatsEffectSuite
 
 class DBIOTest extends CatsEffectSuite:
 
