@@ -5,13 +5,13 @@
  */
 
 import sbt.*
-import sbt.Keys.*
 import sbt.plugins.SbtPlugin
+import sbt.Keys.*
 import sbt.ScriptedPlugin.autoImport.*
 
-import de.heikoseeberger.sbtheader.{ CommentStyle, CommentBlockCreator, AutomateHeaderPlugin }
-import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.HeaderPattern.commentBetween
+import de.heikoseeberger.sbtheader.{ AutomateHeaderPlugin, CommentBlockCreator, CommentStyle }
 import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.*
+import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport.HeaderPattern.commentBetween
 
 import org.typelevel.sbt.TypelevelGitHubPlugin.autoImport.tlGitHubDev
 

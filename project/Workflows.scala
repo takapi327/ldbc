@@ -8,8 +8,8 @@ import sbt.*
 
 import org.typelevel.sbt.gha.GenerativePlugin.autoImport.*
 
-import ScalaVersions.*
 import JavaVersions.*
+import ScalaVersions.*
 
 object Workflows {
 

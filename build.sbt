@@ -4,13 +4,13 @@
  *  please view the LICENSE file that was distributed with this source code.
  */
 
-import ScalaVersions.*
-import JavaVersions.*
 import BuildSettings.*
 import Dependencies.*
-import Workflows.*
-import ProjectKeys.*
 import Implicits.*
+import JavaVersions.*
+import ProjectKeys.*
+import ScalaVersions.*
+import Workflows.*
 
 ThisBuild / tlBaseVersion              := LdbcVersions.latest
 ThisBuild / tlFatalWarnings            := true
