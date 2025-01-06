@@ -17,7 +17,6 @@ import ldbc.sql.ResultSet
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
 
-import ldbc.statement.interpreter.Extract
 import ldbc.statement.Expression.*
 
 /**
@@ -120,8 +119,11 @@ trait Column[A]:
         )
       override private[ldbc] def list: List[Column[?]] = self.list ++ fb.list
 
-  def _equals(value: Extract[A])(using Encoder[Extract[A]]): MatchCondition[A] =
-    MatchCondition[A](noBagQuotLabel, false, value)
+  def _equals[B](value: B)(using Encoder[B], A =:= Option[B]): MatchCondition[B] =
+    MatchCondition(noBagQuotLabel, false, value)
+
+  def _equals(value: A)(using Encoder[A]): MatchCondition[A] =
+    MatchCondition(noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values match in a SELECT statement.
@@ -137,10 +139,12 @@ trait Column[A]:
    *   A query to check whether the values match in a Where statement
    */
   @targetName("matchCondition")
-  def ===(value: Extract[A])(using Encoder[Extract[A]]): MatchCondition[A] = _equals(value)
+  def ===(value: A)(using Encoder[A]): MatchCondition[A] = _equals(value)
+  @targetName("matchCondition")
+  def ===[B](value: B)(using Encoder[B], A =:= Option[B]): MatchCondition[B] = _equals(value)
 
-  def orMore(value: Extract[A])(using Encoder[Extract[A]]): OrMore[A] =
-    OrMore[A](noBagQuotLabel, false, value)
+  def orMore(value:    A)(using Encoder[A]):                  OrMore[A] = OrMore(noBagQuotLabel, false, value)
+  def orMore[B](value: B)(using Encoder[B], A =:= Option[B]): OrMore[B] = OrMore(noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are greater than or equal to in a SELECT statement.
@@ -156,10 +160,12 @@ trait Column[A]:
    *   A query to check whether the values are greater than or equal to in a Where statement
    */
   @targetName("_orMore")
-  def >=(value: Extract[A])(using Encoder[Extract[A]]): OrMore[A] = orMore(value)
+  def >=(value: A)(using Encoder[A]): OrMore[A] = orMore(value)
+  @targetName("_orMore")
+  def >=[B](value: B)(using Encoder[B], A =:= Option[B]): OrMore[B] = orMore(value)
 
-  def over(value: Extract[A])(using Encoder[Extract[A]]): Over[A] =
-    Over[A](noBagQuotLabel, false, value)
+  def over(value:    A)(using Encoder[A]):                  Over[A] = Over(noBagQuotLabel, false, value)
+  def over[B](value: B)(using Encoder[B], A =:= Option[B]): Over[B] = Over(noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are greater than in a SELECT statement.
@@ -175,10 +181,14 @@ trait Column[A]:
    *   A query to check whether the values are greater than in a Where statement
    */
   @targetName("_over")
-  def >(value: Extract[A])(using Encoder[Extract[A]]): Over[A] = over(value)
+  def >(value: A)(using Encoder[A]): Over[A] = over(value)
+  @targetName("_over")
+  def >[B](value: B)(using Encoder[B], A =:= Option[B]): Over[B] = over(value)
 
-  def lessThanOrEqual(value: Extract[A])(using Encoder[Extract[A]]): LessThanOrEqualTo[A] =
-    LessThanOrEqualTo[A](noBagQuotLabel, false, value)
+  def lessThanOrEqual(value: A)(using Encoder[A]): LessThanOrEqualTo[A] =
+    LessThanOrEqualTo(noBagQuotLabel, false, value)
+  def lessThanOrEqual[B](value: B)(using Encoder[B], A =:= Option[B]): LessThanOrEqualTo[B] =
+    LessThanOrEqualTo(noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are less than or equal to in a SELECT statement.
@@ -194,10 +204,14 @@ trait Column[A]:
    *   A query to check whether the values are less than or equal to in a Where statement
    */
   @targetName("_lessThanOrEqual")
-  def <=(value: Extract[A])(using Encoder[Extract[A]]): LessThanOrEqualTo[A] = lessThanOrEqual(value)
+  def <=(value: A)(using Encoder[A]): LessThanOrEqualTo[A] = lessThanOrEqual(value)
+  @targetName("_lessThanOrEqual")
+  def <=[B](value: B)(using Encoder[B], A =:= Option[B]): LessThanOrEqualTo[B] = lessThanOrEqual(value)
 
-  def lessThan(value: Extract[A])(using Encoder[Extract[A]]): LessThan[A] =
-    LessThan[A](noBagQuotLabel, false, value)
+  def lessThan(value: A)(using Encoder[A]): LessThan[A] =
+    LessThan(noBagQuotLabel, false, value)
+  def lessThan[B](value: B)(using Encoder[B], A =:= Option[B]): LessThan[B] =
+    LessThan(noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are less than in a SELECT statement.
@@ -213,10 +227,14 @@ trait Column[A]:
    *   A query to check whether the values are less than in a Where statement
    */
   @targetName("_lessThan")
-  def <(value: Extract[A])(using Encoder[Extract[A]]): LessThan[A] = lessThan(value)
+  def <(value: A)(using Encoder[A]): LessThan[A] = lessThan(value)
+  @targetName("_lessThan")
+  def <[B](value: B)(using Encoder[B], A =:= Option[B]): LessThan[B] = lessThan(value)
 
-  def notEqual(value: Extract[A])(using Encoder[Extract[A]]): NotEqual[A] =
-    NotEqual[A]("<>", noBagQuotLabel, false, value)
+  def notEqual(value: A)(using Encoder[A]): NotEqual[A] =
+    NotEqual("<>", noBagQuotLabel, false, value)
+  def notEqual[B](value: B)(using Encoder[B], A =:= Option[B]): NotEqual[B] =
+    NotEqual("<>", noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are not equal in a SELECT statement.
@@ -232,7 +250,9 @@ trait Column[A]:
    *   A query to check whether the values are not equal in a Where statement
    */
   @targetName("_notEqual")
-  def <>(value: Extract[A])(using Encoder[Extract[A]]): NotEqual[A] = notEqual(value)
+  def <>(value: A)(using Encoder[A]): NotEqual[A] = notEqual(value)
+  @targetName("_notEqual")
+  def <>[B](value: B)(using Encoder[B], A =:= Option[B]): NotEqual[B] = notEqual(value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are not equal in a SELECT statement.
@@ -248,8 +268,11 @@ trait Column[A]:
    *   A query to check whether the values are not equal in a Where statement
    */
   @targetName("_!equal")
-  def !==(value: Extract[A])(using Encoder[Extract[A]]): NotEqual[A] =
-    NotEqual[A]("!=", noBagQuotLabel, false, value)
+  def !==(value: A)(using Encoder[A]): NotEqual[A] =
+    NotEqual("!=", noBagQuotLabel, false, value)
+  @targetName("_!equal")
+  def !==[B](value: B)(using Encoder[B], A =:= Option[B]): NotEqual[B] =
+    NotEqual("!=", noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
@@ -269,8 +292,10 @@ trait Column[A]:
   def IS[B <: "TRUE" | "FALSE" | "UNKNOWN" | "NULL"](value: B): Is[B] =
     Is[B](noBagQuotLabel, false, value)
 
-  def nullSafeEqual(value: Extract[A])(using Encoder[Extract[A]]): NullSafeEqual[A] =
-    NullSafeEqual[A](noBagQuotLabel, false, value)
+  def nullSafeEqual(value: A)(using Encoder[A]): NullSafeEqual[A] =
+    NullSafeEqual(noBagQuotLabel, false, value)
+  def nullSafeEqual[B](value: B)(using Encoder[B], A =:= Option[B]): NullSafeEqual[B] =
+    NullSafeEqual(noBagQuotLabel, false, value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
@@ -286,7 +311,9 @@ trait Column[A]:
    *   A query to check whether the values are equal in a Where statement
    */
   @targetName("_nullSafeEqual")
-  def <=>(value: Extract[A])(using Encoder[Extract[A]]): NullSafeEqual[A] = nullSafeEqual(value)
+  def <=>(value: A)(using Encoder[A]): NullSafeEqual[A] = nullSafeEqual(value)
+  @targetName("_nullSafeEqual")
+  def <=>[B](value: B)(using Encoder[B], A =:= Option[B]): NullSafeEqual[B] = nullSafeEqual(value)
 
   /**
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
@@ -301,8 +328,10 @@ trait Column[A]:
    * @return
    *   A query to check whether the values are equal in a Where statement
    */
-  def IN(value: Extract[A]*)(using Encoder[Extract[A]]): In[A] =
-    In[A](noBagQuotLabel, false, value*)
+  def IN(value: A*)(using Encoder[A]): In[A] =
+    In(noBagQuotLabel, false, value*)
+  def IN[B](value: B*)(using Encoder[B], A =:= Option[B]): In[B] =
+    In(noBagQuotLabel, false, value*)
 
   /**
    * A function that sets a WHERE condition to check whether a value is included in a specified range in a SELECT statement.
@@ -319,8 +348,10 @@ trait Column[A]:
    * @return
    *   A query to check whether the value is included in a specified range in a Where statement
    */
-  def BETWEEN(start: Extract[A], end: Extract[A])(using Encoder[Extract[A]]): Between[A] =
-    Between[A](noBagQuotLabel, false, start, end)
+  def BETWEEN(start: A, end: A)(using Encoder[A]): Between[A] =
+    Between(noBagQuotLabel, false, start, end)
+  def BETWEEN[B](start: B, end: B)(using Encoder[B], A =:= Option[B]): Between[B] =
+    Between(noBagQuotLabel, false, start, end)
 
   /**
    * A function to set a WHERE condition to check a value with an ambiguous search in a SELECT statement.
@@ -335,8 +366,10 @@ trait Column[A]:
    * @return
    *   A query to check a value with an ambiguous search in a Where statement
    */
-  def LIKE(value: Extract[A])(using Encoder[Extract[A]]): Like[A] =
-    Like[A](noBagQuotLabel, false, value)
+  def LIKE(value: A)(using Encoder[A]): Like[A] =
+    Like(noBagQuotLabel, false, value)
+  def LIKE[B](value: B)(using Encoder[B], A =:= Option[B]): Like[B] =
+    Like(noBagQuotLabel, false, value)
 
   /**
    * A function to set a WHERE condition to check a value with an ambiguous search in a SELECT statement.
@@ -353,8 +386,10 @@ trait Column[A]:
    * @return
    *   A query to check a value with an ambiguous search in a Where statement
    */
-  def LIKE_ESCAPE(like: Extract[A], escape: Extract[A])(using Encoder[Extract[A]]): LikeEscape[A] =
-    LikeEscape[A](noBagQuotLabel, false, like, escape)
+  def LIKE_ESCAPE(like: A, escape: A)(using Encoder[A]): LikeEscape[A] =
+    LikeEscape(noBagQuotLabel, false, like, escape)
+  def LIKE_ESCAPE[B](like: B, escape: B)(using Encoder[B], A =:= Option[B]): LikeEscape[B] =
+    LikeEscape(noBagQuotLabel, false, like, escape)
 
   /**
    * A function to set a WHERE condition to check values in a regular expression in a SELECT statement.
@@ -369,11 +404,15 @@ trait Column[A]:
    * @return
    *   A query to check values in a regular expression in a Where statement
    */
-  def REGEXP(value: Extract[A])(using Encoder[Extract[A]]): Regexp[A] =
-    Regexp[A](noBagQuotLabel, false, value)
+  def REGEXP(value: A)(using Encoder[A]): Regexp[A] =
+    Regexp(noBagQuotLabel, false, value)
+  def REGEXP[B](value: B)(using Encoder[B], A =:= Option[B]): Regexp[B] =
+    Regexp(noBagQuotLabel, false, value)
 
-  def leftShift(value: Extract[A])(using Encoder[Extract[A]]): LeftShift[A] =
-    LeftShift[A](noBagQuotLabel, false, value)
+  def leftShift(value: A)(using Encoder[A]): LeftShift[A] =
+    LeftShift(noBagQuotLabel, false, value)
+  def leftShift[B](value: B)(using Encoder[B], A =:= Option[B]): LeftShift[B] =
+    LeftShift(noBagQuotLabel, false, value)
 
   /**
    * A function to set a WHERE condition to check whether the values are shifted to the left in a SELECT statement.
@@ -389,10 +428,14 @@ trait Column[A]:
    *   A query to check whether the values are shifted to the left in a Where statement
    */
   @targetName("_leftShift")
-  def <<(value: Extract[A])(using Encoder[Extract[A]]): LeftShift[A] = leftShift(value)
+  def <<(value: A)(using Encoder[A]): LeftShift[A] = leftShift(value)
+  @targetName("_leftShift")
+  def <<[B](value: B)(using Encoder[B], A =:= Option[B]): LeftShift[B] = leftShift(value)
 
-  def rightShift(value: Extract[A])(using Encoder[Extract[A]]): RightShift[A] =
+  def rightShift(value: A)(using Encoder[A]): RightShift[A] =
     RightShift[A](noBagQuotLabel, false, value)
+  def rightShift[B](value: B)(using Encoder[B], A =:= Option[B]): RightShift[B] =
+    RightShift(noBagQuotLabel, false, value)
 
   /**
    * A function to set a WHERE condition to check whether the values are shifted to the right in a SELECT statement.
@@ -408,7 +451,9 @@ trait Column[A]:
    *   A query to check whether the values are shifted to the right in a Where statement
    */
   @targetName("_rightShift")
-  def >>(value: Extract[A])(using Encoder[Extract[A]]): RightShift[A] = rightShift(value)
+  def >>(value: A)(using Encoder[A]): RightShift[A] = rightShift(value)
+  @targetName("_rightShift")
+  def >>[B](value: B)(using Encoder[B], A =:= Option[B]): RightShift[B] = rightShift(value)
 
   /**
    * A function to set a WHERE condition to check whether the values are added in a SELECT statement.
@@ -425,8 +470,10 @@ trait Column[A]:
    * @return
    *   A query to check whether the values are added in a Where statement
    */
-  def DIV(cond: Extract[A], result: Extract[A])(using Encoder[Extract[A]]): Div[A] =
-    Div[A](noBagQuotLabel, false, cond, result)
+  def DIV(cond: A, result: A)(using Encoder[A]): Div[A] =
+    Div(noBagQuotLabel, false, cond, result)
+  def DIV[B](cond: B, result: B)(using Encoder[B], A =:= Option[B]): Div[B] =
+    Div(noBagQuotLabel, false, cond, result)
 
   /**
    * A function to set the WHERE condition for modulo operations in a SELECT statement.
@@ -443,11 +490,15 @@ trait Column[A]:
    * @return
    *   A query to check the modulo operation in a Where statement
    */
-  def MOD(cond: Extract[A], result: Extract[A])(using Encoder[Extract[A]]): Mod[A] =
-    Mod[A]("MOD", noBagQuotLabel, false, cond, result)
+  def MOD(cond: A, result: A)(using Encoder[A]): Mod[A] =
+    Mod("MOD", noBagQuotLabel, false, cond, result)
+  def MOD[B](cond: B, result: B)(using Encoder[B], A =:= Option[B]): Mod[B] =
+    Mod("MOD", noBagQuotLabel, false, cond, result)
 
-  def mod(cond: Extract[A], result: Extract[A])(using Encoder[Extract[A]]): Mod[A] =
-    Mod[A]("%", noBagQuotLabel, false, cond, result)
+  def mod(cond: A, result: A)(using Encoder[A]): Mod[A] =
+    Mod("%", noBagQuotLabel, false, cond, result)
+  def mod[B](cond: B, result: B)(using Encoder[B], A =:= Option[B]): Mod[B] =
+    Mod("%", noBagQuotLabel, false, cond, result)
 
   /**
    * A function to set the WHERE condition for modulo operations in a SELECT statement.
@@ -465,10 +516,14 @@ trait Column[A]:
    *   A query to check the modulo operation in a Where statement
    */
   @targetName("_mod")
-  def %(cond: Extract[A], result: Extract[A])(using Encoder[Extract[A]]): Mod[A] = mod(cond, result)
+  def %(cond: A, result: A)(using Encoder[A]): Mod[A] = mod(cond, result)
+  @targetName("_mod")
+  def %[B](cond: B, result: B)(using Encoder[B], A =:= Option[B]): Mod[B] = mod(cond, result)
 
-  def bitXOR(value: Extract[A])(using Encoder[Extract[A]]): BitXOR[A] =
-    BitXOR[A](noBagQuotLabel, false, value)
+  def bitXOR(value: A)(using Encoder[A]): BitXOR[A] =
+    BitXOR(noBagQuotLabel, false, value)
+  def bitXOR[B](value: B)(using Encoder[B], A =:= Option[B]): BitXOR[B] =
+    BitXOR(noBagQuotLabel, false, value)
 
   /**
    * A function to set the WHERE condition for bitwise XOR operations in a SELECT statement.
@@ -484,10 +539,14 @@ trait Column[A]:
    *   A query to check the bitwise XOR operation in a Where statement
    */
   @targetName("_bitXOR")
-  def ^(value: Extract[A])(using Encoder[Extract[A]]): BitXOR[A] = bitXOR(value)
+  def ^(value: A)(using Encoder[A]): BitXOR[A] = bitXOR(value)
+  @targetName("_bitXOR")
+  def ^[B](value: B)(using Encoder[B], A =:= Option[B]): BitXOR[B] = bitXOR(value)
 
-  def bitFlip(value: Extract[A])(using Encoder[Extract[A]]): BitFlip[A] =
-    BitFlip[A](noBagQuotLabel, false, value)
+  def bitFlip(value: A)(using Encoder[A]): BitFlip[A] =
+    BitFlip(noBagQuotLabel, false, value)
+  def bitFlip[B](value: B)(using Encoder[B], A =:= Option[B]): BitFlip[B] =
+    BitFlip(noBagQuotLabel, false, value)
 
   /**
    * A function to set the WHERE condition for bitwise NOT operations in a SELECT statement.
@@ -503,7 +562,9 @@ trait Column[A]:
    *   A query to check the bitwise NOT operation in a Where statement
    */
   @targetName("_bitFlip")
-  def ~(value: Extract[A])(using Encoder[Extract[A]]): BitFlip[A] = bitFlip(value)
+  def ~(value: A)(using Encoder[A]): BitFlip[A] = bitFlip(value)
+  @targetName("_bitFlip")
+  def ~[B](value: B)(using Encoder[B], A =:= Option[B]): BitFlip[B] = bitFlip(value)
 
   def combine(other: Column[A])(using Codec[A]): Column.MultiColumn[A] =
     Column.MultiColumn[A]("+", this, other)
