@@ -12,17 +12,17 @@ import ldbc.dsl.codec.Codec
 
 opaque type Token = String
 object Token:
-  def fromString(value: String): Token = value
-  extension (token: Token) def value: String = token
+  def fromString(value: String):          Token  = value
+  extension (token:     Token) def value: String = token
 
 class ColumnTest extends AnyFlatSpec:
 
   given Codec[Token] = Codec[String].imap(Token.fromString)(_.value)
 
-  private val id1   = Column.Impl[Long]("id")
-  private val id2   = Column.Impl[Option[Long]]("id")
-  private val name1 = Column.Impl[String]("name")
-  private val name2 = Column.Impl[Option[String]]("name")
+  private val id1    = Column.Impl[Long]("id")
+  private val id2    = Column.Impl[Option[Long]]("id")
+  private val name1  = Column.Impl[String]("name")
+  private val name2  = Column.Impl[Option[String]]("name")
   private val token1 = Column.Impl[Token]("token")
   private val token2 = Column.Impl[Option[Token]]("token")
 

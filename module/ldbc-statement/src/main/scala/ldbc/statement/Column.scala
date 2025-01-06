@@ -143,7 +143,7 @@ trait Column[A]:
   @targetName("matchCondition")
   def ===[B](value: B)(using Encoder[B], A =:= Option[B]): MatchCondition[B] = _equals(value)
 
-  def orMore(value: A)(using Encoder[A]): OrMore[A] = OrMore(noBagQuotLabel, false, value)
+  def orMore(value:    A)(using Encoder[A]):                  OrMore[A] = OrMore(noBagQuotLabel, false, value)
   def orMore[B](value: B)(using Encoder[B], A =:= Option[B]): OrMore[B] = OrMore(noBagQuotLabel, false, value)
 
   /**
@@ -164,7 +164,7 @@ trait Column[A]:
   @targetName("_orMore")
   def >=[B](value: B)(using Encoder[B], A =:= Option[B]): OrMore[B] = orMore(value)
 
-  def over(value: A)(using Encoder[A]): Over[A] = Over(noBagQuotLabel, false, value)
+  def over(value:    A)(using Encoder[A]):                  Over[A] = Over(noBagQuotLabel, false, value)
   def over[B](value: B)(using Encoder[B], A =:= Option[B]): Over[B] = Over(noBagQuotLabel, false, value)
 
   /**
