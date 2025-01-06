@@ -11,8 +11,8 @@ import cats.syntax.all.*
 
 import cats.effect.Temporal
 
-import ldbc.dsl.util.FactoryCompat
 import ldbc.dsl.codec.Decoder
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for determining what type of search system statements are retrieved from the database.

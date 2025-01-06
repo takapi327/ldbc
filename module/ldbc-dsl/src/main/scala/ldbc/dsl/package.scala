@@ -8,8 +8,6 @@ package ldbc
 
 import java.time.*
 
-//import scala.deriving.Mirror
-
 import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
@@ -17,8 +15,9 @@ import cats.syntax.all.*
 import cats.effect.*
 
 import ldbc.sql.PreparedStatement
-import ldbc.dsl.syntax.*
+
 import ldbc.dsl.codec.Encoder
+import ldbc.dsl.syntax.*
 
 package object dsl:
 

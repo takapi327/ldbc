@@ -8,8 +8,8 @@ package ldbc.connector.codec
 
 import munit.FunSuite
 
-import ldbc.connector.data.*
 import ldbc.connector.codec.text.*
+import ldbc.connector.data.*
 
 class TextCodecsTest extends FunSuite {
   test("char encode successfully") {

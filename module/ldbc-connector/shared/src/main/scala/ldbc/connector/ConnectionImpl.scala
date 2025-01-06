@@ -16,15 +16,15 @@ import cats.effect.std.Console
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.{ Connection, Statement, PreparedStatement, CallableStatement, ResultSet, DatabaseMetaData, Savepoint }
+import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, ResultSet, Savepoint, Statement }
 
 import ldbc.connector.data.*
-import ldbc.connector.util.StringHelper
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
-import ldbc.connector.net.protocol.*
 import ldbc.connector.net.packet.request.*
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.net.protocol.*
+import ldbc.connector.util.StringHelper
 
 private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
   protocol:         Protocol[F],

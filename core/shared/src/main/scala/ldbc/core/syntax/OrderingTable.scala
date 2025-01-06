@@ -6,7 +6,7 @@
 
 package ldbc.core.syntax
 
-import ldbc.core.{ Table, ForeignKey, Constraint }
+import ldbc.core.{ Constraint, ForeignKey, Table }
 
 /**
  * Trait that provides for sorting an array of tables.

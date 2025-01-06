@@ -6,10 +6,10 @@
 
 package benchmark
 
-import dotty.tools.dotc.core.Contexts.inContext
-import dotty.tools.repl.{ Command, ParseResult, Parsed, State, ReplDriver as DottyReplDriver }
-
 import java.io.{ ByteArrayOutputStream, PrintStream }
+
+import dotty.tools.dotc.core.Contexts.inContext
+import dotty.tools.repl.{ Command, ParseResult, Parsed, ReplDriver as DottyReplDriver, State }
 
 class Compiler:
 

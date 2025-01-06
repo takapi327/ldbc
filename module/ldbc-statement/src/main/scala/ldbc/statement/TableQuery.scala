@@ -6,12 +6,13 @@
 
 package ldbc.statement
 
-import scala.deriving.Mirror
-import scala.compiletime.*
 import scala.annotation.targetName
+import scala.compiletime.*
+import scala.deriving.Mirror
 
-import ldbc.dsl.Parameter
 import ldbc.dsl.codec.Encoder
+import ldbc.dsl.Parameter
+
 import ldbc.statement.internal.QueryConcat
 
 /**

@@ -9,6 +9,8 @@ package ldbc.connector.net
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 
+import scodec.bits.BitVector
+
 import cats.*
 import cats.syntax.all.*
 
@@ -16,10 +18,8 @@ import cats.effect.*
 import cats.effect.std.Console
 import cats.effect.syntax.temporal.*
 
-import fs2.Chunk
 import fs2.io.net.Socket
-
-import scodec.bits.BitVector
+import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.exception.*

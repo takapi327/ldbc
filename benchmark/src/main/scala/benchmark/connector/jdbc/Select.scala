@@ -6,14 +6,14 @@
 
 package benchmark.connector.jdbc
 
-import java.util.concurrent.TimeUnit
 import java.time.*
+import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import org.openjdk.jmh.annotations.*
+
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.*
 

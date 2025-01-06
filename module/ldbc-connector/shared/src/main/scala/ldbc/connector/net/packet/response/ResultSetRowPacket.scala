@@ -7,10 +7,10 @@
 package ldbc.connector.net.packet
 package response
 
-import cats.syntax.all.*
-
 import scodec.*
 import scodec.codecs.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.CapabilitiesFlags
 

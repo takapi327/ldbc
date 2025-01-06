@@ -10,8 +10,8 @@ import java.time.*
 
 import munit.FunSuite
 
-import ldbc.connector.data.*
 import ldbc.connector.codec.temporal.*
+import ldbc.connector.data.*
 
 class TemporalCodecsTest extends FunSuite:
 

@@ -7,12 +7,12 @@
 package ldbc.connector.net.packet
 package request
 
-import cats.syntax.all.*
-
 import scodec.*
 import scodec.bits.*
 import scodec.codecs.uint32L
 import scodec.interop.cats.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.*
 

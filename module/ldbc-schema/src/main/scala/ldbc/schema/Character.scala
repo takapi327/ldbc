@@ -6,8 +6,8 @@
 
 package ldbc.schema
 
-import ldbc.schema.model.Enum
 import ldbc.schema.attribute.Attribute
+import ldbc.schema.model.Enum
 
 /**
  * A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,

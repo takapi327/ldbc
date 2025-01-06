@@ -6,7 +6,7 @@
 
 package ldbc.hikari
 
-import java.util.concurrent.{ Executors, ExecutorService }
+import java.util.concurrent.{ ExecutorService, Executors }
 
 import scala.concurrent.ExecutionContext
 

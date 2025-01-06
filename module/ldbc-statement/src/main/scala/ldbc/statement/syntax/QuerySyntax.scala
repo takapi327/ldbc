@@ -10,6 +10,7 @@ import scala.deriving.Mirror
 
 import ldbc.dsl.{ Query as DslQuery, * }
 import ldbc.dsl.codec.Decoder
+
 import ldbc.statement.Query
 
 trait QuerySyntax[F[_]]:

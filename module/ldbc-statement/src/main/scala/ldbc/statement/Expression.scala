@@ -8,6 +8,7 @@ package ldbc.statement
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.Encoder
+
 import ldbc.statement.interpreter.Extract
 
 /**

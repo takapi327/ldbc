@@ -8,8 +8,9 @@ package ldbc.query.builder
 
 import scala.deriving.Mirror
 
-import ldbc.dsl.Parameter
 import ldbc.dsl.codec.*
+import ldbc.dsl.Parameter
+
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
 case class TableQueryImpl[A <: SharedTable & AbstractTable[?], B <: Product](

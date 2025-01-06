@@ -7,12 +7,12 @@
 package ldbc.codegen
 
 import java.io.File
-import java.nio.file.Files
 import java.nio.charset.Charset
+import java.nio.file.Files
 
 import ldbc.codegen.formatter.Naming
-import ldbc.codegen.parser.Parser
 import ldbc.codegen.parser.yml.Parser as YmlParser
+import ldbc.codegen.parser.Parser
 
 private[ldbc] object LdbcGenerator:
 

@@ -9,8 +9,8 @@ package ldbc.sbt
 import sbt._
 import sbt.Keys._
 
-import CustomKeys._
 import AutoImport._
+import CustomKeys._
 
 object Settings {
 

@@ -8,9 +8,11 @@ package ldbc.connector.net
 
 import java.nio.charset.StandardCharsets
 
-import scala.concurrent.duration.*
-import scala.collection.mutable.ArrayBuffer
 import scala.collection.immutable.ListMap
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.*
+
+import scodec.Decoder
 
 import cats.*
 import cats.syntax.all.*
@@ -20,13 +22,11 @@ import cats.effect.std.Console
 
 import fs2.io.net.Socket
 
-import scodec.Decoder
-
+import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{ Tracer, Span }
 
-import ldbc.connector.data.*
 import ldbc.connector.authenticator.*
+import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.packet.*
 import ldbc.connector.net.packet.request.*

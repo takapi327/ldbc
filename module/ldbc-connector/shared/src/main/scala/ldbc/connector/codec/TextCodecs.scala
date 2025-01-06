@@ -6,9 +6,9 @@
 
 package ldbc.connector.codec
 
-import cats.syntax.all.*
-
 import scodec.bits.ByteVector
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.Type
 

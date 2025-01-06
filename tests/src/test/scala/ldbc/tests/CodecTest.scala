@@ -19,8 +19,10 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.*
 
 import ldbc.sql.*
-import ldbc.connector.SSL
+
 import ldbc.dsl.io.*
+
+import ldbc.connector.SSL
 
 class LdbcCodecTest extends CodecTest:
 

@@ -15,6 +15,7 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.*
 
 import ldbc.sql.*
+
 import ldbc.connector.SSL
 
 class LdbcConnectionTest extends ConnectionTest:

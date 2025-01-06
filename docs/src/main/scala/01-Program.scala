@@ -9,8 +9,9 @@ import cats.effect.unsafe.implicits.global
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
 import ldbc.dsl.io.*
+
+import ldbc.connector.*
 
 @main def program1(): Unit =
   // #given

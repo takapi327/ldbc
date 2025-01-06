@@ -6,9 +6,9 @@
 
 package ldbc.connector
 
-import org.typelevel.otel4s.trace.Tracer
-
 import cats.effect.*
+
+import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.Statement
 

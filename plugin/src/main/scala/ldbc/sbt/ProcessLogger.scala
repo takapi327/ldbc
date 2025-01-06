@@ -6,9 +6,9 @@
 
 package ldbc.sbt
 
-import sbt._
-
 import scala.Console._
+
+import sbt._
 
 /**
  * Class for specifying the format of the logs to be spit out when the sbt project is executed.

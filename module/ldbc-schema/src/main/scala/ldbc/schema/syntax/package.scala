@@ -8,9 +8,9 @@ package ldbc.schema
 
 import scala.deriving.Mirror
 
-import cats.effect.*
-
 import cats.syntax.all.*
+
+import cats.effect.*
 
 import ldbc.sql.*
 

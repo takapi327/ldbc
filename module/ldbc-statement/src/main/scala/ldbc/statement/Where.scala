@@ -6,9 +6,9 @@
 
 package ldbc.statement
 
-import ldbc.dsl.{ Parameter, SQL }
-
 import scala.annotation.targetName
+
+import ldbc.dsl.{ Parameter, SQL }
 
 /**
  * Trait for building Statements to be WHERE.

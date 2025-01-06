@@ -13,14 +13,14 @@ import java.time.{
   LocalTime,
   OffsetDateTime,
   OffsetTime,
-  ZonedDateTime,
-  Year as JYear
+  Year as JYear,
+  ZonedDateTime
 }
 
 import scala.compiletime.{ erasedValue, error }
 
+import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
 import ldbc.schema.DataType.*
-import ldbc.schema.model.{ EnumDataType, Enum as EnumModel }
 
 /**
  * A set of methods for constructing DataType

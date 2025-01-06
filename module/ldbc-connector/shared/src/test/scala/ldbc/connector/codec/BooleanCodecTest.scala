@@ -8,8 +8,8 @@ package ldbc.connector.codec
 
 import munit.FunSuite
 
-import ldbc.connector.data.*
 import ldbc.connector.codec.boolean.boolean
+import ldbc.connector.data.*
 
 class BooleanCodecTest extends FunSuite {
   test("boolean encode successfully") {

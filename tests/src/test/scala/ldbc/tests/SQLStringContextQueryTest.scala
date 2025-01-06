@@ -19,9 +19,11 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.CatsEffectSuite
 
 import ldbc.sql.Connection
-import ldbc.connector.SSL
+
 import ldbc.dsl.exception.DecodeFailureException
 import ldbc.dsl.io.*
+
+import ldbc.connector.SSL
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Resource[IO, Connection[IO]] =

@@ -10,6 +10,7 @@ import java.time.*
 import java.time.Year as JYear
 
 import ldbc.statement.{ AbstractTable, TableQuery as AbstractTableQuery }
+
 import ldbc.schema.attribute.*
 
 private[ldbc] trait Alias:

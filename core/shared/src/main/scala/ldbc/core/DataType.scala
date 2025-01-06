@@ -9,13 +9,13 @@ package ldbc.core
 import java.time.*
 import java.time.Year as JYear
 
-import scala.compiletime.{ error, constValue, erasedValue }
-import scala.compiletime.ops.string.*
+import scala.compiletime.{ constValue, erasedValue, error }
 import scala.compiletime.ops.int.*
+import scala.compiletime.ops.string.*
 
-import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
 import ldbc.core.attribute.Attribute
 import ldbc.core.interpreter.ExtractOption
+import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
 
 /**
  * Trait for representing SQL DataType

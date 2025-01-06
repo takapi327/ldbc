@@ -6,10 +6,10 @@
 
 package ldbc.connector.authenticator
 
-import org.typelevel.scalaccompat.annotation.*
-
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*
+
+import org.typelevel.scalaccompat.annotation.*
 
 @nowarn212
 @link("crypto")

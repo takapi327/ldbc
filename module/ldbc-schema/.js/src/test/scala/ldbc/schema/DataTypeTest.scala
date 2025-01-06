@@ -10,8 +10,8 @@ import java.time.{ LocalDate, LocalDateTime, LocalTime, Year as JYear }
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import ldbc.schema.DataType.*
 import ldbc.schema.model.EnumDataType
+import ldbc.schema.DataType.*
 
 class DataTypeTest extends AnyFlatSpec:
 
