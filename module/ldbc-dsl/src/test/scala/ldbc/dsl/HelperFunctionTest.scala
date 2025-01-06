@@ -8,9 +8,9 @@ package ldbc.dsl
 
 import cats.data.NonEmptyList
 
-import ldbc.dsl.io.*
-
 import munit.CatsEffectSuite
+
+import ldbc.dsl.io.*
 
 class HelperFunctionTest extends munit.CatsEffectSuite:
 

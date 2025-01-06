@@ -8,6 +8,8 @@ package ldbc.connector
 
 import scala.concurrent.duration.Duration
 
+import com.comcast.ip4s.*
+
 import cats.*
 import cats.syntax.all.*
 
@@ -24,8 +26,6 @@ import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
-
-import com.comcast.ip4s.*
 
 object Connection:
 

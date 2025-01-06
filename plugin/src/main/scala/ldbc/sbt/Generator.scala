@@ -10,9 +10,10 @@ import java.io.FilenameFilter
 import java.nio.file.attribute.FileTime
 import java.nio.file.Files
 
+import scala.language.reflectiveCalls
+
 import sbt._
 import sbt.Keys._
-import scala.language.reflectiveCalls
 
 import ldbc.sbt.AutoImport._
 import ldbc.sbt.CustomKeys._
