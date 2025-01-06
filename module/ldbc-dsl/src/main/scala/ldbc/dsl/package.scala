@@ -8,8 +8,6 @@ package ldbc
 
 import java.time.*
 
-//import scala.deriving.Mirror
-
 import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
