@@ -109,6 +109,26 @@ trait TableQuery[A, O]:
    *
    * @param mirror
    *   Mirror of Entity
+   * @param head
+   *   Value to be inserted into the table
+   * @param tail
+   *   Value to be inserted into the table
+   */
+  inline def insert(using mirror: Mirror.Of[Entity])(
+    head: mirror.MirroredElemTypes,
+    tail: mirror.MirroredElemTypes*
+  ): Insert[A] = insert(NonEmptyList(head, tail.toList))
+
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .insert(NonEmptyList.one(1L, "Tokyo"))
+   * }}}
+   *
+   * @param mirror
+   *   Mirror of Entity
    * @param values
    *   Value to be inserted into the table
    */
@@ -154,6 +174,21 @@ trait TableQuery[A, O]:
    *
    * {{{
    *   TableQuery[City] ++= List(City(1L, "Tokyo"), City(2L, "Osaka"))
+   * }}}
+   *
+   * @param head
+   *   Value to be inserted into the table
+   * @param tail
+   *   Value to be inserted into the table
+   */
+  @targetName("insertProducts")
+  inline def ++=(head: Entity, tail: Entity*): Insert[A] = ++=(NonEmptyList(head, tail.toList))
+
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City] ++= NonEmptyList(City(1L, "Tokyo"), City(2L, "Osaka"))
    * }}}
    *
    * @param values
