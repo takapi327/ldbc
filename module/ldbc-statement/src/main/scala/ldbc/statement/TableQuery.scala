@@ -117,7 +117,10 @@ trait TableQuery[A, O]:
   inline def insert(using mirror: Mirror.Of[Entity])(
     head: mirror.MirroredElemTypes,
     tail: mirror.MirroredElemTypes*
-  ): Insert[A] = insert(NonEmptyList(head, tail.toList))
+  ): Insert[A] =
+    inline this match
+      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
+      case _ => insert[mirror.MirroredElemTypes](NonEmptyList(head, tail.toList))
 
   /**
    * Method to construct a query to insert a table.
@@ -127,26 +130,19 @@ trait TableQuery[A, O]:
    *     .insert(NonEmptyList.one(1L, "Tokyo"))
    * }}}
    *
-   * @param mirror
-   *   Mirror of Entity
    * @param values
    *   Value to be inserted into the table
    */
-  inline def insert(using mirror: Mirror.Of[Entity])(
-    values: NonEmptyList[mirror.MirroredElemTypes]
-  ): Insert[A] =
-    inline this match
-      case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ =>
-        val parameterBinders: List[Parameter.Dynamic] = values.toList.flatMap { value =>
-          Parameter.Dynamic.many(column.encoder.asInstanceOf[Encoder[mirror.MirroredElemTypes]].encode(value))
-        }
-        Insert.Impl(
-          table = table,
-          statement =
-            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").toList.mkString(",") }",
-          params = params ++ parameterBinders
-        )
+  private def insert[B <: Tuple](values: NonEmptyList[B]): Insert[A] =
+    val parameterBinders: List[Parameter.Dynamic] = values.toList.flatMap { value =>
+      Parameter.Dynamic.many(column.encoder.asInstanceOf[Encoder[B]].encode(value))
+    }
+    Insert.Impl(
+      table = table,
+      statement =
+        s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").toList.mkString(",") }",
+      params = params ++ parameterBinders
+    )
 
   /**
    * Method to construct a query to insert a table.

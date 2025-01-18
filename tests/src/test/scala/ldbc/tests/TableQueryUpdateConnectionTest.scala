@@ -8,6 +8,7 @@ package ldbc.tests
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
+import cats.data.NonEmptyList
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -107,42 +108,40 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         country
           .insert(
-            List(
-              (
-                code(2),
-                s"${ prefix }_Test2",
-                Country.Continent.Asia,
-                "Northeast",
-                BigDecimal.decimal(390757.00),
-                None,
-                1,
-                None,
-                None,
-                None,
-                "Test",
-                "Test",
-                None,
-                None,
-                code(2)
-              ),
-              (
-                code(3),
-                s"${ prefix }_Test3",
-                Country.Continent.Asia,
-                "Northeast",
-                BigDecimal.decimal(390757.00),
-                None,
-                1,
-                None,
-                None,
-                None,
-                "Test",
-                "Test",
-                None,
-                None,
-                code(3)
-              )
-            )*
+            (
+              code(2),
+              s"${ prefix }_Test2",
+              Country.Continent.Asia,
+              "Northeast",
+              BigDecimal.decimal(390757.00),
+              None,
+              1,
+              None,
+              None,
+              None,
+              "Test",
+              "Test",
+              None,
+              None,
+              code(2)
+            ),
+            (
+              code(3),
+              s"${ prefix }_Test3",
+              Country.Continent.Asia,
+              "Northeast",
+              BigDecimal.decimal(390757.00),
+              None,
+              1,
+              None,
+              None,
+              None,
+              "Test",
+              "Test",
+              None,
+              None,
+              code(3)
+            )
           )
           .update
           .commit(conn)
@@ -219,7 +218,7 @@ trait TableQueryUpdateConnectionTest extends CatsEffectSuite:
     )
     assertIO(
       connection.use { conn =>
-        (country ++= List(newCountry1, newCountry2)).update
+        (country ++= NonEmptyList.of(newCountry1, newCountry2)).update
           .commit(conn)
       },
       2
