@@ -6,9 +6,9 @@
 
 package ldbc.query.builder
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import cats.data.NonEmptyList
+
+import org.scalatest.flatspec.AnyFlatSpec
 
 import ldbc.query.builder.syntax.io.*
 

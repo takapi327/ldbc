@@ -6,9 +6,9 @@
 
 package ldbc.schema
 
-import org.scalatest.flatspec.AnyFlatSpec
-
 import cats.data.NonEmptyList
+
+import org.scalatest.flatspec.AnyFlatSpec
 
 case class Test(p1: Long, p2: String, p3: Option[String])
 case class JoinTest(p1: Long, p2: String, p3: Option[String])
