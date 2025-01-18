@@ -1,13 +1,45 @@
+/**
+ * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * This software is licensed under the MIT License (MIT).
+ * For more information see LICENSE or https://opensource.org/licenses/MIT
+ */
+
 package ldbc.statement.functions
 
 import java.time.*
+
+import ldbc.dsl.codec.*
+import ldbc.statement.Column
 
 /**
  * Provide functions that can be used to manipulate temporal values provided by MySQL.
  *
  * @see https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html
  */
-trait DateTime
+trait DateTime:
+
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(p => ADDDATE(p.birthDate, DateTime.Interval.YEAR(1)))
+   *   // SELECT ADDDATE(birth_date, INTERVAL 1 YEAR) FROM person
+   * }}}
+   */
+  def ADDDATE[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
+    Column(s"ADDDATE(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
+
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(p => ADDDATE(LocalDate.now, DateTime.Interval.YEAR(1)))
+   *   // SELECT ADDDATE('2008-02-02', INTERVAL 1 YEAR) FROM person
+   * }}}
+   */
+  def ADDDATE(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"ADDDATE('${date.toString}', ${interval.statement})")
+
 object DateTime:
 
   /**
