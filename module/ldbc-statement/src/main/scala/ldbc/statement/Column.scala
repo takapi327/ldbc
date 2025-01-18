@@ -9,6 +9,7 @@ package ldbc.statement
 import scala.annotation.targetName
 
 import cats.InvariantSemigroupal
+import cats.data.NonEmptyList
 
 import org.typelevel.twiddles.TwiddleSyntax
 
@@ -319,19 +320,37 @@ trait Column[A]:
    * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
    *
    * {{{
-   *   TableQuery[User].select(user => user.name *: user.age).where(_.id IN (1L, 2L, 3L))
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id IN NonEmptyList.of(1L, 2L, 3L))
    *   // SELECT name, age FROM user WHERE id IN (?, ?, ?)
    * }}}
    *
-   * @param value
+   * @param values
    *   Value to compare
    * @return
    *   A query to check whether the values are equal in a Where statement
    */
-  def IN(value: A*)(using Encoder[A]): In[A] =
-    In(noBagQuotLabel, false, value*)
-  def IN[B](value: B*)(using Encoder[B], A =:= Option[B]): In[B] =
-    In(noBagQuotLabel, false, value*)
+  def IN(values: NonEmptyList[A])(using Encoder[A]): In[A] =
+    In(noBagQuotLabel, false, values.toList*)
+  def IN[B](values: NonEmptyList[B])(using Encoder[B], A =:= Option[B]): In[B] =
+    In(noBagQuotLabel, false, values.toList*)
+
+  /**
+   * A function that sets a WHERE condition to check whether the values are equal in a SELECT statement.
+   *
+   * {{{
+   *   TableQuery[User].select(user => user.name *: user.age).where(_.id IN (1L, 2L, 3L))
+   *   // SELECT name, age FROM user WHERE id IN (?, ?, ?)
+   * }}}
+   *
+   * @param head
+   *   Value to compare
+   * @param tail
+   *   Value to compare
+   * @return
+   * A query to check whether the values are equal in a Where statement
+   */
+  def IN(head: A, tail: A)(using Encoder[A]): In[A] = self.IN(NonEmptyList.of(head, tail))
+  def IN[B](head: B, tail: B)(using Encoder[B], A =:= Option[B]): In[B] = self.IN(NonEmptyList.of(head, tail))
 
   /**
    * A function that sets a WHERE condition to check whether a value is included in a specified range in a SELECT statement.
