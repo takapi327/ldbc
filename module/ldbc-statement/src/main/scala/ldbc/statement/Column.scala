@@ -349,8 +349,8 @@ trait Column[A]:
    * @return
    * A query to check whether the values are equal in a Where statement
    */
-  def IN(head:    A, tail: A)(using Encoder[A]):                  In[A] = self.IN(NonEmptyList.of(head, tail))
-  def IN[B](head: B, tail: B)(using Encoder[B], A =:= Option[B]): In[B] = self.IN(NonEmptyList.of(head, tail))
+  def IN(head:    A, tail: A*)(using Encoder[A]):                  In[A] = self.IN(NonEmptyList.of(head, tail*))
+  def IN[B](head: B, tail: B*)(using Encoder[B], A =:= Option[B]): In[B] = self.IN(NonEmptyList.of(head, tail*))
 
   /**
    * A function that sets a WHERE condition to check whether a value is included in a specified range in a SELECT statement.
