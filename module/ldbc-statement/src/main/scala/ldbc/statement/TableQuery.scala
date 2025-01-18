@@ -120,7 +120,7 @@ trait TableQuery[A, O]:
   ): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ => insert[mirror.MirroredElemTypes](NonEmptyList(head, tail.toList))
+      case _                      => insert[mirror.MirroredElemTypes](NonEmptyList(head, tail.toList))
 
   /**
    * Method to construct a query to insert a table.
