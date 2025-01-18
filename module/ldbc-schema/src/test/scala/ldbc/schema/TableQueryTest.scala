@@ -8,6 +8,8 @@ package ldbc.schema
 
 import org.scalatest.flatspec.AnyFlatSpec
 
+import cats.data.NonEmptyList
+
 case class Test(p1: Long, p2: String, p3: Option[String])
 case class JoinTest(p1: Long, p2: String, p3: Option[String])
 case class JoinTest2(p1: Long, p2: String, p3: Option[String])
@@ -249,10 +251,9 @@ class TableQueryTest extends AnyFlatSpec:
     assert(
       query.insert((1L, "p2", Some("p3"))).statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?)"
     )
-    val values: List[(Long, String, Option[String])] = List((1L, "p2", Some("p3")), (2L, "p2", None))
     assert(
       query
-        .insert(values*)
+        .insert((1L, "p2", Some("p3")), (2L, "p2", None))
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?)"
     )
     assert(
@@ -276,7 +277,7 @@ class TableQueryTest extends AnyFlatSpec:
     assert(
       (query
         .++=(
-          List(
+          NonEmptyList.of(
             Test(1L, "p2", Some("p3")),
             Test(2L, "p2", None)
           )
@@ -291,7 +292,7 @@ class TableQueryTest extends AnyFlatSpec:
     )
     assert(
       query
-        .insert(values*)
+        .insert((1L, "p2", Some("p3")), (2L, "p2", None))
         .onDuplicateKeyUpdate(t => t.p1 *: t.p2 *: t.p3)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
@@ -312,14 +313,14 @@ class TableQueryTest extends AnyFlatSpec:
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1), p2 = VALUES(test.p2), p3 = VALUES(test.p3)"
     )
     assert(
-      (query ++= List(
+      (query ++= NonEmptyList.of(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
       )).onDuplicateKeyUpdate(_.p1)
         .statement === "INSERT INTO test (p1, p2, p3) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE p1 = VALUES(test.p1)"
     )
     assert(
-      (query ++= List(
+      (query ++= NonEmptyList.of(
         Test(1L, "p2", Some("p3")),
         Test(2L, "p2", None)
       )).onDuplicateKeyUpdate(v => v.p1 *: v.p2 *: v.p3)
