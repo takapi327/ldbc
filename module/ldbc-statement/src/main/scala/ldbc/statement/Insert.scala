@@ -8,6 +8,8 @@ package ldbc.statement
 
 import scala.annotation.targetName
 
+import cats.data.NonEmptyList
+
 import ldbc.dsl.{ Parameter, SQL }
 
 /**
@@ -76,13 +78,29 @@ object Insert:
      *     .values((1L, "Tokyo"))
      * }}}
      *
+     * @param head
+     *   The values to be inserted.
+     * @param tail
+     *   The values to be inserted.
+     */
+    def values(head: B, tail: B*): Values[A] = values(NonEmptyList(head, tail.toList))
+
+    /**
+     * Method for constructing INSERT ... VALUES statements.
+     *
+     * {{{
+     *   TableQuery[City]
+     *     .insertInto(city => city.id *: city.name)
+     *     .values(NonEmptyList.one(1L, "Tokyo"))
+     * }}}
+     *
      * @param values
      *   The values to be inserted.
      */
-    def values(values: B*): Values[A] =
-      val parameterBinders: List[Parameter.Dynamic] = values.flatMap { value =>
+    def values(values: NonEmptyList[B]): Values[A] =
+      val parameterBinders: List[Parameter.Dynamic] = values.toList.flatMap { value =>
         Parameter.Dynamic.many(columns.encoder.encode(value))
-      }.toList
+      }
       Values(
         table,
         s"$statement (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",

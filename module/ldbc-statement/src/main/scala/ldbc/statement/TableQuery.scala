@@ -10,6 +10,8 @@ import scala.annotation.targetName
 import scala.compiletime.*
 import scala.deriving.Mirror
 
+import cats.data.NonEmptyList
+
 import ldbc.dsl.codec.Encoder
 import ldbc.dsl.Parameter
 
@@ -107,24 +109,40 @@ trait TableQuery[A, O]:
    *
    * @param mirror
    *   Mirror of Entity
-   * @param values
+   * @param head
+   *   Value to be inserted into the table
+   * @param tail
    *   Value to be inserted into the table
    */
   inline def insert(using mirror: Mirror.Of[Entity])(
-    values: mirror.MirroredElemTypes*
+    head: mirror.MirroredElemTypes,
+    tail: mirror.MirroredElemTypes*
   ): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ =>
-        val parameterBinders: List[Parameter.Dynamic] = values.flatMap { value =>
-          Parameter.Dynamic.many(column.encoder.asInstanceOf[Encoder[mirror.MirroredElemTypes]].encode(value))
-        }.toList
-        Insert.Impl(
-          table = table,
-          statement =
-            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
-          params = params ++ parameterBinders
-        )
+      case _                      => insert[mirror.MirroredElemTypes](NonEmptyList(head, tail.toList))
+
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .insert(NonEmptyList.one(1L, "Tokyo"))
+   * }}}
+   *
+   * @param values
+   *   Value to be inserted into the table
+   */
+  private def insert[B <: Tuple](values: NonEmptyList[B]): Insert[A] =
+    val parameterBinders: List[Parameter.Dynamic] = values.toList.flatMap { value =>
+      Parameter.Dynamic.many(column.encoder.asInstanceOf[Encoder[B]].encode(value))
+    }
+    Insert.Impl(
+      table = table,
+      statement =
+        s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").toList.mkString(",") }",
+      params = params ++ parameterBinders
+    )
 
   /**
    * Method to construct a query to insert a table.
@@ -154,19 +172,34 @@ trait TableQuery[A, O]:
    *   TableQuery[City] ++= List(City(1L, "Tokyo"), City(2L, "Osaka"))
    * }}}
    *
+   * @param head
+   *   Value to be inserted into the table
+   * @param tail
+   *   Value to be inserted into the table
+   */
+  @targetName("insertProducts")
+  inline def ++=(head: Entity, tail: Entity*): Insert[A] = ++=(NonEmptyList(head, tail.toList))
+
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City] ++= NonEmptyList(City(1L, "Tokyo"), City(2L, "Osaka"))
+   * }}}
+   *
    * @param values
    *   Value to be inserted into the table
    */
   @targetName("insertProducts")
-  inline def ++=(values: List[Entity]): Insert[A] =
+  inline def ++=(values: NonEmptyList[Entity]): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
         Insert.Impl(
           table = table,
           statement =
-            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(_ => s"(${ List.fill(column.values)("?").mkString(",") })").mkString(",") }",
-          params = params ++ values.flatMap { value =>
+            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(_ => s"(${ List.fill(column.values)("?").mkString(",") })").toList.mkString(",") }",
+          params = params ++ values.toList.flatMap { value =>
             Parameter.Dynamic.many(column.encoder.encode(value))
           }
         )
