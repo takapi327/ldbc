@@ -8,8 +8,8 @@ package ldbc.statement
 
 import scala.annotation.targetName
 
-import cats.InvariantSemigroupal
 import cats.data.NonEmptyList
+import cats.InvariantSemigroupal
 
 import org.typelevel.twiddles.TwiddleSyntax
 
@@ -349,7 +349,7 @@ trait Column[A]:
    * @return
    * A query to check whether the values are equal in a Where statement
    */
-  def IN(head: A, tail: A)(using Encoder[A]): In[A] = self.IN(NonEmptyList.of(head, tail))
+  def IN(head:    A, tail: A)(using Encoder[A]):                  In[A] = self.IN(NonEmptyList.of(head, tail))
   def IN[B](head: B, tail: B)(using Encoder[B], A =:= Option[B]): In[B] = self.IN(NonEmptyList.of(head, tail))
 
   /**
