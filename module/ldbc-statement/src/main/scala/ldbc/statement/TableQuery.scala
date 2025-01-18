@@ -10,6 +10,8 @@ import scala.annotation.targetName
 import scala.compiletime.*
 import scala.deriving.Mirror
 
+import cats.data.NonEmptyList
+
 import ldbc.dsl.codec.Encoder
 import ldbc.dsl.Parameter
 
@@ -111,18 +113,18 @@ trait TableQuery[A, O]:
    *   Value to be inserted into the table
    */
   inline def insert(using mirror: Mirror.Of[Entity])(
-    values: mirror.MirroredElemTypes*
+    values: NonEmptyList[mirror.MirroredElemTypes]
   ): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
-        val parameterBinders: List[Parameter.Dynamic] = values.flatMap { value =>
+        val parameterBinders: List[Parameter.Dynamic] = values.toList.flatMap { value =>
           Parameter.Dynamic.many(column.encoder.asInstanceOf[Encoder[mirror.MirroredElemTypes]].encode(value))
-        }.toList
+        }
         Insert.Impl(
           table = table,
           statement =
-            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
+            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").toList.mkString(",") }",
           params = params ++ parameterBinders
         )
 
@@ -158,15 +160,15 @@ trait TableQuery[A, O]:
    *   Value to be inserted into the table
    */
   @targetName("insertProducts")
-  inline def ++=(values: List[Entity]): Insert[A] =
+  inline def ++=(values: NonEmptyList[Entity]): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
         Insert.Impl(
           table = table,
           statement =
-            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(_ => s"(${ List.fill(column.values)("?").mkString(",") })").mkString(",") }",
-          params = params ++ values.flatMap { value =>
+            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(_ => s"(${ List.fill(column.values)("?").mkString(",") })").toList.mkString(",") }",
+          params = params ++ values.toList.flatMap { value =>
             Parameter.Dynamic.many(column.encoder.encode(value))
           }
         )
