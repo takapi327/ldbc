@@ -372,6 +372,39 @@ trait DateTime:
   def DAYNAME(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[String], Encoder[String]): Column[String] =
     Column(s"DAYNAME('${ date.toString }')")
 
+  /**
+   * A function that returns the day of the month for date, in the range 1 to 31, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero day part.
+   * 
+   * {{{
+   *  TableQuery[DateTime].select(p => DAYOFMONTH(p.birthDate))
+   *  // SELECT DAYOFMONTH(birth_date) FROM date_time
+   * }}}
+   * 
+   * @param column
+   *   The date or date-time column from which to extract the day of the month.
+   */
+  def DAYOFMONTH[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFMONTH(${ column.name })")
+
+  /**
+   * A function that returns the day of the month for date, in the range 1 to 31, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero day part.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(_ => DAYOFMONTH(LocalDate.of(2021, 1, 1)))
+   *   // SELECT DAYOFMONTH('2021-01-01') FROM date_time
+   * }}}
+   * 
+   * @param date
+   *   The date or date-time expression from which to extract the day of the month.
+   */
+  def DAYOFMONTH(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFMONTH('${ date.toString }')")
+
 object DateTime:
 
   /**
