@@ -26,8 +26,10 @@ trait DateTime:
    *   // SELECT ADDDATE(birth_date, INTERVAL 1 YEAR) FROM date_time
    * }}}
    *
-   * @param column The column to which the addition is to be performed.
-   * @param interval The interval to be added to the column.
+   * @param column
+   *   The column to which the addition is to be performed.
+   * @param interval
+   *   The interval to be added to the column.
    */
   def ADDDATE[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
     Column(s"ADDDATE(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
@@ -40,8 +42,10 @@ trait DateTime:
    *   // SELECT ADDDATE('2008-02-02', INTERVAL 1 YEAR) FROM date_time
    * }}}
    *
-   * @param date The date to which the addition is to be performed.
-   * @param interval The interval to be added to the date.
+   * @param date
+   *   The date to which the addition is to be performed.
+   * @param interval
+   *   The interval to be added to the date.
    */
   def ADDDATE(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column(s"ADDDATE('${date.toString}', ${interval.statement})")
@@ -54,8 +58,10 @@ trait DateTime:
    *   // SELECT ADDTIME(time, '01:01:01.000000001') FROM date_time
    * }}}
    *
-   * @param column The column to which the addition is to be performed.
-   * @param time The time to be added to the column.
+   * @param column
+   *   The column to which the addition is to be performed.
+   * @param time
+   *   The time to be added to the column.
    */
   def ADDTIME[A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]](
     column: Column[A],
@@ -71,8 +77,10 @@ trait DateTime:
    *   // SELECT ADDTIME('01:01:01.000000001', '01:01:01.000000001') FROM date_time
    * }}}
    *
-   * @param dateTime The date time to which the addition is to be performed.
-   * @param time The time to be added to the date time.
+   * @param dateTime
+   *   The date time to which the addition is to be performed.
+   * @param time
+   *   The time to be added to the date time.
    */
   def ADDTIME(dateTime: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime, time: LocalTime): Column[LocalTime] =
     Column(s"ADDTIME('${dateTime.toString}', '${time.toString}')")
@@ -85,9 +93,12 @@ trait DateTime:
    *   // SELECT CONVERT_TZ(timestampe, '+00:00', '+09:00') FROM date_time
    * }}}
    *
-   * @param column The column to which the addition is to be performed.
-   * @param from The time zone from which the conversion is to be performed.
-   * @param to The time zone to which the conversion is to be performed.
+   * @param column
+   *   The column to which the addition is to be performed.
+   * @param from
+   *   The time zone from which the conversion is to be performed.
+   * @param to
+   *   The time zone to which the conversion is to be performed.
    */
   def CONVERT_TZ[A <: LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDateTime | OffsetDateTime | ZonedDateTime]](
     column: Column[A],
@@ -104,9 +115,12 @@ trait DateTime:
    *   // SELECT CONVERT_TZ('2025-01-01', '+00:00', '+09:00') FROM date_time
    * }}}
    *
-   * @param dateTime The date time to which the addition is to be performed.
-   * @param from The time zone from which the conversion is to be performed.
-   * @param to The time zone to which the conversion is to be performed.
+   * @param dateTime
+   *   The date time to which the addition is to be performed.
+   * @param from
+   *   The time zone from which the conversion is to be performed.
+   * @param to
+   *   The time zone to which the conversion is to be performed.
    */
   def CONVERT_TZ(dateTime: LocalDateTime | OffsetDateTime | ZonedDateTime, from: LocalTime, to: LocalTime): Column[LocalDateTime] =
     Column(s"CONVERT_TZ('${dateTime.toString}', '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")
@@ -139,7 +153,8 @@ trait DateTime:
    *   // SELECT DATE(timestamp) FROM date_time
    * }}}
    *
-   * @param column Date or date/time column from which to extract the date portion
+   * @param column
+   *   Date or date/time column from which to extract the date portion
    */
   def DATE[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](column: Column[A])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column(s"DATE(${column.name})")
@@ -156,6 +171,42 @@ trait DateTime:
    */
   def DATE(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime): Column[LocalDate] =
     Column(s"DATE('${date.toString}')")
+
+  /**
+   * Function to format a date value according to the format string.
+   * @see https://dev.mysql.com/doc/refman/8.0/ja/date-and-time-functions.html#function_date-format
+   *      
+   * {{{
+   *   TableQuery[DateTime].select(p => DATE_FORMAT(p.timestamp, "%Y-%m-%d"))
+   *   // SELECT DATE_FORMAT(timestamp, '%Y-%m-%d') FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column to be formatted.
+   * @param format
+   *   The format string.
+   */
+  def DATE_FORMAT[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+    column: Column[A],
+    format: String
+  )(using Decoder[String], Encoder[String]): Column[String] =
+    Column(s"DATE_FORMAT(${column.name}, '$format')")
+
+  /**
+   * Function to format a date value according to the format string.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(_ => DATE_FORMAT(LocalDate.of(2025, 1, 1), "%Y-%m-%d"))
+   *   // SELECT DATE_FORMAT('2025-01-01', '%Y-%m-%d') FROM date_time
+   * }}}
+   * 
+   * @param date
+   *   The date or date-time expression to be formatted.
+   * @param format
+   *   The format string.
+   */
+  def DATE_FORMAT(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime, format: String): Column[String] =
+    Column(s"DATE_FORMAT('${date.toString}', '$format')")
 
 object DateTime:
 
