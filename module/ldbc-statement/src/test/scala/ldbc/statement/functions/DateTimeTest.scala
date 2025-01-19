@@ -59,3 +59,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(DATE(c6).name == "DATE(local_date_time)")
     assert(DATE(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "DATE('2021-01-01T00:00')")
   }
+
+  it should "Statement generated using the DATE_FORMAT function matches the specified string." in {
+    assert(DATE_FORMAT(c5, "%Y-%m-%d").name == "DATE_FORMAT(local_date_time, '%Y-%m-%d')")
+    assert(DATE_FORMAT(c6, "%Y-%m-%d").name == "DATE_FORMAT(local_date_time, '%Y-%m-%d')")
+    assert(DATE_FORMAT(LocalDateTime.of(2021, 1, 1, 0, 0), "%Y-%m-%d").name == "DATE_FORMAT('2021-01-01T00:00', '%Y-%m-%d')")
+  }
