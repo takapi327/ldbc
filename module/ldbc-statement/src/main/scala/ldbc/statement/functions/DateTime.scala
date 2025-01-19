@@ -22,8 +22,8 @@ trait DateTime:
    * Function to perform addition on a specified date type column.
    *
    * {{{
-   *   TableQuery[DateTime].select(p => ADDDATE(p.birthDate, DateTime.Interval.YEAR(1)))
-   *   // SELECT ADDDATE(birth_date, INTERVAL 1 YEAR) FROM date_time
+   *   TableQuery[DateTime].select(p => DATE_ADD(p.birthDate, DateTime.Interval.YEAR(1)))
+   *   // SELECT DATE_ADD(birth_date, INTERVAL 1 YEAR) FROM date_time
    * }}}
    *
    * @param column
@@ -31,15 +31,15 @@ trait DateTime:
    * @param interval
    *   The interval to be added to the column.
    */
-  def ADDDATE[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
-    Column(s"ADDDATE(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
+  def DATE_ADD[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
+    Column(s"DATE_ADD(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
 
   /**
    * Function to perform addition on a specified date type column.
    *
    * {{{
-   *   TableQuery[DateTime].select(p => ADDDATE(LocalDate.now, DateTime.Interval.YEAR(1)))
-   *   // SELECT ADDDATE('2008-02-02', INTERVAL 1 YEAR) FROM date_time
+   *   TableQuery[DateTime].select(p => DATE_ADD(LocalDate.now, DateTime.Interval.YEAR(1)))
+   *   // SELECT DATE_ADD('2008-02-02', INTERVAL 1 YEAR) FROM date_time
    * }}}
    *
    * @param date
@@ -47,8 +47,40 @@ trait DateTime:
    * @param interval
    *   The interval to be added to the date.
    */
-  def ADDDATE(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"ADDDATE('${date.toString}', ${interval.statement})")
+  def DATE_ADD(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"DATE_ADD('${date.toString}', ${interval.statement})")
+
+  /**
+   * Function to perform subtraction on a given date type column.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => DATE_SUB(p.birthDate, DateTime.Interval.YEAR(1)))
+   *   // SELECT DATE_SUB(birth_date, INTERVAL 1 YEAR) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column to which the subtraction is to be performed.
+   * @param interval
+   *   The interval to be subtraction to the column.
+   */
+  def DATE_SUB[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
+    Column(s"DATE_SUB(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
+
+  /**
+   * Function to perform subtraction on a given date.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => DATE_SUB(LocalDate.now, DateTime.Interval.YEAR(1)))
+   *   // SELECT DATE_SUB('2008-02-02', INTERVAL 1 YEAR) FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date to which the subtraction is to be performed.
+   * @param interval
+   *   The interval to be subtraction to the date.
+   */
+  def DATE_SUB(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"DATE_SUB('${date.toString}', ${interval.statement})")
 
   /**
    * Function to perform addition on a specified date type column.
