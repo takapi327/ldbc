@@ -121,6 +121,16 @@ trait DateTime:
    */
   def CURDATE(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] = Column("CURDATE()")
 
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(_ => CURTIME)
+   *   // SELECT CURTIME() FROM person
+   * }}}
+   */
+  def CURTIME(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = Column("CURTIME()")
+
 object DateTime:
 
   /**
