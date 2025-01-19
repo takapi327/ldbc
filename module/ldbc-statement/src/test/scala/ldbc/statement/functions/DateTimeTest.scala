@@ -40,9 +40,12 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(ADDTIME(LocalTime.of(1, 1, 1), LocalTime.of(1, 1, 1, 1)).name == "ADDTIME('01:01:01', '01:01:01.000000001')")
   }
 
-
   it should "Statement generated using the CONVERT_TZ function matches the specified string." in {
     assert(CONVERT_TZ(c5, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(local_date_time, '+0:0', '+9:0')")
     assert(CONVERT_TZ(c6, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(local_date_time, '+0:0', '+9:0')")
     assert(CONVERT_TZ(LocalDateTime.of(2021, 1, 1, 0, 0), LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ('2021-01-01T00:00', '+0:0', '+9:0')")
+  }
+
+  it should "Statement generated using the CURDATE function matches the specified string." in {
+    assert(CURDATE.name == "CURDATE()")
   }
