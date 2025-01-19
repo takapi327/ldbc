@@ -334,6 +334,44 @@ trait DateTime:
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"DATEDIFF('${ from.toString }', '${ to.toString }')")
 
+  /**
+   * A function that returns the name of the day of the week corresponding to date.
+   * The language used for the names is controlled by the value of the lc_time_names system variable (Section 10.16, “Locale Support in MySQL Server”).
+   * @see https://dev.mysql.com/doc/refman/8.0/ja/locale-support.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => DAYNAME(p.birthDate))
+   *   // SELECT DAYNAME(birth_date) FROM date_time
+   * }}}
+   * 
+   * @param column
+   *   The date or date-time column from which to extract the day of the week.
+   */
+  def DAYNAME[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[String], Encoder[String]): Column[String] =
+    Column(s"DAYNAME(${ column.name })")
+
+  /**
+   * A function that returns the name of the day of the week corresponding to date.
+   * The language used for the names is controlled by the value of the lc_time_names system variable (Section 10.16, “Locale Support in MySQL Server”).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/ja/locale-support.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => DAYNAME(LocalDate.of(2021, 1, 1)))
+   *   // SELECT DAYNAME('2021-01-01') FROM date_time
+   * }}}
+   * 
+   * @param date
+   *   The date or date-time expression from which to extract the day of the week.
+   */
+  def DAYNAME(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[String], Encoder[String]): Column[String] =
+    Column(s"DAYNAME('${ date.toString }')")
+
 object DateTime:
 
   /**
