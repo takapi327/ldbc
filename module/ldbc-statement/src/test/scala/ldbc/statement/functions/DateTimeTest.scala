@@ -22,17 +22,30 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   private val c5 = Column.Impl[LocalDateTime]("local_date_time")
   private val c6 = Column.Impl[Option[LocalDateTime]]("local_date_time")
 
-  it should "Statement generated using the ADDDATE function matches the specified string." in {
-    assert(ADDDATE(c1, Interval.DAY(1)).name == "ADDDATE(local_date, INTERVAL 1 DAY)")
-    assert(ADDDATE(c1, Interval.MONTH(1)).name == "ADDDATE(local_date, INTERVAL 1 MONTH)")
-    assert(ADDDATE(c1, Interval.YEAR(1)).name == "ADDDATE(local_date, INTERVAL 1 YEAR)")
-    assert(ADDDATE(c2, Interval.DAY(1)).name == "ADDDATE(local_date, INTERVAL 1 DAY)")
-    assert(ADDDATE(c2, Interval.MONTH(1)).name == "ADDDATE(local_date, INTERVAL 1 MONTH)")
-    assert(ADDDATE(c2, Interval.YEAR(1)).name == "ADDDATE(local_date, INTERVAL 1 YEAR)")
-    assert(ADDDATE(LocalDate.of(2021, 1, 1), Interval.DAY(1)).name == "ADDDATE('2021-01-01', INTERVAL 1 DAY)")
-    assert(ADDDATE(LocalDate.of(2021, 1, 1), Interval.MONTH(1)).name == "ADDDATE('2021-01-01', INTERVAL 1 MONTH)")
-    assert(ADDDATE(LocalDate.of(2021, 1, 1), Interval.YEAR(1)).name == "ADDDATE('2021-01-01', INTERVAL 1 YEAR)")
+  it should "Statement generated using the DATE_ADD function matches the specified string." in {
+    assert(DATE_ADD(c1, Interval.DAY(1)).name == "DATE_ADD(local_date, INTERVAL 1 DAY)")
+    assert(DATE_ADD(c1, Interval.MONTH(1)).name == "DATE_ADD(local_date, INTERVAL 1 MONTH)")
+    assert(DATE_ADD(c1, Interval.YEAR(1)).name == "DATE_ADD(local_date, INTERVAL 1 YEAR)")
+    assert(DATE_ADD(c2, Interval.DAY(1)).name == "DATE_ADD(local_date, INTERVAL 1 DAY)")
+    assert(DATE_ADD(c2, Interval.MONTH(1)).name == "DATE_ADD(local_date, INTERVAL 1 MONTH)")
+    assert(DATE_ADD(c2, Interval.YEAR(1)).name == "DATE_ADD(local_date, INTERVAL 1 YEAR)")
+    assert(DATE_ADD(LocalDate.of(2021, 1, 1), Interval.DAY(1)).name == "DATE_ADD('2021-01-01', INTERVAL 1 DAY)")
+    assert(DATE_ADD(LocalDate.of(2021, 1, 1), Interval.MONTH(1)).name == "DATE_ADD('2021-01-01', INTERVAL 1 MONTH)")
+    assert(DATE_ADD(LocalDate.of(2021, 1, 1), Interval.YEAR(1)).name == "DATE_ADD('2021-01-01', INTERVAL 1 YEAR)")
   }
+
+  it should "Statement generated using the DATE_SUB function matches the specified string." in {
+    assert(DATE_SUB(c1, Interval.DAY(1)).name == "DATE_SUB(local_date, INTERVAL 1 DAY)")
+    assert(DATE_SUB(c1, Interval.MONTH(1)).name == "DATE_SUB(local_date, INTERVAL 1 MONTH)")
+    assert(DATE_SUB(c1, Interval.YEAR(1)).name == "DATE_SUB(local_date, INTERVAL 1 YEAR)")
+    assert(DATE_SUB(c2, Interval.DAY(1)).name == "DATE_SUB(local_date, INTERVAL 1 DAY)")
+    assert(DATE_SUB(c2, Interval.MONTH(1)).name == "DATE_SUB(local_date, INTERVAL 1 MONTH)")
+    assert(DATE_SUB(c2, Interval.YEAR(1)).name == "DATE_SUB(local_date, INTERVAL 1 YEAR)")
+    assert(DATE_SUB(LocalDate.of(2021, 1, 1), Interval.DAY(1)).name == "DATE_SUB('2021-01-01', INTERVAL 1 DAY)")
+    assert(DATE_SUB(LocalDate.of(2021, 1, 1), Interval.MONTH(1)).name == "DATE_SUB('2021-01-01', INTERVAL 1 MONTH)")
+    assert(DATE_SUB(LocalDate.of(2021, 1, 1), Interval.YEAR(1)).name == "DATE_SUB('2021-01-01', INTERVAL 1 YEAR)")
+  }
+
 
   it should "Statement generated using the ADDTIME function matches the specified string." in {
     assert(ADDTIME(c3, LocalTime.of(1, 1, 1, 1)).name == "ADDTIME(local_time, '01:01:01.000000001')")
