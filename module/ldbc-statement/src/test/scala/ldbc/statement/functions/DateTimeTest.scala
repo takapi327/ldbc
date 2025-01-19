@@ -21,6 +21,8 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   private val c4 = Column.Impl[Option[LocalTime]]("local_time")
   private val c5 = Column.Impl[LocalDateTime]("local_date_time")
   private val c6 = Column.Impl[Option[LocalDateTime]]("local_date_time")
+  private val c7 = Column.Impl[Int]("days")
+  private val c8 = Column.Impl[Option[Int]]("days")
 
   it should "Statement generated using the DATE_ADD function matches the specified string." in {
     assert(DATE_ADD(c1, Interval.DAY(1)).name == "DATE_ADD(local_date, INTERVAL 1 DAY)")
@@ -122,4 +124,10 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(EXTRACT(c5, TimeUnit.YEAR).name == "EXTRACT(YEAR FROM local_date_time)")
     assert(EXTRACT(c6, TimeUnit.MONTH).name == "EXTRACT(MONTH FROM local_date_time)")
     assert(EXTRACT(LocalDate.of(2025, 1, 1), TimeUnit.HOUR).name == "EXTRACT(HOUR FROM '2025-01-01')")
+  }
+
+  it should "Statement generated using the FROM_DAYS function matches the specified string." in {
+    assert(FROM_DAYS(c7).name == "FROM_DAYS(days)")
+    assert(FROM_DAYS(c8).name == "FROM_DAYS(days)")
+    assert(FROM_DAYS(730669).name == "FROM_DAYS(730669)")
   }
