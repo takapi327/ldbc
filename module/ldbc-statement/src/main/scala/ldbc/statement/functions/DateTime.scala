@@ -369,7 +369,9 @@ trait DateTime:
    * @param date
    *   The date or date-time expression from which to extract the day of the week.
    */
-  def DAYNAME(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[String], Encoder[String]): Column[String] =
+  def DAYNAME(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[String], Encoder[String]): Column[String] =
     Column(s"DAYNAME('${ date.toString }')")
 
   /**
@@ -402,7 +404,9 @@ trait DateTime:
    * @param date
    *   The date or date-time expression from which to extract the day of the month.
    */
-  def DAYOFMONTH(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
+  def DAYOFMONTH(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"DAYOFMONTH('${ date.toString }')")
 
   /**
@@ -421,9 +425,9 @@ trait DateTime:
     A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
-     column: Column[A]
-   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFWEEK(${column.name})")
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFWEEK(${ column.name })")
 
   /**
    * A function that returns the day of the week for date, in the range 1 to 7, where 1 represents Sunday.
@@ -437,8 +441,10 @@ trait DateTime:
    * @param date
    *   The date or date-time expression from which to extract the day of the week.
    */
-  def DAYOFWEEK(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFWEEK('${date.toString}')")
+  def DAYOFWEEK(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFWEEK('${ date.toString }')")
 
   /**
    * A function that returns the day of the year for date, in the range 1 to 366.
@@ -456,9 +462,9 @@ trait DateTime:
     A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
-     column: Column[A]
-   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFYEAR(${column.name})")
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFYEAR(${ column.name })")
 
   /**
    * A function that returns the day of the year for date, in the range 1 to 366.
@@ -472,8 +478,10 @@ trait DateTime:
    * @param date
    *   The date or date-time expression from which to extract the day of the year.
    */
-  def DAYOFYEAR(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DAYOFYEAR('${date.toString}')")
+  def DAYOFYEAR(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFYEAR('${ date.toString }')")
 
   /**
    * A function that returns the time part of the expression expr as a time value.
@@ -487,11 +495,14 @@ trait DateTime:
    * @param timeUnit
    *   The time unit to be extracted.
    */
-  def EXTRACT[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
-    column: Column[A],
-    timeUnit:  DateTime.TimeUnit
+  def EXTRACT[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column:   Column[A],
+    timeUnit: DateTime.TimeUnit
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"EXTRACT(${timeUnit.toString} FROM ${column.name})")
+    Column(s"EXTRACT(${ timeUnit.toString } FROM ${ column.name })")
 
   /**
    * A function that returns the time part of the expression expr as a time value.
@@ -506,10 +517,10 @@ trait DateTime:
    *   The time unit to be extracted.
    */
   def EXTRACT(
-    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
-    timeUnit:  DateTime.TimeUnit
+    date:     LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    timeUnit: DateTime.TimeUnit
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"EXTRACT(${timeUnit.toString} FROM '${date.toString.replaceAll("T", " ")}')")
+    Column(s"EXTRACT(${ timeUnit.toString } FROM '${ date.toString.replaceAll("T", " ") }')")
 
   /**
    * Function to convert a day value to a date.
@@ -526,8 +537,10 @@ trait DateTime:
    * @param column
    *   The column from which to extract the date.
    */
-  def FROM_DAYS[A <: Int | Long | Option[Int | Long]](column: Column[A])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"FROM_DAYS(${column.name})")
+  def FROM_DAYS[A <: Int | Long | Option[Int | Long]](
+    column: Column[A]
+  )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"FROM_DAYS(${ column.name })")
 
   /**
    * Function to convert a day value to a date.
@@ -544,7 +557,9 @@ trait DateTime:
    * @param days
    *   The number of days from which to extract the date.
    */
-  def FROM_DAYS[A <: Int | Long | Option[Int | Long]](days: A)(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+  def FROM_DAYS[A <: Int | Long | Option[Int | Long]](
+    days: A
+  )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column(s"FROM_DAYS($days)")
 
 object DateTime:
@@ -585,4 +600,6 @@ object DateTime:
    * Time unit for the INTERVAL expression.
    */
   enum TimeUnit:
-    case MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH
+    case MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND,
+      MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR,
+      YEAR_MONTH
