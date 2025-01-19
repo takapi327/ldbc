@@ -448,7 +448,7 @@ trait DateTime:
    *   TableQuery[DateTime].select(p => DAYOFYEAR(p.birthDate))
    *   // SELECT DAYOFYEAR(birth_date) FROM date_time
    * }}}
-   * 
+   *
    * @param column
    *   The date or date-time column from which to extract the day of the year.
    */
@@ -463,17 +463,53 @@ trait DateTime:
   /**
    * A function that returns the day of the year for date, in the range 1 to 366.
    * The range of DAYOFYEAR() is 1 to 366 because MySQL supports leap year.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(_ => DAYOFYEAR(LocalDate.of(2021, 1, 1)))
    *   // SELECT DAYOFYEAR('2021-01-01') FROM date_time
    * }}}
-   * 
+   *
    * @param date
    *   The date or date-time expression from which to extract the day of the year.
    */
   def DAYOFYEAR(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"DAYOFYEAR('${date.toString}')")
+
+  /**
+   * A function that returns the time part of the expression expr as a time value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => EXTRACT(p.timestamp, DateTime.TimeUnit.HOUR))
+   *   // SELECT EXTRACT(HOUR FROM timestamp) FROM date_time
+   * }}}
+   * @param column
+   *   The column from which to extract the time part.
+   * @param timeUnit
+   *   The time unit to be extracted.
+   */
+  def EXTRACT[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+    column: Column[A],
+    timeUnit:  DateTime.TimeUnit
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"EXTRACT(${timeUnit.toString} FROM ${column.name})")
+
+  /**
+   * A function that returns the time part of the expression expr as a time value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => EXTRACT(LocalDateTime.of(2021, 1, 1, 0, 0), DateTime.TimeUnit.HOUR))
+   *   // SELECT EXTRACT(HOUR FROM '2021-01-01T00:00') FROM date_time
+   * }}}
+   * @param date
+   *   The date or date-time expression from which to extract the time part.
+   * @param timeUnit
+   *   The time unit to be extracted.
+   */
+  def EXTRACT(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    timeUnit:  DateTime.TimeUnit
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"EXTRACT(${timeUnit.toString} FROM '${date.toString.replaceAll("T", " ")}')")
 
 object DateTime:
 
@@ -508,3 +544,9 @@ object DateTime:
     case DAY_MINUTE(expr: String)         extends Interval(expr, "DAY_MINUTE")
     case DAY_HOUR(expr: String)           extends Interval(expr, "DAY_HOUR")
     case YEAR_MONTH(expr: YearMonth)      extends Interval(expr, "YEAR_MONTH")
+
+  /**
+   * Time unit for the INTERVAL expression.
+   */
+  enum TimeUnit:
+    case MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR, SECOND_MICROSECOND, MINUTE_MICROSECOND, MINUTE_SECOND, HOUR_MICROSECOND, HOUR_SECOND, HOUR_MINUTE, DAY_MICROSECOND, DAY_SECOND, DAY_MINUTE, DAY_HOUR, YEAR_MONTH
