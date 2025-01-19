@@ -343,7 +343,7 @@ trait DateTime:
    *   TableQuery[DateTime].select(p => DAYNAME(p.birthDate))
    *   // SELECT DAYNAME(birth_date) FROM date_time
    * }}}
-   * 
+   *
    * @param column
    *   The date or date-time column from which to extract the day of the week.
    */
@@ -365,7 +365,7 @@ trait DateTime:
    *   TableQuery[DateTime].select(_ => DAYNAME(LocalDate.of(2021, 1, 1)))
    *   // SELECT DAYNAME('2021-01-01') FROM date_time
    * }}}
-   * 
+   *
    * @param date
    *   The date or date-time expression from which to extract the day of the week.
    */
@@ -374,12 +374,12 @@ trait DateTime:
 
   /**
    * A function that returns the day of the month for date, in the range 1 to 31, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero day part.
-   * 
+   *
    * {{{
    *  TableQuery[DateTime].select(p => DAYOFMONTH(p.birthDate))
    *  // SELECT DAYOFMONTH(birth_date) FROM date_time
    * }}}
-   * 
+   *
    * @param column
    *   The date or date-time column from which to extract the day of the month.
    */
@@ -393,17 +393,52 @@ trait DateTime:
 
   /**
    * A function that returns the day of the month for date, in the range 1 to 31, or 0 for dates such as '0000-00-00' or '2008-00-00' that have a zero day part.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(_ => DAYOFMONTH(LocalDate.of(2021, 1, 1)))
    *   // SELECT DAYOFMONTH('2021-01-01') FROM date_time
    * }}}
-   * 
+   *
    * @param date
    *   The date or date-time expression from which to extract the day of the month.
    */
   def DAYOFMONTH(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"DAYOFMONTH('${ date.toString }')")
+
+  /**
+   * A function that returns the day of the week for date, in the range 1 to 7, where 1 represents Sunday.
+   * Day of the week index (1 = Sunday, 2 = Monday, ..., 7 = Saturday) for date.
+   * 
+   * {{{
+   *  TableQuery[DateTime].select(p => DAYOFWEEK(p.birthDate))
+   *  // SELECT DAYOFWEEK(birth_date) FROM date_time
+   * }}}
+   * 
+   * @param column
+   *   The date or date-time column from which to extract the day of the week.
+   */
+  def DAYOFWEEK[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+     column: Column[A]
+   )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFWEEK(${column.name})")
+
+  /**
+   * A function that returns the day of the week for date, in the range 1 to 7, where 1 represents Sunday.
+   * Day of the week index (1 = Sunday, 2 = Monday, ..., 7 = Saturday) for date.
+   * 
+   * {{{
+   *  TableQuery[DateTime].select(_ => DAYOFWEEK(LocalDate.of(2021, 1, 1)))
+   *  // SELECT DAYOFWEEK('2021-01-01') FROM date_time
+   * }}}
+   * 
+   * @param date
+   *   The date or date-time expression from which to extract the day of the week.
+   */
+  def DAYOFWEEK(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFWEEK('${date.toString}')")
 
 object DateTime:
 
