@@ -93,3 +93,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(DATEDIFF(c6, LocalDate.of(2025, 1, 1)).name == "DATEDIFF(local_date_time, '2025-01-01')")
     assert(DATEDIFF(LocalDate.of(2024, 1, 1), LocalDate.of(2025, 1, 1)).name == "DATEDIFF('2024-01-01', '2025-01-01')")
   }
+
+  it should "Statement generated using the DAYNAME function matches the specified string." in {
+    assert(DAYNAME(c5).name == "DAYNAME(local_date_time)")
+    assert(DAYNAME(c6).name == "DAYNAME(local_date_time)")
+    assert(DAYNAME(LocalDate.of(2025, 1, 1)).name == "DAYNAME('2025-01-01')")
+  }
