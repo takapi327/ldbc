@@ -40,6 +40,31 @@ trait DateTime:
   def ADDDATE(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column(s"ADDDATE('${date.toString}', ${interval.statement})")
 
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(p => ADDTIME(p.time, LocalTime.of(1, 1, 1, 1)))
+   *   // SELECT ADDDATE(time, '01:01:01.000000001') FROM person
+   * }}}
+   */
+  def ADDTIME[A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+    column: Column[A],
+    time: LocalTime
+  ): Column[A] =
+    Column(s"ADDTIME(${column.name}, '${time.toString}')")(using column.decoder, column.encoder)
+
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(p => ADDDATE(LocalTime.of(1, 1, 1, 1), LocalTime.of(1, 1, 1, 1)))
+   *   // SELECT ADDDATE('01:01:01.000000001', '01:01:01.000000001') FROM person
+   * }}}
+   */
+  def ADDTIME(dateTime: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime, time: LocalTime): Column[LocalTime] =
+    Column(s"ADDTIME('${dateTime.toString}', '${time.toString}')")
+
 object DateTime:
 
   /**
