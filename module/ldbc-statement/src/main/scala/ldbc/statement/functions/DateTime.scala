@@ -511,6 +511,42 @@ trait DateTime:
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"EXTRACT(${timeUnit.toString} FROM '${date.toString.replaceAll("T", " ")}')")
 
+  /**
+   * Function to convert a day value to a date.
+   *
+   * Use FROM_DAYS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/ja/mysql-calendar.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => FROM_DAYS(p.birthDate))
+   *   // SELECT FROM_DAYS(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column from which to extract the date.
+   */
+  def FROM_DAYS[A <: Int | Long | Option[Int | Long]](column: Column[A])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"FROM_DAYS(${column.name})")
+
+  /**
+   * Function to convert a day value to a date.
+   *
+   * Use FROM_DAYS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/ja/mysql-calendar.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => FROM_DAYS(730669))
+   *   // SELECT FROM_DAYS(730669) FROM date_time
+   * }}}
+   *
+   * @param days
+   *   The number of days from which to extract the date.
+   */
+  def FROM_DAYS[A <: Int | Long | Option[Int | Long]](days: A)(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"FROM_DAYS($days)")
+
 object DateTime:
 
   /**
