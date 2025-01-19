@@ -78,3 +78,11 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(DATE_FORMAT(c6, "%Y-%m-%d").name == "DATE_FORMAT(local_date_time, '%Y-%m-%d')")
     assert(DATE_FORMAT(LocalDateTime.of(2021, 1, 1, 0, 0), "%Y-%m-%d").name == "DATE_FORMAT('2021-01-01T00:00', '%Y-%m-%d')")
   }
+
+  it should "Statement generated using the DATEDIFF function matches the specified string." in {
+    assert(DATEDIFF(c5, c1).name == "DATEDIFF(local_date_time, local_date)")
+    assert(DATEDIFF(c6, c2).name == "DATEDIFF(local_date_time, local_date)")
+    assert(DATEDIFF(c5, LocalDate.of(2025, 1, 1)).name == "DATEDIFF(local_date_time, '2025-01-01')")
+    assert(DATEDIFF(c6, LocalDate.of(2025, 1, 1)).name == "DATEDIFF(local_date_time, '2025-01-01')")
+    assert(DATEDIFF(LocalDate.of(2024, 1, 1), LocalDate.of(2025, 1, 1)).name == "DATEDIFF('2024-01-01', '2025-01-01')")
+  }
