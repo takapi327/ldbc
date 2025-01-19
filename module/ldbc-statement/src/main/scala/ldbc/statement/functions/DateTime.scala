@@ -25,6 +25,9 @@ trait DateTime:
    *   TableQuery[Person].select(p => ADDDATE(p.birthDate, DateTime.Interval.YEAR(1)))
    *   // SELECT ADDDATE(birth_date, INTERVAL 1 YEAR) FROM person
    * }}}
+   *
+   * @param column The column to which the addition is to be performed.
+   * @param interval The interval to be added to the column.
    */
   def ADDDATE[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
     Column(s"ADDDATE(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
@@ -36,6 +39,9 @@ trait DateTime:
    *   TableQuery[Person].select(p => ADDDATE(LocalDate.now, DateTime.Interval.YEAR(1)))
    *   // SELECT ADDDATE('2008-02-02', INTERVAL 1 YEAR) FROM person
    * }}}
+   * 
+   * @param date The date to which the addition is to be performed.
+   * @param interval The interval to be added to the date.
    */
   def ADDDATE(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column(s"ADDDATE('${date.toString}', ${interval.statement})")
@@ -45,8 +51,11 @@ trait DateTime:
    *
    * {{{
    *   TableQuery[Person].select(p => ADDTIME(p.time, LocalTime.of(1, 1, 1, 1)))
-   *   // SELECT ADDDATE(time, '01:01:01.000000001') FROM person
+   *   // SELECT ADDTIME(time, '01:01:01.000000001') FROM person
    * }}}
+   * 
+   * @param column The column to which the addition is to be performed.
+   * @param time The time to be added to the column.
    */
   def ADDTIME[A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]](
     column: Column[A],
@@ -58,12 +67,49 @@ trait DateTime:
    * Function to perform addition on a specified date type column.
    *
    * {{{
-   *   TableQuery[Person].select(p => ADDDATE(LocalTime.of(1, 1, 1, 1), LocalTime.of(1, 1, 1, 1)))
-   *   // SELECT ADDDATE('01:01:01.000000001', '01:01:01.000000001') FROM person
+   *   TableQuery[Person].select(p => ADDTIME(LocalTime.of(1, 1, 1, 1), LocalTime.of(1, 1, 1, 1)))
+   *   // SELECT ADDTIME('01:01:01.000000001', '01:01:01.000000001') FROM person
    * }}}
+   * 
+   * @param dateTime The date time to which the addition is to be performed.
+   * @param time The time to be added to the date time.
    */
   def ADDTIME(dateTime: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime, time: LocalTime): Column[LocalTime] =
     Column(s"ADDTIME('${dateTime.toString}', '${time.toString}')")
+
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(p => CONVERT_TZ(p.timestampe, LocalTime.of(0, 0), LocalTime.of(9, 0)))
+   *   // SELECT CONVERT_TZ(timestampe, '+00:00', '+09:00') FROM person
+   * }}}
+   * 
+   * @param column The column to which the addition is to be performed.
+   * @param from The time zone from which the conversion is to be performed.
+   * @param to The time zone to which the conversion is to be performed.
+   */
+  def CONVERT_TZ[A <: LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDateTime | OffsetDateTime | ZonedDateTime]](
+    column: Column[A],
+    from: LocalTime,
+    to: LocalTime
+  ): Column[A] =
+    Column(s"CONVERT_TZ(${column.name}, '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")(using column.decoder, column.encoder)
+
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(p => CONVERT_TZ(LocalDateTime.of(2025, 1, 1), LocalTime.of(0, 0), LocalTime.of(9, 0)))
+   *   // SELECT CONVERT_TZ('2025-01-01', '+00:00', '+09:00') FROM person
+   * }}}
+   * 
+   * @param dateTime The date time to which the addition is to be performed.
+   * @param from The time zone from which the conversion is to be performed.
+   * @param to The time zone to which the conversion is to be performed.
+   */
+  def CONVERT_TZ(dateTime: LocalDateTime | OffsetDateTime | ZonedDateTime, from: LocalTime, to: LocalTime): Column[LocalDateTime] =
+    Column(s"CONVERT_TZ('${dateTime.toString}', '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")
 
 object DateTime:
 
