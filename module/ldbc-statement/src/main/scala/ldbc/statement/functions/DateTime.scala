@@ -39,7 +39,7 @@ trait DateTime:
    *   TableQuery[Person].select(p => ADDDATE(LocalDate.now, DateTime.Interval.YEAR(1)))
    *   // SELECT ADDDATE('2008-02-02', INTERVAL 1 YEAR) FROM person
    * }}}
-   * 
+   *
    * @param date The date to which the addition is to be performed.
    * @param interval The interval to be added to the date.
    */
@@ -53,7 +53,7 @@ trait DateTime:
    *   TableQuery[Person].select(p => ADDTIME(p.time, LocalTime.of(1, 1, 1, 1)))
    *   // SELECT ADDTIME(time, '01:01:01.000000001') FROM person
    * }}}
-   * 
+   *
    * @param column The column to which the addition is to be performed.
    * @param time The time to be added to the column.
    */
@@ -70,7 +70,7 @@ trait DateTime:
    *   TableQuery[Person].select(p => ADDTIME(LocalTime.of(1, 1, 1, 1), LocalTime.of(1, 1, 1, 1)))
    *   // SELECT ADDTIME('01:01:01.000000001', '01:01:01.000000001') FROM person
    * }}}
-   * 
+   *
    * @param dateTime The date time to which the addition is to be performed.
    * @param time The time to be added to the date time.
    */
@@ -84,7 +84,7 @@ trait DateTime:
    *   TableQuery[Person].select(p => CONVERT_TZ(p.timestampe, LocalTime.of(0, 0), LocalTime.of(9, 0)))
    *   // SELECT CONVERT_TZ(timestampe, '+00:00', '+09:00') FROM person
    * }}}
-   * 
+   *
    * @param column The column to which the addition is to be performed.
    * @param from The time zone from which the conversion is to be performed.
    * @param to The time zone to which the conversion is to be performed.
@@ -103,13 +103,23 @@ trait DateTime:
    *   TableQuery[Person].select(p => CONVERT_TZ(LocalDateTime.of(2025, 1, 1), LocalTime.of(0, 0), LocalTime.of(9, 0)))
    *   // SELECT CONVERT_TZ('2025-01-01', '+00:00', '+09:00') FROM person
    * }}}
-   * 
+   *
    * @param dateTime The date time to which the addition is to be performed.
    * @param from The time zone from which the conversion is to be performed.
    * @param to The time zone to which the conversion is to be performed.
    */
   def CONVERT_TZ(dateTime: LocalDateTime | OffsetDateTime | ZonedDateTime, from: LocalTime, to: LocalTime): Column[LocalDateTime] =
     Column(s"CONVERT_TZ('${dateTime.toString}', '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")
+
+  /**
+   * Function to perform addition on a specified date type column.
+   *
+   * {{{
+   *   TableQuery[Person].select(_ => CURDATE)
+   *   // SELECT CURDATE() FROM person
+   * }}}
+   */
+  def CURDATE(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] = Column("CURDATE()")
 
 object DateTime:
 
