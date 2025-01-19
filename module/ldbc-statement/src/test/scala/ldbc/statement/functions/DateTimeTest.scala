@@ -105,3 +105,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(DAYOFMONTH(c6).name == "DAYOFMONTH(local_date_time)")
     assert(DAYOFMONTH(LocalDate.of(2025, 1, 1)).name == "DAYOFMONTH('2025-01-01')")
   }
+
+  it should "Statement generated using the DAYOFWEEK function matches the specified string." in {
+    assert(DAYOFWEEK(c5).name == "DAYOFWEEK(local_date_time)")
+    assert(DAYOFWEEK(c6).name == "DAYOFWEEK(local_date_time)")
+    assert(DAYOFWEEK(LocalDate.of(2025, 1, 1)).name == "DAYOFWEEK('2025-01-01')")
+  }
