@@ -19,6 +19,8 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   private val c2 = Column.Impl[Option[LocalDate]]("local_date")
   private val c3 = Column.Impl[LocalTime]("local_time")
   private val c4 = Column.Impl[Option[LocalTime]]("local_time")
+  private val c5 = Column.Impl[LocalDateTime]("local_date_time")
+  private val c6 = Column.Impl[Option[LocalDateTime]]("local_date_time")
 
   it should "Statement generated using the ADDDATE function matches the specified string." in {
     assert(ADDDATE(c1, Interval.DAY(1)).name == "ADDDATE(local_date, INTERVAL 1 DAY)")
@@ -36,4 +38,11 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(ADDTIME(c3, LocalTime.of(1, 1, 1, 1)).name == "ADDTIME(local_time, '01:01:01.000000001')")
     assert(ADDTIME(c4, LocalTime.of(1, 1, 1, 1)).name == "ADDTIME(local_time, '01:01:01.000000001')")
     assert(ADDTIME(LocalTime.of(1, 1, 1), LocalTime.of(1, 1, 1, 1)).name == "ADDTIME('01:01:01', '01:01:01.000000001')")
+  }
+
+
+  it should "Statement generated using the CONVERT_TZ function matches the specified string." in {
+    assert(CONVERT_TZ(c5, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(local_date_time, '+0:0', '+9:0')")
+    assert(CONVERT_TZ(c6, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(local_date_time, '+0:0', '+9:0')")
+    assert(CONVERT_TZ(LocalDateTime.of(2021, 1, 1, 0, 0), LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ('2021-01-01T00:00', '+0:0', '+9:0')")
   }
