@@ -408,12 +408,12 @@ trait DateTime:
   /**
    * A function that returns the day of the week for date, in the range 1 to 7, where 1 represents Sunday.
    * Day of the week index (1 = Sunday, 2 = Monday, ..., 7 = Saturday) for date.
-   * 
+   *
    * {{{
    *  TableQuery[DateTime].select(p => DAYOFWEEK(p.birthDate))
    *  // SELECT DAYOFWEEK(birth_date) FROM date_time
    * }}}
-   * 
+   *
    * @param column
    *   The date or date-time column from which to extract the day of the week.
    */
@@ -428,17 +428,52 @@ trait DateTime:
   /**
    * A function that returns the day of the week for date, in the range 1 to 7, where 1 represents Sunday.
    * Day of the week index (1 = Sunday, 2 = Monday, ..., 7 = Saturday) for date.
-   * 
+   *
    * {{{
    *  TableQuery[DateTime].select(_ => DAYOFWEEK(LocalDate.of(2021, 1, 1)))
    *  // SELECT DAYOFWEEK('2021-01-01') FROM date_time
    * }}}
-   * 
+   *
    * @param date
    *   The date or date-time expression from which to extract the day of the week.
    */
   def DAYOFWEEK(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"DAYOFWEEK('${date.toString}')")
+
+  /**
+   * A function that returns the day of the year for date, in the range 1 to 366.
+   * The range of DAYOFYEAR() is 1 to 366 because MySQL supports leap year.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => DAYOFYEAR(p.birthDate))
+   *   // SELECT DAYOFYEAR(birth_date) FROM date_time
+   * }}}
+   * 
+   * @param column
+   *   The date or date-time column from which to extract the day of the year.
+   */
+  def DAYOFYEAR[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+     column: Column[A]
+   )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFYEAR(${column.name})")
+
+  /**
+   * A function that returns the day of the year for date, in the range 1 to 366.
+   * The range of DAYOFYEAR() is 1 to 366 because MySQL supports leap year.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(_ => DAYOFYEAR(LocalDate.of(2021, 1, 1)))
+   *   // SELECT DAYOFYEAR('2021-01-01') FROM date_time
+   * }}}
+   * 
+   * @param date
+   *   The date or date-time expression from which to extract the day of the year.
+   */
+  def DAYOFYEAR(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DAYOFYEAR('${date.toString}')")
 
 object DateTime:
 
