@@ -49,3 +49,7 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the CURDATE function matches the specified string." in {
     assert(CURDATE.name == "CURDATE()")
   }
+
+  it should "Statement generated using the CURTIME function matches the specified string." in {
+    assert(CURTIME.name == "CURTIME()")
+  }
