@@ -53,3 +53,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the CURTIME function matches the specified string." in {
     assert(CURTIME.name == "CURTIME()")
   }
+
+  it should "Statement generated using the DATE function matches the specified string." in {
+    assert(DATE(c5).name == "DATE(local_date_time)")
+    assert(DATE(c6).name == "DATE(local_date_time)")
+    assert(DATE(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "DATE('2021-01-01T00:00')")
+  }
