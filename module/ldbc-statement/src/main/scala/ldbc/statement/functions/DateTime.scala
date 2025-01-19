@@ -240,6 +240,63 @@ trait DateTime:
   def DATE_FORMAT(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime, format: String): Column[String] =
     Column(s"DATE_FORMAT('${date.toString}', '$format')")
 
+  /**
+   * Function to calculate the value of the number of days from one date to another.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => DATEDIFF(p.birthDate, p.deathDate))
+   *   // SELECT DATEDIFF(birth_date, death_date) FROM date_time
+   * }}}
+   * 
+   * @param from
+   *   The starting date.
+   * @param to
+   *   The ending date.
+   */
+  def DATEDIFF[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime], B <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+    from: Column[A],
+    to: Column[B]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DATEDIFF(${from.name}, ${to.name})")
+
+  /**
+   * Function to calculate the value of the number of days from one date to another.
+   * 
+   * {{{
+   *  TableQuery[DateTime].select(p => DATEDIFF(p.birthDate, LocalDate.of(2021, 1, 1)))
+   *  // SELECT DATEDIFF(birth_date, '2021-01-01') FROM date_time 
+   * }}}
+   * 
+   * @param from
+   *   The starting date.
+   * @param to
+   *   The ending date.
+   */
+  def DATEDIFF[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+                                                                                                                                                      from: Column[A],
+                                                                                                                                                      to: LocalDate
+                                                                                                                                                    )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DATEDIFF(${from.name}, '${to.toString}')")
+
+  /**
+   * Function to calculate the value of the number of days from one date to another.
+   *
+   * {{{
+   *  TableQuery[DateTime].select(p => DATEDIFF(p.birthDate, LocalDate.of(2021, 1, 1)))
+   *  // SELECT DATEDIFF(birth_date, '2021-01-01') FROM date_time 
+   * }}}
+   *
+   * @param from
+   * The starting date.
+   * @param to
+   * The ending date.
+   */
+  def DATEDIFF(
+                                                                                                                                                      from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+                                                                                                                                                      to: LocalDate
+                                                                                                                                                    )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DATEDIFF('${from.toString}', '${to.toString}')")
+    
 object DateTime:
 
   /**
