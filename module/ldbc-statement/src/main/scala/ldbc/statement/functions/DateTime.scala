@@ -22,8 +22,8 @@ trait DateTime:
    * Function to perform addition on a specified date type column.
    *
    * {{{
-   *   TableQuery[Person].select(p => ADDDATE(p.birthDate, DateTime.Interval.YEAR(1)))
-   *   // SELECT ADDDATE(birth_date, INTERVAL 1 YEAR) FROM person
+   *   TableQuery[DateTime].select(p => ADDDATE(p.birthDate, DateTime.Interval.YEAR(1)))
+   *   // SELECT ADDDATE(birth_date, INTERVAL 1 YEAR) FROM date_time
    * }}}
    *
    * @param column The column to which the addition is to be performed.
@@ -36,8 +36,8 @@ trait DateTime:
    * Function to perform addition on a specified date type column.
    *
    * {{{
-   *   TableQuery[Person].select(p => ADDDATE(LocalDate.now, DateTime.Interval.YEAR(1)))
-   *   // SELECT ADDDATE('2008-02-02', INTERVAL 1 YEAR) FROM person
+   *   TableQuery[DateTime].select(p => ADDDATE(LocalDate.now, DateTime.Interval.YEAR(1)))
+   *   // SELECT ADDDATE('2008-02-02', INTERVAL 1 YEAR) FROM date_time
    * }}}
    *
    * @param date The date to which the addition is to be performed.
@@ -50,8 +50,8 @@ trait DateTime:
    * Function to perform addition on a specified date type column.
    *
    * {{{
-   *   TableQuery[Person].select(p => ADDTIME(p.time, LocalTime.of(1, 1, 1, 1)))
-   *   // SELECT ADDTIME(time, '01:01:01.000000001') FROM person
+   *   TableQuery[DateTime].select(p => ADDTIME(p.time, LocalTime.of(1, 1, 1, 1)))
+   *   // SELECT ADDTIME(time, '01:01:01.000000001') FROM date_time
    * }}}
    *
    * @param column The column to which the addition is to be performed.
@@ -67,8 +67,8 @@ trait DateTime:
    * Function to perform addition on a specified date type column.
    *
    * {{{
-   *   TableQuery[Person].select(p => ADDTIME(LocalTime.of(1, 1, 1, 1), LocalTime.of(1, 1, 1, 1)))
-   *   // SELECT ADDTIME('01:01:01.000000001', '01:01:01.000000001') FROM person
+   *   TableQuery[DateTime].select(p => ADDTIME(LocalTime.of(1, 1, 1, 1), LocalTime.of(1, 1, 1, 1)))
+   *   // SELECT ADDTIME('01:01:01.000000001', '01:01:01.000000001') FROM date_time
    * }}}
    *
    * @param dateTime The date time to which the addition is to be performed.
@@ -78,11 +78,11 @@ trait DateTime:
     Column(s"ADDTIME('${dateTime.toString}', '${time.toString}')")
 
   /**
-   * Function to perform addition on a specified date type column.
+   * Function to convert a date-time value dt from the time zone specified by from_tz to the time zone specified by to_tz.
    *
    * {{{
-   *   TableQuery[Person].select(p => CONVERT_TZ(p.timestampe, LocalTime.of(0, 0), LocalTime.of(9, 0)))
-   *   // SELECT CONVERT_TZ(timestampe, '+00:00', '+09:00') FROM person
+   *   TableQuery[DateTime].select(p => CONVERT_TZ(p.timestampe, LocalTime.of(0, 0), LocalTime.of(9, 0)))
+   *   // SELECT CONVERT_TZ(timestampe, '+00:00', '+09:00') FROM date_time
    * }}}
    *
    * @param column The column to which the addition is to be performed.
@@ -97,11 +97,11 @@ trait DateTime:
     Column(s"CONVERT_TZ(${column.name}, '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")(using column.decoder, column.encoder)
 
   /**
-   * Function to perform addition on a specified date type column.
+   * Function to convert a date-time value dt from the time zone specified by from_tz to the time zone specified by to_tz.
    *
    * {{{
-   *   TableQuery[Person].select(p => CONVERT_TZ(LocalDateTime.of(2025, 1, 1), LocalTime.of(0, 0), LocalTime.of(9, 0)))
-   *   // SELECT CONVERT_TZ('2025-01-01', '+00:00', '+09:00') FROM person
+   *   TableQuery[DateTime].select(p => CONVERT_TZ(LocalDateTime.of(2025, 1, 1), LocalTime.of(0, 0), LocalTime.of(9, 0)))
+   *   // SELECT CONVERT_TZ('2025-01-01', '+00:00', '+09:00') FROM date_time
    * }}}
    *
    * @param dateTime The date time to which the addition is to be performed.
@@ -112,24 +112,50 @@ trait DateTime:
     Column(s"CONVERT_TZ('${dateTime.toString}', '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")
 
   /**
-   * Function to perform addition on a specified date type column.
+   * Function to return the current date as 'YYYY-MM-DD' format.
    *
    * {{{
-   *   TableQuery[Person].select(_ => CURDATE)
-   *   // SELECT CURDATE() FROM person
+   *   TableQuery[DateTime].select(_ => CURDATE)
+   *   // SELECT CURDATE() FROM date_time
    * }}}
    */
   def CURDATE(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] = Column("CURDATE()")
 
   /**
-   * Function to perform addition on a specified date type column.
+   * Function to return the current time in 'hh:mm:ss' format.
    *
    * {{{
-   *   TableQuery[Person].select(_ => CURTIME)
-   *   // SELECT CURTIME() FROM person
+   *   TableQuery[DateTime].select(_ => CURTIME)
+   *   // SELECT CURTIME() FROM date_time
    * }}}
    */
   def CURTIME(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = Column("CURTIME()")
+  
+  /**
+   * Function to extract the date portion of a date or date-time expression.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => DATE(p.timestamp))
+   *   // SELECT DATE(timestamp) FROM date_time
+   * }}}
+   *
+   * @param column Date or date/time column from which to extract the date portion
+   */
+  def DATE[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](column: Column[A])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"DATE(${column.name})")
+
+  /**
+   * Function to extract the date portion of a date or date-time expression.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => DATE(LocalDateTime.of(2025, 1, 1, 1, 1)))
+   *   // SELECT DATE('2025-01-01T01:01') FROM date_time
+   * }}}
+   * @param date
+   *   The date or date-time expression from which the date portion is to be extracted.
+   */
+  def DATE(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime): Column[LocalDate] =
+    Column(s"DATE('${date.toString}')")
 
 object DateTime:
 
