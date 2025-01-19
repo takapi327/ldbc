@@ -117,3 +117,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(DAYOFYEAR(c6).name == "DAYOFYEAR(local_date_time)")
     assert(DAYOFYEAR(LocalDate.of(2025, 1, 1)).name == "DAYOFYEAR('2025-01-01')")
   }
+
+  it should "Statement generated using the EXTRACT function matches the specified string." in {
+    assert(EXTRACT(c5, TimeUnit.YEAR).name == "EXTRACT(YEAR FROM local_date_time)")
+    assert(EXTRACT(c6, TimeUnit.MONTH).name == "EXTRACT(MONTH FROM local_date_time)")
+    assert(EXTRACT(LocalDate.of(2025, 1, 1), TimeUnit.HOUR).name == "EXTRACT(HOUR FROM '2025-01-01')")
+  }
