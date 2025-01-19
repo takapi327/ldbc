@@ -8,10 +8,10 @@ package ldbc.statement.functions
 
 import java.time.*
 
-import ldbc.statement.Column
-import ldbc.statement.functions.DateTime.*
-
 import org.scalatest.flatspec.AnyFlatSpec
+
+import ldbc.statement.functions.DateTime.*
+import ldbc.statement.Column
 
 class DateTimeTest extends AnyFlatSpec, DateTime:
 
@@ -46,7 +46,6 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(DATE_SUB(LocalDate.of(2021, 1, 1), Interval.YEAR(1)).name == "DATE_SUB('2021-01-01', INTERVAL 1 YEAR)")
   }
 
-
   it should "Statement generated using the ADDTIME function matches the specified string." in {
     assert(ADDTIME(c3, LocalTime.of(1, 1, 1, 1)).name == "ADDTIME(local_time, '01:01:01.000000001')")
     assert(ADDTIME(c4, LocalTime.of(1, 1, 1, 1)).name == "ADDTIME(local_time, '01:01:01.000000001')")
@@ -56,7 +55,13 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the CONVERT_TZ function matches the specified string." in {
     assert(CONVERT_TZ(c5, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(local_date_time, '+0:0', '+9:0')")
     assert(CONVERT_TZ(c6, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(local_date_time, '+0:0', '+9:0')")
-    assert(CONVERT_TZ(LocalDateTime.of(2021, 1, 1, 0, 0), LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ('2021-01-01T00:00', '+0:0', '+9:0')")
+    assert(
+      CONVERT_TZ(
+        LocalDateTime.of(2021, 1, 1, 0, 0),
+        LocalTime.of(0, 0),
+        LocalTime.of(9, 0)
+      ).name == "CONVERT_TZ('2021-01-01T00:00', '+0:0', '+9:0')"
+    )
   }
 
   it should "Statement generated using the CURDATE function matches the specified string." in {
@@ -76,7 +81,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the DATE_FORMAT function matches the specified string." in {
     assert(DATE_FORMAT(c5, "%Y-%m-%d").name == "DATE_FORMAT(local_date_time, '%Y-%m-%d')")
     assert(DATE_FORMAT(c6, "%Y-%m-%d").name == "DATE_FORMAT(local_date_time, '%Y-%m-%d')")
-    assert(DATE_FORMAT(LocalDateTime.of(2021, 1, 1, 0, 0), "%Y-%m-%d").name == "DATE_FORMAT('2021-01-01T00:00', '%Y-%m-%d')")
+    assert(
+      DATE_FORMAT(LocalDateTime.of(2021, 1, 1, 0, 0), "%Y-%m-%d").name == "DATE_FORMAT('2021-01-01T00:00', '%Y-%m-%d')"
+    )
   }
 
   it should "Statement generated using the DATEDIFF function matches the specified string." in {

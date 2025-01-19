@@ -9,6 +9,7 @@ package ldbc.statement.functions
 import java.time.*
 
 import ldbc.dsl.codec.*
+
 import ldbc.statement.Column
 
 /**
@@ -32,7 +33,7 @@ trait DateTime:
    *   The interval to be added to the column.
    */
   def DATE_ADD[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
-    Column(s"DATE_ADD(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
+    Column(s"DATE_ADD(${ column.name }, ${ interval.statement })")(using column.decoder, column.encoder)
 
   /**
    * Function to perform addition on a specified date type column.
@@ -47,8 +48,11 @@ trait DateTime:
    * @param interval
    *   The interval to be added to the date.
    */
-  def DATE_ADD(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"DATE_ADD('${date.toString}', ${interval.statement})")
+  def DATE_ADD(date: LocalDate, interval: DateTime.Interval[Int])(using
+    Decoder[LocalDate],
+    Encoder[LocalDate]
+  ): Column[LocalDate] =
+    Column(s"DATE_ADD('${ date.toString }', ${ interval.statement })")
 
   /**
    * Function to perform subtraction on a given date type column.
@@ -64,7 +68,7 @@ trait DateTime:
    *   The interval to be subtraction to the column.
    */
   def DATE_SUB[A <: LocalDate | Option[LocalDate]](column: Column[A], interval: DateTime.Interval[Int]): Column[A] =
-    Column(s"DATE_SUB(${column.name}, ${interval.statement})")(using column.decoder, column.encoder)
+    Column(s"DATE_SUB(${ column.name }, ${ interval.statement })")(using column.decoder, column.encoder)
 
   /**
    * Function to perform subtraction on a given date.
@@ -79,8 +83,11 @@ trait DateTime:
    * @param interval
    *   The interval to be subtraction to the date.
    */
-  def DATE_SUB(date: LocalDate, interval: DateTime.Interval[Int])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"DATE_SUB('${date.toString}', ${interval.statement})")
+  def DATE_SUB(date: LocalDate, interval: DateTime.Interval[Int])(using
+    Decoder[LocalDate],
+    Encoder[LocalDate]
+  ): Column[LocalDate] =
+    Column(s"DATE_SUB('${ date.toString }', ${ interval.statement })")
 
   /**
    * Function to perform addition on a specified date type column.
@@ -95,11 +102,14 @@ trait DateTime:
    * @param time
    *   The time to be added to the column.
    */
-  def ADDTIME[A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+  def ADDTIME[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
     column: Column[A],
-    time: LocalTime
+    time:   LocalTime
   ): Column[A] =
-    Column(s"ADDTIME(${column.name}, '${time.toString}')")(using column.decoder, column.encoder)
+    Column(s"ADDTIME(${ column.name }, '${ time.toString }')")(using column.decoder, column.encoder)
 
   /**
    * Function to perform addition on a specified date type column.
@@ -114,8 +124,11 @@ trait DateTime:
    * @param time
    *   The time to be added to the date time.
    */
-  def ADDTIME(dateTime: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime, time: LocalTime): Column[LocalTime] =
-    Column(s"ADDTIME('${dateTime.toString}', '${time.toString}')")
+  def ADDTIME(
+    dateTime: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    time:     LocalTime
+  ): Column[LocalTime] =
+    Column(s"ADDTIME('${ dateTime.toString }', '${ time.toString }')")
 
   /**
    * Function to convert a date-time value dt from the time zone specified by from_tz to the time zone specified by to_tz.
@@ -132,12 +145,16 @@ trait DateTime:
    * @param to
    *   The time zone to which the conversion is to be performed.
    */
-  def CONVERT_TZ[A <: LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDateTime | OffsetDateTime | ZonedDateTime]](
+  def CONVERT_TZ[
+    A <: LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
     column: Column[A],
-    from: LocalTime,
-    to: LocalTime
+    from:   LocalTime,
+    to:     LocalTime
   ): Column[A] =
-    Column(s"CONVERT_TZ(${column.name}, '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")(using column.decoder, column.encoder)
+    Column(
+      s"CONVERT_TZ(${ column.name }, '+${ from.getHour }:${ from.getMinute }', '+${ to.getHour }:${ to.getMinute }')"
+    )(using column.decoder, column.encoder)
 
   /**
    * Function to convert a date-time value dt from the time zone specified by from_tz to the time zone specified by to_tz.
@@ -154,8 +171,14 @@ trait DateTime:
    * @param to
    *   The time zone to which the conversion is to be performed.
    */
-  def CONVERT_TZ(dateTime: LocalDateTime | OffsetDateTime | ZonedDateTime, from: LocalTime, to: LocalTime): Column[LocalDateTime] =
-    Column(s"CONVERT_TZ('${dateTime.toString}', '+${from.getHour}:${from.getMinute}', '+${to.getHour}:${to.getMinute}')")
+  def CONVERT_TZ(
+    dateTime: LocalDateTime | OffsetDateTime | ZonedDateTime,
+    from:     LocalTime,
+    to:       LocalTime
+  ): Column[LocalDateTime] =
+    Column(
+      s"CONVERT_TZ('${ dateTime.toString }', '+${ from.getHour }:${ from.getMinute }', '+${ to.getHour }:${ to.getMinute }')"
+    )
 
   /**
    * Function to return the current date as 'YYYY-MM-DD' format.
@@ -176,7 +199,7 @@ trait DateTime:
    * }}}
    */
   def CURTIME(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] = Column("CURTIME()")
-  
+
   /**
    * Function to extract the date portion of a date or date-time expression.
    *
@@ -188,8 +211,11 @@ trait DateTime:
    * @param column
    *   Date or date/time column from which to extract the date portion
    */
-  def DATE[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](column: Column[A])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
-    Column(s"DATE(${column.name})")
+  def DATE[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](column: Column[A])(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"DATE(${ column.name })")
 
   /**
    * Function to extract the date portion of a date or date-time expression.
@@ -202,7 +228,7 @@ trait DateTime:
    *   The date or date-time expression from which the date portion is to be extracted.
    */
   def DATE(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime): Column[LocalDate] =
-    Column(s"DATE('${date.toString}')")
+    Column(s"DATE('${ date.toString }')")
 
   /**
    * Function to format a date value according to the format string.
@@ -218,11 +244,14 @@ trait DateTime:
    * @param format
    *   The format string.
    */
-  def DATE_FORMAT[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+  def DATE_FORMAT[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
     column: Column[A],
     format: String
   )(using Decoder[String], Encoder[String]): Column[String] =
-    Column(s"DATE_FORMAT(${column.name}, '$format')")
+    Column(s"DATE_FORMAT(${ column.name }, '$format')")
 
   /**
    * Function to format a date value according to the format string.
@@ -238,7 +267,7 @@ trait DateTime:
    *   The format string.
    */
   def DATE_FORMAT(date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime, format: String): Column[String] =
-    Column(s"DATE_FORMAT('${date.toString}', '$format')")
+    Column(s"DATE_FORMAT('${ date.toString }', '$format')")
 
   /**
    * Function to calculate the value of the number of days from one date to another.
@@ -253,11 +282,16 @@ trait DateTime:
    * @param to
    *   The ending date.
    */
-  def DATEDIFF[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime], B <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
+  def DATEDIFF[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime],
+    B <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
     from: Column[A],
-    to: Column[B]
+    to:   Column[B]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DATEDIFF(${from.name}, ${to.name})")
+    Column(s"DATEDIFF(${ from.name }, ${ to.name })")
 
   /**
    * Function to calculate the value of the number of days from one date to another.
@@ -272,11 +306,14 @@ trait DateTime:
    * @param to
    *   The ending date.
    */
-  def DATEDIFF[A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]](
-                                                                                                                                                      from: Column[A],
-                                                                                                                                                      to: LocalDate
-                                                                                                                                                    )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DATEDIFF(${from.name}, '${to.toString}')")
+  def DATEDIFF[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    from: Column[A],
+    to:   LocalDate
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DATEDIFF(${ from.name }, '${ to.toString }')")
 
   /**
    * Function to calculate the value of the number of days from one date to another.
@@ -292,11 +329,11 @@ trait DateTime:
    * The ending date.
    */
   def DATEDIFF(
-                                                                                                                                                      from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
-                                                                                                                                                      to: LocalDate
-                                                                                                                                                    )(using Decoder[Int], Encoder[Int]): Column[Int] =
-    Column(s"DATEDIFF('${from.toString}', '${to.toString}')")
-    
+    from: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    to:   LocalDate
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"DATEDIFF('${ from.toString }', '${ to.toString }')")
+
 object DateTime:
 
   /**
@@ -310,23 +347,23 @@ object DateTime:
    */
   enum Interval[A](expr: A, val unit: String):
     def statement: String = s"INTERVAL $expr $unit"
-    case MICROSECOND(expr: Int) extends Interval(expr, "MICROSECOND")
-    case SECOND(expr: Int) extends Interval(expr, "SECOND")
-    case MINUTE(expr: Int) extends Interval(expr, "MINUTE")
-    case HOUR(expr: Int) extends Interval(expr, "HOUR")
-    case DAY(expr: Int) extends Interval(expr, "DAY")
-    case WEEK(expr: Int) extends Interval(expr, "WEEK")
-    case MONTH(expr: Int) extends Interval(expr, "MONTH")
-    case QUARTER(expr: Int) extends Interval(expr, "QUARTER")
-    case YEAR(expr: Int) extends Interval(expr, "YEAR")
+    case MICROSECOND(expr: Int)           extends Interval(expr, "MICROSECOND")
+    case SECOND(expr: Int)                extends Interval(expr, "SECOND")
+    case MINUTE(expr: Int)                extends Interval(expr, "MINUTE")
+    case HOUR(expr: Int)                  extends Interval(expr, "HOUR")
+    case DAY(expr: Int)                   extends Interval(expr, "DAY")
+    case WEEK(expr: Int)                  extends Interval(expr, "WEEK")
+    case MONTH(expr: Int)                 extends Interval(expr, "MONTH")
+    case QUARTER(expr: Int)               extends Interval(expr, "QUARTER")
+    case YEAR(expr: Int)                  extends Interval(expr, "YEAR")
     case SECOND_MICROSECOND(expr: String) extends Interval(expr, "SECOND_MICROSECOND")
     case MINUTE_MICROSECOND(expr: String) extends Interval(expr, "MINUTE_MICROSECOND")
-    case MINUTE_SECOND(expr: String) extends Interval(expr, "MINUTE_SECOND")
-    case HOUR_MICROSECOND(expr: String) extends Interval(expr, "HOUR_MICROSECOND")
-    case HOUR_SECOND(expr: String) extends Interval(expr, "HOUR_SECOND")
-    case HOUR_MINUTE(expr: String) extends Interval(expr, "HOUR_MINUTE")
-    case DAY_MICROSECOND(expr: String) extends Interval(expr, "DAY_MICROSECOND")
-    case DAY_SECOND(expr: String) extends Interval(expr, "DAY_SECOND")
-    case DAY_MINUTE(expr: String) extends Interval(expr, "DAY_MINUTE")
-    case DAY_HOUR(expr: String) extends Interval(expr, "DAY_HOUR")
-    case YEAR_MONTH(expr: YearMonth) extends Interval(expr, "YEAR_MONTH")
+    case MINUTE_SECOND(expr: String)      extends Interval(expr, "MINUTE_SECOND")
+    case HOUR_MICROSECOND(expr: String)   extends Interval(expr, "HOUR_MICROSECOND")
+    case HOUR_SECOND(expr: String)        extends Interval(expr, "HOUR_SECOND")
+    case HOUR_MINUTE(expr: String)        extends Interval(expr, "HOUR_MINUTE")
+    case DAY_MICROSECOND(expr: String)    extends Interval(expr, "DAY_MICROSECOND")
+    case DAY_SECOND(expr: String)         extends Interval(expr, "DAY_SECOND")
+    case DAY_MINUTE(expr: String)         extends Interval(expr, "DAY_MINUTE")
+    case DAY_HOUR(expr: String)           extends Interval(expr, "DAY_HOUR")
+    case YEAR_MONTH(expr: YearMonth)      extends Interval(expr, "YEAR_MONTH")
