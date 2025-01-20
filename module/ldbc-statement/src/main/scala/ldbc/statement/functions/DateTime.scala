@@ -595,12 +595,12 @@ trait DateTime:
   /**
    * Function for extracting time-only values from date types.
    * The range of returned values is from 0 to 23 for date-time values. However, since the range of TIME values is actually much larger, HOUR can return values greater than 23.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(p => HOUR(p.birthDate))
    *   // SELECT HOUR(birth_date) FROM date_time
    * }}}
-   * 
+   *
    * @param column
    *   The column from which to extract the hour.
    */
@@ -615,7 +615,7 @@ trait DateTime:
   /**
    * Function for extracting time-only values from date types.
    * The range of returned values is from 0 to 23 for date-time values. However, since the range of TIME values is actually much larger, HOUR can return values greater than 23.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(_ => HOUR(LocalTime.of(1, 1, 1, 1)))
    *   // SELECT HOUR('01:01:01.000000001') FROM date_time
@@ -627,6 +627,41 @@ trait DateTime:
     date: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"HOUR('${ date.toString.replaceAll("T", " ") }')")
+
+  /**
+   * Function that returns the value corresponding to the last day of the month from a date or date-time value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => LAST_DAY(p.birthDate))
+   *   // SELECT LAST_DAY(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *  The column from which to extract the last day of the month.
+   */
+  def LAST_DAY[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"LAST_DAY(${ column.name })")
+
+  /**
+   * Function that returns the value corresponding to the last day of the month from a date or date-time value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => LAST_DAY(LocalDate.of(2021, 1, 1)))
+   *   // SELECT LAST_DAY('2021-01-01') FROM date_time
+   * }}}
+   * 
+   * @param date
+   *  The date or date-time expression from which to extract the last day of the month.
+   */
+  def LAST_DAY(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    Column(s"LAST_DAY('${ date.toString }')")
 
 object DateTime:
 
