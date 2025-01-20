@@ -654,7 +654,7 @@ trait DateTime:
    *   TableQuery[DateTime].select(_ => LAST_DAY(LocalDate.of(2021, 1, 1)))
    *   // SELECT LAST_DAY('2021-01-01') FROM date_time
    * }}}
-   * 
+   *
    * @param date
    *  The date or date-time expression from which to extract the last day of the month.
    */
@@ -662,6 +662,45 @@ trait DateTime:
     date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column(s"LAST_DAY('${ date.toString }')")
+
+  /**
+   * Function to return a date calculated from a given year and annual total.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => MAKEDATE(p.birthDate, 1))
+   *   // SELECT MAKEDATE(birth_date, 1) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column from which to calculate the date.
+   * @param day
+   *   The annual total from which to calculate the date.
+   *   The annual total must be greater than 0.
+   */
+  def MAKEDATE[A <: Year | Option[Year]](
+    column: Column[A],
+    day: Int
+  )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    require(day > 0, "The annual total must be greater than 0.")
+    Column(s"MAKEDATE(${ column.name }, $day)")
+
+  /**
+   * Function to return a date calculated from a given year and annual total.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => MAKEDATE(2021, 1))
+   *   // SELECT MAKEDATE(2021, 1) FROM date_time
+   * }}}
+   *
+   * @param year
+   *   The year from which to calculate the date.
+   * @param day
+   *   The annual total from which to calculate the date.
+   *   The annual total must be greater than 0.
+   */
+  def MAKEDATE(year: Int | Year, day: Int)(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
+    require(day > 0, "The annual total must be greater than 0.")
+    Column(s"MAKEDATE($year, $day)")
 
 object DateTime:
 
