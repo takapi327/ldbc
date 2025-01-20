@@ -349,7 +349,8 @@ object Protocol:
         case Right(plugin: CachingSha2PasswordPlugin[F]) =>
           for
             hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-            _ <- socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(
+            _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
+            _ <- readUntilOk(
                    plugin,
                    password,
                    Some(switchRequestPacket.pluginProvidedData)
@@ -363,7 +364,8 @@ object Protocol:
         case Right(plugin) =>
           for
             hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-            _ <- socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(
+            _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
+            _ <- readUntilOk(
                    plugin,
                    password,
                    Some(switchRequestPacket.pluginProvidedData)
@@ -510,8 +512,8 @@ object Protocol:
                          initialPacket.authPlugin,
                          hashedPassword
                        )
-                     ) *>
-                       readUntilOk(plugin, password)
+                     )
+                _ <- readUntilOk(plugin, password)
               yield ()
         )
       }
