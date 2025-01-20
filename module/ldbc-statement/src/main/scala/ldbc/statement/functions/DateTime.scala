@@ -592,6 +592,42 @@ trait DateTime:
   def FROM_UNIXTIME(timestamp: Int | Long)(using Decoder[String], Encoder[String]): Column[String] =
     Column(s"FROM_UNIXTIME($timestamp)")
 
+  /**
+   * Function for extracting time-only values from date types.
+   * The range of returned values is from 0 to 23 for date-time values. However, since the range of TIME values is actually much larger, HOUR can return values greater than 23.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(p => HOUR(p.birthDate))
+   *   // SELECT HOUR(birth_date) FROM date_time
+   * }}}
+   * 
+   * @param column
+   *   The column from which to extract the hour.
+   */
+  def HOUR[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"HOUR(${ column.name })")
+
+  /**
+   * Function for extracting time-only values from date types.
+   * The range of returned values is from 0 to 23 for date-time values. However, since the range of TIME values is actually much larger, HOUR can return values greater than 23.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(_ => HOUR(LocalTime.of(1, 1, 1, 1)))
+   *   // SELECT HOUR('01:01:01.000000001') FROM date_time
+   * }}}
+   * @param date
+   *   The date or date-time expression from which to extract the hour.
+   */
+  def HOUR(
+    date: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"HOUR('${ date.toString.replaceAll("T", " ") }')")
+
 object DateTime:
 
   /**
