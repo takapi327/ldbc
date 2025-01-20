@@ -137,3 +137,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(FROM_UNIXTIME(c8).name == "FROM_UNIXTIME(days)")
     assert(FROM_UNIXTIME(730669).name == "FROM_UNIXTIME(730669)")
   }
+
+  it should "Statement generated using the HOUR function matches the specified string." in {
+    assert(HOUR(c5).name == "HOUR(local_date_time)")
+    assert(HOUR(c6).name == "HOUR(local_date_time)")
+    assert(HOUR(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "HOUR('2021-01-01 00:00')")
+  }
