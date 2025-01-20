@@ -182,3 +182,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(MINUTE(c6).name == "MINUTE(local_date_time)")
     assert(MINUTE(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "MINUTE('2021-01-01 00:00')")
   }
+
+  it should "Statement generated using the MONTH function matches the specified string." in {
+    assert(MONTH(c5).name == "MONTH(local_date_time)")
+    assert(MONTH(c6).name == "MONTH(local_date_time)")
+    assert(MONTH(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "MONTH('2021-01-01 00:00')")
+  }
