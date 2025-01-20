@@ -824,6 +824,43 @@ trait DateTime:
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"MINUTE('${ time.toString.replaceAll("T", " ") }')")
 
+  /**
+   * Function that returns the month part of a date or date-time expression.
+   * The range of the month is 1 to 12.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => MONTH(p.birthDate))
+   *   // SELECT MONTH(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *  The column from which to extract the month.
+   */
+  def MONTH[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"MONTH(${ column.name })")
+
+  /**
+   * Function that returns the month part of a date or date-time expression.
+   * The range of the month is 1 to 12.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => MONTH(LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT MONTH('2021-01-01 00:00') FROM date_time
+   * }}}
+   *
+   * @param date
+   *  The date or date-time expression from which to extract the month.
+   */
+  def MONTH(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"MONTH('${ date.toString.replaceAll("T", " ") }')")
+
 object DateTime:
 
   /**
