@@ -7,27 +7,22 @@
 package ldbc.connector.authenticator
 
 import java.nio.charset.StandardCharsets
-import java.security.{ KeyFactory, MessageDigest, PublicKey }
+import java.security.{ KeyFactory, PublicKey }
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
 import javax.crypto.Cipher
 
-trait Sha256PasswordPlugin extends AuthenticationPlugin:
+import cats.effect.Concurrent
+
+import fs2.hashing.Hashing
+
+trait Sha256PasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlugin[F]:
 
   override def name: String = "sha256_password"
 
   def transformation: String = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding"
-
-  override def hashPassword(password: String, scramble: Array[Byte]): Array[Byte] =
-    if password.isEmpty then Array[Byte]()
-    else
-      val sha256 = MessageDigest.getInstance("SHA-256")
-      val hash1  = sha256.digest(password.getBytes(StandardCharsets.UTF_8))
-      val hash2  = sha256.digest(hash1)
-      val hash3  = sha256.digest(hash2 ++ scramble)
-      hash1.zip(hash3).map { case (a, b) => (a ^ b).toByte }
 
   def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
     val input = if password.nonEmpty then (password + "\u0000").getBytes(StandardCharsets.UTF_8) else Array[Byte](0)
@@ -56,4 +51,4 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
 
 object Sha256PasswordPlugin:
 
-  def apply(): Sha256PasswordPlugin = new Sha256PasswordPlugin {}
+  def apply[F[_]: Hashing: Concurrent](): Sha256PasswordPlugin[F] = new Sha256PasswordPlugin {}

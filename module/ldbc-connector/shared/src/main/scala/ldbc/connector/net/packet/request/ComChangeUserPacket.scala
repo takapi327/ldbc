@@ -14,6 +14,7 @@ import scodec.interop.cats.*
 import cats.syntax.all.*
 
 import ldbc.connector.data.*
+import scodec.bits.ByteVector
 
 /**
  * The COM_CHANGE_USER request packet is used to change the user of the current connection.
@@ -37,7 +38,7 @@ case class ComChangeUserPacket(
   database:          Option[String],
   characterSet:      Int,
   pluginName:        String,
-  hashedPassword:    Array[Byte]
+  hashedPassword:    ByteVector
 ) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =

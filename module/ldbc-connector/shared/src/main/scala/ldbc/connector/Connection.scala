@@ -16,6 +16,7 @@ import cats.syntax.all.*
 import cats.effect.*
 import cats.effect.std.Console
 
+import fs2.hashing.Hashing
 import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
@@ -49,7 +50,7 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  def apply[F[_]: Temporal: Network: Console](
+  def apply[F[_]: Temporal: Network: Console: Hashing](
     host:                    String,
     port:                    Int,
     user:                    String,
@@ -83,7 +84,7 @@ object Connection:
                     )
     yield connection
 
-  def fromSockets[F[_]: Temporal: Tracer: Console](
+  def fromSockets[F[_]: Temporal: Tracer: Console: Hashing](
     sockets:                 Resource[F, Socket[F]],
     host:                    String,
     port:                    Int,
@@ -125,7 +126,7 @@ object Connection:
         )(_.close())
     yield connection
 
-  def fromSocketGroup[F[_]: Tracer: Console](
+  def fromSocketGroup[F[_]: Tracer: Console: Hashing](
     socketGroup:             SocketGroup[F],
     host:                    String,
     port:                    Int,
