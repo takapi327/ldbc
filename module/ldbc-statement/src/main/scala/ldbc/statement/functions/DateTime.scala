@@ -752,6 +752,41 @@ trait DateTime:
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column(s"MAKETIME($hour, $minute, $second)")
 
+  /**
+   * Function that returns microseconds from a time or date-time expression as a number in the range 0 to 999999.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => MICROSECOND(p.birthDate))
+   *   // SELECT MICROSECOND(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column from which to extract the microseconds.
+   */
+  def MICROSECOND[
+    A <: LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"MICROSECOND(${ column.name })")
+
+  /**
+   * Function that returns microseconds from a time or date-time expression as a number in the range 0 to 999999.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => MICROSECOND(LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT MICROSECOND('2021-01-01 00:00') FROM date_time
+   * }}}
+   *
+   * @param datetime
+   *   The date or date-time expression from which to extract the microseconds.
+   */
+  def MICROSECOND(
+    datetime: LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"MICROSECOND('${ datetime.toString.replaceAll("T", " ") }')")
+
 object DateTime:
 
   /**
