@@ -176,3 +176,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(MICROSECOND(c6).name == "MICROSECOND(local_date_time)")
     assert(MICROSECOND(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "MICROSECOND('2021-01-01 00:00')")
   }
+
+  it should "Statement generated using the MINUTE function matches the specified string." in {
+    assert(MINUTE(c5).name == "MINUTE(local_date_time)")
+    assert(MINUTE(c6).name == "MINUTE(local_date_time)")
+    assert(MINUTE(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "MINUTE('2021-01-01 00:00')")
+  }
