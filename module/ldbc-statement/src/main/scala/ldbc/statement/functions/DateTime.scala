@@ -787,6 +787,43 @@ trait DateTime:
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"MICROSECOND('${ datetime.toString.replaceAll("T", " ") }')")
 
+  /**
+   * Function that returns the minute part of a date or date-time expression.
+   * The range of the minute is 0 to 59.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => MINUTE(p.birthDate))
+   *   // SELECT MINUTE(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *  The column from which to extract the minute.
+   */
+  def MINUTE[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"MINUTE(${ column.name })")
+
+  /**
+   * Function that returns the minute part of a date or date-time expression.
+   * The range of the minute is 0 to 59.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => MINUTE(LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT MINUTE('2021-01-01 00:00') FROM date_time
+   * }}}
+   *
+   * @param time
+   *   The date or date-time expression from which to extract the minute.
+   */
+  def MINUTE(
+    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"MINUTE('${ time.toString.replaceAll("T", " ") }')")
+
 object DateTime:
 
   /**
