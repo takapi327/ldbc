@@ -170,3 +170,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(MAKETIME(c12, c14, c16).name == "MAKETIME(hour, minute, second)")
     assert(MAKETIME(24, 59, 59).name == "MAKETIME(24, 59, 59)")
   }
+
+  it should "Statement generated using the MICROSECOND function matches the specified string." in {
+    assert(MICROSECOND(c5).name == "MICROSECOND(local_date_time)")
+    assert(MICROSECOND(c6).name == "MICROSECOND(local_date_time)")
+    assert(MICROSECOND(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "MICROSECOND('2021-01-01 00:00')")
+  }
