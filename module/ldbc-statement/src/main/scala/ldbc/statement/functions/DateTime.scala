@@ -702,6 +702,56 @@ trait DateTime:
     require(day > 0, "The annual total must be greater than 0.")
     Column(s"MAKEDATE($year, $day)")
 
+  /**
+   * Function to return a time value calculated from the given hour, minute, and second.
+   * The range of the hour is 0 to 23, the range of the minute is 0 to 59, and the range of the second is 0 to 59.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => MAKETIME(p.hour, p.minute, p.second))
+   *   // SELECT MAKETIME(hour, minute, second) FROM date_time
+   * }}}
+   *
+   * @param hour
+   *   The hour from which to calculate the time.
+   * @param minute
+   *   The minute from which to calculate the time.
+   * @param second
+   *   The second from which to calculate the time.
+   */
+  def MAKETIME[
+    A <: Int | Long | Option[Int | Long],
+    B <: Int | Long | Option[Int | Long],
+    C <: Int | Long | Option[Int | Long]
+  ](
+    hour: Column[A],
+    minute: Column[B],
+    second: Column[C]
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"MAKETIME(${hour.name}, ${minute.name}, ${second.name})")
+
+  /**
+   * Function to return a time value calculated from the given hour, minute, and second.
+   * The range of the hour is 0 to 23, the range of the minute is 0 to 59, and the range of the second is 0 to 59.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => MAKETIME(1, 1, 1))
+   *   // SELECT MAKETIME(1, 1, 1) FROM date_time
+   * }}}
+   *
+   * @param hour
+   *   The hour from which to calculate the time.
+   * @param minute
+   *   The minute from which to calculate the time.
+   * @param second
+   *   The second from which to calculate the time.
+   */
+  def MAKETIME(
+    hour: Int | Long,
+    minute: Int | Long,
+    second: Int | Long
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"MAKETIME($hour, $minute, $second)")
+
 object DateTime:
 
   /**
