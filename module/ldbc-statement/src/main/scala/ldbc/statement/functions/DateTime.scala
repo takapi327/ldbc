@@ -562,6 +562,36 @@ trait DateTime:
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     Column(s"FROM_DAYS($days)")
 
+  /**
+   * Function to generate a UTC date in YYYYY-MM-DD hh:mm:ss format from a number.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => FROM_UNIXTIME(p.birthDate))
+   *   // SELECT FROM_UNIXTIME(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column from which to extract the date.
+   */
+  def FROM_UNIXTIME[A <: Int | Long | Option[Int | Long]](
+    column: Column[A]
+  )(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] =
+    Column(s"FROM_UNIXTIME(${ column.name })")
+
+  /**
+   * Function to generate a UTC date in YYYYY-MM-DD hh:mm:ss format from a number.
+   *
+   * {{{
+   *  TableQuery[DateTime].select(_ => FROM_UNIXTIME(1612137600))
+   *  // SELECT FROM_UNIXTIME(1612137600) FROM date_time
+   * }}}
+   *
+   * @param timestamp
+   *   The number from which to extract the date.
+   */
+  def FROM_UNIXTIME(timestamp: Int | Long)(using Decoder[String], Encoder[String]): Column[String] =
+    Column(s"FROM_UNIXTIME($timestamp)")
+
 object DateTime:
 
   /**
