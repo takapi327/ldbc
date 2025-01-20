@@ -23,7 +23,7 @@ trait AuthenticationPlugin[F[_]: Hashing](using F: Concurrent[F]):
   def name: String
 
   def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector] =
-    if password.isEmpty then F.raiseError(new Exception("Password should not be empty"))
+    if password.isEmpty then F.pure(ByteVector.empty)
     else
       val sha256Hashing = Hashing[F].hash(HashAlgorithm.SHA256)
 
