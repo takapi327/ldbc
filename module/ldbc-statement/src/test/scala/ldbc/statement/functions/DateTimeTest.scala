@@ -131,3 +131,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(FROM_DAYS(c8).name == "FROM_DAYS(days)")
     assert(FROM_DAYS(730669).name == "FROM_DAYS(730669)")
   }
+
+  it should "Statement generated using the FROM_UNIXTIME function matches the specified string." in {
+    assert(FROM_UNIXTIME(c7).name == "FROM_UNIXTIME(days)")
+    assert(FROM_UNIXTIME(c8).name == "FROM_UNIXTIME(days)")
+    assert(FROM_UNIXTIME(730669).name == "FROM_UNIXTIME(730669)")
+  }
