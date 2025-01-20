@@ -25,6 +25,12 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   private val c8 = Column.Impl[Option[Int]]("days")
   private val c9 = Column.Impl[Year]("year")
   private val c10 = Column.Impl[Option[Year]]("year")
+  private val c11 = Column.Impl[Int]("hour")
+  private val c12 = Column.Impl[Option[Int]]("hour")
+  private val c13 = Column.Impl[Int]("minute")
+  private val c14 = Column.Impl[Option[Int]]("minute")
+  private val c15 = Column.Impl[Int]("second")
+  private val c16 = Column.Impl[Option[Int]]("second")
 
   it should "Statement generated using the DATE_ADD function matches the specified string." in {
     assert(DATE_ADD(c1, Interval.DAY(1)).name == "DATE_ADD(local_date, INTERVAL 1 DAY)")
@@ -157,4 +163,10 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(MAKEDATE(c10, 64).name == "MAKEDATE(year, 64)")
     assert(MAKEDATE(2025, 103).name == "MAKEDATE(2025, 103)")
     assert(MAKEDATE(Year.of(2025), 103).name == "MAKEDATE(2025, 103)")
+  }
+
+  it should "Statement generated using the MAKETIME function matches the specified string." in {
+    assert(MAKETIME(c11, c13, c15).name == "MAKETIME(hour, minute, second)")
+    assert(MAKETIME(c12, c14, c16).name == "MAKETIME(hour, minute, second)")
+    assert(MAKETIME(24, 59, 59).name == "MAKETIME(24, 59, 59)")
   }
