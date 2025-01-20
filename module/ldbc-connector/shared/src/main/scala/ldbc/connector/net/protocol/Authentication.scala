@@ -6,11 +6,13 @@
 
 package ldbc.connector.net.protocol
 
+import cats.effect.Concurrent
+
+import fs2.hashing.Hashing
+
 import ldbc.connector.authenticator.*
 import ldbc.connector.exception.*
 import ldbc.connector.util.Version
-import fs2.hashing.Hashing
-import cats.effect.Concurrent
 
 /**
  * Protocol to handle the Authentication Phase
@@ -26,7 +28,7 @@ import cats.effect.Concurrent
  * @tparam F
  *   The effect type
  */
-trait Authentication[F[_]:Hashing: Concurrent]:
+trait Authentication[F[_]: Hashing: Concurrent]:
 
   /**
    * Determine the authentication plugin.

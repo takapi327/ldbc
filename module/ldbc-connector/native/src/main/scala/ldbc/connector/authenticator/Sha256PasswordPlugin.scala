@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*
 
-
 import cats.effect.Concurrent
 
 import fs2.hashing.Hashing

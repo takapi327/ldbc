@@ -6,8 +6,6 @@
 
 package ldbc.connector.authenticator
 
-
-
 import cats.effect.Concurrent
 
 import fs2.hashing.Hashing
@@ -15,4 +13,3 @@ import fs2.hashing.Hashing
 class MysqlNativePasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlugin[F]:
 
   override def name: String = "mysql_native_password"
-

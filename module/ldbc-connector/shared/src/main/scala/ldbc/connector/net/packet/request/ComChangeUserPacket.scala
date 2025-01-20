@@ -9,12 +9,12 @@ package request
 
 import scodec.*
 import scodec.bits.BitVector
+import scodec.bits.ByteVector
 import scodec.interop.cats.*
 
 import cats.syntax.all.*
 
 import ldbc.connector.data.*
-import scodec.bits.ByteVector
 
 /**
  * The COM_CHANGE_USER request packet is used to change the user of the current connection.

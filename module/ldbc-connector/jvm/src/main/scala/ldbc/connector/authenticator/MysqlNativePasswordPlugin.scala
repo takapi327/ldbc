@@ -6,7 +6,6 @@
 
 package ldbc.connector.authenticator
 
-
 import cats.effect.Concurrent
 
 import fs2.hashing.Hashing
