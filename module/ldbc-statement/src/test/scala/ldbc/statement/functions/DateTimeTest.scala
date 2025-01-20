@@ -143,3 +143,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(HOUR(c6).name == "HOUR(local_date_time)")
     assert(HOUR(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "HOUR('2021-01-01 00:00')")
   }
+
+  it should "Statement generated using the LAST_DAY function matches the specified string." in {
+    assert(LAST_DAY(c5).name == "LAST_DAY(local_date_time)")
+    assert(LAST_DAY(c6).name == "LAST_DAY(local_date_time)")
+    assert(LAST_DAY(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "LAST_DAY('2021-01-01T00:00')")
+  }
