@@ -930,6 +930,41 @@ trait DateTime:
     }
     Column(s"PERIOD_ADD(${period.format(formatter)}, $months)")
 
+  /**
+   * Function to return the quarter corresponding to date in the range 1 to 4.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => QUARTER(p.birthDate))
+   *   // SELECT QUARTER(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the quarter.
+   */
+  def QUARTER[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"QUARTER(${ column.name })")
+
+  /**
+   * Function to return the quarter corresponding to date in the range 1 to 4.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => QUARTER(LocalDate.of(2021, 1, 1)))
+   *   // SELECT QUARTER('2021-01-01') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the quarter.
+   */
+  def QUARTER(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"QUARTER('${ date.toString }')")
+
 object DateTime:
 
   /**
