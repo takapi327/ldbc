@@ -220,3 +220,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(SECOND(c6).name == "SECOND(local_date_time)")
     assert(SECOND(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "SECOND('2021-01-01 00:00')")
   }
+
+  it should "Statement generated using the SUBTIME function matches the specified string." in {
+    assert(SUBTIME(c5, c3).name == "SUBTIME(local_date_time, local_time)")
+    assert(SUBTIME(c6, c4).name == "SUBTIME(local_date_time, local_time)")
+    assert(SUBTIME(LocalDateTime.of(2021, 1, 1, 0, 0), LocalTime.of(1, 1, 1, 1)).name == "SUBTIME('2021-01-01 00:00', '01:01:01.000000001')")
+  }
