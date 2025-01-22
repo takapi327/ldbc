@@ -902,6 +902,16 @@ trait DateTime:
   )(using Decoder[String], Encoder[String]): Column[String] =
     Column(s"MONTHNAME('${ date.toString }')")
 
+  /**
+   * Function to return the current date and time in 'YYYY-MM-DD hh:mm:ss' format.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => NOW)
+   *   // SELECT NOW() FROM date_time
+   * }}}
+   */
+  def NOW()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column("NOW()")
+
 object DateTime:
 
   /**
