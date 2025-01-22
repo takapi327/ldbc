@@ -198,3 +198,7 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the NOW function matches the specified string." in {
     assert(NOW().name == "NOW()")
   }
+
+  it should "Statement generated using the PERIOD_ADD function matches the specified string." in {
+    assert(PERIOD_ADD(YearMonth.of(2025, 1), 1).name == "PERIOD_ADD(202501, 1)")
+  }
