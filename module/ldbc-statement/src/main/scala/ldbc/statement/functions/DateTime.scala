@@ -996,12 +996,12 @@ trait DateTime:
 
   /**
    * Function to return the second part of a date or date-time expression.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(p => SECOND(p.birthDate))
    *   // SELECT SECOND(birth_date) FROM date_time
    * }}}
-   * 
+   *
    * @param column
    *   The column from which to extract the second.
    */
@@ -1015,12 +1015,12 @@ trait DateTime:
 
   /**
    * Function to return the second part of a date or date-time expression.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(_ => SECOND(LocalDateTime.of(2021, 1, 1, 0, 0)))
    *   // SELECT SECOND('2021-01-01 00:00') FROM date_time
    * }}}
-   * 
+   *
    * @param time
    *   The date or date-time expression from which to extract the second.
    */
@@ -1028,6 +1028,48 @@ trait DateTime:
     time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"SECOND('${ time.toString.replaceAll("T", " ") }')")
+
+  /**
+   * Function to calculate the difference time from a date/time or time type value.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(p => SEC_TO_TIME(p.start, p.end))
+   *   // SELECT SEC_TO_TIME(start, end) FROM date_time
+   * }}}
+   * 
+   * @param time
+   *   The start time.
+   * @param interval
+   *   The end time.
+   */
+  def SUBTIME[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime],
+    B <: LocalTime | Option[LocalTime]
+  ](
+    time: Column[A],
+    interval: Column[B]
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"SUBTIME(${time.name}, ${interval.name})")
+
+  /**
+   * Function to calculate the difference time from a date/time or time type value.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(_ => SUBTIME(LocalDateTime.of(2021, 1, 1, 0, 0), LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT SUBTIME('2021-01-01 00:00', '2021-01-01 00:00') FROM date_time
+   * }}}
+   * 
+   * @param time
+   *   The start time.
+   * @param interval
+   *   The end time.
+   */
+  def SUBTIME(
+    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    interval: LocalTime
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"SUBTIME('${time.toString.replaceAll("T", " ")}', '${interval.toString}')")
 
 object DateTime:
 
