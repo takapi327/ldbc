@@ -202,3 +202,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the PERIOD_ADD function matches the specified string." in {
     assert(PERIOD_ADD(YearMonth.of(2025, 1), 1).name == "PERIOD_ADD(202501, 1)")
   }
+
+  it should "Statement generated using the QUARTER function matches the specified string." in {
+    assert(QUARTER(c5).name == "QUARTER(local_date_time)")
+    assert(QUARTER(c6).name == "QUARTER(local_date_time)")
+    assert(QUARTER(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "QUARTER('2021-01-01T00:00')")
+  }
