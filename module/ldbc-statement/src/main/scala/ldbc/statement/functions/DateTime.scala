@@ -7,6 +7,7 @@
 package ldbc.statement.functions
 
 import java.time.*
+import java.time.format.DateTimeFormatter
 
 import ldbc.dsl.codec.*
 
@@ -911,6 +912,23 @@ trait DateTime:
    * }}}
    */
   def NOW()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column("NOW()")
+
+  /**
+   * Function to add the specified month to the yyyyMM value.
+   *
+   * @param period
+   *   The period in yyyyMM format.
+   * @param months
+   *   The number of months to add.
+   */
+  def PERIOD_ADD(period: YearMonth, months: Int): Column[YearMonth] =
+    val formatter = DateTimeFormatter.ofPattern("yyyyMM")
+    given Codec[YearMonth] = Codec[String].imap { str =>
+      YearMonth.parse(str, formatter)
+    } { yearMonth =>
+      yearMonth.format(formatter)
+    }
+    Column(s"PERIOD_ADD(${period.format(formatter)}, $months)")
 
 object DateTime:
 
