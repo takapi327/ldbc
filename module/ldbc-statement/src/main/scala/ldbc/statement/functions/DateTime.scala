@@ -1031,12 +1031,12 @@ trait DateTime:
 
   /**
    * Function to calculate the difference time from a date/time or time type value.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(p => SEC_TO_TIME(p.start, p.end))
    *   // SELECT SEC_TO_TIME(start, end) FROM date_time
    * }}}
-   * 
+   *
    * @param time
    *   The start time.
    * @param interval
@@ -1054,12 +1054,12 @@ trait DateTime:
 
   /**
    * Function to calculate the difference time from a date/time or time type value.
-   * 
+   *
    * {{{
    *   TableQuery[DateTime].select(_ => SUBTIME(LocalDateTime.of(2021, 1, 1, 0, 0), LocalDateTime.of(2021, 1, 1, 0, 0)))
    *   // SELECT SUBTIME('2021-01-01 00:00', '2021-01-01 00:00') FROM date_time
    * }}}
-   * 
+   *
    * @param time
    *   The start time.
    * @param interval
@@ -1070,6 +1070,16 @@ trait DateTime:
     interval: LocalTime
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column(s"SUBTIME('${time.toString.replaceAll("T", " ")}', '${interval.toString}')")
+
+  /**
+   * Function to return the current date and time in 'YYYY-MM-DD hh:mm:ss' format.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => SYSDATE)
+   *   // SELECT SYSDATE() FROM date_time
+   * }}}
+   */
+  def SYSDATE()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column("SYSDATE()")
 
 object DateTime:
 
