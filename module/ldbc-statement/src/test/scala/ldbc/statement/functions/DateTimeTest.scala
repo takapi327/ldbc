@@ -214,3 +214,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(SEC_TO_TIME(c16).name == "SEC_TO_TIME(second)")
     assert(SEC_TO_TIME(2378).name == "SEC_TO_TIME(2378)")
   }
+
+  it should "Statement generated using the SECOND function matches the specified string." in {
+    assert(SECOND(c5).name == "SECOND(local_date_time)")
+    assert(SECOND(c6).name == "SECOND(local_date_time)")
+    assert(SECOND(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "SECOND('2021-01-01 00:00')")
+  }

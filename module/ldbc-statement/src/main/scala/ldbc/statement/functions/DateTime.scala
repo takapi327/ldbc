@@ -994,6 +994,41 @@ trait DateTime:
     given Codec[LocalTime] = Codec[Int].imap(LocalTime.ofSecondOfDay(_))(_.toSecondOfDay)
     Column(s"SEC_TO_TIME($seconds)")
 
+  /**
+   * Function to return the second part of a date or date-time expression.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(p => SECOND(p.birthDate))
+   *   // SELECT SECOND(birth_date) FROM date_time
+   * }}}
+   * 
+   * @param column
+   *   The column from which to extract the second.
+   */
+  def SECOND[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"SECOND(${ column.name })")
+
+  /**
+   * Function to return the second part of a date or date-time expression.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(_ => SECOND(LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT SECOND('2021-01-01 00:00') FROM date_time
+   * }}}
+   * 
+   * @param time
+   *   The date or date-time expression from which to extract the second.
+   */
+  def SECOND(
+    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Int], Encoder[Int]): Column[Int] =
+    Column(s"SECOND('${ time.toString.replaceAll("T", " ") }')")
+
 object DateTime:
 
   /**
