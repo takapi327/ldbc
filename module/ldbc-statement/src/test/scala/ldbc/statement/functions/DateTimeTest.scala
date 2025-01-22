@@ -208,3 +208,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(QUARTER(c6).name == "QUARTER(local_date_time)")
     assert(QUARTER(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "QUARTER('2021-01-01T00:00')")
   }
+
+  it should "Statement generated using the SEC_TO_TIME function matches the specified string." in {
+    assert(SEC_TO_TIME(c15).name == "SEC_TO_TIME(second)")
+    assert(SEC_TO_TIME(c16).name == "SEC_TO_TIME(second)")
+    assert(SEC_TO_TIME(2378).name == "SEC_TO_TIME(2378)")
+  }
