@@ -232,7 +232,7 @@ trait DateTime:
 
   /**
    * Function to format a date value according to the format string.
-   * @see https://dev.mysql.com/doc/refman/8.0/ja/date-and-time-functions.html#function_date-format
+   * @see https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html#function_date-format
    *      
    * {{{
    *   TableQuery[DateTime].select(p => DATE_FORMAT(p.timestamp, "%Y-%m-%d"))
@@ -337,7 +337,7 @@ trait DateTime:
   /**
    * A function that returns the name of the day of the week corresponding to date.
    * The language used for the names is controlled by the value of the lc_time_names system variable (Section 10.16, “Locale Support in MySQL Server”).
-   * @see https://dev.mysql.com/doc/refman/8.0/ja/locale-support.html
+   * @see https://dev.mysql.com/doc/refman/8.0/en/locale-support.html
    *
    * {{{
    *   TableQuery[DateTime].select(p => DAYNAME(p.birthDate))
@@ -359,7 +359,7 @@ trait DateTime:
    * A function that returns the name of the day of the week corresponding to date.
    * The language used for the names is controlled by the value of the lc_time_names system variable (Section 10.16, “Locale Support in MySQL Server”).
    *
-   * @see https://dev.mysql.com/doc/refman/8.0/ja/locale-support.html
+   * @see https://dev.mysql.com/doc/refman/8.0/en/locale-support.html
    *
    * {{{
    *   TableQuery[DateTime].select(_ => DAYNAME(LocalDate.of(2021, 1, 1)))
@@ -527,7 +527,7 @@ trait DateTime:
    *
    * Use FROM_DAYS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
    *
-   * @see https://dev.mysql.com/doc/refman/8.0/ja/mysql-calendar.html
+   * @see https://dev.mysql.com/doc/refman/8.0/en/mysql-calendar.html
    *
    * {{{
    *   TableQuery[DateTime].select(p => FROM_DAYS(p.birthDate))
@@ -547,7 +547,7 @@ trait DateTime:
    *
    * Use FROM_DAYS() carefully with older dates. It is not designed to be used with values prior to the advent of the Gregorian calendar (1582).
    *
-   * @see https://dev.mysql.com/doc/refman/8.0/ja/mysql-calendar.html
+   * @see https://dev.mysql.com/doc/refman/8.0/en/mysql-calendar.html
    *
    * {{{
    *   TableQuery[DateTime].select(_ => FROM_DAYS(730669))
@@ -861,12 +861,53 @@ trait DateTime:
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"MONTH('${ date.toString.replaceAll("T", " ") }')")
 
+  /**
+   * Function to return the full name of the month corresponding to a value of type Date.
+   * The language used for names is controlled by the value of the lc_time_names system variable (Section 10.16, “Locale Support in MySQL Server”).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/en/locale-support.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => MONTHNAME(p.birthDate))
+   *   // SELECT MONTHNAME(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The date or date-time column from which to extract the month name.
+   */
+  def MONTHNAME[
+    A <: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    column: Column[A]
+  )(using Decoder[String], Encoder[String]): Column[String] =
+    Column(s"MONTHNAME(${ column.name })")
+
+  /**
+   * Function to return the full name of the month corresponding to a value of type Date.
+   * The language used for names is controlled by the value of the lc_time_names system variable (Section 10.16, “Locale Support in MySQL Server”).
+   *
+   * @see https://dev.mysql.com/doc/refman/8.0/en/locale-support.html
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => MONTHNAME(LocalDate.of(2021, 1, 1)))
+   *   // SELECT MONTHNAME('2021-01-01') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the month name.
+   */
+  def MONTHNAME(
+    date: LocalDate | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[String], Encoder[String]): Column[String] =
+    Column(s"MONTHNAME('${ date.toString }')")
+
 object DateTime:
 
   /**
    * Extracts the date part of a date or datetime expression.
    *
-   * @see https://dev.mysql.com/doc/refman/8.0/ja/expressions.html#temporal-intervals
+   * @see https://dev.mysql.com/doc/refman/8.0/en/expressions.html#temporal-intervals
    *
    *  {{{
    *    INTERVAL expr unit
