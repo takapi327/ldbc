@@ -14,7 +14,7 @@ object Dependencies {
 
   val parserCombinators = "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 
-  val mysqlVersion = "8.4.0"
+  val mysqlVersion = "9.2.0"
   val mysql        = "com.mysql" % "mysql-connector-j" % mysqlVersion
 
   val typesafeConfig = "com.typesafe" % "config" % "1.4.3"
