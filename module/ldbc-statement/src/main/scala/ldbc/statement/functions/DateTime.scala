@@ -965,6 +965,35 @@ trait DateTime:
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
     Column(s"QUARTER('${ date.toString }')")
 
+  /**
+   * Function to convert TIME values to hh:mm:ss format.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => SEC_TO_TIME(p.seconds))
+   *   // SELECT SEC_TO_TIME(seconds) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column to be converted.
+   */
+  def SEC_TO_TIME[A <: Long | Int | Option[Long | Int]](column: Column[A]): Column[LocalTime] =
+    given Codec[LocalTime] = Codec[Int].imap(LocalTime.ofSecondOfDay(_))(_.toSecondOfDay)
+    Column(s"SEC_TO_TIME(${column.name})")
+
+  /**
+   * Function to convert TIME values to hh:mm:ss format.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => SEC_TO_TIME(3600))
+   *   // SELECT SEC_TO_TIME(3600) FROM date_time
+   * }}}
+   * @param seconds
+   *   The number of seconds to be converted.
+   */
+  def SEC_TO_TIME(seconds: Long): Column[LocalTime] =
+    given Codec[LocalTime] = Codec[Int].imap(LocalTime.ofSecondOfDay(_))(_.toSecondOfDay)
+    Column(s"SEC_TO_TIME($seconds)")
+
 object DateTime:
 
   /**
