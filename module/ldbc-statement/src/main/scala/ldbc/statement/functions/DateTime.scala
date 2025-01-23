@@ -1145,6 +1145,70 @@ trait DateTime:
   )(using Decoder[Long], Encoder[Long]): Column[Long] =
     Column(s"TIME_TO_SEC('${ time.toString.replaceAll("T", " ") }')")
 
+  /**
+   * A function that calculates the difference of the time portion from a date/time type value and returns the result as a time type.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIMEDIFF(p.start, p.end))
+   *   // SELECT TIMEDIFF(start, end) FROM date_time
+   * }}}
+   *
+   * @param start
+   *   The start time.
+   * @param end
+   *   The end time.
+   */
+  def TIMEDIFF[
+    A <: LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+    start: Column[A],
+    end: Column[A]
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"TIMEDIFF(${ start.name }, ${ end.name })")
+
+
+  /**
+   * A function that calculates the difference of the time portion from a date/time type value and returns the result as a time type.
+   *
+   * {{{
+   *  TableQuery[DateTime].select(p => TIMEDIFF(p.start, LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *  // SELECT TIMEDIFF(start, '2021-01-01 00:00') FROM date_time
+   * }}}
+   *
+   * @param start
+   *   The start time.
+   * @param end
+   *   The end time.
+   */
+  def TIMEDIFF[
+    A <: LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](
+     start: Column[A],
+     end: LocalDateTime | OffsetDateTime | ZonedDateTime
+   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"TIMEDIFF(${ start.name }, '${ end.toString.replaceAll("T", " ") }')")
+
+  /**
+   * A function that calculates the difference of the time portion from a date/time type value and returns the result as a time type.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TIMEDIFF(LocalDateTime.of(2021, 1, 1, 0, 0), LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT TIMEDIFF('2021-01-01 00:00', '2021-01-01 00:00') FROM date_time
+   * }}}
+   *
+   * @param start
+   *   The start time.
+   * @param end
+   *  The end time.
+   */
+  def TIMEDIFF[A <: LocalDateTime | OffsetDateTime | ZonedDateTime](
+    start: A,
+    end: A
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"TIMEDIFF('${ start.toString.replaceAll("T", " ") }', '${ end.toString.replaceAll("T", " ") }')")
+
 object DateTime:
 
   /**
