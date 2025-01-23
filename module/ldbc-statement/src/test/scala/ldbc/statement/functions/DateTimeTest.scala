@@ -230,3 +230,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the SYSDATE function matches the specified string." in {
     assert(SYSDATE().name == "SYSDATE()")
   }
+
+  it should "Statement generated using the TIME function matches the specified string." in {
+    assert(TIME(c5).name == "TIME(local_date_time)")
+    assert(TIME(c6).name == "TIME(local_date_time)")
+    assert(TIME(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "TIME('2021-01-01 00:00')")
+  }
