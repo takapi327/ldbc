@@ -1209,6 +1209,57 @@ trait DateTime:
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column(s"TIMEDIFF('${ start.toString.replaceAll("T", " ") }', '${ end.toString.replaceAll("T", " ") }')")
 
+  /**
+   * Function to return a date or date-time format value as a date-time value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIMESTAMP(p.birthDate))
+   *   // SELECT TIMESTAMP(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column from which to extract the date-time value.
+   */
+  def TIMESTAMP[A <: LocalDate | Option[LocalDate]](
+    column: Column[A]
+  )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
+    Column(s"TIMESTAMP(${ column.name })")
+
+  /**
+   * Function to return a date or date-time format value as a date-time value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TIMESTAMP(LocalDate.of(2021, 1, 1)))
+   *   // SELECT TIMESTAMP('2021-01-01') FROM date_time
+   * }}}
+   *
+   * @param date
+   *   The date or date-time expression from which to extract the date-time value.
+   */
+  def TIMESTAMP[A <: LocalDate](
+    date: A
+  )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
+    Column(s"TIMESTAMP('${ date.toString }')")
+
+  /**
+   * Function that adds the value of a time expression to the value of a date or date-time expression and returns the result as a date-time value.
+   * 
+   * {{{
+   *   TableQuery[DateTime].select(p => TIMESTAMP(p.birthDate, p.birthTime))
+   *   // SELECT TIMESTAMP(birth_date, birth_time) FROM date_time
+   * }}}
+   * 
+   * @param column1
+   *   The date or date-time expression.
+   * @param column2
+   *   The time expression.
+   */
+  def TIMESTAMP[A <: LocalDateTime | Option[LocalDateTime], B <: LocalTime | Option[LocalTime]](
+                                                     column1: Column[A],
+                                                     column2: Column[B],
+                                                   )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
+    Column(s"TIMESTAMP(${column1.name}, ${column2.name})")
+
 object DateTime:
 
   /**
