@@ -255,3 +255,11 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(TIMEDIFF(c6, LocalDateTime.of(2025, 1, 1, 1, 1)).name == "TIMEDIFF(local_date_time, '2025-01-01 01:01')")
     assert(TIMEDIFF(LocalDateTime.of(2021, 1, 1, 0, 0), LocalDateTime.of(2025, 1, 1, 1, 1)).name == "TIMEDIFF('2021-01-01 00:00', '2025-01-01 01:01')")
   }
+
+  it should "Statement generated using the TIMESTAMP function matches the specified string." in {
+    assert(TIMESTAMP(c1).name == "TIMESTAMP(local_date)")
+    assert(TIMESTAMP(c2).name == "TIMESTAMP(local_date)")
+    assert(TIMESTAMP(c5, c3).name == "TIMESTAMP(local_date_time, local_time)")
+    assert(TIMESTAMP(c6, c4).name == "TIMESTAMP(local_date_time, local_time)")
+    assert(TIMESTAMP(LocalDate.of(2021, 1, 1)).name == "TIMESTAMP('2021-01-01')")
+  }
