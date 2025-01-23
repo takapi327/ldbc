@@ -18,7 +18,7 @@ import ldbc.schema.interpreter.*
 
 trait Table[T](val $name: String) extends AbstractTable[T]:
 
-  type Column[A] = ldbc.statement.Column[A]
+  export ldbc.statement.Column
 
   protected final def column[A](name: String)(using codec: Codec[A]): Column[A] =
     ColumnImpl[A](name, Some(s"${ $name }.$name"), codec.asDecoder, codec.asEncoder, None, List.empty)
