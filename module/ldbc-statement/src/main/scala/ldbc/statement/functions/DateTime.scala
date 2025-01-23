@@ -1081,6 +1081,34 @@ trait DateTime:
    */
   def SYSDATE()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column("SYSDATE()")
 
+  /**
+   * Function to extract only the time portion from a time or date-time expression value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIME(p.birthDate))
+   *   // SELECT TIME(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *  The column from which to extract the time.
+   */
+  def TIME[    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+    Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]](column: Column[A])(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"TIME(${column.name})")
+
+  /**
+   * Function to extract only the time portion from a time or date-time expression value.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TIME(LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT TIME('2021-01-01 00:00') FROM date_time
+   * }}}
+   * @param time
+   *   The time or date-time expression from which to extract the time.
+   */
+  def TIME(time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"TIME('${time.toString.replaceAll("T", " ")}')")
+
 object DateTime:
 
   /**
