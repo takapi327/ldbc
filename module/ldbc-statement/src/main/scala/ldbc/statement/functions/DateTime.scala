@@ -1112,6 +1112,39 @@ trait DateTime:
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column(s"TIME('${ time.toString.replaceAll("T", " ") }')")
 
+  /**
+   * Function to convert the time portion from a date type value to seconds.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(p => TIME_TO_SEC(p.birthDate))
+   *   // SELECT TIME_TO_SEC(birth_date) FROM date_time
+   * }}}
+   *
+   * @param column
+   *   The column from which to extract the time.
+   */
+  def TIME_TO_SEC[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](column: Column[A])(using Decoder[Long], Encoder[Long]): Column[Long] =
+    Column(s"TIME_TO_SEC(${ column.name })")
+
+  /**
+   * Function to convert the time portion from a date type value to seconds.
+   *
+   * {{{
+   *   TableQuery[DateTime].select(_ => TIME_TO_SEC(LocalDateTime.of(2021, 1, 1, 0, 0)))
+   *   // SELECT TIME_TO_SEC('2021-01-01 00:00') FROM date_time
+   * }}}
+   *
+   * @param time
+   *   The time or date-time expression from which to extract the time.
+   */
+  def TIME_TO_SEC(
+    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[Long], Encoder[Long]): Column[Long] =
+    Column(s"TIME_TO_SEC('${ time.toString.replaceAll("T", " ") }')")
+
 object DateTime:
 
   /**
