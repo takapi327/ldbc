@@ -11,6 +11,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import ldbc.dsl.codec.{ Decoder, Encoder }
 
 import ldbc.statement.Column
+
 import ldbc.schema.attribute.*
 import ldbc.schema.DataType.*
 
