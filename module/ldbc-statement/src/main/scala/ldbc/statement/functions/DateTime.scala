@@ -1159,14 +1159,12 @@ trait DateTime:
    *   The end time.
    */
   def TIMEDIFF[
-    A <: LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
+    A <: LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
     start: Column[A],
-    end: Column[A]
+    end:   Column[A]
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column(s"TIMEDIFF(${ start.name }, ${ end.name })")
-
 
   /**
    * A function that calculates the difference of the time portion from a date/time type value and returns the result as a time type.
@@ -1182,12 +1180,11 @@ trait DateTime:
    *   The end time.
    */
   def TIMEDIFF[
-    A <: LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
+    A <: LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
-     start: Column[A],
-     end: LocalDateTime | OffsetDateTime | ZonedDateTime
-   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    start: Column[A],
+    end:   LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column(s"TIMEDIFF(${ start.name }, '${ end.toString.replaceAll("T", " ") }')")
 
   /**
@@ -1205,7 +1202,7 @@ trait DateTime:
    */
   def TIMEDIFF[A <: LocalDateTime | OffsetDateTime | ZonedDateTime](
     start: A,
-    end: A
+    end:   A
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
     Column(s"TIMEDIFF('${ start.toString.replaceAll("T", " ") }', '${ end.toString.replaceAll("T", " ") }')")
 
@@ -1255,10 +1252,10 @@ trait DateTime:
    *   The time expression.
    */
   def TIMESTAMP[A <: LocalDateTime | Option[LocalDateTime], B <: LocalTime | Option[LocalTime]](
-                                                     column1: Column[A],
-                                                     column2: Column[B],
-                                                   )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
-    Column(s"TIMESTAMP(${column1.name}, ${column2.name})")
+    column1: Column[A],
+    column2: Column[B]
+  )(using Decoder[Option[LocalDateTime]], Encoder[Option[LocalDateTime]]): Column[Option[LocalDateTime]] =
+    Column(s"TIMESTAMP(${ column1.name }, ${ column2.name })")
 
 object DateTime:
 
