@@ -241,3 +241,9 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(TIME(c6).name == "TIME(local_date_time)")
     assert(TIME(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "TIME('2021-01-01 00:00')")
   }
+
+  it should "Statement generated using the TIME_TO_SEC function matches the specified string." in {
+    assert(TIME_TO_SEC(c5).name == "TIME_TO_SEC(local_date_time)")
+    assert(TIME_TO_SEC(c6).name == "TIME_TO_SEC(local_date_time)")
+    assert(TIME_TO_SEC(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "TIME_TO_SEC('2021-01-01 00:00')")
+  }
