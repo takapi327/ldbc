@@ -247,3 +247,11 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
     assert(TIME_TO_SEC(c6).name == "TIME_TO_SEC(local_date_time)")
     assert(TIME_TO_SEC(LocalDateTime.of(2021, 1, 1, 0, 0)).name == "TIME_TO_SEC('2021-01-01 00:00')")
   }
+
+  it should "Statement generated using the TIMEDIFF function matches the specified string." in {
+    assert(TIMEDIFF(c5, c5).name == "TIMEDIFF(local_date_time, local_date_time)")
+    assert(TIMEDIFF(c6, c6).name == "TIMEDIFF(local_date_time, local_date_time)")
+    assert(TIMEDIFF(c5, LocalDateTime.of(2025, 1, 1, 1, 1)).name == "TIMEDIFF(local_date_time, '2025-01-01 01:01')")
+    assert(TIMEDIFF(c6, LocalDateTime.of(2025, 1, 1, 1, 1)).name == "TIMEDIFF(local_date_time, '2025-01-01 01:01')")
+    assert(TIMEDIFF(LocalDateTime.of(2021, 1, 1, 0, 0), LocalDateTime.of(2025, 1, 1, 1, 1)).name == "TIMEDIFF('2021-01-01 00:00', '2025-01-01 01:01')")
+  }
