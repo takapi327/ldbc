@@ -680,7 +680,7 @@ trait DateTime:
    */
   def MAKEDATE[A <: Year | Option[Year]](
     column: Column[A],
-    day: Int
+    day:    Int
   )(using Decoder[LocalDate], Encoder[LocalDate]): Column[LocalDate] =
     require(day > 0, "The annual total must be greater than 0.")
     Column(s"MAKEDATE(${ column.name }, $day)")
@@ -724,11 +724,11 @@ trait DateTime:
     B <: Int | Long | Option[Int | Long],
     C <: Int | Long | Option[Int | Long]
   ](
-    hour: Column[A],
+    hour:   Column[A],
     minute: Column[B],
     second: Column[C]
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"MAKETIME(${hour.name}, ${minute.name}, ${second.name})")
+    Column(s"MAKETIME(${ hour.name }, ${ minute.name }, ${ second.name })")
 
   /**
    * Function to return a time value calculated from the given hour, minute, and second.
@@ -747,7 +747,7 @@ trait DateTime:
    *   The second from which to calculate the time.
    */
   def MAKETIME(
-    hour: Int | Long,
+    hour:   Int | Long,
     minute: Int | Long,
     second: Int | Long
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
@@ -765,8 +765,7 @@ trait DateTime:
    *   The column from which to extract the microseconds.
    */
   def MICROSECOND[
-    A <: LocalDateTime | OffsetDateTime | ZonedDateTime |
-      Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
+    A <: LocalDateTime | OffsetDateTime | ZonedDateTime | Option[LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](
     column: Column[A]
   )(using Decoder[Int], Encoder[Int]): Column[Int] =
@@ -928,7 +927,7 @@ trait DateTime:
     } { yearMonth =>
       yearMonth.format(formatter)
     }
-    Column(s"PERIOD_ADD(${period.format(formatter)}, $months)")
+    Column(s"PERIOD_ADD(${ period.format(formatter) }, $months)")
 
   /**
    * Function to return the quarter corresponding to date in the range 1 to 4.
@@ -978,7 +977,7 @@ trait DateTime:
    */
   def SEC_TO_TIME[A <: Long | Int | Option[Long | Int]](column: Column[A]): Column[LocalTime] =
     given Codec[LocalTime] = Codec[Int].imap(LocalTime.ofSecondOfDay(_))(_.toSecondOfDay)
-    Column(s"SEC_TO_TIME(${column.name})")
+    Column(s"SEC_TO_TIME(${ column.name })")
 
   /**
    * Function to convert TIME values to hh:mm:ss format.
@@ -1047,10 +1046,10 @@ trait DateTime:
       Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime],
     B <: LocalTime | Option[LocalTime]
   ](
-    time: Column[A],
+    time:     Column[A],
     interval: Column[B]
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"SUBTIME(${time.name}, ${interval.name})")
+    Column(s"SUBTIME(${ time.name }, ${ interval.name })")
 
   /**
    * Function to calculate the difference time from a date/time or time type value.
@@ -1066,10 +1065,10 @@ trait DateTime:
    *   The end time.
    */
   def SUBTIME(
-    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
+    time:     LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime,
     interval: LocalTime
   )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"SUBTIME('${time.toString.replaceAll("T", " ")}', '${interval.toString}')")
+    Column(s"SUBTIME('${ time.toString.replaceAll("T", " ") }', '${ interval.toString }')")
 
   /**
    * Function to return the current date and time in 'YYYY-MM-DD hh:mm:ss' format.
@@ -1092,9 +1091,11 @@ trait DateTime:
    * @param column
    *  The column from which to extract the time.
    */
-  def TIME[    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
-    Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]](column: Column[A])(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"TIME(${column.name})")
+  def TIME[
+    A <: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime |
+      Option[LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime]
+  ](column: Column[A])(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"TIME(${ column.name })")
 
   /**
    * Function to extract only the time portion from a time or date-time expression value.
@@ -1106,8 +1107,10 @@ trait DateTime:
    * @param time
    *   The time or date-time expression from which to extract the time.
    */
-  def TIME(time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime)(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
-    Column(s"TIME('${time.toString.replaceAll("T", " ")}')")
+  def TIME(
+    time: LocalTime | LocalDateTime | OffsetDateTime | ZonedDateTime
+  )(using Decoder[LocalTime], Encoder[LocalTime]): Column[LocalTime] =
+    Column(s"TIME('${ time.toString.replaceAll("T", " ") }')")
 
 object DateTime:
 

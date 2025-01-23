@@ -15,15 +15,15 @@ import ldbc.statement.Column
 
 class DateTimeTest extends AnyFlatSpec, DateTime:
 
-  private val c1 = Column.Impl[LocalDate]("local_date")
-  private val c2 = Column.Impl[Option[LocalDate]]("local_date")
-  private val c3 = Column.Impl[LocalTime]("local_time")
-  private val c4 = Column.Impl[Option[LocalTime]]("local_time")
-  private val c5 = Column.Impl[LocalDateTime]("local_date_time")
-  private val c6 = Column.Impl[Option[LocalDateTime]]("local_date_time")
-  private val c7 = Column.Impl[Int]("days")
-  private val c8 = Column.Impl[Option[Int]]("days")
-  private val c9 = Column.Impl[Year]("year")
+  private val c1  = Column.Impl[LocalDate]("local_date")
+  private val c2  = Column.Impl[Option[LocalDate]]("local_date")
+  private val c3  = Column.Impl[LocalTime]("local_time")
+  private val c4  = Column.Impl[Option[LocalTime]]("local_time")
+  private val c5  = Column.Impl[LocalDateTime]("local_date_time")
+  private val c6  = Column.Impl[Option[LocalDateTime]]("local_date_time")
+  private val c7  = Column.Impl[Int]("days")
+  private val c8  = Column.Impl[Option[Int]]("days")
+  private val c9  = Column.Impl[Year]("year")
   private val c10 = Column.Impl[Option[Year]]("year")
   private val c11 = Column.Impl[Int]("hour")
   private val c12 = Column.Impl[Option[Int]]("hour")
@@ -224,7 +224,12 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   it should "Statement generated using the SUBTIME function matches the specified string." in {
     assert(SUBTIME(c5, c3).name == "SUBTIME(local_date_time, local_time)")
     assert(SUBTIME(c6, c4).name == "SUBTIME(local_date_time, local_time)")
-    assert(SUBTIME(LocalDateTime.of(2021, 1, 1, 0, 0), LocalTime.of(1, 1, 1, 1)).name == "SUBTIME('2021-01-01 00:00', '01:01:01.000000001')")
+    assert(
+      SUBTIME(
+        LocalDateTime.of(2021, 1, 1, 0, 0),
+        LocalTime.of(1, 1, 1, 1)
+      ).name == "SUBTIME('2021-01-01 00:00', '01:01:01.000000001')"
+    )
   }
 
   it should "Statement generated using the SYSDATE function matches the specified string." in {
