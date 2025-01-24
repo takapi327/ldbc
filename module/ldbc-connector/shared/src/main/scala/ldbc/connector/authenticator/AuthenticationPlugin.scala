@@ -39,9 +39,6 @@ trait AuthenticationPlugin[F[_]: Hashing](using F: Concurrent[F]):
                    .chunk(hash1.bytes)
                    .covary[F]
                    .through(sha256Hashing)
-                   .map(_.bytes) // hash1
-                   .unchunks
-                   .through(sha256Hashing)
                    .map(_.bytes ++ Chunk(scramble*)) // hash2 + scramble
                    .unchunks
                    .through(sha256Hashing)
