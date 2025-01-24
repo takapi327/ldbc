@@ -53,24 +53,20 @@ object ResultSetRowPacket:
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case length =>
         val buffer = new Array[Option[String]](columns.length)
-
-        def decodeRow(index: Int, remainingLength: Option[Int]): Decoder[ResultSetRowPacket] =
-          if index >= columns.length then Decoder.pure(ResultSetRowPacket(buffer))
-          else
+        columns.zipWithIndex.foldLeft(Decoder.pure(buffer)) {
+          case (acc, (column, index)) =>
             val valueDecoder =
-              length match
-                case NULL if index == 0 => Decoder.pure(None)
-                case _ if index == 0    => decodeValue(length)
-                case _ =>
-                  lengthEncodedIntDecoder.flatMap {
-                    case NULL  => Decoder.pure(None)
-                    case value => decodeValue(value.toInt)
-                  }
+              if length == NULL && index == 0 then Decoder.pure(None)
+              else if index == 0 then decodeValue(length)
+              else lengthEncodedIntDecoder.flatMap {
+                case NULL  => Decoder.pure(None)
+                case value => decodeValue(value.toInt)
+              }
 
-            valueDecoder.flatMap { value =>
-              buffer(index) = value
-              decodeRow(index + 1, None)
+            acc.flatMap { buffer =>
+              valueDecoder.map { value =>
+                buffer.updated(index, value)
+              }
             }
-
-        decodeRow(0, Some(length))
+        }.map(ResultSetRowPacket(_))
     }
