@@ -22,10 +22,6 @@ trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
       publicKeyString
     )
 
-  private def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =
-    val scrambleLength = scramble.length
-    (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
-
   private def encryptWithRSAPublicKey(input: Array[Byte], publicKey: String): Array[Byte] =
     val encrypted = crypto.publicEncrypt(
       publicKey,
