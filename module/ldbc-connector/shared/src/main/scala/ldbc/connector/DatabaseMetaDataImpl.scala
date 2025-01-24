@@ -30,7 +30,7 @@ import ldbc.connector.net.Protocol
 import ldbc.connector.util.StringHelper
 import ldbc.connector.util.Version
 
-private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
+private[ldbc] case class DatabaseMetaDataImpl[F[_]: Exchange: Tracer](
   protocol:                      Protocol[F],
   serverVariables:               Map[String, String],
   connectionClosed:              Ref[F, Boolean],
@@ -43,7 +43,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
   transformedBitIsBoolean:       Boolean                       = false,
   yearIsDateType:                Boolean                       = true,
   nullDatabaseMeansCurrent:      Boolean                       = false
-)(using ev: MonadError[F, Throwable])
+)(using F: Concurrent[F])
   extends DatabaseMetaDataImpl.StaticDatabaseMetaData[F]:
 
   private enum FunctionConstant:
@@ -66,8 +66,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     protocol.resetSequenceId *>
       protocol.send(ComQueryPacket("SELECT USER()", protocol.initialPacket.capabilityFlags, ListMap.empty)) *>
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-        case _: OKPacket      => ev.pure("")
-        case error: ERRPacket => ev.raiseError(error.toException(Some("SELECT USER()"), None))
+        case _: OKPacket      => F.pure("")
+        case error: ERRPacket => F.raiseError(error.toException(Some("SELECT USER()"), None))
         case result: ColumnsNumberPacket =>
           for
             columnDefinitions <-
@@ -114,9 +114,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
         )
       ) *>
       protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-        case _: OKPacket => ev.pure("")
+        case _: OKPacket => F.pure("")
         case error: ERRPacket =>
-          ev.raiseError(
+          F.raiseError(
             error.toException(
               Some("SELECT WORD FROM INFORMATION_SCHEMA.KEYWORDS WHERE RESERVED=1 ORDER BY WORD"),
               None
@@ -245,7 +245,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, procedureName)
         case (Some(dbValue), None)       => preparedStatement.setString(1, dbValue)
         case (None, Some(procedureName)) => preparedStatement.setString(1, procedureName)
-        case _                           => ev.unit
+        case _                           => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -431,7 +431,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           preparedStatement.setString(1, procedureName) *> preparedStatement.setString(2, columnName)
         case (None, Some(procedureName), None) => preparedStatement.setString(1, procedureName)
         case (None, None, Some(columnName))    => preparedStatement.setString(1, columnName)
-        case (None, None, None)                => ev.unit
+        case (None, None, None)                => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -497,23 +497,23 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       ) *> (
         tableNamePattern match
           case Some(tableName) => preparedStatement.setString(2, tableName)
-          case None            => ev.unit
+          case None            => F.unit
       ) *> (
         if types.nonEmpty then
-          List.fill(5)("").zipWithIndex.foldLeft(ev.unit) {
+          List.fill(5)("").zipWithIndex.foldLeft(F.unit) {
             case (acc, (_, index)) =>
               acc *> preparedStatement.setNull(index + 3, MysqlType.NULL.jdbcType)
           } *>
-            types.zipWithIndex.foldLeft(ev.unit) {
+            types.zipWithIndex.foldLeft(F.unit) {
               case (acc, (tableType, index)) =>
                 preparedStatement.setString(index + 3, tableType)
             }
-        else ev.unit
+        else F.unit
       ) *> preparedStatement.executeQuery()
     }
 
   override def getCatalogs(): F[ResultSet] =
-    (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then ev.pure(List.empty[String])
+    (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then F.pure(List.empty[String])
      else getDatabases(None)).map { dbList =>
       ResultSetImpl(
         Vector("TABLE_CAT").map { value =>
@@ -733,7 +733,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             preparedStatement.setString(1, tableNameValue) *> preparedStatement.setString(2, columnName)
           case (None, Some(tableNameValue), None) => preparedStatement.setString(1, tableNameValue)
           case (None, None, Some(columnName))     => preparedStatement.setString(1, columnName)
-          case (None, None, None)                 => ev.unit
+          case (None, None, None)                 => F.unit
 
         settings *> preparedStatement.executeQuery()
       }
@@ -817,7 +817,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           preparedStatement.setString(1, tableName) *> preparedStatement.setString(2, columnName)
         case (None, Some(tableName), None)  => preparedStatement.setString(1, tableName)
         case (None, None, Some(columnName)) => preparedStatement.setString(1, columnName)
-        case (None, None, None)             => ev.unit
+        case (None, None, None)             => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -860,7 +860,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
           case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
           case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
-          case _                       => ev.unit
+          case _                       => F.unit
 
         setting *> preparedStatement.executeQuery()
       }
@@ -1393,7 +1393,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, tableName)
         case (Some(dbValue), None)   => preparedStatement.setString(1, dbValue)
         case (None, Some(tableName)) => preparedStatement.setString(1, tableName)
-        case (None, None)            => ev.unit
+        case (None, None)            => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -1488,7 +1488,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
 
   override def getSchemas(catalog: Option[String], schemaPattern: Option[String]): F[ResultSet] =
     (if databaseTerm == DatabaseMetaData.DatabaseTerm.SCHEMA then getDatabases(schemaPattern)
-     else ev.pure(List.empty[String])).map { dbList =>
+     else F.pure(List.empty[String])).map { dbList =>
       ResultSetImpl(
         Vector("TABLE_CATALOG", "TABLE_SCHEM").map { value =>
           new ColumnDefinitionPacket:
@@ -1548,7 +1548,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           preparedStatement.setString(1, dbValue) *> preparedStatement.setString(2, functionName)
         case (Some(dbValue), None)      => preparedStatement.setString(1, dbValue)
         case (None, Some(functionName)) => preparedStatement.setString(1, functionName)
-        case (None, None)               => ev.unit
+        case (None, None)               => F.unit
 
       setting *> preparedStatement.executeQuery()
     }
@@ -1712,7 +1712,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
           preparedStatement.setString(1, functionName) *> preparedStatement.setString(2, columnName)
         case (None, Some(functionName), None) => preparedStatement.setString(1, functionName)
         case (None, None, Some(columnName))   => preparedStatement.setString(1, columnName)
-        case (None, None, None)               => ev.unit
+        case (None, None, None)               => F.unit
 
       setting *> preparedStatement.executeQuery()
     }

@@ -26,7 +26,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.util.StringHelper
 
-private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
+private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange](
   protocol:         Protocol[F],
   serverVariables:  Map[String, String],
   database:         Option[String],
@@ -34,7 +34,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
   isAutoCommit:     Ref[F, Boolean],
   connectionClosed: Ref[F, Boolean],
   databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG
-)(using ev: MonadError[F, Throwable])
+)(using ev: Concurrent[F])
   extends LdbcConnection[F]:
 
   override def createStatement(): F[Statement[F]] =
