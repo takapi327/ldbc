@@ -6,7 +6,7 @@
 
 package ldbc.connector.net.protocol
 
-import cats.effect.Concurrent
+import cats.effect.kernel.Sync
 
 import fs2.hashing.Hashing
 
@@ -28,7 +28,7 @@ import ldbc.connector.util.Version
  * @tparam F
  *   The effect type
  */
-trait Authentication[F[_]: Hashing: Concurrent]:
+trait Authentication[F[_]: Hashing: Sync]:
 
   /**
    * Determine the authentication plugin.

@@ -50,7 +50,7 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  def apply[F[_]: Temporal: Network: Console: Hashing](
+  def apply[F[_]: Async: Network: Console: Hashing](
     host:                    String,
     port:                    Int,
     user:                    String,
@@ -84,7 +84,7 @@ object Connection:
                     )
     yield connection
 
-  def fromSockets[F[_]: Temporal: Tracer: Console: Hashing](
+  def fromSockets[F[_]: Async: Tracer: Console: Hashing](
     sockets:                 Resource[F, Socket[F]],
     host:                    String,
     port:                    Int,
@@ -139,7 +139,7 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
-  )(using ev: Temporal[F]): Resource[F, LdbcConnection[F]] =
+  )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
       Resource.eval(ev.raiseError(new SQLClientInfoException(msg)))

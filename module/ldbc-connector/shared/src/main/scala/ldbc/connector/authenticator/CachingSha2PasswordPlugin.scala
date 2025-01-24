@@ -6,17 +6,17 @@
 
 package ldbc.connector.authenticator
 
-import cats.effect.Concurrent
+import cats.effect.kernel.Sync
 
 import fs2.hashing.Hashing
 
 import ldbc.connector.util.Version
-trait CachingSha2PasswordPlugin[F[_]: Hashing: Concurrent] extends Sha256PasswordPlugin[F]:
+trait CachingSha2PasswordPlugin[F[_]: Hashing: Sync] extends Sha256PasswordPlugin[F]:
 
   override def name: String = "caching_sha2_password"
 
 object CachingSha2PasswordPlugin:
-  def apply[F[_]: Hashing: Concurrent](version: Version): CachingSha2PasswordPlugin[F] =
+  def apply[F[_]: Hashing: Sync](version: Version): CachingSha2PasswordPlugin[F] =
     version.compare(Version(8, 0, 5)) match
       case 1 => new CachingSha2PasswordPlugin {}
       case _ =>
