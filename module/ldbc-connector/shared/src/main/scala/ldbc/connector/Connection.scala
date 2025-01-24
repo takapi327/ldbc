@@ -15,6 +15,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.Console
+import cats.effect.std.UUIDGen
 
 import fs2.io.net.*
 
@@ -49,7 +50,7 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  def apply[F[_]: Temporal: Network: Console](
+  def apply[F[_]: Temporal: Network: Console: UUIDGen](
     host:                    String,
     port:                    Int,
     user:                    String,
@@ -83,7 +84,7 @@ object Connection:
                     )
     yield connection
 
-  def fromSockets[F[_]: Temporal: Tracer: Console](
+  def fromSockets[F[_]: Temporal: Tracer: Console: UUIDGen](
     sockets:                 Resource[F, Socket[F]],
     host:                    String,
     port:                    Int,
@@ -125,7 +126,7 @@ object Connection:
         )(_.close())
     yield connection
 
-  def fromSocketGroup[F[_]: Tracer: Console](
+  def fromSocketGroup[F[_]: Tracer: Console: UUIDGen](
     socketGroup:             SocketGroup[F],
     host:                    String,
     port:                    Int,
