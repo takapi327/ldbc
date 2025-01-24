@@ -7,23 +7,15 @@
 package ldbc.connector.authenticator
 
 import java.nio.charset.StandardCharsets
-import java.security.{ KeyFactory, PublicKey }
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
+import java.security.KeyFactory
+import java.security.PublicKey
 import java.util.Base64
 
 import javax.crypto.Cipher
 
-import cats.effect.Concurrent
-
-import fs2.hashing.Hashing
-
-trait Sha256PasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlugin[F]:
-
-  override def name: String = "sha256_password"
-
-  def transformation: String = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding"
-
+trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
   def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
     val input = if password.nonEmpty then (password + "\u0000").getBytes(StandardCharsets.UTF_8) else Array[Byte](0)
     val mysqlScrambleBuff = xorString(input, scramble, input.length)
@@ -48,7 +40,4 @@ trait Sha256PasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlug
     val spec            = new X509EncodedKeySpec(certificateData)
     val kf              = KeyFactory.getInstance("RSA")
     kf.generatePublic(spec).asInstanceOf[RSAPublicKey]
-
-object Sha256PasswordPlugin:
-
-  def apply[F[_]: Hashing: Concurrent](): Sha256PasswordPlugin[F] = new Sha256PasswordPlugin {}
+}

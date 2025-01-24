@@ -5,24 +5,14 @@
  */
 
 package ldbc.connector.authenticator
-
 import java.nio.charset.StandardCharsets
 
 import scala.scalanative.unsafe.*
 import scala.scalanative.unsigned.*
 
-import cats.effect.Concurrent
-
-import fs2.hashing.Hashing
-
 import ldbc.connector.authenticator.Openssl.*
 
-trait Sha256PasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlugin[F]:
-
-  override def name: String = "sha256_password"
-
-  def transformation: String = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding"
-
+trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
   def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
     val input = if password.nonEmpty then (password + "\u0000").getBytes(StandardCharsets.UTF_8) else Array[Byte](0)
     val mysqlScrambleBuff = xorString(input, scramble, input.length)
@@ -78,7 +68,4 @@ trait Sha256PasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlug
 
       result
     }
-
-object Sha256PasswordPlugin:
-
-  def apply[F[_]: Hashing: Concurrent](): Sha256PasswordPlugin[F] = new Sha256PasswordPlugin {}
+}

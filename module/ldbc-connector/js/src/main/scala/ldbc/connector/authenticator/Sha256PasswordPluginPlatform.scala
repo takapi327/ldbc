@@ -5,23 +5,13 @@
  */
 
 package ldbc.connector.authenticator
-
 import java.nio.charset.StandardCharsets
 
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Uint8Array
 
 import scodec.bits.ByteVector
-
-import cats.effect.Concurrent
-
-import fs2.hashing.Hashing
-trait Sha256PasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlugin[F]:
-
-  override def name: String = "sha256_password"
-
-  def transformation: String = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding"
-
+trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
   private val crypto = js.Dynamic.global.require("crypto")
 
   def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
@@ -42,7 +32,4 @@ trait Sha256PasswordPlugin[F[_]: Hashing: Concurrent] extends AuthenticationPlug
       ByteVector(input).toUint8Array
     )
     ByteVector.view(encrypted.asInstanceOf[Uint8Array]).toArray
-
-object Sha256PasswordPlugin:
-
-  def apply[F[_]: Hashing: Concurrent](): Sha256PasswordPlugin[F] = new Sha256PasswordPlugin {}
+}
