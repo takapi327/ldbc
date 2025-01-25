@@ -151,7 +151,8 @@ trait TableParser extends KeyParser:
   private def connection: Parser[TableOption] =
     customError(
       keyValue(caseSensitivity("connection"), stringLiteral) ^^ TableOption.Connection.apply,
-      input => s"""
+      input =>
+        s"""
         |======================================================
         |There is an error in the connection format.
         |Please correct the format according to the following.

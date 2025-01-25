@@ -31,8 +31,7 @@ class LdbcConnectionTest extends ConnectionTest:
       ssl      = SSL.Trusted,
       databaseTerm = Some(databaseTerm match
         case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
-        case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
-      )
+        case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG)
     )
 
 class JdbcConnectionTest extends ConnectionTest:
