@@ -9,13 +9,12 @@ package ldbc.schema
 import java.time.*
 import java.time.Year as JYear
 
-import ldbc.statement.{ AbstractTable, TableQuery as AbstractTableQuery }
+import ldbc.statement.{ AbstractTable, Column, TableQuery as AbstractTableQuery }
 
 import ldbc.schema.attribute.*
 
 private[ldbc] trait Alias:
 
-  type Column[A]                         = ldbc.statement.Column[A]
   type TableQuery[T <: AbstractTable[?]] = AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]]
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)

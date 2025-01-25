@@ -20,6 +20,7 @@ import cats.syntax.all.*
 import cats.effect.*
 import cats.effect.std.Console
 
+import fs2.hashing.Hashing
 import fs2.io.net.Socket
 
 import org.typelevel.otel4s.trace.{ Span, Tracer }
@@ -137,7 +138,7 @@ object Protocol:
   private val SELECT_SERVER_VARIABLES_QUERY =
     "SELECT @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
 
-  private[ldbc] case class Impl[F[_]: Temporal: Tracer](
+  private[ldbc] case class Impl[F[_]: Async: Tracer: Hashing](
     initialPacket:           InitialPacket,
     hostInfo:                HostInfo,
     socket:                  PacketSocket[F],
@@ -274,7 +275,7 @@ object Protocol:
      * Authentication plugin
      */
     private def readUntilOk(
-      plugin:       AuthenticationPlugin,
+      plugin:       AuthenticationPlugin[F],
       password:     String,
       scrambleBuff: Option[Array[Byte]] = None
     ): F[Unit] =
@@ -283,7 +284,7 @@ object Protocol:
           if (allowPublicKeyRetrieval || useSSL) && more.authenticationMethodData
             .mkString("") == Authentication.FULL_AUTH =>
           plugin match
-            case plugin: CachingSha2PasswordPlugin =>
+            case plugin: CachingSha2PasswordPlugin[F] =>
               cachingSha2Authentication(
                 plugin,
                 password,
@@ -292,7 +293,7 @@ object Protocol:
                 plugin,
                 password
               )
-            case plugin: Sha256PasswordPlugin =>
+            case plugin: Sha256PasswordPlugin[F] =>
               sha256Authentication(
                 plugin,
                 password,
@@ -345,25 +346,31 @@ object Protocol:
     private def changeAuthenticationMethod(switchRequestPacket: AuthSwitchRequestPacket, password: String): F[Unit] =
       determinatePlugin(switchRequestPacket.pluginName, initialPacket.serverVersion) match
         case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
-        case Right(plugin: CachingSha2PasswordPlugin) =>
-          val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-          socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(
-            plugin,
-            password,
-            Some(switchRequestPacket.pluginProvidedData)
-          )
-        case Right(plugin: Sha256PasswordPlugin) =>
+        case Right(plugin: CachingSha2PasswordPlugin[F]) =>
+          for
+            hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
+            _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
+            _ <- readUntilOk(
+                   plugin,
+                   password,
+                   Some(switchRequestPacket.pluginProvidedData)
+                 )
+          yield ()
+        case Right(plugin: Sha256PasswordPlugin[F]) =>
           sha256Authentication(plugin, password, switchRequestPacket.pluginProvidedData) *> readUntilOk(
             plugin,
             password
           )
         case Right(plugin) =>
-          val hashedPassword = plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
-          socket.send(AuthSwitchResponsePacket(hashedPassword)) *> readUntilOk(
-            plugin,
-            password,
-            Some(switchRequestPacket.pluginProvidedData)
-          )
+          for
+            hashedPassword <- plugin.hashPassword(password, switchRequestPacket.pluginProvidedData)
+            _              <- socket.send(AuthSwitchResponsePacket(hashedPassword))
+            _ <- readUntilOk(
+                   plugin,
+                   password,
+                   Some(switchRequestPacket.pluginProvidedData)
+                 )
+          yield ()
 
     /**
      * Plain text handshake
@@ -374,19 +381,20 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def plainTextHandshake(
-      plugin:       AuthenticationPlugin,
+      plugin:       AuthenticationPlugin[F],
       password:     String,
       scrambleBuff: Array[Byte]
     ): F[Unit] =
-      val hashedPassword = plugin.hashPassword(password, scrambleBuff)
-      socket.send(AuthSwitchResponsePacket(hashedPassword))
+      plugin
+        .hashPassword(password, scrambleBuff)
+        .flatMap(hashedPassword => socket.send(AuthSwitchResponsePacket(hashedPassword)))
 
     /**
      * SSL handshake.
      * Send a plain password to use SSL/TLS encrypted secure communication.
      */
     private def sslHandshake(password: String): F[Unit] =
-      socket.send(AuthSwitchResponsePacket((password + "\u0000").getBytes(StandardCharsets.UTF_8)))
+      socket.send(AuthSwitchResponsePacket.unsafeFromBytes((password + "\u0000").getBytes(StandardCharsets.UTF_8)))
 
     /**
      * Allow public key retrieval request.
@@ -398,7 +406,7 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def allowPublicKeyRetrievalRequest(
-      plugin:       Sha256PasswordPlugin,
+      plugin:       Sha256PasswordPlugin[F],
       password:     String,
       scrambleBuff: Array[Byte]
     ): F[Unit] =
@@ -411,7 +419,7 @@ object Protocol:
           .mkString("")
         val encryptPassword =
           plugin.encryptPassword(password, scrambleBuff, publicKeyString)
-        socket.send(AuthSwitchResponsePacket(encryptPassword))
+        socket.send(AuthSwitchResponsePacket.unsafeFromBytes(encryptPassword))
       }
 
     /**
@@ -423,7 +431,7 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def sha256Authentication(
-      plugin:       Sha256PasswordPlugin,
+      plugin:       Sha256PasswordPlugin[F],
       password:     String,
       scrambleBuff: Array[Byte]
     ): F[Unit] =
@@ -442,7 +450,7 @@ object Protocol:
      * Scramble buffer for authentication payload
      */
     private def cachingSha2Authentication(
-      plugin:       CachingSha2PasswordPlugin,
+      plugin:       CachingSha2PasswordPlugin[F],
       password:     String,
       scrambleBuff: Array[Byte]
     ): F[Unit] =
@@ -458,17 +466,19 @@ object Protocol:
      * @param plugin
      * Authentication plugin
      */
-    private def handshake(plugin: AuthenticationPlugin, username: String, password: String): F[Unit] =
-      val hashedPassword = plugin.hashPassword(password, initialPacket.scrambleBuff)
-      val handshakeResponse = HandshakeResponsePacket(
-        capabilityFlags,
-        username,
-        Array(hashedPassword.length.toByte) ++ hashedPassword,
-        plugin.name,
-        initialPacket.characterSet,
-        hostInfo.database
-      )
-      socket.send(handshakeResponse)
+    private def handshake(plugin: AuthenticationPlugin[F], username: String, password: String): F[Unit] =
+      for
+        hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
+        handshakeResponse = HandshakeResponsePacket(
+                              capabilityFlags,
+                              username,
+                              hashedPassword.length.toByte +: hashedPassword.toArray,
+                              plugin.name,
+                              initialPacket.characterSet,
+                              hostInfo.database
+                            )
+        _ <- socket.send(handshakeResponse)
+      yield ()
 
     override def startAuthentication(username: String, password: String): F[Unit] =
       exchange[F, Unit]("database.authentication") { (span: Span[F]) =>
@@ -491,21 +501,24 @@ object Protocol:
           determinatePlugin(initialPacket.authPlugin, initialPacket.serverVersion) match
             case Left(error) => ev.raiseError(error) *> socket.send(ComQuitPacket())
             case Right(plugin) =>
-              socket.send(
-                ComChangeUserPacket(
-                  capabilityFlags,
-                  user,
-                  hostInfo.database,
-                  initialPacket.characterSet,
-                  initialPacket.authPlugin,
-                  plugin.hashPassword(password, initialPacket.scrambleBuff)
-                )
-              ) *>
-                readUntilOk(plugin, password)
+              for
+                hashedPassword <- plugin.hashPassword(password, initialPacket.scrambleBuff)
+                _ <- socket.send(
+                       ComChangeUserPacket(
+                         capabilityFlags,
+                         user,
+                         hostInfo.database,
+                         initialPacket.characterSet,
+                         initialPacket.authPlugin,
+                         hashedPassword
+                       )
+                     )
+                _ <- readUntilOk(plugin, password)
+              yield ()
         )
       }
 
-  def apply[F[_]: Temporal: Console: Tracer: Exchange](
+  def apply[F[_]: Async: Console: Tracer: Exchange: Hashing](
     sockets:                 Resource[F, Socket[F]],
     hostInfo:                HostInfo,
     debug:                   Boolean,
@@ -532,7 +545,7 @@ object Protocol:
                   )
     yield protocol
 
-  def fromPacketSocket[F[_]: Temporal: Tracer: Exchange](
+  def fromPacketSocket[F[_]: Async: Tracer: Exchange: Hashing](
     packetSocket:            PacketSocket[F],
     hostInfo:                HostInfo,
     sslOptions:              Option[SSLNegotiation.Options[F]],

@@ -9,6 +9,7 @@ package request
 
 import scodec.*
 import scodec.bits.BitVector
+import scodec.bits.ByteVector
 import scodec.interop.cats.*
 
 import cats.syntax.all.*
@@ -37,7 +38,7 @@ case class ComChangeUserPacket(
   database:          Option[String],
   characterSet:      Int,
   pluginName:        String,
-  hashedPassword:    Array[Byte]
+  hashedPassword:    ByteVector
 ) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =
