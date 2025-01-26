@@ -84,7 +84,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getByte(columnIndex: Int): Byte =
     checkClose {
-      rowDecode[Byte](columnIndex, _.toByte) match
+      rowDecode[Byte](columnIndex, _.toByte(false).toString) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
