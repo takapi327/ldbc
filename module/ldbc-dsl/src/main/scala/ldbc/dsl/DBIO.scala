@@ -60,7 +60,7 @@ trait DBIO[F[_], T]:
 
 object DBIO:
 
-  private[ldbc] case class Impl[F[_]: Temporal, T](
+  private[ldbc] case class Impl[F[_]: MonadCancelThrow, T](
     statement: String,
     params:    List[Parameter],
     func:      Connection[F] => F[T]
@@ -82,7 +82,7 @@ object DBIO:
         .rollback() <* connection.setAutoCommit(true)
 
     override def transaction(connection: Connection[F])(using LogHandler[F]): F[T] =
-      val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+      val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> MonadThrow[F].pure(connection)
 
       val release = (connection: Connection[F], exitCase: ExitCase) =>
         (exitCase match
@@ -111,7 +111,7 @@ object DBIO:
       override def rollback(connection:    Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
       override def transaction(connection: Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
 
-  given [F[_]: Temporal]: MonadError[[T] =>> DBIO[F, T], Throwable] with
+  given [F[_]: MonadCancelThrow]: MonadThrow[[T] =>> DBIO[F, T]] with
     override def pure[A](x: A): DBIO[F, A] = DBIO.pure(x)
 
     override def flatMap[A, B](fa: DBIO[F, A])(f: A => DBIO[F, B]): DBIO[F, B] =
@@ -126,7 +126,8 @@ object DBIO:
           connection.setReadOnly(false) *> connection.setAutoCommit(false) *> run(connection) <* connection
             .rollback() <* connection.setAutoCommit(true)
         override def transaction(connection: Connection[F])(using LogHandler[F]): F[B] =
-          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+          val acquire =
+            connection.setReadOnly(false) *> connection.setAutoCommit(false) *> MonadCancelThrow[F].pure(connection)
           val release = (connection: Connection[F], exitCase: ExitCase) =>
             (exitCase match
               case ExitCase.Errored(_) | ExitCase.Canceled => connection.rollback()
@@ -140,7 +141,7 @@ object DBIO:
     override def tailRecM[A, B](a: A)(f: A => DBIO[F, Either[A, B]]): DBIO[F, B] =
       new DBIO[F, B]:
         override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[B] =
-          Temporal[F].tailRecM(a)(a => f(a).run(connection))
+          MonadCancelThrow[F].tailRecM(a)(a => f(a).run(connection))
 
         override def readOnly(connection: Connection[F])(using LogHandler[F]): F[B] =
           connection.setReadOnly(true) *> run(connection) <* connection.setReadOnly(false)
@@ -153,7 +154,8 @@ object DBIO:
             .rollback() <* connection.setAutoCommit(true)
 
         override def transaction(connection: Connection[F])(using LogHandler[F]): F[B] =
-          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+          val acquire =
+            connection.setReadOnly(false) *> connection.setAutoCommit(false) *> MonadCancelThrow[F].pure(connection)
 
           val release = (connection: Connection[F], exitCase: ExitCase) =>
             (exitCase match
@@ -182,7 +184,8 @@ object DBIO:
             .rollback() <* connection.setAutoCommit(true)
 
         override def transaction(connection: Connection[F])(using LogHandler[F]): F[B] =
-          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+          val acquire =
+            connection.setReadOnly(false) *> connection.setAutoCommit(false) *> MonadCancelThrow[F].pure(connection)
 
           val release = (connection: Connection[F], exitCase: ExitCase) =>
             (exitCase match
@@ -214,7 +217,8 @@ object DBIO:
             .rollback() <* connection.setAutoCommit(true)
 
         override def transaction(connection: Connection[F])(using LogHandler[F]): F[A] =
-          val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> Temporal[F].pure(connection)
+          val acquire =
+            connection.setReadOnly(false) *> connection.setAutoCommit(false) *> MonadCancelThrow[F].pure(connection)
 
           val release = (connection: Connection[F], exitCase: ExitCase) =>
             (exitCase match

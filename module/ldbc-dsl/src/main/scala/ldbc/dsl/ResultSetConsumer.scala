@@ -42,7 +42,7 @@ object ResultSetConsumer:
 
   private val FIRST_OFFSET = 1
 
-  given [F[_]: Monad, T](using
+  given [F[_], T](using
     consumer: ResultSetConsumer[F, Option[T]],
     ev:       MonadThrow[F]
   ): ResultSetConsumer[F, T] with
@@ -52,16 +52,16 @@ object ResultSetConsumer:
         case None        => ev.raiseError(new NoSuchElementException(""))
       }
 
-  given [F[_]: Monad, T](using decoder: Decoder[T], ev: MonadThrow[F]): ResultSetConsumer[F, Option[T]] with
+  given [F[_], T](using decoder: Decoder[T], ev: ApplicativeThrow[F]): ResultSetConsumer[F, Option[T]] with
     override def consume(resultSet: ResultSet, statement: String): F[Option[T]] =
       if resultSet.next() then
         decoder.decode(resultSet, FIRST_OFFSET) match
-          case Right(value) => Monad[F].pure(Some(value))
+          case Right(value) => ev.pure(Some(value))
           case Left(error) =>
             ev.raiseError(new DecodeFailureException(error.message, decoder.offset, statement, error.cause))
-      else Monad[F].pure(None)
+      else ev.pure(None)
 
-  given [F[_]: Monad, T, G[_]](using
+  given [F[_]: Applicative, T, G[_]](using
     decoder:       Decoder[T],
     factoryCompat: FactoryCompat[T, G[T]]
   ): ResultSetConsumer[F, G[T]] with
@@ -71,4 +71,4 @@ object ResultSetConsumer:
         decoder.decode(resultSet, FIRST_OFFSET) match
           case Right(value) => builder += value
           case Left(error)  => throw new DecodeFailureException(error.message, decoder.offset, statement, error.cause)
-      Monad[F].pure(builder.result())
+      Applicative[F].pure(builder.result())

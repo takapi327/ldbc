@@ -553,7 +553,7 @@ object Protocol:
     capabilitiesFlags:       Set[CapabilitiesFlags],
     sequenceIdRef:           Ref[F, Byte],
     initialPacketRef:        Ref[F, Option[InitialPacket]]
-  )(using ev: MonadError[F, Throwable]): F[Protocol[F]] =
+  )(using ev: Temporal[F]): F[Protocol[F]] =
     for initialPacketOpt <- initialPacketRef.get
     yield initialPacketOpt match
       case Some(initialPacket) =>
