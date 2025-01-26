@@ -262,7 +262,7 @@ object Protocol:
               .zip(resultSetRow.flatMap(_.values))
               .map {
                 case (columnDefinition, resultSetRow) =>
-                  columnDefinition.name -> resultSetRow.map(_.toBase64).getOrElse("")
+                  columnDefinition.name -> resultSetRow.map(_.toByteVector.decodeUtf8Lenient).getOrElse("")
               }
               .toMap
         }

@@ -7,6 +7,7 @@
 package ldbc.connector
 
 import java.util.{ Locale, StringTokenizer }
+import java.nio.charset.Charset
 
 import scala.collection.immutable.{ ListMap, SortedMap }
 
@@ -80,7 +81,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
                               ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
                             )
-          yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.map(_.toBase64).getOrElse("")
+          yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.map(_.toByteVector.decodeUtf8Lenient).getOrElse("")
       }
 
   override def getDatabaseProductVersion(): String = protocol.initialPacket.serverVersion.toString
@@ -136,6 +137,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                             )
           yield resultSetRow
             .flatMap(_.values.flatten)
+            .map(_.toByteVector.decodeUtf8Lenient)
             .filterNot(DatabaseMetaDataImpl.SQL2003_KEYWORDS.contains)
             .mkString(",")
       }
@@ -525,7 +527,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
-        dbList.map(name => ResultSetRowPacket(Array(scodec.bits.BitVector.encodeUtf8(name).toOption))).toVector,
+        dbList.map(name => ResultSetRowPacket(Array(BitVector.encodeString(name)(using Charset.defaultCharset()).toOption))).toVector,
         serverVariables,
         protocol.initialPacket.serverVersion
       )
@@ -1015,15 +1017,15 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
               ResultSetRowPacket(
                 Array(
-                  BitVector.encodeUtf8(scope.toString).toOption,
-                  BitVector.encodeUtf8(columnName).toOption,
-                  BitVector.encodeUtf8(dataType.toString).toOption,
-                  BitVector.encodeUtf8(typeName).toOption,
-                  BitVector.encodeUtf8(columnSize.toString).toOption,
-                  BitVector.encodeUtf8(bufferLength.toString).toOption,
-                  BitVector.encodeUtf8(decimalDigits.toString).toOption,
-                  BitVector.encodeUtf8(pseudoColumn.toString).toOption
-                )
+                  scope.toString,
+                  columnName,
+                  dataType.toString,
+                  typeName,
+                  columnSize.toString,
+                  bufferLength.toString,
+                  decimalDigits.toString,
+                  pseudoColumn.toString
+                ).map(str => BitVector.encodeUtf8(str).toOption)
               )
           },
           serverVariables,

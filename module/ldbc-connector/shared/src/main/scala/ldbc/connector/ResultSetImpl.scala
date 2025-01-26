@@ -52,7 +52,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getString(columnIndex: Int): String =
     checkClose {
-      rowDecode[String](columnIndex - 1) match
+      rowDecode[String](columnIndex, _.toString) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -63,7 +63,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBoolean(columnIndex: Int): Boolean =
     checkClose {
-      rowDecode[Boolean](columnIndex - 1) match
+      rowDecode[Boolean](columnIndex, _.toBoolean) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -74,10 +74,10 @@ private[ldbc] case class ResultSetImpl(
 
   override def getByte(columnIndex: Int): Byte =
     checkClose {
-      rowDecode[Byte](columnIndex - 1) match
+      rowDecode[Byte](columnIndex, _.toByte) match
         case Some(value) =>
           lastColumnReadNullable = false
-          value // .toByte(false)
+          value
         case None =>
           lastColumnReadNullable = true
           0
@@ -85,7 +85,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getShort(columnIndex: Int): Short =
     checkClose {
-      rowDecode[Short](columnIndex - 1) match
+      rowDecode[Short](columnIndex, _.toShort) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -96,7 +96,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getInt(columnIndex: Int): Int =
     checkClose {
-      rowDecode[Int](columnIndex - 1) match
+      rowDecode[Int](columnIndex, _.toInt) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -107,7 +107,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getLong(columnIndex: Int): Long =
     checkClose {
-      rowDecode[Long](columnIndex - 1) match
+      rowDecode[Long](columnIndex, _.toLong) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -118,7 +118,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getFloat(columnIndex: Int): Float =
     checkClose {
-      rowDecode[Float](columnIndex - 1) match
+      rowDecode[Float](columnIndex, _.toFloat) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -129,7 +129,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getDouble(columnIndex: Int): Double =
     checkClose {
-      rowDecode[Double](columnIndex - 1) match
+      rowDecode[Double](columnIndex, _.toDouble) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -140,7 +140,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBytes(columnIndex: Int): Array[Byte] =
     checkClose {
-      rowDecode[Array[Byte]](columnIndex - 1) match
+      rowDecode[Array[Byte]](columnIndex) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -151,7 +151,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getDate(columnIndex: Int): LocalDate =
     checkClose {
-      rowDecode[LocalDate](columnIndex - 1) match
+      rowDecode[LocalDate](columnIndex) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -162,7 +162,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTime(columnIndex: Int): LocalTime =
     checkClose {
-      rowDecode[LocalTime](columnIndex - 1) match
+      rowDecode[LocalTime](columnIndex) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -173,7 +173,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTimestamp(columnIndex: Int): LocalDateTime =
     checkClose {
-      rowDecode[LocalDateTime](columnIndex - 1) match
+      rowDecode[LocalDateTime](columnIndex) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -261,7 +261,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBigDecimal(columnIndex: Int): BigDecimal =
     checkClose {
-      rowDecode[BigDecimal](columnIndex - 1) match
+      rowDecode[BigDecimal](columnIndex) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -396,10 +396,18 @@ private[ldbc] case class ResultSetImpl(
     if isClosed then raiseError("Operation not allowed after ResultSet closed")
     else f
 
-  private def rowDecode[T](index: Int)(using codec: Codec[T]): Option[T] =
+  private def rowDecode[T](index: Int, decode: String => T): Option[T] =
     for
       row     <- currentRow
-      value   <- row.values(index)
+      value   <- row.values(index - 1)
+      decoded <- try { Option(decode(value.toByteVector.decodeUtf8Lenient)) } catch
+        case _ => None
+    yield decoded
+
+  private def rowDecode[T](index: Int)(using codec: Codec[T]): Option[T] =
+    for
+      row <- currentRow
+      value <- row.values(index)
       decoded <- codec.decode(value).toOption
     yield decoded.value
 
