@@ -7,12 +7,15 @@
 package ldbc.connector
 
 import java.time.*
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.temporal.TemporalAccessor
 
-import scodec.Codec
+import cats.syntax.all.*
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
-import ldbc.connector.codec.all.given
+import ldbc.connector.data.Formatter.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.util.Version
@@ -63,7 +66,14 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBoolean(columnIndex: Int): Boolean =
     checkClose {
-      rowDecode[Boolean](columnIndex, _.toBoolean) match
+      rowDecode[Boolean](
+        columnIndex,
+        {
+          case "true" | "1"  => true
+          case "false" | "0" => false
+          case unknown       => raiseError(s"Unknown boolean value: $unknown")
+        }
+      ) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -140,7 +150,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBytes(columnIndex: Int): Array[Byte] =
     checkClose {
-      rowDecode[Array[Byte]](columnIndex) match
+      rowDecode[Array[Byte]](columnIndex, _.getBytes("UTF-8")) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -151,7 +161,10 @@ private[ldbc] case class ResultSetImpl(
 
   override def getDate(columnIndex: Int): LocalDate =
     checkClose {
-      rowDecode[LocalDate](columnIndex) match
+      rowDecodeEither[LocalDate](
+        columnIndex,
+        str => ResultSetImpl.temporalDecode[LocalDate](str)(localDateFormatter, LocalDate.parse)
+      ) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -162,7 +175,10 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTime(columnIndex: Int): LocalTime =
     checkClose {
-      rowDecode[LocalTime](columnIndex) match
+      rowDecodeEither[LocalTime](
+        columnIndex,
+        str => ResultSetImpl.temporalDecode[LocalTime](str)(timeFormatter(0), LocalTime.parse)
+      ) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -173,7 +189,10 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTimestamp(columnIndex: Int): LocalDateTime =
     checkClose {
-      rowDecode[LocalDateTime](columnIndex) match
+      rowDecodeEither[LocalDateTime](
+        columnIndex,
+        str => ResultSetImpl.temporalDecode[LocalDateTime](str)(localDateTimeFormatter(0), LocalDateTime.parse)
+      ) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -261,7 +280,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBigDecimal(columnIndex: Int): BigDecimal =
     checkClose {
-      rowDecode[BigDecimal](columnIndex) match
+      rowDecode[BigDecimal](columnIndex, str => BigDecimal(str)) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -404,12 +423,12 @@ private[ldbc] case class ResultSetImpl(
                  catch case _ => None
     yield decoded
 
-  private def rowDecode[T](index: Int)(using codec: Codec[T]): Option[T] =
+  private def rowDecodeEither[T](index: Int, decode: String => Either[String, T]): Option[T] =
     for
       row     <- currentRow
-      value   <- row.values(index)
-      decoded <- codec.decode(value).toOption
-    yield decoded.value
+      value   <- row.values(index - 1)
+      decoded <- decode(value.toByteVector.decodeUtf8Lenient).toOption
+    yield decoded
 
   private def findByName(columnLabel: String): Int =
     columns.zipWithIndex
@@ -427,6 +446,12 @@ private[ldbc] case class ResultSetImpl(
     throw new SQLException(message, sql = statement)
 
 private[ldbc] object ResultSetImpl:
+
+  private[ldbc] def temporalDecode[A <: TemporalAccessor](str: String)(
+    formatter: DateTimeFormatter,
+    parse:     (String, DateTimeFormatter) => A
+  ): Either[String, A] =
+    Either.catchOnly[DateTimeParseException](parse(str, formatter)).leftMap(_.getMessage)
 
   def apply(
     columns:         Vector[ColumnDefinitionPacket],
