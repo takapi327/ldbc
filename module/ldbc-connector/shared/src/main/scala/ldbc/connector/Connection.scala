@@ -15,6 +15,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.Console
+import cats.effect.std.UUIDGen
 
 import fs2.hashing.Hashing
 import fs2.io.net.*
@@ -50,7 +51,7 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  def apply[F[_]: Async: Network: Console: Hashing](
+  def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host:                    String,
     port:                    Int,
     user:                    String,
@@ -84,7 +85,7 @@ object Connection:
                     )
     yield connection
 
-  def fromSockets[F[_]: Async: Tracer: Console: Hashing](
+  def fromSockets[F[_]: Async: Tracer: Console: Hashing: UUIDGen](
     sockets:                 Resource[F, Socket[F]],
     host:                    String,
     port:                    Int,
@@ -126,7 +127,7 @@ object Connection:
         )(_.close())
     yield connection
 
-  def fromSocketGroup[F[_]: Tracer: Console: Hashing](
+  def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen](
     socketGroup:             SocketGroup[F],
     host:                    String,
     port:                    Int,

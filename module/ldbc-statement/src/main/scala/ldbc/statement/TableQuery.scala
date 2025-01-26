@@ -114,7 +114,9 @@ trait TableQuery[A, O]:
    * @param tail
    *   Value to be inserted into the table
    */
-  inline def insert(using mirror: Mirror.Of[Entity])(
+  inline def insert(using
+    mirror: Mirror.Of[Entity]
+  )(
     head: mirror.MirroredElemTypes,
     tail: mirror.MirroredElemTypes*
   ): Insert[A] =
