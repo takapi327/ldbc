@@ -6,8 +6,8 @@
 
 package ldbc.connector
 
-import java.util.{ Locale, StringTokenizer }
 import java.nio.charset.Charset
+import java.util.{ Locale, StringTokenizer }
 
 import scala.collection.immutable.{ ListMap, SortedMap }
 
@@ -81,7 +81,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
                               ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
                             )
-          yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.map(_.toByteVector.decodeUtf8Lenient).getOrElse("")
+          yield resultSetRow.headOption
+            .flatMap(_.values.headOption)
+            .flatten
+            .map(_.toByteVector.decodeUtf8Lenient)
+            .getOrElse("")
       }
 
   override def getDatabaseProductVersion(): String = protocol.initialPacket.serverVersion.toString
@@ -527,7 +531,9 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
-        dbList.map(name => ResultSetRowPacket(Array(BitVector.encodeString(name)(using Charset.defaultCharset()).toOption))).toVector,
+        dbList
+          .map(name => ResultSetRowPacket(Array(BitVector.encodeString(name)(using Charset.defaultCharset()).toOption)))
+          .toVector,
         serverVariables,
         protocol.initialPacket.serverVersion
       )

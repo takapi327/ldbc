@@ -398,16 +398,16 @@ private[ldbc] case class ResultSetImpl(
 
   private def rowDecode[T](index: Int, decode: String => T): Option[T] =
     for
-      row     <- currentRow
-      value   <- row.values(index - 1)
-      decoded <- try { Option(decode(value.toByteVector.decodeUtf8Lenient)) } catch
-        case _ => None
+      row   <- currentRow
+      value <- row.values(index - 1)
+      decoded <- try { Option(decode(value.toByteVector.decodeUtf8Lenient)) }
+                 catch case _ => None
     yield decoded
 
   private def rowDecode[T](index: Int)(using codec: Codec[T]): Option[T] =
     for
-      row <- currentRow
-      value <- row.values(index)
+      row     <- currentRow
+      value   <- row.values(index)
       decoded <- codec.decode(value).toOption
     yield decoded.value
 
