@@ -18,75 +18,69 @@ import java.time.Year
 
 import cats.syntax.all.*
 
+import scodec.{Codec, Attempt, Err}
+
 import ldbc.connector.data.Formatter.*
-import ldbc.connector.data.Type
 
 trait TemporalCodecs:
 
   private def temporal[A <: TemporalAccessor](
     formatter: DateTimeFormatter,
     parse:     (String, DateTimeFormatter) => A,
-    tpe:       Type
   ): Codec[A] =
-    Codec.simple(
-      a => formatter.format(a),
-      s => Either.catchOnly[DateTimeParseException](parse(s, formatter)).leftMap(_.toString),
-      tpe
+    Codec[String].exmap(
+      str => Attempt.fromEither(Either.catchOnly[DateTimeParseException](parse(str, formatter)).leftMap(Err.fromThrowable(_))),
+      temporal => Attempt.successful(formatter.format(temporal))
     )
 
-  val date: Codec[LocalDate] =
-    temporal(localDateFormatter, LocalDate.parse, Type.date)
-
-  def datetime(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalDateTime] =
-    temporal(localDateTimeFormatter(fsp), LocalDateTime.parse, Type.datetime(fsp))
-  val datetime: Codec[LocalDateTime] = datetime(0)
+  given Codec[LocalDate] =
+    temporal(localDateFormatter, LocalDate.parse)
 
   def timestamp(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalDateTime] =
-    temporal(localDateTimeFormatter(fsp), LocalDateTime.parse, Type.timestamp(fsp))
-  val timestamp: Codec[LocalDateTime] = timestamp(0)
+    temporal(localDateTimeFormatter(fsp), LocalDateTime.parse)
+  given Codec[LocalDateTime] = timestamp(0)
 
   def timestamptz(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[OffsetDateTime] =
-    temporal(offsetDateTimeFormatter(fsp), OffsetDateTime.parse, Type.varchar(255))
-  val timestamptz: Codec[OffsetDateTime] = timestamptz(0)
+    temporal(offsetDateTimeFormatter(fsp), OffsetDateTime.parse)
+  given Codec[OffsetDateTime] = timestamptz(0)
 
   def time(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[LocalTime] =
-    temporal(timeFormatter(fsp), LocalTime.parse, Type.time(fsp))
-  val time: Codec[LocalTime] = time(0)
+    temporal(timeFormatter(fsp), LocalTime.parse)
+  given Codec[LocalTime] = time(0)
 
   def timetz(fsp: 0 | 1 | 2 | 3 | 4 | 5 | 6): Codec[OffsetTime] =
-    temporal(offsetTimeFormatter(fsp), OffsetTime.parse, Type.varchar(255))
-  val timetz: Codec[OffsetTime] = timetz(0)
+    temporal(offsetTimeFormatter(fsp), OffsetTime.parse)
+  given Codec[OffsetTime] = timetz(0)
 
   @deprecated(
     "As of MySQL 8.0.19, specifying the number of digits for the YEAR data type is deprecated. It will not be supported in future MySQL versions.",
     "0.3.0"
   )
   def year(digit: 4): Codec[Year] =
-    Codec.simple(
-      _.toString,
-      str => Either.catchOnly[DateTimeParseException](Year.parse(str)).leftMap(_.toString),
-      Type.year(digit)
+    Codec[String].exmap(
+      str => Attempt.fromEither(Either.catchOnly[DateTimeParseException](Year.parse(str)).leftMap(Err.fromThrowable(_))),
+      year => Attempt.successful(year.toString),
     )
-  val year: Codec[Year] =
-    Codec.simple(
-      _.toString,
-      str =>
+  given Codec[Year] =
+    Codec[String].exmap(
+      str => Attempt.fromEither(
         (
           for
             int <- Either.catchOnly[NumberFormatException](str.toInt)
             year <- Either.catchOnly[DateTimeParseException] {
-                      val int = str.toInt
-                      if (1901 <= int && int <= 2156) || str === "0000" then Year.of(int)
-                      else
-                        throw new DateTimeParseException(
-                          s"Year is out of range: $int. Year must be in the range 1901 to 2155.",
-                          str,
-                          0
-                        )
-                    }
+              val int = str.toInt
+              if (1901 <= int && int <= 2156) || str === "0000" then Year.of(int)
+              else
+                throw new DateTimeParseException(
+                  s"Year is out of range: $int. Year must be in the range 1901 to 2155.",
+                  str,
+                  0
+                )
+            }
           yield year
-        ).leftMap(_.toString),
-      Type.year
+          ).leftMap(Err.fromThrowable(_))
+      ),
+      year => Attempt.successful(year.toString),
     )
 
 object temporal extends TemporalCodecs
