@@ -258,7 +258,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
                              override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
                            ),
-                           Vector(ResultSetRowPacket(Array(Some(BitVector.fromLong(lastInsertId))))),
+                           Vector(ResultSetRowPacket(Array(BitVector.encodeUtf8(lastInsertId.toString).toOption))),
                            serverVariables,
                            protocol.initialPacket.serverVersion
                          )

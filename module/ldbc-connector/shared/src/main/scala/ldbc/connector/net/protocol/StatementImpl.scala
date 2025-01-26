@@ -178,7 +178,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
 
                           override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
                         ),
-                        Vector(ResultSetRowPacket(Array(Some(BitVector.fromLong(lastInsertId))))),
+                        Vector(ResultSetRowPacket(Array(BitVector.encodeUtf8(lastInsertId.toString).toOption))),
                         serverVariables,
                         protocol.initialPacket.serverVersion
                       )
