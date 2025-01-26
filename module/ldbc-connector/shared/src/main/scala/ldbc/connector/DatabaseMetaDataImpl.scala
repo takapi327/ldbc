@@ -10,12 +10,12 @@ import java.util.{ Locale, StringTokenizer }
 
 import scala.collection.immutable.{ ListMap, SortedMap }
 
+import scodec.bits.BitVector
+
 import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
-
-import scodec.bits.BitVector
 
 import org.typelevel.otel4s.trace.Tracer
 
@@ -1499,7 +1499,11 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
-        dbList.map(name => ResultSetRowPacket(Array(BitVector.encodeUtf8("def").toOption, BitVector.encodeUtf8(name).toOption))).toVector,
+        dbList
+          .map(name =>
+            ResultSetRowPacket(Array(BitVector.encodeUtf8("def").toOption, BitVector.encodeUtf8(name).toOption))
+          )
+          .toVector,
         serverVariables,
         protocol.initialPacket.serverVersion
       )
@@ -1909,8 +1913,8 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       (
         mysqlType match
           case MysqlType.BIGINT | MysqlType.BIGINT_UNSIGNED | MysqlType.BOOLEAN | MysqlType.INT |
-            MysqlType.INT_UNSIGNED | MysqlType.MEDIUMINT | MysqlType.MEDIUMINT_UNSIGNED | MysqlType.SMALLINT |
-            MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
+            MysqlType.INT_UNSIGNED | MysqlType.MEDIUMINT | MysqlType.MEDIUMINT_UNSIGNED |
+            MysqlType.SMALLINT | MysqlType.SMALLINT_UNSIGNED | MysqlType.TINYINT | MysqlType.TINYINT_UNSIGNED =>
             Some("true")
           case MysqlType.DOUBLE | MysqlType.DOUBLE_UNSIGNED | MysqlType.FLOAT | MysqlType.FLOAT_UNSIGNED =>
             val supportsAutoIncrement = protocol.initialPacket.serverVersion.compare(Version(8, 4, 0)) >= 0

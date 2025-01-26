@@ -13,7 +13,7 @@ trait NumericCodecs:
   given Codec[BigDecimal] =
     Codec[String].xmap(
       str => BigDecimal(str),
-      _.toString(),
+      _.toString()
     )
 
 object numeric extends NumericCodecs

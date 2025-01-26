@@ -8,12 +8,12 @@ package ldbc.connector.net.protocol
 
 import scala.collection.immutable.{ ListMap, SortedMap }
 
+import scodec.bits.BitVector
+
 import cats.*
 import cats.syntax.all.*
 
 import cats.effect.*
-
-import scodec.bits.BitVector
 
 import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute

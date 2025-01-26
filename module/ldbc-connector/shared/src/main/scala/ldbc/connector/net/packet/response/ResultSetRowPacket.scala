@@ -7,9 +7,9 @@
 package ldbc.connector.net.packet
 package response
 
-import scodec.Decoder
 import scodec.bits.BitVector
 import scodec.codecs.*
+import scodec.Decoder
 
 import cats.syntax.all.*
 
@@ -53,19 +53,22 @@ object ResultSetRowPacket:
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case length =>
         val buffer = new Array[Option[BitVector]](columns.length)
-        columns.zipWithIndex.foldLeft(Decoder.pure(buffer)) {
-          case (acc, (column, index)) =>
-            val valueDecoder =
-              if length == NULL && index == 0 then Decoder.pure(None)
-              else if index == 0 then decodeValue(length)
-              else lengthEncodedIntDecoder.flatMap {
-                case NULL  => Decoder.pure(None)
-                case value => decodeValue(value.toInt)
-              }
+        columns.zipWithIndex
+          .foldLeft(Decoder.pure(buffer)) {
+            case (acc, (column, index)) =>
+              val valueDecoder =
+                if length == NULL && index == 0 then Decoder.pure(None)
+                else if index == 0 then decodeValue(length)
+                else
+                  lengthEncodedIntDecoder.flatMap {
+                    case NULL  => Decoder.pure(None)
+                    case value => decodeValue(value.toInt)
+                  }
 
-            for
-              buffer <- acc
-              value <- valueDecoder
-            yield buffer.updated(index, value)
-        }.map(ResultSetRowPacket(_))
+              for
+                buffer <- acc
+                value  <- valueDecoder
+              yield buffer.updated(index, value)
+          }
+          .map(ResultSetRowPacket(_))
     }

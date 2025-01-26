@@ -261,7 +261,8 @@ object Protocol:
             yield columnDefinitions
               .zip(resultSetRow.flatMap(_.values))
               .map {
-                case (columnDefinition, resultSetRow) => columnDefinition.name -> resultSetRow.map(_.toBase64).getOrElse("")
+                case (columnDefinition, resultSetRow) =>
+                  columnDefinition.name -> resultSetRow.map(_.toBase64).getOrElse("")
               }
               .toMap
         }

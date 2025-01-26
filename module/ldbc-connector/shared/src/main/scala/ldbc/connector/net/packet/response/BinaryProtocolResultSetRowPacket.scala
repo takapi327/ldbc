@@ -39,10 +39,18 @@ object BinaryProtocolResultSetRowPacket:
         case MYSQL_TYPE_DOUBLE                  => doubleL.map(d => BitVector.encodeUtf8(d.toString).toOption)
         case MYSQL_TYPE_FLOAT                   => floatL.map(f => BitVector.encodeUtf8(f.toString).toOption)
         case MYSQL_TYPE_DATE =>
-          timestamp.map(_.flatMap(localDateTime => BitVector.encodeUtf8(localDateFormatter.format(localDateTime.toLocalDate)).toOption))
-        case MYSQL_TYPE_DATETIME | MYSQL_TYPE_TIMESTAMP => timestamp.map(_.flatMap(localDateTime => BitVector.encodeUtf8(localDateTimeFormatter(0).format(localDateTime)).toOption))
-        case MYSQL_TYPE_TIME                            => time.map(_.flatMap(localDateTime => BitVector.encodeUtf8(timeFormatter(0).format(localDateTime)).toOption))
-        case MYSQL_TYPE_NULL                            => provide(None)
+          timestamp.map(
+            _.flatMap(localDateTime =>
+              BitVector.encodeUtf8(localDateFormatter.format(localDateTime.toLocalDate)).toOption
+            )
+          )
+        case MYSQL_TYPE_DATETIME | MYSQL_TYPE_TIMESTAMP =>
+          timestamp.map(
+            _.flatMap(localDateTime => BitVector.encodeUtf8(localDateTimeFormatter(0).format(localDateTime)).toOption)
+          )
+        case MYSQL_TYPE_TIME =>
+          time.map(_.flatMap(localDateTime => BitVector.encodeUtf8(timeFormatter(0).format(localDateTime)).toOption))
+        case MYSQL_TYPE_NULL => provide(None)
         case MYSQL_TYPE_NEWDATE | MYSQL_TYPE_TIMESTAMP2 | MYSQL_TYPE_DATETIME2 | MYSQL_TYPE_TIME2 | MYSQL_TYPE_JSON =>
           throw new RuntimeException(s"Unsupported column type: ${ column.columnType }")
 

@@ -77,7 +77,7 @@ private[ldbc] case class ResultSetImpl(
       rowDecode[Byte](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
-          value//.toByte(false)
+          value // .toByte(false)
         case None =>
           lastColumnReadNullable = true
           0
@@ -398,8 +398,8 @@ private[ldbc] case class ResultSetImpl(
 
   private def rowDecode[T](index: Int)(using codec: Codec[T]): Option[T] =
     for
-      row <- currentRow
-      value <- row.values(index)
+      row     <- currentRow
+      value   <- row.values(index)
       decoded <- codec.decode(value).toOption
     yield decoded.value
 

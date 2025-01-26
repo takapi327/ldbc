@@ -16,9 +16,9 @@ import java.time.OffsetDateTime
 import java.time.OffsetTime
 import java.time.Year
 
-import cats.syntax.all.*
+import scodec.{ Attempt, Codec, Err }
 
-import scodec.{Codec, Attempt, Err}
+import cats.syntax.all.*
 
 import ldbc.connector.data.Formatter.*
 
@@ -26,10 +26,13 @@ trait TemporalCodecs:
 
   private def temporal[A <: TemporalAccessor](
     formatter: DateTimeFormatter,
-    parse:     (String, DateTimeFormatter) => A,
+    parse:     (String, DateTimeFormatter) => A
   ): Codec[A] =
     Codec[String].exmap(
-      str => Attempt.fromEither(Either.catchOnly[DateTimeParseException](parse(str, formatter)).leftMap(Err.fromThrowable(_))),
+      str =>
+        Attempt.fromEither(
+          Either.catchOnly[DateTimeParseException](parse(str, formatter)).leftMap(Err.fromThrowable(_))
+        ),
       temporal => Attempt.successful(formatter.format(temporal))
     )
 
@@ -58,29 +61,31 @@ trait TemporalCodecs:
   )
   def year(digit: 4): Codec[Year] =
     Codec[String].exmap(
-      str => Attempt.fromEither(Either.catchOnly[DateTimeParseException](Year.parse(str)).leftMap(Err.fromThrowable(_))),
-      year => Attempt.successful(year.toString),
+      str =>
+        Attempt.fromEither(Either.catchOnly[DateTimeParseException](Year.parse(str)).leftMap(Err.fromThrowable(_))),
+      year => Attempt.successful(year.toString)
     )
   given Codec[Year] =
     Codec[String].exmap(
-      str => Attempt.fromEither(
-        (
-          for
-            int <- Either.catchOnly[NumberFormatException](str.toInt)
-            year <- Either.catchOnly[DateTimeParseException] {
-              val int = str.toInt
-              if (1901 <= int && int <= 2156) || str === "0000" then Year.of(int)
-              else
-                throw new DateTimeParseException(
-                  s"Year is out of range: $int. Year must be in the range 1901 to 2155.",
-                  str,
-                  0
-                )
-            }
-          yield year
+      str =>
+        Attempt.fromEither(
+          (
+            for
+              int <- Either.catchOnly[NumberFormatException](str.toInt)
+              year <- Either.catchOnly[DateTimeParseException] {
+                        val int = str.toInt
+                        if (1901 <= int && int <= 2156) || str === "0000" then Year.of(int)
+                        else
+                          throw new DateTimeParseException(
+                            s"Year is out of range: $int. Year must be in the range 1901 to 2155.",
+                            str,
+                            0
+                          )
+                      }
+            yield year
           ).leftMap(Err.fromThrowable(_))
-      ),
-      year => Attempt.successful(year.toString),
+        ),
+      year => Attempt.successful(year.toString)
     )
 
 object temporal extends TemporalCodecs

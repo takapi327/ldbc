@@ -13,7 +13,7 @@ trait TextCodecs:
   def binary(): Codec[Array[Byte]] =
     Codec[String].xmap(
       s => s.getBytes("UTF-8"),
-      bytes => new String(bytes),
+      bytes => new String(bytes)
     )
   given Codec[Array[Byte]] = binary()
 
