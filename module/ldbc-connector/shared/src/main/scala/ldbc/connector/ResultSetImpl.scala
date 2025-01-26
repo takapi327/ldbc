@@ -8,10 +8,11 @@ package ldbc.connector
 
 import java.time.*
 
+import scodec.Codec
+
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
-import ldbc.connector.codec.all.*
-import ldbc.connector.codec.Codec
+import ldbc.connector.codec.all.given
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
 import ldbc.connector.util.Version
@@ -51,7 +52,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getString(columnIndex: Int): String =
     checkClose {
-      rowDecode(row => text.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[String](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -62,7 +63,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBoolean(columnIndex: Int): Boolean =
     checkClose {
-      rowDecode(row => boolean.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Boolean](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -73,10 +74,10 @@ private[ldbc] case class ResultSetImpl(
 
   override def getByte(columnIndex: Int): Byte =
     checkClose {
-      rowDecode(row => bit.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Byte](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
-          value.toByte(false)
+          value//.toByte(false)
         case None =>
           lastColumnReadNullable = true
           0
@@ -84,7 +85,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getShort(columnIndex: Int): Short =
     checkClose {
-      rowDecode(row => smallint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Short](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -95,7 +96,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getInt(columnIndex: Int): Int =
     checkClose {
-      rowDecode(row => int.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Int](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -106,7 +107,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getLong(columnIndex: Int): Long =
     checkClose {
-      rowDecode(row => bigint.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Long](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -117,7 +118,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getFloat(columnIndex: Int): Float =
     checkClose {
-      rowDecode(row => float.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Float](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -128,7 +129,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getDouble(columnIndex: Int): Double =
     checkClose {
-      rowDecode(row => double.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Double](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -139,7 +140,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBytes(columnIndex: Int): Array[Byte] =
     checkClose {
-      rowDecode(row => binary(255).decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[Array[Byte]](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -150,7 +151,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getDate(columnIndex: Int): LocalDate =
     checkClose {
-      rowDecode(row => date.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[LocalDate](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -161,7 +162,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTime(columnIndex: Int): LocalTime =
     checkClose {
-      rowDecode(row => time.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[LocalTime](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -172,7 +173,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getTimestamp(columnIndex: Int): LocalDateTime =
     checkClose {
-      rowDecode(row => timestamp.decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[LocalDateTime](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -260,7 +261,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBigDecimal(columnIndex: Int): BigDecimal =
     checkClose {
-      rowDecode(row => decimal().decode(columnIndex, List(row.values(columnIndex - 1))).toOption) match
+      rowDecode[BigDecimal](columnIndex - 1) match
         case Some(value) =>
           lastColumnReadNullable = false
           value
@@ -371,21 +372,6 @@ private[ldbc] case class ResultSetImpl(
     }
 
   /**
-   * Function to decode all lines with the specified type.
-   *
-   * @param codec
-   *   The codec to decode the value
-   * @tparam T
-   *   The type of the value
-   * @return
-   *   A list of values decoded with the specified type.
-   */
-  def decode[T](codec: Codec[T]): List[T] =
-    checkClose {
-      records.flatMap(row => codec.decode(0, row.values.toList).toOption).toList
-    }
-
-  /**
    * Does the result set contain rows, or is it the result of a DDL or DML statement?
    *
    * @return true if result set contains rows
@@ -410,8 +396,12 @@ private[ldbc] case class ResultSetImpl(
     if isClosed then raiseError("Operation not allowed after ResultSet closed")
     else f
 
-  private def rowDecode[T](decode: ResultSetRowPacket => Option[T]): Option[T] =
-    currentRow.flatMap(decode)
+  private def rowDecode[T](index: Int)(using codec: Codec[T]): Option[T] =
+    for
+      row <- currentRow
+      value <- row.values(index)
+      decoded <- codec.decode(value).toOption
+    yield decoded.value
 
   private def findByName(columnLabel: String): Int =
     columns.zipWithIndex

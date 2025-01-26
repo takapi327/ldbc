@@ -15,6 +15,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import scodec.bits.BitVector
+
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.{ Connection, DatabaseMetaData, PreparedStatement, ResultSet, RowIdLifetime, Statement }
@@ -78,7 +80,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
                               ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
                             )
-          yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.getOrElse("")
+          yield resultSetRow.headOption.flatMap(_.values.headOption).flatten.map(_.toBase64).getOrElse("")
       }
 
   override def getDatabaseProductVersion(): String = protocol.initialPacket.serverVersion.toString
@@ -523,7 +525,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
-        dbList.map(name => ResultSetRowPacket(Array(Some(name)))).toVector,
+        dbList.map(name => ResultSetRowPacket(Array(scodec.bits.BitVector.encodeUtf8(name).toOption))).toVector,
         serverVariables,
         protocol.initialPacket.serverVersion
       )
@@ -540,7 +542,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       ),
       TableType.values
         .filterNot(_ == TableType.UNKNOWN)
-        .map(tableType => ResultSetRowPacket(Array(Some(tableType.name))))
+        .map(tableType => ResultSetRowPacket(Array(BitVector.encodeUtf8(tableType.name).toOption)))
         .toVector,
       serverVariables,
       protocol.initialPacket.serverVersion
@@ -907,7 +909,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
                   Some(privilege),                                                                  // PRIVILEGE
                   None                                                                              // IS_GRANTABLE
                 )
-                records += ResultSetRowPacket(rows)
+                records += ResultSetRowPacket(rows.map(_.flatMap(BitVector.encodeUtf8(_).toOption)))
               records.result()
             }
           }
@@ -1013,14 +1015,14 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             case (scope, columnName, dataType, typeName, columnSize, bufferLength, decimalDigits, pseudoColumn) =>
               ResultSetRowPacket(
                 Array(
-                  Some(scope.toString),
-                  Some(columnName),
-                  Some(dataType.toString),
-                  Some(typeName),
-                  Some(columnSize.toString),
-                  Some(bufferLength.toString),
-                  Some(decimalDigits.toString),
-                  Some(pseudoColumn.toString)
+                  BitVector.encodeUtf8(scope.toString).toOption,
+                  BitVector.encodeUtf8(columnName).toOption,
+                  BitVector.encodeUtf8(dataType.toString).toOption,
+                  BitVector.encodeUtf8(typeName).toOption,
+                  BitVector.encodeUtf8(columnSize.toString).toOption,
+                  BitVector.encodeUtf8(bufferLength.toString).toOption,
+                  BitVector.encodeUtf8(decimalDigits.toString).toOption,
+                  BitVector.encodeUtf8(pseudoColumn.toString).toOption
                 )
               )
           },
@@ -1497,7 +1499,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
             override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_VARCHAR
             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
         },
-        dbList.map(name => ResultSetRowPacket(Array(Some("def"), Some(name)))).toVector,
+        dbList.map(name => ResultSetRowPacket(Array(BitVector.encodeUtf8("def").toOption, BitVector.encodeUtf8(name).toOption))).toVector,
         serverVariables,
         protocol.initialPacket.serverVersion
       )
@@ -1877,10 +1879,10 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
     "JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
       + "AND R.TABLE_NAME = B.TABLE_NAME AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) "
 
-  private def getTypeInfo(mysqlTypeName: String): Array[Option[String]] =
+  private def getTypeInfo(mysqlTypeName: String): Array[Option[BitVector]] =
     val mysqlType = MysqlType.getByName(mysqlTypeName)
 
-    Array(
+    (Array(
       Some(mysqlTypeName), // TYPE_NAME
       if mysqlType == MysqlType.YEAR && !yearIsDateType then Some(SMALLINT.toString)
       else Some(mysqlType.jdbcType.toString), // DATA_TYPE
@@ -1928,7 +1930,7 @@ private[ldbc] case class DatabaseMetaDataImpl[F[_]: Temporal: Exchange: Tracer](
       Some("0"), // SQL_DATA_TYPE
       Some("0"), // SQL_DATETIME_SUB
       Some("10") // NUM_PREC_RADIX
-    )
+    )).map(_.flatMap(BitVector.encodeUtf8(_).toOption))
 
   private def emptyResultSet(fields: Vector[String]): ResultSet =
     ResultSetImpl(

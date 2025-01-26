@@ -7,7 +7,8 @@
 package ldbc.connector.net.packet
 package response
 
-import scodec.*
+import scodec.Decoder
+import scodec.bits.BitVector
 import scodec.codecs.*
 
 import cats.syntax.all.*
@@ -28,7 +29,7 @@ trait ResultSetRowPacket extends ResponsePacket:
   /**
    * The values of the row.
    */
-  def values: Array[Option[String]]
+  def values: Array[Option[BitVector]]
 
   override def toString: String = "ProtocolText::ResultSetRow"
 
@@ -36,13 +37,12 @@ object ResultSetRowPacket:
 
   private val NULL = 0xfb
 
-  def apply(_values: Array[Option[String]]): ResultSetRowPacket =
+  def apply(_values: Array[Option[BitVector]]): ResultSetRowPacket =
     new ResultSetRowPacket:
-      override val values: Array[Option[String]] = _values
+      override val values: Array[Option[BitVector]] = _values
 
-  private def decodeValue(length: Int): Decoder[Option[String]] =
-    bytes(length).asDecoder
-      .map(_.decodeUtf8Lenient.some)
+  private def decodeValue(length: Int): Decoder[Option[BitVector]] =
+    bits(length * 8).asDecoder.map(_.some)
 
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags],
@@ -52,7 +52,7 @@ object ResultSetRowPacket:
       case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
       case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case length =>
-        val buffer = new Array[Option[String]](columns.length)
+        val buffer = new Array[Option[BitVector]](columns.length)
         columns.zipWithIndex.foldLeft(Decoder.pure(buffer)) {
           case (acc, (column, index)) =>
             val valueDecoder =
@@ -63,10 +63,9 @@ object ResultSetRowPacket:
                 case value => decodeValue(value.toInt)
               }
 
-            acc.flatMap { buffer =>
-              valueDecoder.map { value =>
-                buffer.updated(index, value)
-              }
-            }
+            for
+              buffer <- acc
+              value <- valueDecoder
+            yield buffer.updated(index, value)
         }.map(ResultSetRowPacket(_))
     }

@@ -13,6 +13,8 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import scodec.bits.BitVector
+
 import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
 
@@ -246,7 +248,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                           override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
                           override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
                         ),
-                        Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
+                        Vector(ResultSetRowPacket(Array(Some(BitVector.fromLong(lastInsertId))))),
                         serverVariables,
                         protocol.initialPacket.serverVersion
                       )
