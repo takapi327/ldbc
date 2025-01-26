@@ -52,8 +52,7 @@ package object dsl:
             case value: LocalDate     => prepareStatement.setDate(index + 1, value)
             case value: LocalTime     => prepareStatement.setTime(index + 1, value)
             case value: LocalDateTime => prepareStatement.setTimestamp(index + 1, value)
-            case None                 => prepareStatement.setNull(index + 1, ldbc.sql.Types.NULL)
-          )
+            case None                 => prepareStatement.setNull(index + 1, ldbc.sql.Types.NULL))
       })
 
   private[ldbc] trait SyncSyntax[F[_]: Temporal] extends StringContextSyntax[F]:

@@ -254,8 +254,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                              override def table:      String                     = ""
                              override def name:       String                     = "GENERATED_KEYS"
                              override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
-                             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-                           ),
+                             override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty),
                            Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
                            serverVariables,
                            protocol.initialPacket.serverVersion
