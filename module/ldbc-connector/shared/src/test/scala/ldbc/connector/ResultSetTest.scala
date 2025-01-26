@@ -36,7 +36,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_LONG),
         column("c3", ColumnDataType.MYSQL_TYPE_LONG)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Int, Int, Int)]
@@ -56,7 +56,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_LONGLONG),
         column("c3", ColumnDataType.MYSQL_TYPE_LONGLONG)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Long, Long, Long)]
@@ -76,7 +76,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_DOUBLE),
         column("c3", ColumnDataType.MYSQL_TYPE_DOUBLE)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Double, Double, Double)]
@@ -96,7 +96,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_STRING),
         column("c3", ColumnDataType.MYSQL_TYPE_STRING)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Option[String], Option[String], Option[String])]
@@ -116,7 +116,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_TINY),
         column("c3", ColumnDataType.MYSQL_TYPE_TINY)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1"), Some("0"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"), Some("0"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Boolean, Boolean, Boolean)]
@@ -136,7 +136,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_TINY),
         column("c3", ColumnDataType.MYSQL_TYPE_TINY)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Byte, Byte, Byte)]
@@ -156,7 +156,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_SHORT),
         column("c3", ColumnDataType.MYSQL_TYPE_SHORT)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1"), Some("2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"), Some("2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Short, Short, Short)]
@@ -176,7 +176,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_FLOAT),
         column("c3", ColumnDataType.MYSQL_TYPE_FLOAT)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Float, Float, Float)]
@@ -196,7 +196,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_DECIMAL),
         column("c3", ColumnDataType.MYSQL_TYPE_DECIMAL)
       ),
-      Vector(ResultSetRowPacket(Array(Some("1.1"), Some("2.2"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1.1"), Some("2.2"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Option[BigDecimal], Option[BigDecimal], Option[BigDecimal])]
@@ -216,7 +216,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_DATE),
         column("c3", ColumnDataType.MYSQL_TYPE_DATE)
       ),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01"), Some("2023-01-02"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01"), Some("2023-01-02"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Option[LocalDate], Option[LocalDate], Option[LocalDate])]
@@ -236,7 +236,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_TIME),
         column("c3", ColumnDataType.MYSQL_TYPE_TIME)
       ),
-      Vector(ResultSetRowPacket(Array(Some("12:34:56"), Some("12:34:57"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("12:34:56"), Some("12:34:57"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Option[LocalTime], Option[LocalTime], Option[LocalTime])]
@@ -256,7 +256,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
         column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
       ),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])]
@@ -279,7 +279,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_TIMESTAMP),
         column("c3", ColumnDataType.MYSQL_TYPE_TIMESTAMP)
       ),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56"), Some("2023-01-02 12:34:57"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Option[LocalDateTime], Option[LocalDateTime], Option[LocalDateTime])]
@@ -303,10 +303,10 @@ class ResultSetTest extends FTestPlatform:
         column("c3", ColumnDataType.MYSQL_TYPE_LONG)
       ),
       Vector(
-        ResultSetRowPacket(Array(Some("1"), Some("2"), None)),
-        ResultSetRowPacket(Array(Some("3"), Some("4"), None)),
-        ResultSetRowPacket(Array(Some("5"), Some("6"), None)),
-        ResultSetRowPacket(Array(Some("7"), Some("8"), None))
+        ResultSetRowPacket.fromString(Array(Some("1"), Some("2"), None)),
+        ResultSetRowPacket.fromString(Array(Some("3"), Some("4"), None)),
+        ResultSetRowPacket.fromString(Array(Some("5"), Some("6"), None)),
+        ResultSetRowPacket.fromString(Array(Some("7"), Some("8"), None))
       ),
       Version(0, 0, 0)
     )
@@ -329,7 +329,7 @@ class ResultSetTest extends FTestPlatform:
         column("c2", ColumnDataType.MYSQL_TYPE_TINY, Some("t")),
         column("c3", ColumnDataType.MYSQL_TYPE_TINY, Some("t"))
       ),
-      Vector(ResultSetRowPacket(Array(Some("1"), Some("0"), None))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"), Some("0"), None))),
       Version(0, 0, 0)
     )
     val builder = List.newBuilder[(Boolean, Boolean, Boolean)]
@@ -619,7 +619,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assert(resultSet.isBeforeFirst())
@@ -637,7 +637,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assertEquals(resultSet.isAfterLast(), false)
@@ -652,7 +652,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assertEquals(resultSet.isFirst(), false)
@@ -667,7 +667,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0)
     )
     assertEquals(resultSet.isLast(), false)
@@ -682,7 +682,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -720,7 +720,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -759,7 +759,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -808,8 +808,8 @@ class ResultSetTest extends FTestPlatform:
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
       Vector(
-        ResultSetRowPacket(Array(Some("2023-01-01 12:34:56"))),
-        ResultSetRowPacket(Array(Some("2023-01-01 12:34:56")))
+        ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56"))),
+        ResultSetRowPacket.fromString(Array(Some("2023-01-01 12:34:56")))
       ),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -858,7 +858,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"))), ResultSetRowPacket.fromString(Array(Some("2")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -928,7 +928,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"))), ResultSetRowPacket.fromString(Array(Some("2")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY
@@ -963,7 +963,7 @@ class ResultSetTest extends FTestPlatform:
   ) {
     val resultSet = buildResultSet(
       Vector(column("c1", ColumnDataType.MYSQL_TYPE_TIMESTAMP)),
-      Vector(ResultSetRowPacket(Array(Some("1"))), ResultSetRowPacket(Array(Some("2")))),
+      Vector(ResultSetRowPacket.fromString(Array(Some("1"))), ResultSetRowPacket.fromString(Array(Some("2")))),
       Version(0, 0, 0),
       ResultSet.TYPE_SCROLL_INSENSITIVE,
       ResultSet.CONCUR_READ_ONLY

@@ -41,6 +41,10 @@ object ResultSetRowPacket:
     new ResultSetRowPacket:
       override val values: Array[Option[BitVector]] = _values
 
+  def fromString(_values: Array[Option[String]]): ResultSetRowPacket =
+    new ResultSetRowPacket:
+      override val values: Array[Option[BitVector]] = _values.map(_.flatMap(BitVector.encodeUtf8(_).toOption))
+
   private def decodeValue(length: Int): Decoder[Option[BitVector]] =
     bits(length * 8).asDecoder.map(_.some)
 
