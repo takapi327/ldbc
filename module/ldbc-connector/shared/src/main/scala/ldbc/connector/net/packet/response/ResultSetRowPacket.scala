@@ -10,7 +10,7 @@ package response
 import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
-import scodec.bits.BitVector
+import scodec.bits.{BitVector, ByteOrdering}
 import scodec.codecs.*
 
 import ldbc.connector.data.CapabilitiesFlags
@@ -43,7 +43,7 @@ object ResultSetRowPacket:
 
   private def decodeToString(remainder: BitVector, size: Int): (BitVector, Option[String]) =
     val (fieldSizeBits, postFieldSize) = remainder.splitAt(size)
-    val fieldSizeNumBytes              = fieldSizeBits.toInt()
+    val fieldSizeNumBytes              = fieldSizeBits.toLong(false, ByteOrdering.LittleEndian)
     if fieldSizeNumBytes == NULL then (postFieldSize, None)
     else
       val (fieldBits, postFieldBits) = postFieldSize.splitAt(fieldSizeNumBytes * 8L)
