@@ -22,7 +22,7 @@ import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.packet.*
-import ldbc.connector.net.packet.response.*
+import ldbc.connector.net.packet.response.InitialPacket
 import ldbc.connector.net.protocol.parseHeader
 
 /**
@@ -42,10 +42,9 @@ trait PacketSocket[F[_]]:
 object PacketSocket:
 
   def fromBitVectorSocket[F[_]: Concurrent: Console](
-    bvs:             BitVectorSocket[F],
-    debugEnabled:    Boolean,
-    sequenceIdRef:   Ref[F, Byte],
-    capabilityFlags: Set[CapabilitiesFlags]
+    bvs:           BitVectorSocket[F],
+    debugEnabled:  Boolean,
+    sequenceIdRef: Ref[F, Byte]
   ): PacketSocket[F] = new PacketSocket[F]:
 
     private def debug(msg: => String): F[Unit] =
@@ -105,5 +104,5 @@ object PacketSocket:
     capabilitiesFlags: Set[CapabilitiesFlags]
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
-      fromBitVectorSocket(_, debug, sequenceIdRef, capabilitiesFlags)
+      fromBitVectorSocket(_, debug, sequenceIdRef)
     )

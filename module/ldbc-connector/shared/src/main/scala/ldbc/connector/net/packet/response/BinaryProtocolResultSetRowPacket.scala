@@ -13,6 +13,7 @@ import scodec.interop.cats.*
 
 import cats.syntax.all.*
 
+import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.data.ColumnDataType.*
 import ldbc.connector.data.Formatter.*
 
@@ -44,8 +45,13 @@ object BinaryProtocolResultSetRowPacket:
         case MYSQL_TYPE_NEWDATE | MYSQL_TYPE_TIMESTAMP2 | MYSQL_TYPE_DATETIME2 | MYSQL_TYPE_TIME2 | MYSQL_TYPE_JSON =>
           throw new RuntimeException(s"Unsupported column type: ${ column.columnType }")
 
-  def decoder(columns: Vector[ColumnDefinitionPacket]): Decoder[BinaryProtocolResultSetRowPacket] =
+  def decoder(
+    capabilityFlags: Set[CapabilitiesFlags],
+    columns:         Vector[ColumnDefinitionPacket]
+  ): Decoder[BinaryProtocolResultSetRowPacket | EOFPacket | ERRPacket] =
     uint8L.flatMap {
+      case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
+      case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
       case OKPacket.STATUS =>
         for
           nullBitmapBytes <- bytes((columns.length + 7 + 2) / 8)

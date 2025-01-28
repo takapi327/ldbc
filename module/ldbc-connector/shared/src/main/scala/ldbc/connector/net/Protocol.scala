@@ -61,7 +61,7 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    * Receive the next `ResponsePacket`, or raise an exception if EOF is reached before a complete
    * message arrives.
    */
-  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[ResponsePacket]
+  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P]
 
   /** Send the specified request packet. */
   def send(request: RequestPacket): F[Unit]
@@ -151,7 +151,7 @@ object Protocol:
       hostInfo.database.map(db => Attribute("database", db))
     ).flatten
 
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[ResponsePacket] = socket.receive(decoder)
+    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] = socket.receive(decoder)
 
     override def send(request: RequestPacket): F[Unit] = socket.send(request)
 
