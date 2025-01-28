@@ -7,12 +7,11 @@
 package ldbc.connector.net.packet
 package response
 
+import java.nio.charset.StandardCharsets.UTF_8
+
 import scodec.*
+import scodec.bits.BitVector
 import scodec.codecs.*
-
-import cats.syntax.all.*
-
-import ldbc.connector.data.CapabilitiesFlags
 
 /**
  * Represents a row in a result set.
@@ -40,33 +39,56 @@ object ResultSetRowPacket:
     new ResultSetRowPacket:
       override val values: Array[Option[String]] = _values
 
-  private def decodeValue(length: Int): Decoder[Option[String]] =
-    bytes(length).asDecoder
-      .map(_.decodeUtf8Lenient.some)
+  private def decodeToString(remainder: BitVector, size: Int): (BitVector, Option[String]) =
+    val (fieldSizeBits, postFieldSize) = remainder.splitAt(size)
+    val fieldSizeNumBytes = fieldSizeBits.toInt()
+    if fieldSizeNumBytes == NULL then
+      (postFieldSize, None)
+    else
+      val (fieldBits, postFieldBits) = postFieldSize.splitAt(fieldSizeNumBytes * 8L)
+      (postFieldBits, Some(new String(fieldBits.toByteArray, UTF_8)))
 
-  def decoder(
-    capabilityFlags: Set[CapabilitiesFlags],
-    columns:         Vector[ColumnDefinitionPacket]
-  ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
-    uint8.flatMap {
-      case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
-      case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
-      case length =>
-        val buffer = new Array[Option[String]](columns.length)
-        columns.zipWithIndex.foldLeft(Decoder.pure(buffer)) {
-          case (acc, (column, index)) =>
-            val valueDecoder =
-              if length == NULL && index == 0 then Decoder.pure(None)
-              else if index == 0 then decodeValue(length)
-              else lengthEncodedIntDecoder.flatMap {
-                case NULL  => Decoder.pure(None)
-                case value => decodeValue(value.toInt)
-              }
+  def decoder(columnLength: Int): Decoder[ResultSetRowPacket] =
+    new Decoder[ResultSetRowPacket]:
+      override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
+        val buffer = new Array[Option[String]](columnLength)
+        var remainingFields    = columnLength
+        var remainder = bits
+        val fieldLength = uint8.decodeValue(remainder).require
+        remainder = remainder.drop(8)
+        while remainingFields >= 1 do
+          val index = columnLength - remainingFields
+          if fieldLength == NULL && index == 0 then
+            buffer.update(index, None)
+          else if index == 0 then
+            val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength * 8L)
+            buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
+            remainder = postFieldBits
+          else
+            val length = uint8.decodeValue(remainder).require
+            remainder = remainder.drop(8)
+            if length == NULL then
+              buffer.update(index, None)
+            else if length <= 251 then
+              val (fieldBits, postFieldBits) = remainder.splitAt(length * 8L)
+              buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
+              remainder = postFieldBits
+            else if length == 252 then
+              val (postFieldSize, decodedValue) = decodeToString(remainder, 16)
+              buffer.update(index, decodedValue)
+              remainder = postFieldSize
+            else if length == 253 then
+              val (postFieldSize, decodedValue) = decodeToString(remainder, 24)
+              buffer.update(index, decodedValue)
+              remainder = postFieldSize
+            else if length == 254 then
+              val (postFieldSize, decodedValue) = decodeToString(remainder, 32)
+              buffer.update(index, decodedValue)
+              remainder = postFieldSize
+            else
+              return Attempt.Failure(Err("Invalid length encoded integer: " + fieldLength))
+          end if
+          remainingFields -= 1
+        end while
 
-            acc.flatMap { buffer =>
-              valueDecoder.map { value =>
-                buffer.updated(index, value)
-              }
-            }
-        }.map(ResultSetRowPacket(_))
-    }
+        Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
