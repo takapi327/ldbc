@@ -93,9 +93,10 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                     result.size,
                     ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
                   )
-                resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
-                                  ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
-                                )
+                resultSetRow <-
+                  protocol.readUntilEOF[ResultSetRowPacket](
+                    ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
+                  )
                 resultSet = ResultSetImpl(
                               columnDefinitions,
                               resultSetRow,
