@@ -89,7 +89,7 @@ case class ServerPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           )
         resultSetRow <-
           protocol.readUntilEOF[BinaryProtocolResultSetRowPacket](
-            BinaryProtocolResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+            BinaryProtocolResultSetRowPacket.decoder(columnDefinitions)
           )
         _ <- params.set(SortedMap.empty)
         resultSet = ResultSetImpl(

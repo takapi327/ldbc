@@ -121,9 +121,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               ))*
             ) *>
               sendQuery(buildQuery(sql, params)).flatMap {
-                case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
-                case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
-                case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                result => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
               }
           }
       }
@@ -149,9 +147,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                 ))*
               ) *>
                 sendQuery(buildQuery(sql, params)).flatMap {
-                  case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
-                  case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
-                  case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                  result => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
                 }
             }
             .map(_ => false)
@@ -200,11 +196,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               sql.toUpperCase match
                 case q if q.startsWith("INSERT") =>
                   sendQuery(sql.split("VALUES").head + " VALUES" + args.mkString(","))
-                    .flatMap {
-                      case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                      case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
-                      case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
-                    }
+                    .flatMap(_ => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong)))
                 case q if q.startsWith("update") || q.startsWith("delete") || q.startsWith("CALL") =>
                   protocol.resetSequenceId *>
                     protocol.comSetOption(EnumMySQLSetOption.MYSQL_OPTION_MULTI_STATEMENTS_ON) *>
@@ -296,11 +288,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
 
               params.get.flatMap { params =>
                 val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
-                sendQuery(sql).flatMap {
-                  case _: OKPacket      => ev.unit
-                  case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
-                  case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
-                }
+                sendQuery(sql) >> ev.unit
               }
             else ev.raiseError(new SQLException("No output parameters returned by procedure."))
           )
@@ -534,10 +522,15 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
   private def setParameter(index: Int, value: String): F[Unit] =
     params.update(_ + (index -> Parameter.parameter(value)))
 
-  private def sendQuery(sql: String): F[GenericResponsePackets] =
+  private def sendQuery(sql: String): F[OKPacket] =
     checkNullOrEmptyQuery(sql) *> protocol.resetSequenceId *> protocol.send(
       ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)
-    ) *> protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
+    ) *> protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
+      case result: OKPacket      => result.pure[F]
+      case error: ERRPacket      => ev.raiseError(error.toException(Some(sql), None))
+      case _: EOFPacket          => ev.raiseError(new SQLException("Unexpected EOF packet"))
+      case unknown => ev.raiseError(new SQLException(s"Unexpected packet: $unknown"))
+    }
 
   private def receiveUntilOkPacket(resultSets: Vector[ResultSetImpl]): F[Vector[ResultSetImpl]] =
     protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
@@ -552,7 +545,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
             )
           resultSetRow <-
             protocol.readUntilEOF[ResultSetRowPacket](
-              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+              ResultSetRowPacket.decoder(columnDefinitions.length)
             )
           resultSet = ResultSetImpl(
                         columnDefinitions,
@@ -585,7 +578,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
             )
           resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
-                            ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
+                            ResultSetRowPacket.decoder(columnDefinitions.length)
                           )
           resultSet = ResultSetImpl(
                         columnDefinitions,
@@ -638,11 +631,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
 
           acc *> params.get.flatMap { params =>
             val sql = queryBuf.toString ++ params.get(param.index).fold("NULL")(_.sql)
-            sendQuery(sql).flatMap {
-              case _: OKPacket      => ev.unit
-              case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
-              case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
-            }
+            sendQuery(sql) >> ev.unit
           }
         else acc
       }
