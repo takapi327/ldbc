@@ -11,6 +11,7 @@ import scala.io.AnsiColor
 
 import scodec.bits.BitVector
 import scodec.Decoder
+import scodec.codecs.uint8
 
 import cats.syntax.all.*
 
@@ -22,7 +23,7 @@ import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.packet.*
-import ldbc.connector.net.packet.response.InitialPacket
+import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.parseHeader
 
 /**
@@ -34,7 +35,7 @@ trait PacketSocket[F[_]]:
    * Receive the next `ResponsePacket`, or raise an exception if EOF is reached before a complete
    * message arrives.
    */
-  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P]
+  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[ResponsePacket]
 
   /** Send the specified request packet. */
   def send(request: RequestPacket): F[Unit]
@@ -44,7 +45,8 @@ object PacketSocket:
   def fromBitVectorSocket[F[_]: Concurrent: Console](
     bvs:           BitVectorSocket[F],
     debugEnabled:  Boolean,
-    sequenceIdRef: Ref[F, Byte]
+    sequenceIdRef: Ref[F, Byte],
+    capabilityFlags: Set[CapabilitiesFlags]
   ): PacketSocket[F] = new PacketSocket[F]:
 
     private def debug(msg: => String): F[Unit] =
@@ -52,12 +54,18 @@ object PacketSocket:
         sequenceIdRef.get.flatMap(id => Console[F].println(s"[$id] $msg"))
       }
 
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
+    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[ResponsePacket] =
       (for
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
         payload <- bvs.read(payloadSize)
-        response = decoder.decodeValue(payload).require
+        remainder = payload
+        status = uint8.decodeValue(payload).require
+        response = status match {
+          case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decodeValue(payload).require
+          case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decodeValue(payload).require
+          case _ => decoder.decodeValue(remainder).require
+        }
         _ <-
           debug(
             s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$response${ AnsiColor.RESET }"
@@ -104,5 +112,5 @@ object PacketSocket:
     capabilitiesFlags: Set[CapabilitiesFlags]
   ): Resource[F, PacketSocket[F]] =
     BitVectorSocket(sockets, sequenceIdRef, initialPacketRef, sslOptions, readTimeout, capabilitiesFlags).map(
-      fromBitVectorSocket(_, debug, sequenceIdRef)
+      fromBitVectorSocket(_, debug, sequenceIdRef, capabilitiesFlags)
     )
