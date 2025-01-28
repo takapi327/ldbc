@@ -13,6 +13,8 @@ import scodec.*
 import scodec.bits.BitVector
 import scodec.codecs.*
 
+import ldbc.connector.data.CapabilitiesFlags
+
 /**
  * Represents a row in a result set.
  *
@@ -47,13 +49,13 @@ object ResultSetRowPacket:
       val (fieldBits, postFieldBits) = postFieldSize.splitAt(fieldSizeNumBytes * 8L)
       (postFieldBits, Some(new String(fieldBits.toByteArray, UTF_8)))
 
-  def decoder(columnLength: Int): Decoder[ResultSetRowPacket] =
+  private def decodeResultSetRow(columnLength: Int): Decoder[ResultSetRowPacket] =
     new Decoder[ResultSetRowPacket]:
       override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
-        val buffer          = new Array[Option[String]](columnLength)
+        val buffer = new Array[Option[String]](columnLength)
         var remainingFields = columnLength
-        var remainder       = bits
-        val fieldLength     = uint8.decodeValue(remainder).require
+        var remainder = bits
+        val fieldLength = uint8.decodeValue(remainder).require
         remainder = remainder.drop(8)
         while remainingFields >= 1 do
           val index = columnLength - remainingFields
@@ -88,3 +90,16 @@ object ResultSetRowPacket:
         end while
 
         Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
+
+  def decoder(
+               capabilityFlags: Set[CapabilitiesFlags],
+               columnLength: Int
+             ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
+    (bits: BitVector) =>
+      var remainder = bits
+      val status = uint8.decodeValue(remainder).require
+      remainder = remainder.drop(8)
+      status match
+        case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(remainder)
+        case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(remainder)
+        case _ => decodeResultSetRow(columnLength).decode(bits)

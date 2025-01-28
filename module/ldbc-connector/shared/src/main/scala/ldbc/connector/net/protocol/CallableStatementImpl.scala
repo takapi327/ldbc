@@ -545,7 +545,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
             )
           resultSetRow <-
             protocol.readUntilEOF[ResultSetRowPacket](
-              ResultSetRowPacket.decoder(columnDefinitions.length)
+              ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
             )
           resultSet = ResultSetImpl(
                         columnDefinitions,
@@ -578,7 +578,7 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
               ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
             )
           resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
-                            ResultSetRowPacket.decoder(columnDefinitions.length)
+                            ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
                           )
           resultSet = ResultSetImpl(
                         columnDefinitions,

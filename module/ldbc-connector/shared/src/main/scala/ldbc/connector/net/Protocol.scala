@@ -124,7 +124,7 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    * @return
    *   a vector of the response packets
    */
-  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P]): F[Vector[P]]
+  def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]]
 
   /**
    * Returns the server variables.
@@ -166,7 +166,6 @@ object Protocol:
           socket.send(ComInitDBPacket(schema)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute change schema"))
-            case eof: EOFPacket   => ev.raiseError(new SQLException("Failed to execute change schema"))
             case ok: OKPacket     => ev.unit
           }
       }
@@ -175,11 +174,7 @@ object Protocol:
       exchange[F, StatisticsPacket]("utility_commands") { (span: Span[F]) =>
         span.addAttributes((attributes :+ Attribute("command", "COM_STATISTICS"))*) *>
           socket.send(ComStatisticsPacket()) *>
-          socket.receive(StatisticsPacket.decoder).flatMap {
-            case error: ERRPacket             => ev.raiseError(error.toException("Failed to execute statistics"))
-            case eof: EOFPacket               => ev.raiseError(new SQLException("Failed to execute statistics"))
-            case statistics: StatisticsPacket => ev.pure(statistics)
-          }
+          socket.receive(StatisticsPacket.decoder)
       }
 
     override def comPing(): F[Boolean] =
@@ -188,7 +183,6 @@ object Protocol:
           socket.send(ComPingPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.pure(false)
-            case eof: EOFPacket   => ev.pure(false)
             case ok: OKPacket     => ev.pure(true)
           }
       }
@@ -199,7 +193,6 @@ object Protocol:
           socket.send(ComResetConnectionPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute reset connection"))
-            case eof: EOFPacket   => ev.unit
             case ok: OKPacket     => ev.unit
           }
       }
@@ -228,16 +221,11 @@ object Protocol:
     override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]] =
       def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
         if remaining <= 0 then ev.pure(acc)
-        else
-          socket.receive(decoder).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException)
-            case eof: EOFPacket   => ev.pure(acc)
-            case result           => read(remaining - 1, acc :+ result.asInstanceOf[P])
-          }
+        else socket.receive(decoder).flatMap(result => read(remaining - 1, acc :+ result))
 
       read(times, Vector.empty[P])
 
-    override def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P]): F[Vector[P]] =
+    override def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]] =
       def loop(acc: Vector[P]): F[Vector[P]] =
         socket.receive(decoder).flatMap {
           case _: EOFPacket     => ev.pure(acc)
@@ -265,7 +253,7 @@ object Protocol:
                   ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
                 )
               resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                                ResultSetRowPacket.decoder(columnDefinitions.length)
+                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions.length)
                               )
             yield columnDefinitions
               .zip(resultSetRow.flatMap(_.values))
@@ -411,10 +399,7 @@ object Protocol:
       password:     String,
       scrambleBuff: Array[Byte]
     ): F[Unit] =
-      socket.receive(AuthMoreDataPacket.decoder).flatMap {
-        case error: ERRPacket => ev.raiseError(error.toException("Failed to execute allow public key retrieval"))
-        case eof: EOFPacket   => ev.raiseError(new SQLException("Failed to execute allow public key retrieval"))
-        case moreData: AuthMoreDataPacket =>
+      socket.receive(AuthMoreDataPacket.decoder).flatMap { moreData =>
           // TODO: When converted to Array[Byte], it contains an extra 1 for some reason. This causes an error in public key parsing when executing Scala JS. Therefore, the first 1Byte is excluded.
           val publicKeyString = moreData.authenticationMethodData
             .drop(1)

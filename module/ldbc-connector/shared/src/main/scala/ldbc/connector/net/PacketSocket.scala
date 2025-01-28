@@ -10,7 +10,6 @@ import scala.concurrent.duration.Duration
 import scala.io.AnsiColor
 
 import scodec.bits.BitVector
-import scodec.codecs.uint8
 import scodec.Decoder
 
 import cats.syntax.all.*
@@ -35,7 +34,7 @@ trait PacketSocket[F[_]]:
    * Receive the next `ResponsePacket`, or raise an exception if EOF is reached before a complete
    * message arrives.
    */
-  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[ResponsePacket]
+  def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P]
 
   /** Send the specified request packet. */
   def send(request: RequestPacket): F[Unit]
@@ -54,18 +53,12 @@ object PacketSocket:
         sequenceIdRef.get.flatMap(id => Console[F].println(s"[$id] $msg"))
       }
 
-    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[ResponsePacket] =
+    override def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P] =
       (for
         header <- bvs.read(4)
         payloadSize = parseHeader(header.toByteArray)
         payload <- bvs.read(payloadSize)
-        remainder = payload
-        status    = uint8.decodeValue(payload).require
-        response = status match {
-                     case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decodeValue(payload).require
-                     case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decodeValue(payload).require
-                     case _                => decoder.decodeValue(remainder).require
-                   }
+        response = decoder.decodeValue(payload).require
         _ <-
           debug(
             s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$response${ AnsiColor.RESET }"
