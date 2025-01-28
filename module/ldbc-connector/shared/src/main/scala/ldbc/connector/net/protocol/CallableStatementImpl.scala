@@ -120,8 +120,8 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                 Attribute("execute", "update")
               ))*
             ) *>
-              sendQuery(buildQuery(sql, params)).flatMap {
-                result => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
+              sendQuery(buildQuery(sql, params)).flatMap { result =>
+                lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
               }
           }
       }
@@ -146,8 +146,8 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
                   Attribute("execute", "update")
                 ))*
               ) *>
-                sendQuery(buildQuery(sql, params)).flatMap {
-                  result => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
+                sendQuery(buildQuery(sql, params)).flatMap { result =>
+                  lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
                 }
             }
             .map(_ => false)
@@ -526,10 +526,10 @@ case class CallableStatementImpl[F[_]: Temporal: Exchange: Tracer](
     checkNullOrEmptyQuery(sql) *> protocol.resetSequenceId *> protocol.send(
       ComQueryPacket(sql, protocol.initialPacket.capabilityFlags, ListMap.empty)
     ) *> protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-      case result: OKPacket      => result.pure[F]
-      case error: ERRPacket      => ev.raiseError(error.toException(Some(sql), None))
-      case _: EOFPacket          => ev.raiseError(new SQLException("Unexpected EOF packet"))
-      case unknown => ev.raiseError(new SQLException(s"Unexpected packet: $unknown"))
+      case result: OKPacket => result.pure[F]
+      case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
+      case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+      case unknown          => ev.raiseError(new SQLException(s"Unexpected packet: $unknown"))
     }
 
   private def receiveUntilOkPacket(resultSets: Vector[ResultSetImpl]): F[Vector[ResultSetImpl]] =

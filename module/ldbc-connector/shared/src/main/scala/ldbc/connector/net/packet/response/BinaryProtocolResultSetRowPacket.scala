@@ -44,7 +44,7 @@ object BinaryProtocolResultSetRowPacket:
         case MYSQL_TYPE_NEWDATE | MYSQL_TYPE_TIMESTAMP2 | MYSQL_TYPE_DATETIME2 | MYSQL_TYPE_TIME2 | MYSQL_TYPE_JSON =>
           throw new RuntimeException(s"Unsupported column type: ${ column.columnType }")
 
-  def decoder(columns:         Vector[ColumnDefinitionPacket]): Decoder[BinaryProtocolResultSetRowPacket] =
+  def decoder(columns: Vector[ColumnDefinitionPacket]): Decoder[BinaryProtocolResultSetRowPacket] =
     uint8L.flatMap {
       case OKPacket.STATUS =>
         for

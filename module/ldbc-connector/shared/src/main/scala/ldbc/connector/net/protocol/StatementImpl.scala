@@ -70,8 +70,8 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
                   ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
                 )
               resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
-                ResultSetRowPacket.decoder(columnDefinitions.length)
-              )
+                                ResultSetRowPacket.decoder(columnDefinitions.length)
+                              )
               resultSet = ResultSetImpl(
                             columnDefinitions,
                             resultSetRow,

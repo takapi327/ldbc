@@ -10,8 +10,8 @@ import scala.concurrent.duration.Duration
 import scala.io.AnsiColor
 
 import scodec.bits.BitVector
-import scodec.Decoder
 import scodec.codecs.uint8
+import scodec.Decoder
 
 import cats.syntax.all.*
 
@@ -43,9 +43,9 @@ trait PacketSocket[F[_]]:
 object PacketSocket:
 
   def fromBitVectorSocket[F[_]: Concurrent: Console](
-    bvs:           BitVectorSocket[F],
-    debugEnabled:  Boolean,
-    sequenceIdRef: Ref[F, Byte],
+    bvs:             BitVectorSocket[F],
+    debugEnabled:    Boolean,
+    sequenceIdRef:   Ref[F, Byte],
     capabilityFlags: Set[CapabilitiesFlags]
   ): PacketSocket[F] = new PacketSocket[F]:
 
@@ -60,12 +60,12 @@ object PacketSocket:
         payloadSize = parseHeader(header.toByteArray)
         payload <- bvs.read(payloadSize)
         remainder = payload
-        status = uint8.decodeValue(payload).require
+        status    = uint8.decodeValue(payload).require
         response = status match {
-          case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decodeValue(payload).require
-          case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decodeValue(payload).require
-          case _ => decoder.decodeValue(remainder).require
-        }
+                     case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decodeValue(payload).require
+                     case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decodeValue(payload).require
+                     case _                => decoder.decodeValue(remainder).require
+                   }
         _ <-
           debug(
             s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$response${ AnsiColor.RESET }"

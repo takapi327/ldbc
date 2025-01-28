@@ -41,9 +41,8 @@ object ResultSetRowPacket:
 
   private def decodeToString(remainder: BitVector, size: Int): (BitVector, Option[String]) =
     val (fieldSizeBits, postFieldSize) = remainder.splitAt(size)
-    val fieldSizeNumBytes = fieldSizeBits.toInt()
-    if fieldSizeNumBytes == NULL then
-      (postFieldSize, None)
+    val fieldSizeNumBytes              = fieldSizeBits.toInt()
+    if fieldSizeNumBytes == NULL then (postFieldSize, None)
     else
       val (fieldBits, postFieldBits) = postFieldSize.splitAt(fieldSizeNumBytes * 8L)
       (postFieldBits, Some(new String(fieldBits.toByteArray, UTF_8)))
@@ -51,15 +50,14 @@ object ResultSetRowPacket:
   def decoder(columnLength: Int): Decoder[ResultSetRowPacket] =
     new Decoder[ResultSetRowPacket]:
       override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
-        val buffer = new Array[Option[String]](columnLength)
-        var remainingFields    = columnLength
-        var remainder = bits
-        val fieldLength = uint8.decodeValue(remainder).require
+        val buffer          = new Array[Option[String]](columnLength)
+        var remainingFields = columnLength
+        var remainder       = bits
+        val fieldLength     = uint8.decodeValue(remainder).require
         remainder = remainder.drop(8)
         while remainingFields >= 1 do
           val index = columnLength - remainingFields
-          if fieldLength == NULL && index == 0 then
-            buffer.update(index, None)
+          if fieldLength == NULL && index == 0 then buffer.update(index, None)
           else if index == 0 then
             val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength * 8L)
             buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
@@ -67,8 +65,7 @@ object ResultSetRowPacket:
           else
             val length = uint8.decodeValue(remainder).require
             remainder = remainder.drop(8)
-            if length == NULL then
-              buffer.update(index, None)
+            if length == NULL then buffer.update(index, None)
             else if length <= 251 then
               val (fieldBits, postFieldBits) = remainder.splitAt(length * 8L)
               buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
@@ -85,8 +82,7 @@ object ResultSetRowPacket:
               val (postFieldSize, decodedValue) = decodeToString(remainder, 32)
               buffer.update(index, decodedValue)
               remainder = postFieldSize
-            else
-              return Attempt.Failure(Err("Invalid length encoded integer: " + fieldLength))
+            else return Attempt.Failure(Err("Invalid length encoded integer: " + fieldLength))
           end if
           remainingFields -= 1
         end while

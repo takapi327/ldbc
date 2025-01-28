@@ -166,7 +166,7 @@ object Protocol:
           socket.send(ComInitDBPacket(schema)) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.raiseError(error.toException("Failed to execute change schema"))
-            case eof: EOFPacket => ev.raiseError(new SQLException("Failed to execute change schema"))
+            case eof: EOFPacket   => ev.raiseError(new SQLException("Failed to execute change schema"))
             case ok: OKPacket     => ev.unit
           }
       }
@@ -176,8 +176,8 @@ object Protocol:
         span.addAttributes((attributes :+ Attribute("command", "COM_STATISTICS"))*) *>
           socket.send(ComStatisticsPacket()) *>
           socket.receive(StatisticsPacket.decoder).flatMap {
-            case error: ERRPacket => ev.raiseError(error.toException("Failed to execute statistics"))
-            case eof: EOFPacket   => ev.raiseError(new SQLException("Failed to execute statistics"))
+            case error: ERRPacket             => ev.raiseError(error.toException("Failed to execute statistics"))
+            case eof: EOFPacket               => ev.raiseError(new SQLException("Failed to execute statistics"))
             case statistics: StatisticsPacket => ev.pure(statistics)
           }
       }
@@ -188,7 +188,7 @@ object Protocol:
           socket.send(ComPingPacket()) *>
           socket.receive(GenericResponsePackets.decoder(initialPacket.capabilityFlags)).flatMap {
             case error: ERRPacket => ev.pure(false)
-            case eof: EOFPacket => ev.pure(false)
+            case eof: EOFPacket   => ev.pure(false)
             case ok: OKPacket     => ev.pure(true)
           }
       }
@@ -228,11 +228,12 @@ object Protocol:
     override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]] =
       def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
         if remaining <= 0 then ev.pure(acc)
-        else socket.receive(decoder).flatMap {
-          case error: ERRPacket => ev.raiseError(error.toException)
-          case eof: EOFPacket   => ev.pure(acc)
-          case result => read(remaining - 1, acc :+ result.asInstanceOf[P])
-        }
+        else
+          socket.receive(decoder).flatMap {
+            case error: ERRPacket => ev.raiseError(error.toException)
+            case eof: EOFPacket   => ev.pure(acc)
+            case result           => read(remaining - 1, acc :+ result.asInstanceOf[P])
+          }
 
       read(times, Vector.empty[P])
 
@@ -241,12 +242,12 @@ object Protocol:
         socket.receive(decoder).flatMap {
           case _: EOFPacket     => ev.pure(acc)
           case error: ERRPacket => ev.raiseError(error.toException)
-          case row => loop(acc :+ row.asInstanceOf[P])
+          case row              => loop(acc :+ row.asInstanceOf[P])
         }
 
       loop(Vector.empty).attempt.flatMap {
         case Right(result) => ev.pure(result)
-        case Left(ex) => ev.raiseError(ex)
+        case Left(ex)      => ev.raiseError(ex)
       }
 
     override def serverVariables(): F[Map[String, String]] =
