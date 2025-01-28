@@ -10,7 +10,7 @@ package response
 import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
-import scodec.bits.{BitVector, ByteOrdering}
+import scodec.bits.{ BitVector, ByteOrdering }
 import scodec.codecs.*
 
 import ldbc.connector.data.CapabilitiesFlags
