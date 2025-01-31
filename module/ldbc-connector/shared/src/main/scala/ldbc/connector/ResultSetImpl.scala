@@ -209,51 +209,51 @@ private[ldbc] case class ResultSetImpl(
 
   override def getString(columnLabel: String): String =
     val index = findByName(columnLabel)
-    getString(index + 1)
+    getString(index)
 
   override def getBoolean(columnLabel: String): Boolean =
     val index = findByName(columnLabel)
-    getBoolean(index + 1)
+    getBoolean(index)
 
   override def getByte(columnLabel: String): Byte =
     val index = findByName(columnLabel)
-    getByte(index + 1)
+    getByte(index)
 
   override def getShort(columnLabel: String): Short =
     val index = findByName(columnLabel)
-    getShort(index + 1)
+    getShort(index)
 
   override def getInt(columnLabel: String): Int =
     val index = findByName(columnLabel)
-    getInt(index + 1)
+    getInt(index)
 
   override def getLong(columnLabel: String): Long =
     val index = findByName(columnLabel)
-    getLong(index + 1)
+    getLong(index)
 
   override def getFloat(columnLabel: String): Float =
     val index = findByName(columnLabel)
-    getFloat(index + 1)
+    getFloat(index)
 
   override def getDouble(columnLabel: String): Double =
     val index = findByName(columnLabel)
-    getDouble(index + 1)
+    getDouble(index)
 
   override def getBytes(columnLabel: String): Array[Byte] =
     val index = findByName(columnLabel)
-    getBytes(index + 1)
+    getBytes(index)
 
   override def getDate(columnLabel: String): LocalDate =
     val index = findByName(columnLabel)
-    getDate(index + 1)
+    getDate(index)
 
   override def getTime(columnLabel: String): LocalTime =
     val index = findByName(columnLabel)
-    getTime(index + 1)
+    getTime(index)
 
   override def getTimestamp(columnLabel: String): LocalDateTime =
     val index = findByName(columnLabel)
-    getTimestamp(index + 1)
+    getTimestamp(index)
 
   override def getMetaData(): ResultSetMetaData =
     if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
@@ -272,7 +272,7 @@ private[ldbc] case class ResultSetImpl(
 
   override def getBigDecimal(columnLabel: String): BigDecimal =
     val index = findByName(columnLabel)
-    getBigDecimal(index + 1)
+    getBigDecimal(index)
 
   override def isBeforeFirst(): Boolean =
     currentCursor <= 0 && records.nonEmpty
