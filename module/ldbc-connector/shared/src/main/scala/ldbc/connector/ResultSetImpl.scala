@@ -41,12 +41,12 @@ private[ldbc] case class ResultSetImpl(
 
   def next(): Boolean =
     if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
-    else if currentCursor < recordSize then
-      currentRow = Some(records(currentCursor))
-      currentCursor += 1
-      true
+    else if currentCursor <= recordSize then
+      currentRow    = records.lift(currentCursor)
+      currentCursor = currentCursor + 1
+      currentRow.isDefined
     else
-      currentRow = None
+      currentCursor = currentCursor + 1
       false
 
   override def close(): Unit = isClosed = true
