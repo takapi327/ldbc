@@ -406,7 +406,7 @@ private[ldbc] case class ResultSetImpl(
       .find { (column: ColumnDefinitionPacket, _) =>
         column.name.equalsIgnoreCase(columnLabel) || column.fullName.equalsIgnoreCase(columnLabel)
       }
-      .map(_._2)
+      .map(_._2 + 1)
       .getOrElse(
         raiseError(
           s"${ Console.CYAN }Column name '${ Console.RED }$columnLabel${ Console.CYAN }' does not exist in the ResultSet."
