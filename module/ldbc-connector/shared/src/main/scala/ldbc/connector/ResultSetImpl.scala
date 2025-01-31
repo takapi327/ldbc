@@ -33,16 +33,15 @@ private[ldbc] case class ResultSetImpl(
   statement:            Option[String] = None
 ) extends ResultSet:
 
-  private final val recordSize: Int = records.size
+  private final val recordSize:             Int                        = records.size
   private final var isClosed:               Boolean                    = false
   private final var lastColumnReadNullable: Boolean                    = false
   private final var currentCursor:          Int                        = 0
   private final var currentRow:             Option[ResultSetRowPacket] = records.headOption
 
   def next(): Boolean =
-  if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
-  else
-    if currentCursor < recordSize then
+    if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
+    else if currentCursor < recordSize then
       currentRow = Some(records(currentCursor))
       currentCursor += 1
       true
@@ -392,13 +391,13 @@ private[ldbc] case class ResultSetImpl(
       row   <- currentRow
       value <- row.values(index - 1)
       decoded <- try { Option(decode(value)) }
-      catch case _ => None
+                 catch case _ => None
     yield decoded
 
   private def rowDecodeEither[T](index: Int, decode: String => Either[String, T]): Option[T] =
     for
-      row <- currentRow
-      value <- row.values(index - 1)
+      row     <- currentRow
+      value   <- row.values(index - 1)
       decoded <- decode(value).toOption
     yield decoded
 
@@ -423,7 +422,7 @@ private[ldbc] object ResultSetImpl:
 
   private[ldbc] def temporalDecode[A <: TemporalAccessor](str: String)(
     formatter: DateTimeFormatter,
-    parse: (String, DateTimeFormatter) => A
+    parse:     (String, DateTimeFormatter) => A
   ): Either[String, A] =
     Either.catchOnly[DateTimeParseException](parse(str, formatter)).leftMap(_.getMessage)
 
