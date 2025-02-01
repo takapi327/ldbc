@@ -387,7 +387,9 @@ private[ldbc] case class ResultSetImpl(
     for
       row   <- currentRow
       value <- row.values(index - 1)
-    yield decode(value)
+      decoded <- try { Option(decode(value)) }
+                 catch case _ => None
+    yield decoded
 
   private def findByName(columnLabel: String): Int =
     columns.zipWithIndex
