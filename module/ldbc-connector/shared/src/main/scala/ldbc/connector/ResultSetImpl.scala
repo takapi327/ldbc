@@ -8,10 +8,7 @@ package ldbc.connector
 
 import java.time.*
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAccessor
-
-import cats.syntax.all.*
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
@@ -168,9 +165,9 @@ private[ldbc] case class ResultSetImpl(
   override def getDate(columnIndex: Int): LocalDate =
     if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
     else
-      rowDecodeEither[LocalDate](
+      rowDecode[LocalDate](
         columnIndex,
-        str => ResultSetImpl.temporalDecode[LocalDate](str)(localDateFormatter, LocalDate.parse)
+        str => LocalDate.parse(str, localDateFormatter)
       ) match
         case Some(value) =>
           lastColumnReadNullable = false
@@ -182,9 +179,9 @@ private[ldbc] case class ResultSetImpl(
   override def getTime(columnIndex: Int): LocalTime =
     if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
     else
-      rowDecodeEither[LocalTime](
+      rowDecode[LocalTime](
         columnIndex,
-        str => ResultSetImpl.temporalDecode[LocalTime](str)(timeFormatter(0), LocalTime.parse)
+        str => LocalTime.parse(str, timeFormatter(6))
       ) match
         case Some(value) =>
           lastColumnReadNullable = false
@@ -196,9 +193,9 @@ private[ldbc] case class ResultSetImpl(
   override def getTimestamp(columnIndex: Int): LocalDateTime =
     if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
     else
-      rowDecodeEither[LocalDateTime](
+      rowDecode[LocalDateTime](
         columnIndex,
-        str => ResultSetImpl.temporalDecode[LocalDateTime](str)(localDateTimeFormatter(0), LocalDateTime.parse)
+        str => LocalDateTime.parse(str, localDateTimeFormatter(6))
       ) match
         case Some(value) =>
           lastColumnReadNullable = false
@@ -388,18 +385,9 @@ private[ldbc] case class ResultSetImpl(
 
   private def rowDecode[T](index: Int, decode: String => T): Option[T] =
     for
-      row   <- currentRow
+      row <- currentRow
       value <- row.values(index - 1)
-      decoded <- try { Option(decode(value)) }
-                 catch case _ => None
-    yield decoded
-
-  private def rowDecodeEither[T](index: Int, decode: String => Either[String, T]): Option[T] =
-    for
-      row     <- currentRow
-      value   <- row.values(index - 1)
-      decoded <- decode(value).toOption
-    yield decoded
+    yield decode(value)
 
   private def findByName(columnLabel: String): Int =
     columns.zipWithIndex
@@ -420,11 +408,10 @@ private[ldbc] object ResultSetImpl:
 
   private[ldbc] final val CLOSED_MESSAGE = "Operation not allowed after ResultSet closed"
 
-  private[ldbc] def temporalDecode[A <: TemporalAccessor](str: String)(
+  private[ldbc] def temporalDecode[A <: TemporalAccessor](
     formatter: DateTimeFormatter,
     parse:     (String, DateTimeFormatter) => A
-  ): Either[String, A] =
-    Either.catchOnly[DateTimeParseException](parse(str, formatter)).leftMap(_.getMessage)
+  ): String => A = str => parse(str, formatter)
 
   def apply(
     columns:         Vector[ColumnDefinitionPacket],
