@@ -8,7 +8,7 @@ package ldbc.connector.net.packet
 package response
 
 import scodec.*
-import scodec.codecs.*
+import scodec.bits.*
 
 import cats.syntax.option.*
 
@@ -44,13 +44,25 @@ object EOFPacket:
 
   val STATUS = 0xfe
 
+  /**
+   * Decoder of EOF
+   *
+   * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
+   *
+   * @param capabilityFlags
+   *   Values for the capabilities flag bitmask used by the MySQL protocol.
+   */
   def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[EOFPacket] =
-    val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
-    uint4.flatMap { status =>
-      if hasClientProtocol41Flag then
-        for
-          warnings    <- uint4
-          statusFlags <- uint4
-        yield EOFPacket(status, warnings, statusFlags)
-      else Decoder.pure(EOFPacket(status, 0, 0))
-    }
+    new Decoder[EOFPacket]:
+      override def decode(bits: BitVector): Attempt[DecodeResult[EOFPacket]] =
+        val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+        val (statusBits, postStatusBits) = bits.splitAt(4)
+        val status = statusBits.toInt(false)
+        val packet = if hasClientProtocol41Flag then
+          val (warningsBits, postWorningsBits) = postStatusBits.splitAt(4)
+          val statusFlagsBits = postWorningsBits.take(4)
+          val warnings = warningsBits.toInt(false)
+          val statusFlags = statusFlagsBits.toInt(false)
+          EOFPacket(status, warnings, statusFlags)
+        else EOFPacket(status, 0, 0)
+        Attempt.successful(DecodeResult(packet, bits))
