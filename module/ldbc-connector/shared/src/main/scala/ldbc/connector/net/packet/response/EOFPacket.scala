@@ -55,14 +55,14 @@ object EOFPacket:
   def decoder(capabilityFlags: Set[CapabilitiesFlags]): Decoder[EOFPacket] =
     new Decoder[EOFPacket]:
       override def decode(bits: BitVector): Attempt[DecodeResult[EOFPacket]] =
-        val hasClientProtocol41Flag = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
+        val hasClientProtocol41Flag      = capabilityFlags.contains(CapabilitiesFlags.CLIENT_PROTOCOL_41)
         val (statusBits, postStatusBits) = bits.splitAt(4)
-        val status = statusBits.toInt(false)
+        val status                       = statusBits.toInt(false)
         val packet = if hasClientProtocol41Flag then
           val (warningsBits, postWorningsBits) = postStatusBits.splitAt(4)
-          val statusFlagsBits = postWorningsBits.take(4)
-          val warnings = warningsBits.toInt(false)
-          val statusFlags = statusFlagsBits.toInt(false)
+          val statusFlagsBits                  = postWorningsBits.take(4)
+          val warnings                         = warningsBits.toInt(false)
+          val statusFlags                      = statusFlagsBits.toInt(false)
           EOFPacket(status, warnings, statusFlags)
         else EOFPacket(status, 0, 0)
         Attempt.successful(DecodeResult(packet, bits))

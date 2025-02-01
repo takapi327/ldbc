@@ -59,11 +59,11 @@ object ResultSetRowPacket:
   private def decodeResultSetRow(columnLength: Int): Decoder[ResultSetRowPacket] =
     new Decoder[ResultSetRowPacket]:
       override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
-        val buffer          = new Array[Option[String]](columnLength)
-        var remainingFields = columnLength
-        var remainder       = bits
+        val buffer                                 = new Array[Option[String]](columnLength)
+        var remainingFields                        = columnLength
+        var remainder                              = bits
         val (fieldLengthBits, fieldLengthReminded) = remainder.splitAt(8)
-        val fieldLength = fieldLengthBits.toInt(false)
+        val fieldLength                            = fieldLengthBits.toInt(false)
         remainder = fieldLengthReminded
         while remainingFields >= 1 do
           val index = columnLength - remainingFields
@@ -74,7 +74,7 @@ object ResultSetRowPacket:
             remainder = postFieldBits
           else
             val (lengthBits, postLengthBits) = remainder.splitAt(8)
-            val length = lengthBits.toInt(false)
+            val length                       = lengthBits.toInt(false)
             remainder = postLengthBits
             if length == NULL then buffer.update(index, None)
             else if length <= 251 then
@@ -106,7 +106,7 @@ object ResultSetRowPacket:
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
     (bits: BitVector) =>
       val (statusBits, postLengthBits) = bits.splitAt(8)
-      val status    = statusBits.toInt(false)
+      val status                       = statusBits.toInt(false)
       status match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)

@@ -385,7 +385,7 @@ private[ldbc] case class ResultSetImpl(
 
   private def rowDecode[T](index: Int, decode: String => T): Option[T] =
     for
-      row <- currentRow
+      row   <- currentRow
       value <- row.values(index - 1)
     yield decode(value)
 
