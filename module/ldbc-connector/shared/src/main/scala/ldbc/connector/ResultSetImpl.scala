@@ -39,6 +39,7 @@ private[ldbc] case class ResultSetImpl(
   override def next(): Boolean =
     if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
     else if currentCursor < recordSize then
+      // Use apply instead of lift for index access from a performance standpoint.
       currentRow    = Some(records(currentCursor))
       currentCursor = currentCursor + 1
       true
@@ -385,22 +386,12 @@ private[ldbc] case class ResultSetImpl(
     else recordSize
 
   private def rowDecode[T](index: Int, decode: String => T): Option[T] =
-  currentRow match
-    case Some(row) =>
-      val value = row.values(index - 1)
-      value match
-        case Some(str) =>
-          try { Some(decode(str)) }
-          catch
-            case _: Throwable => None
-            case None         => None
-    case None => None
-  // for
-  //  row   <- currentRow
-  //  value <- row.values(index - 1)
-  //  decoded <- try { Option(decode(value)) }
-  //             catch case _ => None
-  // yield decoded
+    for
+     row   <- currentRow
+     value <- row.values(index - 1)
+     decoded <- try { Option(decode(value)) }
+                catch case _ => None
+    yield decoded
 
   private def findByName(columnLabel: String): Int =
     columns.zipWithIndex
