@@ -226,17 +226,18 @@ object Protocol:
       read(times, Vector.empty[P])
 
     override def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]] =
-      def loop(acc: Vector[P]): F[Vector[P]] =
+      val builder = Vector.newBuilder[P]
+      def loop: F[Vector[P]] =
         socket.receive(decoder).flatMap {
-          case _: EOFPacket     => ev.pure(acc)
-          case error: ERRPacket => ev.raiseError(error.toException)
-          case row              => loop(acc :+ row.asInstanceOf[P])
+          case _: EOFPacket => ev.pure(builder.result())
+          case error: ERRPacket =>
+            ev.raiseError(error.toException("Error during database operation"))
+          case row =>
+            builder += row.asInstanceOf[P]
+            loop
         }
 
-      loop(Vector.empty).attempt.flatMap {
-        case Right(result) => ev.pure(result)
-        case Left(ex)      => ev.raiseError(ex)
-      }
+      loop
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
