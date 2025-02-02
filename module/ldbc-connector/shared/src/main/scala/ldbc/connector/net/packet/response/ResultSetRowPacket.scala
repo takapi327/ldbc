@@ -56,9 +56,9 @@ object ResultSetRowPacket:
   private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     new Decoder[ResultSetRowPacket]:
       override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
-        val buffer                                 = new Array[Option[String]](columnLength)
-        var remainingFields                        = columnLength
-        var remainder                              = bits
+        val buffer          = new Array[Option[String]](columnLength)
+        var remainingFields = columnLength
+        var remainder       = bits
         while remainingFields >= 1 do
           val index = columnLength - remainingFields
           if fieldLength == NULL && index == 0 then buffer.update(index, None)
@@ -104,4 +104,4 @@ object ResultSetRowPacket:
       status match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
-        case fieldLength                => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)
+        case fieldLength      => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)
