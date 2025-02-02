@@ -36,14 +36,14 @@ private[ldbc] case class ResultSetImpl(
   private final var currentCursor:          Int                        = 0
   private final var currentRow:             Option[ResultSetRowPacket] = records.headOption
 
-  def next(): Boolean =
+  override def next(): Boolean =
     if isClosed then raiseError(ResultSetImpl.CLOSED_MESSAGE)
-    else if currentCursor <= recordSize then
-      currentRow    = records.lift(currentCursor)
+    else if currentCursor < recordSize then
+      currentRow    = Some(records(currentCursor))
       currentCursor = currentCursor + 1
-      currentRow.isDefined
+      true
     else
-      currentCursor = currentCursor + 1
+      currentRow    = None
       false
 
   override def close(): Unit = isClosed = true
