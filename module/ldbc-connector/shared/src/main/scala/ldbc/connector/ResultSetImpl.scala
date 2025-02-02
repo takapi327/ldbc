@@ -43,7 +43,8 @@ private[ldbc] case class ResultSetImpl(
       currentCursor = currentCursor + 1
       true
     else
-      currentRow = None
+      currentCursor = currentCursor + 1
+      currentRow    = None
       false
 
   override def close(): Unit = isClosed = true
@@ -384,12 +385,22 @@ private[ldbc] case class ResultSetImpl(
     else recordSize
 
   private def rowDecode[T](index: Int, decode: String => T): Option[T] =
-    for
-      row   <- currentRow
-      value <- row.values(index - 1)
-      decoded <- try { Option(decode(value)) }
-                 catch case _ => None
-    yield decoded
+  currentRow match
+    case Some(row) =>
+      val value = row.values(index - 1)
+      value match
+        case Some(str) =>
+          try { Some(decode(str)) }
+          catch
+            case _: Throwable => None
+            case None         => None
+    case None => None
+  // for
+  //  row   <- currentRow
+  //  value <- row.values(index - 1)
+  //  decoded <- try { Option(decode(value)) }
+  //             catch case _ => None
+  // yield decoded
 
   private def findByName(columnLabel: String): Int =
     columns.zipWithIndex
