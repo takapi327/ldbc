@@ -52,19 +52,13 @@ object ResultSetRowPacket:
    * Decoder of result set acquisition
    *
    * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
-   *
-   * @param columnLength
-   *   The number of columns in the result set.
    */
-  private def decodeResultSetRow(columnLength: Int): Decoder[ResultSetRowPacket] =
+  private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     new Decoder[ResultSetRowPacket]:
       override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
         val buffer                                 = new Array[Option[String]](columnLength)
         var remainingFields                        = columnLength
         var remainder                              = bits
-        val (fieldLengthBits, fieldLengthReminded) = remainder.splitAt(8)
-        val fieldLength                            = fieldLengthBits.toInt(false)
-        remainder = fieldLengthReminded
         while remainingFields >= 1 do
           val index = columnLength - remainingFields
           if fieldLength == NULL && index == 0 then buffer.update(index, None)
@@ -110,4 +104,4 @@ object ResultSetRowPacket:
       status match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
-        case _                => decodeResultSetRow(columnLength).decode(bits)
+        case fieldLength                => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)
