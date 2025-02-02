@@ -43,7 +43,7 @@ private[ldbc] case class ResultSetImpl(
       currentCursor = currentCursor + 1
       true
     else
-      currentRow    = None
+      currentRow = None
       false
 
   override def close(): Unit = isClosed = true
