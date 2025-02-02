@@ -387,10 +387,10 @@ private[ldbc] case class ResultSetImpl(
 
   private def rowDecode[T](index: Int, decode: String => T): Option[T] =
     for
-     row   <- currentRow
-     value <- row.values(index - 1)
-     decoded <- try { Option(decode(value)) }
-                catch case _ => None
+      row   <- currentRow
+      value <- row.values(index - 1)
+      decoded <- try { Option(decode(value)) }
+                 catch case _ => None
     yield decoded
 
   private def findByName(columnLabel: String): Int =
