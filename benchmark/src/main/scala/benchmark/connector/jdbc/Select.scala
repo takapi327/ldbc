@@ -57,6 +57,7 @@ class Select:
     ds.setDatabaseName("benchmark")
     ds.setUser("ldbc")
     ds.setPassword("password")
+    ds.setUseSSL(true)
 
     val datasource = jdbc.connector.MysqlDataSource[IO](ds)
 

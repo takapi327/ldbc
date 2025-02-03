@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
 import scodec.bits.{ BitVector, ByteOrdering }
-import scodec.codecs.*
 
 import ldbc.connector.data.CapabilitiesFlags
 
@@ -49,14 +48,17 @@ object ResultSetRowPacket:
       val (fieldBits, postFieldBits) = postFieldSize.splitAt(fieldSizeNumBytes * 8L)
       (postFieldBits, Some(new String(fieldBits.toByteArray, UTF_8)))
 
-  private def decodeResultSetRow(columnLength: Int): Decoder[ResultSetRowPacket] =
+  /**
+   * Decoder of result set acquisition
+   *
+   * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
+   */
+  private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     new Decoder[ResultSetRowPacket]:
       override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
         val buffer          = new Array[Option[String]](columnLength)
         var remainingFields = columnLength
         var remainder       = bits
-        val fieldLength     = uint8.decodeValue(remainder).require
-        remainder = remainder.drop(8)
         while remainingFields >= 1 do
           val index = columnLength - remainingFields
           if fieldLength == NULL && index == 0 then buffer.update(index, None)
@@ -65,8 +67,9 @@ object ResultSetRowPacket:
             buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
             remainder = postFieldBits
           else
-            val length = uint8.decodeValue(remainder).require
-            remainder = remainder.drop(8)
+            val (lengthBits, postLengthBits) = remainder.splitAt(8)
+            val length                       = lengthBits.toInt(false)
+            remainder = postLengthBits
             if length == NULL then buffer.update(index, None)
             else if length <= 251 then
               val (fieldBits, postFieldBits) = remainder.splitAt(length * 8L)
@@ -96,10 +99,9 @@ object ResultSetRowPacket:
     columnLength:    Int
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
     (bits: BitVector) =>
-      var remainder = bits
-      val status    = uint8.decodeValue(remainder).require
-      remainder = remainder.drop(8)
+      val (statusBits, postLengthBits) = bits.splitAt(8)
+      val status                       = statusBits.toInt(false)
       status match
-        case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(remainder)
-        case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(remainder)
-        case _                => decodeResultSetRow(columnLength).decode(bits)
+        case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
+        case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
+        case fieldLength      => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)
