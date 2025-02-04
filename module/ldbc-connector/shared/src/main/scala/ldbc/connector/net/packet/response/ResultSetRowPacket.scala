@@ -55,7 +55,7 @@ object ResultSetRowPacket:
    */
   private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
-      val buffer = new Array[Option[String]](columnLength)
+      val buffer    = new Array[Option[String]](columnLength)
       var remainder = bits
       for index <- 0 until columnLength do
         if fieldLength == NULL && index == 0 then buffer.update(index, None)
@@ -65,7 +65,7 @@ object ResultSetRowPacket:
           remainder = postFieldBits
         else
           val (lengthBits, postLengthBits) = remainder.splitAt(8)
-          val length = lengthBits.toInt(false)
+          val length                       = lengthBits.toInt(false)
           remainder = postLengthBits
           if length == NULL then buffer.update(index, None)
           else if length <= 251 then

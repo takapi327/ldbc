@@ -220,13 +220,14 @@ object Protocol:
 
     override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]] =
       val builder = Vector.newBuilder[P]
-      
+
       def read(remaining: Int): F[Vector[P]] =
         if remaining <= 0 then ev.pure(builder.result())
-        else socket.receive(decoder).flatMap { result =>
-          builder += result
-          read(remaining - 1)
-        }
+        else
+          socket.receive(decoder).flatMap { result =>
+            builder += result
+            read(remaining - 1)
+          }
 
       read(times)
 
