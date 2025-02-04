@@ -54,45 +54,39 @@ object ResultSetRowPacket:
    * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
    */
   private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
-    new Decoder[ResultSetRowPacket]:
-      override def decode(bits: BitVector): Attempt[DecodeResult[ResultSetRowPacket]] =
-        val buffer          = new Array[Option[String]](columnLength)
-        var remainingFields = columnLength
-        var remainder       = bits
-        while remainingFields >= 1 do
-          val index = columnLength - remainingFields
-          if fieldLength == NULL && index == 0 then buffer.update(index, None)
-          else if index == 0 then
-            val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength * 8L)
+    (bits: BitVector) =>
+      val buffer = new Array[Option[String]](columnLength)
+      var remainder = bits
+      for index <- 0 until columnLength do
+        if fieldLength == NULL && index == 0 then buffer.update(index, None)
+        else if index == 0 then
+          val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength * 8L)
+          buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
+          remainder = postFieldBits
+        else
+          val (lengthBits, postLengthBits) = remainder.splitAt(8)
+          val length = lengthBits.toInt(false)
+          remainder = postLengthBits
+          if length == NULL then buffer.update(index, None)
+          else if length <= 251 then
+            val (fieldBits, postFieldBits) = remainder.splitAt(length * 8L)
             buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
             remainder = postFieldBits
+          else if length == 252 then
+            val (postFieldSize, decodedValue) = decodeToString(remainder, 16)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSize
+          else if length == 253 then
+            val (postFieldSize, decodedValue) = decodeToString(remainder, 24)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSize
           else
-            val (lengthBits, postLengthBits) = remainder.splitAt(8)
-            val length                       = lengthBits.toInt(false)
-            remainder = postLengthBits
-            if length == NULL then buffer.update(index, None)
-            else if length <= 251 then
-              val (fieldBits, postFieldBits) = remainder.splitAt(length * 8L)
-              buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
-              remainder = postFieldBits
-            else if length == 252 then
-              val (postFieldSize, decodedValue) = decodeToString(remainder, 16)
-              buffer.update(index, decodedValue)
-              remainder = postFieldSize
-            else if length == 253 then
-              val (postFieldSize, decodedValue) = decodeToString(remainder, 24)
-              buffer.update(index, decodedValue)
-              remainder = postFieldSize
-            else if length == 254 then
-              val (postFieldSize, decodedValue) = decodeToString(remainder, 32)
-              buffer.update(index, decodedValue)
-              remainder = postFieldSize
-            else return Attempt.Failure(Err("Invalid length encoded integer: " + fieldLength))
-          end if
-          remainingFields -= 1
-        end while
+            val (postFieldSize, decodedValue) = decodeToString(remainder, 32)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSize
+        end if
 
-        Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
+      Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
 
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags],
