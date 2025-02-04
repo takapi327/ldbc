@@ -6,7 +6,7 @@
 
 package ldbc.dsl.syntax
 
-import cats.effect.Temporal
+import cats.effect.MonadCancelThrow
 
 import ldbc.dsl.*
 
@@ -16,7 +16,7 @@ import ldbc.dsl.*
  * @tparam F
  *   The effect type
  */
-trait StringContextSyntax[F[_]: Temporal]:
+trait StringContextSyntax[F[_]: MonadCancelThrow]:
 
   extension (sc: StringContext)
 

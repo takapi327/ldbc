@@ -9,7 +9,7 @@ package ldbc.dsl
 import cats.*
 import cats.syntax.all.*
 
-import cats.effect.Temporal
+import cats.effect.MonadCancelThrow
 
 import ldbc.dsl.codec.Decoder
 import ldbc.dsl.util.FactoryCompat
@@ -37,7 +37,7 @@ trait Query[F[_], T]:
 
 object Query:
 
-  private[ldbc] case class Impl[F[_]: Temporal, T](
+  private[ldbc] case class Impl[F[_]: MonadCancelThrow, T](
     statement: String,
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[T]

@@ -11,6 +11,7 @@ import java.time.*
 import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
+import cats.MonadThrow
 
 import cats.effect.*
 
@@ -21,22 +22,22 @@ import ldbc.dsl.syntax.*
 
 package object dsl:
 
-  private[ldbc] trait ParamBinder[F[_]: Temporal]:
+  private[ldbc] trait ParamBinder[F[_]: MonadThrow]:
     protected def paramBind(
       prepareStatement: PreparedStatement[F],
       params:           List[Parameter.Dynamic]
     ): F[Unit] =
-      val encoded = params.foldLeft(Temporal[F].pure(List.empty[Encoder.Supported])) {
+      val encoded = params.foldLeft(MonadThrow[F].pure(List.empty[Encoder.Supported])) {
         case (acc, param) =>
           for
             acc$ <- acc
             value <- param match
-                       case Parameter.Dynamic.Success(value) => Temporal[F].pure(value)
+                       case Parameter.Dynamic.Success(value) => MonadThrow[F].pure(value)
                        case Parameter.Dynamic.Failure(errors) =>
-                         Temporal[F].raiseError(new IllegalArgumentException(errors.mkString(", ")))
+                         MonadThrow[F].raiseError(new IllegalArgumentException(errors.mkString(", ")))
           yield acc$ :+ value
       }
-      encoded.flatMap(_.zipWithIndex.foldLeft(Temporal[F].unit) {
+      encoded.flatMap(_.zipWithIndex.foldLeft(MonadThrow[F].unit) {
         case (acc, (value, index)) =>
           acc *> (value match
             case value: Boolean       => prepareStatement.setBoolean(index + 1, value)
@@ -52,11 +53,10 @@ package object dsl:
             case value: LocalDate     => prepareStatement.setDate(index + 1, value)
             case value: LocalTime     => prepareStatement.setTime(index + 1, value)
             case value: LocalDateTime => prepareStatement.setTimestamp(index + 1, value)
-            case None                 => prepareStatement.setNull(index + 1, ldbc.sql.Types.NULL)
-          )
+            case None                 => prepareStatement.setNull(index + 1, ldbc.sql.Types.NULL))
       })
 
-  private[ldbc] trait SyncSyntax[F[_]: Temporal] extends StringContextSyntax[F]:
+  private[ldbc] trait SyncSyntax[F[_]: MonadCancelThrow] extends StringContextSyntax[F]:
 
     /**
      * Function for setting parameters to be used as static strings.

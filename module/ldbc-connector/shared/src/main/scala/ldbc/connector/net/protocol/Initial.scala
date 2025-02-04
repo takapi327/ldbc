@@ -7,9 +7,7 @@
 package ldbc.connector.net.protocol
 
 import cats.syntax.all.*
-import cats.ApplicativeError
-
-import cats.effect.Temporal
+import cats.MonadThrow
 
 import fs2.io.net.Socket
 
@@ -20,7 +18,7 @@ import ldbc.connector.net.packet.response.InitialPacket
  * Initial packet is the first packet sent by the server to the client.
  * It contains the server version, connection id, and authentication plugin data.
  * The client uses this information to determine the authentication method to use.
- * 
+ *
  * @tparam F
  *   the effect type
  */
@@ -30,29 +28,29 @@ trait Initial[F[_]]:
 
 object Initial:
 
-  def apply[F[_]: Temporal](socket: Socket[F])(using ev: ApplicativeError[F, Throwable]): Initial[F] =
+  def apply[F[_]](socket: Socket[F])(using F: MonadThrow[F]): Initial[F] =
     new Initial[F]:
       override def start: F[InitialPacket] =
         for
           header <- socket.read(4).flatMap {
-                      case Some(chunk) => ev.pure(chunk)
-                      case None        => ev.raiseError(new SQLException("Failed to read header"))
+                      case Some(chunk) => F.pure(chunk)
+                      case None        => F.raiseError(new SQLException("Failed to read header"))
                     }
           payloadSize = parseHeader(header.toArray)
           payload <- socket.read(payloadSize).flatMap {
-                       case Some(chunk) => ev.pure(chunk)
-                       case None        => ev.raiseError(new SQLException("Failed to read payload"))
+                       case Some(chunk) => F.pure(chunk)
+                       case None        => F.raiseError(new SQLException("Failed to read payload"))
                      }
           initialPacket <- InitialPacket.decoder
                              .decode(payload.toBitVector)
                              .fold(
                                err =>
-                                 ev.raiseError[InitialPacket](
+                                 F.raiseError[InitialPacket](
                                    new SQLException(
                                      message = err.message,
                                      detail  = Some(s"Failed to decode initial packet: ${ payload.toBitVector.toHex }")
                                    )
                                  ),
-                               result => ev.pure(result.value)
+                               result => F.pure(result.value)
                              )
         yield initialPacket

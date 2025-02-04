@@ -25,7 +25,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.Protocol
 import ldbc.connector.ResultSetImpl
 
-private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
+private[ldbc] case class StatementImpl[F[_]: Exchange: Tracer](
   protocol:             Protocol[F],
   serverVariables:      Map[String, String],
   batchedArgs:          Ref[F, Vector[String]],
@@ -39,7 +39,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
   lastInsertId:         Ref[F, Long],
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-)(using ev: MonadError[F, Throwable])
+)(using F: MonadThrow[F])
   extends StatementImpl.ShareStatement[F]:
 
   private val attributes = protocol.initialPacket.attributes ++ List(Attribute("type", "Statement"))
@@ -52,7 +52,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
         protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
           case _: OKPacket =>
             for
-              resultSet <- ev.pure(
+              resultSet <- F.pure(
                              ResultSetImpl
                                .empty(
                                  serverVariables,
@@ -61,7 +61,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
                            )
               _ <- currentResultSet.set(Some(resultSet))
             yield resultSet
-          case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
+          case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
           case result: ColumnsNumberPacket =>
             for
               columnDefinitions <-
@@ -98,8 +98,8 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case result: OKPacket =>
               lastInsertId.set(result.lastInsertId) *> updateCount.updateAndGet(_ => result.affectedRows)
-            case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
-            case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+            case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
+            case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
           }
       )
     }
@@ -132,14 +132,14 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
               Attribute("sql", args.toArray.toSeq)
             ))*
           ) *> (
-            if args.isEmpty then ev.pure(Array.empty)
+            if args.isEmpty then F.pure(Array.empty)
             else
               protocol.resetSequenceId *>
                 protocol.send(
                   ComQueryPacket(args.mkString(";"), protocol.initialPacket.capabilityFlags, ListMap.empty)
                 ) *>
                 args
-                  .foldLeft(ev.pure(Vector.empty[Long])) { ($acc, _) =>
+                  .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
                     for
                       acc <- $acc
                       result <-
@@ -147,10 +147,10 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
                           .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                           .flatMap {
                             case result: OKPacket =>
-                              lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
+                              lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
                             case error: ERRPacket =>
-                              ev.raiseError(error.toException("Failed to execute batch", acc))
-                            case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                              F.raiseError(error.toException("Failed to execute batch", acc))
+                            case _: EOFPacket => F.raiseError(new SQLException("Unexpected EOF packet"))
                           }
                     yield result
                   }
@@ -174,8 +174,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
 
                           override def columnType: ColumnDataType = ColumnDataType.MYSQL_TYPE_LONGLONG
 
-                          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty
-                        ),
+                          override def flags: Seq[ColumnDefinitionFlags] = Seq.empty),
                         Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
                         serverVariables,
                         protocol.initialPacket.serverVersion
@@ -183,7 +182,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
           _ <- currentResultSet.set(Some(resultSet))
         yield resultSet
       case Statement.NO_GENERATED_KEYS =>
-        ev.raiseError(
+        F.raiseError(
           new SQLException(
             "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate(), Statement.executeLargeUpdate() or Connection.prepareStatement()."
           )
@@ -192,7 +191,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
 
 object StatementImpl:
 
-  private[ldbc] trait ShareStatement[F[_]: Temporal](using ev: MonadError[F, Throwable]) extends Statement[F]:
+  private[ldbc] trait ShareStatement[F[_]](using F: MonadThrow[F]) extends Statement[F]:
 
     def statementClosed:   Ref[F, Boolean]
     def connectionClosed:  Ref[F, Boolean]
@@ -226,15 +225,15 @@ object StatementImpl:
 
     protected def checkClosed(): F[Unit] =
       isClosed().ifM(
-        close() *> ev.raiseError(new SQLException("No operations allowed after statement closed.")),
-        ev.unit
+        close() *> F.raiseError(new SQLException("No operations allowed after statement closed.")),
+        F.unit
       )
 
     protected def checkNullOrEmptyQuery(sql: String): F[Unit] =
-      if sql.isEmpty then ev.raiseError(new SQLException("Can not issue empty query."))
-      else if sql == null then ev.raiseError(new SQLException("Can not issue NULL query."))
-      else ev.unit
+      if sql.isEmpty then F.raiseError(new SQLException("Can not issue empty query."))
+      else if sql == null then F.raiseError(new SQLException("Can not issue NULL query."))
+      else F.unit
 
     protected def shiftF[T](f: => T): F[T] =
-      try ev.pure(f)
-      catch case scala.util.control.NonFatal(e) => ev.raiseError(e)
+      try F.pure(f)
+      catch case scala.util.control.NonFatal(e) => F.raiseError(e)

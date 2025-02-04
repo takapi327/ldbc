@@ -40,8 +40,7 @@ trait DataTypeParser extends SqlParser:
       "(" ~> digit.filter(n =>
         n >= min && (max match
           case m: Int  => n <= m
-          case m: Long => n <= m
-        )
+          case m: Long => n <= m)
       ) <~ ")",
       input => s"""
         |======================================================
@@ -58,7 +57,8 @@ trait DataTypeParser extends SqlParser:
       bitType | tinyintType | smallintType | mediumintType | bigIntType | intType | decimalType | floatType | doubleType |
         charType | varcharType | binaryType | varbinaryType | tinyblobType | tinytextType | blobType | textType | mediumblobType |
         mediumtextType | longblobType | longtextType | enumType | datetimeType | dateType | timestampType | timeType | yearType | serialType | booleanType,
-      input => s"""
+      input =>
+        s"""
            |===============================================================================
            |The corresponding DataType did not exist.
            |
@@ -220,7 +220,8 @@ trait DataTypeParser extends SqlParser:
               case Some(m ~ d) => DataType.DECIMAL(m, d.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
               case None        => DataType.DECIMAL(10, 0, unsigned.isDefined, zerofill.isDefined)
         },
-      input => s"""
+      input =>
+        s"""
         |===============================================================================
         |Failed to parse decimal data type.
         |The decimal Data type must be defined as follows
@@ -242,7 +243,8 @@ trait DataTypeParser extends SqlParser:
         opt(unsigned) ~ opt(zerofill) ^^ {
           case n ~ unsigned ~ zerofill => DataType.FLOAT(n.getOrElse(0), unsigned.isDefined, zerofill.isDefined)
         },
-      input => s"""
+      input =>
+        s"""
         |===============================================================================
         |Failed to parse float data type.
         |The float Data type must be defined as follows
@@ -268,7 +270,8 @@ trait DataTypeParser extends SqlParser:
               case Some(m ~ _ ~ d) => DataType.FLOAT(m, unsigned.isDefined, zerofill.isDefined)
               case None            => DataType.FLOAT(10, unsigned.isDefined, zerofill.isDefined)
         },
-      input => s"""
+      input =>
+        s"""
         |===============================================================================
         |Failed to parse double data type.
         |The double Data type must be defined as follows
@@ -627,7 +630,8 @@ trait DataTypeParser extends SqlParser:
         case Some("4") => DataType.YEAR(Some(4))
         case _         => DataType.YEAR(None)
       },
-      input => s"""
+      input =>
+        s"""
         |===============================================================================
         |Failed to parse year data type.
         |The year Data type must be defined as follows

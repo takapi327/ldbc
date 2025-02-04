@@ -13,6 +13,7 @@ import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.Console
+import cats.effect.std.UUIDGen
 
 import org.typelevel.otel4s.trace.Tracer
 
@@ -26,7 +27,7 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.util.StringHelper
 
-private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
+private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen](
   protocol:         Protocol[F],
   serverVariables:  Map[String, String],
   database:         Option[String],
@@ -34,7 +35,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
   isAutoCommit:     Ref[F, Boolean],
   connectionClosed: Ref[F, Boolean],
   databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG
-)(using ev: MonadError[F, Throwable])
+)(using ev: Concurrent[F])
   extends LdbcConnection[F]:
 
   override def createStatement(): F[Statement[F]] =
@@ -473,7 +474,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
       ResultSet.CONCUR_READ_ONLY
     )
 
-  override def setSavepoint(): F[Savepoint] = setSavepoint(StringHelper.getUniqueSavepointId)
+  override def setSavepoint(): F[Savepoint] = StringHelper.getUniqueSavepointId >>= setSavepoint
 
   override def setSavepoint(name: String): F[Savepoint] =
     for

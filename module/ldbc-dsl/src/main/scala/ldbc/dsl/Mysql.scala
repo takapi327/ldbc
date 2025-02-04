@@ -10,7 +10,7 @@ import scala.annotation.targetName
 
 import cats.syntax.all.*
 
-import cats.effect.Temporal
+import cats.effect.MonadCancelThrow
 
 import ldbc.sql.*
 
@@ -27,7 +27,9 @@ import ldbc.dsl.codec.Decoder
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynamic]) extends SQL, ParamBinder[F]:
+case class Mysql[F[_]: MonadCancelThrow](statement: String, params: List[Parameter.Dynamic])
+  extends SQL,
+          ParamBinder[F]:
 
   @targetName("combine")
   override def ++(sql: SQL): Mysql[F] =
