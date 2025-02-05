@@ -9,7 +9,6 @@ package ldbc.connector.net
 import java.nio.charset.StandardCharsets
 
 import scala.collection.immutable.ListMap
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 
 import scodec.Decoder
@@ -221,26 +220,31 @@ object Protocol:
       resetSequenceId *> comSetOption(optionOperation)
 
     override def repeatProcess[P <: ResponsePacket](times: Int, decoder: Decoder[P]): F[Vector[P]] =
-      def read(remaining: Int, acc: Vector[P]): F[Vector[P]] =
-        if remaining <= 0 then ev.pure(acc)
-        else socket.receive(decoder).flatMap(result => read(remaining - 1, acc :+ result))
+      val builder = Vector.newBuilder[P]
 
-      read(times, Vector.empty[P])
+      def read(remaining: Int): F[Vector[P]] =
+        if remaining <= 0 then ev.pure(builder.result())
+        else
+          socket.receive(decoder).flatMap { result =>
+            builder += result
+            read(remaining - 1)
+          }
 
-    override def readUntilEOF[P <: ResponsePacket](
-      decoder: Decoder[P | EOFPacket | ERRPacket]
-    ): F[Vector[P]] =
+      read(times)
 
-      def loop(buffer: ArrayBuffer[P]): F[ArrayBuffer[P]] =
+    override def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]] =
+      val builder = Vector.newBuilder[P]
+      def loop: F[Vector[P]] =
         socket.receive(decoder).flatMap {
-          case _: EOFPacket     => ev.pure(buffer)
-          case error: ERRPacket => ev.raiseError(error.toException)
+          case _: EOFPacket => ev.pure(builder.result())
+          case error: ERRPacket =>
+            ev.raiseError(error.toException("Error during database operation"))
           case row =>
-            buffer append row.asInstanceOf[P]
-            loop(buffer)
+            builder += row.asInstanceOf[P]
+            loop
         }
 
-      loop(new ArrayBuffer[P]()).map(_.toVector)
+      loop
 
     override def serverVariables(): F[Map[String, String]] =
       resetSequenceId *>
@@ -257,7 +261,7 @@ object Protocol:
                   ColumnDefinitionPacket.decoder(initialPacket.capabilityFlags)
                 )
               resultSetRow <- readUntilEOF[ResultSetRowPacket](
-                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions)
+                                ResultSetRowPacket.decoder(initialPacket.capabilityFlags, columnDefinitions.length)
                               )
             yield columnDefinitions
               .zip(resultSetRow.flatMap(_.values))

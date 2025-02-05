@@ -53,7 +53,8 @@ enum ColumnDataType(val code: Long, val name: String):
 
 object ColumnDataType:
 
+  private val codeToTypeMap: Map[Long, ColumnDataType] =
+    ColumnDataType.values.map(t => t.code -> t).toMap
+
   def apply(code: Long): ColumnDataType =
-    ColumnDataType.values
-      .find(_.code == code)
-      .getOrElse(throw new IllegalArgumentException(s"Unknown column data type code: $code"))
+    codeToTypeMap.getOrElse(code, throw new IllegalArgumentException(s"Unknown column data type code: $code"))
