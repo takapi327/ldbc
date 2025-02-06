@@ -40,6 +40,8 @@ trait BitVectorSocket[F[_]]:
    */
   def read(nBytes: Int): F[BitVector]
 
+  def readChunk(nBytes: Int): F[Chunk[Byte]]
+
 object BitVectorSocket:
 
   /**
@@ -69,12 +71,25 @@ object BitVectorSocket:
           val (output, remainder) = carry.splitAt(nBytes)
           carryRef.set(remainder).as(output.toBitVector)
 
+      private def readChunkUntilN(nBytes: Int, carry: Chunk[Byte]): F[Chunk[Byte]] =
+        if carry.size < nBytes then
+          withTimeout(socket.read(8192)).flatMap {
+            case Some(bytes) => readChunkUntilN(nBytes, carry ++ bytes)
+            case None => F.raiseError(SQLTimeoutException("Timeout while reading from socket"))
+          }
+        else
+          val (output, remainder) = carry.splitAt(nBytes)
+          carryRef.set(remainder).as(output)
+
       override def write(bits: BitVector): F[Unit] =
         socket.write(Chunk.byteVector(bits.bytes))
 
       override def read(nBytes: Int): F[BitVector] =
         // nb: unsafe for concurrent reads but protected by protocol mutex
         carryRef.get.flatMap(carry => readUntilN(nBytes, carry))
+
+      override def readChunk(nBytes: Int): F[Chunk[Byte]] =
+        carryRef.get.flatMap(carry => readChunkUntilN(nBytes, carry))
 
   def apply[F[_]: Temporal: Console](
     sockets:           Resource[F, Socket[F]],

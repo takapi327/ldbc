@@ -88,6 +88,52 @@ object ResultSetRowPacket:
 
       Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
 
+  private def decodeChunkToString(chunk: fs2.Chunk[Byte], size: Int): (fs2.Chunk[Byte], Option[String]) =
+    val (fieldSizeChunk, postFieldSizeChunk) = chunk.splitAt(size)
+    val fieldSizeNumBytes = fieldSizeChunk.toArray.foldLeft(0L)((acc, byte) => (acc << 8) | (byte & 0xFF))
+    if fieldSizeNumBytes == NULL then (postFieldSizeChunk, None)
+    else
+      val (fieldChunk, postFieldChunk) = postFieldSizeChunk.splitAt(fieldSizeNumBytes.toInt)
+      (postFieldChunk, Some(new String(fieldChunk.toArray, UTF_8)))
+
+  private def decodeChunkResultSetRow(fieldLength: Int, columnLength: Int): fs2.Chunk[Byte] => ResultSetRowPacket =
+    (chunk: fs2.Chunk[Byte]) =>
+      val buffer = new Array[Option[String]](columnLength)
+      var remainder = chunk
+      var remainedLength = columnLength
+      while remainedLength > 0 do
+        val index = columnLength - remainedLength
+        if fieldLength == NULL && index == 0 then buffer.update(index, None)
+        else if index == 0 then
+          val (fieldChunk, postFieldChunk) = remainder.splitAt(fieldLength)
+          buffer.update(index, Some(new String(fieldChunk.toArray, UTF_8)))
+          remainder = postFieldChunk
+        else
+          val (lengthChunk, postLengthChunk) = remainder.splitAt(1)
+          val length = lengthChunk(0).toInt & 0xFF
+          remainder = postLengthChunk
+          if length == NULL then buffer.update(index, None)
+          else if length <= 251 then
+            val (fieldChunk, postFieldChunk) = remainder.splitAt(length)
+            buffer.update(index, Some(new String(fieldChunk.toArray, UTF_8)))
+            remainder = postFieldChunk
+          else if length == 252 then
+            val (postFieldSizeChunk, decodedValue) = decodeChunkToString(remainder, 2)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSizeChunk
+          else if length == 253 then
+            val (postFieldSizeChunk, decodedValue) = decodeChunkToString(remainder, 3)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSizeChunk
+          else
+            val (postFieldSizeChunk, decodedValue) = decodeChunkToString(remainder, 4)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSizeChunk
+        end if
+        remainedLength -= 1
+      
+      ResultSetRowPacket(buffer)
+
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags],
     columnLength:    Int
@@ -99,3 +145,15 @@ object ResultSetRowPacket:
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
         case fieldLength      => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)
+
+  def chunkDecoder(
+    capabilityFlags: Set[CapabilitiesFlags],
+    columnLength:    Int
+  ): fs2.Chunk[Byte] => ResultSetRowPacket | EOFPacket | ERRPacket =
+    (chunk: fs2.Chunk[Byte]) =>
+      val (statusChunk, postLengthChunk) = chunk.splitAt(1)
+      val status = statusChunk(0).toInt & 0xFF
+      status match
+        case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthChunk.toBitVector).require.value
+        case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthChunk.toBitVector).require.value
+        case fieldLength      => decodeChunkResultSetRow(fieldLength, columnLength)(postLengthChunk)

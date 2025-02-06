@@ -36,6 +36,8 @@ trait PacketSocket[F[_]]:
    */
   def receive[P <: ResponsePacket](decoder: Decoder[P]): F[P]
 
+  def receiveChunk[P <: ResponsePacket](decoder: Chunk[Byte] => P): F[P]
+
   /** Send the specified request packet. */
   def send(request: RequestPacket): F[Unit]
 
@@ -67,6 +69,24 @@ object PacketSocket:
         case t =>
           debug(
             s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.RED }${ t.getMessage }${ AnsiColor.RESET }"
+          )
+      }
+
+    override def receiveChunk[P <: ResponsePacket](decoder: Chunk[Byte] => P): F[P] =
+      (for
+        header <- bvs.read(4)
+        payloadSize = parseHeader(header.toByteArray)
+        payload <- bvs.readChunk(payloadSize)
+        response = decoder(payload)
+        _ <-
+          debug(
+            s"Client ${AnsiColor.BLUE}←${AnsiColor.RESET} Server: ${AnsiColor.GREEN}$response${AnsiColor.RESET}"
+          )
+        _ <- sequenceIdRef.update(_ => ((header.toByteArray(3) + 1) % 256).toByte)
+      yield response).onError {
+        case t =>
+          debug(
+            s"Client ${AnsiColor.BLUE}←${AnsiColor.RESET} Server: ${AnsiColor.RED}${t.getMessage}${AnsiColor.RESET}"
           )
       }
 

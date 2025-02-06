@@ -126,6 +126,8 @@ trait Protocol[F[_]] extends UtilityCommands[F], Authentication[F]:
    */
   def readUntilEOF[P <: ResponsePacket](decoder: Decoder[P | EOFPacket | ERRPacket]): F[Vector[P]]
 
+  def readChunkUntilEOF[P <: ResponsePacket](decoder: fs2.Chunk[Byte] => P | EOFPacket | ERRPacket): F[Vector[P]]
+
   /**
    * Returns the server variables.
    */
@@ -235,6 +237,20 @@ object Protocol:
       val builder = Vector.newBuilder[P]
       def loop: F[Vector[P]] =
         socket.receive(decoder).flatMap {
+          case _: EOFPacket => ev.pure(builder.result())
+          case error: ERRPacket =>
+            ev.raiseError(error.toException("Error during database operation"))
+          case row =>
+            builder += row.asInstanceOf[P]
+            loop
+        }
+
+      loop
+
+    override def readChunkUntilEOF[P <: ResponsePacket](decoder: fs2.Chunk[Byte] => P | EOFPacket | ERRPacket): F[Vector[P]] =
+      val builder = Vector.newBuilder[P]
+      def loop: F[Vector[P]] =
+        socket.receiveChunk(decoder).flatMap {
           case _: EOFPacket => ev.pure(builder.result())
           case error: ERRPacket =>
             ev.raiseError(error.toException("Error during database operation"))
