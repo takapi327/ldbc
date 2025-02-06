@@ -90,7 +90,7 @@ object ResultSetRowPacket:
 
   private def decodeChunkToString(chunk: fs2.Chunk[Byte], size: Int): (fs2.Chunk[Byte], Option[String]) =
     val (fieldSizeChunk, postFieldSizeChunk) = chunk.splitAt(size)
-    val fieldSizeNumBytes = fieldSizeChunk.toArray.foldLeft(0L)((acc, byte) => (acc << 8) | (byte & 0xFF))
+    val fieldSizeNumBytes = fieldSizeChunk.toArray.foldLeft(0L)((acc, byte) => (acc << 8) | (byte & 0xff))
     if fieldSizeNumBytes == NULL then (postFieldSizeChunk, None)
     else
       val (fieldChunk, postFieldChunk) = postFieldSizeChunk.splitAt(fieldSizeNumBytes.toInt)
@@ -98,8 +98,8 @@ object ResultSetRowPacket:
 
   private def decodeChunkResultSetRow(fieldLength: Int, columnLength: Int): fs2.Chunk[Byte] => ResultSetRowPacket =
     (chunk: fs2.Chunk[Byte]) =>
-      val buffer = new Array[Option[String]](columnLength)
-      var remainder = chunk
+      val buffer         = new Array[Option[String]](columnLength)
+      var remainder      = chunk
       var remainedLength = columnLength
       while remainedLength > 0 do
         val index = columnLength - remainedLength
@@ -110,7 +110,7 @@ object ResultSetRowPacket:
           remainder = postFieldChunk
         else
           val (lengthChunk, postLengthChunk) = remainder.splitAt(1)
-          val length = lengthChunk(0).toInt & 0xFF
+          val length                         = lengthChunk(0).toInt & 0xff
           remainder = postLengthChunk
           if length == NULL then buffer.update(index, None)
           else if length <= 251 then
@@ -131,7 +131,7 @@ object ResultSetRowPacket:
             remainder = postFieldSizeChunk
         end if
         remainedLength -= 1
-      
+
       ResultSetRowPacket(buffer)
 
   def decoder(
@@ -152,7 +152,7 @@ object ResultSetRowPacket:
   ): fs2.Chunk[Byte] => ResultSetRowPacket | EOFPacket | ERRPacket =
     (chunk: fs2.Chunk[Byte]) =>
       val (statusChunk, postLengthChunk) = chunk.splitAt(1)
-      val status = statusChunk(0).toInt & 0xFF
+      val status                         = statusChunk(0).toInt & 0xff
       status match
         case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthChunk.toBitVector).require.value
         case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthChunk.toBitVector).require.value

@@ -80,13 +80,13 @@ object PacketSocket:
         response = decoder(payload)
         _ <-
           debug(
-            s"Client ${AnsiColor.BLUE}←${AnsiColor.RESET} Server: ${AnsiColor.GREEN}$response${AnsiColor.RESET}"
+            s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.GREEN }$response${ AnsiColor.RESET }"
           )
         _ <- sequenceIdRef.update(_ => ((header.toByteArray(3) + 1) % 256).toByte)
       yield response).onError {
         case t =>
           debug(
-            s"Client ${AnsiColor.BLUE}←${AnsiColor.RESET} Server: ${AnsiColor.RED}${t.getMessage}${AnsiColor.RESET}"
+            s"Client ${ AnsiColor.BLUE }←${ AnsiColor.RESET } Server: ${ AnsiColor.RED }${ t.getMessage }${ AnsiColor.RESET }"
           )
       }
 

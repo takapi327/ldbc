@@ -75,7 +75,7 @@ object BitVectorSocket:
         if carry.size < nBytes then
           withTimeout(socket.read(8192)).flatMap {
             case Some(bytes) => readChunkUntilN(nBytes, carry ++ bytes)
-            case None => F.raiseError(SQLTimeoutException("Timeout while reading from socket"))
+            case None        => F.raiseError(SQLTimeoutException("Timeout while reading from socket"))
           }
         else
           val (output, remainder) = carry.splitAt(nBytes)

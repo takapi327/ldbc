@@ -247,7 +247,9 @@ object Protocol:
 
       loop
 
-    override def readChunkUntilEOF[P <: ResponsePacket](decoder: fs2.Chunk[Byte] => P | EOFPacket | ERRPacket): F[Vector[P]] =
+    override def readChunkUntilEOF[P <: ResponsePacket](
+      decoder: fs2.Chunk[Byte] => P | EOFPacket | ERRPacket
+    ): F[Vector[P]] =
       val builder = Vector.newBuilder[P]
       def loop: F[Vector[P]] =
         socket.receiveChunk(decoder).flatMap {

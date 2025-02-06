@@ -69,7 +69,7 @@ private[ldbc] case class StatementImpl[F[_]: Temporal: Exchange: Tracer](
                   result.size,
                   ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
                 )
-              //resultSetRow <-
+              // resultSetRow <-
               //  protocol.readUntilEOF[ResultSetRowPacket](
               //    ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
               //  )
