@@ -55,8 +55,8 @@ object ResultSetRowPacket:
    */
   private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
-      val buffer    = new Array[Option[String]](columnLength)
-      var remainder = bits
+      val buffer       = new Array[Option[String]](columnLength)
+      var remainder    = bits
       var remainedSize = columnLength
       while remainedSize > 0 do
         val index = columnLength - remainedSize
