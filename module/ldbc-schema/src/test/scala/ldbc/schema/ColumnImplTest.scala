@@ -21,7 +21,7 @@ class ColumnImplTest extends AnyFlatSpec:
     decoder: Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
-    ColumnImpl[A](name, None, decoder, encoder, Some(dataType), attributes.toList)
+    ColumnImpl[A](s"`$name`", None, decoder, encoder, Some(dataType), attributes.toList)
 
   it should "The query string of the Column model generated with only label and DataType matches the specified string." in {
     assert(column[Long]("id", BIGINT).statement === "`id` BIGINT NOT NULL")

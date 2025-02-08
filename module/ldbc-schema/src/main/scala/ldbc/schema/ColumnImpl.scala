@@ -25,7 +25,7 @@ private[ldbc] case class ColumnImpl[T](
     this.copy(alias = Some(name))
 
   override def statement: String =
-    dataType.fold(s"`$name`")(dataType => s"`$name` ${ dataType.queryString }") + attributes
+    dataType.fold(name)(dataType => s"$name ${ dataType.queryString }") + attributes
       .map(v => s" ${ v.queryString }")
       .mkString("")
   override def updateStatement:             String = s"$name = ?"
