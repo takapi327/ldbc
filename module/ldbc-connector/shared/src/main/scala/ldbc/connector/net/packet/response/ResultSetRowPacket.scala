@@ -57,7 +57,9 @@ object ResultSetRowPacket:
     (bits: BitVector) =>
       val buffer    = new Array[Option[String]](columnLength)
       var remainder = bits
-      for index <- 0 until columnLength do
+      var remainedSize = columnLength
+      while remainedSize > 0 do
+        val index = columnLength - remainedSize
         if fieldLength == NULL && index == 0 then buffer.update(index, None)
         else if index == 0 then
           val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength * 8L)
@@ -85,6 +87,7 @@ object ResultSetRowPacket:
             buffer.update(index, decodedValue)
             remainder = postFieldSize
         end if
+        remainedSize -= 1
 
       Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
 
