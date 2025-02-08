@@ -780,7 +780,7 @@ object Column extends TwiddleSyntax[Column]:
     Impl[A](name)
 
   def apply[A](name: String, alias: String)(using Decoder[A], Encoder[A]): Column[A] =
-    Impl[A](name, s"$alias.$name")
+    Impl[A](name, s"$alias.`$name`")
 
   private[ldbc] case class Impl[A](
     name:    String,
