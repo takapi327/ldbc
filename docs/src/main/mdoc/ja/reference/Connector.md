@@ -332,10 +332,10 @@ connection.use { conn =>
   yield
     val builder = List.newBuilder[(Long, String, Int)]
     while resultSet.next() do
-        val id = resultSet.getLong(1)
-        val name = resultSet.getString("name")
-        val age = resultSet.getInt(3)
-        builder += (id, name, age)
+      val id = resultSet.getLong(1)
+      val name = resultSet.getString("name")
+      val age = resultSet.getInt(3)
+      builder += (id, name, age)
     builder.result()
 }
 ```
