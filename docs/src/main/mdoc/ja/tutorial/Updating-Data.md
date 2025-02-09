@@ -9,10 +9,10 @@
 
 ## 挿入
 
-挿入は簡単で、selectと同様に動作します。ここでは、`user`テーブルに行を挿入する`Executor`を作成するメソッドを定義します。
+挿入は簡単で、selectと同様に動作します。ここでは、`user`テーブルに行を挿入する`DBIO`を作成するメソッドを定義します。
 
 ```scala
-def insertUser(name: String, email: String): Executor[IO, Int] =
+def insertUser(name: String, email: String): DBIO[Int] =
   sql"INSERT INTO user (name, email) VALUES ($name, $email)"
     .update
 ```
@@ -28,7 +28,7 @@ insertUser("dave", "dave@example.com").commit.unsafeRunSync()
 ```scala
 sql"SELECT * FROM user"
   .query[(Int, String, String)] // Query[IO, (Int, String, String)]
-  .to[List]                     // Executor[IO, List[(Int, String, String)]]
+  .to[List]                     // DBIO[IO, List[(Int, String, String)]]
   .readOnly(conn)               // IO[List[(Int, String, String)]]
   .unsafeRunSync()              // List[(Int, String, String)]
   .foreach(println)             // Unit
@@ -39,7 +39,7 @@ sql"SELECT * FROM user"
 更新も同じパターンだ。ここではユーザーのメールアドレスを更新する。
 
 ```scala
-def updateUserEmail(id: Int, email: String): Executor[IO, Int] =
+def updateUserEmail(id: Int, email: String): DBIO[Int] =
   sql"UPDATE user SET email = $email WHERE id = $id"
     .update
 ```
@@ -51,7 +51,7 @@ updateUserEmail(1, "alice+1@example.com").commit.unsafeRunSync()
 
 sql"SELECT * FROM user WHERE id = 1"
   .query[(Int, String, String)] // Query[IO, (Int, String, String)]
-  .to[Option]                   // Executor[IO, List[(Int, String, String)]]
+  .to[Option]                   // DBIO[IO, List[(Int, String, String)]]
   .readOnly(conn)               // IO[List[(Int, String, String)]]
   .unsafeRunSync()              // List[(Int, String, String)]
   .foreach(println)             // Unit
@@ -62,8 +62,8 @@ sql"SELECT * FROM user WHERE id = 1"
 
 インサートする際には、新しく生成されたキーを返したいものです。まず、挿入して最後に生成されたキーを`LAST_INSERT_ID`で取得し、指定された行を選択するという難しい方法をとります。
 
-```scala
-def insertUser(name: String, email: String): Executor[IO, (Int, String, String)] =
+```scala 3
+def insertUser(name: String, email: String): DBIO[IO, (Int, String, String)] =
   for
     _    <- sql"INSERT INTO user (name, email) VALUES ($name, $email)".update
     id   <- sql"SELECT LAST_INSERT_ID()".query[Int].unsafe
@@ -81,8 +81,8 @@ MySQLでは、`AUTO_INCREMENT`が設定された行のみが挿入時に返す�
 
 自動生成キーを使用して行を挿入する場合、`returning`メソッドを使用して自動生成キーを取得できます。
 
-```scala
-def insertUser(name: String, email: String): Executor[IO, (Int, String, String)] =
+```scala 3
+def insertUser(name: String, email: String): DBIO[IO, (Int, String, String)] =
   for
     id   <- sql"INSERT INTO user (name, email) VALUES ($name, $email)".returning[Int]
     user <- sql"SELECT * FROM user WHERE id = $id".query[(Int, String, String)].to[Option]
@@ -97,8 +97,8 @@ insertUser("frank", "frank@example.com").commit.unsafeRunSync()
 
 バッチ更新を行うには、`NonEmptyList`を使用して複数の行を挿入する`insertManyUser`メソッドを定義します。
 
-```scala
-def insertManyUser(users: NonEmptyList[(String, String)]): Executor[IO, Int] =
+```scala 3
+def insertManyUser(users: NonEmptyList[(String, String)]): DBIO[IO, Int] =
   val value = users.map { case (name, email) => sql"($name, $email)" }
   (sql"INSERT INTO user (name, email) VALUES" ++ values(value)).update
 ```

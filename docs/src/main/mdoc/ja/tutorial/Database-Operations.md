@@ -35,10 +35,10 @@ val write = sql"INSERT INTO `table`(`c1`, `c2`) VALUES ('column 1', 'column 2')"
 
 `transaction`メソッドを使用することで複数のデータベース接続処理を1つのトランザクションにまとめることができます。
 
-ldbcは`Executor[F, A]`という形式でデータベースへの接続処理を組むことになる。 Executorはモナドなので、for内包を使って2つの小さなプログラムを1つの大きなプログラムにすることができる。
+ldbcは`DBIO[A]`という形式でデータベースへの接続処理を組むことになる。 DBIOはモナドなので、for内包を使って2つの小さなプログラムを1つの大きなプログラムにすることができる。
 
-```scala
-val program: Executor[IO, (List[Int], Option[Int], Int)] =
+```scala 3
+val program: DBIO[(List[Int], Option[Int], Int)] =
   for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
@@ -46,7 +46,7 @@ val program: Executor[IO, (List[Int], Option[Int], Int)] =
   yield (result1, result2, result3)
 ```
 
-1つのプログラムとなった`Executor`を`transaction`メソッドで1つのトランザクションでまとめて処理を行うことができます。
+1つのプログラムとなった`DBIO`を`transaction`メソッドで1つのトランザクションでまとめて処理を行うことができます。
 
 ```scala
 val transaction = program.transaction(connection)

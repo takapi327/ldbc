@@ -1,9 +1,9 @@
 {%
-  laika.title = Migration Notes
+  laika.title = マイグレーションノート
   laika.metadata.language = ja
 %}
 
-# Migration Notes (Upgrading to 0.3.x from 0.2.x)
+# マイグレーションノート (0.2.xから0.3.xへの移行)
 
 ## パッケージ
 
@@ -309,22 +309,15 @@ enum Status(val code: Int, val name: String):
   case InActive extends Status(2, "InActive")
 ```
 
-**Before**
+```diff
+-given Parameter[Status] with
+-  override def bind[F[_]](
+-    statement: PreparedStatement[F],
+-    index: Int,
+-    status: Status
+-  ): F[Unit] = statement.setInt(index, status.code)
 
-```scala 3
-given Parameter[Status] with
-  override def bind[F[_]](
-    statement: PreparedStatement[F],
-    index: Int,
-    status: Status
-  ): F[Unit] = statement.setInt(index, status.code)
-```
-
-**After**
-
-```scala 3
-given Encoder[Status] with
-  override def encode(status: Status): Int = status.done
++given Encoder[Status] = Encoder[Int].contramap(_.code)
 ```
 
 `Encoder`のエンコード処理では、`PreparedStatement`で扱えるScala型しか返すことができません。
@@ -348,11 +341,77 @@ given Encoder[Status] with
 | `java.time.LocalDateTime` | `setTimestamp`                      |
 | `None`                    | `setNull`                           |
 
+また、Encoderは複数の型を合成して新しい型を作成することができます。
+
+```scala 3
+val encoder: Encoder[(Int, String)] = Encoder[Int] *: Encoder[String]
+```
+
+合成した型は任意のクラスに変換することもできます。
+
+```scala 3
+case class Status(code: Int, name: String)
+given Encoder[Status] = (Encoder[Int] *: Encoder[String]).to[Status]
+```
+
 #### Decoder
 
 `ResultSet`からデータを取得する処理を`ResultSetReader`から`Decoder`に変更。
 
-これにより、ユーザーは取得したレコードをネストした階層データに変換できる。
+```diff
+-given ResultSetReader[IO, Status] =
+-  ResultSetReader.mapping[IO, Int, Status](code => Status.fromCode(code))
++given Decoder[Status] = Decoder[Int].map(code => Status.fromCode(code))
+```
+
+Decoderも複数の型を合成して新しい型を作成することができます。
+
+```scala 3
+val decoder: Decoder[(Int, String)] = Decoder[Int] *: Decoder[String]
+```
+
+合成した型は任意のクラスに変換することもできます。
+
+```scala 3
+case class Status(code: Int, name: String)
+given Decoder[Status] = (Decoder[Int] *: Decoder[String]).to[Status]
+```
+
+### Codecの導入
+
+`Codec`は、`Encoder`と`Decoder`を組み合わせたもので、`Codec`を使用することで、`Encoder`と`Decoder`を組み合わせることができます。
+
+```scala 3
+enum Status(val code: Int, val name: String):
+  case Active   extends Status(1, "Active")
+  case InActive extends Status(2, "InActive")
+
+given Codec[Status] = Codec[Int].imap(Status.fromCode)(_.code)
+```
+
+Codecも複数の型を合成して新しい型を作成することができます。
+
+```scala 3
+val codec: Codec[(Int, String)] = Codec[Int] *: Codec[String]
+```
+
+合成した型は任意のクラスに変換することもできます。
+
+```scala 3
+case class Status(code: Int, name: String)
+given Codec[Status] = (Codec[Int] *: Codec[String]).to[Status]
+```
+
+Codecは、`Encoder`と`Decoder`を組み合わせたものであるため、それぞれの型への変換処理を行うことができます。
+
+```scala 3
+val encoder: Encoder[Status] = Codec[Status].asEncoder
+val decoder: Decoder[Status] = Codec[Status].asDecoder
+```
+
+今回の変更により、ユーザーは`Codec`を使用して、`Encoder`と`Decoder`を組み合わせることができるようになりました。
+
+これにより、ユーザーは取得したレコードをネストした階層データに変換できます。
 
 ```scala
 case class City(id: Int, name: String, countryCode: String)
@@ -362,24 +421,35 @@ case class CityWithCountry(city: City, country: Country)
 sql"SELECT city.Id, city.Name, city.CountryCode, country.Code, country.Name FROM city JOIN country ON city.CountryCode = country.Code".query[CityWithCountry]
 ```
 
-**Using Query Builder**
+Codecを始め`Encoder`と`Decoder`は暗黙的に解決されるため、ユーザーはこれらの型を明示的に指定する必要はありません。
+
+しかし、モデル内に多くのプロパティがある場合、暗黙的な検索は失敗する可能性があります。
+
+```shell
+[error]    |Implicit search problem too large.
+[error]    |an implicit search was terminated with failure after trying 100000 expressions.
+[error]    |The root candidate for the search was:
+[error]    |
+[error]    |  given instance given_Decoder_P in object Decoder  for  ldbc.dsl.codec.Decoder[City]}
+```
+
+このような場合は、コンパイルオプションの検索制限を上げると問題が解決することがあります。
+
+```scala
+scalacOptions += "-Ximplicit-search-limit:100000"
+```
+
+しかし、オプションでの制限拡張はコンパイル時間の増幅につながる可能性があります。その場合は、以下のように手動で任意の型を構築することで解決することもできます。
 
 ```scala 3
-case class City(id: Int, name: String, countryCode: String) derives Table
-case class Country(code: String, name: String) derives Table
+given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
+given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
+```
 
-val city = Table[City]
-val country = Table[Country]
+もしくは、`Codec`を使用して`Encoder`と`Decoder`を組み合わせることで解決することもできます。
 
-city.join(country).on((city, country) => city.countryCode === country.code)
-  .select((city, country) => (city.name, country.name))
-  .query // (String, String)
-  .to[Option]
-
-city.join(country).on((city, country) => city.countryCode === country.code)
-  .selectAll
-  .query // (City, Country)
-  .to[Option]
+```scala 3
+given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
 ```
 
 ### 列の絞り込み方法の変更
