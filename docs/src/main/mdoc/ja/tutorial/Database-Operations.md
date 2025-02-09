@@ -35,7 +35,7 @@ val write = sql"INSERT INTO `table`(`c1`, `c2`) VALUES ('column 1', 'column 2')"
 
 `transaction`メソッドを使用することで複数のデータベース接続処理を1つのトランザクションにまとめることができます。
 
-ldbcは`DBIO[A]`という形式でデータベースへの接続処理を組むことになる。 DBIOはモナドなので、for内包を使って2つの小さなプログラムを1つの大きなプログラムにすることができる。
+ldbcは`DBIO[A]`という形式でデータベースへの接続処理を組むことになる。 DBIOはモナドなので、for内包を使って2つの小さなプログラムを1つの大きなプログラムにすることができます。
 
 ```scala 3
 val program: DBIO[(List[Int], Option[Int], Int)] =

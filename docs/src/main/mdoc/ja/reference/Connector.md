@@ -22,8 +22,6 @@ Typelevel Projectには[Skunk](https://github.com/typelevel/skunk)と呼ばれ�
 
 ldbc コネクタはこのSkunkに影響を受けてJVM, JS, Native環境を問わずMySQLへの接続を行えるようにするために開発が行われてるプロジェクトです。
 
-※ このコネクタは現在実験的な機能となります。そのため本番環境での使用しないでください。
-
 ldbcコネクタは一番低レイヤーのAPIとなります。
 今後このコネクタを使用してより高レイヤーのAPIを提供する予定です。また既存の高レイヤーのAPIとの互換性を持たせることも予定しています。
 
@@ -331,101 +329,16 @@ connection.use { conn =>
     statement <- conn.clientPreparedStatement("SELECT `id`, `name`, `age` FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
     result <- statement.executeQuery()
-    records <- Monad[IO].whileM(result.next()) {
-      for
-        id <- result.getLong(1)
-        name <- result.getString("name")
-        age <- result.getInt(3)  
-      yield (id, name, age)
-  }
-  yield records
+  yield
+    val builder = List.newBuilder[(Long, String, Int)]
+    while resultSet.next() do
+        val id = resultSet.getLong(1)
+        val name = resultSet.getString("name")
+        val age = resultSet.getInt(3)
+        builder += (id, name, age)
+    builder.result()
 }
 ```
-
-#### decode
-
-`decode`メソッドは`ResultSet`から取得した値をScalaの型に変換して取得するためのAPIです。
-
-取得するカラムの数に応じて`*:`演算子を使用して変換する型を指定します。
-
-例では、usersテーブルのid, name, ageカラムを取得する場合を示しておりそれぞれのカラムの型を指定しています。
-
-```scala 3
-result.decode(bigint *: varchar *: int.opt)
-```
-
-NULL許容のカラムを取得する場合は`Option`型に変換するために`opt`メソッドを使用します。
-これによりレコードがNULLの場合はNoneとして取得することができます。
-
-クエリ実行からレコード取得までの一連の流れは以下のようになります。
-
-```scala 3
-connection.use { conn =>
-  for 
-    statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
-    _ <- statement.setLong(1, 1)
-    result <- statement.executeQuery()
-    decodes <- result.decode(bigint *: varchar *: int.opt)
-  yield decodes
-}
-```
-
-`ResultSet`から取得するレコードは常に配列になります。
-これはMySQLで実行するクエリの結果が常に複数のレコードを返す可能性があるからです。
-
-単一のレコードを取得する場合は`decode`処理後に、`head`や`headOption`メソッドを使用して取得を行なってください。
-
-現在のバージョンでは以下のデータ型がサポートされています。
-
-| Codec         | データ型                | Scala 型          |
-|---------------|---------------------|------------------|
-| `boolean`     | `BOOLEAN`           | `Boolean`        |
-| `tinyint`     | `TINYINT`           | `Byte`           |
-| `utinyint`    | `unsigned TINYINT`  | `Short`          |
-| `smallint`    | `SMALLINT`          | `Short`          |
-| `usmallint`   | `unsigned SMALLINT` | `Int`            |
-| `int`         | `INT`               | `Int`            |
-| `uint`        | `unsigned INT`      | `Long`           |
-| `bigint`      | `BIGINT`            | `Long`           |
-| `ubigint`     | `unsigned BIGINT`   | `BigInt`         |
-| `float`       | `FLOAT`             | `Float`          |
-| `double`      | `DOUBLE`            | `Double`         |
-| `decimal`     | `DECIMAL`           | `BigDecimal`     |
-| `char`        | `CHAR`              | `String`         |
-| `varchar`     | `VARCHAR`           | `String`         |
-| `binary`      | `BINARY`            | `Array[Byte]`    |
-| `varbinary`   | `VARBINARY`         | `String`         |
-| `tinyblob`    | `TINYBLOB`          | `String`         |
-| `blob`        | `BLOB`              | `String`         |
-| `mediumblob`  | `MEDIUMBLOB`        | `String`         |
-| `longblob`    | `LONGBLOB`          | `String`         |
-| `tinytext`    | `TINYTEXT`          | `String`         |
-| `text`        | `TEXT`              | `String`         |
-| `mediumtext`  | `MEDIUMTEXT`        | `String`         |
-| `longtext`    | `LONGTEXT`          | `String`         |
-| `enum`        | `ENUM`              | `String`         |
-| `set`         | `SET`               | `List[String]`   |
-| `json`        | `JSON`              | `String`         |
-| `date`        | `DATE`              | `LocalDate`      |
-| `time`        | `TIME`              | `LocalTime`      |
-| `timetz`      | `TIME`              | `OffsetTime`     |
-| `datetime`    | `DATETIME`          | `LocalDateTime`  |
-| `timestamp`   | `TIMESTAMP`         | `LocalDateTime`  |
-| `timestamptz` | `TIMESTAMP`         | `OffsetDateTime` |
-| `year`        | `YEAR`              | `Year`           |
-
-※ 現在MySQLのデータ型を指定して値を取得するような作りとなっていますが、将来的にはより簡潔にScalaの型を指定して値を取得するような作りに変更する可能性があります。
-
-以下サポートされていないデータ型があります。
-
-- GEOMETRY
-- POINT
-- LINESTRING
-- POLYGON
-- MULTIPOINT
-- MULTILINESTRING
-- MULTIPOLYGON
-- GEOMETRYCOLLECTION
 
 ## トランザクション
 
@@ -444,6 +357,7 @@ for
   statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
   _ <- statement.setString(1, "Alice")
   _ <- statement.setInt(2, 20)
+  _ <- conn.setAutoCommit(false)
   result <- statement.executeUpdate()
   _ <- conn.commit()
 yield
@@ -455,6 +369,7 @@ for
   statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
   _ <- statement.setString(1, "Alice")
   _ <- statement.setInt(2, 20)
+  _ <- conn.setAutoCommit(false)
   result <- statement.executeUpdate()
   _ <- conn.rollback()
 yield
@@ -807,8 +722,7 @@ connection.use { conn =>
           case Some(rs) => IO.pure(rs)
           case None     => IO.raiseError(new Exception("No result set"))
         }
-        value <- resultSet.getString(1)
-      yield value
+      yield resultSet.getString(1)
     }
   yield values // List(Some("abcdefg"), Some("zyxwabcdefg"))
 }

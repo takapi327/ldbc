@@ -43,9 +43,9 @@
 
 ### コネクタ切り替え機能
 
-Scala MySQL コネクタに、JDBC と ldbc の接続切り替えのサポートが追加されました。
+Scala MySQL コネクタに、jdbc と ldbc の接続切り替えのサポートが追加されました。
 
-この変更により、開発者はプロジェクトの要件に応じて JDBC または ldbc ライブラリを使用したデータベース接続を柔軟に選択できるようになりました。これにより、開発者は異なるライブラリの機能を利用できるようになり、接続の設定や操作の柔軟性が向上します。
+この変更により、開発者はプロジェクトの要件に応じて jdbc または ldbc ライブラリを使用したデータベース接続を柔軟に選択できるようになりました。これにより、開発者は異なるライブラリの機能を利用できるようになり、接続の設定や操作の柔軟性が向上します。
 
 #### 変更方法
 
@@ -514,10 +514,10 @@ val cityTable = TableQuery[City]
 ```scala 3
 case class City(
   id: Int,
-  name:             String,
-  countryCode:      String,
-  district:         String,
-  population:       Int
+  name: String,
+  countryCode: String,
+  district: String,
+  population: Int
 )
 
 object City:
