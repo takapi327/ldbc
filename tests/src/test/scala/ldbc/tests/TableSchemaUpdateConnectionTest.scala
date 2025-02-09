@@ -6,10 +6,9 @@
 
 package ldbc.tests
 
-import scala.concurrent.duration.DurationInt
-
 import com.mysql.cj.jdbc.MysqlDataSource
 
+import cats.data.NonEmptyList
 import cats.syntax.all.*
 
 import cats.effect.*
@@ -19,9 +18,12 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.*
 
 import ldbc.sql.*
-import ldbc.connector.SSL
-import ldbc.schema.TableQuery
+
 import ldbc.schema.syntax.io.*
+import ldbc.schema.TableQuery
+
+import ldbc.connector.SSL
+
 import ldbc.tests.model.*
 
 class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest:
@@ -106,42 +108,40 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
       connection.use { conn =>
         country
           .insert(
-            List(
-              (
-                code(2),
-                s"${ prefix }_Test2",
-                Country.Continent.Asia,
-                "Northeast",
-                BigDecimal.decimal(390757.00),
-                None,
-                1,
-                None,
-                None,
-                None,
-                "Test",
-                "Test",
-                None,
-                None,
-                code(2)
-              ),
-              (
-                code(3),
-                s"${ prefix }_Test3",
-                Country.Continent.Asia,
-                "Northeast",
-                BigDecimal.decimal(390757.00),
-                None,
-                1,
-                None,
-                None,
-                None,
-                "Test",
-                "Test",
-                None,
-                None,
-                code(3)
-              )
-            )*
+            (
+              code(2),
+              s"${ prefix }_Test2",
+              Country.Continent.Asia,
+              "Northeast",
+              BigDecimal.decimal(390757.00),
+              None,
+              1,
+              None,
+              None,
+              None,
+              "Test",
+              "Test",
+              None,
+              None,
+              code(2)
+            ),
+            (
+              code(3),
+              s"${ prefix }_Test3",
+              Country.Continent.Asia,
+              "Northeast",
+              BigDecimal.decimal(390757.00),
+              None,
+              1,
+              None,
+              None,
+              None,
+              "Test",
+              "Test",
+              None,
+              None,
+              code(3)
+            )
           )
           .update
           .commit(conn)
@@ -218,7 +218,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
     )
     assertIO(
       connection.use { conn =>
-        (country ++= List(newCountry1, newCountry2)).update
+        (country ++= NonEmptyList.of(newCountry1, newCountry2)).update
           .commit(conn)
       },
       2
@@ -282,7 +282,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
           cityOpt <-
             city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query.to[Option]
           result <- cityOpt match
-                      case None => Executor.pure[IO, Int](0)
+                      case None => DBIO.pure[IO, Int](0)
                       case Some(cityModel) =>
                         city
                           .update(cityModel.copy(district = "Tokyo-to"))
@@ -387,7 +387,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
     "The value of AutoIncrement obtained during insert matches the specified value."
   ) {
     assertIOBoolean(
-      IO.sleep(5.seconds) >> connection.use { conn =>
+      connection.use { conn =>
         (for
           length <- city.select(_.id.count).query.unsafe.map(_ + 1)
           result <-
@@ -401,7 +401,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
     )
   }
 
-  test("") {
+  test("The value of AutoIncrement obtained during insert matches the specified value.") {
     assertIO(
       connection.use { conn =>
         city
@@ -431,7 +431,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
                        .query
                        .to[Option]
           result <- codeOpt match
-                      case None => Executor.pure[IO, Int](0)
+                      case None => DBIO.pure[IO, Int](0)
                       case Some(code) =>
                         city
                           .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))

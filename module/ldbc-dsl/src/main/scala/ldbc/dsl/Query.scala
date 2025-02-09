@@ -9,10 +9,10 @@ package ldbc.dsl
 import cats.*
 import cats.syntax.all.*
 
-import cats.effect.Temporal
+import cats.effect.MonadCancelThrow
 
-import ldbc.dsl.util.FactoryCompat
 import ldbc.dsl.codec.Decoder
+import ldbc.dsl.util.FactoryCompat
 
 /**
  * Trait for determining what type of search system statements are retrieved from the database.
@@ -27,48 +27,45 @@ trait Query[F[_], T]:
   /**
    * Functions for safely retrieving data from a database in an array or Option type.
    */
-  def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]]
+  def to[G[_]](using FactoryCompat[T, G[T]]): DBIO[F, G[T]]
 
   /**
    * A method to return the data to be retrieved from the database as is. If the data does not exist, an exception is
    * raised. Use the [[to]] method if you want to retrieve individual data.
    */
-  def unsafe: Executor[F, T]
+  def unsafe: DBIO[F, T]
 
 object Query:
 
-  private[ldbc] case class Impl[F[_]: Temporal, T](
+  private[ldbc] case class Impl[F[_]: MonadCancelThrow, T](
     statement: String,
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[T]
-  ) extends Query[F, T]:
+  ) extends Query[F, T],
+            ParamBinder[F]:
 
     given Decoder[T] = decoder
 
-    override def to[G[_]](using FactoryCompat[T, G[T]]): Executor[F, G[T]] =
-      Executor.Impl[F, G[T]](
+    override def to[G[_]](using FactoryCompat[T, G[T]]): DBIO[F, G[T]] =
+      DBIO.Impl[F, G[T]](
         statement,
         params,
         connection =>
           for
             prepareStatement <- connection.prepareStatement(statement)
-            resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind(prepareStatement, index + 1)
-                         } >> prepareStatement.executeQuery()
-            result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet) <* prepareStatement.close()
+            resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
+            result <- summon[ResultSetConsumer[F, G[T]]].consume(resultSet, statement) <* prepareStatement.close()
           yield result
       )
 
-    override def unsafe: Executor[F, T] =
-      Executor.Impl[F, T](
+    override def unsafe: DBIO[F, T] =
+      DBIO.Impl[F, T](
         statement,
         params,
         connection =>
           for
             prepareStatement <- connection.prepareStatement(statement)
-            resultSet <- params.zipWithIndex.traverse {
-                           case (param, index) => param.bind(prepareStatement, index + 1)
-                         } >> prepareStatement.executeQuery()
-            result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
+            resultSet        <- paramBind(prepareStatement, params) >> prepareStatement.executeQuery()
+            result <- summon[ResultSetConsumer[F, T]].consume(resultSet, statement) <* prepareStatement.close()
           yield result
       )

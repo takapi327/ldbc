@@ -7,10 +7,12 @@
 package ldbc.connector.net.packet
 package response
 
-import cats.syntax.all.*
+import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
-import scodec.codecs.*
+import scodec.bits.{ BitVector, ByteOrdering }
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.*
 
@@ -88,31 +90,37 @@ case class ColumnDefinition41Packet(
 
 object ColumnDefinition41Packet:
 
+  private def decodeToString(bits: BitVector): (BitVector, String) =
+    val (sizeBits, remainder)  = bits.splitAt(8)
+    val size                   = sizeBits.toLong(signed = false)
+    val (valueBits, postValue) = remainder.splitAt(size * 8L)
+    (postValue, new String(valueBits.toByteArray, UTF_8))
+
   val decoder: Decoder[ColumnDefinition41Packet] =
-    for
-      catalog      <- variableSizeBytes(uint8, utf8).asDecoder
-      schema       <- variableSizeBytes(uint8, utf8).asDecoder
-      table        <- variableSizeBytes(uint8, utf8).asDecoder
-      orgTable     <- variableSizeBytes(uint8, utf8).asDecoder
-      name         <- variableSizeBytes(uint8, utf8).asDecoder
-      orgName      <- variableSizeBytes(uint8, utf8).asDecoder
-      length       <- uint8.asDecoder
-      characterSet <- uint16.asDecoder
-      columnLength <- uint32.asDecoder
-      columnType   <- uint8.asDecoder
-      flags        <- uint16L.asDecoder
-      decimals     <- int(1).asDecoder
-    yield ColumnDefinition41Packet(
-      catalog      = catalog,
-      schema       = schema,
-      table        = table,
-      orgTable     = orgTable,
-      name         = name,
-      orgName      = orgName,
-      length       = length,
-      characterSet = characterSet,
-      columnLength = columnLength,
-      columnType   = ColumnDataType(columnType),
-      flags        = ColumnDefinitionFlags(flags),
-      decimals     = decimals
-    )
+    (bits: BitVector) =>
+      val (catalogBits, catalog)           = decodeToString(bits)
+      val (schemaBits, schema)             = decodeToString(catalogBits)
+      val (tableBits, table)               = decodeToString(schemaBits)
+      val (orgTableBits, orgTable)         = decodeToString(tableBits)
+      val (nameBits, name)                 = decodeToString(orgTableBits)
+      val (orgNameBits, orgName)           = decodeToString(nameBits)
+      val (length, lengthBits)             = orgNameBits.splitAt(8)
+      val (characterSet, characterSetBits) = lengthBits.splitAt(16)
+      val (columnLength, columnLengthBits) = characterSetBits.splitAt(32)
+      val (columnType, columnTypeBits)     = columnLengthBits.splitAt(8)
+      val (flags, decimals)                = columnTypeBits.splitAt(16)
+      val packet = ColumnDefinition41Packet(
+        catalog      = catalog,
+        schema       = schema,
+        table        = table,
+        orgTable     = orgTable,
+        name         = name,
+        orgName      = orgName,
+        length       = length.toInt(signed = false),
+        characterSet = characterSet.toInt(signed = false),
+        columnLength = columnLength.toLong(signed = false),
+        columnType   = ColumnDataType(columnType.toInt(signed = false)),
+        flags        = ColumnDefinitionFlags(flags.toInt(signed = false, ordering = ByteOrdering.LittleEndian)),
+        decimals     = decimals.toInt()
+      )
+      Attempt.successful(DecodeResult(packet, bits))

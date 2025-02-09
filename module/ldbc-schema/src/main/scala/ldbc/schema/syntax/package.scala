@@ -7,11 +7,10 @@
 package ldbc.schema
 
 import scala.deriving.Mirror
-import scala.compiletime.erasedValue
-
-import cats.effect.*
 
 import cats.syntax.all.*
+
+import cats.effect.*
 
 import ldbc.sql.*
 
@@ -23,48 +22,46 @@ import ldbc.statement.syntax.*
 
 package object syntax:
 
-  private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F]:
+  private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F], ParamBinder[F]:
 
     extension [A, B](query: Query[A, B])
 
       def query: DslQuery[F, B] = DslQuery.Impl[F, B](query.statement, query.params, query.columns.decoder)
 
-      inline def queryTo[P <: Product](using
-        m1:    Mirror.ProductOf[P],
-        m2:    Mirror.ProductOf[B],
-        check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
+      def queryTo[P <: Product](using
+        m1:      Mirror.ProductOf[P],
+        m2:      Mirror.ProductOf[B],
+        check:   m1.MirroredElemTypes =:= m2.MirroredElemTypes,
+        decoder: Decoder[P]
       ): DslQuery[F, P] =
-        inline erasedValue[P] match
-          case _: Tuple => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedTuple(m1))
-          case _        => DslQuery.Impl[F, P](query.statement, query.params, Decoder.derivedProduct(m1))
+        DslQuery.Impl[F, P](query.statement, query.params, decoder)
 
     extension (command: Command)
-      def update: Executor[F, Int] =
-        Executor.Impl[F, Int](
+      def update: DBIO[Int] =
+        DBIO.Impl[F, Int](
           command.statement,
           command.params,
           connection =>
             for
               prepareStatement <- connection.prepareStatement(command.statement)
-              result <- command.params.zipWithIndex.traverse {
-                          case (param, index) => param.bind[F](prepareStatement, index + 1)
-                        } >> prepareStatement.executeUpdate() <* prepareStatement.close()
+              result <-
+                paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() <* prepareStatement
+                  .close()
             yield result
         )
 
-      def returning[T <: String | Int | Long](using decoder: Decoder.Elem[T]): Executor[F, T] =
-        given Decoder[T] = Decoder.one[T]
-
-        Executor.Impl[F, T](
+      def returning[T <: String | Int | Long](using Decoder[T]): DBIO[T] =
+        DBIO.Impl[F, T](
           command.statement,
           command.params,
           connection =>
             for
               prepareStatement <- connection.prepareStatement(command.statement, Statement.RETURN_GENERATED_KEYS)
-              resultSet <- command.params.zipWithIndex.traverse {
-                             case (param, index) => param.bind[F](prepareStatement, index + 1)
-                           } >> prepareStatement.executeUpdate() >> prepareStatement.getGeneratedKeys()
-              result <- summon[ResultSetConsumer[F, T]].consume(resultSet) <* prepareStatement.close()
+              resultSet <-
+                paramBind(prepareStatement, command.params) >> prepareStatement.executeUpdate() >> prepareStatement
+                  .getGeneratedKeys()
+              result <-
+                summon[ResultSetConsumer[F, T]].consume(resultSet, command.statement) <* prepareStatement.close()
             yield result
         )
 

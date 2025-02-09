@@ -62,6 +62,68 @@ case class Select[A, B](
     )
 
   /**
+   * A method for setting the WHERE condition in a SELECT statement.
+   *
+   * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .whereOpt(city => opt.map(value => city.name === value))
+   * }}}
+   *
+   * @param func
+   * Function to construct an expression using the columns that Table has.
+   */
+  def whereOpt(func: A => Option[Expression]): Where.Q[A, B] =
+    func(table) match
+      case Some(expression) =>
+        Where.Q[A, B](
+          table     = table,
+          columns   = columns,
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter
+        )
+      case None =>
+        Where.Q[A, B](
+          table     = table,
+          columns   = columns,
+          statement = statement,
+          params    = params,
+          isFirst   = true
+        )
+
+  /**
+   * A method for setting the WHERE condition in a SELECT statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .select(_.name)
+   *     .whereOpt(Some("Tokyo"))((city, value) => city.name === value)
+   * }}}
+   *
+   * @param func
+   * Function to construct an expression using the columns that Table has.
+   */
+  def whereOpt[C](opt: Option[C])(func: (A, C) => Expression): Where.Q[A, B] =
+    opt match
+      case Some(value) =>
+        val expression = func(table, value)
+        Where.Q[A, B](
+          table     = table,
+          columns   = columns,
+          statement = statement ++ s" WHERE ${ expression.statement }",
+          params    = params ++ expression.parameter
+        )
+      case None =>
+        Where.Q[A, B](
+          table     = table,
+          columns   = columns,
+          statement = statement,
+          params    = params,
+          isFirst   = true
+        )
+
+  /**
    * A method for setting the GROUP BY condition in a SELECT statement.
    * 
    * {{{

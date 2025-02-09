@@ -6,11 +6,11 @@
 
 package ldbc.dsl.logging
 
-import cats.Applicative
 import cats.syntax.all.*
+import cats.Applicative
 
-import cats.effect.Sync
 import cats.effect.std.Console
+import cats.effect.Sync
 
 /**
  * copied from doobie:

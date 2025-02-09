@@ -7,6 +7,7 @@
 package ldbc.hikari
 
 import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
+
 import cats.effect.*
 import cats.effect.implicits.*
 

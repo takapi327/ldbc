@@ -9,25 +9,13 @@ package ldbc.connector.authenticator
 import java.nio.charset.StandardCharsets
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.X509EncodedKeySpec
-import java.security.{ KeyFactory, MessageDigest, PublicKey }
+import java.security.KeyFactory
+import java.security.PublicKey
 import java.util.Base64
+
 import javax.crypto.Cipher
 
-trait Sha256PasswordPlugin extends AuthenticationPlugin:
-
-  override def name: String = "sha256_password"
-
-  def transformation: String = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding"
-
-  override def hashPassword(password: String, scramble: Array[Byte]): Array[Byte] =
-    if password.isEmpty then Array[Byte]()
-    else
-      val sha256 = MessageDigest.getInstance("SHA-256")
-      val hash1  = sha256.digest(password.getBytes(StandardCharsets.UTF_8))
-      val hash2  = sha256.digest(hash1)
-      val hash3  = sha256.digest(hash2 ++ scramble)
-      hash1.zip(hash3).map { case (a, b) => (a ^ b).toByte }
-
+trait Sha256PasswordPluginPlatform[F[_]] { self: Sha256PasswordPlugin[F] =>
   def encryptPassword(password: String, scramble: Array[Byte], publicKeyString: String): Array[Byte] =
     val input = if password.nonEmpty then (password + "\u0000").getBytes(StandardCharsets.UTF_8) else Array[Byte](0)
     val mysqlScrambleBuff = xorString(input, scramble, input.length)
@@ -35,10 +23,6 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
       mysqlScrambleBuff,
       decodeRSAPublicKey(publicKeyString)
     )
-
-  private def xorString(from: Array[Byte], scramble: Array[Byte], length: Int): Array[Byte] =
-    val scrambleLength = scramble.length
-    (0 until length).map(pos => (from(pos) ^ scramble(pos % scrambleLength)).toByte).toArray
 
   private def encryptWithRSAPublicKey(input: Array[Byte], key: PublicKey): Array[Byte] =
     val cipher = Cipher.getInstance(transformation)
@@ -52,7 +36,4 @@ trait Sha256PasswordPlugin extends AuthenticationPlugin:
     val spec            = new X509EncodedKeySpec(certificateData)
     val kf              = KeyFactory.getInstance("RSA")
     kf.generatePublic(spec).asInstanceOf[RSAPublicKey]
-
-object Sha256PasswordPlugin:
-
-  def apply(): Sha256PasswordPlugin = new Sha256PasswordPlugin {}
+}

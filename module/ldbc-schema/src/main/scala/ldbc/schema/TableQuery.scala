@@ -9,9 +9,10 @@ package ldbc.schema
 import scala.quoted.*
 
 import ldbc.dsl.Parameter
+
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
-private[ldbc] case class TableQueryImpl[A <: AbstractTable[?]](
+case class TableQueryImpl[A <: AbstractTable[?]](
   table:  A,
   column: Column[AbstractTableQuery.Extract[A]],
   name:   String,
@@ -23,6 +24,7 @@ private[ldbc] case class TableQueryImpl[A <: AbstractTable[?]](
       column.name,
       column.alias,
       column.opt.decoder,
+      column.opt.encoder,
       Some(column.values),
       Some(column.updateStatement)
     )

@@ -8,8 +8,9 @@ package ldbc.statement
 
 import scala.annotation.targetName
 
+import cats.data.NonEmptyList
+
 import ldbc.dsl.{ Parameter, SQL }
-import ldbc.dsl.codec.Encoder
 
 /**
  * Trait for building Statements to be added.
@@ -31,7 +32,7 @@ sealed trait Insert[A] extends Command:
    *     .onDuplicateKeyUpdate(_.name)
    * }}}
    */
-  def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A]
+  def onDuplicateKeyUpdate[B](func: A => Column[B]): Insert.DuplicateKeyUpdate[A]
 
   /**
    * Methods for constructing INSERT ... ON DUPLICATE KEY UPDATE statements.
@@ -42,29 +43,28 @@ sealed trait Insert[A] extends Command:
    *     .onDuplicateKeyUpdate(_.name, "Osaka")
    * }}}
    */
-  def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using Encoder[B]): Insert.DuplicateKeyUpdate[A]
+  def onDuplicateKeyUpdate[B](func: A => Column[B], value: B): Insert.DuplicateKeyUpdate[A]
 
 object Insert:
 
-  case class Impl[A, B](table: A, statement: String, params: List[Parameter.Dynamic]) extends Insert[A]:
+  case class Impl[A](table: A, statement: String, params: List[Parameter.Dynamic]) extends Insert[A]:
 
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-    override def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[B](func: A => Column[B]): Insert.DuplicateKeyUpdate[A] =
       Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).duplicateKeyUpdateStatement }",
+        s"$statement ON DUPLICATE KEY UPDATE ${ func(table).duplicateKeyUpdateStatement }",
         params
       )
 
-    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using
-      Encoder[B]
-    ): Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[B](func: A => Column[B], value: B): Insert.DuplicateKeyUpdate[A] =
+      val columns = func(table)
       Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).name } = ?",
-        params :+ Parameter.Dynamic(value)
+        s"$statement ON DUPLICATE KEY UPDATE ${ columns.name } = ?",
+        params ++ Parameter.Dynamic.many(columns.encoder.encode(value))
       )
 
   case class Into[A, B](table: A, statement: String, columns: Column[B]):
@@ -78,27 +78,33 @@ object Insert:
      *     .values((1L, "Tokyo"))
      * }}}
      *
+     * @param head
+     *   The values to be inserted.
+     * @param tail
+     *   The values to be inserted.
+     */
+    def values(head: B, tail: B*): Values[A] = values(NonEmptyList(head, tail.toList))
+
+    /**
+     * Method for constructing INSERT ... VALUES statements.
+     *
+     * {{{
+     *   TableQuery[City]
+     *     .insertInto(city => city.id *: city.name)
+     *     .values(NonEmptyList.one(1L, "Tokyo"))
+     * }}}
+     *
      * @param values
      *   The values to be inserted.
      */
-    inline def values(values: B*): Values[A] =
-      val parameterBinders = values
-        .map {
-          case h *: EmptyTuple => h *: EmptyTuple
-          case h *: t          => h *: t
-          case h               => h *: EmptyTuple
-        }
-        .flatMap(
-          _.zip(Encoder.fold[B]).toList
-            .map {
-              case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-            }
-            .toList
-        )
+    def values(values: NonEmptyList[B]): Values[A] =
+      val parameterBinders: List[Parameter.Dynamic] = values.toList.flatMap { value =>
+        Parameter.Dynamic.many(columns.encoder.encode(value))
+      }
       Values(
         table,
         s"$statement (${ columns.name }) VALUES ${ List.fill(values.length)(s"(${ List.fill(columns.values)("?").mkString(",") })").mkString(",") }",
-        parameterBinders.toList
+        parameterBinders
       )
 
     /**
@@ -159,20 +165,19 @@ object Insert:
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-    override def onDuplicateKeyUpdate[C](columns: A => Column[C]): Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[C](func: A => Column[C]): Insert.DuplicateKeyUpdate[A] =
       Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).duplicateKeyUpdateStatement }",
+        s"$statement ON DUPLICATE KEY UPDATE ${ func(table).duplicateKeyUpdateStatement }",
         params
       )
 
-    override def onDuplicateKeyUpdate[B](columns: A => Column[B], value: B)(using
-      Encoder[B]
-    ): Insert.DuplicateKeyUpdate[A] =
+    override def onDuplicateKeyUpdate[B](func: A => Column[B], value: B): Insert.DuplicateKeyUpdate[A] =
+      val columns = func(table)
       Insert.DuplicateKeyUpdate(
         table,
-        s"$statement ON DUPLICATE KEY UPDATE ${ columns(table).name } = ?",
-        params :+ Parameter.Dynamic(value)
+        s"$statement ON DUPLICATE KEY UPDATE ${ columns.name } = ?",
+        params ++ Parameter.Dynamic.many(columns.encoder.encode(value))
       )
 
   case class DuplicateKeyUpdate[A](table: A, statement: String, params: List[Parameter.Dynamic]) extends Command:

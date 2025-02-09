@@ -7,10 +7,10 @@
 package ldbc.connector.net.packet
 package response
 
-import cats.syntax.all.*
+import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
-import scodec.codecs.*
+import scodec.bits.{ BitVector, ByteOrdering }
 
 import ldbc.connector.data.CapabilitiesFlags
 
@@ -40,37 +40,65 @@ object ResultSetRowPacket:
     new ResultSetRowPacket:
       override val values: Array[Option[String]] = _values
 
-  private def decodeValue(length: Int): Decoder[Option[String]] =
-    bytes(length).asDecoder
-      .map(_.decodeUtf8Lenient.some)
+  private def decodeToString(remainder: BitVector, size: Int): (BitVector, Option[String]) =
+    val (fieldSizeBits, postFieldSize) = remainder.splitAt(size)
+    val fieldSizeNumBytes              = fieldSizeBits.toLong(false, ByteOrdering.LittleEndian)
+    if fieldSizeNumBytes == NULL then (postFieldSize, None)
+    else
+      val (fieldBits, postFieldBits) = postFieldSize.splitAt(fieldSizeNumBytes * 8L)
+      (postFieldBits, Some(new String(fieldBits.toByteArray, UTF_8)))
+
+  /**
+   * Decoder of result set acquisition
+   *
+   * A foolproof implementation using splitAt is faster than the helper functions provided by scodec.
+   */
+  private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
+    (bits: BitVector) =>
+      val buffer       = new Array[Option[String]](columnLength)
+      var remainder    = bits
+      var remainedSize = columnLength
+      while remainedSize > 0 do
+        val index = columnLength - remainedSize
+        if fieldLength == NULL && index == 0 then buffer.update(index, None)
+        else if index == 0 then
+          val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength * 8L)
+          buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
+          remainder = postFieldBits
+        else
+          val (lengthBits, postLengthBits) = remainder.splitAt(8)
+          val length                       = lengthBits.toInt(false)
+          remainder = postLengthBits
+          if length == NULL then buffer.update(index, None)
+          else if length <= 251 then
+            val (fieldBits, postFieldBits) = remainder.splitAt(length * 8L)
+            buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
+            remainder = postFieldBits
+          else if length == 252 then
+            val (postFieldSize, decodedValue) = decodeToString(remainder, 16)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSize
+          else if length == 253 then
+            val (postFieldSize, decodedValue) = decodeToString(remainder, 24)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSize
+          else
+            val (postFieldSize, decodedValue) = decodeToString(remainder, 32)
+            buffer.update(index, decodedValue)
+            remainder = postFieldSize
+        end if
+        remainedSize -= 1
+
+      Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
 
   def decoder(
     capabilityFlags: Set[CapabilitiesFlags],
-    columns:         Vector[ColumnDefinitionPacket]
+    columnLength:    Int
   ): Decoder[ResultSetRowPacket | EOFPacket | ERRPacket] =
-    uint8.flatMap {
-      case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags)
-      case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags)
-      case length =>
-        val buffer = new Array[Option[String]](columns.length)
-
-        def decodeRow(index: Int, remainingLength: Option[Int]): Decoder[ResultSetRowPacket] =
-          if index >= columns.length then Decoder.pure(ResultSetRowPacket(buffer))
-          else
-            val valueDecoder =
-              length match
-                case NULL if index == 0 => Decoder.pure(None)
-                case _ if index == 0    => decodeValue(length)
-                case _ =>
-                  lengthEncodedIntDecoder.flatMap {
-                    case NULL  => Decoder.pure(None)
-                    case value => decodeValue(value.toInt)
-                  }
-
-            valueDecoder.flatMap { value =>
-              buffer(index) = value
-              decodeRow(index + 1, None)
-            }
-
-        decodeRow(0, Some(length))
-    }
+    (bits: BitVector) =>
+      val (statusBits, postLengthBits) = bits.splitAt(8)
+      val status                       = statusBits.toInt(false)
+      status match
+        case EOFPacket.STATUS => EOFPacket.decoder(capabilityFlags).decode(postLengthBits)
+        case ERRPacket.STATUS => ERRPacket.decoder(capabilityFlags).decode(postLengthBits)
+        case fieldLength      => decodeResultSetRow(fieldLength, columnLength).decode(postLengthBits)

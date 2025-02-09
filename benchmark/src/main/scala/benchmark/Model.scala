@@ -6,14 +6,19 @@
 
 package benchmark
 
-import ldbc.query.builder.Table
+import ldbc.dsl.codec.*
+
 import ldbc.query.builder.formatter.Naming
+import ldbc.query.builder.Table
 
 given Naming = Naming.PASCAL
 
 case class Model1(
   c1: Int
 ) derives Table
+
+object Model1:
+  given Codec[Model1] = Codec[Int].to[Model1]
 
 case class Model5(
   c1: Int,
@@ -59,6 +64,14 @@ case class Model20(
   c20: Int
 ) derives Table
 
+object Model20:
+  given Codec[Model20] = (
+    Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int]
+  ).to[Model20]
+
 case class Model25(
   c1:  Int,
   c2:  Int,
@@ -86,6 +99,15 @@ case class Model25(
   c24: Int,
   c25: Int
 ) derives Table
+
+object Model25:
+  given Codec[Model25] = (
+    Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *:
+      Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int] *: Codec[Int]
+  ).to[Model25]
 
 case class City(
   id:          Int,

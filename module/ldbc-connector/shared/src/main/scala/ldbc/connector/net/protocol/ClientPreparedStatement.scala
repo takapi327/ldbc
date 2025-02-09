@@ -13,17 +13,17 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
+import org.typelevel.otel4s.trace.{ Span, Tracer }
 import org.typelevel.otel4s.Attribute
-import org.typelevel.otel4s.trace.{ Tracer, Span }
 
-import ldbc.sql.{ Statement, ResultSet }
+import ldbc.sql.{ ResultSet, Statement }
 
-import ldbc.connector.ResultSetImpl
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
-import ldbc.connector.net.Protocol
-import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.packet.request.*
+import ldbc.connector.net.packet.response.*
+import ldbc.connector.net.Protocol
+import ldbc.connector.ResultSetImpl
 
 /**
  * PreparedStatement for query construction at the client side.
@@ -39,7 +39,7 @@ import ldbc.connector.net.packet.request.*
  * @tparam F
  *   the effect type
  */
-case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
+case class ClientPreparedStatement[F[_]: Exchange: Tracer](
   protocol:             Protocol[F],
   serverVariables:      Map[String, String],
   sql:                  String,
@@ -55,7 +55,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
   lastInsertId:         Ref[F, Long],
   resultSetType:        Int = ResultSet.TYPE_FORWARD_ONLY,
   resultSetConcurrency: Int = ResultSet.CONCUR_READ_ONLY
-)(using ev: MonadError[F, Throwable])
+)(using F: MonadThrow[F])
   extends SharedPreparedStatement[F]:
 
   private val attributes = protocol.initialPacket.attributes ++ List(
@@ -78,14 +78,14 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           ) *>
           protocol.receive(ColumnsNumberPacket.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
             case _: OKPacket =>
-              ev.pure(
+              F.pure(
                 ResultSetImpl
                   .empty(
                     serverVariables,
                     protocol.initialPacket.serverVersion
                   )
               )
-            case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None, params))
+            case error: ERRPacket => F.raiseError(error.toException(Some(sql), None, params))
             case result: ColumnsNumberPacket =>
               for
                 columnDefinitions <-
@@ -93,9 +93,10 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                     result.size,
                     ColumnDefinitionPacket.decoder(protocol.initialPacket.capabilityFlags)
                   )
-                resultSetRow <- protocol.readUntilEOF[ResultSetRowPacket](
-                                  ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions)
-                                )
+                resultSetRow <-
+                  protocol.readUntilEOF[ResultSetRowPacket](
+                    ResultSetRowPacket.decoder(protocol.initialPacket.capabilityFlags, columnDefinitions.length)
+                  )
                 resultSet = ResultSetImpl(
                               columnDefinitions,
                               resultSetRow,
@@ -125,9 +126,9 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
             ComQueryPacket(buildQuery(sql, params), protocol.initialPacket.capabilityFlags, ListMap.empty)
           ) *>
           protocol.receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags)).flatMap {
-            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> ev.pure(result.affectedRows)
-            case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None, params))
-            case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+            case result: OKPacket => lastInsertId.set(result.lastInsertId) *> F.pure(result.affectedRows)
+            case error: ERRPacket => F.raiseError(error.toException(Some(sql), None, params))
+            case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
           }
       } <* params.set(SortedMap.empty)
     }
@@ -161,7 +162,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                     Attribute("sql", args.toArray.toSeq)
                   ))*
                 ) *> (
-                  if args.isEmpty then ev.pure(Array.empty)
+                  if args.isEmpty then F.pure(Array.empty)
                   else
                     protocol.resetSequenceId *>
                       protocol.send(
@@ -174,9 +175,9 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                       protocol
                         .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                         .flatMap {
-                          case _: OKPacket      => ev.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
-                          case error: ERRPacket => ev.raiseError(error.toException(Some(sql), None))
-                          case _: EOFPacket     => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                          case _: OKPacket      => F.pure(Array.fill(args.length)(Statement.SUCCESS_NO_INFO.toLong))
+                          case error: ERRPacket => F.raiseError(error.toException(Some(sql), None))
+                          case _: EOFPacket     => F.raiseError(new SQLException("Unexpected EOF packet"))
                         }
                 )
               }
@@ -194,7 +195,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                       Attribute("sql", args.toArray.toSeq)
                     ))*
                   ) *> (
-                    if args.isEmpty then ev.pure(Array.empty)
+                    if args.isEmpty then F.pure(Array.empty)
                     else
                       protocol.resetSequenceId *>
                         protocol.send(
@@ -205,7 +206,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                           )
                         ) *>
                         args
-                          .foldLeft(ev.pure(Vector.empty[Long])) { ($acc, _) =>
+                          .foldLeft(F.pure(Vector.empty[Long])) { ($acc, _) =>
                             for
                               acc <- $acc
                               result <-
@@ -213,10 +214,10 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                                   .receive(GenericResponsePackets.decoder(protocol.initialPacket.capabilityFlags))
                                   .flatMap {
                                     case result: OKPacket =>
-                                      lastInsertId.set(result.lastInsertId) *> ev.pure(acc :+ result.affectedRows)
+                                      lastInsertId.set(result.lastInsertId) *> F.pure(acc :+ result.affectedRows)
                                     case error: ERRPacket =>
-                                      ev.raiseError(error.toException("Failed to execute batch", acc))
-                                    case _: EOFPacket => ev.raiseError(new SQLException("Unexpected EOF packet"))
+                                      F.raiseError(error.toException("Failed to execute batch", acc))
+                                    case _: EOFPacket => F.raiseError(new SQLException("Unexpected EOF packet"))
                                   }
                             yield result
                           }
@@ -229,7 +230,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
             params.set(SortedMap.empty) <*
             batchedArgs.set(Vector.empty)
         case _ =>
-          ev.raiseError(
+          F.raiseError(
             new IllegalArgumentException("The batch query must be an INSERT, UPDATE, or DELETE statement.")
           )
     )
@@ -244,8 +245,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
                           override def table:      String                     = ""
                           override def name:       String                     = "GENERATED_KEYS"
                           override def columnType: ColumnDataType             = ColumnDataType.MYSQL_TYPE_LONGLONG
-                          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty
-                        ),
+                          override def flags:      Seq[ColumnDefinitionFlags] = Seq.empty),
                         Vector(ResultSetRowPacket(Array(Some(lastInsertId.toString)))),
                         serverVariables,
                         protocol.initialPacket.serverVersion
@@ -253,7 +253,7 @@ case class ClientPreparedStatement[F[_]: Temporal: Exchange: Tracer](
           _ <- currentResultSet.set(Some(resultSet))
         yield resultSet
       case Statement.NO_GENERATED_KEYS =>
-        ev.raiseError(
+        F.raiseError(
           new SQLException(
             "Generated keys not requested. You need to specify Statement.RETURN_GENERATED_KEYS to Statement.executeUpdate(), Statement.executeLargeUpdate() or Connection.prepareStatement()."
           )

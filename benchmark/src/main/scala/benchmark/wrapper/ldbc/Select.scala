@@ -10,14 +10,15 @@ import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import org.openjdk.jmh.annotations.*
+
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.Connection
+
 import ldbc.query.builder.syntax.io.*
 
 import benchmark.City

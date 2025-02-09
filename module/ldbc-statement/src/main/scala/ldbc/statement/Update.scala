@@ -9,7 +9,6 @@ package ldbc.statement
 import scala.annotation.targetName
 
 import ldbc.dsl.{ Parameter, SQL }
-import ldbc.dsl.codec.Encoder
 
 /** 
  * Trait for building Statements to be updated.
@@ -36,7 +35,7 @@ sealed trait Update[A] extends Command:
    * @param value
    *   The value to be set
    */
-  def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A]
+  def set[B](column: A => Column[B], value: B): Update[A]
 
   /** 
    * Methods for setting the value of a column in a table.
@@ -55,7 +54,7 @@ sealed trait Update[A] extends Command:
    * @param bool
    *   A boolean value that determines whether to update
    */
-  def set[B](column: A => Column[B], value: B, bool: Boolean)(using Encoder[B]): Update[A]
+  def set[B](column: A => Column[B], value: B, bool: Boolean): Update[A]
 
   /** 
    * A method for setting the WHERE condition in a Update statement.
@@ -72,6 +71,37 @@ sealed trait Update[A] extends Command:
    */
   def where(func: A => Expression): Where.C[A]
 
+  /**
+   * A method for setting the WHERE condition in a Update statement.
+   *
+   * {{{
+   *   val opt: Option[String] = ???
+   *   TableQuery[City]
+   *     .update(...)
+   *     .set(_.population, 13929286)
+   *     .whereOpt(city => opt.map(value => city.name === value))
+   * }}}
+   *
+   * @param func
+   *   A function that takes a column and returns an expression.
+   */
+  def whereOpt(func: A => Option[Expression]): Where.C[A]
+
+  /**
+   * A method for setting the WHERE condition in a Update statement.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .update(...)
+   *     .set(_.population, 13929286)
+   *     .whereOpt(Some("Tokyo"))((city, value) => city.name === value)
+   * }}}
+   *
+   * @param func
+   *   A function that takes a column and returns an expression.
+   */
+  def whereOpt[B](opt: Option[B])(func: (A, B) => Expression): Where.C[A]
+
 object Update:
 
   private[ldbc] case class Impl[A](
@@ -83,13 +113,14 @@ object Update:
     @targetName("combine")
     override def ++(sql: SQL): SQL = this.copy(statement = statement ++ sql.statement, params = params ++ sql.params)
 
-    override def set[B](column: A => Column[B], value: B)(using Encoder[B]): Update[A] =
+    override def set[B](column: A => Column[B], value: B): Update[A] =
+      val columns = column(table)
       this.copy(
-        statement = statement ++ s", ${ column(table).updateStatement }",
-        params    = params :+ Parameter.Dynamic(value)
+        statement = statement ++ s", ${ columns.updateStatement }",
+        params    = params ++ Parameter.Dynamic.many(columns.encoder.encode(value))
       )
 
-    override def set[B](column: A => Column[B], value: B, bool: Boolean)(using Encoder[B]): Update[A] =
+    override def set[B](column: A => Column[B], value: B, bool: Boolean): Update[A] =
       if bool then set(column, value) else this
 
     override def where(func: A => Expression): Where.C[A] =
@@ -99,3 +130,36 @@ object Update:
         statement = statement ++ s" WHERE ${ expression.statement }",
         params    = params ++ expression.parameter
       )
+
+    override def whereOpt(func: A => Option[Expression]): Where.C[A] =
+      func(table) match
+        case Some(expression) =>
+          Where.C[A](
+            table     = table,
+            statement = statement ++ s" WHERE ${ expression.statement }",
+            params    = params ++ expression.parameter
+          )
+        case None =>
+          Where.C[A](
+            table     = table,
+            statement = statement,
+            params    = params,
+            isFirst   = true
+          )
+
+    override def whereOpt[B](opt: Option[B])(func: (A, B) => Expression): Where.C[A] =
+      opt match
+        case Some(value) =>
+          val expression = func(table, value)
+          Where.C[A](
+            table     = table,
+            statement = statement ++ s" WHERE ${ expression.statement }",
+            params    = params ++ expression.parameter
+          )
+        case None =>
+          Where.C[A](
+            table     = table,
+            statement = statement,
+            params    = params,
+            isFirst   = true
+          )

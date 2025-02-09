@@ -11,8 +11,9 @@ import cats.effect.unsafe.implicits.global
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
 import ldbc.dsl.io.*
+
+import ldbc.connector.*
 
 @main def setup(): Unit =
 
@@ -22,12 +23,12 @@ import ldbc.dsl.io.*
   // #given
 
   // #setupDatabase
-  val createDatabase: Executor[IO, Int] =
+  val createDatabase: DBIO[Int] =
     sql"CREATE DATABASE IF NOT EXISTS sandbox_db".update
   // #setupDatabase
 
   // #setupUser
-  val createUser: Executor[IO, Int] =
+  val createUser: DBIO[Int] =
     sql"""
       CREATE TABLE IF NOT EXISTS `user` (
         `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -40,7 +41,7 @@ import ldbc.dsl.io.*
   // #setupUser
 
   // #setupProduct
-  val createProduct: Executor[IO, Int] =
+  val createProduct: DBIO[Int] =
     sql"""
       CREATE TABLE IF NOT EXISTS `product` (
         `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -53,7 +54,7 @@ import ldbc.dsl.io.*
   // #setupProduct
 
   // #setupOrder
-  val createOrder: Executor[IO, Int] =
+  val createOrder: DBIO[Int] =
     sql"""
       CREATE TABLE IF NOT EXISTS `order` (
         `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -70,7 +71,7 @@ import ldbc.dsl.io.*
   // #setupOrder
 
   // #insertUser
-  val insertUser: Executor[IO, Int] =
+  val insertUser: DBIO[Int] =
     sql"""
       INSERT INTO user (name, email) VALUES
        ('Alice', 'alice@example.com'),
@@ -80,7 +81,7 @@ import ldbc.dsl.io.*
   // #insertUser
 
   // #insertProduct
-  val insertProduct: Executor[IO, Int] =
+  val insertProduct: DBIO[Int] =
     sql"""
       INSERT INTO product (name, price) VALUES
       ('Laptop', 999.99),
@@ -91,7 +92,7 @@ import ldbc.dsl.io.*
   // #insertProduct
 
   // #insertOrder
-  val insertOrder: Executor[IO, Int] =
+  val insertOrder: DBIO[Int] =
     sql"""
       INSERT INTO `order` (user_id, product_id, quantity) VALUES
       (1, 1, 1), -- Alice ordered 1 Laptop

@@ -6,19 +6,19 @@
 
 package ldbc.connector.net
 
-import scala.io.AnsiColor
 import scala.concurrent.duration.Duration
+import scala.io.AnsiColor
+
+import scodec.bits.BitVector
+import scodec.Decoder
 
 import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.*
 
-import fs2.Chunk
 import fs2.io.net.Socket
-
-import scodec.Decoder
-import scodec.bits.BitVector
+import fs2.Chunk
 
 import ldbc.connector.data.CapabilitiesFlags
 import ldbc.connector.net.packet.*

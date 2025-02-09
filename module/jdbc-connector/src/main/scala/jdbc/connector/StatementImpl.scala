@@ -10,7 +10,7 @@ import cats.syntax.all.*
 
 import cats.effect.Sync
 
-import ldbc.sql.{ Statement, ResultSet }
+import ldbc.sql.{ ResultSet, Statement }
 
 private[jdbc] case class StatementImpl[F[_]: Sync](statement: java.sql.Statement) extends Statement[F]:
 

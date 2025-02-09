@@ -9,6 +9,8 @@ package ldbc.statement.syntax
 import scala.deriving.Mirror
 
 import ldbc.dsl.{ Query as DslQuery, * }
+import ldbc.dsl.codec.Decoder
+
 import ldbc.statement.Query
 
 trait QuerySyntax[F[_]]:
@@ -37,8 +39,9 @@ trait QuerySyntax[F[_]]:
      * @return
      *   A [[ldbc.dsl.Query]] instance
      */
-    inline def queryTo[P <: Product](using
-      m1:    Mirror.ProductOf[P],
-      m2:    Mirror.ProductOf[B],
-      check: m1.MirroredElemTypes =:= m2.MirroredElemTypes
+    def queryTo[P <: Product](using
+      m1:      Mirror.ProductOf[P],
+      m2:      Mirror.ProductOf[B],
+      check:   m1.MirroredElemTypes =:= m2.MirroredElemTypes,
+      decoder: Decoder[P]
     ): DslQuery[F, P]

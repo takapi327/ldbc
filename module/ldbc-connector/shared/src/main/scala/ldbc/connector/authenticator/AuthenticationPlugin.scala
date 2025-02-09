@@ -6,8 +6,10 @@
 
 package ldbc.connector.authenticator
 
-trait AuthenticationPlugin:
+import scodec.bits.ByteVector
+
+trait AuthenticationPlugin[F[_]]:
 
   def name: String
 
-  def hashPassword(password: String, scramble: Array[Byte]): Array[Byte]
+  def hashPassword(password: String, scramble: Array[Byte]): F[ByteVector]

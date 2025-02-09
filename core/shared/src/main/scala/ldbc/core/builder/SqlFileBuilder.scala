@@ -12,8 +12,8 @@ import java.time.LocalDateTime
 
 import scala.io.Codec
 
-import ldbc.core.Database
 import ldbc.core.syntax.given
+import ldbc.core.Database
 
 /**
  * Object to generate sql files that write out Create statements for databases and tables.

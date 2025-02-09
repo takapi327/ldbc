@@ -6,8 +6,8 @@
 
 package ldbc.core
 
-import scala.language.dynamics
 import scala.deriving.Mirror
+import scala.language.dynamics
 
 import ldbc.core.interpreter.*
 

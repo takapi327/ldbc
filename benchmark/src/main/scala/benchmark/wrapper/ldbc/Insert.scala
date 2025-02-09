@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit
 
 import scala.compiletime.uninitialized
 
-import com.mysql.cj.jdbc.MysqlDataSource
-
 import org.openjdk.jmh.annotations.*
+
+import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.data.NonEmptyList
 
@@ -20,9 +20,11 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.Connection
+
 import ldbc.dsl.SQL
-import ldbc.query.builder.Table
+
 import ldbc.query.builder.syntax.io.*
+import ldbc.query.builder.Table
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -67,7 +69,7 @@ class Insert:
       .use { conn =>
         query
           .insertInto(test => test.c1 *: test.c2)
-          .values(records.toList*)
+          .values(records)
           .update
           .commit(conn)
       }

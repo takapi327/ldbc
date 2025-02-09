@@ -6,13 +6,13 @@
 
 package ldbc.core
 
-import java.time.{ Instant, LocalTime, LocalDate, LocalDateTime, OffsetTime, OffsetDateTime, ZonedDateTime }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, OffsetTime, ZonedDateTime }
 import java.time.Year as JYear
 
-import scala.compiletime.{ error, erasedValue }
+import scala.compiletime.{ erasedValue, error }
 
-import ldbc.core.DataType.*
 import ldbc.core.model.{ Enum as EnumModel, EnumDataType }
+import ldbc.core.DataType.*
 
 /**
  * A set of methods for constructing DataType

@@ -6,8 +6,8 @@
 
 package ldbc.connector.data
 
-import cats.Eq
 import cats.syntax.all.*
+import cats.Eq
 
 /**
  * Represents a MySQL data type.

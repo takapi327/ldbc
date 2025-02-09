@@ -10,21 +10,22 @@ import java.io.{ File, IOException }
 import java.sql.SQLException
 
 import org.schemaspy.{ LayoutFolder, SchemaAnalyzer }
-import org.schemaspy.model.{ EmptySchemaException, InvalidConfigurationException }
-import org.schemaspy.input.dbms.MissingParameterException
-import org.schemaspy.input.dbms.service.{ DatabaseServiceFactory, SqlService }
-import org.schemaspy.input.dbms.exceptions.ConnectionFailure
-import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 import org.schemaspy.cli.{
   CommandLineArgumentParser,
   CommandLineArguments,
   ConfigFileArgumentParser,
   DefaultProviderFactory
 }
+import org.schemaspy.input.dbms.exceptions.ConnectionFailure
+import org.schemaspy.input.dbms.service.{ DatabaseServiceFactory, SqlService }
+import org.schemaspy.input.dbms.MissingParameterException
+import org.schemaspy.model.{ EmptySchemaException, InvalidConfigurationException }
+import org.schemaspy.output.xml.dom.XmlProducerUsingDOM
 
 import ldbc.core.*
-import ldbc.schemaspy.result.Status
+
 import ldbc.schemaspy.builder.DbmsMetaBuilder
+import ldbc.schemaspy.result.Status
 
 /**
  * Class for generating SchemaSpy documents.

@@ -6,8 +6,8 @@
 
 package ldbc.core
 
-import ldbc.core.model.Enum
 import ldbc.core.attribute.Attribute
+import ldbc.core.model.Enum
 
 /**
  * A model for representing character sets to be set in column definitions for the string data types CHAR, VARCHAR,

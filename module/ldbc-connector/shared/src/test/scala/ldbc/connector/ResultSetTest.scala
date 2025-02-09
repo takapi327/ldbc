@@ -10,10 +10,10 @@ import java.time.*
 
 import ldbc.sql.{ ResultSet, ResultSetMetaData }
 
-import ldbc.connector.util.Version
 import ldbc.connector.data.*
 import ldbc.connector.exception.SQLException
 import ldbc.connector.net.packet.response.*
+import ldbc.connector.util.Version
 
 class ResultSetTest extends FTestPlatform:
 

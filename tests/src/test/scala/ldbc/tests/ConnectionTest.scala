@@ -15,6 +15,7 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.*
 
 import ldbc.sql.*
+
 import ldbc.connector.SSL
 
 class LdbcConnectionTest extends ConnectionTest:
@@ -30,8 +31,7 @@ class LdbcConnectionTest extends ConnectionTest:
       ssl      = SSL.Trusted,
       databaseTerm = Some(databaseTerm match
         case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
-        case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
-      )
+        case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG)
     )
 
 class JdbcConnectionTest extends ConnectionTest:

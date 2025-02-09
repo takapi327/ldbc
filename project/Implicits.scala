@@ -14,8 +14,8 @@ import sbtcrossproject.{ CrossPlugin, CrossProject }
 import de.heikoseeberger.sbtheader.AutomateHeaderPlugin
 
 import BuildSettings.*
-import ScalaVersions.*
 import ProjectKeys.*
+import ScalaVersions.*
 
 object Implicits {
 

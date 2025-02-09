@@ -9,8 +9,9 @@ import cats.effect.unsafe.implicits.global
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
 import ldbc.dsl.io.*
+
+import ldbc.connector.*
 
 @main def program4(): Unit =
 
@@ -20,7 +21,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #program
-  val program: Executor[IO, Int] =
+  val program: DBIO[Int] =
     sql"INSERT INTO user (name, email) VALUES ('Carol', 'carol@example.com')".update
   // #program
 

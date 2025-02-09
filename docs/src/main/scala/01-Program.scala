@@ -9,8 +9,9 @@ import cats.effect.unsafe.implicits.global
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
 import ldbc.dsl.io.*
+
+import ldbc.connector.*
 
 @main def program1(): Unit =
   // #given
@@ -19,7 +20,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #program
-  val program: Executor[IO, Int] = Executor.pure[IO, Int](1)
+  val program: DBIO[Int] = DBIO.pure[IO, Int](1)
   // #program
 
   // #connection

@@ -11,8 +11,9 @@ import cats.effect.unsafe.implicits.global
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
 import ldbc.dsl.io.*
+
+import ldbc.connector.*
 
 @main def program3(): Unit =
 
@@ -22,7 +23,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #program
-  val program: Executor[IO, (List[Int], Option[Int], Int)] =
+  val program: DBIO[(List[Int], Option[Int], Int)] =
     for
       result1 <- sql"SELECT 1".query[Int].to[List]
       result2 <- sql"SELECT 2".query[Int].to[Option]

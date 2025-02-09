@@ -6,12 +6,15 @@
 
 package ldbc.statement
 
-import scala.deriving.Mirror
-import scala.compiletime.*
 import scala.annotation.targetName
+import scala.compiletime.*
+import scala.deriving.Mirror
 
-import ldbc.dsl.Parameter
+import cats.data.NonEmptyList
+
 import ldbc.dsl.codec.Encoder
+import ldbc.dsl.Parameter
+
 import ldbc.statement.internal.QueryConcat
 
 /**
@@ -63,11 +66,6 @@ trait TableQuery[A, O]:
   def selectAll: Select[A, Entity] =
     Select(table, column, s"SELECT ${ column.alias.getOrElse(column.name) } FROM $name", params)
 
-  protected type ToTuple[T] <: Tuple = T match
-    case h *: EmptyTuple => Tuple1[h]
-    case h *: t          => h *: ToTuple[t]
-    case _               => Tuple1[T]
-
   /**
    * Method to construct a query to insert a table.
    *
@@ -111,27 +109,42 @@ trait TableQuery[A, O]:
    *
    * @param mirror
    *   Mirror of Entity
-   * @param values
+   * @param head
+   *   Value to be inserted into the table
+   * @param tail
    *   Value to be inserted into the table
    */
-  inline def insert(using mirror: Mirror.Of[Entity])(
-    values: mirror.MirroredElemTypes*
+  inline def insert(using
+    mirror: Mirror.Of[Entity]
+  )(
+    head: mirror.MirroredElemTypes,
+    tail: mirror.MirroredElemTypes*
   ): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ =>
-        val parameterBinders = values
-          .flatMap(_.zip(Encoder.fold[mirror.MirroredElemTypes]).toList)
-          .map {
-            case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-          }
-          .toList
-        Insert.Impl(
-          table = table,
-          statement =
-            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").mkString(",") }",
-          params = params ++ parameterBinders
-        )
+      case _                      => insert[mirror.MirroredElemTypes](NonEmptyList(head, tail.toList))
+
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City]
+   *     .insert(NonEmptyList.one(1L, "Tokyo"))
+   * }}}
+   *
+   * @param values
+   *   Value to be inserted into the table
+   */
+  private def insert[B <: Tuple](values: NonEmptyList[B]): Insert[A] =
+    val parameterBinders: List[Parameter.Dynamic] = values.toList.flatMap { value =>
+      Parameter.Dynamic.many(column.encoder.asInstanceOf[Encoder[B]].encode(value))
+    }
+    Insert.Impl(
+      table = table,
+      statement =
+        s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(tuple => s"(${ tuple.toArray.map(_ => "?").mkString(",") })").toList.mkString(",") }",
+      params = params ++ parameterBinders
+    )
 
   /**
    * Method to construct a query to insert a table.
@@ -142,31 +155,17 @@ trait TableQuery[A, O]:
    *
    * @param value
    *   Value to be inserted into the table
-   * @param mirror
-   *   Mirror of Entity
    */
   @targetName("insertProduct")
-  inline def +=(value: Entity)(using mirror: Mirror.Of[Entity]): Insert[A] =
+  inline def +=(value: Entity): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
       case _ =>
-        inline mirror match
-          case s: Mirror.SumOf[Entity]     => error("Sum type is not supported.")
-          case p: Mirror.ProductOf[Entity] => derivedProduct(value, p)
-
-  private inline def derivedProduct[P](value: P, mirror: Mirror.ProductOf[P]): Insert[A] =
-    val tuples = Tuple.fromProduct(value.asInstanceOf[Product]).asInstanceOf[mirror.MirroredElemTypes]
-    val parameterBinders = tuples
-      .zip(Encoder.fold[mirror.MirroredElemTypes])
-      .toList
-      .map {
-        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-      }
-    Insert.Impl(
-      table     = table,
-      statement = s"INSERT INTO $name ${ column.insertStatement }",
-      params    = params ++ parameterBinders
-    )
+        Insert.Impl(
+          table     = table,
+          statement = s"INSERT INTO $name ${ column.insertStatement }",
+          params    = params ++ Parameter.Dynamic.many(column.encoder.encode(value))
+        )
 
   /**
    * Method to construct a query to insert a table.
@@ -175,18 +174,37 @@ trait TableQuery[A, O]:
    *   TableQuery[City] ++= List(City(1L, "Tokyo"), City(2L, "Osaka"))
    * }}}
    *
-   * @param values
+   * @param head
    *   Value to be inserted into the table
-   * @param check
-   *   Check if the type of the value is the same as the Entity
-   * @tparam P
-   *   Scala types to be converted by Encoder
+   * @param tail
+   *   Value to be inserted into the table
    */
   @targetName("insertProducts")
-  inline def ++=[P <: Product](values: List[P])(using check: P =:= Entity): Insert[A] =
+  inline def ++=(head: Entity, tail: Entity*): Insert[A] = ++=(NonEmptyList(head, tail.toList))
+
+  /**
+   * Method to construct a query to insert a table.
+   *
+   * {{{
+   *   TableQuery[City] ++= NonEmptyList(City(1L, "Tokyo"), City(2L, "Osaka"))
+   * }}}
+   *
+   * @param values
+   *   Value to be inserted into the table
+   */
+  @targetName("insertProducts")
+  inline def ++=(values: NonEmptyList[Entity]): Insert[A] =
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Insert processing.")
-      case _ => TableQueryMacro.++=[A, P](table, name, column.asInstanceOf[Column[P]], params, values)
+      case _ =>
+        Insert.Impl(
+          table = table,
+          statement =
+            s"INSERT INTO $name (${ column.name }) VALUES ${ values.map(_ => s"(${ List.fill(column.values)("?").mkString(",") })").toList.mkString(",") }",
+          params = params ++ values.toList.flatMap { value =>
+            Parameter.Dynamic.many(column.encoder.encode(value))
+          }
+        )
 
   /**
    * Method to construct a query to update a table.
@@ -207,17 +225,8 @@ trait TableQuery[A, O]:
     inline this match
       case Join.On(_, _, _, _, _) => error("Join Query does not yet support Update processing.")
       case _ =>
-        val columns = func(table)
-        val parameterBinders = (values match
-          case h *: EmptyTuple => h *: EmptyTuple
-          case h *: t          => h *: t
-          case h               => h *: EmptyTuple
-        )
-        .zip(Encoder.fold[ToTuple[C]])
-          .toList
-          .map {
-            case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-          }
+        val columns          = func(table)
+        val parameterBinders = Parameter.Dynamic.many(columns.encoder.encode(values))
         Update.Impl[A](table, s"UPDATE $name SET ${ columns.updateStatement }", params ++ parameterBinders)
 
   /**
@@ -230,21 +239,9 @@ trait TableQuery[A, O]:
    *
    * @param value
    *   Value to be updated in the table
-   * @param mirror
-   *   Mirror of Entity
-   * @param check
-   *   Check if the type of the value is the same as the Entity
-   * @tparam P
-   *   Scala types to be converted by Encoder
    */
-  inline def update[P <: Product](value: P)(using mirror: Mirror.ProductOf[P], check: P =:= Entity): Update[A] =
-    val parameterBinders = Tuple
-      .fromProductTyped(value)
-      .zip(Encoder.fold[mirror.MirroredElemTypes])
-      .toList
-      .map {
-        case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-      }
+  def update(value: Entity): Update[A] =
+    val parameterBinders = Parameter.Dynamic.many(column.encoder.encode(value))
     val statement =
       s"UPDATE $name SET ${ column.updateStatement }"
     Update.Impl[A](table, statement, params ++ parameterBinders)
@@ -334,68 +331,3 @@ object TableQuery:
   type Extract[T] = T match
     case AbstractTable[t]       => t
     case AbstractTable[t] *: tn => t *: Extract[tn]
-
-private[ldbc] object TableQueryMacro:
-
-  import scala.quoted.*
-
-  @targetName("insertProducts")
-  private[ldbc] inline def ++=[A, B <: Product](
-    table:  A,
-    name:   String,
-    column: Column[B],
-    params: List[Parameter.Dynamic],
-    values: List[B]
-  ): Insert[A] =
-    ${ derivedProducts('table, 'name, 'column, 'params, 'values) }
-
-  private[ldbc] def derivedProducts[A: Type, B <: Product](
-    table:  Expr[A],
-    name:   Expr[String],
-    column: Expr[Column[B]],
-    params: Expr[List[Parameter.Dynamic]],
-    values: Expr[List[B]]
-  )(using quotes: Quotes, tpe: Type[B]): Expr[Insert[A]] =
-    import quotes.reflect.*
-
-    val symbol = TypeRepr.of[B].typeSymbol
-
-    val encodes = Expr.ofSeq(
-      symbol.caseFields
-        .map { field =>
-          field.tree match
-            case ValDef(name, tpt, _) =>
-              tpt.tpe.asType match
-                case '[tpe] =>
-                  val encoder = Expr.summon[Encoder[tpe]].getOrElse {
-                    report.errorAndAbort(s"Encoder for type $tpe not found")
-                  }
-                  encoder.asExprOf[Encoder[tpe]]
-                case _ =>
-                  report.errorAndAbort(s"Type $tpt is not a type")
-        }
-    )
-
-    val lists: Expr[List[Tuple]] = '{
-      $values
-        .map(value => Tuple.fromProduct(value))
-    }
-
-    val parameterBinders = '{
-      $lists.flatMap(list =>
-        list.toList
-          .zip($encodes)
-          .map {
-            case (value, encoder) => Parameter.Dynamic(value)(using encoder.asInstanceOf[Encoder[Any]])
-          }
-      )
-    }
-
-    '{
-      Insert.Impl(
-        table = $table,
-        statement =
-          s"INSERT INTO ${ $name } (${ $column.name }) VALUES ${ $lists.map(list => s"(${ list.toList.map(_ => "?").mkString(",") })").mkString(",") }",
-        params = $params ++ $parameterBinders
-      )
-    }

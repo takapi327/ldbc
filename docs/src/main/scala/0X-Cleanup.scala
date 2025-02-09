@@ -9,8 +9,9 @@ import cats.effect.unsafe.implicits.global
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
 import ldbc.dsl.io.*
+
+import ldbc.connector.*
 
 @main def cleanup(): Unit =
 
@@ -20,7 +21,7 @@ import ldbc.dsl.io.*
   // #given
 
   // #cleanupDatabase
-  val dropDatabase: Executor[IO, Int] =
+  val dropDatabase: DBIO[Int] =
     sql"DROP DATABASE IF EXISTS sandbox_db".update
   // #cleanupDatabase
 

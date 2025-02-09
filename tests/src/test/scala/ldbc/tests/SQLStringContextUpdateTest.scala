@@ -17,8 +17,10 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.CatsEffectSuite
 
 import ldbc.sql.Connection
-import ldbc.connector.SSL
+
 import ldbc.dsl.io.*
+
+import ldbc.connector.SSL
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"

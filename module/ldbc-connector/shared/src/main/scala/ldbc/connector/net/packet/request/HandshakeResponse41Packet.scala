@@ -9,11 +9,11 @@ package request
 
 import java.util.Arrays.copyOf
 
-import cats.syntax.all.*
-
 import scodec.*
 import scodec.bits.*
 import scodec.interop.cats.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.CapabilitiesFlags
 

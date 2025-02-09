@@ -6,31 +6,37 @@
 
 package ldbc.schema
 
-import scala.language.dynamics
 import scala.deriving.Mirror
+import scala.language.dynamics
 
-import ldbc.dsl.codec.Decoder
+import ldbc.dsl.codec.Codec
+
 import ldbc.statement.{ AbstractTable, Column }
-import ldbc.schema.interpreter.*
+
 import ldbc.schema.attribute.Attribute
+import ldbc.schema.interpreter.*
 
 trait Table[T](val $name: String) extends AbstractTable[T]:
 
-  type Column[A] = ldbc.statement.Column[A]
+  export ldbc.statement.Column
 
-  protected final def column[A](name: String)(using elem: Decoder.Elem[A]): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
-    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, None, List.empty)
+  protected final def column[A](name: String)(using codec: Codec[A]): Column[A] =
+    ColumnImpl[A](s"`$name`", Some(s"${ $name }.`$name`"), codec.asDecoder, codec.asEncoder, None, List.empty)
 
-  protected final def column[A](name: String, dataType: DataType[A])(using elem: Decoder.Elem[A]): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
-    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, Some(dataType), List.empty)
+  protected final def column[A](name: String, dataType: DataType[A])(using codec: Codec[A]): Column[A] =
+    ColumnImpl[A](s"`$name`", Some(s"${ $name }.`$name`"), codec.asDecoder, codec.asEncoder, Some(dataType), List.empty)
 
   protected final def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-    elem: Decoder.Elem[A]
+    codec: Codec[A]
   ): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(s"${ $name }.$name")))
-    ColumnImpl[A](name, Some(s"${ $name }.$name"), decoder, Some(dataType), attributes.toList)
+    ColumnImpl[A](
+      s"`$name`",
+      Some(s"${ $name }.`$name`"),
+      codec.asDecoder,
+      codec.asEncoder,
+      Some(dataType),
+      attributes.toList
+    )
 
   /**
    * Methods for setting key information for tables.
@@ -43,7 +49,7 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
 
 object Table:
 
-  private[ldbc] case class Opt[T](
+  case class Opt[T](
     $name:   String,
     columns: List[Column[?]],
     *      : Column[Option[T]]

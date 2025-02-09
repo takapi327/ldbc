@@ -8,17 +8,20 @@ package ldbc.schema
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import ldbc.dsl.codec.Decoder
-import ldbc.schema.DataType.*
+import ldbc.dsl.codec.{ Decoder, Encoder }
+
+import ldbc.statement.Column
+
 import ldbc.schema.attribute.*
+import ldbc.schema.DataType.*
 
 class ColumnImplTest extends AnyFlatSpec:
 
   private def column[A](name: String, dataType: DataType[A], attributes: Attribute[A]*)(using
-    elem: Decoder.Elem[A]
+    decoder: Decoder[A],
+    encoder: Encoder[A]
   ): Column[A] =
-    val decoder = new Decoder[A]((resultSet, prefix) => elem.decode(resultSet, prefix.getOrElse(name)))
-    ColumnImpl[A](name, None, decoder, Some(dataType), attributes.toList)
+    ColumnImpl[A](s"`$name`", None, decoder, encoder, Some(dataType), attributes.toList)
 
   it should "The query string of the Column model generated with only label and DataType matches the specified string." in {
     assert(column[Long]("id", BIGINT).statement === "`id` BIGINT NOT NULL")

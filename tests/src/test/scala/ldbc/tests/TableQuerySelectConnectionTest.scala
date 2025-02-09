@@ -17,9 +17,11 @@ import org.typelevel.otel4s.trace.Tracer
 import munit.*
 
 import ldbc.sql.*
-import ldbc.connector.SSL
+
 import ldbc.query.builder.*
 import ldbc.query.builder.syntax.io.*
+
+import ldbc.connector.SSL
 
 import ldbc.tests.model.*
 
@@ -313,7 +315,7 @@ trait TableQuerySelectConnectionTest extends CatsEffectSuite:
         (for
           codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
           cities <- codeOpt match
-                      case None => Executor.pure[IO, List[(String, String)]](List.empty)
+                      case None => DBIO.pure[IO, List[(String, String)]](List.empty)
                       case Some(code) =>
                         city
                           .select(v => v.name *: v.countryCode)

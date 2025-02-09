@@ -8,8 +8,8 @@ package ldbc.hikari
 
 import java.time.Duration as JavaDuration
 
-import scala.jdk.CollectionConverters.*
 import scala.concurrent.duration.{ Duration, FiniteDuration, * }
+import scala.jdk.CollectionConverters.*
 
 import com.typesafe.config.*
 

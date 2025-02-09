@@ -6,20 +6,57 @@
 
 package ldbc
 
-import scala.deriving.Mirror
+import java.time.*
 
 import cats.{ Foldable, Functor, Reducible }
 import cats.data.NonEmptyList
 import cats.syntax.all.*
+import cats.MonadThrow
 
 import cats.effect.*
 
-import ldbc.dsl.syntax.*
+import ldbc.sql.PreparedStatement
+
 import ldbc.dsl.codec.Encoder
+import ldbc.dsl.syntax.*
 
 package object dsl:
 
-  private[ldbc] trait SyncSyntax[F[_]: Temporal] extends StringContextSyntax[F]:
+  private[ldbc] trait ParamBinder[F[_]: MonadThrow]:
+    protected def paramBind(
+      prepareStatement: PreparedStatement[F],
+      params:           List[Parameter.Dynamic]
+    ): F[Unit] =
+      val encoded = params.foldLeft(MonadThrow[F].pure(List.empty[Encoder.Supported])) {
+        case (acc, param) =>
+          for
+            acc$ <- acc
+            value <- param match
+                       case Parameter.Dynamic.Success(value) => MonadThrow[F].pure(value)
+                       case Parameter.Dynamic.Failure(errors) =>
+                         MonadThrow[F].raiseError(new IllegalArgumentException(errors.mkString(", ")))
+          yield acc$ :+ value
+      }
+      encoded.flatMap(_.zipWithIndex.foldLeft(MonadThrow[F].unit) {
+        case (acc, (value, index)) =>
+          acc *> (value match
+            case value: Boolean       => prepareStatement.setBoolean(index + 1, value)
+            case value: Byte          => prepareStatement.setByte(index + 1, value)
+            case value: Short         => prepareStatement.setShort(index + 1, value)
+            case value: Int           => prepareStatement.setInt(index + 1, value)
+            case value: Long          => prepareStatement.setLong(index + 1, value)
+            case value: Float         => prepareStatement.setFloat(index + 1, value)
+            case value: Double        => prepareStatement.setDouble(index + 1, value)
+            case value: BigDecimal    => prepareStatement.setBigDecimal(index + 1, value)
+            case value: String        => prepareStatement.setString(index + 1, value)
+            case value: Array[Byte]   => prepareStatement.setBytes(index + 1, value)
+            case value: LocalDate     => prepareStatement.setDate(index + 1, value)
+            case value: LocalTime     => prepareStatement.setTime(index + 1, value)
+            case value: LocalDateTime => prepareStatement.setTimestamp(index + 1, value)
+            case None                 => prepareStatement.setNull(index + 1, ldbc.sql.Types.NULL))
+      })
+
+  private[ldbc] trait SyncSyntax[F[_]: MonadCancelThrow] extends StringContextSyntax[F]:
 
     /**
      * Function for setting parameters to be used as static strings.
@@ -34,24 +71,13 @@ package object dsl:
     // The following helper functions for building SQL models are rewritten from doobie fragments for ldbc SQL models.
     // see: https://github.com/tpolecat/doobie/blob/main/modules/core/src/main/scala/doobie/util/fragments.scala
 
-    /** Returns `VALUES (v0), (v1), ...`. */
-    def values[M[_]: Reducible, T](vs: M[T])(using Encoder[T]): Mysql[F] =
-      sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(p"$v")))
-
     /** Returns `VALUES (v0, v1), (v2, v3), ...`. */
-    inline def values[M[_]: Reducible, T <: Product](vs: M[T])(using Mirror.ProductOf[T]): Mysql[F] =
+    def values[M[_]: Reducible, T](vs: M[T])(using Encoder[T]): Mysql[F] =
       sql"VALUES" ++ comma(vs.toNonEmptyList.map(v => parentheses(values(v))))
 
-    private inline def values[T <: Product](v: T)(using mirror: Mirror.ProductOf[T]): Mysql[F] =
-      val tuple  = Encoder.fold[mirror.MirroredElemTypes]
-      val params = tuple.toList
-      Mysql[F](
-        List.fill(params.size)("?").mkString(","),
-        (Tuple.fromProduct(v).toList zip params).map {
-          case (value, param) =>
-            Parameter.Dynamic(value.asInstanceOf[Any])(using param.asInstanceOf[Encoder[Any]])
-        }
-      )
+    private def values[T](v: T)(using encoder: Encoder[T]): Mysql[F] =
+      val params = Parameter.Dynamic.many(encoder.encode(v))
+      Mysql[F](List.fill(params.size)("?").mkString(","), params)
 
     /** Returns `(sql IN (v0, v1, ...))`. */
     def in[T](s: SQL, v0: T, v1: T, vs: T*)(using Encoder[T]): Mysql[F] =
@@ -190,8 +216,8 @@ package object dsl:
     def orderByOpt(s1: Option[SQL], s2: Option[SQL], ss: Option[SQL]*): Mysql[F] =
       orderByOpt((s1 :: s2 :: ss.toList).flatten)
 
-    type ExecutorIO[T] = ldbc.dsl.Executor[F, T]
-    export ldbc.dsl.Executor
+    type DBIO[T] = ldbc.dsl.DBIO[F, T]
+    val DBIO = ldbc.dsl.DBIO
 
     export ldbc.dsl.logging.LogHandler
 

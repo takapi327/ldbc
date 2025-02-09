@@ -7,8 +7,10 @@
 package ldbc.tests.model
 
 import ldbc.dsl.*
-import ldbc.dsl.codec.{ Encoder, Decoder }
+import ldbc.dsl.codec.Codec
+
 import ldbc.query.builder.Table
+
 import ldbc.schema.Table as SchemaTable
 
 case class Country(
@@ -42,12 +44,14 @@ object Country:
 
     override def toString: String = value
 
-  given Encoder[Continent] with
-    override def encode(continent: Continent): String = continent.value
+  given Codec[Continent] = Codec[String].imap(str => Continent.valueOf(str.replace(" ", "_")))(_.value)
 
-  given Decoder.Elem[Continent] =
-    Decoder.Elem.mapping[String, Continent](str => Continent.valueOf(str.replace(" ", "_")))
-
+  given Codec[Country] = (
+    Codec[String] *: Codec[String] *: Codec[Continent] *: Codec[String] *: Codec[BigDecimal] *:
+      Codec[Option[Short]] *: Codec[Int] *: Codec[Option[BigDecimal]] *: Codec[Option[BigDecimal]] *:
+      Codec[Option[BigDecimal]] *: Codec[String] *: Codec[String] *: Codec[Option[String]] *:
+      Codec[Option[Int]] *: Codec[String]
+  ).to[Country]
   given Table[Country] = Table.derived[Country]("country")
 
 class CountryTable extends SchemaTable[Country]("country"):

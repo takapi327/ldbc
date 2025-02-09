@@ -6,12 +6,14 @@
 
 package ldbc.query.builder
 
-import scala.language.dynamics
 import scala.deriving.Mirror
+import scala.language.dynamics
 import scala.quoted.*
 
-import ldbc.dsl.codec.Decoder
+import ldbc.dsl.codec.*
+
 import ldbc.statement.{ AbstractTable, Column }
+
 import ldbc.query.builder.formatter.Naming
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.Column as ColumnAnnotation
@@ -53,24 +55,18 @@ object Table:
   private[ldbc] case class Impl[P <: Product](
     $name:   String,
     columns: List[Column[?]]
-  )(using mirror: Mirror.ProductOf[P])
+  )(using codec: Codec[P])
     extends Table[P]:
 
     override def statement: String = $name
 
     override def * : Column[P] =
-      val decoder: Decoder[P] = new Decoder[P]((resultSet, prefix) =>
-        mirror.fromTuple(
-          Tuple
-            .fromArray(columns.map(_.decoder.decode(resultSet, prefix)).toArray)
-            .asInstanceOf[mirror.MirroredElemTypes]
-        )
-      )
       val alias = columns.flatMap(_.alias).mkString(", ")
       Column.Impl[P](
         columns.map(_.name).mkString(", "),
         if alias.isEmpty then None else Some(alias),
-        decoder,
+        codec.asDecoder,
+        codec.asEncoder,
         Some(columns.length),
         Some(columns.map(column => s"${ column.name } = ?").mkString(", "))
       )
@@ -93,8 +89,8 @@ object Table:
       case Some(naming) => naming
       case None         => '{ Naming.SNAKE }
 
-    val mirror = Expr.summon[Mirror.ProductOf[P]].getOrElse {
-      report.errorAndAbort(s"Mirror for type $tpe not found")
+    val codec = Expr.summon[Codec[P]].getOrElse {
+      report.errorAndAbort(s"Codec for type $tpe not found")
     }
 
     val labels = symbol.primaryConstructor.paramSymss.flatten
@@ -107,17 +103,16 @@ object Table:
           '{ $naming.format($name) }
       }
 
-    val decodes = Expr.ofSeq(
+    val codecs = Expr.ofSeq(
       symbol.caseFields
         .map { field =>
           field.tree match
             case ValDef(name, tpt, _) =>
               tpt.tpe.asType match
                 case '[tpe] =>
-                  val decoder = Expr.summon[Decoder.Elem[tpe]].getOrElse {
-                    report.errorAndAbort(s"Decoder for type $tpe not found")
+                  Expr.summon[Codec[tpe]].getOrElse {
+                    report.errorAndAbort(s"Codec for type $tpe not found")
                   }
-                  decoder.asExprOf[Decoder.Elem[?]]
                 case _ =>
                   report.errorAndAbort(s"Type $tpt is not a type")
         }
@@ -127,9 +122,10 @@ object Table:
 
     val columns = '{
       ${ Expr.ofSeq(labels) }
-        .zip($decodes)
+        .zip($codecs)
         .map {
-          case (label: String, decoder: Decoder.Elem[t]) => Column[t](label, $naming.format($name))(using decoder)
+          case (label: String, codec: Codec[t]) =>
+            Column[t](label, $naming.format($name))(using codec.asDecoder, codec.asEncoder)
         }
         .toList
     }
@@ -138,7 +134,7 @@ object Table:
       Impl[P](
         $naming.format($name),
         $columns
-      )(using $mirror)
+      )(using $codec)
     }
 
   private def derivedWithNameImpl[P <: Product](name: Expr[String])(using
@@ -156,8 +152,8 @@ object Table:
       case Some(naming) => naming
       case None         => '{ Naming.SNAKE }
 
-    val mirror = Expr.summon[Mirror.ProductOf[P]].getOrElse {
-      report.errorAndAbort(s"Mirror for type $tpe not found")
+    val codec = Expr.summon[Codec[P]].getOrElse {
+      report.errorAndAbort(s"Codec for type $tpe not found")
     }
 
     val labels = symbol.primaryConstructor.paramSymss.flatten
@@ -170,17 +166,16 @@ object Table:
           '{ $naming.format($name) }
       }
 
-    val decodes = Expr.ofSeq(
+    val codecs = Expr.ofSeq(
       symbol.caseFields
         .map { field =>
           field.tree match
             case ValDef(name, tpt, _) =>
               tpt.tpe.asType match
                 case '[tpe] =>
-                  val decoder = Expr.summon[Decoder.Elem[tpe]].getOrElse {
-                    report.errorAndAbort(s"Decoder for type $tpe not found")
+                  Expr.summon[Codec[tpe]].getOrElse {
+                    report.errorAndAbort(s"Codec for type $tpe not found")
                   }
-                  decoder.asExprOf[Decoder.Elem[?]]
                 case _ =>
                   report.errorAndAbort(s"Type $tpt is not a type")
         }
@@ -188,9 +183,10 @@ object Table:
 
     val columns = '{
       ${ Expr.ofSeq(labels) }
-        .zip($decodes)
+        .zip($codecs)
         .map {
-          case (label: String, decoder: Decoder.Elem[t]) => Column[t](label, $name)(using decoder)
+          case (label: String, codec: Codec[t]) =>
+            Column[t](label, $name)(using codec.asDecoder, codec.asEncoder)
         }
         .toList
     }
@@ -199,7 +195,7 @@ object Table:
       Impl[P](
         $name,
         $columns
-      )(using $mirror)
+      )(using $codec)
     }
 
   trait Opt[P] extends SharedTable, AbstractTable.Opt[P]:

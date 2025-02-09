@@ -11,10 +11,10 @@ import java.nio.file.Files
 
 import scala.io.Codec
 
+import ldbc.codegen.builder.ColumnCodeBuilder
 import ldbc.codegen.formatter.Naming
 import ldbc.codegen.model.*
 import ldbc.codegen.parser.yml.Parser
-import ldbc.codegen.builder.ColumnCodeBuilder
 
 /**
  * An object for generating a model about Table.
@@ -148,8 +148,6 @@ private[ldbc] object TableModelGenerator:
         Some(s"""enum $enumName extends model.Enum:
            |    case ${ types.mkString(", ") }
            |  object $enumName extends model.EnumDataType[$enumName]:
-           |    given ldbc.dsl.codec.Decoder.Elem[$enumName] = new ldbc.dsl.codec.Decoder.Elem[$enumName]:
-           |      override def decode(resultSet: ldbc.sql.ResultSet, columnLabel: String): $enumName = $enumName.fromOrdinal(resultSet.getInt(columnLabel))
-           |      override def decode(resultSet: ldbc.sql.ResultSet, index: Int): $enumName = $enumName.fromOrdinal(resultSet.getInt(index))
+           |    given ldbc.dsl.codec.Codec[$enumName] = ldbc.dsl.codec.Codec[Int].imap($enumName.fromOrdinal)(_.ordinal)
            |""".stripMargin)
       case _ => None

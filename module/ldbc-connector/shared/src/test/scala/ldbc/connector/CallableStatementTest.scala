@@ -7,11 +7,13 @@
 package ldbc.connector
 
 import cats.*
+
 import cats.effect.*
 
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.Types
+
 import ldbc.connector.exception.SQLException
 
 class CallableStatementTest extends FTestPlatform:

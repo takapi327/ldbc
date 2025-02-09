@@ -9,12 +9,12 @@ package request
 
 import scala.collection.immutable.SortedMap
 
-import cats.syntax.all.*
-
 import scodec.*
 import scodec.bits.*
 import scodec.codecs.*
 import scodec.interop.cats.*
+
+import cats.syntax.all.*
 
 import ldbc.connector.data.*
 
