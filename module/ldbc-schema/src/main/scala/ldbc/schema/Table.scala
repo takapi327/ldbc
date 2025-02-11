@@ -43,6 +43,19 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
    */
   def keys: List[Key] = List.empty
 
+  /**
+   * Create a table statement.
+   */
+  def createStatement: String =
+    val columns = this.*.list.map(_.statement).mkString(",\n  ")
+    val keys    = this.keys.map(_.queryString).mkString(",\n  ")
+    s"""
+       |CREATE TABLE IF NOT EXISTS `${$name}` (
+       |  $columns,
+       |  $keys
+       |)
+       |""".stripMargin
+
   override final def statement: String = $name
 
   override def toString: String = s"Table($$name)"
