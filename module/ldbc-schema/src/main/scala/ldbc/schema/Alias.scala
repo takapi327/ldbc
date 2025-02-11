@@ -100,6 +100,9 @@ private[ldbc] trait Alias:
   def INDEX_KEY[T](columns: Column[T]): IndexKey[T] =
     IndexKey(None, None, columns, None)
 
+  def INDEX_KEY[T](name: String, columns: Column[T]): IndexKey[T] =
+    IndexKey(Some(name), None, columns, None)
+
   def INDEX_KEY[T](
     indexName:   Option[String],
     indexType:   Option[Index.Type],
@@ -134,10 +137,8 @@ private[ldbc] trait Alias:
   ): ForeignKey[T] =
     FOREIGN_KEY(Some(name), columns, reference)
 
-  def REFERENCE[T](
-    table:   Table[?],
-    columns: Column[T]
-  ): Reference[T] = Reference(table, columns, None, None)
+  def REFERENCE[T <: Table[?], U](query: TableQuery[T])(columns: T => Column[U]): Reference[U] =
+    Reference(query.table, columns(query.table), None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
 
