@@ -102,14 +102,14 @@ class AliasTest extends AnyFlatSpec, Matchers:
 
       override def * = (id *: status).to[SubTest]
 
-    val subTestTable = new SubTestTable
+    val subTest = TableQuery[SubTestTable]
 
-    val p1 = FOREIGN_KEY(testTable.subId, REFERENCE(subTestTable, subTestTable.id))
+    val p1 = FOREIGN_KEY(testTable.subId, REFERENCE(subTest)(_.id))
     val p2 = FOREIGN_KEY(
       testTable.subId *: testTable.status,
-      REFERENCE(subTestTable, subTestTable.id *: subTestTable.status)
+      REFERENCE(subTest)(s => s.id *: s.status)
     )
 
-    assert(p1.queryString === "FOREIGN KEY (`sub_id`) REFERENCES sub_test (`id`)")
-    assert(p2.queryString === "FOREIGN KEY (`sub_id`, `status`) REFERENCES sub_test (`id`, `status`)")
+    assert(p1.queryString === "FOREIGN KEY (`sub_id`) REFERENCES `sub_test` (`id`)")
+    assert(p2.queryString === "FOREIGN KEY (`sub_id`, `status`) REFERENCES `sub_test` (`id`, `status`)")
   }
