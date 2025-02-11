@@ -68,7 +68,7 @@ class TableTest extends AnyFlatSpec:
 
         override def * = (id *: test).to[SubTest]
 
-      val subTable = SubTestTable()
+      val subTest = TableQuery[SubTestTable]
 
       class TestTable extends Table[Test]("test"):
         def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
@@ -79,7 +79,7 @@ class TableTest extends AnyFlatSpec:
         override def keys: List[Key] = List(
           PRIMARY_KEY(id),
           INDEX_KEY(subId),
-          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTable, subTable.id)))
+          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTest)(_.id)))
         )
     """.stripMargin)
   }
@@ -97,7 +97,7 @@ class TableTest extends AnyFlatSpec:
 
         override def * = (id *: test).to[SubTest]
 
-      val subTable = SubTestTable()
+      val subTest = TableQuery[SubTestTable]
 
       class TestTable extends Table[Test]("test"):
         def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
@@ -108,7 +108,7 @@ class TableTest extends AnyFlatSpec:
         override def keys: List[Key] = List(
           PRIMARY_KEY(id),
           INDEX_KEY(subId),
-          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTable, subTable.test)))
+          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTest)(_.test)))
         )
     """.stripMargin)
   }
@@ -127,7 +127,7 @@ class TableTest extends AnyFlatSpec:
 
         override def * = (id *: test *: category).to[SubTest]
 
-      val subTable = SubTestTable()
+      val subTest = TableQuery[SubTestTable]
 
       class TestTable extends Table[Test]("test"):
         def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
@@ -139,7 +139,7 @@ class TableTest extends AnyFlatSpec:
         override def keys: List[Key] = List(
           PRIMARY_KEY(id),
           INDEX_KEY(subId),
-          CONSTRAINT("fk_id", FOREIGN_KEY(subId *: subCategory, REFERENCE(subTable, subTable.id *: subTable.category)))
+          CONSTRAINT("fk_id", FOREIGN_KEY(subId *: subCategory, REFERENCE(subTest)(s => s.id *: s.category)))
         )
     """.stripMargin)
   }
