@@ -50,7 +50,7 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
     val columns = this.*.list.map(_.statement).mkString(",\n  ")
     val keys    = this.keys.map(_.queryString).mkString(",\n  ")
     s"""
-       |CREATE TABLE IF NOT EXISTS `${$name}` (
+       |CREATE TABLE IF NOT EXISTS `${ $name }` (
        |  $columns,
        |  $keys
        |)
