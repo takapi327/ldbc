@@ -49,7 +49,7 @@ trait Encoder[A]:
   /** Lift this `Decoder` into `Option`. */
   def opt: Encoder[Option[A]] = {
     case Some(value) => this.encode(value)
-    case None => Encoder.Encoded.success(List.empty)
+    case None        => Encoder.Encoded.success(List.empty)
   }
 
 object Encoder extends TwiddleSyntax[Encoder]:
