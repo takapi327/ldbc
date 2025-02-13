@@ -46,6 +46,12 @@ trait Encoder[A]:
   /** `Encoder` is semigroupal: a pair of encoders make a encoder for a pair. */
   def product[B](that: Encoder[B]): Encoder[(A, B)] = (value: (A, B)) => encode(value._1) product that.encode(value._2)
 
+  /** Lift this `Decoder` into `Option`. */
+  def opt: Encoder[Option[A]] = {
+    case Some(value) => this.encode(value)
+    case None => Encoder.Encoded.success(List.empty)
+  }
+
 object Encoder extends TwiddleSyntax[Encoder]:
 
   /** Types that can be handled by PreparedStatement. */
