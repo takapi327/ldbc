@@ -6,8 +6,9 @@
 
 package ldbc.tests.model
 
+import ldbc.statement.formatter.Naming
+
 import ldbc.query.builder.{ Column, Table }
-import ldbc.query.builder.formatter.Naming
 
 import ldbc.schema.{ Table as SchemaTable, * }
 

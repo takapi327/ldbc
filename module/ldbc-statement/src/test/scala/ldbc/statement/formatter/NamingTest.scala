@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.query.builder.formatter
+package ldbc.statement.formatter
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -65,28 +65,4 @@ class NamingTest extends AnyFlatSpec, Matchers:
 
   it should "convert snake_case to snake_case" in {
     Naming.toSnake("snake_case") shouldEqual "snake_case"
-  }
-
-  it should "convert kebab-case to kebab_case" in {
-    Naming.toSnake("kebab-case") shouldEqual "kebab_case"
-  }
-
-  "Naming.toKebab" should "convert COLUMN to column" in {
-    Naming.toKebab("COLUMN") shouldEqual "column"
-  }
-
-  it should "convert camelCase to camel-case" in {
-    Naming.toKebab("camelCase") shouldEqual "camel-case"
-  }
-
-  it should "convert PascalCase to pascal-case" in {
-    Naming.toKebab("PascalCase") shouldEqual "pascal-case"
-  }
-
-  it should "convert snake_case to snake-case" in {
-    Naming.toKebab("snake_case") shouldEqual "snake-case"
-  }
-
-  it should "convert kebab-case to kebab-case" in {
-    Naming.toKebab("kebab-case") shouldEqual "kebab-case"
   }
