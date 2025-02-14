@@ -233,14 +233,50 @@ object DataTypeColumn:
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
 
-  def apply[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using codec: Codec[T]): DataTypeColumn[T] =
-    Impl[T](s"`$name`", alias.map(v => s"$v.`$name`"), codec.asDecoder, codec.asEncoder, dataType, isOptional = isOptional)
+  def apply[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using
+    codec: Codec[T]
+  ): DataTypeColumn[T] =
+    Impl[T](
+      s"`$name`",
+      alias.map(v => s"$v.`$name`"),
+      codec.asDecoder,
+      codec.asEncoder,
+      dataType,
+      isOptional = isOptional
+    )
 
-  def numeric[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using codec: Codec[T]): NumericColumn[T] =
-    NumericColumnImpl[T](s"`$name`", alias.map(v => s"$v.`$name`"), codec.asDecoder, codec.asEncoder, dataType, isOptional = isOptional)
+  def numeric[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using
+    codec: Codec[T]
+  ): NumericColumn[T] =
+    NumericColumnImpl[T](
+      s"`$name`",
+      alias.map(v => s"$v.`$name`"),
+      codec.asDecoder,
+      codec.asEncoder,
+      dataType,
+      isOptional = isOptional
+    )
 
-  def string[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using codec: Codec[T]): StringColumn[T] =
-    StringColumnImpl[T](s"`$name`", alias.map(v => s"$v.`$name`"), codec.asDecoder, codec.asEncoder, dataType, isOptional = isOptional)
+  def string[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using
+    codec: Codec[T]
+  ): StringColumn[T] =
+    StringColumnImpl[T](
+      s"`$name`",
+      alias.map(v => s"$v.`$name`"),
+      codec.asDecoder,
+      codec.asEncoder,
+      dataType,
+      isOptional = isOptional
+    )
 
-  def temporal[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using codec: Codec[T]): TemporalColumn[T] =
-    TemporalColumnImpl[T](s"`$name`", alias.map(v => s"$v.`$name`"), codec.asDecoder, codec.asEncoder, dataType, isOptional = isOptional)
+  def temporal[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using
+    codec: Codec[T]
+  ): TemporalColumn[T] =
+    TemporalColumnImpl[T](
+      s"`$name`",
+      alias.map(v => s"$v.`$name`"),
+      codec.asDecoder,
+      codec.asEncoder,
+      dataType,
+      isOptional = isOptional
+    )
