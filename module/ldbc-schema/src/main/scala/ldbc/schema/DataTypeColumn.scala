@@ -10,7 +10,7 @@ import ldbc.dsl.codec.*
 
 import ldbc.statement.Column
 
-import ldbc.schema.attribute.{Attribute, AutoInc}
+import ldbc.schema.attribute.{ Attribute, AutoInc }
 
 sealed trait DataTypeColumn[T] extends Column[T]:
 
@@ -18,7 +18,7 @@ sealed trait DataTypeColumn[T] extends Column[T]:
    * Data type to be set for the column
    */
   def dataType: DataType[T]
-  
+
   /**
    * List of attributes to be set for the column
    */
@@ -102,16 +102,16 @@ object DataTypeColumn:
     def defaultCurrentDate: TemporalColumn[T]
 
   private[ldbc] case class NumericColumnImpl[T](
-                                                name:       String,
-                                                alias:      Option[String],
-                                                decoder:    Decoder[T],
-                                                encoder:    Encoder[T],
-                                                dataType:   DataType[T],
-                                                isUnsigned: Boolean = false,
-                                                isOptional: Boolean = true,
-                                                defaultValue: Option[Default] = None,
-                                                attributes: List[Attribute[T]] = List.empty[Attribute[T]],
-                                              ) extends NumericColumn[T]:
+    name:         String,
+    alias:        Option[String],
+    decoder:      Decoder[T],
+    encoder:      Encoder[T],
+    dataType:     DataType[T],
+    isUnsigned:   Boolean            = false,
+    isOptional:   Boolean            = true,
+    defaultValue: Option[Default]    = None,
+    attributes:   List[Attribute[T]] = List.empty[Attribute[T]]
+  ) extends NumericColumn[T]:
 
     override def as(name: String): Column[T] =
       this.copy(alias = Some(name))
@@ -124,11 +124,11 @@ object DataTypeColumn:
         Some(nullType),
         defaultValue.map(_.queryString)
       ).flatten ++ attributes.map(_.queryString)).mkString(" ")
-    override def updateStatement: String = s"$name = ?"
-    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${alias.getOrElse(name)})"
+    override def updateStatement:             String = s"$name = ?"
+    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
     override def default(value: T): DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Value(value)))
-    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
     override def autoIncrement: NumericColumn[T] = this.copy(attributes = AutoInc[T]() :: attributes)
@@ -136,17 +136,17 @@ object DataTypeColumn:
     override def unsigned: NumericColumn[T] = this.copy(isUnsigned = true)
 
   private[ldbc] case class StringColumnImpl[T](
-                                                name:       String,
-                                                alias:      Option[String],
-                                                decoder:    Decoder[T],
-                                                encoder:    Encoder[T],
-                                                dataType:   DataType[T],
-                                                isOptional: Boolean = true,
-                                                attributes: List[Attribute[T]] = List.empty[Attribute[T]],
-                                                defaultValue: Option[Default] = None,
-                                                character:  Option[Character]  = None,
-                                                collate:    Option[Collate[T]] = None,
-                                              ) extends StringColumn[T]:
+    name:         String,
+    alias:        Option[String],
+    decoder:      Decoder[T],
+    encoder:      Encoder[T],
+    dataType:     DataType[T],
+    isOptional:   Boolean            = true,
+    attributes:   List[Attribute[T]] = List.empty[Attribute[T]],
+    defaultValue: Option[Default]    = None,
+    character:    Option[Character]  = None,
+    collate:      Option[Collate[T]] = None
+  ) extends StringColumn[T]:
 
     override def as(name: String): Column[T] =
       this.copy(alias = Some(name))
@@ -158,29 +158,29 @@ object DataTypeColumn:
         character.map(_.queryString),
         collate.map(_.queryString),
         Some(nullType),
-        defaultValue.map(_.queryString),
+        defaultValue.map(_.queryString)
       ).flatten ++ attributes.map(_.queryString)).mkString(" ")
-    override def updateStatement: String = s"$name = ?"
-    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${alias.getOrElse(name)})"
+    override def updateStatement:             String = s"$name = ?"
+    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
     override def default(value: T): DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Value(value)))
-    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
 
-    override def charset(character: Character): StringColumn[T] = this.copy(character = Some(character))
-    override def collate(collate: Collate[T]): StringColumn[T] = this.copy(collate = Some(collate))
+    override def charset(character: Character):  StringColumn[T] = this.copy(character = Some(character))
+    override def collate(collate:   Collate[T]): StringColumn[T] = this.copy(collate = Some(collate))
 
   private[ldbc] case class TemporalColumnImpl[T](
-                                                  name:       String,
-                                                  alias:      Option[String],
-                                                  decoder:    Decoder[T],
-                                                  encoder:    Encoder[T],
-                                                  dataType:   DataType[T],
-                                                  isOptional: Boolean = true,
-                                                  attributes: List[Attribute[T]] = List.empty[Attribute[T]],
-                                                  defaultValue: Option[Default] = None,
-                                                ) extends TemporalColumn[T]:
+    name:         String,
+    alias:        Option[String],
+    decoder:      Decoder[T],
+    encoder:      Encoder[T],
+    dataType:     DataType[T],
+    isOptional:   Boolean            = true,
+    attributes:   List[Attribute[T]] = List.empty[Attribute[T]],
+    defaultValue: Option[Default]    = None
+  ) extends TemporalColumn[T]:
 
     override def as(name: String): Column[T] =
       this.copy(alias = Some(name))
@@ -190,45 +190,46 @@ object DataTypeColumn:
         Some(name),
         Some(dataType.typeName),
         Some(nullType),
-        defaultValue.map(_.queryString),
+        defaultValue.map(_.queryString)
       ).flatten ++ attributes.map(_.queryString)).mkString(" ")
-    override def updateStatement: String = s"$name = ?"
-    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${alias.getOrElse(name)})"
+    override def updateStatement:             String = s"$name = ?"
+    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
     override def default(value: T): DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Value(value)))
-    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
 
-    override def defaultCurrentTimestamp(onUpdate: Boolean = false): TemporalColumn[T] = this.copy(defaultValue = Some(Default.TimeStamp(None, onUpdate)))
+    override def defaultCurrentTimestamp(onUpdate: Boolean = false): TemporalColumn[T] =
+      this.copy(defaultValue = Some(Default.TimeStamp(None, onUpdate)))
     override def defaultCurrentDate: TemporalColumn[T] = this.copy(defaultValue = Some(Default.Date()))
 
   private[ldbc] case class Impl[T](
-                                    name:       String,
-                                    alias:      Option[String],
-                                    decoder:    Decoder[T],
-                                    encoder:    Encoder[T],
-                                    dataType:   DataType[T],
-                                    isOptional: Boolean = true,
-                                    attributes: List[Attribute[T]] = List.empty[Attribute[T]],
-                                    defaultValue: Option[Default] = None
-                                  ) extends DataTypeColumn[T]:
+    name:         String,
+    alias:        Option[String],
+    decoder:      Decoder[T],
+    encoder:      Encoder[T],
+    dataType:     DataType[T],
+    isOptional:   Boolean            = true,
+    attributes:   List[Attribute[T]] = List.empty[Attribute[T]],
+    defaultValue: Option[Default]    = None
+  ) extends DataTypeColumn[T]:
 
     override def as(name: String): Column[T] =
       this.copy(alias = Some(name))
-    
+
     override def statement: String =
       (List(
         Some(name),
         Some(dataType.typeName),
         Some(nullType),
-        defaultValue.map(_.queryString),
+        defaultValue.map(_.queryString)
       ).flatten ++ attributes.map(_.queryString)).mkString(" ")
-    override def updateStatement: String = s"$name = ?"
-    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${alias.getOrElse(name)})"
+    override def updateStatement:             String = s"$name = ?"
+    override def duplicateKeyUpdateStatement: String = s"$name = VALUES(${ alias.getOrElse(name) })"
 
     override def default(value: T): DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Value(value)))
-    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
 
