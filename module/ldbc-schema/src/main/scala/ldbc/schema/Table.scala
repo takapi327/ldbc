@@ -24,7 +24,8 @@ import scala.quoted.*
 
 import ldbc.dsl.codec.Codec
 
-import ldbc.statement.{ AbstractTable, Column }
+import ldbc.statement.{AbstractTable, Column}
+import ldbc.statement.formatter.Naming
 
 import ldbc.schema.attribute.Attribute
 import ldbc.schema.interpreter.*
@@ -91,6 +92,8 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
     Codec[A]
   ): DataTypeColumn.NumericColumn[A] =
     DataTypeColumn.numeric(name, Some($name), INT, Table.isOptional[A])
+
+  protected final inline def int[A <: Int | Long | Option[Int | Long]]: () => DataTypeColumn.NumericColumn[A] = Table.int[A]($name)
 
   /**
    * Create a column with a data type of BIGINT.
@@ -311,10 +314,10 @@ object Table:
     case _: Option[?] => true
     case _            => false
 
-  private[ldbc] def namedNumericColumnImpl[A](dataType: Expr[DataType[A]], isOptional: Expr[Boolean])(using
+  private[ldbc] def namedNumericColumnImpl[A](alias: Expr[Option[String]], dataType: Expr[DataType[A]], isOptional: Expr[Boolean])(using
     q:   Quotes,
     tpe: Type[A]
-  ): Expr[DataTypeColumn.NumericColumn[A]] =
+  ): Expr[() => DataTypeColumn.NumericColumn[A]] =
     import quotes.reflect.*
 
     @scala.annotation.tailrec()
@@ -328,11 +331,15 @@ object Table:
       report.errorAndAbort(s"Codec for type $tpe not found")
     }
 
-    val name = enclosingTerm(Symbol.spliceOwner).name
-    '{ DataTypeColumn.numeric[A](${ Expr(name) }, ${ Expr(None) }, $dataType, $isOptional)(using $codec) }
+    val naming = Expr.summon[Naming] match
+      case Some(naming) => naming
+      case None => '{ Naming.SNAKE }
 
-  inline def int[A <: Int | Long | Option[Int | Long]]()(using Codec[A]): DataTypeColumn.NumericColumn[A] =
-    ${ namedNumericColumnImpl[A]('INT, 'isOptional) }
+    val name = '{ $naming.format(${ Expr(enclosingTerm(Symbol.spliceOwner).name) }) }
+    '{ () => DataTypeColumn.numeric[A]($name, $alias, $dataType, $isOptional)(using $codec) }
+
+  inline def int[A <: Int | Long | Option[Int | Long]](alias: String): () => DataTypeColumn.NumericColumn[A] =
+    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'INT, 'isOptional) }
 
   case class Opt[T](
     $name:   String,

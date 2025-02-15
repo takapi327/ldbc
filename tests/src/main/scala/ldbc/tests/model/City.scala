@@ -32,7 +32,7 @@ class CityTable extends SchemaTable[City]("city"):
   def name:        Column[String] = char(35, "Name").default("''")
   def countryCode: Column[String] = char(3, "CountryCode").default("''")
   def district:    Column[String] = char(20, "District").default("''")
-  def population:  Column[Int]    = int("Population").default(0)
+  def population:  Column[Int]    = int().default(0)
 
   override def keys: List[Key] = List(
     PRIMARY_KEY(id),
