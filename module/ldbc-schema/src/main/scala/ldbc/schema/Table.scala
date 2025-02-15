@@ -24,7 +24,7 @@ import scala.quoted.*
 
 import ldbc.dsl.codec.Codec
 
-import ldbc.statement.{AbstractTable, Column}
+import ldbc.statement.{ AbstractTable, Column }
 import ldbc.statement.formatter.Naming
 
 import ldbc.schema.attribute.Attribute
@@ -93,7 +93,8 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
   ): DataTypeColumn.NumericColumn[A] =
     DataTypeColumn.numeric(name, Some($name), INT, Table.isOptional[A])
 
-  protected final inline def int[A <: Int | Long | Option[Int | Long]]: () => DataTypeColumn.NumericColumn[A] = Table.int[A]($name)
+  protected final inline def int[A <: Int | Long | Option[Int | Long]]: () => DataTypeColumn.NumericColumn[A] =
+    Table.int[A]($name)
 
   /**
    * Create a column with a data type of BIGINT.
@@ -314,7 +315,11 @@ object Table:
     case _: Option[?] => true
     case _            => false
 
-  private[ldbc] def namedNumericColumnImpl[A](alias: Expr[Option[String]], dataType: Expr[DataType[A]], isOptional: Expr[Boolean])(using
+  private[ldbc] def namedNumericColumnImpl[A](
+    alias:      Expr[Option[String]],
+    dataType:   Expr[DataType[A]],
+    isOptional: Expr[Boolean]
+  )(using
     q:   Quotes,
     tpe: Type[A]
   ): Expr[() => DataTypeColumn.NumericColumn[A]] =
@@ -333,7 +338,7 @@ object Table:
 
     val naming = Expr.summon[Naming] match
       case Some(naming) => naming
-      case None => '{ Naming.SNAKE }
+      case None         => '{ Naming.SNAKE }
 
     val name = '{ $naming.format(${ Expr(enclosingTerm(Symbol.spliceOwner).name) }) }
     '{ () => DataTypeColumn.numeric[A]($name, $alias, $dataType, $isOptional)(using $codec) }
