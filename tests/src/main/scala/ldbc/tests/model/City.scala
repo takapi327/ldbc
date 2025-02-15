@@ -29,9 +29,9 @@ object City:
 class CityTable extends SchemaTable[City]("city"):
 
   def id:          Column[Int]    = int("ID").unsigned.autoIncrement
-  def name:        Column[String] = char(35, "Name").default("''")
-  def countryCode: Column[String] = char(3, "CountryCode").default("''")
-  def district:    Column[String] = char(20, "District").default("''")
+  def name:        Column[String] = char(35).default("''")
+  def countryCode: Column[String] = char(3).default("''")
+  def district:    Column[String] = char(20).default("''")
   def population:  Column[Int]    = int().default(0)
 
   override def keys: List[Key] = List(
