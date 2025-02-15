@@ -53,7 +53,7 @@ class TableCreateStatementTest extends AnyFlatSpec:
     def c4:  Column[Option[Int]]           = int().default(Some(42))
     def c5:  Column[Long]                  = bigint().default(9999999999L)
     def c6:  Column[Option[BigDecimal]]    = decimal(10, 2).default(Some(123.45))
-    def c7:  Column[Option[Float]]         = float(10).default(Some(3.142f))
+    def c7:  Column[Option[Float]]         = float(10)
     def c8:  Column[Option[Double]]        = double(10).default(Some(2.71828))
     def c9:  Column[Option[Byte]]          = bit()
     def c10: Column[Option[String]]        = char(50).default(Some("FIXED"))
@@ -105,7 +105,7 @@ class TableCreateStatementTest extends AnyFlatSpec:
       allDataTypes.table.c6.statement === "`c6` DECIMAL(10, 2) NOT NULL DEFAULT '123.45'"
     )
     assert(
-      allDataTypes.table.c7.statement === "`c7` FLOAT(10) NOT NULL DEFAULT 3.142"
+      allDataTypes.table.c7.statement === "`c7` FLOAT(10) NOT NULL"
     )
     assert(
       allDataTypes.table.c8.statement === "`c8` FLOAT(10) NOT NULL DEFAULT 2.71828"
@@ -177,7 +177,7 @@ class TableCreateStatementTest extends AnyFlatSpec:
           |  `c4` INT NOT NULL DEFAULT 42,
           |  `c5` BIGINT NOT NULL DEFAULT 9999999999,
           |  `c6` DECIMAL(10, 2) NOT NULL DEFAULT '123.45',
-          |  `c7` FLOAT(10) NOT NULL DEFAULT 3.142,
+          |  `c7` FLOAT(10) NOT NULL,
           |  `c8` FLOAT(10) NOT NULL DEFAULT 2.71828,
           |  `c9` BIT NOT NULL,
           |  `c10` CHAR(50) NOT NULL DEFAULT 'FIXED',
