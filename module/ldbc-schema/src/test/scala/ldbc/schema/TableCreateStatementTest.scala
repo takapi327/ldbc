@@ -6,7 +6,7 @@
 
 package ldbc.schema
 
-import java.time.{LocalDate, LocalTime, LocalDateTime, Year}
+import java.time.{ LocalDate, LocalDateTime, LocalTime, Year }
 
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -17,62 +17,62 @@ import ldbc.schema.DataType.*
 class TableCreateStatementTest extends AnyFlatSpec:
 
   case class AllDataTypes(
-                           c1: Option[Short],
-                           c2: Option[Short],
-                           c3: Option[Int],
-                           c4: Option[Int],
-                           c5: Long,
-                           c6: Option[BigDecimal],
-                           c7: Option[Float],
-                           c8: Option[Double],
-                           c9: Option[Byte],
-                           c10: Option[String],
-                           c11: Option[String],
-                           c12: Option[Array[Byte]],
-                           c13: Array[Byte],
-                           c14: Option[String],
-                           c15: Option[String],
-                           c16: Option[String],
-                           c17: String,
-                           c18: Array[Byte],
-                           c19: Option[Array[Byte]],
-                           c20: Option[Array[Byte]],
-                           c21: Option[Array[Byte]],
-                           c22: Option[LocalDate],
-                           c23: Option[LocalTime],
-                           c24: Option[LocalDateTime],
-                           c25: Option[LocalDateTime],
-                           c26: Option[Year]
-                         )
+    c1:  Option[Short],
+    c2:  Option[Short],
+    c3:  Option[Int],
+    c4:  Option[Int],
+    c5:  Long,
+    c6:  Option[BigDecimal],
+    c7:  Option[Float],
+    c8:  Option[Double],
+    c9:  Option[Byte],
+    c10: Option[String],
+    c11: Option[String],
+    c12: Option[Array[Byte]],
+    c13: Array[Byte],
+    c14: Option[String],
+    c15: Option[String],
+    c16: Option[String],
+    c17: String,
+    c18: Array[Byte],
+    c19: Option[Array[Byte]],
+    c20: Option[Array[Byte]],
+    c21: Option[Array[Byte]],
+    c22: Option[LocalDate],
+    c23: Option[LocalTime],
+    c24: Option[LocalDateTime],
+    c25: Option[LocalDateTime],
+    c26: Option[Year]
+  )
 
   class AllDataTypesTable extends Table[AllDataTypes]("all_data_types"):
 
-    def c1: Column[Option[Short]] = smallint().unsigned.autoIncrement
-    def c2: Column[Option[Short]] = smallint().default(Some(-1000))
-    def c3: Column[Option[Int]] = mediumint().unsigned.default(Some(100000))
-    def c4: Column[Option[Int]] = int().default(Some(42))
-    def c5: Column[Long] = bigint().default(9999999999L)
-    def c6: Column[Option[BigDecimal]] = decimal(10, 2).default(Some(123.45))
-    def c7: Column[Option[Float]] = float(10).default(Some(3.142f))
-    def c8: Column[Option[Double]] = double(10).default(Some(2.71828))
-    def c9: Column[Option[Byte]] = bit()
-    def c10: Column[Option[String]] = char(50).default(Some("FIXED"))
-    def c11: Column[Option[String]] = varchar(255).defaultNull
-    def c12: Column[Option[Array[Byte]]] = binary(10)
-    def c13: Column[Array[Byte]] = varbinary(255)
-    def c14: Column[Option[String]] = tinytext().charset(Character.utf8mb4)
-    def c15: Column[Option[String]] = text().collate(Collate.utf8mb4_unicode_ci)
-    def c16: Column[Option[String]] = mediumtext().charset(Character.utf8mb4).collate(Collate.utf8mb4_unicode_ci)
-    def c17: Column[String] = longtext().default("")
-    def c18: Column[Array[Byte]] = tinyblob()
-    def c19: Column[Option[Array[Byte]]] = blob().defaultNull
-    def c20: Column[Option[Array[Byte]]] = mediumblob()
-    def c21: Column[Option[Array[Byte]]] = longblob()
-    def c22: Column[Option[LocalDate]] = date().default(Some(LocalDate.of(2025, 2, 15)))
-    def c23: Column[Option[LocalTime]] = time().default(Some(LocalTime.of(12, 0, 0)))
+    def c1:  Column[Option[Short]]         = smallint().unsigned.autoIncrement
+    def c2:  Column[Option[Short]]         = smallint().default(Some(-1000))
+    def c3:  Column[Option[Int]]           = mediumint().unsigned.default(Some(100000))
+    def c4:  Column[Option[Int]]           = int().default(Some(42))
+    def c5:  Column[Long]                  = bigint().default(9999999999L)
+    def c6:  Column[Option[BigDecimal]]    = decimal(10, 2).default(Some(123.45))
+    def c7:  Column[Option[Float]]         = float(10).default(Some(3.142f))
+    def c8:  Column[Option[Double]]        = double(10).default(Some(2.71828))
+    def c9:  Column[Option[Byte]]          = bit()
+    def c10: Column[Option[String]]        = char(50).default(Some("FIXED"))
+    def c11: Column[Option[String]]        = varchar(255).defaultNull
+    def c12: Column[Option[Array[Byte]]]   = binary(10)
+    def c13: Column[Array[Byte]]           = varbinary(255)
+    def c14: Column[Option[String]]        = tinytext().charset(Character.utf8mb4)
+    def c15: Column[Option[String]]        = text().collate(Collate.utf8mb4_unicode_ci)
+    def c16: Column[Option[String]]        = mediumtext().charset(Character.utf8mb4).collate(Collate.utf8mb4_unicode_ci)
+    def c17: Column[String]                = longtext().default("")
+    def c18: Column[Array[Byte]]           = tinyblob()
+    def c19: Column[Option[Array[Byte]]]   = blob().defaultNull
+    def c20: Column[Option[Array[Byte]]]   = mediumblob()
+    def c21: Column[Option[Array[Byte]]]   = longblob()
+    def c22: Column[Option[LocalDate]]     = date().default(Some(LocalDate.of(2025, 2, 15)))
+    def c23: Column[Option[LocalTime]]     = time().default(Some(LocalTime.of(12, 0, 0)))
     def c24: Column[Option[LocalDateTime]] = datetime().defaultCurrentTimestamp(false)
     def c25: Column[Option[LocalDateTime]] = timestamp().defaultCurrentTimestamp(true)
-    def c26: Column[Option[Year]] = year().default(Some(Year.of(2025)))
+    def c26: Column[Option[Year]]          = year().default(Some(Year.of(2025)))
 
     override def keys: List[Key] = List(
       PRIMARY_KEY(c5),

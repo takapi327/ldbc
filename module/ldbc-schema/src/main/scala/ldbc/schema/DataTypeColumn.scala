@@ -130,7 +130,7 @@ object DataTypeColumn:
     override def default(value: T): DataTypeColumn[T] = value match
       case v: Option[?] => this.copy(defaultValue = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
-    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
     override def autoIncrement: NumericColumn[T] = this.copy(attributes = AutoInc[T]() :: attributes)
@@ -168,7 +168,7 @@ object DataTypeColumn:
     override def default(value: T): DataTypeColumn[T] = value match
       case v: Option[?] => this.copy(defaultValue = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
-    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
 
@@ -202,7 +202,7 @@ object DataTypeColumn:
     override def default(value: T): DataTypeColumn[T] = value match
       case v: Option[?] => this.copy(defaultValue = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
-    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
 
@@ -237,7 +237,7 @@ object DataTypeColumn:
     override def default(value: T): DataTypeColumn[T] = value match
       case v: Option[?] => this.copy(defaultValue = Some(v.fold(Default.Null)(Default.Value(_))))
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
-    override def defaultNull:       DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
+    override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
     override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
 
