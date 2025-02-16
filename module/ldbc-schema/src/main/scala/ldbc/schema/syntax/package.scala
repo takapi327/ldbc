@@ -87,4 +87,4 @@ package object syntax:
    *   import ldbc.schema.syntax.io.*
    * }}}
    */
-  val io: SyncSyntax[IO] & Alias & DataTypes = new SyncSyntax[IO] with Alias with DataTypes {}
+  val io: SyncSyntax[IO] = new SyncSyntax[IO] {}

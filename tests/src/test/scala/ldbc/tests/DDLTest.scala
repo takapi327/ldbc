@@ -16,7 +16,7 @@ import munit.*
 
 import ldbc.sql.Connection
 
-import ldbc.schema.{ Key, Table, TableQuery }
+import ldbc.schema.*
 import ldbc.schema.syntax.io.*
 
 import ldbc.connector.SSL
