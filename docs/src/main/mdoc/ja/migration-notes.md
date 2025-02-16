@@ -267,9 +267,9 @@ val userTable = Table[User]("user")(
 
 **After**
 
-今回の修正では、Table型の生成は、Tableを継承してクラスを作成する方法に変更された。また、カラムのデータ型は必須ではなくなり、実装者が任意に設定できるようになった。
+今回の修正では、Table型の生成は、Tableを継承してクラスを作成する方法に変更された。また、カラムのデータ型は必須ではなくなり、実装者が任意に設定できるようになりました。
 
-このようにSlickと同様の構築方法に変更することで、実装者にとってより馴染みやすいものになった。
+このようにSlickと同様の構築方法に変更することで、実装者にとってより馴染みやすいものになっています。
 
 ```scala 3
 class UserTable extends Table[User]("user"):
@@ -287,6 +287,52 @@ class UserTable extends Table[User]("user"):
   def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
   def name: Column[String] = column[String]("name", VARCHAR(255))
   def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+また、データ型を表現したカラム定義方法も存在します。上記の定義方法は以下のように書き換えることが可能です。
+この定義方法では、カラム名を変数名として使用できるためカラム名を引数として渡す必要はありません。
+
+```diff
+class UserTable extends Table[User]("user"):
+-  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+-  def name: Column[String] = column[String]("name", VARCHAR(255))
+-  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
++  def id: Column[Long] = bigint().autoIncrement()
++  def name: Column[String] = varchar(255)
++  def age: Column[Option[Int]] = int().unsigned.defaultNull
+
++  override def keys = List(PRIMARY_KEY(id))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+カラム名はNamingを暗黙的に渡すことで書式を変更することができます。
+デフォルトはキャメルケースですが、パスカルケースに変更するには以下のようにします。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  given Naming = Naming.PASCAL
+
+  def id: Column[Long] = bigint().autoIncrement()
+  def name: Column[String] = varchar(255)
+  def age: Column[Option[Int]] = int().unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+特定のカラムの書式を変更したい場合は、カラム名を引数として渡すことで定義できます。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint("ID").autoIncrement()
+  def name: Column[String] = varchar("NAME", 255)
+  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id))
 
   override def * : Column[User] = (id *: name *: age).to[User]
 ```

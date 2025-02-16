@@ -108,3 +108,117 @@ Null可能な列は`Option[T]`で表現され、Tはサポートされるプリ�
 | `BIGINT`    | `-9223372036854775808 ~ 9223372036854775807` | `0 ~ 18446744073709551615` | `Long<br>BigInt` | `-9223372036854775808～9223372036854775807<br>...`                    |
 
 ユーザー定義の独自型やサポートされていない型を扱う場合は、カスタムデータ型を参照してください。
+
+## データ型のカラム
+
+カラムにデータ型やその他の設定を与える場合は、引数として渡す以外にもデータ型の特徴を持つカラムを使用することができます。
+
+この定義方法では、カラム名は変数名を使用できるためカラム名を引数として渡す必要がありません。
+
+```scala 3
+class UserTable extends Table[User]:
+  def id: Column[Long] = bigint().autoIncrement()
+  def name: Column[String] = varchar(255)
+  def age: Column[Option[Int]] = int().unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+カラム名はNamingを暗黙的に渡すことで書式を変更することができます。
+デフォルトはキャメルケースですが、パスカルケースに変更するには以下のようにします。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  given Naming = Naming.PASCAL
+
+  def id: Column[Long] = bigint().autoIncrement()
+  def name: Column[String] = varchar(255)
+  def age: Column[Option[Int]] = int().unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+特定のカラムの書式を変更したい場合は、カラム名を引数として渡すことで定義できます。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint("ID").autoIncrement()
+  def name: Column[String] = varchar("NAME", 255)
+  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+## 制約条件
+
+`PRIMARY_KEY`を呼び出すメソッドを追加することで、主キー制約を定義できます。これは複合主キーを定義するのに便利です。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint("ID").autoIncrement()
+  def name: Column[String] = varchar("NAME", 255)
+  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id, name))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+その他のインデックスも、`INDEX_KEY`メソッドで同様に定義します。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint("ID").autoIncrement()
+  def name: Column[String] = varchar("NAME", 255)
+  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id), INDEX_KEY(name))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+ユニーク制約も同様に定義できます。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint("ID").autoIncrement()
+  def name: Column[String] = varchar("NAME", 255)
+  def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
+
+  override def keys = List(PRIMARY_KEY(id), UNIQUE_KEY(name))
+
+  override def * : Column[User] = (id *: name *: age).to[User]
+```
+
+外部キー制約は、テーブルの`FOREIGN_KEY`メソッドで定義できます。
+まず、制約の名前、参照する列、参照されるテーブルを指定します。
+テーブルのDDL文を作成する際に、外部キー定義が追加されます。
+
+```scala 3
+val userTable = TableQuery[UserTable]
+
+class UserProfileTable extends Table[UserProfile]("user_profile"):
+  // ...
+  def userId: Column[Long] = bigint()
+
+  def fkUserId = FOREIGN_KEY("FK_USER_ID", userId, REFERENCE(userTable)(_.id))
+
+  override def keys = List(PRIMARY_KEY(id), fkUserId)
+  // ...
+```
+
+## データ定義言語 (DDL)
+
+テーブルの DDL 文は、TableQuery の schema メソッドで作成できます。
+
+```scala 3
+val userTable = TableQuery[UserTable]
+
+val ddl = userTable.schema
+```
