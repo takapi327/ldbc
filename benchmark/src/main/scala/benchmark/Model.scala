@@ -8,7 +8,8 @@ package benchmark
 
 import ldbc.dsl.codec.*
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.statement.formatter.Naming
+
 import ldbc.query.builder.Table
 
 given Naming = Naming.PASCAL

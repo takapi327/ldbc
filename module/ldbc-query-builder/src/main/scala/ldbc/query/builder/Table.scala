@@ -13,8 +13,8 @@ import scala.quoted.*
 import ldbc.dsl.codec.*
 
 import ldbc.statement.{ AbstractTable, Column }
+import ldbc.statement.formatter.Naming
 
-import ldbc.query.builder.formatter.Naming
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.Column as ColumnAnnotation
 

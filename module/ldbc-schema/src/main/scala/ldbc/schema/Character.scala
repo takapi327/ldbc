@@ -243,7 +243,7 @@ object Character:
  * A model for representing collations to be set in column definitions for the string data types CHAR, VARCHAR, TEXT,
  * ENUM, SET, and any synonym.
  */
-trait Collate[T <: Collate.COLLATION_TYPE] extends Attribute[T]:
+trait Collate[T] extends Attribute[T]:
 
   /** Collate name */
   def name: String
