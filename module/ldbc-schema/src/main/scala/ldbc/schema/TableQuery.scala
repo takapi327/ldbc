@@ -39,7 +39,7 @@ case class TableQueryImpl[A <: Table[?]](
 
   private def createStatement(ifNotExists: Boolean): Schema.DDL =
     val columns = column.list.map(_.statement).mkString(",\n  ")
-    val keys = table.keys.map(_.statement).mkString(",\n  ")
+    val keys = table.keys.map(_.queryString).mkString(",\n  ")
     val statement = s"CREATE TABLE ${ if (ifNotExists) "IF NOT EXISTS " else "" }`$name` (\n  $columns,\n  $keys\n)"
     Schema.DDL(statement)
 
