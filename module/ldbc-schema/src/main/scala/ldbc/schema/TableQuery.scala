@@ -37,6 +37,20 @@ case class TableQueryImpl[A <: Table[?]](
     TableQueryOpt[A, Table.Opt[AbstractTableQuery.Extract[A]]](opt, opt.*, name, params)
       .asInstanceOf[AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]]
 
+  private def createStatement(ifNotExists: Boolean): Schema.DDL =
+    val columns = column.list.map(_.statement).mkString(",\n  ")
+    val keys = table.keys.map(_.statement).mkString(",\n  ")
+    val statement = s"CREATE TABLE ${ if (ifNotExists) "IF NOT EXISTS " else "" }`$name` (\n  $columns,\n  $keys\n)"
+    Schema.DDL(statement)
+
+  override def schema: Schema = Schema(
+    create = createStatement(false),
+    createIfNotExists = createStatement(true),
+    drop = Schema.DDL(s"DROP TABLE `$name`"),
+    dropIfExists = Schema.DDL(s"DROP TABLE IF EXISTS `$name`"),
+    truncate = Schema.DDL(s"TRUNCATE TABLE `$name`")
+  )
+
 private[ldbc] case class TableQueryOpt[A, O](
   table:  O,
   column: Column[AbstractTableQuery.Extract[O]],
