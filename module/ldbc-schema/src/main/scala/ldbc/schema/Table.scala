@@ -427,17 +427,29 @@ object Table:
 
   inline def float[A <: Float | Option[Float]](alias: String): Int => DataTypeColumn.NumericColumn[A] =
     ${
-      namedDoubleColumnImpl[A]('{ Some(alias) }, '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) }, '{ isOptional[A] })
+      namedDoubleColumnImpl[A](
+        '{ Some(alias) },
+        '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def double[A <: Double | Option[Double]](alias: String): Int => DataTypeColumn.NumericColumn[A] =
     ${
-      namedDoubleColumnImpl[A]('{ Some(alias) }, '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) }, '{ isOptional[A] })
+      namedDoubleColumnImpl[A](
+        '{ Some(alias) },
+        '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def char[A <: String | Option[String]](alias: String): Int => DataTypeColumn.StringColumn[A] =
     ${
-      namedStringLengthColumnImpl[A]('{ Some(alias) }, '{ (length: Int) => CChar(length, isOptional[A]) }, '{ isOptional[A] })
+      namedStringLengthColumnImpl[A](
+        '{ Some(alias) },
+        '{ (length: Int) => CChar(length, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def varchar[A <: String | Option[String]](alias: String): Int => DataTypeColumn.StringColumn[A] =
@@ -451,7 +463,11 @@ object Table:
 
   inline def binary[A <: Array[Byte] | Option[Array[Byte]]](alias: String): Int => DataTypeColumn.StringColumn[A] =
     ${
-      namedStringLengthColumnImpl[A]('{ Some(alias) }, '{ (length: Int) => Binary(length, isOptional[A]) }, '{ isOptional[A] })
+      namedStringLengthColumnImpl[A](
+        '{ Some(alias) },
+        '{ (length: Int) => Binary(length, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def varbinary[A <: Array[Byte] | Option[Array[Byte]]](alias: String): Int => DataTypeColumn.StringColumn[A] =

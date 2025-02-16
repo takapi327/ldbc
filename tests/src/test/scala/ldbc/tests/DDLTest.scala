@@ -16,7 +16,7 @@ import munit.*
 
 import ldbc.sql.Connection
 
-import ldbc.schema.{Table, TableQuery, Key}
+import ldbc.schema.{ Key, Table, TableQuery }
 import ldbc.schema.syntax.io.*
 
 import ldbc.connector.SSL
@@ -58,9 +58,9 @@ trait DDLTest extends CatsEffectSuite:
   )
 
   class UserTable extends Table[User]("user"):
-    def id: Column[Long] = bigint().autoIncrement
-    def name: Column[String] = varchar(255)
-    def age: Column[Option[Int]] = int()
+    def id:   Column[Long]        = bigint().autoIncrement
+    def name: Column[String]      = varchar(255)
+    def age:  Column[Option[Int]] = int()
 
     override def keys: List[Key] = List(PRIMARY_KEY(id))
 
@@ -72,12 +72,14 @@ trait DDLTest extends CatsEffectSuite:
     connection
       .use { conn =>
         // The following implementation is used to test the possibility of multiple executions.
-        DBIO.sequence(
-          userTable.schema.create,
-          userTable.schema.createIfNotExists,
-          userTable.schema.dropIfExists,
-          userTable.schema.create
-        ).commit(conn) *> IO.unit
+        DBIO
+          .sequence(
+            userTable.schema.create,
+            userTable.schema.createIfNotExists,
+            userTable.schema.dropIfExists,
+            userTable.schema.create
+          )
+          .commit(conn) *> IO.unit
       }
       .unsafeRunSync()
 

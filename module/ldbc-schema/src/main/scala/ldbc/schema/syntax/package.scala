@@ -73,8 +73,8 @@ package object syntax:
         connection =>
           for
             statement <- connection.createStatement()
-            _ <- ddl.statements.map(statement.addBatch).sequence
-            result <- statement.executeBatch()
+            _         <- ddl.statements.map(statement.addBatch).sequence
+            result    <- statement.executeBatch()
           yield result
       )
 
