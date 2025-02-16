@@ -17,9 +17,9 @@ class TableTest extends AnyFlatSpec:
       case class User(id: Long, name: String, age: Int)
 
       class UserTable extends Table[User]("user"):
-        def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
-        def name: Column[String] = column[String]("name", VARCHAR(255))
-        def age: Column[Int] = column[Int]("age", INT)
+        def id: Column[Long] = bigint("id").autoIncrement
+        def name: Column[String] = varchar(255, "name")
+        def age: Column[Int] = int("age")
 
         override def * = (id *: name *: age).to[User]
     """.stripMargin)
@@ -32,9 +32,9 @@ class TableTest extends AnyFlatSpec:
       case class User(id: Long, name: String, age: Int)
 
       class UserTable extends Table[User]("user"):
-        def id: Column[Long] = column[Long]("id", BIGINT)
-        def name: Column[String] = column[String]("name", VARCHAR(255), AUTO_INCREMENT)
-        def age: Column[Int] = column[Int]("age", INT)
+        def id: Column[Long] = bigint("id")
+        def name: Column[String] = varchar(255, "name").autoIncrement
+        def age: Column[Int] = int("age")
 
         override def * = (id *: name *: age).to[User]
     """.stripMargin)
@@ -63,23 +63,23 @@ class TableTest extends AnyFlatSpec:
       case class SubTest(id: Long, test: String)
 
       class SubTestTable extends Table[SubTest]("sub_test"):
-        def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
-        def test: Column[String] = column[String]("test", VARCHAR(255))
+        def id: Column[Long] = bigint("id").autoIncrement
+        def test: Column[String] = varchar(255, "test")
 
         override def * = (id *: test).to[SubTest]
 
-      val subTable = SubTestTable()
+      val subTest = TableQuery[SubTestTable]
 
       class TestTable extends Table[Test]("test"):
-        def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
-        def subId: Column[Long] = column[Long]("sub_id", BIGINT)
+        def id: Column[Long] = bigint("id").autoIncrement
+        def subId: Column[Long] = bigint("sub_id")
 
         override def * = (id *: subId).to[Test]
 
         override def keys: List[Key] = List(
           PRIMARY_KEY(id),
           INDEX_KEY(subId),
-          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTable, subTable.id)))
+          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTest)(_.id)))
         )
     """.stripMargin)
   }
@@ -97,7 +97,7 @@ class TableTest extends AnyFlatSpec:
 
         override def * = (id *: test).to[SubTest]
 
-      val subTable = SubTestTable()
+      val subTest = TableQuery[SubTestTable]
 
       class TestTable extends Table[Test]("test"):
         def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
@@ -108,7 +108,7 @@ class TableTest extends AnyFlatSpec:
         override def keys: List[Key] = List(
           PRIMARY_KEY(id),
           INDEX_KEY(subId),
-          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTable, subTable.test)))
+          CONSTRAINT("fk_id", FOREIGN_KEY(subId, REFERENCE(subTest)(_.test)))
         )
     """.stripMargin)
   }
@@ -127,7 +127,7 @@ class TableTest extends AnyFlatSpec:
 
         override def * = (id *: test *: category).to[SubTest]
 
-      val subTable = SubTestTable()
+      val subTest = TableQuery[SubTestTable]
 
       class TestTable extends Table[Test]("test"):
         def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT)
@@ -139,7 +139,7 @@ class TableTest extends AnyFlatSpec:
         override def keys: List[Key] = List(
           PRIMARY_KEY(id),
           INDEX_KEY(subId),
-          CONSTRAINT("fk_id", FOREIGN_KEY(subId *: subCategory, REFERENCE(subTable, subTable.id *: subTable.category)))
+          CONSTRAINT("fk_id", FOREIGN_KEY(subId *: subCategory, REFERENCE(subTest)(s => s.id *: s.category)))
         )
     """.stripMargin)
   }
