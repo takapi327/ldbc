@@ -12,7 +12,7 @@ import ldbc.dsl.Parameter
 
 import ldbc.statement.{ TableQuery as AbstractTableQuery, * }
 
-case class TableQueryImpl[A <: AbstractTable[?]](
+case class TableQueryImpl[A <: Table[?]](
   table:  A,
   column: Column[AbstractTableQuery.Extract[A]],
   name:   String,
@@ -48,17 +48,21 @@ private[ldbc] case class TableQueryOpt[A, O](
 
 object TableQuery:
 
-  def apply[E, T <: AbstractTable[E]](table: T): AbstractTableQuery[T, Table.Opt[E]] =
+  type Extract[T] = T match
+    case Table[t] => t
+    case Table[t] *: tn => t *: Extract[tn]
+
+  def apply[E, T <: Table[E]](table: T): AbstractTableQuery[T, Table.Opt[E]] =
     TableQueryImpl[T](table, table.*, table.$name, List.empty)
 
-  inline def apply[T <: AbstractTable[?]]: AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]] = ${
+  inline def apply[T <: Table[?]]: AbstractTableQuery[T, Table.Opt[Extract[T]]] = ${
     applyImpl[T]
   }
 
-  private def applyImpl[T <: AbstractTable[?]](using
+  private def applyImpl[T <: Table[?]](using
     quotes: Quotes,
     tpe:    Type[T]
-  ): Expr[AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]]] =
+  ): Expr[AbstractTableQuery[T, Table.Opt[Extract[T]]]] =
     import quotes.reflect.*
     val tableType = TypeRepr.of[T]
     val table = Select
@@ -66,4 +70,4 @@ object TableQuery:
       .appliedToArgs(List.empty)
       .asExprOf[T]
 
-    '{ apply[AbstractTableQuery.Extract[T], T]($table) }
+    '{ apply[Extract[T], T]($table) }
