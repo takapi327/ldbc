@@ -49,7 +49,7 @@ private[ldbc] case class TableQueryOpt[A, O](
 object TableQuery:
 
   type Extract[T] = T match
-    case Table[t] => t
+    case Table[t]       => t
     case Table[t] *: tn => t *: Extract[tn]
 
   def apply[E, T <: Table[E]](table: T): AbstractTableQuery[T, Table.Opt[E]] =
