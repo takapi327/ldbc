@@ -56,6 +56,21 @@ sealed trait DataTypeColumn[T] extends Column[T]:
    * Value to indicate whether NULL is acceptable as a query string in SQL
    */
   protected def nullType: String = if isOptional then "NULL" else "NOT NULL"
+  
+  /**
+   * Method for setting the primary key to the column.
+   */
+  def primaryKey: DataTypeColumn[T] = this.setAttributes(PRIMARY_KEY[T])
+
+  /**
+   * Method for setting the unique key to the column.
+   */
+  def unique: DataTypeColumn[T] = this.setAttributes(UNIQUE_KEY[T])
+  
+  /**
+   * Method for setting the comment to the column.
+   */
+  def comment(message: String): DataTypeColumn[T] = this.setAttributes(COMMENT[T](message))
 
 object DataTypeColumn:
 
@@ -132,7 +147,7 @@ object DataTypeColumn:
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
     override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
-    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
+    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = this.attributes ++ attributes.toList)
     override def autoIncrement: NumericColumn[T] = this.copy(attributes = AutoInc[T]() :: attributes)
 
     override def unsigned: NumericColumn[T] = this.copy(isUnsigned = true)
@@ -170,7 +185,7 @@ object DataTypeColumn:
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
     override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
-    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
+    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = this.attributes ++ attributes.toList)
 
     override def charset(character: Character):  StringColumn[T] = this.copy(character = Some(character))
     override def collate(collate:   Collate[T]): StringColumn[T] = this.copy(collate = Some(collate))
@@ -204,7 +219,7 @@ object DataTypeColumn:
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
     override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
-    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
+    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = this.attributes ++ attributes.toList)
 
     override def defaultCurrentTimestamp(onUpdate: Boolean = false): TemporalColumn[T] =
       this.copy(defaultValue = Some(Default.TimeStamp(None, onUpdate)))
@@ -239,7 +254,7 @@ object DataTypeColumn:
       case v            => this.copy(defaultValue = Some(Default.Value(v)))
     override def defaultNull: DataTypeColumn[T] = this.copy(defaultValue = Some(Default.Null))
 
-    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = attributes.toList)
+    override def setAttributes(attributes: Attribute[T]*): DataTypeColumn[T] = this.copy(attributes = this.attributes ++ attributes.toList)
 
   def apply[T](name: String, alias: Option[String], dataType: DataType[T], isOptional: Boolean)(using
     codec: Codec[T]
