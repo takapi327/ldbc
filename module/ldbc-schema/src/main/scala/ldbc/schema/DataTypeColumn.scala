@@ -245,8 +245,7 @@ object DataTypeColumn:
     override def statement: String =
       (List(
         Some(name),
-        Some(dataType.typeName),
-        Some(nullType),
+        Some(dataType.queryString),
         defaultValue.map(_.queryString)
       ).flatten ++ attributes.map(_.queryString)).mkString(" ")
     override def updateStatement:             String = s"$name = ?"
