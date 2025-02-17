@@ -417,7 +417,7 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Serial DataType model matches the specified one." in {
-    assert(SERIAL[BigInt].queryString === "BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY")
+    assert(SERIAL[BigInt].queryString === "SERIAL")
   }
 
   it should "The query string generated from the Boolean DataType model matches the specified one." in {
