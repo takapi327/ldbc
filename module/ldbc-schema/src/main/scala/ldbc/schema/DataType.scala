@@ -15,7 +15,6 @@ import scala.compiletime.ops.string.*
 
 import ldbc.sql.Types
 
-import ldbc.schema.attribute.Attribute
 import ldbc.schema.interpreter.ExtractOption
 import ldbc.schema.model.{ Enum as EnumModel, EnumDataType }
 
@@ -1562,19 +1561,6 @@ object DataType:
           else error("Only values in the range 0 or 1901 to 2155 can be passed to the YEAR type.")
         case _ => this.copy(default = Some(Default.Value(value)))
 
-  /**
-   * Alias for DataType
-   *
-   * @tparam T
-   *   Scala types that match SQL DataType
-   */
-  private[ldbc] trait Alias[T] extends DataType[T]:
-
-    /**
-     * Extra attribute of column
-     */
-    def attributes: List[Attribute[T]]
-
   private[ldbc] object Alias:
 
     /**
@@ -1583,23 +1569,17 @@ object DataType:
      * @tparam T
      *   Scala types that match SQL DataType
      */
-    case class Serial[T <: BigInt]() extends Alias[T]:
+    case class Serial[T <: BigInt]() extends DataType[T]:
 
-      override def typeName: String = "BIGINT"
+      override def typeName: String = "SERIAL"
 
       override def sqlType: Int = Types.BIGINT
 
       override def isOptional: Boolean = false
 
-      override val queryString: String =
-        s"$typeName UNSIGNED $nullType ${ attributes.map(_.queryString).mkString(" ") }"
+      override val queryString: String = typeName
 
       override def default: Option[Default] = None
-
-      override def attributes: List[Attribute[T]] = List(
-        AUTO_INCREMENT,
-        UNIQUE_KEY
-      )
 
     /**
      * Alias for TINYINT(1)
@@ -1614,15 +1594,13 @@ object DataType:
     case class Bool[T <: Boolean | Option[Boolean]](
       isOptional: Boolean,
       default:    Option[Default] = None
-    ) extends Alias[T]:
+    ) extends DataType[T]:
 
       override def typeName: String = "BOOLEAN"
 
       override def sqlType: Int = Types.BOOLEAN
 
       override def queryString: String = s"$typeName $nullType" ++ default.fold("")(v => s" ${ v.queryString }")
-
-      override def attributes: List[Attribute[T]] = List.empty
 
       /**
        * Method for setting Default value to DataType in SQL.
