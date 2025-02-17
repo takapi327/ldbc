@@ -384,19 +384,6 @@ trait Table[T](val $name: String) extends AbstractTable[T]:
    */
   def keys: List[Key] = List.empty
 
-  /**
-   * Create a table statement.
-   */
-  def createStatement: String =
-    val columns = this.*.list.map(_.statement).mkString(",\n  ")
-    val keys    = this.keys.map(_.queryString).mkString(",\n  ")
-    s"""
-       |CREATE TABLE IF NOT EXISTS `${ $name }` (
-       |  $columns,
-       |  $keys
-       |)
-       |""".stripMargin
-
   override final def statement: String = $name
 
   override def toString: String = s"Table($$name)"
@@ -410,22 +397,22 @@ object Table:
   inline def bit[A <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]](
     alias: String
   ): () => DataTypeColumn.NumericColumn[A] =
-    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'BIT, 'isOptional) }
+    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'BIT, '{ isOptional[A] }) }
 
   inline def tinyint[A <: Byte | Short | Option[Byte | Short]](alias: String): () => DataTypeColumn.NumericColumn[A] =
-    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'TINYINT, 'isOptional) }
+    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'TINYINT, '{ isOptional[A] }) }
 
   inline def smallint[A <: Short | Int | Option[Short | Int]](alias: String): () => DataTypeColumn.NumericColumn[A] =
-    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'SMALLINT, 'isOptional) }
+    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'SMALLINT, '{ isOptional[A] }) }
 
   inline def mediumint[A <: Int | Option[Int]](alias: String): () => DataTypeColumn.NumericColumn[A] =
-    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'MEDIUMINT, 'isOptional) }
+    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'MEDIUMINT, '{ isOptional[A] }) }
 
   inline def int[A <: Int | Long | Option[Int | Long]](alias: String): () => DataTypeColumn.NumericColumn[A] =
-    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'INT, 'isOptional) }
+    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'INT, '{ isOptional[A] }) }
 
   inline def bigint[A <: Long | BigInt | Option[Long | BigInt]](alias: String): () => DataTypeColumn.NumericColumn[A] =
-    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'BIGINT, 'isOptional) }
+    ${ namedNumericColumnImpl[A]('{ Some(alias) }, 'BIGINT, '{ isOptional[A] }) }
 
   inline def decimal[A <: BigDecimal | Option[BigDecimal]](
     alias: String
@@ -434,23 +421,35 @@ object Table:
       namedDecimalColumnImpl[A](
         '{ Some(alias) },
         '{ (accuracy: Int, scale: Int) => Decimal(accuracy, scale, isOptional[A]) },
-        'isOptional
+        '{ isOptional[A] }
       )
     }
 
   inline def float[A <: Float | Option[Float]](alias: String): Int => DataTypeColumn.NumericColumn[A] =
     ${
-      namedDoubleColumnImpl[A]('{ Some(alias) }, '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) }, 'isOptional)
+      namedDoubleColumnImpl[A](
+        '{ Some(alias) },
+        '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def double[A <: Double | Option[Double]](alias: String): Int => DataTypeColumn.NumericColumn[A] =
     ${
-      namedDoubleColumnImpl[A]('{ Some(alias) }, '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) }, 'isOptional)
+      namedDoubleColumnImpl[A](
+        '{ Some(alias) },
+        '{ (accuracy: Int) => CFloat(accuracy, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def char[A <: String | Option[String]](alias: String): Int => DataTypeColumn.StringColumn[A] =
     ${
-      namedStringLengthColumnImpl[A]('{ Some(alias) }, '{ (length: Int) => CChar(length, isOptional[A]) }, 'isOptional)
+      namedStringLengthColumnImpl[A](
+        '{ Some(alias) },
+        '{ (length: Int) => CChar(length, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def varchar[A <: String | Option[String]](alias: String): Int => DataTypeColumn.StringColumn[A] =
@@ -458,13 +457,17 @@ object Table:
       namedStringLengthColumnImpl[A](
         '{ Some(alias) },
         '{ (length: Int) => Varchar(length, isOptional[A]) },
-        'isOptional
+        '{ isOptional[A] }
       )
     }
 
   inline def binary[A <: Array[Byte] | Option[Array[Byte]]](alias: String): Int => DataTypeColumn.StringColumn[A] =
     ${
-      namedStringLengthColumnImpl[A]('{ Some(alias) }, '{ (length: Int) => Binary(length, isOptional[A]) }, 'isOptional)
+      namedStringLengthColumnImpl[A](
+        '{ Some(alias) },
+        '{ (length: Int) => Binary(length, isOptional[A]) },
+        '{ isOptional[A] }
+      )
     }
 
   inline def varbinary[A <: Array[Byte] | Option[Array[Byte]]](alias: String): Int => DataTypeColumn.StringColumn[A] =
@@ -472,65 +475,65 @@ object Table:
       namedStringLengthColumnImpl[A](
         '{ Some(alias) },
         '{ (length: Int) => Varbinary(length, isOptional[A]) },
-        'isOptional
+        '{ isOptional[A] }
       )
     }
 
   inline def tinyblob[A <: Array[Byte] | Option[Array[Byte]]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ TINYBLOB() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ TINYBLOB() }, '{ isOptional[A] }) }
 
   inline def blob[A <: Array[Byte] | Option[Array[Byte]]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ BLOB() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ BLOB() }, '{ isOptional[A] }) }
 
   inline def mediumblob[A <: Array[Byte] | Option[Array[Byte]]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ MEDIUMBLOB() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ MEDIUMBLOB() }, '{ isOptional[A] }) }
 
   inline def longblob[A <: Array[Byte] | Option[Array[Byte]]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ LONGBLOB() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ LONGBLOB() }, '{ isOptional[A] }) }
 
   inline def tinytext[A <: String | Option[String]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ TINYTEXT() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ TINYTEXT() }, '{ isOptional[A] }) }
 
   inline def text[A <: String | Option[String]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ TEXT() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ TEXT() }, '{ isOptional[A] }) }
 
   inline def mediumtext[A <: String | Option[String]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ MEDIUMTEXT() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ MEDIUMTEXT() }, '{ isOptional[A] }) }
 
   inline def longtext[A <: String | Option[String]](alias: String): () => DataTypeColumn.StringColumn[A] =
-    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ LONGTEXT() }, 'isOptional) }
+    ${ namedStringColumnImpl[A]('{ Some(alias) }, '{ LONGTEXT() }, '{ isOptional[A] }) }
 
   inline def date[A <: String | LocalDate | Option[String | LocalDate]](
     alias: String
   ): () => DataTypeColumn.TemporalColumn[A] =
-    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'DATE, 'isOptional) }
+    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'DATE, '{ isOptional[A] }) }
 
   inline def datetime[
     A <: String | Instant | LocalDateTime | OffsetTime | Option[String | Instant | LocalDateTime | OffsetTime]
   ](alias: String): () => DataTypeColumn.TemporalColumn[A] =
-    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'DATETIME, 'isOptional) }
+    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'DATETIME, '{ isOptional[A] }) }
 
   inline def timestamp[
     A <: String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime |
       Option[String | Instant | LocalDateTime | OffsetDateTime | ZonedDateTime]
   ](alias: String): () => DataTypeColumn.TemporalColumn[A] =
-    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'TIMESTAMP, 'isOptional) }
+    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'TIMESTAMP, '{ isOptional[A] }) }
 
   inline def time[A <: String | LocalTime | Option[String | LocalTime]](
     alias: String
   ): () => DataTypeColumn.TemporalColumn[A] =
-    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'TIME, 'isOptional) }
+    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'TIME, '{ isOptional[A] }) }
 
   inline def year[A <: Int | Instant | LocalDate | JYear | Option[Int | Instant | LocalDate | JYear]](
     alias: String
   ): () => DataTypeColumn.TemporalColumn[A] =
-    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'YEAR, 'isOptional) }
+    ${ namedTemporalColumnImpl[A]('{ Some(alias) }, 'YEAR, '{ isOptional[A] }) }
 
   inline def serial[A <: BigInt](alias: String): () => DataTypeColumn[A] =
-    ${ namedColumnImpl[A]('{ Some(alias) }, 'SERIAL, 'isOptional) }
+    ${ namedColumnImpl[A]('{ Some(alias) }, 'SERIAL, '{ isOptional[A] }) }
 
   inline def boolean[A <: Boolean | Option[Boolean]](alias: String): () => DataTypeColumn[A] =
-    ${ namedColumnImpl[A]('{ Some(alias) }, 'BOOLEAN, 'isOptional) }
+    ${ namedColumnImpl[A]('{ Some(alias) }, 'BOOLEAN, '{ isOptional[A] }) }
 
   case class Opt[T](
     $name:   String,
