@@ -149,6 +149,52 @@ class UserTable extends Table[User]("user"):
   override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
+## カスタムマッピング
+
+モデルをテーブルとマッピングする際にネストしたモデルを使用することもできます。
+
+```scala 3
+case class User(id: Long, name: User.Name)
+object User:
+  case class Name(firstName: String, lastName: String)
+```
+
+上記のようなモデルをマッピングする場合、以下のように定義します。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint().unsigned.autoIncrement.primaryKey
+  def firstName: Column[String] = char(35)
+  def lastName: Column[String] = char(35)
+
+  override def * : Column[User] = (id *: (firstName *: lastName).to[User.Name]).to[User]
+```
+
+レコードの追加や更新時には、モデルのネストをそのままにして使用できます。
+
+```scala 3
+(user += User(1, User.Name("Takahiko", "Tominaga"))).update
+```
+
+また、以下のように専用のカラムを定義しても同様に使用できます。
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint().unsigned.autoIncrement.primaryKey
+  def firstName: Column[String] = char(35)
+  def lastName: Column[String] = char(35)
+
+  def fullName: Column[User.Name] = (firstName *: lastName).to[User.Name]
+
+  override def * : Column[User] = (id *: fullName).to[User]
+```
+
+専用のカラムを定義した場合は`select`文などで使用することも可能です。
+
+```scala 3
+user.select(_.fullName).query.to[List]
+```
+
 ## 制約条件
 
 `PRIMARY_KEY`を呼び出すメソッドを追加することで、主キー制約を定義できます。これは複合主キーを定義するのに便利です。
