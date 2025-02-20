@@ -111,6 +111,23 @@ object DBIO:
       override def rollback(connection:    Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
       override def transaction(connection: Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
 
+  def sequence[F[_]: Monad, A](dbios: DBIO[F, A]*): DBIO[F, List[A]] =
+    new DBIO[F, List[A]]:
+      override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[List[A]] =
+        dbios.toList.traverse(_.run(connection))
+
+      override def readOnly(connection: Connection[F])(using LogHandler[F]): F[List[A]] =
+        dbios.toList.traverse(_.readOnly(connection))
+
+      override def commit(connection: Connection[F])(using LogHandler[F]): F[List[A]] =
+        dbios.toList.traverse(_.commit(connection))
+
+      override def rollback(connection: Connection[F])(using LogHandler[F]): F[List[A]] =
+        dbios.toList.traverse(_.rollback(connection))
+
+      override def transaction(connection: Connection[F])(using LogHandler[F]): F[List[A]] =
+        dbios.toList.traverse(_.transaction(connection))
+
   given [F[_]: MonadCancelThrow]: MonadThrow[[T] =>> DBIO[F, T]] with
     override def pure[A](x: A): DBIO[F, A] = DBIO.pure(x)
 

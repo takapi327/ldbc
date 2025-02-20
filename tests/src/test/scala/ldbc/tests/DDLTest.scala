@@ -16,8 +16,8 @@ import munit.*
 
 import ldbc.sql.Connection
 
-import ldbc.query.builder.*
-import ldbc.query.builder.syntax.io.*
+import ldbc.schema.*
+import ldbc.schema.syntax.io.*
 
 import ldbc.connector.SSL
 
@@ -55,42 +55,52 @@ trait DDLTest extends CatsEffectSuite:
     id:   Long,
     name: String,
     age:  Option[Int]
-  ) derives Table
+  )
 
-  final val tableQuery = TableQuery[User]
+  class UserTable extends Table[User]("user"):
+    def id:   Column[Long]        = bigint().autoIncrement
+    def name: Column[String]      = varchar(255)
+    def age:  Column[Option[Int]] = int()
+
+    override def keys: List[Key] = List(PRIMARY_KEY(id))
+
+    def * : Column[User] = (id *: name *: age).to[User]
+
+  final val userTable = TableQuery[UserTable]
 
   override def beforeAll(): Unit =
     connection
       .use { conn =>
-        sql"""
-          CREATE TABLE `user` (
-            `id` BIGINT NOT NULL AUTO_INCREMENT,
-            `name` VARCHAR(255) NOT NULL,
-            `age` INT,
-            PRIMARY KEY (`id`)
+        // The following implementation is used to test the possibility of multiple executions.
+        DBIO
+          .sequence(
+            userTable.schema.create,
+            userTable.schema.createIfNotExists,
+            userTable.schema.dropIfExists,
+            userTable.schema.create
           )
-        """.update.commit(conn) *> IO.unit
+          .commit(conn) *> IO.unit
       }
       .unsafeRunSync()
 
   override def afterAll(): Unit =
     connection
       .use { conn =>
-        tableQuery.dropTable.update.commit(conn) *> IO.unit
+        DBIO.sequence(userTable.schema.drop).commit(conn) *> IO.unit
       }
       .unsafeRunSync()
 
   override def afterEach(context: AfterEach): Unit =
     connection
       .use { conn =>
-        tableQuery.truncateTable.update.commit(conn) *> IO.unit
+        DBIO.sequence(userTable.schema.truncate).commit(conn) *> IO.unit
       }
       .unsafeRunSync()
 
   test("When the table is created, the number of records is 0.") {
     assertIO(
       connection.use { conn =>
-        tableQuery.select(_.id.count).query.unsafe.readOnly(conn)
+        userTable.select(_.id.count).query.unsafe.readOnly(conn)
       },
       0
     )
@@ -99,7 +109,7 @@ trait DDLTest extends CatsEffectSuite:
   test("Records can be inserted into tables created before the test begins.") {
     assertIO(
       connection.use { conn =>
-        tableQuery
+        userTable
           .insertInto(user => user.name *: user.age)
           .values(
             ("Alice", Some(20)),

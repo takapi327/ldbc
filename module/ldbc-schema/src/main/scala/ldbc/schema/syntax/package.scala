@@ -19,6 +19,7 @@ import ldbc.dsl.codec.Decoder
 
 import ldbc.statement.{ Command, Query }
 import ldbc.statement.syntax.*
+import ldbc.statement.Schema
 
 package object syntax:
 
@@ -65,6 +66,18 @@ package object syntax:
             yield result
         )
 
+    implicit final def schemaDDLOps(ddl: Schema.DDL): DBIO[Array[Int]] =
+      DBIO.Impl[F, Array[Int]](
+        ddl.statements.mkString(";\n"),
+        Nil,
+        connection =>
+          for
+            statement <- connection.createStatement()
+            _         <- ddl.statements.map(statement.addBatch).sequence
+            result    <- statement.executeBatch()
+          yield result
+      )
+
   /**
    * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
    * might look something like this.
@@ -74,4 +87,4 @@ package object syntax:
    *   import ldbc.schema.syntax.io.*
    * }}}
    */
-  val io: SyncSyntax[IO] & Alias & DataTypes = new SyncSyntax[IO] with Alias with DataTypes {}
+  val io: SyncSyntax[IO] = new SyncSyntax[IO] {}

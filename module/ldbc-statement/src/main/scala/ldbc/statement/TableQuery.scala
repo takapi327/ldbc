@@ -257,24 +257,13 @@ trait TableQuery[A, O]:
   def delete: Delete[A] = Delete[A](table, s"DELETE FROM $name", params)
 
   /**
-   * Method to construct a query to drop a table.
-   *
+   * Function to return a Schema object for executing DDL.
+   * 
    * {{{
-   *   TableQuery[City]
-   *     .dropTable
+   *   TableQuery[City].schema
    * }}}
    */
-  def dropTable: Command = Command.Pure(s"DROP TABLE $name", List.empty)
-
-  /**
-   * Method to construct a query to truncate a table.
-   *
-   * {{{
-   *   TableQuery[City]
-   *     .truncateTable
-   * }}}
-   */
-  def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $name", List.empty)
+  def schema: Schema = Schema.empty
 
   /**
    * Method to construct a query to join a table.

@@ -55,7 +55,7 @@ class ColumnImplTest extends AnyFlatSpec:
         COMMENT("name")
       ).statement === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     )
-    assert(column[BigInt]("id", SERIAL).statement === "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY")
+    assert(column[BigInt]("id", SERIAL).statement === "`id` SERIAL")
   }
 
   it should "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {
