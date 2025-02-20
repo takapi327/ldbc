@@ -117,11 +117,9 @@ Null可能な列は`Option[T]`で表現され、Tはサポートされるプリ�
 
 ```scala 3
 class UserTable extends Table[User]:
-  def id: Column[Long] = bigint().autoIncrement()
+  def id: Column[Long] = bigint().autoIncrement().primaryKey
   def name: Column[String] = varchar(255)
   def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-  override def keys = List(PRIMARY_KEY(id))
 
   override def * : Column[User] = (id *: name *: age).to[User]
 ```
@@ -133,11 +131,9 @@ class UserTable extends Table[User]:
 class UserTable extends Table[User]("user"):
   given Naming = Naming.PASCAL
 
-  def id: Column[Long] = bigint().autoIncrement()
+  def id: Column[Long] = bigint().autoIncrement().primaryKey
   def name: Column[String] = varchar(255)
   def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-  override def keys = List(PRIMARY_KEY(id))
 
   override def * : Column[User] = (id *: name *: age).to[User]
 ```
@@ -146,11 +142,9 @@ class UserTable extends Table[User]("user"):
 
 ```scala 3
 class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement()
+  def id: Column[Long] = bigint("ID").autoIncrement().primaryKey
   def name: Column[String] = varchar("NAME", 255)
   def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
-
-  override def keys = List(PRIMARY_KEY(id))
 
   override def * : Column[User] = (id *: name *: age).to[User]
 ```
@@ -161,7 +155,7 @@ class UserTable extends Table[User]("user"):
 
 ```scala 3
 class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement()
+  def id: Column[Long] = bigint("ID").autoIncrement
   def name: Column[String] = varchar("NAME", 255)
   def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
 
@@ -174,11 +168,11 @@ class UserTable extends Table[User]("user"):
 
 ```scala 3
 class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement()
+  def id: Column[Long] = bigint("ID").autoIncrement.primaryKey
   def name: Column[String] = varchar("NAME", 255)
   def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
 
-  override def keys = List(PRIMARY_KEY(id), INDEX_KEY(name))
+  override def keys = List(INDEX_KEY(name))
 
   override def * : Column[User] = (id *: name *: age).to[User]
 ```
@@ -187,11 +181,11 @@ class UserTable extends Table[User]("user"):
 
 ```scala 3
 class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement()
+  def id: Column[Long] = bigint("ID").autoIncrement.primaryKey
   def name: Column[String] = varchar("NAME", 255)
   def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
 
-  override def keys = List(PRIMARY_KEY(id), UNIQUE_KEY(name))
+  override def keys = List(UNIQUE_KEY(name))
 
   override def * : Column[User] = (id *: name *: age).to[User]
 ```
@@ -215,10 +209,30 @@ class UserProfileTable extends Table[UserProfile]("user_profile"):
 
 ## データ定義言語 (DDL)
 
-テーブルの DDL 文は、TableQuery の schema メソッドで作成できます。
+テーブルの DDL 文は、`TableQuery`の`schema`メソッドで作成できます。複数の DDL オブジェクトを`++`で連結して複合 DDL オブジェクトを作成できます。`create`、`createIfNotExists`、`dropIfExists`、`drop` および `truncate` メソッドは、DDL 文を実行するアクションを生成します。テーブルを安全に作成および削除するには、`createIfNotExists`および`dropIfExists`メソッドを使用します。
 
 ```scala 3
-val userTable = TableQuery[UserTable]
+val schema = TableQuery[UserTable].schema ++ TableQuery[UserProfileTable].schema
 
-val ddl = userTable.schema
+connection
+  .use { conn =>
+    DBIO
+      .sequence(
+        schema.createIfNotExists,
+        schema.dropIfExists,
+        schema.create,
+        schema.drop
+      )
+      .commit(conn)
+  }            
+```
+
+他のほとんどのSQLベースのActionと同様に、SQLコードを取得するためにステートメントメソッドを使用することができます。現在のところ、複数のステートメントを生成できるアクションはスキーマアクションだけです。
+
+```scala 3
+schema.create.statements.foreach(println)
+schema.createIfNotExists.statements.foreach(println)
+schema.truncate.statements.foreach(println)
+schema.drop.statements.foreach(println)
+schema.dropIfExists.statements.foreach(println)
 ```
