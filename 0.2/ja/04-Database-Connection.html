@@ -159,7 +159,7 @@
     <p>この章では、LDBCで構築したクエリを使用して、データベースへの接続処理を行うための方法について説明します。</p>
     <p>プロジェクトに以下の依存関係を設定する必要があります。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.3.0-beta10&quot;</span><span>,
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-dsl&quot;</span><span> % </span><span class="string-literal">&quot;0.3.0-beta11&quot;</span><span>,
   </span><span class="string-literal">&quot;com.mysql&quot;</span><span> % </span><span class="string-literal">&quot;mysql-connector-j&quot;</span><span> % </span><span class="string-literal">&quot;8.4.0&quot;</span><span>
 )</span></code></pre>
     <p>LDBCでのクエリ構築方法をまだ読んでいない場合は、<a href="03-Type-safe-Query-Builder.html">型安全なクエリ構築</a>の章を先に読むことをオススメしましす。</p>
@@ -342,7 +342,7 @@
     <h2 id="hikaricpコネクションプールの使用" class="section"><a class="anchor-link left" href="#hikaricpコネクションプールの使用"><i class="icofont-laika link">&#xef71;</i></a>HikariCPコネクションプールの使用</h2>
     <p><code>ldbc-hikari</code>は、HikariCP接続プールを構築するためのHikariConfigおよびHikariDataSourceを構築するためのビルダーを提供します。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
-  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-hikari&quot;</span><span> % </span><span class="string-literal">&quot;0.3.0-beta10&quot;</span><span>,
+  </span><span class="string-literal">&quot;io.github.takapi327&quot;</span><span> %% </span><span class="string-literal">&quot;ldbc-hikari&quot;</span><span> % </span><span class="string-literal">&quot;0.3.0-beta11&quot;</span><span>,
 )</span></code></pre>
     <p><code>HikariConfigBuilder</code>は名前の通りHikariCPの<code>HikariConfig</code>を構築するためのビルダーです。</p>
     <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">hikariConfig</span><span>: </span><span class="identifier">com</span><span>.</span><span class="identifier">zaxxer</span><span>.</span><span class="identifier">hikari</span><span>.</span><span class="type-name">HikariConfig</span><span> = </span><span class="type-name">HikariConfigBuilder</span><span>.</span><span class="identifier">default</span><span>.</span><span class="identifier">build</span><span>()</span></code></pre>
