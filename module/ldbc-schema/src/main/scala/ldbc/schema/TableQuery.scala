@@ -38,9 +38,16 @@ case class TableQueryImpl[A <: Table[?]](
       .asInstanceOf[AbstractTableQuery[A, Table.Opt[AbstractTableQuery.Extract[A]]]]
 
   private def createStatement(ifNotExists: Boolean): Schema.DDL =
-    val columns   = column.list.map(_.statement).mkString(",\n  ")
-    val keys      = table.keys.map(_.queryString).mkString(",\n  ")
-    val statement = s"CREATE TABLE ${ if ifNotExists then "IF NOT EXISTS " else "" }`$name` (\n  $columns,\n  $keys\n)"
+    val columns   = if column.list.nonEmpty then
+      Some(column.list.map(_.statement).mkString(",\n  "))
+    else
+      None
+    val keys      = if table.keys.nonEmpty then
+      Some(table.keys.map(_.queryString).mkString(",\n  "))
+    else
+      None
+    val settings = List(columns, keys).flatten.mkString(",\n  ")
+    val statement = s"CREATE TABLE ${ if ifNotExists then "IF NOT EXISTS " else "" }`$name` (\n  $settings\n)"
     Schema.DDL(statement)
 
   override def schema: Schema = Schema(
