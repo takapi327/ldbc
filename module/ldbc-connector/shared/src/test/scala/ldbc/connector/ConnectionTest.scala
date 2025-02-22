@@ -1705,3 +1705,52 @@ class ConnectionTest extends FTestPlatform:
       )
     )
   }
+
+  test("Arbitrary processing can be performed before and after the connection.") {
+    def before(connection: ldbc.sql.Connection[IO]): IO[Int] =
+      for
+        statement <- connection.createStatement()
+        _         <- statement.execute("CREATE DATABASE IF NOT EXISTS connector_before_after_test")
+        _ <- connection.setSchema("connector_before_after_test")
+        _ <- statement.execute(
+          """
+            |CREATE TABLE IF NOT EXISTS test (
+            |  id INT PRIMARY KEY AUTO_INCREMENT,
+            |  name VARCHAR(255) NOT NULL
+            |)
+            |""".stripMargin
+        )
+      yield 1
+
+    def after(length: Int, connection: ldbc.sql.Connection[IO]): IO[Unit] =
+      for
+        statement <- connection.createStatement()
+        _         <- statement.execute("DROP DATABASE IF EXISTS connector_before_after_test")
+      yield ()
+
+    val connection = Connection.withBeforeAfter[IO, Int](
+      host = "127.0.0.1",
+      port = 13306,
+      user = "ldbc",
+      password = Some("password"),
+      before = before,
+      after = after
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.execute("INSERT INTO test (name) VALUES ('test')")
+          resultSet <- statement.executeQuery("SELECT * FROM test")
+        yield
+          val builder = Vector.newBuilder[String]
+          while resultSet.next() do
+            val id   = resultSet.getInt("id")
+            val name = resultSet.getString("name")
+            builder += s"ID: $id, Name: $name"
+          builder.result()
+      },
+      Vector("ID: 1, Name: test")
+    )
+  }
