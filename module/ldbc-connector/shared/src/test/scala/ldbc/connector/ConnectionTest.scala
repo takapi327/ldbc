@@ -1711,15 +1711,15 @@ class ConnectionTest extends FTestPlatform:
       for
         statement <- connection.createStatement()
         _         <- statement.execute("CREATE DATABASE IF NOT EXISTS connector_before_after_test")
-        _ <- connection.setSchema("connector_before_after_test")
+        _         <- connection.setSchema("connector_before_after_test")
         _ <- statement.execute(
-          """
+               """
             |CREATE TABLE IF NOT EXISTS test (
             |  id INT PRIMARY KEY AUTO_INCREMENT,
             |  name VARCHAR(255) NOT NULL
             |)
             |""".stripMargin
-        )
+             )
       yield 1
 
     def after(length: Int, connection: ldbc.sql.Connection[IO]): IO[Unit] =
@@ -1729,12 +1729,12 @@ class ConnectionTest extends FTestPlatform:
       yield ()
 
     val connection = Connection.withBeforeAfter[IO, Int](
-      host = "127.0.0.1",
-      port = 13306,
-      user = "ldbc",
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
       password = Some("password"),
-      before = before,
-      after = after
+      before   = before,
+      after    = after
     )
 
     assertIO(
