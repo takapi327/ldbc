@@ -51,8 +51,8 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  private def unitBefore[F[_]: Async]: Connection[F] => F[Unit] = _ => Async[F].unit
-  private def unitAfter[F[_]: Async]: (Unit, Connection[F]) => F[Unit] = (_, _) => Async[F].unit
+  private def unitBefore[F[_]: Async]: Connection[F] => F[Unit]         = _ => Async[F].unit
+  private def unitAfter[F[_]: Async]:  (Unit, Connection[F]) => F[Unit] = (_, _) => Async[F].unit
 
   def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,
