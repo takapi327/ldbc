@@ -51,14 +51,15 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  private def noBeforeAfterRelease[F[_]: Async]: Connection[F] => F[Unit] = _ => Async[F].unit
+  private def unitBefore[F[_]: Async]: Connection[F] => F[Unit] = _ => Async[F].unit
+  private def unitAfter[F[_]: Async]: (Unit, Connection[F]) => F[Unit] = (_, _) => Async[F].unit
 
   def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host: String,
     port: Int,
     user: String
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
-    this.default(host, port, user, before = noBeforeAfterRelease, after = noBeforeAfterRelease)
+    this.default[F, Unit](host, port, user, before = unitBefore, after = unitAfter)
 
   def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host:                    String,
@@ -72,7 +73,7 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
-  ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
+  ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
     host,
     port,
     user,
@@ -84,16 +85,16 @@ object Connection:
     readTimeout,
     allowPublicKeyRetrieval,
     databaseTerm,
-    noBeforeAfterRelease,
-    noBeforeAfterRelease
+    unitBefore,
+    unitAfter
   )
 
-  def withBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen](
+  def withBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     host:                    String,
     port:                    Int,
     user:                    String,
-    before:                  Connection[F] => F[Unit],
-    after:                   Connection[F] => F[Unit],
+    before:                  Connection[F] => F[A],
+    after:                   (A, Connection[F]) => F[Unit],
     password:                Option[String] = None,
     database:                Option[String] = None,
     debug:                   Boolean = false,
@@ -118,7 +119,7 @@ object Connection:
     after
   )
 
-  def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
+  def default[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
     host:                    String,
     port:                    Int,
     user:                    String,
@@ -130,8 +131,8 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
-    before:                  Connection[F] => F[Unit],
-    after:                   Connection[F] => F[Unit]
+    before:                  Connection[F] => F[A],
+    after:                   (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -156,7 +157,7 @@ object Connection:
                     )
     yield connection
 
-  def fromSockets[F[_]: Async: Tracer: Console: Hashing: UUIDGen](
+  def fromSockets[F[_]: Async: Tracer: Console: Hashing: UUIDGen, A](
     sockets:                 Resource[F, Socket[F]],
     host:                    String,
     port:                    Int,
@@ -168,8 +169,8 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    acquire:                 Connection[F] => F[Unit],
-    release:                 Connection[F] => F[Unit]
+    acquire:                 Connection[F] => F[A],
+    release:                 (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
@@ -198,10 +199,10 @@ object Connection:
             )
           )
         )(_.close())
-      _ <- Resource.make(acquire(connection))(_ => release(connection))
+      _ <- Resource.make(acquire(connection))(v => release(v, connection))
     yield connection
 
-  def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen](
+  def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen, A](
     socketGroup:             SocketGroup[F],
     host:                    String,
     port:                    Int,
@@ -214,8 +215,8 @@ object Connection:
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
     databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
-    acquire:                 Connection[F] => F[Unit],
-    release:                 Connection[F] => F[Unit]
+    acquire:                 Connection[F] => F[A],
+    release:                 (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
     def fail[A](msg: String): Resource[F, A] =
