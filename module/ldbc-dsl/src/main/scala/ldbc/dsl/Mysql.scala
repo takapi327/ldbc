@@ -27,9 +27,7 @@ import ldbc.dsl.codec.Decoder
  * @tparam F
  *   The effect type
  */
-case class Mysql[F[_]: MonadCancelThrow](statement: String, params: List[Parameter.Dynamic])
-  extends SQL,
-          ParamBinder:
+case class Mysql[F[_]: MonadCancelThrow](statement: String, params: List[Parameter.Dynamic]) extends SQL, ParamBinder:
 
   @targetName("combine")
   override def ++(sql: SQL): Mysql[F] =

@@ -14,8 +14,8 @@ import cats.effect.kernel.Resource.ExitCase
 
 import ldbc.sql.*
 
-import ldbc.dsl.logging.*
 import ldbc.dsl.codec.Encoder
+import ldbc.dsl.logging.*
 
 /**
  * A trait that represents the execution of a query.
@@ -115,18 +115,22 @@ object DBIO extends ParamBinder:
   def single[F[_]: MonadCancelThrow](statement: String): DBIO[F, Boolean] =
     val func: Connection[F] => F[Boolean] = connection =>
       for
-        stmt <- connection.createStatement()
-        result   <- stmt.execute(statement)
+        stmt   <- connection.createStatement()
+        result <- stmt.execute(statement)
       yield result
     Impl(statement, List.empty, func)
 
-  def single[F[_]: MonadCancelThrow](statement: String, head: Encoder.Supported, tails: Encoder.Supported*): DBIO[F, ResultSet] =
+  def single[F[_]: MonadCancelThrow](
+    statement: String,
+    head:      Encoder.Supported,
+    tails:     Encoder.Supported*
+  ): DBIO[F, ResultSet] =
     val params = (head :: tails.toList).map(Parameter.Dynamic.Success(_))
     val func: Connection[F] => F[ResultSet] = connection =>
       for
         prepareStatement <- connection.prepareStatement(statement)
-        _ <- paramBind(prepareStatement, params)
-        result <- prepareStatement.executeQuery()
+        _                <- paramBind(prepareStatement, params)
+        result           <- prepareStatement.executeQuery()
       yield result
     Impl(statement, params, func)
 
