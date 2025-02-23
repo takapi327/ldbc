@@ -15,6 +15,7 @@ import cats.effect.kernel.Resource.ExitCase
 import ldbc.sql.*
 
 import ldbc.dsl.logging.*
+import ldbc.dsl.codec.Encoder
 
 /**
  * A trait that represents the execution of a query.
@@ -58,7 +59,7 @@ trait DBIO[F[_], T]:
    */
   def transaction(connection: Connection[F])(using LogHandler[F]): F[T]
 
-object DBIO:
+object DBIO extends ParamBinder:
 
   private[ldbc] case class Impl[F[_]: MonadCancelThrow, T](
     statement: String,
@@ -110,6 +111,24 @@ object DBIO:
       override def commit(connection:      Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
       override def rollback(connection:    Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
       override def transaction(connection: Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
+
+  def single[F[_]: MonadCancelThrow](statement: String): DBIO[F, Boolean] =
+    val func: Connection[F] => F[Boolean] = connection =>
+      for
+        stmt <- connection.createStatement()
+        result   <- stmt.execute(statement)
+      yield result
+    Impl(statement, List.empty, func)
+
+  def single[F[_]: MonadCancelThrow](statement: String, head: Encoder.Supported, tails: Encoder.Supported*): DBIO[F, ResultSet] =
+    val params = (head :: tails.toList).map(Parameter.Dynamic.Success(_))
+    val func: Connection[F] => F[ResultSet] = connection =>
+      for
+        prepareStatement <- connection.prepareStatement(statement)
+        _ <- paramBind(prepareStatement, params)
+        result <- prepareStatement.executeQuery()
+      yield result
+    Impl(statement, params, func)
 
   def sequence[F[_]: Monad, A](dbios: DBIO[F, A]*): DBIO[F, List[A]] =
     new DBIO[F, List[A]]:
