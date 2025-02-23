@@ -22,8 +22,8 @@ import ldbc.dsl.syntax.*
 
 package object dsl:
 
-  private[ldbc] trait ParamBinder[F[_]: MonadThrow]:
-    protected def paramBind(
+  private[ldbc] trait ParamBinder:
+    protected def paramBind[F[_]: MonadThrow](
       prepareStatement: PreparedStatement[F],
       params:           List[Parameter.Dynamic]
     ): F[Unit] =
