@@ -23,7 +23,7 @@ import ldbc.statement.Schema
 
 package object syntax:
 
-  private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F], ParamBinder[F]:
+  private trait SyncSyntax[F[_]: Temporal] extends QuerySyntax[F], CommandSyntax[F], DslSyntax[F], ParamBinder:
 
     extension [A, B](query: Query[A, B])
 

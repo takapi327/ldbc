@@ -42,7 +42,7 @@ object Query:
     params:    List[Parameter.Dynamic],
     decoder:   Decoder[T]
   ) extends Query[F, T],
-            ParamBinder[F]:
+            ParamBinder:
 
     given Decoder[T] = decoder
 
