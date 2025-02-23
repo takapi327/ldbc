@@ -112,6 +112,22 @@ object DBIO extends ParamBinder:
       override def rollback(connection:    Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
       override def transaction(connection: Connection[F])(using LogHandler[F]):             F[A] = ev.raiseError(e)
 
+  /**
+   * A method that performs a single operation on the database server.
+   *
+   * The execution result returns only whether the process succeeded or failed.
+   *
+   * {{{
+   *   DBIO.single("SELECT 1")
+   * }}}
+   *
+   * @param statement
+   *   The SQL statement to be executed
+   * @tparam F
+   *   the effect type
+   * @return
+   *   The result of the operation
+   */
   def single[F[_]: MonadCancelThrow](statement: String): DBIO[F, Boolean] =
     val func: Connection[F] => F[Boolean] = connection =>
       for
@@ -120,6 +136,24 @@ object DBIO extends ParamBinder:
       yield result
     Impl(statement, List.empty, func)
 
+  /**
+   * A method that performs a single operation on the database server.
+   *
+   * {{{
+   *   DBIO.single("SELECT ?", 1)
+   * }}}
+   *
+   * @param statement
+   *   The SQL statement to be executed
+   * @param head
+   *   The first parameter
+   * @param tails
+   *   The rest of the parameters
+   * @tparam F
+   *   the effect type
+   * @return
+   *   The result of the operation
+   */
   def single[F[_]: MonadCancelThrow](
     statement: String,
     head:      Encoder.Supported,
@@ -134,6 +168,25 @@ object DBIO extends ParamBinder:
       yield result
     Impl(statement, params, func)
 
+  /**
+   * A method that performs multiple operations on the database server.
+   *
+   * {{{
+   *   DBIO.sequence(
+   *     DBIO.single("SELECT 1"),
+   *     DBIO.single("SELECT 2"),
+   *   )
+   * }}}
+   *
+   * @param dbios
+   *   The operations to be executed
+   * @tparam F
+   *   the effect type
+   * @tparam A
+   *   The result type of the operation
+   * @return
+   *   List of Execution Results
+   */
   def sequence[F[_]: Monad, A](dbios: DBIO[F, A]*): DBIO[F, List[A]] =
     new DBIO[F, List[A]]:
       override def run(connection: Connection[F])(using logHandler: LogHandler[F]): F[List[A]] =
