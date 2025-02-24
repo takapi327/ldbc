@@ -17,7 +17,6 @@ import ldbc.connector.*
 
   // #given
   given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
   // #given
 
   // #program
