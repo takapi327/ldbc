@@ -11,8 +11,9 @@ import cats.syntax.all.*
 import cats.effect.Sync
 
 import ldbc.sql.*
+import ldbc.sql.logging.LogHandler
 
-private[jdbc] case class ConnectionImpl[F[_]: Sync](connection: java.sql.Connection) extends Connection[F]:
+private[jdbc] case class ConnectionImpl[F[_]: Sync](connection: java.sql.Connection, logHandler: LogHandler[F]) extends Connection[F]:
 
   override def createStatement(): F[Statement[F]] =
     Sync[F].blocking(connection.createStatement()).map(StatementImpl.apply)
@@ -38,7 +39,7 @@ private[jdbc] case class ConnectionImpl[F[_]: Sync](connection: java.sql.Connect
   override def isClosed(): F[Boolean] = Sync[F].blocking(connection.isClosed)
 
   override def getMetaData(): F[DatabaseMetaData[F]] =
-    Sync[F].blocking(connection.getMetaData).map(DatabaseMetaDataImpl.apply)
+    Sync[F].blocking(connection.getMetaData).map(conn => DatabaseMetaDataImpl[F](conn, logHandler))
 
   override def setReadOnly(readOnly: Boolean): F[Unit] = Sync[F].blocking(connection.setReadOnly(readOnly))
 
