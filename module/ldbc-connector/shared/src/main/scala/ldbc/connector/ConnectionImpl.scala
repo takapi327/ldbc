@@ -18,6 +18,7 @@ import cats.effect.std.UUIDGen
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, ResultSet, Savepoint, Statement }
+import ldbc.sql.logging.LogHandler
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
@@ -34,7 +35,8 @@ private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen
   readOnly:         Ref[F, Boolean],
   isAutoCommit:     Ref[F, Boolean],
   connectionClosed: Ref[F, Boolean],
-  databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG
+  databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  logHandler:       LogHandler[F]
 )(using ev: Concurrent[F])
   extends LdbcConnection[F]:
 

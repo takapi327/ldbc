@@ -6,6 +6,8 @@
 
 package ldbc.sql
 
+import ldbc.sql.logging.LogHandler
+
 /**
  * A connection (session) with a specific database. SQL statements are executed and results are returned within the
  * context of a connection.
@@ -34,6 +36,11 @@ package ldbc.sql
  *   The effect type
  */
 trait Connection[F[_]]:
+
+  /**
+   * Settings for logging queries executed using connections.
+   */
+  def logHandler: LogHandler[F]
 
   /**
    * Creates a <code>Statement</code> object for sending
