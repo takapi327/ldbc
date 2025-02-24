@@ -29,6 +29,7 @@ import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 
+type Connection[F[_]] = ldbc.sql.Connection[F]
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -126,7 +127,7 @@ object Connection:
     password:                Option[String] = None,
     database:                Option[String] = None,
     debug:                   Boolean = false,
-    ssl:                     SSL = SSL.Trusted,
+    ssl:                     SSL = SSL.None,
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
