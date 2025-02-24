@@ -4,30 +4,33 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
+import cats.effect.*
+
 import io.circe.*
 import io.circe.syntax.*
 
-import cats.effect.*
-
-import org.http4s.*
-import org.http4s.ember.server.EmberServerBuilder
-import org.http4s.dsl.io.*
-import org.http4s.circe.CirceEntityEncoder.*
-
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.connector.*
-import ldbc.statement.formatter.Naming
-import ldbc.schema.*
-import ldbc.schema.syntax.io.*
 import ldbc.dsl.logging.LogHandler
 
+import ldbc.statement.formatter.Naming
+
+import ldbc.schema.*
+import ldbc.schema.syntax.io.*
+
+import ldbc.connector.*
+
+import org.http4s.*
+import org.http4s.circe.CirceEntityEncoder.*
+import org.http4s.dsl.io.*
+import org.http4s.ember.server.EmberServerBuilder
+
 case class City(
-  id: Int,
-  name:             String,
-  countryCode:      String,
-  district:         String,
-  population:       Int
+  id:          Int,
+  name:        String,
+  countryCode: String,
+  district:    String,
+  population:  Int
 )
 
 object City:
@@ -48,7 +51,7 @@ class CityTable extends Table[City]("city"):
 
 object Main extends ResourceApp.Forever:
 
-  given Tracer[IO] = Tracer.noop[IO]
+  given Tracer[IO]     = Tracer.noop[IO]
   given LogHandler[IO] = LogHandler.console[IO]
 
   private val cityTable = TableQuery[CityTable]
@@ -57,10 +60,10 @@ object Main extends ResourceApp.Forever:
     Connection[IO](
       host     = "127.0.0.1",
       port     = 13306,
-      user = "ldbc",
+      user     = "ldbc",
       password = Some("password"),
       database = Some("world"),
-      ssl = SSL.Trusted,
+      ssl      = SSL.Trusted
     )
 
   private def routes(conn: Connection[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
@@ -75,7 +78,7 @@ object Main extends ResourceApp.Forever:
     for
       conn <- connection
       _ <- EmberServerBuilder
-        .default[IO]
-        .withHttpApp(routes(conn).orNotFound)
-        .build
+             .default[IO]
+             .withHttpApp(routes(conn).orNotFound)
+             .build
     yield ()
