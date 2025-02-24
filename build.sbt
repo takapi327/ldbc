@@ -235,8 +235,24 @@ lazy val helloWorld = crossProject(JVMPlatform)
   .example("hello-world", "Hello World example project")
   .dependsOn(connector, dsl)
 
+lazy val http4sExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("http4s", "Http4s example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.http4s" %% "http4s-dsl" % "0.23.30",
+      "org.http4s" %% "http4s-ember-server" % "0.23.30",
+      "org.http4s" %% "http4s-circe" % "0.23.30",
+      "ch.qos.logback" % "logback-classic" % "1.5.16",
+      "io.circe" %% "circe-generic" % "0.14.10",
+    )
+  )
+  .dependsOn(connector, schema)
+
 lazy val examples = Seq(
-  helloWorld
+  helloWorld,
+  http4sExample
 )
 
 lazy val docs = (project in file("docs"))
