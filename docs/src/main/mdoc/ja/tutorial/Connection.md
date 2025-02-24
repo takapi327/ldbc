@@ -79,17 +79,17 @@ val connection: Resource[IO, Connection[IO]] =
 
 コネクションを設定するためのパラメータは以下の通りです。
 
-| プロパティ                     | 詳細                                                             | 必須 |
-|---------------------------|----------------------------------------------------------------|----|
-| `host`                    | `データベースホスト情報`                                                  | ✅  |
-| `port`                    | `データベースポート情報`                                                  | ✅  |
-| `user`                    | `データベースユーザー情報`                                                 | ✅  |
-| `password`                | `データベースパスワード情報 (default: None)`                                | ❌  |
-| `database`                | `データベース名情報 (default: None)`                                    | ❌  |
-| `debug`                   | `デバッグ情報を表示するかどうか  (default: false)`                            | ✅  |
-| `ssl`                     | `SSLの設定 (default: SSL.None)`                                   | ✅  |
-| `socketOptions`           | `TCP/ UDP ソケットのソケットオプションを指定する (default: defaultSocketOptions)` | ✅  |
-| `readTimeout`             | `タイムアウト時間を指定する (default: Duration.Inf)`                        | ✅  |
-| `allowPublicKeyRetrieval` | `公開鍵を取得するかどうか (default: false)`                                | ✅  |
-| `before`                  | `コネクション確立後に実行する処理`                                             | ❌  |
-| `after`                   | `コネクションを切断する前に実行する処理`                                          | ❌  |
+| プロパティ                     | 詳細                                                            | 必須 |
+|---------------------------|---------------------------------------------------------------|----|
+| `host`                    | `データベースホスト情報`                                                 | ✅  |
+| `port`                    | `データベースポート情報`                                                 | ✅  |
+| `user`                    | `データベースユーザー情報`                                                | ✅  |
+| `password`                | `データベースパスワード情報 (default: None)`                               | ❌  |
+| `database`                | `データベース名情報 (default: None)`                                   | ❌  |
+| `debug`                   | `デバッグ情報を表示するかどうか  (default: false)`                           | ✅  |
+| `ssl`                     | `SSLの設定 (default: SSL.None)`                                  | ✅  |
+| `socketOptions`           | `TCP/UDP ソケットのソケットオプションを指定する (default: defaultSocketOptions)` | ✅  |
+| `readTimeout`             | `タイムアウト時間を指定する (default: Duration.Inf)`                       | ✅  |
+| `allowPublicKeyRetrieval` | `公開鍵を取得するかどうか (default: false)`                               | ✅  |
+| `before`                  | `コネクション確立後に実行する処理`                                            | ❌  |
+| `after`                   | `コネクションを切断する前に実行する処理`                                         | ❌  |
