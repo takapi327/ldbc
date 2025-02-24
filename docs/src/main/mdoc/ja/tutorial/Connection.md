@@ -60,15 +60,15 @@ val connection: Resource[IO, Connection[IO]] =
 
 ここでは、`Tracer.noop`を使用してTracerを提供します。
 
-```scala
+```scala 3
 given Tracer[IO] = Tracer.noop[IO]
 ```
 
 最後に、`Connection`を作成します。
 
-```scala
+```scala 3
 val connection: Resource[IO, Connection[IO]] =
-  ldbc.connector.Connection[IO](
+  Connection[IO](
     host     = "127.0.0.1",
     port     = 3306,
     user     = "ldbc",

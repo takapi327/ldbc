@@ -113,7 +113,7 @@ val connection: Resource[IO, Connection[IO]] =
 
 ```scala
 val connection: Resource[IO, Connection[IO]] =
-  ldbc.connector.Connection[IO](
+  Connection[IO](
     host     = "127.0.0.1",
     port     = 3306,
     user     = "ldbc",

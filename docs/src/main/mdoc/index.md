@@ -112,7 +112,7 @@ val connection: Resource[IO, Connection[IO]] =
 
 ```scala
 val connection: Resource[IO, Connection[IO]] =
-  ldbc.connector.Connection[IO](
+  Connection[IO](
     host     = "127.0.0.1",
     port     = 3306,
     user     = "ldbc",
@@ -124,7 +124,7 @@ val connection: Resource[IO, Connection[IO]] =
 
 The connection process to the database can be carried out using the connections established by each of these methods.
 
-```scala
+```scala 3
 val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
   (for
     result1 <- sql"SELECT 1".toList[Int]
