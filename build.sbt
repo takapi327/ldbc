@@ -229,12 +229,6 @@ lazy val benchmark = (project in file("benchmark"))
   .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
-lazy val helloWorld = crossProject(JVMPlatform)
-  .crossType(CrossType.Pure)
-  .withoutSuffixFor(JVMPlatform)
-  .example("hello-world", "Hello World example project")
-  .dependsOn(connector, dsl)
-
 lazy val http4sExample = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .withoutSuffixFor(JVMPlatform)
@@ -251,7 +245,6 @@ lazy val http4sExample = crossProject(JVMPlatform)
   .dependsOn(connector, schema)
 
 lazy val examples = Seq(
-  helloWorld,
   http4sExample
 )
 
