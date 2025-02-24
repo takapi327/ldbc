@@ -18,8 +18,7 @@ import ldbc.connector.*
 @main def setup(): Unit =
 
   // #given
-  given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
+  given Tracer[IO] = Tracer.noop[IO]
   // #given
 
   // #setupDatabase

@@ -219,10 +219,6 @@ package object dsl:
     type DBIO[T] = ldbc.dsl.DBIO[F, T]
     val DBIO = ldbc.dsl.DBIO
 
-    export ldbc.dsl.logging.LogHandler
-
-    implicit def logger: LogHandler[F] = LogHandler.noop[F]
-
   /**
    * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
    * might look something like this.

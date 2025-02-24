@@ -18,8 +18,7 @@ import ldbc.connector.*
 
 @main def program5(): Unit =
 
-  given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.noop[IO]
+  given Tracer[IO] = Tracer.noop[IO]
 
   enum Status:
     case Active, InActive

@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.dsl.logging
+package ldbc.sql.logging
 
 /**
  * copied from doobie:
