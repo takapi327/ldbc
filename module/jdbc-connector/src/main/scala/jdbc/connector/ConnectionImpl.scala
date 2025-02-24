@@ -13,7 +13,8 @@ import cats.effect.Sync
 import ldbc.sql.*
 import ldbc.sql.logging.LogHandler
 
-private[jdbc] case class ConnectionImpl[F[_]: Sync](connection: java.sql.Connection, logHandler: LogHandler[F]) extends Connection[F]:
+private[jdbc] case class ConnectionImpl[F[_]: Sync](connection: java.sql.Connection, logHandler: LogHandler[F])
+  extends Connection[F]:
 
   override def createStatement(): F[Statement[F]] =
     Sync[F].blocking(connection.createStatement()).map(StatementImpl.apply)

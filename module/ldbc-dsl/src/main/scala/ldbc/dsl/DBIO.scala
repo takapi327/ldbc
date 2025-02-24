@@ -97,18 +97,18 @@ object DBIO extends ParamBinder:
   def pure[F[_]: Monad, A](value: A): DBIO[F, A] =
     new DBIO[F, A]:
       override def run(connection:         Connection[F]): F[A] = Monad[F].pure(value)
-      override def readOnly(connection:    Connection[F]):             F[A] = Monad[F].pure(value)
-      override def commit(connection:      Connection[F]):             F[A] = Monad[F].pure(value)
-      override def rollback(connection:    Connection[F]):             F[A] = Monad[F].pure(value)
-      override def transaction(connection: Connection[F]):             F[A] = Monad[F].pure(value)
+      override def readOnly(connection:    Connection[F]): F[A] = Monad[F].pure(value)
+      override def commit(connection:      Connection[F]): F[A] = Monad[F].pure(value)
+      override def rollback(connection:    Connection[F]): F[A] = Monad[F].pure(value)
+      override def transaction(connection: Connection[F]): F[A] = Monad[F].pure(value)
 
   def raiseError[F[_], A](e: Throwable)(using ev: MonadThrow[F]): DBIO[F, A] =
     new DBIO[F, A]:
       override def run(connection:         Connection[F]): F[A] = ev.raiseError(e)
-      override def readOnly(connection:    Connection[F]):             F[A] = ev.raiseError(e)
-      override def commit(connection:      Connection[F]):             F[A] = ev.raiseError(e)
-      override def rollback(connection:    Connection[F]):             F[A] = ev.raiseError(e)
-      override def transaction(connection: Connection[F]):             F[A] = ev.raiseError(e)
+      override def readOnly(connection:    Connection[F]): F[A] = ev.raiseError(e)
+      override def commit(connection:      Connection[F]): F[A] = ev.raiseError(e)
+      override def rollback(connection:    Connection[F]): F[A] = ev.raiseError(e)
+      override def transaction(connection: Connection[F]): F[A] = ev.raiseError(e)
 
   /**
    * A method that performs a single operation on the database server.
