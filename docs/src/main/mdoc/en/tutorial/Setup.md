@@ -129,13 +129,12 @@ import cats.syntax.all.*
 import cats.effect.*
 ```
 
-Next, tracers and log handlers are provided. These are used to log applications. Tracers are used to record application traces. The log handler is used to log the application.
+Next, tracers are provided. These are used to log applications. Tracers are used to log application traces.
 
-The following code provides tracers and log handlers but does nothing with the entities.
+The following code provides tracers but does nothing of substance.
 
 ```scala 3
-given Tracer[IO]     = Tracer.noop[IO]
-given LogHandler[IO] = LogHandler.noop[IO]
+given Tracer[IO] = Tracer.noop[IO]
 ```
 
 The most common type handled by the ldbc high-level API is of the form `Executor[F, A]`, which specifies a calculation to be performed in a context where `{java | ldbc}.sql.Connection` is available, ultimately producing a value of type A.

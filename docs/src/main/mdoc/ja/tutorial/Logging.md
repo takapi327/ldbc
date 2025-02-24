@@ -7,13 +7,9 @@
 
 ldbcではデータベース接続の実行ログやエラーログを任意のロギングライブラリを使用して任意の形式で書き出すことができます。
 
-標準ではCats EffectのConsoleを使用したロガーが提供されているため開発時はこちらを使用することができます。
+デフォルトではCats EffectのConsoleを使用したロガーが提供されているため開発時はこちらを使用することができます。
 
-```scala 3
-given LogHandler[IO] = LogHandler.console[IO]
-```
-
-任意のロギングライブラリを使用してログをカスタマイズする場合は`ldbc.dsl.logging.LogHandler`を使用します。
+任意のロギングライブラリを使用してログをカスタマイズする場合は`ldbc.sql.logging.LogHandler`を使用します。
 
 以下は標準実装のログ実装です。ldbcではデータベース接続で以下3種類のイベントが発生します。
 
@@ -49,4 +45,14 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
          | arguments = [${ args.mkString(",") }]
          |""".stripMargin
     ) >> Console[F].printStackTrace(failure)
+```
+
+作成されたLogHandlerはConnection生成時に引数として渡すことで使用することができます。
+
+```scala 3
+val connection: Resource[IO, Connection[IO]] =
+  Connection[IO](
+    ...,
+    logHandler = console[IO]
+  )
 ```

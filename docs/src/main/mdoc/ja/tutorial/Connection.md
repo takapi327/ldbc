@@ -91,5 +91,6 @@ val connection: Resource[IO, Connection[IO]] =
 | `socketOptions`           | `TCP/UDP ソケットのソケットオプションを指定する (default: defaultSocketOptions)` | ✅  |
 | `readTimeout`             | `タイムアウト時間を指定する (default: Duration.Inf)`                       | ✅  |
 | `allowPublicKeyRetrieval` | `公開鍵を取得するかどうか (default: false)`                               | ✅  |
+| `logHandler`              | `ログ出力設定`                                                      | ❌  |
 | `before`                  | `コネクション確立後に実行する処理`                                            | ❌  |
 | `after`                   | `コネクションを切断する前に実行する処理`                                         | ❌  |
