@@ -16,7 +16,7 @@ import ldbc.connector.*
 @main def cleanup(): Unit =
 
   // #given
-  given Tracer[IO]     = Tracer.noop[IO]
+  given Tracer[IO] = Tracer.noop[IO]
   // #given
 
   // #cleanupDatabase
