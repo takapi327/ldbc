@@ -11,8 +11,6 @@ import io.circe.syntax.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.dsl.logging.LogHandler
-
 import ldbc.statement.formatter.Naming
 
 import ldbc.schema.*
@@ -51,8 +49,7 @@ class CityTable extends Table[City]("city"):
 
 object Main extends ResourceApp.Forever:
 
-  given Tracer[IO]     = Tracer.noop[IO]
-  given LogHandler[IO] = LogHandler.console[IO]
+  given Tracer[IO] = Tracer.noop[IO]
 
   private val cityTable = TableQuery[CityTable]
 
