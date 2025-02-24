@@ -103,7 +103,7 @@ val connection: Resource[IO, Connection[IO]] =
 
 ```scala 3
 val connection: Resource[IO, Connection[IO]] =
-  ldbc.connector.Connection[IO](
+  Connection[IO](
     host     = "127.0.0.1",
     port     = 3306,
     user     = "ldbc",
@@ -299,11 +299,9 @@ class UserTable extends Table[User]("user"):
 -  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
 -  def name: Column[String] = column[String]("name", VARCHAR(255))
 -  def age: Column[Option[Int]] = column[Option[Int]]("age", INT.UNSIGNED.DEFAULT(None))
-+  def id: Column[Long] = bigint().autoIncrement()
++  def id: Column[Long] = bigint().autoIncrement.primaryKey
 +  def name: Column[String] = varchar(255)
 +  def age: Column[Option[Int]] = int().unsigned.defaultNull
-
-+  override def keys = List(PRIMARY_KEY(id))
 
   override def * : Column[User] = (id *: name *: age).to[User]
 ```
