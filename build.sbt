@@ -229,6 +229,16 @@ lazy val benchmark = (project in file("benchmark"))
   .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
+lazy val helloWorld = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("hello-world", "Hello World example project")
+  .dependsOn(connector, dsl)
+
+lazy val examples = Seq(
+  helloWorld
+)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -268,4 +278,5 @@ lazy val ldbc = tlCrossRootProject
     schemaSpy,
     hikari
   )
+  .aggregate(examples*)
   .enablePlugins(NoPublishPlugin)
