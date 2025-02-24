@@ -33,3 +33,6 @@ given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).
 ```scala 3
 given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
 ```
+
+## 参考資料
+- [カスタム データ型](/ja/tutorial/Custom-Data-Type.md)
