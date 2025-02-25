@@ -248,10 +248,12 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .withoutSuffixFor(JVMPlatform)
   .example("hikariCP", "HikariCP example project")
-  .settings(libraryDependencies ++= Seq(
-    hikariCP,
-    mysql
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      hikariCP,
+      mysql
+    )
+  )
   .dependsOn(jdbcConnector, dsl)
 
 lazy val examples = Seq(
