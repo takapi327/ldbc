@@ -8,16 +8,17 @@ import com.zaxxer.hikari.HikariDataSource
 
 import cats.effect.*
 
-import jdbc.connector.MysqlDataSource
 import ldbc.dsl.io.*
 
+import jdbc.connector.MysqlDataSource
+
 case class City(
-                 id:          Int,
-                 name:        String,
-                 countryCode: String,
-                 district:    String,
-                 population:  Int
-               )
+  id:          Int,
+  name:        String,
+  countryCode: String,
+  district:    String,
+  population:  Int
+)
 
 object Main extends ResourceApp.Simple:
 
@@ -28,10 +29,10 @@ object Main extends ResourceApp.Simple:
 
   override def run: Resource[IO, Unit] =
     (for
-      hikari <- Resource.fromAutoCloseable(IO(ds))
+      hikari     <- Resource.fromAutoCloseable(IO(ds))
       connection <- Resource.make(MysqlDataSource[IO](hikari).getConnection)(_.close())
     yield connection).evalMap { conn =>
-      sql"SELECT * FROM `city` WHERE ID = ${1}"
+      sql"SELECT * FROM `city` WHERE ID = ${ 1 }"
         .query[City]
         .to[Option]
         .readOnly(conn)
