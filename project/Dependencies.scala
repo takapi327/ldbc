@@ -23,7 +23,7 @@ object Dependencies {
 
   val scala3Compiler = "org.scala-lang" %% "scala3-compiler" % scala3
 
-  val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC7"
+  val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC8"
 
   val slick = "com.typesafe.slick" %% "slick" % "3.5.2"
 
