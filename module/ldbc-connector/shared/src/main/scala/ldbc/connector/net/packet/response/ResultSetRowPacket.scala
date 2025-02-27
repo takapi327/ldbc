@@ -47,40 +47,44 @@ object ResultSetRowPacket:
    */
   private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
-      val bytes = bits.toByteArray
-      val buffer = new Array[Option[String]](columnLength)
+      val bytes     = bits.toByteArray
+      val buffer    = new Array[Option[String]](columnLength)
       var remainder = bytes
-      var index = 0
+      var index     = 0
 
-      while (index < columnLength) {
-        if (fieldLength == NULL && index == 0) {
+      while index < columnLength do {
+        if fieldLength == NULL && index == 0 then {
           buffer(index) = None
-        } else if (index == 0) {
+        } else if index == 0 then {
           val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength)
           buffer(index) = Some(new String(fieldBits, UTF_8))
-          remainder = postFieldBits
+          remainder     = postFieldBits
         } else {
-          val length = remainder(0).toInt & 0xFF
+          val length = remainder(0).toInt & 0xff
           remainder = remainder.drop(1)
 
-          if (length == NULL) {
+          if length == NULL then {
             buffer(index) = None
-          } else if (length <= 251) {
+          } else if length <= 251 then {
             val (fieldBits, postFieldBits) = remainder.splitAt(length)
             buffer(index) = Some(new String(fieldBits, UTF_8))
-            remainder = postFieldBits
+            remainder     = postFieldBits
           } else {
             val actualLength = length match {
-              case 252 => ((remainder(0).toInt & 0xFF) | ((remainder(1).toInt & 0xFF) << 8))
-              case 253 => ((remainder(0).toInt & 0xFF) | ((remainder(1).toInt & 0xFF) << 8) | ((remainder(2).toInt & 0xFF) << 16))
-              case _ => ((remainder(0).toInt & 0xFF) | ((remainder(1).toInt & 0xFF) << 8) |
-                ((remainder(2).toInt & 0xFF) << 16) | ((remainder(3).toInt & 0xFF) << 24))
+              case 252 => ((remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8))
+              case 253 => (
+                (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8) | ((remainder(2).toInt & 0xff) << 16)
+              )
+              case _ => (
+                (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8) |
+                  ((remainder(2).toInt & 0xff) << 16) | ((remainder(3).toInt & 0xff) << 24)
+              )
             }
-            val headerSize = if (length == 252) 2 else if (length == 253) 3 else 8
+            val headerSize = if length == 252 then 2 else if length == 253 then 3 else 8
             remainder = remainder.drop(headerSize)
             val (fieldBits, postFieldBits) = remainder.splitAt(actualLength)
             buffer(index) = Some(new String(fieldBits, UTF_8))
-            remainder = postFieldBits
+            remainder     = postFieldBits
           }
         }
         index += 1
