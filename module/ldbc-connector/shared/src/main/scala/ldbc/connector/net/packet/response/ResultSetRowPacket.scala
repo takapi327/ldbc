@@ -10,7 +10,7 @@ package response
 import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
-import scodec.bits.{ BitVector, ByteOrdering }
+import scodec.bits.BitVector
 
 import ldbc.connector.data.CapabilitiesFlags
 
@@ -53,40 +53,35 @@ object ResultSetRowPacket:
       var index     = 0
 
       while index < columnLength do {
-        if fieldLength == NULL && index == 0 then {
-          buffer(index) = None
-        } else if index == 0 then {
+        if fieldLength == NULL && index == 0 then buffer(index) = None
+        else if index == 0 then
           val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength)
           buffer(index) = Some(new String(fieldBits, UTF_8))
           remainder     = postFieldBits
-        } else {
+        else
           val length = remainder(0).toInt & 0xff
           remainder = remainder.drop(1)
 
-          if length == NULL then {
-            buffer(index) = None
-          } else if length <= 251 then {
+          if length == NULL then buffer(index) = None
+          else if length <= 251 then
             val (fieldBits, postFieldBits) = remainder.splitAt(length)
             buffer(index) = Some(new String(fieldBits, UTF_8))
             remainder     = postFieldBits
-          } else {
-            val actualLength = length match {
-              case 252 => ((remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8))
-              case 253 => (
+          else
+            val actualLength = length match
+              case 252 => (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8)
+              case 253 =>
                 (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8) | ((remainder(2).toInt & 0xff) << 16)
-              )
-              case _ => (
+              case _ =>
                 (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8) |
                   ((remainder(2).toInt & 0xff) << 16) | ((remainder(3).toInt & 0xff) << 24)
-              )
-            }
+
             val headerSize = if length == 252 then 2 else if length == 253 then 3 else 8
             remainder = remainder.drop(headerSize)
             val (fieldBits, postFieldBits) = remainder.splitAt(actualLength)
             buffer(index) = Some(new String(fieldBits, UTF_8))
             remainder     = postFieldBits
-          }
-        }
+
         index += 1
       }
 
