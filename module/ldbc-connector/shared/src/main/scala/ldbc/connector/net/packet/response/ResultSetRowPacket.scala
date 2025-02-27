@@ -55,18 +55,18 @@ object ResultSetRowPacket:
       while index < columnLength do {
         if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
-          val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength)
-          buffer(index) = Some(new String(fieldBits, UTF_8))
-          remainder     = postFieldBits
+          val (fieldBytes, postFieldBytes) = remainder.splitAt(fieldLength)
+          buffer(index) = Some(new String(fieldBytes, UTF_8))
+          remainder     = postFieldBytes
         else
           val length = remainder(0).toInt & 0xff
           remainder = remainder.drop(1)
 
           if length == NULL then buffer(index) = None
           else if length <= 251 then
-            val (fieldBits, postFieldBits) = remainder.splitAt(length)
-            buffer(index) = Some(new String(fieldBits, UTF_8))
-            remainder     = postFieldBits
+            val (fieldBytes, postFieldBytes) = remainder.splitAt(length)
+            buffer(index) = Some(new String(fieldBytes, UTF_8))
+            remainder     = postFieldBytes
           else
             val actualLength = length match
               case 252 => (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8)
@@ -78,9 +78,9 @@ object ResultSetRowPacket:
 
             val headerSize = if length == 252 then 2 else if length == 253 then 3 else 8
             remainder = remainder.drop(headerSize)
-            val (fieldBits, postFieldBits) = remainder.splitAt(actualLength)
-            buffer(index) = Some(new String(fieldBits, UTF_8))
-            remainder     = postFieldBits
+            val (fieldBytes, postFieldBytes) = remainder.splitAt(actualLength)
+            buffer(index) = Some(new String(fieldBytes, UTF_8))
+            remainder     = postFieldBytes
 
         index += 1
       }
