@@ -47,10 +47,10 @@ object ResultSetRowPacket:
    */
   private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
-      val bytes     = bits.toByteArray
-      val buffer    = new Array[Option[String]](columnLength)
-      var offset    = 0
-      var index     = 0
+      val bytes  = bits.toByteArray
+      val buffer = new Array[Option[String]](columnLength)
+      var offset = 0
+      var index  = 0
 
       while index < columnLength do {
         if fieldLength == NULL && index == 0 then buffer(index) = None
