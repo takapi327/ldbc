@@ -49,38 +49,39 @@ object ResultSetRowPacket:
     (bits: BitVector) =>
       val bytes     = bits.toByteArray
       val buffer    = new Array[Option[String]](columnLength)
-      var remainder = bytes
+      var offset    = 0
       var index     = 0
 
       while index < columnLength do {
         if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
-          val (fieldBytes, postFieldBytes) = remainder.splitAt(fieldLength)
-          buffer(index) = Some(new String(fieldBytes, UTF_8))
-          remainder     = postFieldBytes
+          buffer(index) = Some(new String(bytes, offset, fieldLength, UTF_8))
+          offset += fieldLength
         else
-          val length = remainder(0).toInt & 0xff
-          remainder = remainder.drop(1)
+          val length = bytes(offset) & 0xff
+          offset += 1
 
           if length == NULL then buffer(index) = None
           else if length <= 251 then
-            val (fieldBytes, postFieldBytes) = remainder.splitAt(length)
-            buffer(index) = Some(new String(fieldBytes, UTF_8))
-            remainder     = postFieldBytes
+            buffer(index) = Some(new String(bytes, offset, length, UTF_8))
+            offset += length
           else
             val actualLength = length match
-              case 252 => (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8)
+              case 252 => (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
               case 253 =>
-                (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8) | ((remainder(2).toInt & 0xff) << 16)
+                (bytes(offset) & 0xff) |
+                  ((bytes(offset + 1) & 0xff) << 8) |
+                  ((bytes(offset + 2) & 0xff) << 16)
               case _ =>
-                (remainder(0).toInt & 0xff) | ((remainder(1).toInt & 0xff) << 8) |
-                  ((remainder(2).toInt & 0xff) << 16) | ((remainder(3).toInt & 0xff) << 24)
+                (bytes(offset) & 0xff) |
+                  ((bytes(offset + 1) & 0xff) << 8) |
+                  ((bytes(offset + 2) & 0xff) << 16) |
+                  ((bytes(offset + 3) & 0xff) << 24)
 
-            val headerSize = if length == 252 then 2 else if length == 253 then 3 else 8
-            remainder = remainder.drop(headerSize)
-            val (fieldBytes, postFieldBytes) = remainder.splitAt(actualLength)
-            buffer(index) = Some(new String(fieldBytes, UTF_8))
-            remainder     = postFieldBytes
+            val headerSize = if length == 252 then 2 else if length == 253 then 3 else 4
+            offset += headerSize
+            buffer(index) = Some(new String(bytes, offset, actualLength, UTF_8))
+            offset += actualLength
 
         index += 1
       }
