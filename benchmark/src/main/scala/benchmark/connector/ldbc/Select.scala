@@ -64,7 +64,7 @@ class Select:
       ssl      = SSL.Trusted
     )
 
-  @Param(Array("10", "100", "1000", "2000", "4000"))
+  @Param(Array("100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
