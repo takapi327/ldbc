@@ -223,6 +223,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(scalacOptions ++= additionalSettings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
+  .settings(Compile / javacOptions ++= Seq("--release", java21))
   .settings(
     libraryDependencies ++= Seq(
       scala3Compiler,
