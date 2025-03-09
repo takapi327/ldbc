@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        scala: [3.3.5, 3.6.3]
+        scala: [3.3.5, 3.6.4]
         java: [corretto@11, corretto@17, corretto@21]
         project: [ldbcJS, ldbcNative, ldbcJVM]
         exclude:
@@ -36,9 +36,9 @@ jobs:
             java: corretto@17
           - project: ldbcJS
             java: corretto@21
-          - scala: 3.6.3
+          - scala: 3.6.4
             java: corretto@17
-          - scala: 3.6.3
+          - scala: 3.6.4
             java: corretto@21
           - project: ldbcNative
             java: corretto@17
@@ -232,32 +232,32 @@ jobs:
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.6.3, ldbcJS)
+      - name: Download target directories (3.6.4, ldbcJS)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.6.3-ldbcJS
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.6.4-ldbcJS
 
-      - name: Inflate target directories (3.6.3, ldbcJS)
+      - name: Inflate target directories (3.6.4, ldbcJS)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.6.3, ldbcNative)
+      - name: Download target directories (3.6.4, ldbcNative)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.6.3-ldbcNative
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.6.4-ldbcNative
 
-      - name: Inflate target directories (3.6.3, ldbcNative)
+      - name: Inflate target directories (3.6.4, ldbcNative)
         run: |
           tar xf targets.tar
           rm targets.tar
 
-      - name: Download target directories (3.6.3, ldbcJVM)
+      - name: Download target directories (3.6.4, ldbcJVM)
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.os }}-${{ matrix.java }}-3.6.3-ldbcJVM
+          name: target-${{ matrix.os }}-${{ matrix.java }}-3.6.4-ldbcJVM
 
-      - name: Inflate target directories (3.6.3, ldbcJVM)
+      - name: Inflate target directories (3.6.4, ldbcJVM)
         run: |
           tar xf targets.tar
           rm targets.tar
