@@ -58,7 +58,7 @@ object InitialPacket:
     offset += 1
 
     val serverVersionEnd = bytes.indexWhere(_ == 0, offset)
-    val serverVersion = new String(bytes.slice(offset, serverVersionEnd), UTF_8)
+    val serverVersion    = new String(bytes.slice(offset, serverVersionEnd), UTF_8)
     offset = serverVersionEnd + 1
 
     val threadId = (bytes(offset + 3) & 0xff) << 24 |
@@ -86,35 +86,33 @@ object InitialPacket:
 
     val capabilityFlags: Int = (capabilityFlagsUpper << 16) | capabilityFlagsLower
 
-    val (authPluginDataPart2Length, newOffset) = if (capabilityFlags & (1 << 19)) != 0 then
-      (bytes(offset) & 0xff, offset + 1)
-    else
-      (0, offset)
+    val (authPluginDataPart2Length, newOffset) =
+      if (capabilityFlags & (1 << 19)) != 0 then (bytes(offset) & 0xff, offset + 1)
+      else (0, offset)
     offset = newOffset
 
     offset += 10 // Skip reserved bytes (10 bytes)
 
     val authPluginDataPart2Length2 = math.max(13, authPluginDataPart2Length - 8)
-    val authPluginDataPart2 = bytes.slice(offset, offset + authPluginDataPart2Length2)
+    val authPluginDataPart2        = bytes.slice(offset, offset + authPluginDataPart2Length2)
     offset += authPluginDataPart2Length2
 
     val authPluginName = if (capabilityFlags & (1 << 19)) != 0 then
       val end = bytes.indexWhere(_ == 0, offset)
       new String(bytes.slice(offset, end), UTF_8)
-    else
-      ""
+    else ""
 
     val version = Version(serverVersion) match
       case Some(v) => v
-      case None => Version(0, 0, 0)
+      case None    => Version(0, 0, 0)
 
     InitialPacket(
       protocolVersion = protocolVersion & 0xff,
-      serverVersion = version,
-      threadId = threadId,
+      serverVersion   = version,
+      threadId        = threadId,
       capabilityFlags = CapabilitiesFlags(capabilityFlags),
-      characterSet = characterSet & 0xff,
-      statusFlags = ServerStatusFlags(statusFlags),
-      scrambleBuff = authPluginDataPart1 ++ authPluginDataPart2.dropRight(1),
-      authPlugin = authPluginName
+      characterSet    = characterSet & 0xff,
+      statusFlags     = ServerStatusFlags(statusFlags),
+      scrambleBuff    = authPluginDataPart1 ++ authPluginDataPart2.dropRight(1),
+      authPlugin      = authPluginName
     )

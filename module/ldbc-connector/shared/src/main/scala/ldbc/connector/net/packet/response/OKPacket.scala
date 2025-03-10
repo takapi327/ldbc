@@ -81,49 +81,49 @@ object OKPacket:
       val affectedRowsLength = bytes(offset) & 0xff
       offset += 1
 
-      val affectedRows = if affectedRowsLength <= 251 then
-        affectedRowsLength
-      else if affectedRowsLength == 252 then
-        val rows = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
-        offset += 2
-        rows
-      else if affectedRowsLength == 253 then
-        val rows = (bytes(offset) & 0xff) |
-          ((bytes(offset + 1) & 0xff) << 8) |
-          ((bytes(offset + 2) & 0xff) << 16)
-        offset += 3
-        rows
-      else
-        val rows = (bytes(offset) & 0xff) |
-          ((bytes(offset + 1) & 0xff) << 8) |
-          ((bytes(offset + 2) & 0xff) << 16) |
-          ((bytes(offset + 3) & 0xff) << 24)
-        offset += 4
-        rows
-      
+      val affectedRows =
+        if affectedRowsLength <= 251 then affectedRowsLength
+        else if affectedRowsLength == 252 then
+          val rows = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
+          offset += 2
+          rows
+        else if affectedRowsLength == 253 then
+          val rows = (bytes(offset) & 0xff) |
+            ((bytes(offset + 1) & 0xff) << 8) |
+            ((bytes(offset + 2) & 0xff) << 16)
+          offset += 3
+          rows
+        else
+          val rows = (bytes(offset) & 0xff) |
+            ((bytes(offset + 1) & 0xff) << 8) |
+            ((bytes(offset + 2) & 0xff) << 16) |
+            ((bytes(offset + 3) & 0xff) << 24)
+          offset += 4
+          rows
+
       val lastInsertIdLength = bytes(offset) & 0xff
       offset += 1
 
-      val lastInsertId = if lastInsertIdLength <= 251 then
-        lastInsertIdLength
-      else if lastInsertIdLength == 252 then
-        val id = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
-        offset += 2
-        id
-      else if lastInsertIdLength == 253 then
-        val id = (bytes(offset) & 0xff) |
-          ((bytes(offset + 1) & 0xff) << 8) |
-          ((bytes(offset + 2) & 0xff) << 16)
-        offset += 3
-        id
-      else
-        val id = (bytes(offset) & 0xff) |
-          ((bytes(offset + 1) & 0xff) << 8) |
-          ((bytes(offset + 2) & 0xff) << 16) |
-          ((bytes(offset + 3) & 0xff) << 24)
-        offset += 4
-        id
-      
+      val lastInsertId =
+        if lastInsertIdLength <= 251 then lastInsertIdLength
+        else if lastInsertIdLength == 252 then
+          val id = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
+          offset += 2
+          id
+        else if lastInsertIdLength == 253 then
+          val id = (bytes(offset) & 0xff) |
+            ((bytes(offset + 1) & 0xff) << 8) |
+            ((bytes(offset + 2) & 0xff) << 16)
+          offset += 3
+          id
+        else
+          val id = (bytes(offset) & 0xff) |
+            ((bytes(offset + 1) & 0xff) << 8) |
+            ((bytes(offset + 2) & 0xff) << 16) |
+            ((bytes(offset + 3) & 0xff) << 24)
+          offset += 4
+          id
+
       val statusFlags: Set[ServerStatusFlags] = if hasClientProtocol41Flag || hasClientTransactionsFlag then
         val int = bytes(offset) & 0xff | ((bytes(offset + 1) & 0xff) << 8)
         offset += 2
@@ -136,25 +136,26 @@ object OKPacket:
         int.some
       else None
 
-      val info = if (hasClientSessionTrackFlag && offset < bytes.length) {
+      val info = if hasClientSessionTrackFlag && offset < bytes.length then {
         val size = bytes(offset) & 0xff
         offset += 1
-        if (bytes.length >= offset + size) {
+        if bytes.length >= offset + size then {
           val str = new String(bytes, offset, size, "UTF-8")
           offset += size
           str.some
         } else None
       } else None
 
-      val sessionStateInfo = if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) && offset < bytes.length then
-        val size = bytes(offset) & 0xff
-        offset += 1
-        if bytes.length >= offset + size then
-          val str = new String(bytes, offset, size, "UTF-8")
-          offset += size
-          str.some
+      val sessionStateInfo =
+        if statusFlags.contains(ServerStatusFlags.SERVER_SESSION_STATE_CHANGED) && offset < bytes.length then
+          val size = bytes(offset) & 0xff
+          offset += 1
+          if bytes.length >= offset + size then
+            val str = new String(bytes, offset, size, "UTF-8")
+            offset += size
+            str.some
+          else None
         else None
-      else None
 
       val msg = if !hasClientSessionTrackFlag && offset < bytes.length then
         val size = bytes(offset) & 0xff
@@ -166,4 +167,9 @@ object OKPacket:
         else None
       else None
 
-      Attempt.Successful(DecodeResult(OKPacket(STATUS, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg), bits))
+      Attempt.Successful(
+        DecodeResult(
+          OKPacket(STATUS, affectedRows, lastInsertId, statusFlags, warnings, info, sessionStateInfo, msg),
+          bits
+        )
+      )

@@ -94,55 +94,55 @@ object ColumnDefinition41Packet:
     (bits: BitVector) =>
       val bytes  = bits.toByteArray
       var offset = 0
-      
+
       val catalogSize = bytes(offset) & 0xff
       offset += 1
       val catalog = new String(bytes, offset, catalogSize, UTF_8)
       offset += catalogSize
-      
+
       val schemaSize = bytes(offset) & 0xff
       offset += 1
       val schema = new String(bytes, offset, schemaSize, UTF_8)
       offset += schemaSize
-      
+
       val tableSize = bytes(offset) & 0xff
       offset += 1
       val table = new String(bytes, offset, tableSize, UTF_8)
       offset += tableSize
-      
+
       val orgTableSize = bytes(offset) & 0xff
       offset += 1
       val orgTable = new String(bytes, offset, orgTableSize, UTF_8)
       offset += orgTableSize
-      
+
       val nameSize = bytes(offset) & 0xff
       offset += 1
       val name = new String(bytes, offset, nameSize, UTF_8)
       offset += nameSize
-      
+
       val orgNameSize = bytes(offset) & 0xff
       offset += 1
       val orgName = new String(bytes, offset, orgNameSize, UTF_8)
       offset += orgNameSize
-      
+
       val length = bytes(offset) & 0xff
       offset += 1
-      
+
       val characterSet = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
       offset += 2
-      
+
       val columnLength = (bytes(offset) & 0xff) |
         ((bytes(offset + 1) & 0xff) << 8) |
         ((bytes(offset + 2) & 0xff) << 16) |
         ((bytes(offset + 3) & 0xff) << 24)
       offset += 4
-      
+
       val columnType = bytes(offset) & 0xff
       offset += 1
-      
+
       val flags = ColumnDefinitionFlags(bytes(offset) & 0xff)
       offset += 2
-      
+
       val decimals = bytes(offset) & 0xff
 
       val packet = ColumnDefinition41Packet(
@@ -157,6 +157,6 @@ object ColumnDefinition41Packet:
         columnLength = columnLength,
         columnType   = ColumnDataType(columnType),
         flags        = flags,
-        decimals     = decimals,
+        decimals     = decimals
       )
       Attempt.successful(DecodeResult(packet, bits))
