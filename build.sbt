@@ -249,8 +249,21 @@ lazy val http4sExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, schema)
 
+lazy val hikariCPExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("hikariCP", "HikariCP example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      hikariCP,
+      mysql
+    )
+  )
+  .dependsOn(jdbcConnector, dsl)
+
 lazy val examples = Seq(
-  http4sExample
+  http4sExample,
+  hikariCPExample
 )
 
 lazy val docs = (project in file("docs"))

@@ -117,7 +117,7 @@ Null可能な列は`Option[T]`で表現され、Tはサポートされるプリ�
 
 ```scala 3
 class UserTable extends Table[User]:
-  def id: Column[Long] = bigint().autoIncrement().primaryKey
+  def id: Column[Long] = bigint().autoIncrement.primaryKey
   def name: Column[String] = varchar(255)
   def age: Column[Option[Int]] = int().unsigned.defaultNull
 
@@ -131,7 +131,7 @@ class UserTable extends Table[User]:
 class UserTable extends Table[User]("user"):
   given Naming = Naming.PASCAL
 
-  def id: Column[Long] = bigint().autoIncrement().primaryKey
+  def id: Column[Long] = bigint().autoIncrement.primaryKey
   def name: Column[String] = varchar(255)
   def age: Column[Option[Int]] = int().unsigned.defaultNull
 
@@ -142,7 +142,7 @@ class UserTable extends Table[User]("user"):
 
 ```scala 3
 class UserTable extends Table[User]("user"):
-  def id: Column[Long] = bigint("ID").autoIncrement().primaryKey
+  def id: Column[Long] = bigint("ID").autoIncrement.primaryKey
   def name: Column[String] = varchar("NAME", 255)
   def age: Column[Option[Int]] = int("AGE").unsigned.defaultNull
 
