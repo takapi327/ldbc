@@ -41,16 +41,4 @@ object Initial:
                        case Some(chunk) => F.pure(chunk)
                        case None        => F.raiseError(new SQLException("Failed to read payload"))
                      }
-          initialPacket <- InitialPacket.decoder
-                             .decode(payload.toBitVector)
-                             .fold(
-                               err =>
-                                 F.raiseError[InitialPacket](
-                                   new SQLException(
-                                     message = err.message,
-                                     detail  = Some(s"Failed to decode initial packet: ${ payload.toBitVector.toHex }")
-                                   )
-                                 ),
-                               result => F.pure(result.value)
-                             )
-        yield initialPacket
+        yield InitialPacket.decode(payload.toArray)

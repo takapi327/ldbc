@@ -9,9 +9,6 @@ package response
 
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scodec.*
-import scodec.bits.*
-
 import cats.syntax.all.*
 
 import org.typelevel.otel4s.Attribute
@@ -54,45 +51,68 @@ case class InitialPacket(
 
 object InitialPacket:
 
-  val decoder: Decoder[InitialPacket] =
-    (bits: BitVector) =>
-      val (protocolVersion, reminder0) = bits.splitAt(8)
-      val bytes                        = reminder0.bytes.takeWhile(_ != 0)
-      val serverVersion                = new String(bytes.toArray, UTF_8)
-      val remainder1            = reminder0.drop((bytes.size + 1) * 8) // +1 is a null character, so *8 is a byte to bit
-      val (threadId, reminder2) = remainder1.splitAt(32)
-      val (authPluginDataPart1, reminder3)  = reminder2.splitAt(64)
-      val reminder4                         = reminder3.drop(8) // Skip filter [0x00]
-      val (capabilityFlagsLower, reminder5) = reminder4.splitAt(16)
-      val (characterSet, reminder6)         = reminder5.splitAt(8)
-      val (statusFlag, reminder7)           = reminder6.splitAt(16)
-      val (capabilityFlagsUpper, reminder8) = reminder7.splitAt(16)
-      val capabilityFlags = (capabilityFlagsUpper.toInt(false, ByteOrdering.LittleEndian) << 16) | capabilityFlagsLower
-        .toInt(false, ByteOrdering.LittleEndian)
-      val (authPluginDataPart2Length, reminder9) = if (capabilityFlags & (1 << 19)) != 0 then
-        val (v1, v2) = reminder8.splitAt(8)
-        (v1.toInt(false), v2)
-      else (0, reminder8)
-      val reminder10                        = reminder9.drop(10 * 8) // Skip reserved bytes (10 bytes)
-      val (authPluginDataPart2, reminder11) = reminder10.splitAt(math.max(13, authPluginDataPart2Length - 8) * 8)
-      val authPluginName = if (capabilityFlags & (1 << 19)) != 0 then
-        val bytes = reminder11.bytes.takeWhile(_ != 0)
-        new String(bytes.toArray, UTF_8)
-      else ""
+  def decode(bytes: Array[Byte]): InitialPacket =
+    var offset = 0
 
-      val version = Version(serverVersion) match
-        case Some(v) => v
-        case None    => Version(0, 0, 0)
+    val protocolVersion = bytes(offset)
+    offset += 1
 
-      val packet = InitialPacket(
-        protocolVersion = protocolVersion.toInt(false),
-        serverVersion   = version,
-        threadId        = threadId.toInt(true, ByteOrdering.LittleEndian),
-        capabilityFlags = CapabilitiesFlags(capabilityFlags),
-        characterSet    = characterSet.toInt(false, ByteOrdering.LittleEndian),
-        statusFlags     = ServerStatusFlags(statusFlag.toInt(false, ByteOrdering.LittleEndian)),
-        scrambleBuff    = authPluginDataPart1.toByteArray ++ authPluginDataPart2.toByteArray.dropRight(1),
-        authPlugin      = authPluginName
-      )
+    val serverVersionEnd = bytes.indexWhere(_ == 0, offset)
+    val serverVersion    = new String(bytes.slice(offset, serverVersionEnd), UTF_8)
+    offset = serverVersionEnd + 1
 
-      Attempt.successful(DecodeResult(packet, bits))
+    val threadId = (bytes(offset + 3) & 0xff) << 24 |
+      (bytes(offset + 2) & 0xff) << 16 |
+      (bytes(offset + 1) & 0xff) << 8 |
+      (bytes(offset) & 0xff)
+    offset += 4
+
+    val authPluginDataPart1 = bytes.slice(offset, offset + 8)
+    offset += 8
+
+    offset += 1 // Skip filter [0x00]
+
+    val capabilityFlagsLower = (bytes(offset + 1) & 0xff) << 8 | (bytes(offset) & 0xff)
+    offset += 2
+
+    val characterSet = bytes(offset)
+    offset += 1
+
+    val statusFlags = (bytes(offset + 1) & 0xff) << 8 | (bytes(offset) & 0xff)
+    offset += 2
+
+    val capabilityFlagsUpper = (bytes(offset + 1) & 0xff) << 8 | (bytes(offset) & 0xff)
+    offset += 2
+
+    val capabilityFlags: Int = (capabilityFlagsUpper << 16) | capabilityFlagsLower
+
+    val (authPluginDataPart2Length, newOffset) =
+      if (capabilityFlags & (1 << 19)) != 0 then (bytes(offset) & 0xff, offset + 1)
+      else (0, offset)
+    offset = newOffset
+
+    offset += 10 // Skip reserved bytes (10 bytes)
+
+    val authPluginDataPart2Length2 = math.max(13, authPluginDataPart2Length - 8)
+    val authPluginDataPart2        = bytes.slice(offset, offset + authPluginDataPart2Length2)
+    offset += authPluginDataPart2Length2
+
+    val authPluginName = if (capabilityFlags & (1 << 19)) != 0 then
+      val end = bytes.indexWhere(_ == 0, offset)
+      new String(bytes.slice(offset, end), UTF_8)
+    else ""
+
+    val version = Version(serverVersion) match
+      case Some(v) => v
+      case None    => Version(0, 0, 0)
+
+    InitialPacket(
+      protocolVersion = protocolVersion & 0xff,
+      serverVersion   = version,
+      threadId        = threadId,
+      capabilityFlags = CapabilitiesFlags(capabilityFlags),
+      characterSet    = characterSet & 0xff,
+      statusFlags     = ServerStatusFlags(statusFlags),
+      scrambleBuff    = authPluginDataPart1 ++ authPluginDataPart2.dropRight(1),
+      authPlugin      = authPluginName
+    )
