@@ -10,7 +10,7 @@ package response
 import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
-import scodec.bits.{ BitVector, ByteOrdering }
+import scodec.bits.BitVector
 
 import ldbc.connector.data.CapabilitiesFlags
 
@@ -36,17 +36,9 @@ object ResultSetRowPacket:
 
   private val NULL = 0xfb
 
-  def apply(_values: Array[Option[String]]): ResultSetRowPacket =
-    new ResultSetRowPacket:
-      override val values: Array[Option[String]] = _values
+  private[ldbc] case class Impl(values: Array[Option[String]]) extends ResultSetRowPacket
 
-  private def decodeToString(remainder: BitVector, size: Int): (BitVector, Option[String]) =
-    val (fieldSizeBits, postFieldSize) = remainder.splitAt(size)
-    val fieldSizeNumBytes              = fieldSizeBits.toLong(false, ByteOrdering.LittleEndian)
-    if fieldSizeNumBytes == NULL then (postFieldSize, None)
-    else
-      val (fieldBits, postFieldBits) = postFieldSize.splitAt(fieldSizeNumBytes * 8L)
-      (postFieldBits, Some(new String(fieldBits.toByteArray, UTF_8)))
+  def apply(values: Array[Option[String]]): ResultSetRowPacket = Impl(values)
 
   /**
    * Decoder of result set acquisition
@@ -55,39 +47,44 @@ object ResultSetRowPacket:
    */
   private def decodeResultSetRow(fieldLength: Int, columnLength: Int): Decoder[ResultSetRowPacket] =
     (bits: BitVector) =>
-      val buffer       = new Array[Option[String]](columnLength)
-      var remainder    = bits
-      var remainedSize = columnLength
-      while remainedSize > 0 do
-        val index = columnLength - remainedSize
-        if fieldLength == NULL && index == 0 then buffer.update(index, None)
+      val bytes  = bits.toByteArray
+      val buffer = new Array[Option[String]](columnLength)
+      var offset = 0
+      var index  = 0
+
+      while index < columnLength do {
+        if fieldLength == NULL && index == 0 then buffer(index) = None
         else if index == 0 then
-          val (fieldBits, postFieldBits) = remainder.splitAt(fieldLength * 8L)
-          buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
-          remainder = postFieldBits
+          buffer(index) = Some(new String(bytes, offset, fieldLength, UTF_8))
+          offset += fieldLength
         else
-          val (lengthBits, postLengthBits) = remainder.splitAt(8)
-          val length                       = lengthBits.toInt(false)
-          remainder = postLengthBits
-          if length == NULL then buffer.update(index, None)
+          val length = bytes(offset) & 0xff
+          offset += 1
+
+          if length == NULL then buffer(index) = None
           else if length <= 251 then
-            val (fieldBits, postFieldBits) = remainder.splitAt(length * 8L)
-            buffer.update(index, Some(new String(fieldBits.toByteArray, UTF_8)))
-            remainder = postFieldBits
-          else if length == 252 then
-            val (postFieldSize, decodedValue) = decodeToString(remainder, 16)
-            buffer.update(index, decodedValue)
-            remainder = postFieldSize
-          else if length == 253 then
-            val (postFieldSize, decodedValue) = decodeToString(remainder, 24)
-            buffer.update(index, decodedValue)
-            remainder = postFieldSize
+            buffer(index) = Some(new String(bytes, offset, length, UTF_8))
+            offset += length
           else
-            val (postFieldSize, decodedValue) = decodeToString(remainder, 32)
-            buffer.update(index, decodedValue)
-            remainder = postFieldSize
-        end if
-        remainedSize -= 1
+            val actualLength = length match
+              case 252 => (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
+              case 253 =>
+                (bytes(offset) & 0xff) |
+                  ((bytes(offset + 1) & 0xff) << 8) |
+                  ((bytes(offset + 2) & 0xff) << 16)
+              case _ =>
+                (bytes(offset) & 0xff) |
+                  ((bytes(offset + 1) & 0xff) << 8) |
+                  ((bytes(offset + 2) & 0xff) << 16) |
+                  ((bytes(offset + 3) & 0xff) << 24)
+
+            val headerSize = if length == 252 then 2 else if length == 253 then 3 else 4
+            offset += headerSize
+            buffer(index) = Some(new String(bytes, offset, actualLength, UTF_8))
+            offset += actualLength
+
+        index += 1
+      }
 
       Attempt.Successful(DecodeResult(ResultSetRowPacket(buffer), bits))
 

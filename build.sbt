@@ -12,12 +12,16 @@ import ProjectKeys.*
 import ScalaVersions.*
 import Workflows.*
 
-ThisBuild / tlBaseVersion              := LdbcVersions.latest
-ThisBuild / tlFatalWarnings            := true
-ThisBuild / projectName                := "ldbc"
-ThisBuild / scalaVersion               := scala3
-ThisBuild / crossScalaVersions         := Seq(scala3, scala36)
-ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.corretto(java11), JavaSpec.corretto(java17))
+ThisBuild / tlBaseVersion      := LdbcVersions.latest
+ThisBuild / tlFatalWarnings    := true
+ThisBuild / projectName        := "ldbc"
+ThisBuild / scalaVersion       := scala3
+ThisBuild / crossScalaVersions := Seq(scala3, scala36)
+ThisBuild / githubWorkflowJavaVersions := Seq(
+  JavaSpec.corretto(java11),
+  JavaSpec.corretto(java17),
+  JavaSpec.corretto(java21)
+)
 ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
@@ -218,6 +222,7 @@ lazy val benchmark = (project in file("benchmark"))
   .settings(scalacOptions ++= additionalSettings)
   .settings(scalacOptions --= removeSettings)
   .settings(commonSettings)
+  .settings(Compile / javacOptions ++= Seq("--release", java21))
   .settings(
     libraryDependencies ++= Seq(
       scala3Compiler,
