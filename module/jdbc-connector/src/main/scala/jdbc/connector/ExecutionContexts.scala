@@ -6,10 +6,11 @@
 
 package jdbc.connector
 
-import cats.effect.kernel.{Resource, Sync}
+import java.util.concurrent.{ ExecutorService, Executors }
 
-import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
+
+import cats.effect.kernel.{ Resource, Sync }
 
 /**
  * copied from doobie-core:

@@ -19,8 +19,9 @@ import ldbc.sql.*
 import ldbc.schema.syntax.io.*
 import ldbc.schema.TableQuery
 
-import jdbc.connector.{MySQLProvider as JdbcProvider, *}
-import ldbc.connector.{MySQLProvider as LdbcProvider, *}
+import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+
+import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
 
 import ldbc.tests.model.*
 
@@ -28,7 +29,7 @@ class LdbcTableSchemaSelectConnectionTest extends TableSchemaSelectConnectionTes
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection:  Provider[IO] =
+  override def connection: Provider[IO] =
     LdbcProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
       .setSSL(SSL.Trusted)

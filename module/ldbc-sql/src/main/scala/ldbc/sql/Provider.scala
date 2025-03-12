@@ -9,7 +9,7 @@ package ldbc.sql
 import ldbc.sql.logging.LogHandler
 
 trait Provider[F[_]]:
-  
+
   def logHandler: LogHandler[F]
 
   def use[A](f: Connection[F] => F[A]): F[A]
