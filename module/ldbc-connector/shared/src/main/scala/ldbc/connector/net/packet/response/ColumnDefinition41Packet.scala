@@ -10,7 +10,7 @@ package response
 import java.nio.charset.StandardCharsets.UTF_8
 
 import scodec.*
-import scodec.bits.{ BitVector, ByteOrdering }
+import scodec.bits.BitVector
 
 import cats.syntax.all.*
 
@@ -90,25 +90,61 @@ case class ColumnDefinition41Packet(
 
 object ColumnDefinition41Packet:
 
-  private def decodeToString(bits: BitVector): (BitVector, String) =
-    val (sizeBits, remainder)  = bits.splitAt(8)
-    val size                   = sizeBits.toLong(signed = false)
-    val (valueBits, postValue) = remainder.splitAt(size * 8L)
-    (postValue, new String(valueBits.toByteArray, UTF_8))
-
   val decoder: Decoder[ColumnDefinition41Packet] =
     (bits: BitVector) =>
-      val (catalogBits, catalog)           = decodeToString(bits)
-      val (schemaBits, schema)             = decodeToString(catalogBits)
-      val (tableBits, table)               = decodeToString(schemaBits)
-      val (orgTableBits, orgTable)         = decodeToString(tableBits)
-      val (nameBits, name)                 = decodeToString(orgTableBits)
-      val (orgNameBits, orgName)           = decodeToString(nameBits)
-      val (length, lengthBits)             = orgNameBits.splitAt(8)
-      val (characterSet, characterSetBits) = lengthBits.splitAt(16)
-      val (columnLength, columnLengthBits) = characterSetBits.splitAt(32)
-      val (columnType, columnTypeBits)     = columnLengthBits.splitAt(8)
-      val (flags, decimals)                = columnTypeBits.splitAt(16)
+      val bytes  = bits.toByteArray
+      var offset = 0
+
+      val catalogSize = bytes(offset) & 0xff
+      offset += 1
+      val catalog = new String(bytes, offset, catalogSize, UTF_8)
+      offset += catalogSize
+
+      val schemaSize = bytes(offset) & 0xff
+      offset += 1
+      val schema = new String(bytes, offset, schemaSize, UTF_8)
+      offset += schemaSize
+
+      val tableSize = bytes(offset) & 0xff
+      offset += 1
+      val table = new String(bytes, offset, tableSize, UTF_8)
+      offset += tableSize
+
+      val orgTableSize = bytes(offset) & 0xff
+      offset += 1
+      val orgTable = new String(bytes, offset, orgTableSize, UTF_8)
+      offset += orgTableSize
+
+      val nameSize = bytes(offset) & 0xff
+      offset += 1
+      val name = new String(bytes, offset, nameSize, UTF_8)
+      offset += nameSize
+
+      val orgNameSize = bytes(offset) & 0xff
+      offset += 1
+      val orgName = new String(bytes, offset, orgNameSize, UTF_8)
+      offset += orgNameSize
+
+      val length = bytes(offset) & 0xff
+      offset += 1
+
+      val characterSet = (bytes(offset) & 0xff) | ((bytes(offset + 1) & 0xff) << 8)
+      offset += 2
+
+      val columnLength = (bytes(offset) & 0xff) |
+        ((bytes(offset + 1) & 0xff) << 8) |
+        ((bytes(offset + 2) & 0xff) << 16) |
+        ((bytes(offset + 3) & 0xff) << 24)
+      offset += 4
+
+      val columnType = bytes(offset) & 0xff
+      offset += 1
+
+      val flags = ColumnDefinitionFlags(bytes(offset) & 0xff)
+      offset += 2
+
+      val decimals = bytes(offset) & 0xff
+
       val packet = ColumnDefinition41Packet(
         catalog      = catalog,
         schema       = schema,
@@ -116,11 +152,11 @@ object ColumnDefinition41Packet:
         orgTable     = orgTable,
         name         = name,
         orgName      = orgName,
-        length       = length.toInt(signed = false),
-        characterSet = characterSet.toInt(signed = false),
-        columnLength = columnLength.toLong(signed = false),
-        columnType   = ColumnDataType(columnType.toInt(signed = false)),
-        flags        = ColumnDefinitionFlags(flags.toInt(signed = false, ordering = ByteOrdering.LittleEndian)),
-        decimals     = decimals.toInt()
+        length       = length,
+        characterSet = characterSet,
+        columnLength = columnLength,
+        columnType   = ColumnDataType(columnType),
+        flags        = flags,
+        decimals     = decimals
       )
       Attempt.successful(DecodeResult(packet, bits))
