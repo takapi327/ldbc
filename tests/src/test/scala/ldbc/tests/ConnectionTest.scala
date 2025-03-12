@@ -23,13 +23,13 @@ class LdbcConnectionTest extends ConnectionTest:
 
   override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
     LdbcProvider
-    .default[IO](host, port, user, password, database)
-    .setSSL(SSL.Trusted)
-    .setDatabaseTerm(
-      databaseTerm match
-        case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
-        case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
-    )
+      .default[IO](host, port, user, password, database)
+      .setSSL(SSL.Trusted)
+      .setDatabaseTerm(
+        databaseTerm match
+          case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
+          case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
+      )
 
 class JdbcConnectionTest extends ConnectionTest:
 
