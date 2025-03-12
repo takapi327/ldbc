@@ -14,28 +14,24 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.*
 
 import ldbc.sql.*
 
 import ldbc.dsl.io.*
 
-import ldbc.connector.SSL
+import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+
+import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
 
 class LdbcCodecTest extends CodecTest:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      ssl      = SSL.Trusted
-    )
+  override def connection: Provider[IO] =
+    LdbcProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
 
 class JdbcCodecTest extends CodecTest:
 
@@ -47,15 +43,13 @@ class JdbcCodecTest extends CodecTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+  override def connection: Provider[IO] =
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait CodecTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
   def prefix:     "jdbc" | "ldbc"
-  def connection: Resource[IO, Connection[IO]]
+  def connection: Provider[IO]
 
   override def beforeAll(): Unit =
     connection
