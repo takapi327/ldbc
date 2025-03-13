@@ -259,11 +259,13 @@ trait MySQLProvider[F[_], A] extends Provider[F]:
    *
    * The order of processing is as follows.
    *
-   * 1. connection establishment
-   * 2. before operation
-   * 3. Processing using connections. Any processing used primarily in the operation of an application.
-   * 4. after operation
-   * 5. Disconnection
+   * {{{
+   *   1. connection establishment
+   *   2. before operation
+   *   3. Processing using connections. Any processing used primarily in the operation of an application.
+   *   4. after operation
+   *   5. Disconnection
+   * }}}
    *
    * {{{
    *   val before = ???
