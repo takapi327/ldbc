@@ -18,9 +18,10 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
-import jdbc.connector.*
 
 import ldbc.query.builder.syntax.io.*
+
+import jdbc.connector.*
 
 import benchmark.City
 

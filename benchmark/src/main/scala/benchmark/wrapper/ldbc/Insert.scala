@@ -20,12 +20,13 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
-import jdbc.connector.*
 
 import ldbc.dsl.SQL
 
 import ldbc.query.builder.syntax.io.*
 import ldbc.query.builder.Table
+
+import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
