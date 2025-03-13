@@ -18,8 +18,6 @@ import cats.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import org.typelevel.otel4s.trace.Tracer
-
 import ldbc.sql.ResultSet
 
 import ldbc.connector.*
@@ -48,28 +46,21 @@ class Select:
     LocalDateTime
   )
 
-  given Tracer[IO] = Tracer.noop[IO]
-
   @volatile
-  var connection: Resource[IO, LdbcConnection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
-    connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("benchmark"),
-      ssl      = SSL.Trusted
-    )
+    provider = MySQLProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
+      .setSSL(SSL.Trusted)
 
   @Param(Array("100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -80,7 +71,7 @@ class Select:
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")

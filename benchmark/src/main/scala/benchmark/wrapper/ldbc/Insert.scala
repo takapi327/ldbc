@@ -19,7 +19,8 @@ import cats.data.NonEmptyList
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.Connection
+import ldbc.sql.*
+import jdbc.connector.*
 
 import ldbc.dsl.SQL
 
@@ -32,7 +33,7 @@ import ldbc.query.builder.Table
 class Insert:
 
   @volatile
-  var connection: Resource[IO, Connection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @volatile
   var query: TableQuery[Test] = uninitialized
@@ -52,9 +53,7 @@ class Insert:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-    connection = Resource.make(datasource.getConnection)(_.close())
+    provider = MySQLProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
@@ -65,7 +64,7 @@ class Insert:
 
   @Benchmark
   def queryInsertN: Unit =
-    connection
+    provider
       .use { conn =>
         query
           .insertInto(test => test.c1 *: test.c2)
@@ -77,7 +76,7 @@ class Insert:
 
   @Benchmark
   def dslInsertN: Unit =
-    connection
+    provider
       .use { conn =>
         (sql"INSERT INTO `ldbc_wrapper_dsl_test` (`c1`, `c2`) " ++ values(records)).update
           .commit(conn)

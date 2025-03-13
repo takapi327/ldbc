@@ -17,7 +17,8 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.Connection
+import ldbc.sql.*
+import jdbc.connector.*
 
 import ldbc.query.builder.syntax.io.*
 
@@ -29,7 +30,7 @@ import benchmark.City
 class Select:
 
   @volatile
-  var connection: Resource[IO, Connection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @volatile
   var query: TableQuery[City] = uninitialized
@@ -43,9 +44,7 @@ class Select:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-    connection = Resource.make(datasource.getConnection)(_.close())
+    provider = MySQLProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     query = TableQuery[City]
 
@@ -54,7 +53,7 @@ class Select:
 
   @Benchmark
   def querySelectN: List[(Int, String, String)] =
-    connection
+    provider
       .use { conn =>
         query
           .select(city => city.id *: city.name *: city.countryCode)
@@ -67,7 +66,7 @@ class Select:
 
   @Benchmark
   def dslSelectN: List[(Int, String, String)] =
-    connection
+    provider
       .use { conn =>
         sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
           .query[(Int, String, String)]
