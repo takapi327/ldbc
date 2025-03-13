@@ -36,8 +36,8 @@ trait MySQLProvider[F[_], A] extends Provider[F]:
   def setLogHandler(handler:                              LogHandler[F]):                 MySQLProvider[F, A]
   def setTracer(tracer:                                   Tracer[F]):                     MySQLProvider[F, A]
 
-  def withBefore[B](before:                                Connection[F] => F[B]):         MySQLProvider[F, B]
-  def withAfter(after:                                     (A, Connection[F]) => F[Unit]): MySQLProvider[F, A]
+  def withBefore[B](before:      Connection[F] => F[B]):                                       MySQLProvider[F, B]
+  def withAfter(after:           (A, Connection[F]) => F[Unit]):                               MySQLProvider[F, A]
   def withBeforeAfter[B](before: Connection[F] => F[B], after: (B, Connection[F]) => F[Unit]): MySQLProvider[F, B]
 
   def createConnection():               Resource[F, Connection[F]]
