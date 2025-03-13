@@ -35,9 +35,10 @@ trait MySQLProvider[F[_], A] extends Provider[F]:
   def setDatabaseTerm(databaseTerm:                       DatabaseMetaData.DatabaseTerm): MySQLProvider[F, A]
   def setLogHandler(handler:                              LogHandler[F]):                 MySQLProvider[F, A]
   def setTracer(tracer:                                   Tracer[F]):                     MySQLProvider[F, A]
-  def setBefore[B](before:                                Connection[F] => F[B]):         MySQLProvider[F, B]
-  def setAfter(after:                                     (A, Connection[F]) => F[Unit]): MySQLProvider[F, A]
-  def setBeforeAfter[B](before: Connection[F] => F[B], after: (B, Connection[F]) => F[Unit]): MySQLProvider[F, B]
+
+  def withBefore[B](before:                                Connection[F] => F[B]):         MySQLProvider[F, B]
+  def withAfter(after:                                     (A, Connection[F]) => F[Unit]): MySQLProvider[F, A]
+  def withBeforeAfter[B](before: Connection[F] => F[B], after: (B, Connection[F]) => F[Unit]): MySQLProvider[F, B]
 
   def createConnection():               Resource[F, Connection[F]]
   def use[B](f: Connection[F] => F[B]): F[B]
@@ -105,7 +106,7 @@ object MySQLProvider:
     override def setTracer(tracer: Tracer[F]): MySQLProvider[F, A] =
       this.copy(tracer = Some(tracer))
 
-    override def setBefore[B](before: Connection[F] => F[B]): MySQLProvider[F, B] =
+    override def withBefore[B](before: Connection[F] => F[B]): MySQLProvider[F, B] =
       Impl(
         host                    = host,
         port                    = port,
@@ -122,10 +123,10 @@ object MySQLProvider:
         before                  = Some(before),
         after                   = None
       )
-    override def setAfter(after: (A, Connection[F]) => F[Unit]): MySQLProvider[F, A] =
+    override def withAfter(after: (A, Connection[F]) => F[Unit]): MySQLProvider[F, A] =
       this.copy(after = Some(after))
 
-    override def setBeforeAfter[B](
+    override def withBeforeAfter[B](
       before: Connection[F] => F[B],
       after:  (B, Connection[F]) => F[Unit]
     ): MySQLProvider[F, B] =
