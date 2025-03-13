@@ -90,6 +90,15 @@ object MySQLProvider:
           })
           connect.use(conn => f(ConnectionImpl(conn, logHandler)))
 
+    /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
+     *
+     * @param driver
+     *   the class name of the JDBC driver, like "com.mysql.cj.jdbc.MySQLDriver"
+     * @param url
+     *   a connection URL, specific to your driver
+     * @param logHandler
+     *   Handler for outputting logs of process execution using connections.
+     */
     def apply(
       driver:     String,
       url:        String,
@@ -97,6 +106,19 @@ object MySQLProvider:
     ): MySQLProvider[F] =
       create(driver, () => DriverManager.getConnection(url), logHandler.getOrElse(consoleLogger))
 
+    /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
+     *
+     * @param driver
+     *   the class name of the JDBC driver, like "com.mysql.cj.jdbc.MySQLDriver"
+     * @param url
+     *   a connection URL, specific to your driver
+     * @param user
+     *   database username
+     * @param password
+     *   database password
+     * @param logHandler
+     *   Handler for outputting logs of process execution using connections.
+     */
     def apply(
       driver:     String,
       url:        String,
@@ -106,6 +128,17 @@ object MySQLProvider:
     ): MySQLProvider[F] =
       create(driver, () => DriverManager.getConnection(url, user, password), logHandler.getOrElse(consoleLogger))
 
+    /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
+     *
+     * @param driver
+     *   the class name of the JDBC driver, like "com.mysql.cj.jdbc.MySQLDriver"
+     * @param url
+     *   a connection URL, specific to your driver
+     * @param info
+     *   a `Properties` containing connection information (see `DriverManager.getConnection`)
+     * @param logHandler
+     *   Handler for outputting logs of process execution using connections.
+     */
     def apply(
       driver:     String,
       url:        String,
@@ -116,15 +149,41 @@ object MySQLProvider:
 
   def default[F[_]](logHandler: LogHandler[F]): MySQLProvider[F] = Impl(logHandler)
 
+  /**
+   *  Construct a constructor of `Provider[F]` for some `D <: DataSource` When calling this constructor you
+   * should explicitly supply the effect type M e.g. MySQLProvider.fromDataSource[IO](myDataSource, connectEC)
+   *
+   * @param dataSource
+   *   A data source that manages connection information to MySQL.
+   * @param connectEC
+   *   Execution context dedicated to database connection.
+   * @param logHandler
+   *   Handler for outputting logs of process execution using connections.
+   */
   def fromDataSource[F[_]: Console: Async](
     dataSource: DataSource,
     connectEC:  ExecutionContext,
     logHandler: Option[LogHandler[F]] = None
   ): MySQLProvider[F] = DataSourceProvider(dataSource, connectEC, logHandler.getOrElse(consoleLogger))
 
+  /**
+   * Construct a `Provider` that wraps an existing `Connection`. Closing the connection is the responsibility of
+   * the caller.
+   *
+   * @param connection
+   *   a raw JDBC `Connection` to wrap
+   * @param logHandler
+   *   Handler for outputting logs of process execution using connections.
+   */
   def fromConnection[F[_]: Console: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]] = None
   ): MySQLProvider[F] = ConnectionProvider(connection, logHandler.getOrElse(consoleLogger))
 
+  /** Module of constructors for `Provider` that use the JDBC `DriverManager` to allocate connections. Note that
+   * `DriverManager` is unbounded and will happily allocate new connections until server resources are exhausted. It
+   * is usually preferable to use `DataSourceTransactor` with an underlying bounded connection pool. Blocking operations on `DriverProvider` are
+   * executed on an unbounded cached daemon thread pool by default, so you are also at risk of exhausting system
+   * threads. TL;DR this is fine for console apps but don't use it for a web application.
+   */
   def fromDriverManager[F[_]: Console: Async]: DriverProvider[F] = new DriverProvider[F]
