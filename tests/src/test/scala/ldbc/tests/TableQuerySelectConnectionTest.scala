@@ -12,8 +12,6 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.*
 
 import ldbc.sql.*
@@ -21,7 +19,9 @@ import ldbc.sql.*
 import ldbc.query.builder.*
 import ldbc.query.builder.syntax.io.*
 
-import ldbc.connector.SSL
+import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+
+import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
 
 import ldbc.tests.model.*
 
@@ -29,15 +29,10 @@ class LdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("world"),
-      ssl      = SSL.Trusted
-    )
+  override def connection: Provider[IO] =
+    LdbcProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
 
 class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
@@ -50,15 +45,13 @@ class JdbcTableQuerySelectConnectionTest extends TableQuerySelectConnectionTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+  override def connection: Provider[IO] =
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait TableQuerySelectConnectionTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
   def prefix:     "jdbc" | "ldbc"
-  def connection: Resource[IO, Connection[IO]]
+  def connection: Provider[IO]
 
   private final val country          = TableQuery[Country]
   private final val city             = TableQuery[City]

@@ -10,9 +10,9 @@ import cats.syntax.all.*
 
 import cats.effect.IO
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.CatsEffectSuite
+
+import ldbc.sql.*
 
 import ldbc.dsl.io.*
 
@@ -20,15 +20,11 @@ import ldbc.connector.*
 
 class DBIOTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
-  private val connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
-    ssl      = SSL.Trusted
-  )
+  def connection: Provider[IO] =
+    MySQLProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc")
+      .setPassword("password")
+      .setSSL(SSL.Trusted)
 
   test("DBIO#pure") {
     val program = DBIO.pure[IO, Int](1)

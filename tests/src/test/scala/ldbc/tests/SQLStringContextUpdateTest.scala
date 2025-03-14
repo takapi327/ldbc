@@ -12,27 +12,23 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.CatsEffectSuite
 
-import ldbc.sql.Connection
+import ldbc.sql.*
 
 import ldbc.dsl.io.*
 
-import ldbc.connector.SSL
+import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+
+import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
 
 class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def prefix: "jdbc" | "ldbc" = "ldbc"
-  override def connection: Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
+
+  override def connection: Provider[IO] =
+    LdbcProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
+      .setSSL(SSL.Trusted)
 
 class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
@@ -45,16 +41,14 @@ class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   ds.setDatabaseName("connector_test")
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
-  override def connection: Resource[IO, Connection[IO]] =
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+  override def connection: Provider[IO] =
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait SQLStringContextUpdateTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
   def prefix: "jdbc" | "ldbc"
 
-  def connection: Resource[IO, Connection[IO]]
+  def connection: Provider[IO]
 
   final val table = prefix match
     case "jdbc" => sc("`jdbc_sql_string_context_table`")

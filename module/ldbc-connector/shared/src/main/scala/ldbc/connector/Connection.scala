@@ -53,7 +53,7 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  private def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
+  private[ldbc] def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
     case LogEvent.Success(sql, args) =>
       Console[F].println(
         s"""Successful Statement Execution:
