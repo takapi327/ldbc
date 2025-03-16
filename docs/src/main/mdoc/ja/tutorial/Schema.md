@@ -5,6 +5,10 @@
 
 # スキーマ
 
+[クエリビルダー](/ja/tutorial/Query-Builder.md)で型安全にクエリを構築する方法を学びました。このページでは、Scalaコードでデータベーススキーマを定義し、テーブルとモデルのマッピングを行う方法を説明します。
+
+スキーマ定義は、アプリケーションとデータベースの間の境界を明確にする重要な要素です。ldbcは、Scalaコードでスキーマを定義し、強力な型システムを活用してデータベースの構造を表現するための機能を提供しています。
+
 この章では、Scala コードでデータベーススキーマを扱う方法、特に既存のデータベースなしでアプリケーションを書き始めるときに便利な、手動でスキーマを記述する方法について説明します。すでにデータベースにスキーマがある場合は、Code Generatorを使ってこの作業を省略することもできます。
 
 プロジェクトに以下の依存関係を設定する必要があります。
@@ -255,7 +259,7 @@ class UserProfileTable extends Table[UserProfile]("user_profile"):
 
 ## データ定義言語 (DDL)
 
-テーブルの DDL 文は、`TableQuery`の`schema`メソッドで作成できます。複数の DDL オブジェクトを`++`で連結して複合 DDL オブジェクトを作成できます。`create`、`createIfNotExists`、`dropIfExists`、`drop` および `truncate` メソッドは、DDL 文を実行するアクションを生成します。テーブルを安全に作成および削除するには、`createIfNotExists`および`dropIfExists`メソッドを使用します。
+テーブルの DDL 文は、`TableQuery`の`schema`メソッドで作成できます。複数の DDL オブジェクトを`++`で連結して複合 DDL オブジェクトを作成できます。`create`、`createIfNotExists`、`dropIfExists`、`drop` および `truncate`メソッドは、DDL 文を実行するアクションを生成します。テーブルを安全に作成および削除するには、`createIfNotExists`および`dropIfExists`メソッドを使用します。
 
 ```scala 3
 val schema = TableQuery[UserTable].schema ++ TableQuery[UserProfileTable].schema
@@ -282,3 +286,9 @@ schema.truncate.statements.foreach(println)
 schema.drop.statements.foreach(println)
 schema.dropIfExists.statements.foreach(println)
 ```
+
+## 次のステップ
+
+これでScalaコードでスキーマを定義する方法がわかりました。手動でスキーマを定義することで、アプリケーションとデータベースの構造を密接に連携させることができます。
+
+次は[スキーマコード生成](/ja/tutorial/Schema-Code-Generation.md)に進み、既存のSQLファイルからスキーマコードを自動生成する方法を学びましょう。

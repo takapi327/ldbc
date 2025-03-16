@@ -5,11 +5,18 @@
 
 # セットアップ
 
-素晴らしいldbcの世界へようこそ！このセクションでは、すべてのセットアップをお手伝いします。
+ldbcを使い始めるための最初のステップへようこそ！このページでは、開発環境とデータベースを準備する方法を説明します。
+
+## 必要なもの
+
+- JDK 21以上
+- Scala 3
+- Docker（データベース環境のため）
+- [Scala CLI](https://scala-cli.virtuslab.org/)（推奨）
 
 ## データベースセットアップ
 
-まず、Dockerを使用してデータベースを起動します。以下のコードを使用して、データベースを起動します。
+まず、Dockerを使用してMySQLデータベースを起動します。以下のdocker-compose.ymlファイルを作成してください：
 
 ```yaml
 services:
@@ -30,17 +37,14 @@ services:
       retries: 10
 ```
 
-次に、データベースの初期化を行います。
-
-以下コードのようにデータベースの作成を行います。
+次に、`database`ディレクトリに以下のSQLファイルを作成して、初期データを設定します：
 
 ```sql
+-- 01-create-database.sql
 CREATE DATABASE IF NOT EXISTS sandbox_db;
-```
+USE sandbox_db;
 
-次に、テーブルの作成を行います。
-
-```sql
+-- テーブル作成
 CREATE TABLE IF NOT EXISTS `user` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(50) NOT NULL,
@@ -55,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `product` (
   `price` DECIMAL(10, 2) NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)
+);
 
 CREATE TABLE IF NOT EXISTS `order` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -67,12 +71,9 @@ CREATE TABLE IF NOT EXISTS `order` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES `user` (id),
   FOREIGN KEY (product_id) REFERENCES `product` (id)
-)
-```
+);
 
-それぞれのテーブルにデータを挿入します。
-
-```sql
+-- 初期データ投入
 INSERT INTO user (name, email) VALUES
   ('Alice', 'alice@example.com'),
   ('Bob', 'bob@example.com'),
@@ -91,92 +92,88 @@ INSERT INTO `order` (user_id, product_id, quantity) VALUES
   (3, 4, 1); -- Charlie ordered 1 Monitor
 ```
 
-## Scalaセットアップ
-
-チュートリアルでは[Scala CLI](https://scala-cli.virtuslab.org/)を使用します。そのため、Scala CLIをインストールする必要があります。
+Docker Composeを使ってデータベースを起動します：
 
 ```bash
+docker-compose up -d
+```
+
+## Scalaプロジェクトのセットアップ
+
+このチュートリアルでは[Scala CLI](https://scala-cli.virtuslab.org/)を使用して簡単に始められるようにしています。まだインストールしていない場合は、以下のコマンドでインストールできます：
+
+```bash
+# macOSの場合
 brew install Virtuslab/scala-cli/scala-cli
+
+# その他のOSはScala CLIの公式サイトを参照してください
 ```
 
-**Scala CLIで実行**
+### はじめてのldbcプロジェクト
 
-先ほどのデータベースセットアップは、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このセットアップを行うことができる。
+新しいディレクトリを作成し、最初のldbcプロジェクトを設定します：
 
-```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+```bash
+mkdir ldbc-tutorial
+cd ldbc-tutorial
+touch FirstSteps.scala
 ```
 
-### 最初のプログラム
-
-はじめに、ldbcを依存関係に持つ新しいプロジェクトを作成します。
+`FirstSteps.scala`に以下のコードを記述します：
 
 ```scala
 //> using scala "@SCALA_VERSION@"
 //> using dep "@ORGANIZATION@::ldbc-dsl:@VERSION@"
-```
+//> using dep "@ORGANIZATION@::ldbc-connector:@VERSION@"
 
-ldbcを使う前に、いくつかのシンボルをインポートする必要がある。ここでは便宜上、パッケージのインポートを使用する。これにより、高レベルAPIで作業する際に最もよく使用されるシンボルを得ることができる。
+import cats.effect._
+import cats.syntax.all._
+import ldbc.dsl.io._
 
-```scala
-import ldbc.dsl.io.*
-```
-
-Catsも連れてこよう。
-
-```scala
-import cats.syntax.all.*
-import cats.effect.*
-```
-
-次に、トレーサーを提供する。これらは、アプリケーションのログを記録するために使用される。トレーサーは、アプリケーションのトレースを記録するために使用される。
-
-以下のコードは、トレーサーを提供するがその実体は何もしない。
-
-```scala 3
-given Tracer[IO] = Tracer.noop[IO]
-```
-
-ldbc高レベルAPIで扱う最も一般的な型は`DBIO[F, A]`という形式で、`{java | ldbc}.sql.Connection`が利用可能なコンテキストで行われる計算を指定し、最終的にA型の値を生成します。
-
-では、定数を返すだけのDBIOプログラムから始めてみよう。
-
-```scala
-val program: DBIO[IO, Int] = DBIO.pure[IO, Int](1)
-```
-
-次に、データベースに接続するためのコネクタを作成する。コネクタは、データベースへの接続を管理するためのリソースである。コネクタは、データベースへの接続を開始し、クエリを実行し、接続を閉じるためのリソースを提供する。
-
-※ ここではldbcが独自に作成したコネクタを使用します。コネクタの選択と作成方法は後に説明します。
-
-```scala
-def connection = Connection[IO](
-  host     = "127.0.0.1",
-  port     = 13306,
-  user     = "ldbc",
-  password = Some("password"),
-  ssl      = SSL.Trusted
-)
-```
-
-DBIOは、データベースへの接続方法、接続の受け渡し方法、接続のクリーンアップ方法を知っているデータ型であり、この知識によってDBIOをIOへ変換し、実行可能なプログラムを得ることができる。具体的には、実行するとデータベースに接続し、単一のトランザクションを実行するIOが得られる。
-
-```scala
-connection
-  .use { conn =>
-    program.readOnly(conn).map(println(_))
+object FirstSteps extends IOApp.Simple {
+  
+  // トレーサー設定（ログ記録用）
+  given Tracer[IO] = Tracer.noop[IO]
+  
+  // 単純な定数を返すプログラム
+  val simpleProgram: DBIO[IO, Int] = DBIO.pure[IO, Int](42)
+  
+  // データベース接続設定
+  val connection = Connection[IO](
+    host     = "127.0.0.1",
+    port     = 13306,
+    user     = "ldbc",
+    password = Some("password"),
+    database = Some("sandbox_db")
+  )
+  
+  def run: IO[Unit] = {
+    // プログラムの実行
+    connection.use { conn =>
+      simpleProgram.readOnly(conn).flatMap { result =>
+        IO.println(s"データベースから取得した値: $result")
+      }
+    }
   }
-  .unsafeRunSync()
+}
 ```
 
-万歳！定数を計算できた。これはデータベースに仕事を依頼することはないので、あまり面白いものではないが、最初の一歩が完了です。
+Scala CLIを使ってプログラムを実行します：
 
-> この本のコードは、IO.unsafeRunSyncの呼び出し以外はすべて純粋なものであることを覚えておいてほしい。IO.unsafeRunSyncは、通常アプリケーションのエントリー・ポイントにのみ現れる「世界の終わり」の操作である。REPLでは、計算を強制的に "happen "させるためにこれを使用する。
-
-**Scala CLIで実行**
-
-このプログラムも、Scala CLIを使って実行することができる。以下のコマンドを実行すると、このプログラムを実行することができる。
-
-```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+```bash
+scala-cli FirstSteps.scala
 ```
+
+「データベースから取得した値: 42」と表示されれば成功です！これは実際にはデータベースに問い合わせていませんが、ldbcの基本的な構造と接続の設定ができていることを確認できました。
+
+## 自動セットアップスクリプト（オプション）
+
+すべてのセットアップを自動で行うScala CLIスクリプトも用意しています：
+
+```bash
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+```
+
+## 次のステップ
+
+これでldbcを使用する準備が整いました！次は[コネクション](/ja/tutorial/Connection.md)に進み、データベース接続の詳細について学びましょう。

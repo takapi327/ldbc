@@ -5,9 +5,11 @@
 
 # シンプルなプログラム
 
-ここではまず、シンプルなプログラムを作成し実行することでldbcの基本的な使い方を説明します。
+[コネクション](/ja/tutorial/Connection.md)の設定方法を学んだところで、いよいよデータベースにクエリを実行してみましょう。このページでは、ldbcを使った基本的なデータベースプログラムの作成方法を説明します。
 
-※ ここで使用するプログラムの環境はセットアップで構築したものを前提としています。
+ldbcでは、`DBIO`モナドを使って一連のデータベース操作を表現します。この強力な抽象化により、複数のクエリを組み合わせたり、純粋関数型プログラミングの恩恵を受けながらデータベース操作を行うことができます。
+
+※ このページで使用するプログラムの環境はセットアップで構築したものを前提としています。
 
 ## 1つめのプログラム
 
@@ -104,3 +106,7 @@ connection
 ```shell
 scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
+
+## 次のステップ
+
+基本的なクエリの実行方法を学んだところで、次は[パラメータ付きクエリ](/ja/tutorial/Parameterized-Queries.md)についてさらに詳しく見ていきましょう。
