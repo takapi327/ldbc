@@ -30,8 +30,8 @@ object Main extends ResourceApp.Simple:
   override def run: Resource[IO, Unit] =
     (for
       hikari     <- Resource.fromAutoCloseable(IO(ds))
-      execution <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
-       connection <- MySQLProvider.fromDataSource[IO](hikari, execution).createConnection()
+      execution  <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
+      connection <- MySQLProvider.fromDataSource[IO](hikari, execution).createConnection()
     yield connection).evalMap { conn =>
       sql"SELECT * FROM `city` WHERE ID = ${ 1 }"
         .query[City]
