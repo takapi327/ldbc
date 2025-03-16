@@ -32,7 +32,7 @@ val program: DBIO[Option[Int]] = sql"SELECT 2".query[Int].to[Option]
 最後に、データベースに接続して値を返すプログラムを書きます。このプログラムは、データベースに接続し、クエリを実行し、結果を取得します。
 
 ```scala 3
-connection
+provider
   .use { conn =>
     program.readOnly(conn).map(println(_))
   }
@@ -65,7 +65,7 @@ val program: DBIO[(List[Int], Option[Int], Int)] =
 最後に、データベースに接続して値を返すプログラムを書く。このプログラムは、データベースに接続し、クエリを実行し、結果を取得する。
 
 ```scala 3
-connection
+provider
   .use { conn =>
     program.readOnly(conn).map(println(_))
   }
@@ -92,7 +92,7 @@ val program: DBIO[Int] =
 先ほどと異なる点は、`commit`メソッドを呼び出すことである。これにより、トランザクションがコミットされ、データベースにデータが挿入されます。
 
 ``` 3
-connection
+provider
   .use { conn =>
     program.commit(conn).map(println(_))
   }

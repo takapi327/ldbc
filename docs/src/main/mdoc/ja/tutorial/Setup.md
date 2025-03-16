@@ -126,30 +126,25 @@ touch FirstSteps.scala
 //> using dep "@ORGANIZATION@::ldbc-dsl:@VERSION@"
 //> using dep "@ORGANIZATION@::ldbc-connector:@VERSION@"
 
-import cats.effect._
-import cats.syntax.all._
-import ldbc.dsl.io._
+import cats.effect.*
+import cats.syntax.all.*
+import ldbc.connector.*
+import ldbc.dsl.io.*
 
 object FirstSteps extends IOApp.Simple {
-  
-  // トレーサー設定（ログ記録用）
-  given Tracer[IO] = Tracer.noop[IO]
-  
+
   // 単純な定数を返すプログラム
   val simpleProgram: DBIO[IO, Int] = DBIO.pure[IO, Int](42)
   
   // データベース接続設定
-  val connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
-    database = Some("sandbox_db")
-  )
+  val provider =
+    MySQLProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "sandbox_db")
+      .setSSL(SSL.Trusted)
   
   def run: IO[Unit] = {
     // プログラムの実行
-    connection.use { conn =>
+    provider.use { conn =>
       simpleProgram.readOnly(conn).flatMap { result =>
         IO.println(s"データベースから取得した値: $result")
       }

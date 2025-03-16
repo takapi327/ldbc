@@ -51,14 +51,15 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
     ) >> Console[F].printStackTrace(failure)
 ```
 
-作成されたLogHandlerはConnection生成時に引数として渡すことで使用することができます。
+作成されたLogHandlerはProvider生成時に`setLogHandler`に引数として渡すことで任意のログ出力方式を使用することができます。
 
 ```scala 3
-val connection: Resource[IO, Connection[IO]] =
-  Connection[IO](
-    ...,
-    logHandler = console[IO]
-  )
+import ldbc.connector.*
+val provider =
+  MySQLProvider
+    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .setSSL(SSL.Trusted)
+    .setLogHandler(console[IO])
 ```
 
 ## 次のステップ

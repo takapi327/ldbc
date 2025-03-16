@@ -37,20 +37,14 @@ ds.setUser("ldbc")
 ds.setPassword("password")
 ```
 
-作成したデータソースを使用してjdbcコネクタのデータソースを作成します。
+作成したデータソースを使用してコネクションを管理するプロバイダーを作成します。
 
 ```scala
-val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+import jdbc.connector.*
+val provider =
+  MySQLProvider
+    .fromDataSource[IO](ds, ExecutionContexts.synchronous)
 ```
-
-最後に、jdbcコネクタを使用してコネクションを作成します。
-
-```scala
-val connection: Resource[IO, Connection[IO]] =
-  Resource.make(datasource.getConnection)(_.close())
-```
-
-ここではCats Effectの`Resource`を使用してコネクション使用後にクローズするようにしています。
 
 ## Use ldbc connector
 
@@ -60,25 +54,14 @@ val connection: Resource[IO, Connection[IO]] =
 //> dep "@ORGANIZATION@::ldbc-connector:@VERSION@"
 ```
 
-次に、Tracerを提供します。ldbcコネクタはTracerを使用してテレメトリデータの収集を行うことができます。 これらは、アプリケーショントレースを記録するために使用されます。
-
-ここでは、`Tracer.noop`を使用してTracerを提供します。
+そして`Provider`を作成します。
 
 ```scala 3
-given Tracer[IO] = Tracer.noop[IO]
-```
-
-最後に、`Connection`を作成します。
-
-```scala 3
-val connection: Resource[IO, Connection[IO]] =
-  Connection[IO](
-    host     = "127.0.0.1",
-    port     = 3306,
-    user     = "ldbc",
-    password = Some("password"),
-    database = Some("ldbc")
-  )
+import ldbc.connector.*
+val provider =
+  MySQLProvider
+    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .setSSL(SSL.Trusted)
 ```
 
 コネクションを設定するためのパラメータは以下の通りです。

@@ -28,7 +28,7 @@ sql"SELECT name, email FROM user WHERE id = $id".query[(String, String)].to[List
 コネクションを使用してクエリを実行すると問題なく動作します。
 
 ```scala
-connection.use { conn =>
+provider.use { conn =>
   sql"SELECT name, email FROM user WHERE id = $id"
     .query[(String, String)]
     .to[List]
@@ -46,7 +46,7 @@ connection.use { conn =>
 val id = 1
 val email = "alice@example.com"
 
-connection.use { conn =>
+provider.use { conn =>
   sql"SELECT name, email FROM user WHERE id = $id AND email > $email"
     .query[(String, String)]
     .to[List]
@@ -61,7 +61,7 @@ SQLリテラルを扱う際によくあるイラつきは、一連の引数をIN
 ```scala
 val ids = NonEmptyList.of(1, 2, 3)
 
-connection.use { conn =>
+provider.use { conn =>
   (sql"SELECT name, email FROM user WHERE" ++ in("id", ids))
     .query[(String, String)]
     .to[List]
