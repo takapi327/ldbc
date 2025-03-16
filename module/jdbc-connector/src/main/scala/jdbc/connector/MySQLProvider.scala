@@ -20,7 +20,18 @@ import cats.effect.std.Console
 import ldbc.sql.{ Connection, Provider }
 import ldbc.sql.logging.{ LogEvent, LogHandler }
 
-trait MySQLProvider[F[_]] extends Provider[F]
+trait MySQLProvider[F[_]] extends Provider[F]:
+
+  /**
+   * Create a connection managed by Resource.
+   *
+   * {{{
+   *   provider.createConnection().user { connection =>
+   *     ???
+   *   }
+   * }}}
+   */
+  def createConnection(): Resource[F, Connection[F]]
 
 object MySQLProvider:
 
@@ -50,29 +61,29 @@ object MySQLProvider:
            |""".stripMargin
       ) >> Console[F].printStackTrace(failure)
 
-  private case class Impl[F[_]](
-    logHandler: LogHandler[F]
-  ) extends MySQLProvider[F]:
-    override def use[A](f: Connection[F] => F[A]): F[A] = ???
-
   private case class DataSourceProvider[F[_]](
     dataSource: DataSource,
     connectEC:  ExecutionContext,
     logHandler: LogHandler[F]
   )(using ev: Async[F])
     extends MySQLProvider[F]:
+    override def createConnection(): Resource[F, Connection[F]] =
+      Resource
+        .fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
+        .map(conn => ConnectionImpl(conn, logHandler))
+
     override def use[A](f: Connection[F] => F[A]): F[A] =
-      val connect = Resource.fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
-      connect.use(conn => f(ConnectionImpl(conn, logHandler)))
+      createConnection().use(f)
 
   private case class ConnectionProvider[F[_]: Sync](
     connection: java.sql.Connection,
     logHandler: LogHandler[F]
   ) extends MySQLProvider[F]:
+    override def createConnection(): Resource[F, Connection[F]] =
+      Resource.pure(ConnectionImpl(connection, logHandler))
+
     override def use[A](f: Connection[F] => F[A]): F[A] =
-      Resource
-        .pure(ConnectionImpl(connection, logHandler))
-        .use(f)
+      createConnection().use(f)
 
   class DriverProvider[F[_]: Console](using ev: Async[F]):
 
@@ -83,12 +94,16 @@ object MySQLProvider:
     ): MySQLProvider[F] =
       new MySQLProvider[F]:
         override def logHandler: LogHandler[F] = _logHandler
+        override def createConnection(): Resource[F, Connection[F]] =
+          Resource
+            .fromAutoCloseable(ev.blocking {
+              Class.forName(driver)
+              conn()
+            })
+            .map(conn => ConnectionImpl(conn, logHandler))
+
         override def use[A](f: Connection[F] => F[A]): F[A] =
-          val connect = Resource.fromAutoCloseable(ev.blocking {
-            Class.forName(driver)
-            conn()
-          })
-          connect.use(conn => f(ConnectionImpl(conn, logHandler)))
+          createConnection().use(f)
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
      *
@@ -146,8 +161,6 @@ object MySQLProvider:
       logHandler: Option[LogHandler[F]]
     ): MySQLProvider[F] =
       create(driver, () => DriverManager.getConnection(url, info), logHandler.getOrElse(consoleLogger))
-
-  def default[F[_]](logHandler: LogHandler[F]): MySQLProvider[F] = Impl(logHandler)
 
   /**
    *  Construct a constructor of `Provider[F]` for some `D <: DataSource` When calling this constructor you
