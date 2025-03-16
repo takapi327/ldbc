@@ -86,6 +86,8 @@ libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 **jdbcコネクタの使用**
 
 ```scala 3
+import jdbc.connector.*
+
 val ds = new com.mysql.cj.jdbc.MysqlDataSource()
 ds.setServerName("127.0.0.1")
 ds.setPortNumber(13306)
@@ -93,30 +95,24 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-val connection: Resource[IO, Connection[IO]] =
-  Resource.make(datasource.getConnection)(_.close())
+val provider = MySQLProvider.fromDataSource(ex, ExecutionContexts.synchronous)
 ```
 
 **ldbcコネクタの使用**
 
 ```scala 3
-val connection: Resource[IO, Connection[IO]] =
-  Connection[IO](
-    host     = "127.0.0.1",
-    port     = 3306,
-    user     = "ldbc",
-    password = Some("password"),
-    database = Some("ldbc"),
-    ssl      = SSL.Trusted
-  )
+import ldbc.connector.*
+
+val provider =
+  MySQLProvider
+    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .setSSL(SSL.Trusted)
 ```
 
 データベースへの接続処理は、それぞれの方法で確立されたコネクションを使って行うことができる。
 
 ```scala 3
-val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
+val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
   (for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
