@@ -9,7 +9,14 @@
 
 ldbcでは、SQLインジェクション攻撃を防ぐために、パラメータ化されたクエリを使用することを強く推奨しています。パラメータ化されたクエリを使うと、SQLコードとデータを分離し、より安全なデータベースアクセスが可能になります。
 
-## パラメータの追加
+## パラメータの基本
+
+ldbcでは、SQL文にパラメータを埋め込むための2つの主要な方法があります：
+
+1. **動的パラメータ** - 通常のパラメータとして使用され、SQLインジェクション攻撃を防ぐために`PreparedStatement`によって処理される
+2. **静的パラメータ** - SQL文の一部として直接埋め込まれる（例：テーブル名、カラム名など）
+
+## 動的パラメータの追加
 
 まずは、パラメーターを持たないクエリを作成します。
 
@@ -36,11 +43,24 @@ provider.use { conn =>
 }
 ```
 
-ここでは何が起こっているのでしょうか？文字列リテラルをSQL文字列にドロップしているだけのように見えますが、実際には`PreparedStatement`を構築しており、`id`値は最終的に`setInt`の呼び出しによって設定されます。
+ここでは何が起こっているのでしょうか？文字列リテラルをSQL文字列にドロップしているだけのように見えますが、実際には`PreparedStatement`を構築しており、`id`値は最終的に`setInt`の呼び出しによって設定されます。これにより、SQLインジェクション攻撃からアプリケーションを守ることができます。
+
+さまざまな型のパラメータを使用できます：
+
+```scala
+val id: Int = 1
+val name: String = "Alice"
+val active: Boolean = true
+val createdAt: LocalDateTime = LocalDateTime.now()
+
+sql"INSERT INTO user (id, name, active, created_at) VALUES ($id, $name, $active, $createdAt)"
+```
+
+ldbcでは、各型に対して適切なエンコーダーが用意されており、Scala/Javaの値をSQLの値に安全に変換します。
 
 ## 複数のパラメータ
 
-複数のパラメータも同じように機能する。驚きはない。
+複数のパラメータも同様に使用できます。
 
 ```scala
 val id = 1
@@ -54,64 +74,152 @@ provider.use { conn =>
 }
 ```
 
-## IN句の扱い
+## クエリーの結合
 
-SQLリテラルを扱う際によくあるイラつきは、一連の引数をIN句にインライン化したいという欲求ですが、SQLはこの概念をサポートしていません（JDBCも何もサポートしていません）。
+大きなクエリを構築する場合は、複数のSQLフラグメントを結合することができます。
+
+```scala
+val baseQuery = sql"SELECT name, email FROM user"
+val whereClause = sql"WHERE id > $id"
+val orderClause = sql"ORDER BY name ASC"
+
+val query = baseQuery ++ whereClause ++ orderClause
+```
+
+## SQLヘルパー関数
+
+ldbcは、複雑なSQL句を簡単に構築するためのヘルパー関数を多数提供しています。
+
+### IN句の扱い
+
+SQLでよくある課題は、一連の値をIN句で使用したい場合です。ldbcでは`in`関数を使って簡単に実装できます。
 
 ```scala
 val ids = NonEmptyList.of(1, 2, 3)
 
 provider.use { conn =>
-  (sql"SELECT name, email FROM user WHERE" ++ in("id", ids))
+  (sql"SELECT name, email FROM user WHERE " ++ in("id", ids))
     .query[(String, String)]
     .to[List]
     .readOnly(conn)
 }
 ```
 
-IN句は空であってはならないので、`ids`は`NonEmptyList`であることに注意。
+これは以下のSQLに相当します：
 
-このクエリーを実行すると、望ましい結果が得られる
+```sql
+SELECT name, email FROM user WHERE (id IN (?, ?, ?))
+```
 
-ldbcでは他にもいくつかの便利な関数が用意されています。
+`ids`は`NonEmptyList`である必要があることに注意してください。これはIN句が空であってはならないためです。
 
-- `values` - VALUES句を生成する
-- `in` - IN句を生成する
-- `notIn` - NOT IN句を生成する
-- `and` - AND句を生成する
-- `or` - OR句を生成する
-- `whereAnd` - AND句で括られた複数の条件のWHERE句を生成する
-- `whereOr` - OR句で括られた複数の条件のWHERE句を生成する
-- `set` - SET句を生成する
-- `orderBy` - ORDER BY句を生成する
+### その他のヘルパー関数
+
+ldbcでは他にも多くの便利な関数を提供しています：
+
+#### VALUES句の生成
+
+```scala
+val users = NonEmptyList.of(
+  (1, "Alice", "alice@example.com"),
+  (2, "Bob", "bob@example.com")
+)
+
+(sql"INSERT INTO user (id, name, email) " ++ values(users))
+```
+
+#### WHERE句の条件
+
+AND条件とOR条件を簡単に構築できます：
+
+```scala
+val activeFilter = sql"active = true"
+val nameFilter = sql"name LIKE ${"A%"}"
+val emailFilter = sql"email IS NOT NULL"
+
+// WHERE (active = true) AND (name LIKE 'A%') AND (email IS NOT NULL)
+val query1 = sql"SELECT * FROM user " ++ whereAnd(activeFilter, nameFilter, emailFilter)
+
+// WHERE (active = true) OR (name LIKE 'A%')
+val query2 = sql"SELECT * FROM user " ++ whereOr(activeFilter, nameFilter)
+```
+
+#### SET句の生成
+
+UPDATE文のSET句を簡単に生成できます：
+
+```scala
+val name = "New Name"
+val email = "new@example.com"
+
+val updateValues = set(
+  sql"name = $name",
+  sql"email = $email",
+  sql"updated_at = NOW()"
+)
+
+sql"UPDATE user " ++ updateValues ++ sql" WHERE id = 1"
+```
+
+#### ORDER BY句の生成
+
+```scala
+val query = sql"SELECT * FROM user " ++ orderBy(sql"name ASC", sql"created_at DESC")
+```
+
+### オプションの条件
+
+条件がオプションの場合（存在しない可能性がある場合）は、`Opt`サフィックスが付いた関数を使用できます：
+
+```scala
+val nameOpt: Option[String] = Some("Alice")
+val emailOpt: Option[String] = None
+
+val nameFilter = nameOpt.map(name => sql"name = $name")
+val emailFilter = emailOpt.map(email => sql"email = $email")
+
+// nameFilterはSome(...)、emailFilterはNoneなので、WHERE句には「name = ?」のみが含まれます
+val query = sql"SELECT * FROM user " ++ whereAndOpt(nameFilter, emailFilter)
+```
 
 ## 静的なパラメーター
 
-パラメーターは動的ではありますが、時にはパラメーターとして使用しても静的な値として扱いたいことがあるかと思います。
+カラム名やテーブル名など、SQL文の構造的な部分をパラメータ化したい場合があります。このような場合、値をそのままSQL文に埋め込む「静的パラメータ」を使用します。
 
-例えば受け取った値に応じて取得するカラムを変更する場合、以下のように記述できます。
+動的パラメータ（通常の`$value`）は`PreparedStatement`によって処理され、クエリ文字列では`?`に置き換えられますが、静的パラメータは文字列として直接埋め込まれます。
 
-```scala
-val column = "name"
-
-sql"SELECT $column FROM user".query[String].to[List]
-```
-
-動的なパラメーターは`PreparedStatement`によって処理が行われるため、クエリ文字列自体は`?`で置き換えられます。
-
-そのため、このクエリは`SELECT ? FROM user`として実行されます。
-
-これではログに出力されるクエリがわかりにくいため、`$column`は静的な値として扱いたい場合は、`$column`を`${sc(column)}`とすることで、クエリ文字列に直接埋め込まれるようになります。
+静的パラメータを使用するには、`sc`関数を使用します：
 
 ```scala
 val column = "name"
+val table = "user"
 
-sql"SELECT ${sc(column)} FROM user".query[String].to[List]
+// 動的パラメータとして扱うと「SELECT ? FROM user」となってしまう
+// sql"SELECT $column FROM user".query[String].to[List]
+
+// 静的パラメータとして扱うと「SELECT name FROM user」となる
+sql"SELECT ${sc(column)} FROM ${sc(table)}".query[String].to[List]
 ```
 
-このクエリは`SELECT name FROM user`として実行されます。
+この例では、生成されるSQLは`SELECT name FROM user`です。
 
-> `sc(...)`は渡された文字列のエスケープを行わないことに注意してください。ユーザから与えられたデータを渡すことは、インジェクションのリスクになります。
+> **警告**: `sc(...)`は渡された文字列のエスケープを行わないため、ユーザー入力などの検証されていないデータをそのまま渡すと、SQLインジェクション攻撃のリスクがあります。静的パラメータはアプリケーションの安全な部分（定数や設定など）からのみ使用してください。
+
+静的パラメータの一般的な使用例：
+
+```scala
+// 動的なソート順
+val sortColumn = "created_at" 
+val sortDirection = "DESC"
+
+sql"SELECT * FROM user ORDER BY ${sc(sortColumn)} ${sc(sortDirection)}"
+
+// 動的なテーブル選択
+val schema = "public"
+val table = "user"
+
+sql"SELECT * FROM ${sc(schema)}.${sc(table)}"
+```
 
 ## 次のステップ
 
