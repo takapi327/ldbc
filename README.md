@@ -90,6 +90,8 @@ The difference in usage is that there are differences in the way connections are
 **jdbc connector**
 
 ```scala
+import jdbc.connector.*
+
 val ds = new com.mysql.cj.jdbc.MysqlDataSource()
 ds.setServerName("127.0.0.1")
 ds.setPortNumber(13306)
@@ -97,30 +99,24 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-val connection: Resource[IO, Connection[IO]] =
-  Resource.make(datasource.getConnection)(_.close())
+val provider = MySQLProvider.fromDataSource(ex, ExecutionContexts.synchronous)
 ```
 
 **ldbc connector**
 
 ```scala
-val connection: Resource[IO, Connection[IO]] =
-  Connection[IO](
-    host     = "127.0.0.1",
-    port     = 3306,
-    user     = "ldbc",
-    password = Some("password"),
-    database = Some("ldbc"),
-    ssl      = SSL.Trusted
-  )
+import ldbc.connector.*
+
+val provider =
+  MySQLProvider
+    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .setSSL(SSL.Trusted)
 ```
 
-The connection process to the database can be carried out using the connections established by each of these methods.
+The connection process to the database can be carried out using the provider established by each of these methods.
 
 ```scala 3
-val result: IO[(List[Int], Option[Int], Int)] = connection.use { conn =>
+val result: IO[(List[Int], Option[Int], Int)] = provider.use { conn =>
   (for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
@@ -168,7 +164,7 @@ val userTable = TableQuery[User]
 Finally, you can use the query builder to create a query.
 
 ```scala
-val result: IO[List[User]] = connection.use { conn =>
+val result: IO[List[User]] = provider.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
@@ -216,7 +212,7 @@ Finally, you can use the query builder to create a query.
 
 ```scala
 val userTable: TableQuery[UserTable] = TableQuery[UserTable]
-val result: IO[List[User]] = connection.use { conn =>
+val result: IO[List[User]] = provider.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
