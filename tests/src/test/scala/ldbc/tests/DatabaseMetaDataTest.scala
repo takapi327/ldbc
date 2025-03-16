@@ -10,26 +10,21 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.*
 
 import ldbc.sql.*
 
-import ldbc.connector.SSL
+import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+
+import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
 
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
   override def prefix: "ldbc" = "ldbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = host,
-      port     = port,
-      user     = user,
-      password = Some(password),
-      database = Some(database),
-      ssl      = SSL.Trusted
-    )
+  override def connection: Provider[IO] =
+    LdbcProvider
+      .default[IO](host, port, user, password, database)
+      .setSSL(SSL.Trusted)
 
 class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
 
@@ -42,12 +37,10 @@ class JdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+  override def connection: Provider[IO] =
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait DatabaseMetaDataTest extends CatsEffectSuite:
-
-  given Tracer[IO] = Tracer.noop[IO]
 
   protected val host:     String = "127.0.0.1"
   protected val port:     Int    = 13306
@@ -56,7 +49,7 @@ trait DatabaseMetaDataTest extends CatsEffectSuite:
   protected val database: String = "connector_test"
 
   def prefix:     "jdbc" | "ldbc"
-  def connection: Resource[IO, Connection[IO]]
+  def connection: Provider[IO]
 
   test(s"$prefix: allTablesAreSelectable") {
     assertIO(

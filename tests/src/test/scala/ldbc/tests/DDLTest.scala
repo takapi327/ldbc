@@ -10,28 +10,23 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.*
 
-import ldbc.sql.Connection
+import ldbc.sql.*
 
 import ldbc.schema.*
 import ldbc.schema.syntax.io.*
 
-import ldbc.connector.SSL
+import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+
+import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
 
 class LdbcDDLTest extends DDLTest:
 
-  override def connection: Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("connector_test"),
-      ssl      = SSL.Trusted
-    )
+  override def connection: Provider[IO] =
+    LdbcProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
+      .setSSL(SSL.Trusted)
 
 class JdbcDDLTest extends DDLTest:
 
@@ -42,14 +37,12 @@ class JdbcDDLTest extends DDLTest:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  override def connection: Resource[IO, Connection[IO]] =
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+  override def connection: Provider[IO] =
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait DDLTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
-  def connection: Resource[IO, Connection[IO]]
+  def connection: Provider[IO]
 
   final case class User(
     id:   Long,

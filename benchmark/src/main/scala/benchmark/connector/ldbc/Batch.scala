@@ -15,8 +15,6 @@ import org.openjdk.jmh.annotations.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import org.typelevel.otel4s.trace.Tracer
-
 import ldbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -24,10 +22,8 @@ import ldbc.connector.*
 @State(Scope.Benchmark)
 class Batch:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
   @volatile
-  var connection: Resource[IO, LdbcConnection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -37,14 +33,9 @@ class Batch:
 
   @Setup
   def setup(): Unit =
-    connection = Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("benchmark"),
-      ssl      = SSL.Trusted
-    )
+    provider = MySQLProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
+      .setSSL(SSL.Trusted)
 
     values = (1 to len).map(_ => "(?, ?)").mkString(",")
 
@@ -55,7 +46,7 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -73,7 +64,7 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.prepareStatement(s"INSERT INTO ldbc_test (c1, c2) VALUES (?, ?)")

@@ -18,7 +18,9 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.Connection
+import ldbc.sql.*
+
+import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -26,7 +28,7 @@ import ldbc.sql.Connection
 class Insert:
 
   @volatile
-  var connection: Resource[IO, Connection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -62,9 +64,7 @@ class Insert:
     ds.setPassword("password")
     ds.setUseSSL(true)
 
-    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-    connection = Resource.make(datasource.getConnection)(_.close())
+    provider = MySQLProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     values = (1 to len).map(_ => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").mkString(",")
 
@@ -95,7 +95,7 @@ class Insert:
 
   @Benchmark
   def statement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -117,7 +117,7 @@ class Insert:
 
   @Benchmark
   def prepareStatement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <-
