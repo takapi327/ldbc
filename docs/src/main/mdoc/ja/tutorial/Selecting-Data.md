@@ -9,68 +9,91 @@
 
 ldbcの最も強力な機能の1つは、データベースの結果をScalaの型に簡単にマッピングできることです。単純なプリミティブ型から複雑なケースクラスまで、さまざまなデータ形式を扱えます。
 
+## データ取得の基本ワークフロー
+
+ldbcでデータを取得する基本的な流れは以下の通りです：
+
+1. SQLクエリを`sql`補間子で作成
+2. `.query[T]`で結果の型を指定
+3. `.to[Collection]`で結果をコレクションに変換（オプション）
+4. `.readOnly()`/`.commit()`/`.transaction()`などでクエリを実行
+5. 結果を処理
+
+この流れをコード上の型の変化と共に見ていきましょう。
+
 ## コレクションへの行の読み込み
 
-最初のクエリでは、低レベルのクエリを目指して、いくつかのユーザーをリストに選択し、最初の数件をプリントアウトしてみましょう。ここにはいくつかのステップがあるので、途中のタイプを記しておきます。
+最初のクエリでは、いくつかのユーザー名をリストに取得し、出力する例を見てみましょう。各ステップで型がどう変化するかを示しています：
 
 ```scala
 sql"SELECT name FROM user"
-  .query[String] // Query[IO, String]
-  .to[List] // DBIO[IO, List[String]]
-  .readOnly(conn) // IO[List[String]]
-  .unsafeRunSync() // List[String]
-  .foreach(println) // Unit
+  .query[String]                 // Query[IO, String]
+  .to[List]                      // DBIO[IO, List[String]]
+  .readOnly(conn)                // IO[List[String]]
+  .unsafeRunSync()               // List[String]
+  .foreach(println)              // Unit
 ```
 
-これを少し分解してみよう。
+このコードを詳しく説明すると：
 
-- `sql"SELECT name FROM user".query[String]`は`Query[IO, String]`を定義し、返される各行をStringにマップする1列のクエリです。このクエリは1列のクエリで、返される行をそれぞれStringにマップします。
-- `.to[List]`は、行をリストに蓄積する便利なメソッドで、この場合は`DBIO[IO, List[String]]`を生成します。このメソッドは、CanBuildFromを持つすべてのコレクション・タイプで動作します。
-- `readOnly(conn)`は`IO[List[String]]`を生成し、これを実行すると通常のScala `List[String]`が出力される。
-- `unsafeRunSync()`は、IOモナドを実行し、結果を取得する。これは、IOモナドを実行し、結果を取得するために使用される。
-- `foreach(println)`は、リストの各要素をプリントアウトする。
+- `sql"SELECT name FROM user"` - SQLクエリを定義します。
+- `.query[String]` - 各行の結果を`String`型にマッピングします。これにより`Query[IO, String]`型が生成されます。
+- `.to[List]` - 結果を`List`に集約します。`DBIO[IO, List[String]]`型が生成されます。このメソッドは`FactoryCompat`を実装する任意のコレクション型（`List`、`Vector`、`Set`など）で使用できます。
+- `.readOnly(conn)` - コネクションを読み取り専用モードで使用してクエリを実行します。戻り値は`IO[List[String]]`です。
+- `.unsafeRunSync()` - IOモナドを実行して実際の結果（`List[String]`）を取得します。
+- `.foreach(println)` - 結果の各要素を出力します。
 
 ## 複数列クエリ
 
-もちろん、複数のカラムを選択してタプルにマッピングすることもできます。
+もちろん、複数のカラムを選択してタプルにマッピングすることもできます：
 
 ```scala
 sql"SELECT name, email FROM user"
-  .query[(String, String)] // Query[IO, (String, String)]
-  .to[List] // DBIO[IO, List[(String, String)]]
-  .readOnly(conn) // IO[List[(String, String)]]
-  .unsafeRunSync() // List[(String, String)]
-  .foreach(println) // Unit
+  .query[(String, String)]       // Query[IO, (String, String)]
+  .to[List]                      // DBIO[IO, List[(String, String)]]
+  .readOnly(conn)                // IO[List[(String, String)]]
+  .unsafeRunSync()               // List[(String, String)]
+  .foreach { case (name, email) => println(s"Name: $name, Email: $email") }
 ```
 
-## クラスへのマッピング
+複数列クエリでは、選択したカラムの順序とタプルの型パラメータの順序が一致していることが重要です。上記の例では、`name`が1番目のカラム（タプルの`_1`）、`email`が2番目のカラム（タプルの`_2`）に対応します。
 
-ldbcは、複数のカラムを選択してクラスにマッピングすることもできます。これは、`User`クラスを定義して、クエリの結果を`User`クラスにマッピングする例です。
+## ケースクラスへのマッピング
 
-```scala 3
+タプルは便利ですが、コードの可読性を高めるためにケースクラスを使用することをお勧めします。ldbcは、クエリの結果を自動的にケースクラスにマッピングできます：
+
+```scala
+// ユーザー情報を表すケースクラス
 case class User(id: Long, name: String, email: String)
 
+// クエリ実行とマッピング
 sql"SELECT id, name, email FROM user"
-  .query[User] // Query[IO, User]
-  .to[List] // DBIO[IO, List[User]]
-  .readOnly(conn) // IO[List[User]]
-  .unsafeRunSync() // List[User]
-  .foreach(println) // Unit
+  .query[User]                   // Query[IO, User]
+  .to[List]                      // DBIO[IO, List[User]]
+  .readOnly(conn)                // IO[List[User]]
+  .unsafeRunSync()               // List[User]
+  .foreach(user => println(s"ID: ${user.id}, Name: ${user.name}, Email: ${user.email}"))
 ```
 
-クラスのフィールドは、クエリのカラム名と一致する必要があります。これは、`User`クラスのフィールドが`id`、`name`、`email`であるため、クエリのカラム名が`id`、`name`、`email`であることを意味します。
+**重要**: ケースクラスのフィールド名とSQLクエリで選択するカラム名が一致している必要があります。順序も一致している必要がありますが、名前が正確に一致していれば、ldbcが適切にマッピングします。
 
 ![Selecting Data](../../img/data_select.png)
 
-`Join`などを使用して複数のテーブルからデータを選択する方法を見てみましょう。
+## 複数テーブルの結合とネストしたケースクラス
 
-これは、`City`, `Country`, `CityWithCountry`クラスそれぞれを定義して、`city`と`country`テーブルを`Join`したクエリの結果を`CityWithCountry`クラスにマッピングする例です。
+`JOIN`を使って複数のテーブルからデータを取得する場合、ネストしたケースクラス構造にマッピングすることができます。以下の例では、`city`テーブルと`country`テーブルを結合し、結果を`CityWithCountry`クラスにマッピングしています：
 
-```scala 3
+```scala
+// 都市を表すケースクラス
 case class City(id: Long, name: String)
-case class Country(code: String, name: String, region: String)
-case class CityWithCountry(coty: City, country: Country)
 
+// 国を表すケースクラス
+case class Country(code: String, name: String, region: String)
+
+// 都市と国の情報を組み合わせたケースクラス
+case class CityWithCountry(city: City, country: Country)
+
+// 結合クエリの実行
 sql"""
   SELECT
     city.id,
@@ -81,26 +104,30 @@ sql"""
   FROM city
   JOIN country ON city.country_code = country.code
 """
-  .query[CityWithCountry] // Query[IO, CityWithCountry]
-  .to[List] // DBIO[IO, List[CityWithCountry]]
-  .readOnly(conn) // IO[List[CityWithCountry]]
-  .unsafeRunSync() // List[CityWithCountry]
-  .foreach(println) // Unit
+  .query[CityWithCountry]        // Query[IO, CityWithCountry]
+  .to[List]                      // DBIO[IO, List[CityWithCountry]]
+  .readOnly(conn)                // IO[List[CityWithCountry]]
+  .unsafeRunSync()               // List[CityWithCountry]
+  .foreach(cityWithCountry => println(
+    s"City: ${cityWithCountry.city.name}, Country: ${cityWithCountry.country.name}"
+  ))
 ```
 
-クラスのフィールドは、クエリのカラム名と一致する必要があると先ほど述べました。
-この場合、`City`クラスのフィールドが`id`、`name`であり、`Country`クラスのフィールドが`code`、`name`、`region`であるため、クエリのカラム名が`id`、`name`、`code`、`name`、`region`であることを意味します。
+ldbcの特徴として、`テーブル名.カラム名`の形式で指定されたカラムは、自動的に`クラス名.フィールド名`にマッピングされます。これにより、上記の例では次のようなマッピングが行われます：
 
-`Join`を行った場合、それぞれのカラムはテーブル名と共に指定しどのテーブルのカラムかを明示する必要があります。 
-この例では、`city.id`、`city.name`、`country.code`、`country.name`、`country.region`として指定しています。
-
-ldbcではこのように`テーブル名`.`カラム名`を`クラス名`.`フィールド名`にマッピングすることによって、複数のテーブルから取得したデータをネストしたクラスにマッピングすることができます。
+- `city.id` → `CityWithCountry.city.id`
+- `city.name` → `CityWithCountry.city.name`
+- `country.code` → `CityWithCountry.country.code`
+- `country.name` → `CityWithCountry.country.name`
+- `country.region` → `CityWithCountry.country.region`
 
 ![Selecting Data](../../img/data_multi_select.png)
 
-ldbcでは`Join`を行い複数のテーブルからデータを取得する際に、単体のクラスのみではなくクラスの`Tuple`にマッピングすることもできます。
+## タプルを使用した結合クエリ
 
-```scala 3
+ネストしたケースクラスの代わりに、タプルを使用して複数テーブルのデータを取得することもできます：
+
+```scala
 case class City(id: Long, name: String)
 case class Country(code: String, name: String, region: String)
 
@@ -114,20 +141,23 @@ sql"""
   FROM city
   JOIN country ON city.country_code = country.code
 """
-  .query[(City, Country)]
-  .to[List]
-  .readOnly(conn)
-  .unsafeRunSync()
-  .foreach(println)
+  .query[(City, Country)]        // Query[IO, (City, Country)]
+  .to[List]                      // DBIO[IO, List[(City, Country)]]
+  .readOnly(conn)                // IO[List[(City, Country)]]
+  .unsafeRunSync()               // List[(City, Country)]
+  .foreach { case (city, country) => 
+    println(s"City: ${city.name}, Country: ${country.name}")
+  }
 ```
 
-この例では、`City`クラスと`Country`クラスを`Tuple`にマッピングしています。
+ここで重要なのは、タプルを使用する場合、テーブル名とケースクラスの名前は一致している必要があるということです。つまり、`city`テーブルは`City`クラスに、`country`テーブルは`Country`クラスにマッピングされます。
 
-ここで注意したいのが、先ほどと異なり`テーブル名`.`カラム名`を`クラス名`.`フィールド名`にマッピングすること際にテーブル名はクラス名を使用しています。
+## テーブルのエイリアスとマッピング
 
-そのため、このマッピングには制約がありテーブル名とクラス名は等価でなければいけません。つまり、エイリアスなどを使ってテーブル名を`city`から`c`などに短縮した場合、クラス名も`C`でなければならない。
+SQL文でテーブルにエイリアスを使用する場合、ケースクラスの名前もそのエイリアスと一致させる必要があります：
 
-```scala 3
+```scala
+// エイリアス名に合わせたケースクラス名
 case class C(id: Long, name: String)
 case class CT(code: String, name: String, region: String)
 
@@ -141,12 +171,93 @@ sql"""
   FROM city AS c
   JOIN country AS ct ON c.country_code = ct.code
 """
-  .query[(City, Country)]
+  .query[(C, CT)]                // Query[IO, (C, CT)]
+  .to[List]                      // DBIO[IO, List[(C, CT)]]
+  .readOnly(conn)                // IO[List[(C, CT)]]
+  .unsafeRunSync()               // List[(C, CT)]
+  .foreach { case (city, country) => 
+    println(s"City: ${city.name}, Country: ${country.name}")
+  }
+```
+
+## 単一結果の取得（Option型）
+
+リストではなく、単一の結果や省略可能な結果（0または1件）を取得したい場合は、`.to[Option]`を使用できます：
+
+```scala
+case class User(id: Long, name: String, email: String)
+
+// IDによる単一ユーザーの検索
+sql"SELECT id, name, email FROM user WHERE id = ${userId}"
+  .query[User]                   // Query[IO, User]
+  .to[Option]                    // DBIO[IO, Option[User]]
+  .readOnly(conn)                // IO[Option[User]]
+  .unsafeRunSync()               // Option[User]
+  .foreach(user => println(s"Found user: ${user.name}"))
+```
+
+結果が見つからない場合は`None`が返され、1件見つかった場合は`Some(User(...))`が返されます。
+
+## クエリ実行メソッドの選択
+
+ldbcでは、用途に応じて異なるクエリ実行メソッドが用意されています：
+
+- `.readOnly(conn)` - 読み取り専用操作に使用します（SELECT文など）
+- `.commit(conn)` - 自動コミットモードで書き込み操作を実行します
+- `.rollback(conn)` - 書き込み操作を実行し、必ずロールバックします（テスト用）
+- `.transaction(conn)` - トランザクション内で操作を実行し、成功時のみコミットします
+
+```scala
+// 読み取り専用操作の例
+sql"SELECT * FROM users"
+  .query[User]
+  .to[List]
+  .readOnly(conn)
+
+// 書き込み操作の例（自動コミット）
+sql"UPDATE users SET name = ${newName} WHERE id = ${userId}"
+  .update
+  .commit(conn)
+
+// トランザクション内での複数操作
+(for {
+  userId <- sql"INSERT INTO users (name, email) VALUES (${name}, ${email})".returning[Long]
+  _      <- sql"INSERT INTO user_roles (user_id, role_id) VALUES (${userId}, ${roleId})".update
+} yield userId).transaction(conn)
+```
+
+## コレクション操作とクエリの組み合わせ
+
+取得したデータに対して、Scalaのコレクション操作を適用することで、より複雑なデータ処理を簡潔に記述できます：
+
+```scala
+// ユーザーをグループ化する例
+sql"SELECT id, name, department FROM employees"
+  .query[(Long, String, String)] // ID, 名前, 部署
   .to[List]
   .readOnly(conn)
   .unsafeRunSync()
-  .foreach(println)
+  .groupBy(_._3) // 部署ごとにグループ化
+  .map { case (department, employees) => 
+    (department, employees.map(_._2)) // 部署名と従業員名のリストのマッピング
+  }
+  .foreach { case (department, names) =>
+    println(s"Department: $department, Employees: ${names.mkString(", ")}")
+  }
 ```
+
+## まとめ
+
+ldbcは、データベースからのデータ取得を型安全かつ直感的に行うための機能を提供しています。このチュートリアルでは、以下の内容を説明しました：
+
+- 基本的なデータ取得のワークフロー
+- 単一カラムと複数カラムのクエリ
+- ケースクラスへのマッピング
+- 複数テーブルの結合とネストしたデータ構造
+- 単一結果と複数結果の取得
+- さまざまな実行メソッド
+
+これらの知識を活用して、アプリケーション内でデータベースから効率的にデータを取得し、Scalaの型システムの利点を最大限に活用してください。
 
 ## 次のステップ
 
