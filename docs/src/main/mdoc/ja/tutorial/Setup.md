@@ -95,7 +95,7 @@ INSERT INTO `order` (user_id, product_id, quantity) VALUES
 Docker Composeを使ってデータベースを起動します：
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Scalaプロジェクトのセットアップ
@@ -131,7 +131,7 @@ import cats.syntax.all.*
 import ldbc.connector.*
 import ldbc.dsl.io.*
 
-object FirstSteps extends IOApp.Simple {
+object FirstSteps extends IOApp.Simple:
 
   // 単純な定数を返すプログラム
   val simpleProgram: DBIO[IO, Int] = DBIO.pure[IO, Int](42)
@@ -142,15 +142,13 @@ object FirstSteps extends IOApp.Simple {
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "sandbox_db")
       .setSSL(SSL.Trusted)
   
-  def run: IO[Unit] = {
+  def run: IO[Unit] =
     // プログラムの実行
     provider.use { conn =>
       simpleProgram.readOnly(conn).flatMap { result =>
         IO.println(s"データベースから取得した値: $result")
       }
     }
-  }
-}
 ```
 
 Scala CLIを使ってプログラムを実行します：

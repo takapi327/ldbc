@@ -19,22 +19,20 @@ ldbcは、Scala 3で書かれたタイプセーフなMySQLデータベースク�
 
 まずはldbcの基本的な使い方を見てみましょう。以下は、データベースからユーザー情報を取得し、新しいユーザーを追加する簡単な例です：
 
-```scala
-import cats.effect._
-import cats.syntax.all._
-import ldbc.dsl.io._
+```scala 3
+import cats.effect.*
+import cats.syntax.all.*
+import ldbc.connector.*
+import ldbc.dsl.io.*
 
 // データベース接続の設定
-val connection = Connection[IO](
-  host     = "127.0.0.1",
-  port     = 13306,
-  user     = "ldbc",
-  password = Some("password"),
-  database = Some("sandbox_db")
-)
+val provider =
+  MySQLProvider
+    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .setSSL(SSL.Trusted)
 
 // クエリの実行
-val program = for {
+val program = for
   // ユーザー一覧の取得
   users <- sql"SELECT id, name FROM user".query[(Int, String)].to[List]
   
@@ -43,10 +41,10 @@ val program = for {
   
   // 更新後のユーザー数確認
   count <- sql"SELECT COUNT(*) FROM user".query[Int].unsafe
-} yield (users, count)
+yield (users, count)
 
 // プログラムの実行
-connection.use { conn =>
+provider.use { conn =>
   program.transaction(conn)
 }
 ```
