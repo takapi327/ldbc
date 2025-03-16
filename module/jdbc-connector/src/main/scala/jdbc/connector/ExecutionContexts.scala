@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc.hikari
+package jdbc.connector
 
 import java.util.concurrent.{ ExecutorService, Executors }
 
