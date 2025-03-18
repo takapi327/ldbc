@@ -305,7 +305,7 @@ object MySQLProvider:
     host:                    String,
     port:                    Int,
     user:                    String,
-    logHandler:              Option[LogHandler[F]] = None,
+    logHandler:              Option[LogHandler[F]]                 = None,
     password:                Option[String]                        = None,
     database:                Option[String]                        = None,
     debug:                   Boolean                               = false,

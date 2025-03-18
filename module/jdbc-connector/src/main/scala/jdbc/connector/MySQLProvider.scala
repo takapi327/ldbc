@@ -12,8 +12,8 @@ import javax.sql.DataSource
 
 import scala.concurrent.ExecutionContext
 
-import cats.Applicative
 import cats.syntax.all.*
+import cats.Applicative
 
 import cats.effect.*
 import cats.effect.std.Console

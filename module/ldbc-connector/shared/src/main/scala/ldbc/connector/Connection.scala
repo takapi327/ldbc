@@ -23,7 +23,7 @@ import fs2.io.net.*
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.{ Connection, DatabaseMetaData }
-import ldbc.sql.logging.{LogEvent, LogHandler}
+import ldbc.sql.logging.{ LogEvent, LogHandler }
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
