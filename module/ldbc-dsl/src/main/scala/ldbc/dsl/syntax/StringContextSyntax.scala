@@ -6,8 +6,6 @@
 
 package ldbc.dsl.syntax
 
-//import cats.effect.MonadCancelThrow
-
 import ldbc.dsl.*
 
 /**
