@@ -47,6 +47,7 @@ program.attempt
 `raiseError`を使って明示的に例外を発生させることができます：
 
 ```scala
+import cats.syntax.all.*
 import cats.effect.IO
 import ldbc.dsl.io.*
 
@@ -131,7 +132,7 @@ def retryOnConnectionError[A](operation: DBIO[A], maxRetries: Int, delay: Finite
         // 接続エラーの場合のみリトライする
         if isConnectionError(error) && remainingAttempts > 0 then
           DBIO.pure[IO, Unit](()) // 遅延のための空のアクション
-            .flatMap(_ => IO.sleep(delay).to[DBIO])
+            .flatMap(_ => DBIO.sleep[IO](delay))
             .flatMap(_ => retry(remainingAttempts - 1))
         else
           DBIO.raiseError[IO, A](error) // その他のエラーは再スロー
