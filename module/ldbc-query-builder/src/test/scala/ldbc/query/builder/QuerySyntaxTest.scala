@@ -45,6 +45,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import cats.effect.IO
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -92,7 +93,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import cats.effect.IO
-        |
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -109,7 +110,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import cats.effect.IO
-        |
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -142,7 +143,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import cats.effect.IO
-        |
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -159,7 +160,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import cats.effect.IO
-        |
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -210,6 +211,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -240,6 +242,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
@@ -270,6 +273,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
       """
         |import cats.effect.IO
         |
+        |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
         |import ldbc.query.builder.syntax.io.*
         |
