@@ -14,7 +14,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -29,7 +29,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertDoesNotCompile(
       """
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -47,7 +47,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -62,7 +62,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertCompiles(
       """
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -77,7 +77,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertDoesNotCompile(
       """
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -95,7 +95,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -112,7 +112,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -127,7 +127,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
     assertDoesNotCompile(
       """
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -145,7 +145,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int) derives Table
         |
@@ -162,7 +162,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int, categoryId: Long) derives Table
         |
@@ -187,7 +187,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |import cats.effect.IO
         |
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class User(id: Long, name: String, age: Int, categoryId: Long) derives Table
         |
@@ -213,7 +213,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class Country(code: String, name: String) derives Table
         |
@@ -244,7 +244,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class Country(code: String, name: String) derives Table
         |
@@ -275,7 +275,7 @@ class QuerySyntaxTest extends AnyFlatSpec:
         |
         |import ldbc.dsl.DBIO
         |import ldbc.query.builder.Table
-        |import ldbc.query.builder.syntax.io.*
+        |import ldbc.query.builder.syntax.*
         |
         |case class Country(code: String, name: String) derives Table
         |

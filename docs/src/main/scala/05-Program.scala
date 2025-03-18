@@ -11,7 +11,6 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.dsl.*
 import ldbc.dsl.codec.*
-import ldbc.dsl.io.*
 
 import ldbc.connector.*
 

@@ -14,7 +14,7 @@ import munit.CatsEffectSuite
 
 import ldbc.sql.*
 
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
 

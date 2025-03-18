@@ -29,7 +29,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 import ldbc.dsl.logging.ConsoleLogHandler
 import ldbc.query.builder.TableQuery
 ```
@@ -267,7 +267,7 @@ LDBCでは`Database`モデルはデータベースの接続情報を持つ以外
 すでに`Database`モデルを別の用途で生成している場合は、そのモデルを使用してデータベースの接続情報を持った`Database`を構築することができます。
 
 ```scala 3
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 val database: Database = ???
 

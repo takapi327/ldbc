@@ -8,7 +8,6 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
 import ldbc.dsl.*
-import ldbc.dsl.io.*
 
 import ldbc.connector.*
 
