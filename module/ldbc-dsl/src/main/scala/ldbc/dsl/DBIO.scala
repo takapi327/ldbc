@@ -26,6 +26,23 @@ import ldbc.dsl.util.FactoryCompat
  *   The result type of the query
  */
 sealed trait DBIOA[A]
+private object DBIOA:
+  given MonadThrow[DBIO] with
+    override def pure[A](a: A): DBIO[A] = DBIO.liftF(DBIO.Pure(a))
+    override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]) = fa.flatMap(f)
+    override def tailRecM[A, B](a: A)(f: A => DBIO[Either[A, B]]): DBIO[B] = f(a).flatMap {
+      case Left(next) => tailRecM(next)(f)
+      case Right(value) => DBIO.pure(value)
+    }
+    override def ap[A, B](ff: DBIO[A => B])(fa: DBIO[A]): DBIO[B] =
+      for
+        a <- fa
+        f <- ff
+      yield f(a)
+    override def raiseError[A](e: Throwable): DBIO[A] =
+      Free.liftF(DBIO.RaiseError(e))
+    override def handleErrorWith[A](fa: DBIO[A])(f: Throwable => DBIO[A]): DBIO[A] =
+      Free.liftF(DBIO.HandleErrorWith(fa, f))
 
 type DBIO[A] = Free[DBIOA, A]
 
@@ -88,23 +105,6 @@ object DBIO extends ParamBinder:
   def raiseError[A](e: Throwable): DBIO[A] = Free.liftF(RaiseError(e))
   def sequence[A](dbios: DBIO[A]*): DBIO[List[A]] =
     dbios.toList.sequence
-
-  given MonadThrow[DBIO] with
-    override def pure[A](a: A): DBIO[A] = DBIO.liftF(Pure(a))
-    override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]) = fa.flatMap(f)
-    override def tailRecM[A, B](a: A)(f: A => DBIO[Either[A, B]]): DBIO[B] = f(a).flatMap {
-      case Left(next) => tailRecM(next)(f)
-      case Right(value) => DBIO.pure(value)
-    }
-    override def ap[A, B](ff: DBIO[A => B])(fa: DBIO[A]): DBIO[B] =
-      for
-        a <- fa
-        f <- ff
-      yield f(a)
-    override def raiseError[A](e: Throwable): DBIO[A] =
-      Free.liftF(RaiseError(e))
-    override def handleErrorWith[A](fa: DBIO[A])(f: Throwable => DBIO[A]): DBIO[A] =
-      Free.liftF(HandleErrorWith(fa, f))
 
   extension [F[_] : MonadCancelThrow](connection: Connection[F])
     def interpreter: DBIOA ~> F =
