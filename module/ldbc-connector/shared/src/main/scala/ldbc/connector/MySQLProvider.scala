@@ -305,7 +305,7 @@ object MySQLProvider:
     host:                    String,
     port:                    Int,
     user:                    String,
-    logHandler:              LogHandler[F],
+    logHandler:              Option[LogHandler[F]]                 = None,
     password:                Option[String]                        = None,
     database:                Option[String]                        = None,
     debug:                   Boolean                               = false,
@@ -357,7 +357,7 @@ object MySQLProvider:
       this.copy(databaseTerm = Some(databaseTerm))
 
     override def setLogHandler(handler: LogHandler[F]): MySQLProvider[F, A] =
-      this.copy(logHandler = handler)
+      this.copy(logHandler = Some(handler))
 
     override def setTracer(tracer: Tracer[F]): MySQLProvider[F, A] =
       this.copy(tracer = Some(tracer))
@@ -420,7 +420,7 @@ object MySQLProvider:
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             databaseTerm            = databaseTerm,
-            logHandler              = Some(logHandler)
+            logHandler              = logHandler
           )
         case (Some(b), None) =>
           Connection.withBeforeAfter(
@@ -437,7 +437,7 @@ object MySQLProvider:
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             databaseTerm            = databaseTerm,
-            logHandler              = Some(logHandler)
+            logHandler              = logHandler
           )
         case (None, _) =>
           Connection(
@@ -452,7 +452,7 @@ object MySQLProvider:
             readTimeout             = readTimeout,
             allowPublicKeyRetrieval = allowPublicKeyRetrieval,
             databaseTerm            = databaseTerm,
-            logHandler              = Some(logHandler)
+            logHandler              = logHandler
           )
 
     override def use[B](f: Connection[F] => F[B]): F[B] =
@@ -462,7 +462,7 @@ object MySQLProvider:
     host: String,
     port: Int,
     user: String
-  ): MySQLProvider[F, Unit] = Impl[F, Unit](host, port, user, Connection.consoleLogger)
+  ): MySQLProvider[F, Unit] = Impl[F, Unit](host, port, user)
 
   def default[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host:     String,

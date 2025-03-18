@@ -6,6 +6,8 @@
 
 package ldbc.dsl
 
+import scala.concurrent.duration.*
+
 import cats.*
 import cats.syntax.all.*
 
@@ -109,6 +111,14 @@ object DBIO extends ParamBinder:
       override def commit(connection:      Connection[F]): F[A] = ev.raiseError(e)
       override def rollback(connection:    Connection[F]): F[A] = ev.raiseError(e)
       override def transaction(connection: Connection[F]): F[A] = ev.raiseError(e)
+
+  def sleep[F[_]: Temporal](duration: FiniteDuration): DBIO[F, Unit] =
+    new DBIO[F, Unit]:
+      override def run(connection:         Connection[F]): F[Unit] = Temporal[F].sleep(duration)
+      override def readOnly(connection:    Connection[F]): F[Unit] = Temporal[F].sleep(duration)
+      override def commit(connection:      Connection[F]): F[Unit] = Temporal[F].sleep(duration)
+      override def rollback(connection:    Connection[F]): F[Unit] = Temporal[F].sleep(duration)
+      override def transaction(connection: Connection[F]): F[Unit] = Temporal[F].sleep(duration)
 
   /**
    * A method that performs a single operation on the database server.
