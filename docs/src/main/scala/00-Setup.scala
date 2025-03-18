@@ -9,7 +9,7 @@ import cats.syntax.all.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.dsl.*
+import ldbc.dsl.DBIO
 import ldbc.dsl.io.*
 
 import ldbc.connector.*
