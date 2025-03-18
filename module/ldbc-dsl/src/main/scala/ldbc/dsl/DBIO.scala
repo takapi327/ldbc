@@ -27,7 +27,12 @@ import ldbc.dsl.util.FactoryCompat
  */
 sealed trait DBIOA[A]
 private object DBIOA:
-  given MonadThrow[DBIO] with
+  /**
+   * The priority of given has changed since Scala 3.7. If you use the Free monad, it will conflict with the one provided by cats free. This can be resolved by using implicit instead of given.
+   * 
+   * @see: https://scala-lang.org/2024/08/19/given-priority-change-3.7.html
+   */
+  implicit def monadThrowDBIO: MonadThrow[DBIO] = new MonadThrow[DBIO]:
     override def pure[A](a:        A): DBIO[A] = DBIO.liftF(DBIO.Pure(a))
     override def flatMap[A, B](fa: DBIO[A])(f: A => DBIO[B]) = fa.flatMap(f)
     override def tailRecM[A, B](a: A)(f: A => DBIO[Either[A, B]]): DBIO[B] = f(a).flatMap {
