@@ -17,6 +17,7 @@ import munit.*
 
 import ldbc.sql.*
 
+import ldbc.dsl.*
 import ldbc.schema.syntax.io.*
 import ldbc.schema.TableQuery
 
@@ -275,7 +276,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
           cityOpt <-
             city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query.to[Option]
           result <- cityOpt match
-                      case None => DBIO.pure[IO, Int](0)
+                      case None => DBIO.pure(0)
                       case Some(cityModel) =>
                         city
                           .update(cityModel.copy(district = "Tokyo-to"))
@@ -424,7 +425,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
                        .query
                        .to[Option]
           result <- codeOpt match
-                      case None => DBIO.pure[IO, Int](0)
+                      case None => DBIO.pure(0)
                       case Some(code) =>
                         city
                           .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))

@@ -8,13 +8,15 @@ package ldbc.tests
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
-import cats.syntax.all.*
+//import cats.syntax.all.*
 
 import cats.effect.*
 
 import munit.*
 
 import ldbc.sql.*
+
+import ldbc.dsl.*
 
 import ldbc.schema.syntax.io.*
 import ldbc.schema.TableQuery
@@ -309,7 +311,7 @@ trait TableSchemaSelectConnectionTest extends CatsEffectSuite:
         (for
           codeOpt <- country.select(_.code).where(_.code _equals "JPN").query.to[Option]
           cities <- codeOpt match
-                      case None => DBIO.pure[IO, List[(String, String)]](List.empty)
+                      case None => DBIO.pure[List[(String, String)]](List.empty)
                       case Some(code) =>
                         city
                           .select(v => v.name *: v.countryCode)
