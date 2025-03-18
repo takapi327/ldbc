@@ -7,29 +7,22 @@
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import org.typelevel.otel4s.trace.Tracer
-
+import ldbc.dsl.*
 import ldbc.dsl.io.*
 
 import ldbc.connector.*
 
 @main def program1(): Unit =
-  // #given
-  given Tracer[IO] = Tracer.noop[IO]
-  // #given
 
   // #program
-  val program: DBIO[Int] = DBIO.pure[IO, Int](1)
+  val program: DBIO[Int] = DBIO.pure[Int](1)
   // #program
 
   // #connection
-  def connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
-    ssl      = SSL.Trusted
-  )
+  def connection = MySQLProvider
+    .default[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setSSL(SSL.Trusted)
   // #connection
 
   // #run

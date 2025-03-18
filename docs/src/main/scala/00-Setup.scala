@@ -9,17 +9,12 @@ import cats.syntax.all.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import org.typelevel.otel4s.trace.Tracer
-
+import ldbc.dsl.*
 import ldbc.dsl.io.*
 
 import ldbc.connector.*
 
 @main def setup(): Unit =
-
-  // #given
-  given Tracer[IO] = Tracer.noop[IO]
-  // #given
 
   // #setupDatabase
   val createDatabase: DBIO[Int] =
@@ -102,12 +97,9 @@ import ldbc.connector.*
   // #insertOrder
 
   // #connection
-  def connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password")
-  )
+  def connection = MySQLProvider
+    .default[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
   // #connection
 
   // #setupTable

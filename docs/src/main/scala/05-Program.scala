@@ -9,16 +9,13 @@ import scala.language.implicitConversions
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import org.typelevel.otel4s.trace.Tracer
-
+import ldbc.dsl.*
 import ldbc.dsl.codec.*
 import ldbc.dsl.io.*
 
 import ldbc.connector.*
 
 @main def program5(): Unit =
-
-  given Tracer[IO] = Tracer.noop[IO]
 
   enum Status:
     case Active, InActive
@@ -39,13 +36,10 @@ import ldbc.connector.*
   val program2: DBIO[(String, String, Status)] =
     sql"SELECT name, email, status FROM user WHERE id = 1".query[(String, String, Status)].unsafe
 
-  def connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
-    ssl      = SSL.Trusted
-  )
+  def connection = MySQLProvider
+    .default[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
+    .setSSL(SSL.Trusted)
 
   connection
     .use { conn =>
