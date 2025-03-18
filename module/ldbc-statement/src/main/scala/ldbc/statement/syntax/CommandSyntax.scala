@@ -11,7 +11,7 @@ import ldbc.dsl.codec.Decoder
 
 import ldbc.statement.Command
 
-trait CommandSyntax[F[_]]:
+trait CommandSyntax:
 
   extension (command: Command)
 
@@ -28,7 +28,7 @@ trait CommandSyntax[F[_]]:
      * @return
      *   The number of rows updated
      */
-    def update: DBIO[F, Int]
+    def update: DBIO[Int]
 
     /**
      * A method to execute an insert operation against the MySQL server.
@@ -45,4 +45,4 @@ trait CommandSyntax[F[_]]:
      * @return
      *   The primary key value
      */
-    def returning[T <: String | Int | Long](using Decoder[T]): DBIO[F, T]
+    def returning[T <: String | Int | Long](using Decoder[T]): DBIO[T]

@@ -13,7 +13,7 @@ import ldbc.dsl.codec.Decoder
 
 import ldbc.statement.Query
 
-trait QuerySyntax[F[_]]:
+trait QuerySyntax:
 
   extension [A, B](query: Query[A, B])
 
@@ -27,7 +27,7 @@ trait QuerySyntax[F[_]]:
      * @return
      *   A [[ldbc.dsl.Query]] instance
      */
-    def query: DslQuery[F, B]
+    def query: DslQuery[B]
 
     /**
      * A method to convert a query to a [[ldbc.dsl.Query]].
@@ -44,4 +44,4 @@ trait QuerySyntax[F[_]]:
       m2:      Mirror.ProductOf[B],
       check:   m1.MirroredElemTypes =:= m2.MirroredElemTypes,
       decoder: Decoder[P]
-    ): DslQuery[F, P]
+    ): DslQuery[P]
