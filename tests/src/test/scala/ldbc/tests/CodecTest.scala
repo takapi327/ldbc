@@ -10,8 +10,6 @@ import java.time.*
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
-//import cats.syntax.all.*
-
 import cats.effect.*
 
 import munit.*
