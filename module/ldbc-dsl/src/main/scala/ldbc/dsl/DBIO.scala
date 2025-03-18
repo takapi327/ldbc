@@ -63,15 +63,37 @@ object DBIO extends ParamBinder:
   final case class HandleErrorWith[A](fa: DBIO[A], f: Throwable => DBIO[A]) extends DBIOA[A]
 
   private[ldbc] class Ops[A](dbio: DBIO[A]):
+    /**
+     * The function that actually executes the query.
+     *
+     * @return
+     *   The result of the query
+     */
     def run[F[_]: MonadCancelThrow](connection: Connection[F]): F[A] =
       dbio.foldMap(connection.interpreter)
+
+    /**
+     * Functions for managing the processing of connections in a read-only manner.
+     */
     def readOnly[F[_]: MonadCancelThrow](connection: Connection[F]): F[A] =
       connection.setReadOnly(true) *> run(connection) <* connection.setReadOnly(false)
+
+    /**
+     * Functions to manage the processing of connections for writing.
+     */
     def commit[F[_]: MonadCancelThrow](connection: Connection[F]): F[A] =
       connection.setReadOnly(false) *> connection.setAutoCommit(true) *> run(connection)
+
+    /**
+     * Functions to manage the processing of connections, always rolling back.
+     */
     def rollback[F[_]: MonadCancelThrow](connection: Connection[F]): F[A] =
       connection.setReadOnly(false) *> connection.setAutoCommit(false) *> run(connection) <* connection
         .rollback() <* connection.setAutoCommit(true)
+
+    /**
+     * Functions to manage the processing of connections in a transaction.
+     */
     def transaction[F[_]: MonadCancelThrow](connection: Connection[F]): F[A] =
       val acquire = connection.setReadOnly(false) *> connection.setAutoCommit(false) *> MonadThrow[F].pure(connection)
 
