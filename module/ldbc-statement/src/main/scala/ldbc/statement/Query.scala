@@ -8,7 +8,7 @@ package ldbc.statement
 
 import scala.deriving.Mirror
 
-import ldbc.dsl.{SQL, Query as DslQuery}
+import ldbc.dsl.{ Query as DslQuery, SQL }
 import ldbc.dsl.codec.Decoder
 
 /**
@@ -50,9 +50,9 @@ trait Query[A, B] extends SQL:
    * A [[ldbc.dsl.Query]] instance
    */
   def queryTo[P <: Product](using
-                            m1: Mirror.ProductOf[P],
-                            m2: Mirror.ProductOf[B],
-                            check: m1.MirroredElemTypes =:= m2.MirroredElemTypes,
-                            decoder: Decoder[P]
-                           ): DslQuery[P] =
+    m1:      Mirror.ProductOf[P],
+    m2:      Mirror.ProductOf[B],
+    check:   m1.MirroredElemTypes =:= m2.MirroredElemTypes,
+    decoder: Decoder[P]
+  ): DslQuery[P] =
     DslQuery.Impl[P](statement, params, decoder)
