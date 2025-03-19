@@ -13,6 +13,7 @@ import javax.sql.DataSource
 import scala.concurrent.ExecutionContext
 
 import cats.syntax.all.*
+import cats.Applicative
 
 import cats.effect.*
 import cats.effect.std.Console
@@ -34,53 +35,28 @@ trait MySQLProvider[F[_]] extends Provider[F]:
   def createConnection(): Resource[F, Connection[F]]
 
 object MySQLProvider:
-
-  def consoleLogger[F[_]: Console: Sync]: LogHandler[F] =
-    case LogEvent.Success(sql, args) =>
-      Console[F].println(
-        s"""Successful Statement Execution:
-           |  $sql
-           |
-           | arguments = [${ args.mkString(",") }]
-           |""".stripMargin
-      )
-    case LogEvent.ProcessingFailure(sql, args, failure) =>
-      Console[F].errorln(
-        s"""Failed ResultSet Processing:
-           |  $sql
-           |
-           | arguments = [${ args.mkString(",") }]
-           |""".stripMargin
-      ) >> Console[F].printStackTrace(failure)
-    case LogEvent.ExecFailure(sql, args, failure) =>
-      Console[F].errorln(
-        s"""Failed Statement Execution:
-           |  $sql
-           |
-           | arguments = [${ args.mkString(",") }]
-           |""".stripMargin
-      ) >> Console[F].printStackTrace(failure)
+  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
 
   private case class DataSourceProvider[F[_]](
     dataSource: DataSource,
     connectEC:  ExecutionContext,
-    logHandler: LogHandler[F]
+    logHandler: Option[LogHandler[F]]
   )(using ev: Async[F])
     extends MySQLProvider[F]:
     override def createConnection(): Resource[F, Connection[F]] =
       Resource
         .fromAutoCloseable(ev.evalOn(ev.delay(dataSource.getConnection()), connectEC))
-        .map(conn => ConnectionImpl(conn, logHandler))
+        .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
 
     override def use[A](f: Connection[F] => F[A]): F[A] =
       createConnection().use(f)
 
   private case class ConnectionProvider[F[_]: Sync](
     connection: java.sql.Connection,
-    logHandler: LogHandler[F]
+    logHandler: Option[LogHandler[F]]
   ) extends MySQLProvider[F]:
     override def createConnection(): Resource[F, Connection[F]] =
-      Resource.pure(ConnectionImpl(connection, logHandler))
+      Resource.pure(ConnectionImpl(connection, logHandler.getOrElse(noopLogger)))
 
     override def use[A](f: Connection[F] => F[A]): F[A] =
       createConnection().use(f)
@@ -90,17 +66,17 @@ object MySQLProvider:
     private def create(
       driver:      String,
       conn:        () => java.sql.Connection,
-      _logHandler: LogHandler[F]
+      _logHandler: Option[LogHandler[F]]
     ): MySQLProvider[F] =
       new MySQLProvider[F]:
-        override def logHandler: LogHandler[F] = _logHandler
+        override def logHandler: Option[LogHandler[F]] = _logHandler
         override def createConnection(): Resource[F, Connection[F]] =
           Resource
             .fromAutoCloseable(ev.blocking {
               Class.forName(driver)
               conn()
             })
-            .map(conn => ConnectionImpl(conn, logHandler))
+            .map(conn => ConnectionImpl(conn, logHandler.getOrElse(noopLogger)))
 
         override def use[A](f: Connection[F] => F[A]): F[A] =
           createConnection().use(f)
@@ -119,7 +95,7 @@ object MySQLProvider:
       url:        String,
       logHandler: Option[LogHandler[F]]
     ): MySQLProvider[F] =
-      create(driver, () => DriverManager.getConnection(url), logHandler.getOrElse(consoleLogger))
+      create(driver, () => DriverManager.getConnection(url), logHandler)
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
      *
@@ -141,7 +117,7 @@ object MySQLProvider:
       password:   String,
       logHandler: Option[LogHandler[F]]
     ): MySQLProvider[F] =
-      create(driver, () => DriverManager.getConnection(url, user, password), logHandler.getOrElse(consoleLogger))
+      create(driver, () => DriverManager.getConnection(url, user, password), logHandler)
 
     /** Construct a new `Provider` that uses the JDBC `DriverManager` to allocate connections.
      *
@@ -160,7 +136,7 @@ object MySQLProvider:
       info:       java.util.Properties,
       logHandler: Option[LogHandler[F]]
     ): MySQLProvider[F] =
-      create(driver, () => DriverManager.getConnection(url, info), logHandler.getOrElse(consoleLogger))
+      create(driver, () => DriverManager.getConnection(url, info), logHandler)
 
   /**
    *  Construct a constructor of `Provider[F]` for some `D <: DataSource` When calling this constructor you
@@ -177,7 +153,7 @@ object MySQLProvider:
     dataSource: DataSource,
     connectEC:  ExecutionContext,
     logHandler: Option[LogHandler[F]] = None
-  ): MySQLProvider[F] = DataSourceProvider(dataSource, connectEC, logHandler.getOrElse(consoleLogger))
+  ): MySQLProvider[F] = DataSourceProvider(dataSource, connectEC, logHandler)
 
   /**
    * Construct a `Provider` that wraps an existing `Connection`. Closing the connection is the responsibility of
@@ -191,7 +167,7 @@ object MySQLProvider:
   def fromConnection[F[_]: Console: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]] = None
-  ): MySQLProvider[F] = ConnectionProvider(connection, logHandler.getOrElse(consoleLogger))
+  ): MySQLProvider[F] = ConnectionProvider(connection, logHandler)
 
   /** Module of constructors for `Provider` that use the JDBC `DriverManager` to allocate connections. Note that
    * `DriverManager` is unbounded and will happily allocate new connections until server resources are exhausted. It
