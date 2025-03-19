@@ -26,7 +26,7 @@
 
 ```scala
 // userテーブルに新しいユーザーを挿入するメソッド
-def insertUser(name: String, email: String): DBIO[IO, Int] =
+def insertUser(name: String, email: String): DBIO[Int] =
   sql"INSERT INTO user (name, email) VALUES ($name, $email)"
     .update
 ```
@@ -57,7 +57,7 @@ sql"SELECT id, name, email FROM user WHERE name = 'dave'"
 
 ```scala
 // 挿入と同時に生成されたIDを取得するメソッド
-def insertUserAndGetId(name: String, email: String): DBIO[IO, Long] =
+def insertUserAndGetId(name: String, email: String): DBIO[Long] =
   sql"INSERT INTO user (name, email) VALUES ($name, $email)"
     .returning[Long]
 ```
@@ -84,7 +84,7 @@ println(s"新しいユーザーのID: $newUserId")
 case class User(id: Long, name: String, email: String)
 
 // ユーザーを挿入し、挿入したユーザーの情報を返すメソッド
-def insertAndRetrieveUser(name: String, email: String): DBIO[IO, Option[User]] =
+def insertAndRetrieveUser(name: String, email: String): DBIO[Option[User]] =
   for
     id   <- sql"INSERT INTO user (name, email) VALUES ($name, $email)".returning[Long]
     user <- sql"SELECT id, name, email FROM user WHERE id = $id".query[User].to[Option]
@@ -109,7 +109,7 @@ insertAndRetrieveUser("grace", "grace@example.com")
 
 ```scala
 // ユーザーのメールアドレスを更新するメソッド
-def updateUserEmail(id: Long, newEmail: String): DBIO[IO, Int] =
+def updateUserEmail(id: Long, newEmail: String): DBIO[Int] =
   sql"UPDATE user SET email = $newEmail WHERE id = $id"
     .update
 ```
@@ -139,7 +139,7 @@ sql"SELECT id, name, email FROM user WHERE id = 1"
 
 ```scala
 // 特定の名前と一致するユーザーのメールアドレスを更新
-def updateEmailsByName(name: String, newEmail: String): DBIO[IO, Int] =
+def updateEmailsByName(name: String, newEmail: String): DBIO[Int] =
   sql"""
     UPDATE user 
     SET email = $newEmail 
@@ -155,7 +155,7 @@ def updateEmailsByName(name: String, newEmail: String): DBIO[IO, Int] =
 
 ```scala
 // IDによるユーザー削除
-def deleteUser(id: Long): DBIO[IO, Int] =
+def deleteUser(id: Long): DBIO[Int] =
   sql"DELETE FROM user WHERE id = $id"
     .update
 ```
@@ -185,7 +185,7 @@ sql"SELECT COUNT(*) FROM user WHERE id = 5"
 
 ```scala
 // 特定のドメインのメールアドレスを持つユーザーをすべて削除
-def deleteUsersByEmailDomain(domain: String): DBIO[IO, Int] =
+def deleteUsersByEmailDomain(domain: String): DBIO[Int] =
   sql"DELETE FROM user WHERE email LIKE ${"%@" + domain}"
     .update
 ```
@@ -200,7 +200,7 @@ def deleteUsersByEmailDomain(domain: String): DBIO[IO, Int] =
 import cats.data.NonEmptyList
 
 // 複数のユーザーを一括挿入
-def insertManyUsers(users: NonEmptyList[(String, String)]): DBIO[IO, Int] =
+def insertManyUsers(users: NonEmptyList[(String, String)]): DBIO[Int] =
   val values = users.map { case (name, email) => sql"($name, $email)" }
   (sql"INSERT INTO user (name, email) VALUES " ++ Fragments.values(values)).update
 ```
@@ -226,7 +226,7 @@ println(s"挿入された行数: $insertedCount") // "挿入された行数: 3" 
 
 ```scala
 // ユーザーを挿入し、そのユーザーに関連する情報も挿入する例
-def createUserWithProfile(name: String, email: String, bio: String): DBIO[IO, Long] =
+def createUserWithProfile(name: String, email: String, bio: String): DBIO[Long] =
   for
     userId    <- sql"INSERT INTO user (name, email) VALUES ($name, $email)".returning[Long]
     profileId <- sql"INSERT INTO user_profile (user_id, bio) VALUES ($userId, $bio)".returning[Long]

@@ -32,10 +32,10 @@
 つまり、どんなldbcプログラムでも`attempt`を加えるだけで例外を捕捉することができます。
 
 ```scala
-val program = DBIO.pure[IO, Int](1)
+val program = DBIO.pure(1)
 
 program.attempt
-// DBIO[IO, Either[Throwable, Int]]
+// DBIO[Either[Throwable, Int]]
 ```
 
 ### 具体的なエラー処理の例
@@ -53,11 +53,11 @@ import ldbc.dsl.*
 
 // 特定の条件でエラーを発生させる
 val program: DBIO[String] = for
-  id <- DBIO.pure[IO, Int](0)
+  id <- DBIO.pure(0)
   result <- if id <= 0 then
-    DBIO.raiseError[IO, String](new IllegalArgumentException("IDは正の値である必要があります"))
+    DBIO.raiseError[String](new IllegalArgumentException("IDは正の値である必要があります"))
   else
-    DBIO.pure[IO, String](s"有効なID: $id")
+    DBIO.pure(s"有効なID: $id")
 yield result
 ```
 
@@ -72,18 +72,17 @@ import java.sql.SQLException
 
 // IDによるユーザー検索と、エラー処理
 val findUserById: DBIO[String] = for
-  userId <- DBIO.pure[IO, Int](123)
-  query = s"SELECT name FROM users WHERE id = $userId"
-  result <- DBIO.single[IO](query).handleErrorWith {
+  userId <- DBIO.pure(123)
+  result <- sql"SELECT name FROM users WHERE id = $userId".query[String].unfase.handleErrorWith {
     case e: SQLException if e.getMessage.contains("Table 'users' doesn't exist") =>
       // テーブルが存在しない場合の処理
-      DBIO.pure[IO, String]("ユーザーテーブルがまだ作成されていません")
+      DBIO.pure("ユーザーテーブルがまだ作成されていません")
     case e: SQLException =>
       // その他のSQLエラーの処理
-      DBIO.pure[IO, String](s"データベースエラー: ${e.getMessage}")
+      DBIO.pure(s"データベースエラー: ${e.getMessage}")
     case e: Throwable =>
       // 予期しないエラーの処理
-      DBIO.pure[IO, String](s"予期しないエラー: ${e.getMessage}")
+      DBIO.pure(s"予期しないエラー: ${e.getMessage}")
   }
 yield result
 ```
@@ -99,13 +98,13 @@ import ldbc.dsl.*
 
 // データベースからの結果を安全に処理する
 val safeOperation: DBIO[String] =
-  val riskyOperation = DBIO.single[IO]("SELECT * FROM non_existent_table")
+  val riskyOperation = sql"SELECT * FROM non_existent_table".query[Stirng].unsafe
   
   riskyOperation.attempt.flatMap {
     case Right(result) => 
-      DBIO.pure[IO, String]("操作成功: " + result.toString)
+      DBIO.pure("操作成功: " + result.toString)
     case Left(error) => 
-      DBIO.pure[IO, String](s"エラーが発生しました: ${error.getMessage}")
+      DBIO.pure(s"エラーが発生しました: ${error.getMessage}")
   }
 ```
 
@@ -131,11 +130,11 @@ def retryOnConnectionError[A](operation: DBIO[A], maxRetries: Int, delay: Finite
       operation.handleErrorWith { error =>
         // 接続エラーの場合のみリトライする
         if isConnectionError(error) && remainingAttempts > 0 then
-          DBIO.pure[IO, Unit](()) // 遅延のための空のアクション
+          DBIO.pure(()) // 遅延のための空のアクション
             .flatMap(_ => DBIO.sleep[IO](delay))
             .flatMap(_ => retry(remainingAttempts - 1))
         else
-          DBIO.raiseError[IO, A](error) // その他のエラーは再スロー
+          DBIO.raiseError[A](error) // その他のエラーは再スロー
       }
   
   retry(maxRetries)
@@ -167,7 +166,7 @@ import cats.data.EitherT
 
 // ユーザーを検索する関数（エラーハンドリング付き）
 def findUser(id: Int): EitherT[DBIO, AppError, User] =
-  val query = DBIO.single[IO](s"SELECT * FROM users WHERE id = $id")
+  val query = sql"SELECT * FROM users WHERE id = $id".query[String].unsafe
   
   EitherT(
     query.attempt.flatMap {
@@ -177,13 +176,13 @@ def findUser(id: Int): EitherT[DBIO, AppError, User] =
           val name = resultSet.getString("name")
           val email = resultSet.getString("email")
           val user = User(id, name, email)
-          DBIO.pure[IO, Either[AppError, User]](Right(user))
+          DBIO.pure[Either[AppError, User]](Right(user))
         else
           // ユーザーが見つからない場合
-          DBIO.pure[IO, Either[AppError, User]](Left(UserNotFound(id)))
+          DBIO.pure[Either[AppError, User]](Left(UserNotFound(id)))
       case Left(e) =>
         // データベースエラーの場合
-        DBIO.pure[IO, Either[AppError, User]](Left(DatabaseError(e)))
+        DBIO.pure[Either[AppError, User]](Left(DatabaseError(e)))
     }
   )
 

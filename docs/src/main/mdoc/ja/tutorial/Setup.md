@@ -134,7 +134,7 @@ import ldbc.dsl.*
 object FirstSteps extends IOApp.Simple:
 
   // 単純な定数を返すプログラム
-  val simpleProgram: DBIO[IO, Int] = DBIO.pure[IO, Int](42)
+  val simpleProgram: DBIO[Int] = DBIO.pure(0)
   
   // データベース接続設定
   val provider =

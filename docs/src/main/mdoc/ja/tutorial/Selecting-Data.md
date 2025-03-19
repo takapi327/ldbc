@@ -27,8 +27,8 @@ ldbcでデータを取得する基本的な流れは以下の通りです：
 
 ```scala
 sql"SELECT name FROM user"
-  .query[String]                 // Query[IO, String]
-  .to[List]                      // DBIO[IO, List[String]]
+  .query[String]                 // Query[String]
+  .to[List]                      // DBIO[List[String]]
   .readOnly(conn)                // IO[List[String]]
   .unsafeRunSync()               // List[String]
   .foreach(println)              // Unit
@@ -37,8 +37,8 @@ sql"SELECT name FROM user"
 このコードを詳しく説明すると：
 
 - `sql"SELECT name FROM user"` - SQLクエリを定義します。
-- `.query[String]` - 各行の結果を`String`型にマッピングします。これにより`Query[IO, String]`型が生成されます。
-- `.to[List]` - 結果を`List`に集約します。`DBIO[IO, List[String]]`型が生成されます。このメソッドは`FactoryCompat`を実装する任意のコレクション型（`List`、`Vector`、`Set`など）で使用できます。
+- `.query[String]` - 各行の結果を`String`型にマッピングします。これにより`Query[String]`型が生成されます。
+- `.to[List]` - 結果を`List`に集約します。`DBIO[List[String]]`型が生成されます。このメソッドは`FactoryCompat`を実装する任意のコレクション型（`List`、`Vector`、`Set`など）で使用できます。
 - `.readOnly(conn)` - コネクションを読み取り専用モードで使用してクエリを実行します。戻り値は`IO[List[String]]`です。
 - `.unsafeRunSync()` - IOモナドを実行して実際の結果（`List[String]`）を取得します。
 - `.foreach(println)` - 結果の各要素を出力します。
@@ -49,8 +49,8 @@ sql"SELECT name FROM user"
 
 ```scala
 sql"SELECT name, email FROM user"
-  .query[(String, String)]       // Query[IO, (String, String)]
-  .to[List]                      // DBIO[IO, List[(String, String)]]
+  .query[(String, String)]       // Query[(String, String)]
+  .to[List]                      // DBIO[List[(String, String)]]
   .readOnly(conn)                // IO[List[(String, String)]]
   .unsafeRunSync()               // List[(String, String)]
   .foreach { case (name, email) => println(s"Name: $name, Email: $email") }
@@ -68,8 +68,8 @@ case class User(id: Long, name: String, email: String)
 
 // クエリ実行とマッピング
 sql"SELECT id, name, email FROM user"
-  .query[User]                   // Query[IO, User]
-  .to[List]                      // DBIO[IO, List[User]]
+  .query[User]                   // Query[User]
+  .to[List]                      // DBIO[List[User]]
   .readOnly(conn)                // IO[List[User]]
   .unsafeRunSync()               // List[User]
   .foreach(user => println(s"ID: ${user.id}, Name: ${user.name}, Email: ${user.email}"))
@@ -104,8 +104,8 @@ sql"""
   FROM city
   JOIN country ON city.country_code = country.code
 """
-  .query[CityWithCountry]        // Query[IO, CityWithCountry]
-  .to[List]                      // DBIO[IO, List[CityWithCountry]]
+  .query[CityWithCountry]        // Query[CityWithCountry]
+  .to[List]                      // DBIO[List[CityWithCountry]]
   .readOnly(conn)                // IO[List[CityWithCountry]]
   .unsafeRunSync()               // List[CityWithCountry]
   .foreach(cityWithCountry => println(
@@ -141,8 +141,8 @@ sql"""
   FROM city
   JOIN country ON city.country_code = country.code
 """
-  .query[(City, Country)]        // Query[IO, (City, Country)]
-  .to[List]                      // DBIO[IO, List[(City, Country)]]
+  .query[(City, Country)]        // Query[(City, Country)]
+  .to[List]                      // DBIO[List[(City, Country)]]
   .readOnly(conn)                // IO[List[(City, Country)]]
   .unsafeRunSync()               // List[(City, Country)]
   .foreach { case (city, country) => 
@@ -171,8 +171,8 @@ sql"""
   FROM city AS c
   JOIN country AS ct ON c.country_code = ct.code
 """
-  .query[(C, CT)]                // Query[IO, (C, CT)]
-  .to[List]                      // DBIO[IO, List[(C, CT)]]
+  .query[(C, CT)]                // Query[(C, CT)]
+  .to[List]                      // DBIO[List[(C, CT)]]
   .readOnly(conn)                // IO[List[(C, CT)]]
   .unsafeRunSync()               // List[(C, CT)]
   .foreach { case (city, country) => 
@@ -189,8 +189,8 @@ case class User(id: Long, name: String, email: String)
 
 // IDによる単一ユーザーの検索
 sql"SELECT id, name, email FROM user WHERE id = ${userId}"
-  .query[User]                   // Query[IO, User]
-  .to[Option]                    // DBIO[IO, Option[User]]
+  .query[User]                   // Query[User]
+  .to[Option]                    // DBIO[Option[User]]
   .readOnly(conn)                // IO[Option[User]]
   .unsafeRunSync()               // Option[User]
   .foreach(user => println(s"Found user: ${user.name}"))
