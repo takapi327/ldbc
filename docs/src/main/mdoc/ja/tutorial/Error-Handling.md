@@ -49,7 +49,7 @@ program.attempt
 ```scala
 import cats.syntax.all.*
 import cats.effect.IO
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 // 特定の条件でエラーを発生させる
 val program: DBIO[String] = for
@@ -67,7 +67,7 @@ yield result
 
 ```scala 3
 import cats.effect.IO
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 import java.sql.SQLException
 
 // IDによるユーザー検索と、エラー処理
@@ -95,7 +95,7 @@ yield result
 ```scala 3
 import cats.effect.IO
 import cats.syntax.all.*
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 // データベースからの結果を安全に処理する
 val safeOperation: DBIO[String] =
@@ -121,7 +121,7 @@ val safeOperation: DBIO[String] =
 import scala.concurrent.duration.*
 import cats.effect.IO
 import cats.syntax.all.*
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 def retryOnConnectionError[A](operation: DBIO[A], maxRetries: Int, delay: FiniteDuration): DBIO[A] =
   def retry(remainingAttempts: Int): DBIO[A] =
@@ -154,7 +154,7 @@ def isConnectionError(error: Throwable): Boolean =
 ```scala
 import cats.effect.IO
 import cats.syntax.all.*
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 // アプリケーション固有のエラー型の定義
 sealed trait AppError

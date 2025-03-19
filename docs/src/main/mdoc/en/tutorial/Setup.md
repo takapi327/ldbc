@@ -119,7 +119,7 @@ To begin, create a new project with ldbc as a dependency.
 Before using ldbc, some symbols need to be imported. For convenience, we will use package import here. This will give us the symbols most commonly used when working with high-level APIs.
 
 ```scala
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 ```
 
 Let's bring Cats too.

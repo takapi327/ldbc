@@ -59,7 +59,7 @@ libraryDependencies ++= Seq(
 プレーンなDSLは、シンプルなSQL文をそのまま記述する方法です。たとえば、直接SQLリテラルを用いてクエリを実行できます。
 
 ```scala
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 val plainResult = sql"SELECT name FROM user"
   .query[String]
@@ -82,7 +82,6 @@ libraryDependencies ++= Seq(
 
 ```scala 3
 import ldbc.query.builder.*
-import ldbc.query.builder.syntax.io.*
 
 case class User(id: Int, name: String, email: String) derives Table
 
@@ -107,7 +106,6 @@ libraryDependencies ++= Seq(
 
 ```scala 3
 import ldbc.schema.*
-import ldbc.schema.syntax.io.*
 
 case class User(id: Long, name: String, email: String)
 

@@ -8,7 +8,7 @@ import com.zaxxer.hikari.HikariDataSource
 
 import cats.effect.*
 
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 import jdbc.connector.*
 

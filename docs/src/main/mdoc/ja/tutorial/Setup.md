@@ -129,7 +129,7 @@ touch FirstSteps.scala
 import cats.effect.*
 import cats.syntax.all.*
 import ldbc.connector.*
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 object FirstSteps extends IOApp.Simple:
 

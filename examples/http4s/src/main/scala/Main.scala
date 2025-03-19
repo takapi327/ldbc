@@ -14,7 +14,6 @@ import org.typelevel.otel4s.trace.Tracer
 import ldbc.statement.formatter.Naming
 
 import ldbc.schema.*
-import ldbc.schema.syntax.io.*
 
 import ldbc.connector.*
 
