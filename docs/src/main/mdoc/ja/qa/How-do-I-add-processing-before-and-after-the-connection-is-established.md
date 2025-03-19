@@ -34,4 +34,4 @@ libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 @:@
 
 ## 参考資料
-- [コネクション](/ja/tutorial/Connection.md#use-ldbc-connector)
+- [コネクション](/ja/tutorial/Connection.md#ldbcコネクタの使用)

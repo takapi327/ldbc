@@ -11,4 +11,4 @@ Scalaコネクタではまだコネクションプールをサポートできて
 
 ## 参考資料
 - [HikariCP](/ja/examples/HikariCP.md)
-- [Use jdbc connector](/ja/tutorial/Connection.md#use-jdbc-connector)
+- [Use jdbc connector](/ja/tutorial/Connection.md#jdbcコネクタの使用)
