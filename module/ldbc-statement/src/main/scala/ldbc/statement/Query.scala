@@ -6,7 +6,10 @@
 
 package ldbc.statement
 
-import ldbc.dsl.SQL
+import scala.deriving.Mirror
+
+import ldbc.dsl.{SQL, Query as DslQuery}
+import ldbc.dsl.codec.Decoder
 
 /**
  * Trait represents a read-only query in MySQL.
@@ -23,3 +26,33 @@ trait Query[A, B] extends SQL:
 
   /** Union-type column list */
   def columns: Column[B]
+
+  /**
+   * A method to convert a query to a [[ldbc.dsl.Query]].
+   *
+   * {{{
+   *   TableQuery[User].select(v => v.name *: v.age).query
+   * }}}
+   *
+   * @return
+   * A [[ldbc.dsl.Query]] instance
+   */
+  def query: DslQuery[B] = DslQuery.Impl[B](statement, params, columns.decoder)
+
+  /**
+   * A method to convert a query to a [[ldbc.dsl.Query]].
+   *
+   * {{{
+   *   TableQuery[User].selectAll.queryTo[User]
+   * }}}
+   *
+   * @return
+   * A [[ldbc.dsl.Query]] instance
+   */
+  def queryTo[P <: Product](using
+                            m1: Mirror.ProductOf[P],
+                            m2: Mirror.ProductOf[B],
+                            check: m1.MirroredElemTypes =:= m2.MirroredElemTypes,
+                            decoder: Decoder[P]
+                           ): DslQuery[P] =
+    DslQuery.Impl[P](statement, params, decoder)

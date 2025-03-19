@@ -17,7 +17,6 @@ import ldbc.sql.*
 import ldbc.dsl.*
 
 import ldbc.query.builder.*
-import ldbc.query.builder.syntax.*
 
 import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
 

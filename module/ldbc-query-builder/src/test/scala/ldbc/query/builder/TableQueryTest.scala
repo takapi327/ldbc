@@ -10,7 +10,7 @@ import cats.data.NonEmptyList
 
 import org.scalatest.flatspec.AnyFlatSpec
 
-import ldbc.query.builder.syntax.*
+import ldbc.query.builder.*
 
 class TableQueryTest extends AnyFlatSpec:
 
