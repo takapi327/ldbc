@@ -10,16 +10,14 @@ import java.time.*
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
-import cats.syntax.all.*
-
 import cats.effect.*
 
 import munit.CatsEffectSuite
 
 import ldbc.sql.*
 
+import ldbc.dsl.*
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.dsl.io.*
 
 import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
 

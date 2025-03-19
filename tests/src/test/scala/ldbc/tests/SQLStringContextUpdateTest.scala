@@ -8,15 +8,13 @@ package ldbc.tests
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
-import cats.syntax.all.*
-
 import cats.effect.*
 
 import munit.CatsEffectSuite
 
 import ldbc.sql.*
 
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
 

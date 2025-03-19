@@ -19,7 +19,7 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
 
-import ldbc.query.builder.syntax.io.*
+import ldbc.query.builder.*
 
 import jdbc.connector.*
 

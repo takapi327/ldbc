@@ -23,8 +23,7 @@ import ldbc.sql.*
 
 import ldbc.dsl.SQL
 
-import ldbc.query.builder.syntax.io.*
-import ldbc.query.builder.Table
+import ldbc.query.builder.*
 
 import jdbc.connector.*
 

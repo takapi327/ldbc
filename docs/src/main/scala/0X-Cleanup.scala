@@ -7,17 +7,11 @@
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import org.typelevel.otel4s.trace.Tracer
-
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 import ldbc.connector.*
 
 @main def cleanup(): Unit =
-
-  // #given
-  given Tracer[IO] = Tracer.noop[IO]
-  // #given
 
   // #cleanupDatabase
   val dropDatabase: DBIO[Int] =
@@ -25,12 +19,9 @@ import ldbc.connector.*
   // #cleanupDatabase
 
   // #connection
-  def connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password")
-  )
+  def connection = MySQLProvider
+    .default[IO]("127.0.0.1", 13306, "ldbc")
+    .setPassword("password")
   // #connection
 
   // #run

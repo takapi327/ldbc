@@ -4,12 +4,9 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-package ldbc
+package ldbc.query
 
 import ldbc.dsl.syntax.HelperFunctionsSyntax
-import ldbc.dsl.DBIO
-
-import ldbc.statement.Schema
 
 /**
  * Top-level imports provide aliases for the most commonly used types and modules. A typical starting set of imports
@@ -17,10 +14,9 @@ import ldbc.statement.Schema
  *
  * example:
  * {{{
- *   import ldbc.schema.*
+ *   import ldbc.query.builder.*
  * }}}
  */
-package object schema extends Alias, DataTypes, HelperFunctionsSyntax:
+package object builder extends HelperFunctionsSyntax:
 
-  implicit final def schemaDDLOps(ddl: Schema.DDL): DBIO[Array[Int]] =
-    DBIO.sequence(ddl.statements)
+  type TableQuery[T] = ldbc.statement.TableQuery[Table[T], Table.Opt[T]]

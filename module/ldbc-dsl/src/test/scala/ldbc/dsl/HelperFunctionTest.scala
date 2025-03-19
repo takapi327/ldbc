@@ -10,7 +10,7 @@ import cats.data.NonEmptyList
 
 import munit.CatsEffectSuite
 
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 class HelperFunctionTest extends munit.CatsEffectSuite:
 

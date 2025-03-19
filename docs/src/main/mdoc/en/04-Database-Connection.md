@@ -29,7 +29,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 import ldbc.dsl.logging.ConsoleLogHandler
 import ldbc.query.builder.TableQuery
 ```
@@ -267,7 +267,7 @@ In LDBC, the `Database` model is also used for purposes other than holding datab
 If you have already generated a `Database` model for another use, you can use that model to build a `Database` with database connection information.
 
 ```scala 3
-import ldbc.dsl.io.*
+import ldbc.dsl.*
 
 val database: Database = ???
 
