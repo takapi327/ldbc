@@ -12,15 +12,15 @@ Connection 生成に`withBeforeAfter`メソッドを使用することでコネ�
 `withBeforeAfter`の第2引数には、Afterに渡すBeforeの処理結果の型を指定します。
 
 ```scala 3
+import ldbc.connector.*
+
 def before: Connection[IO] => IO[Unit] = _ => IO.println("Connecting to...")
 def after: (Unit, Connection[IO]) => IO[Unit] = (_, _) => IO.println("Connection Closed")
 
-def connect: Resource[IO, Connection[IO]] =
-  Connection.withBeforeAfter[IO, Unit](
+val provider =
+  MySQLProvider
     ...
-    before = before,
-    after = after
-  )
+    .withBeforeAfter(before, after)
 ```
 
 @:callout(warning)
@@ -34,4 +34,4 @@ libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 @:@
 
 ## 参考資料
-- [コネクション](/ja/tutorial/Connection.md#ldbcコネクタの使用)
+- [ldbcコネクタの使用](/ja/tutorial/Connection.md#ldbcコネクタの使用)
