@@ -12,4 +12,3 @@ Scalaコネクタではまだコネクションプールをサポートできて
 ## 参考資料
 - [HikariCP](/ja/examples/HikariCP.md)
 - [jdbcコネクタの使用](/ja/tutorial/Connection.md#jdbcコネクタの使用)
-[Implicit-search-problem-too-large.md](Implicit-search-problem-too-large.md)

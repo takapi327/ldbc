@@ -5,195 +5,270 @@
 
 # エラーハンドリング
 
-[データベース操作](/ja/tutorial/Database-Operations.md)で基本的なトランザクション管理を学びました。しかし、実際のアプリケーションでは、さまざまな理由でエラーが発生する可能性があります。このページでは、ldbcでエラーを適切に処理する方法を説明します。
+[データベース操作](/ja/tutorial/Database-Operations.md)で基本的なトランザクション管理を学びました。しかし、実際のアプリケーションでは、データベース接続の問題、SQL構文エラー、一意制約違反など、様々な理由でエラーが発生する可能性があります。このページでは、ldbcでエラーを適切に処理する方法を説明します。
 
-堅牢なアプリケーションを構築するには、期待通りに動作しない状況に対処できる必要があります。ldbcはCats Effectと統合されているため、関数型エラー処理パターンを活用できます。
+## エラーハンドリングの基本
 
-この章では、例外をトラップしたり処理したりするプログラムを構築するためのコンビネーター一式を検討します。
+ldbcは関数型プログラミングの原則に従っており、Cats Effectのエラー処理機能と統合されています。`DBIO` モナドは `MonadThrow` のインスタンスを持っているため、例外の発生や処理のための標準的な関数型インターフェースを提供します。
 
-## 例外について
+主に使用する3つの基本的なエラー処理メソッドは次のとおりです：
 
-ある操作が成功するかどうかは、ネットワークの健全性、テーブルの現在の内容、ロックの状態など、予測できない要因に依存します。そのため、`EitherT[DBIO, Throwable, A]`のような論理和ですべてを計算するか、明示的に捕捉されるまで例外の伝播を許可するかを決めなければならない。つまり、ldbcのアクション（ターゲット・モナドに変換される）が実行されると、例外が発生する可能性がある。
+- `raiseError`: 例外を発生させる - `Throwable`を`DBIO[A]`に変換します
+- `handleErrorWith`: 例外を処理する - エラー処理関数を使って`DBIO[A]`を別の`DBIO[A]`に変換します
+- `attempt`: 例外を捕捉する - `DBIO[A]`を`DBIO[Either[Throwable, A]]`に変換します
 
-発生しやすい例外は主に3種類あります：
+## データベース操作での例外の種類
 
-1. あらゆる種類のI/Oで様々なタイプのIOExceptionが発生する可能性があり、これらの例外は回復できない傾向があります。
-2. データベース例外は、通常、ベンダー固有のSQLStateで特定のエラーを識別する一般的なSQLExceptionとして、キー違反のような一般的な状況で発生します。エラーコードは伝承として伝えられるか、実験によって発見されなければなりません。XOPENとSQL:2003の標準がありますが、どのベンダーもこれらの仕様に忠実ではないようです。これらのエラーには回復可能なものとそうでないものがあります。
-3. ldbcは、無効な型マッピング、ドライバから返される未知の JDBC 定数、観測される NULL 値、その他 ldbc が想定している不変条件の違反に対して InvariantViolation を発生させます。これらの例外はプログラマのエラーかドライバの不適合を示し、一般に回復不可能です。
+ldbcを使用する際に遭遇する可能性のある主な例外の種類は次のとおりです：
 
-## モナド・エラーと派生コンバイネーター
+1. **接続エラー**: データベースサーバーに接続できない場合に発生します（例：`ConnectException`）
+2. **SQL例外**: SQLの実行中に発生するエラー（例：`SQLException`）
+   - 構文エラー
+   - 一意キー制約違反
+   - 外部キー制約違反
+   - タイムアウト
+3. **型変換エラー**: データベースの結果を期待する型に変換できない場合（例：`ldbc.dsl.exception.DecodeFailureException`）
 
-すべてのldbcモナドは、`MonadError[?[_], Throwable]`を拡張したAsyncインスタンスを提供しています。つまり、DBIOなどは以下のような基本的な操作を持っています：
+## エラー処理の基本的な使い方
 
-- `raiseError`: 例外を発生させる (Throwableを`M[A]`に変換する)
-- `handleErrorWith`: 例外を処理する (`M[A]`を`M[B]`に変換する)
-- `attempt`: 例外を捕捉する (`M[A]`を`M[Either[Throwable, A]]`に変換する)
+### 例外の発生（raiseError）
 
-つまり、どんなldbcプログラムでも`attempt`を加えるだけで例外を捕捉することができます。
-
-```scala
-val program = DBIO.pure(1)
-
-program.attempt
-// DBIO[Either[Throwable, Int]]
-```
-
-### 具体的なエラー処理の例
-
-実際のアプリケーションでは、以下のようにしてエラーを処理できます。
-
-#### 例外の発生
-
-`raiseError`を使って明示的に例外を発生させることができます：
+特定の条件で明示的に例外を発生させる場合は、`raiseError`を使用します：
 
 ```scala
 import cats.syntax.all.*
-import cats.effect.IO
 import ldbc.dsl.*
 
-// 特定の条件でエラーを発生させる
+// 特定の条件でエラーを発生させる例
+def validateUserId(id: Int): DBIO[Int] = 
+  if id <= 0 then 
+    DBIO.raiseError[Int](new IllegalArgumentException("IDは正の値である必要があります"))
+  else 
+    DBIO.pure(id)
+
+// 使用例
 val program: DBIO[String] = for
-  id <- DBIO.pure(0)
-  result <- if id <= 0 then
-    DBIO.raiseError[String](new IllegalArgumentException("IDは正の値である必要があります"))
-  else
-    DBIO.pure(s"有効なID: $id")
+  id <- validateUserId(0)
+  result <- sql"SELECT name FROM users WHERE id = $id".query[String].unsafe
 yield result
+
+// この例では、idが0のためエラーが発生し、後続のSQLは実行されません
 ```
 
-#### エラー処理
+### エラーの処理（handleErrorWith）
 
-`handleErrorWith`を使ってエラーを処理する例：
+発生したエラーを処理するには、`handleErrorWith`メソッドを使用します：
 
-```scala 3
-import cats.effect.IO
+```scala
 import ldbc.dsl.*
 import java.sql.SQLException
 
-// IDによるユーザー検索と、エラー処理
+// エラー処理の例
 val findUserById: DBIO[String] = for
   userId <- DBIO.pure(123)
-  result <- sql"SELECT name FROM users WHERE id = $userId".query[String].unfase.handleErrorWith {
-    case e: SQLException if e.getMessage.contains("Table 'users' doesn't exist") =>
-      // テーブルが存在しない場合の処理
+  result <- sql"SELECT name FROM users WHERE id = $userId".query[String].unsafe.handleErrorWith {
+    case e: SQLException if e.getMessage.contains("table 'users' doesn't exist") =>
+      // テーブルが存在しない場合のフォールバック
       DBIO.pure("ユーザーテーブルがまだ作成されていません")
     case e: SQLException =>
       // その他のSQLエラーの処理
       DBIO.pure(s"データベースエラー: ${e.getMessage}")
     case e: Throwable =>
-      // 予期しないエラーの処理
+      // その他のエラーの処理
       DBIO.pure(s"予期しないエラー: ${e.getMessage}")
   }
 yield result
 ```
 
-#### 例外の捕捉
+### 例外の捕捉（attempt）
 
-`attempt`を使って例外を捕捉し、エラーハンドリングを行う例：
+エラーを`Either`型で捕捉するには、`attempt`メソッドを使用します：
 
-```scala 3
-import cats.effect.IO
+```scala
 import cats.syntax.all.*
 import ldbc.dsl.*
 
-// データベースからの結果を安全に処理する
-val safeOperation: DBIO[String] =
-  val riskyOperation = sql"SELECT * FROM non_existent_table".query[Stirng].unsafe
+// attempt を使って例外を捕捉する例
+val safeOperation: DBIO[String] = {
+  val riskyOperation = sql"SELECT * FROM potentially_missing_table".query[String].unsafe
   
   riskyOperation.attempt.flatMap {
     case Right(result) => 
-      DBIO.pure("操作成功: " + result.toString)
+      DBIO.pure(s"操作成功: $result")
     case Left(error) => 
       DBIO.pure(s"エラーが発生しました: ${error.getMessage}")
   }
+}
 ```
 
-### 実用的なエラー処理パターン
+## 実践的なエラー処理パターン
 
-実際のアプリケーションでよく使われるエラー処理パターンの例を紹介します：
+実際のアプリケーションで役立つエラー処理パターンをいくつか紹介します。
 
-#### リトライ機能の実装
+### リトライ機能の実装
 
-一時的なデータベース接続エラーに対してリトライを行う例：
+一時的なデータベース接続エラーに対して自動的にリトライを行う例：
 
-```scala 3
+```scala
 import scala.concurrent.duration.*
-import cats.effect.IO
+import cats.effect.{IO, Sync}
+import cats.effect.syntax.all.*
 import cats.syntax.all.*
 import ldbc.dsl.*
 
-def retryOnConnectionError[A](operation: DBIO[A], maxRetries: Int, delay: FiniteDuration): DBIO[A] =
-  def retry(remainingAttempts: Int): DBIO[A] =
-    if remainingAttempts <= 0 then
-      operation
-    else
-      operation.handleErrorWith { error =>
-        // 接続エラーの場合のみリトライする
-        if isConnectionError(error) && remainingAttempts > 0 then
-          DBIO.pure(()) // 遅延のための空のアクション
-            .flatMap(_ => DBIO.sleep[IO](delay))
-            .flatMap(_ => retry(remainingAttempts - 1))
-        else
-          DBIO.raiseError[A](error) // その他のエラーは再スロー
-      }
+// リトライ処理の実装例 - IOとDBIOを組み合わせた場合
+def retryWithBackoff[F[_]: Sync, A](
+  dbioOperation: DBIO[A], 
+  connection: Connection[F],
+  maxRetries: Int = 3, 
+  initialDelay: FiniteDuration = 100.millis,
+  maxDelay: FiniteDuration = 2.seconds
+): F[A] =
+  def retryLoop(remainingRetries: Int, delay: FiniteDuration): F[A] =
+    // DBIOをF型（例：IO）に変換して実行
+    dbioOperation.run(connection).handleErrorWith { error =>
+      if remainingRetries > 0 && isTransientError(error) then
+        // 一時的なエラーの場合は遅延してリトライ
+        val nextDelay = (delay * 2).min(maxDelay)
+        Sync[F].sleep(delay) >> retryLoop(remainingRetries - 1, nextDelay)
+      else
+        // リトライ回数を超えた場合や永続的なエラーの場合は例外を再スロー
+        Sync[F].raiseError[A](error)
+    }
   
-  retry(maxRetries)
+  retryLoop(maxRetries, initialDelay)
 
-// 接続エラーかどうかを判定する補助関数
-def isConnectionError(error: Throwable): Boolean =
-  error.getMessage.contains("Connection reset") ||
-  error.getMessage.contains("Connection refused") ||
-  error.getMessage.contains("Connection timed out")
+// 具体的なIO型での使用例
+def retryDatabaseOperation[A](
+  operation: DBIO[A],
+  connection: Connection[IO],
+  maxRetries: Int = 3
+): IO[A] =
+  retryWithBackoff(operation, connection, maxRetries)
+
+// 一時的なエラーかどうかを判断するヘルパーメソッド
+def isTransientError(error: Throwable): Boolean =
+  error match
+    case e: SQLException if e.getSQLState == "40001" => true // デッドロックの場合
+    case e: SQLException if e.getSQLState == "08006" => true // 接続喪失の場合
+    case e: Exception if e.getMessage.contains("connection reset") => true
+    case _ => false
+
+// 使用例
+val query = sql"SELECT * FROM users".query[User].unsafe
+val result = retryDatabaseOperation(query, myConnection)
 ```
 
-#### ユーザー定義エラー型によるエラー処理
+### ユーザー定義エラー型と EitherT を使用したエラー処理
 
-独自のエラー型を定義して、より明確なエラー処理を行う例：
+より詳細なエラー処理のために、アプリケーション固有のエラー型を定義する例：
+
+```scala
+import cats.data.EitherT
+import cats.syntax.all.*
+import ldbc.dsl.*
+
+// アプリケーション固有のエラー型
+sealed trait AppDatabaseError
+case class UserNotFoundError(id: Int) extends AppDatabaseError
+case class DuplicateUserError(email: String) extends AppDatabaseError
+case class DatabaseConnectionError(cause: Throwable) extends AppDatabaseError
+case class UnexpectedDatabaseError(message: String, cause: Throwable) extends AppDatabaseError
+
+// ユーザーモデル
+case class User(id: Int, name: String, email: String)
+
+// EitherTを使ったエラー処理の例
+def findUserById(id: Int): EitherT[DBIO, AppDatabaseError, User] =
+  val query = sql"SELECT id, name, email FROM users WHERE id = $id".query[User].to[Option]
+
+  EitherT(
+    query.attempt.map {
+      case Right(user) => user.toRight(UserNotFoundError(id))
+      case Left(e: SQLException) if e.getMessage.contains("Connection refused") =>
+        Left(DatabaseConnectionError(e))
+      case Left(e) =>
+        Left(UnexpectedDatabaseError(e.getMessage, e))
+    }
+  )
+
+// 使用例
+val program = for
+  user <- findUserById(123)
+  // 他の操作...
+yield user
+
+// 結果の処理
+val result: DBIO[Either[AppDatabaseError, User]] = program.value
+
+// 最終的な処理
+val finalResult: DBIO[String] = result.flatMap {
+  case Right(user) => DBIO.pure(s"ユーザーが見つかりました: ${user.name}")
+  case Left(UserNotFoundError(id)) => DBIO.pure(s"ID ${id} のユーザーは存在しません")
+  case Left(DatabaseConnectionError(_)) => DBIO.pure("データベース接続エラーが発生しました")
+  case Left(error) => DBIO.pure(s"エラー: $error")
+}
+```
+
+### トランザクションとエラー処理の組み合わせ
+
+トランザクション内でのエラー処理の例：
 
 ```scala
 import cats.effect.IO
 import cats.syntax.all.*
 import ldbc.dsl.*
+import java.sql.Connection
 
-// アプリケーション固有のエラー型の定義
-sealed trait AppError
-case class UserNotFound(id: Int) extends AppError
-case class DatabaseError(cause: Throwable) extends AppError
-case class ValidationError(message: String) extends AppError
-
-// EitherTを使ったエラー処理
-import cats.data.EitherT
-
-// ユーザーを検索する関数（エラーハンドリング付き）
-def findUser(id: Int): EitherT[DBIO, AppError, User] =
-  val query = sql"SELECT * FROM users WHERE id = $id".query[String].unsafe
+// トランザクション内でのエラー処理
+def transferMoney(fromAccount: Int, toAccount: Int, amount: BigDecimal): DBIO[String] =
+  val operation = for
+    // 送金元の残高を確認
+    balance <- sql"SELECT balance FROM accounts WHERE id = $fromAccount".query[BigDecimal].unsafe
+    
+    _ <- if balance < amount then
+           DBIO.raiseError[Unit](new IllegalStateException(s"口座残高が不足しています: $balance < $amount"))
+         else
+           DBIO.pure(())
+           
+    // 送金元から引き落とし
+    _ <- sql"UPDATE accounts SET balance = balance - $amount WHERE id = $fromAccount".update.unsafe
+    
+    // 送金先に入金
+    _ <- sql"UPDATE accounts SET balance = balance + $amount WHERE id = $toAccount".update.unsafe
+    
+    // 取引記録を作成
+    _ <- sql"""INSERT INTO transactions (from_account, to_account, amount, timestamp) 
+         VALUES ($fromAccount, $toAccount, $amount, NOW())""".update.unsafe
+  yield "送金が完了しました"
   
-  EitherT(
-    query.attempt.flatMap {
-      case Right(resultSet) =>
-        if resultSet.next() then
-          // ユーザーが見つかった場合
-          val name = resultSet.getString("name")
-          val email = resultSet.getString("email")
-          val user = User(id, name, email)
-          DBIO.pure[Either[AppError, User]](Right(user))
-        else
-          // ユーザーが見つからない場合
-          DBIO.pure[Either[AppError, User]](Left(UserNotFound(id)))
-      case Left(e) =>
-        // データベースエラーの場合
-        DBIO.pure[Either[AppError, User]](Left(DatabaseError(e)))
-    }
-  )
+  // トランザクションとしてラップ（エラー発生時は自動的にロールバック）
+  operation.handleErrorWith { error =>
+    DBIO.pure(s"送金エラー: ${error.getMessage}")
+  }
 
-// ユーザーデータモデル
-case class User(id: Int, name: String, email: String)
+// 使用例
+val fromAccount: Int = ???
+val toAccount: Int = ???
+val amount: BigDecimal = ???
+
+provider.use { conn =>
+  transferMoney(fromAccount, toAccount, amount).transaction(conn)
+}
 ```
+
+## まとめ
+
+エラー処理は堅牢なデータベースアプリケーションの重要な側面です。ldbcでは、関数型プログラミングの原則に基づいた明示的なエラー処理が可能です。主なポイントは次のとおりです：
+
+- `raiseError`で例外を発生させる
+- `handleErrorWith`で例外を処理する
+- `attempt`で例外を`Either`として捕捉する
+- 適切なエラー型を定義してアプリケーション固有のエラー処理を行う
+- トランザクションとエラー処理を組み合わせて、データの整合性を保つ
+
+これらのテクニックを活用することで、予期せぬエラーに強い、メンテナンスしやすいデータベース操作を実装できます。
 
 ## 次のステップ
 
-これでldbcでのエラー処理方法がわかりました。適切なエラー処理は堅牢なアプリケーションの基盤となります。ldbcが提供する`raiseError`、`handleErrorWith`、`attempt`などの基本的なコンビネーターを使って、様々なエラー状況に対応できます。また、より高度なエラー処理パターンとして、リトライ機構や独自のエラー型の定義なども検討すると良いでしょう。
-
-実際のアプリケーションでは、これらのパターンを使って堅牢なエラー処理を実装できます。
-
-次は[ロギング](/ja/tutorial/Logging.md)に進み、クエリの実行やエラーをログに記録する方法を学びましょう。
+エラー処理について理解したら、次は[ロギング](/ja/tutorial/Logging.md)に進み、クエリの実行やエラーをログに記録する方法を学びましょう。ロギングはデバッグやモニタリングのために重要です。
