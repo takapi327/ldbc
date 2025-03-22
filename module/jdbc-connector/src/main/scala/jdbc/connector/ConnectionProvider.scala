@@ -51,7 +51,7 @@ object ConnectionProvider:
     override def use[A](f: Connection[F] => F[A]): F[A] =
       createConnection().use(f)
 
-  private case class ConnectionProvider[F[_]: Sync](
+  private case class JavaConnectionProvider[F[_]: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]]
   ) extends ConnectionProvider[F]:
@@ -167,7 +167,7 @@ object ConnectionProvider:
   def fromConnection[F[_]: Console: Sync](
     connection: java.sql.Connection,
     logHandler: Option[LogHandler[F]] = None
-  ): ConnectionProvider[F] = ConnectionProvider(connection, logHandler)
+  ): ConnectionProvider[F] = JavaConnectionProvider(connection, logHandler)
 
   /** Module of constructors for `Provider` that use the JDBC `DriverManager` to allocate connections. Note that
    * `DriverManager` is unbounded and will happily allocate new connections until server resources are exhausted. It
