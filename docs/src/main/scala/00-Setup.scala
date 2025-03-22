@@ -96,7 +96,7 @@ import ldbc.connector.*
   // #insertOrder
 
   // #connection
-  def connection = MySQLProvider
+  def connection = ConnectionProvider
     .default[IO]("127.0.0.1", 13306, "ldbc")
     .setPassword("password")
   // #connection

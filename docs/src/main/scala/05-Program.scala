@@ -35,7 +35,7 @@ import ldbc.connector.*
   val program2: DBIO[(String, String, Status)] =
     sql"SELECT name, email, status FROM user WHERE id = 1".query[(String, String, Status)].unsafe
 
-  def connection = MySQLProvider
+  def connection = ConnectionProvider
     .default[IO]("127.0.0.1", 13306, "ldbc")
     .setPassword("password")
     .setSSL(SSL.Trusted)

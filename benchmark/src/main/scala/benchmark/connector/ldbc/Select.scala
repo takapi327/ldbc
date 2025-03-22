@@ -51,7 +51,7 @@ class Select:
 
   @Setup
   def setupDataSource(): Unit =
-    provider = MySQLProvider
+    provider = ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "benchmark")
       .setSSL(SSL.Trusted)
 
