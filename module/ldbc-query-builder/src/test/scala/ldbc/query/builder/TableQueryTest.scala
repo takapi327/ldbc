@@ -10,6 +10,8 @@ import cats.data.NonEmptyList
 
 import org.scalatest.flatspec.AnyFlatSpec
 
+import ldbc.dsl.codec.Codec
+
 import ldbc.query.builder.*
 
 class TableQueryTest extends AnyFlatSpec:
@@ -17,6 +19,9 @@ class TableQueryTest extends AnyFlatSpec:
   case class Test(p1: Long, p2: String, p3: Option[String]) derives Table
   case class JoinTest(p1: Long, p2: String, p3: Option[String]) derives Table
   case class JoinTest2(p1: Long, p2: String, p3: Option[String]) derives Table
+  given Codec[Test]      = Codec.derived[Test]
+  given Codec[JoinTest]  = Codec.derived[JoinTest]
+  given Codec[JoinTest2] = Codec.derived[JoinTest2]
 
   private val query      = TableQuery[Test]
   private val joinQuery  = TableQuery[JoinTest]

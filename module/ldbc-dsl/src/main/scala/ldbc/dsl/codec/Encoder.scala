@@ -60,6 +60,9 @@ object Encoder extends TwiddleSyntax[Encoder]:
 
   def apply[A](using encoder: Encoder[A]): Encoder[A] = encoder
 
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
+    encoder.to[P]
+
   given ContravariantSemigroupal[Encoder] with
     override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)
     override def product[A, B](fa:   Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
@@ -71,9 +74,6 @@ object Encoder extends TwiddleSyntax[Encoder]:
 
   given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
     eh.product(et).contramap { case h *: t => (h, t) }
-
-  given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
-    encoder.to[P]
 
   sealed trait Encoded:
     def product(that: Encoded): Encoded

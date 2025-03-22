@@ -17,6 +17,7 @@ import munit.CatsEffectSuite
 import ldbc.sql.*
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.exception.DecodeFailureException
 
 import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }

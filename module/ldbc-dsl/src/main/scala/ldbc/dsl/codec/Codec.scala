@@ -68,6 +68,9 @@ object Codec extends TwiddleSyntax[Codec]:
 
   def apply[A](using codec: Codec[A]): Codec[A] = codec
 
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
+    codec.to[P]
+
   private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
     try Right(func)
     catch case ex: Throwable => Left(Decoder.Error(offset, ex.getMessage, Some(ex)))
@@ -174,6 +177,3 @@ object Codec extends TwiddleSyntax[Codec]:
 
   given [H, T <: Tuple](using dh: Codec[H], dt: Codec[T]): Codec[H *: T] =
     dh.product(dt).imap { case (h, t) => h *: t }(tuple => (tuple.head, tuple.tail))
-
-  given [P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
-    codec.to[P]
