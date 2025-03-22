@@ -8,6 +8,8 @@ package ldbc.dsl.codec
 
 import java.time.*
 
+import scala.deriving.Mirror
+
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 import cats.ContravariantSemigroupal
@@ -57,6 +59,9 @@ object Encoder extends TwiddleSyntax[Encoder]:
     LocalTime | LocalDate | LocalDateTime | None.type
 
   def apply[A](using encoder: Encoder[A]): Encoder[A] = encoder
+
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
+    encoder.to[P]
 
   given ContravariantSemigroupal[Encoder] with
     override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)

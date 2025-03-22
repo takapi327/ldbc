@@ -8,6 +8,8 @@ package ldbc.dsl.codec
 
 import java.time.*
 
+import scala.deriving.Mirror
+
 import cats.syntax.all.*
 import cats.InvariantSemigroupal
 
@@ -65,6 +67,9 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
 object Codec extends TwiddleSyntax[Codec]:
 
   def apply[A](using codec: Codec[A]): Codec[A] = codec
+
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
+    codec.to[P]
 
   private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
     try Right(func)

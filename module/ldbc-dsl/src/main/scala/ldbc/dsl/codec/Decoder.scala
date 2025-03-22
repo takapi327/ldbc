@@ -6,6 +6,8 @@
 
 package ldbc.dsl.codec
 
+import scala.deriving.Mirror
+
 import cats.{ Applicative, Eq }
 import cats.syntax.all.*
 
@@ -69,6 +71,9 @@ trait Decoder[A]:
 object Decoder extends TwiddleSyntax[Decoder]:
 
   def apply[A](using decoder: Decoder[A]): Decoder[A] = decoder
+
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], decoder: Decoder[mirror.MirroredElemTypes]): Decoder[P] =
+    decoder.to[P]
 
   /**
    * An error indicating that decoding a value starting at column `offset` and spanning `length`

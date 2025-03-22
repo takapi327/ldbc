@@ -23,8 +23,7 @@ case class GovernmentOffice(
 
 object GovernmentOffice:
 
-  given Codec[GovernmentOffice] =
-    (Codec[Int] *: Codec[Int] *: Codec[String] *: Codec[Option[LocalDate]]).to[GovernmentOffice]
+  given Codec[GovernmentOffice] = Codec.derived[GovernmentOffice]
   given Table[GovernmentOffice] = Table.derived[GovernmentOffice]("government_office")
 
 class GovernmentOfficeTable extends SchemaTable[GovernmentOffice]("government_office"):
