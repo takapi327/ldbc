@@ -10,8 +10,11 @@ import scala.deriving.Mirror
 
 import ldbc.dsl.codec.*
 
+/**
+ * Automatic derivation can bombard compile speeds, so be careful when using it.
+ */
 package object generic:
-  
+
   trait AutoDecoder:
 
     given [A, B](using da: Decoder[A], db: Decoder[B]): Decoder[(A, B)] =
@@ -33,7 +36,7 @@ package object generic:
 
     given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
       encoder.to[P]
-      
+
   trait AutoCodec extends AutoDecoder, AutoEncoder:
 
     given [A, B](using ca: Codec[A], cb: Codec[B]): Codec[(A, B)] = ca product cb
