@@ -8,6 +8,7 @@ package ldbc.tests.model
 
 import ldbc.statement.formatter.Naming
 
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.{ Column, Table }
 
 import ldbc.schema.{ Table as SchemaTable, * }
@@ -24,6 +25,7 @@ case class City(
 
 object City:
 
+  given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[String] *: Codec[String] *: Codec[Int]).to[City]
   given Table[City] = Table.derived[City]("city")
 
 class CityTable extends SchemaTable[City]("city"):
