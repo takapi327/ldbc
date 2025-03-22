@@ -29,7 +29,8 @@ object CountryLanguage:
 
   given Codec[IsOfficial] = Codec[String].imap(IsOfficial.valueOf)(_.toString)
 
-  given Codec[CountryLanguage] = (Codec[String] *: Codec[String] *: Codec[IsOfficial] *: Codec[BigDecimal]).to[CountryLanguage]
+  given Codec[CountryLanguage] =
+    (Codec[String] *: Codec[String] *: Codec[IsOfficial] *: Codec[BigDecimal]).to[CountryLanguage]
   given Table[CountryLanguage] = Table.derived[CountryLanguage]("countrylanguage")
 
 class CountryLanguageTable extends SchemaTable[CountryLanguage]("countrylanguage"):
