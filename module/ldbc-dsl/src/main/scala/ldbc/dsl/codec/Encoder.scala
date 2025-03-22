@@ -8,8 +8,6 @@ package ldbc.dsl.codec
 
 import java.time.*
 
-import scala.deriving.Mirror
-
 import cats.data.NonEmptyList
 import cats.syntax.all.*
 import cats.ContravariantSemigroupal
@@ -65,15 +63,6 @@ object Encoder extends TwiddleSyntax[Encoder]:
     override def product[A, B](fa:   Encoder[A], fb: Encoder[B]): Encoder[(A, B)] = fa.product(fb)
 
   given [A](using codec: Codec[A]): Encoder[A] = codec.asEncoder
-
-  given [A, B](using ea: Encoder[A], eb: Encoder[B]): Encoder[(A, B)] =
-    ea.product(eb)
-
-  given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
-    eh.product(et).contramap { case h *: t => (h, t) }
-
-  given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
-    encoder.to[P]
 
   sealed trait Encoded:
     def product(that: Encoded): Encoded
