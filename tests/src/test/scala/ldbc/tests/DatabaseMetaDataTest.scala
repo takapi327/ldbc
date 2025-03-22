@@ -14,9 +14,9 @@ import munit.*
 
 import ldbc.sql.*
 
-import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
 
-import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 class LdbcDatabaseMetaDataTest extends DatabaseMetaDataTest:
   override def prefix: "ldbc" = "ldbc"
