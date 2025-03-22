@@ -21,7 +21,7 @@ import ldbc.connector.*
 class DBIOTest extends CatsEffectSuite:
 
   def connection: Provider[IO] =
-    MySQLProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc")
       .setPassword("password")
       .setSSL(SSL.Trusted)
