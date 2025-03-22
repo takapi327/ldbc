@@ -90,3 +90,9 @@ object Decoder extends TwiddleSyntax[Decoder]:
   given [A](using codec: Codec[A]): Decoder[A] = codec.asDecoder
 
   given [A](using decoder: Decoder[A]): Decoder[Option[A]] = decoder.opt
+
+  given [A, B](using da: Decoder[A], db: Decoder[B]): Decoder[(A, B)] =
+    da.product(db)
+
+  given [H, T <: Tuple](using dh: Decoder[H], dt: Decoder[T]): Decoder[H *: T] =
+    dh.product(dt).map { case (h, t) => h *: t }

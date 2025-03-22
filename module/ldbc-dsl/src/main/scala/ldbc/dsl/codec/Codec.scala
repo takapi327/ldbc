@@ -167,3 +167,8 @@ object Codec extends TwiddleSyntax[Codec]:
     override def decode(resultSet: ResultSet, index: Int): Either[Decoder.Error, None.type] = Right(None)
 
   given [A](using codec: Codec[A]): Codec[Option[A]] = codec.opt
+
+  given [A, B](using ca: Codec[A], cb: Codec[B]): Codec[(A, B)] = ca product cb
+
+  given [H, T <: Tuple](using dh: Codec[H], dt: Codec[T]): Codec[H *: T] =
+    dh.product(dt).imap { case (h, t) => h *: t }(tuple => (tuple.head, tuple.tail))

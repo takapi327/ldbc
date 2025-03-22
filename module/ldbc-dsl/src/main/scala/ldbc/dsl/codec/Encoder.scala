@@ -64,6 +64,12 @@ object Encoder extends TwiddleSyntax[Encoder]:
 
   given [A](using codec: Codec[A]): Encoder[A] = codec.asEncoder
 
+  given [A, B](using ea: Encoder[A], eb: Encoder[B]): Encoder[(A, B)] =
+    ea.product(eb)
+
+  given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
+    eh.product(et).contramap { case h *: t => (h, t) }
+
   sealed trait Encoded:
     def product(that: Encoded): Encoded
   object Encoded:
