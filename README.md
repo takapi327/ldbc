@@ -147,6 +147,7 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "latest"
 ldbc uses classes to construct queries.
 
 ```scala 3
+import ldbc.dsl.codec.*
 import ldbc.query.builder.Table
 
 case class User(
@@ -154,6 +155,9 @@ case class User(
   name: String,
   age: Option[Int],
 ) derives Table
+
+object User:
+  given Codec[User] = (Codec[Long] *: Codec[String] *: Codec[Option[Int]]).to[User]
 ```
 
 The next step is to create a Table using the classes you have created.
