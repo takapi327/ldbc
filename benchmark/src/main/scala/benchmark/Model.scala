@@ -7,6 +7,7 @@
 package benchmark
 
 import ldbc.dsl.codec.*
+import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 
 import ldbc.statement.formatter.Naming
 
