@@ -157,7 +157,7 @@ case class User(
 ) derives Table
 
 object User:
-  given Codec[User] = (Codec[Long] *: Codec[String] *: Codec[Option[Int]]).to[User]
+  given Codec[User] = Codec.derived[User]
 ```
 
 The next step is to create a Table using the classes you have created.
