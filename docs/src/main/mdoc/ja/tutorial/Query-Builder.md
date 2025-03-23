@@ -24,10 +24,13 @@
 ldbcでは、ケースクラスを使用してテーブルを表現し、クエリを構築します。まず、シンプルなテーブルの定義から始めましょう。
 
 ```scala 3
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.*
 
 // テーブル定義
 case class User(id: Int, name: String, email: String) derives Table
+object User:
+  gicen Codec[User] = Codec.derived[User]
 ```
 
 `Table`トレイトは`derives`キーワードを使って自動的に導出します。これによって、クラスのプロパティがデータベースのカラムとして扱われます。

@@ -9,185 +9,425 @@
 
 コード生成は、反復的な作業を自動化し、人的ミスを減らすための強力なツールです。ldbcは、SQLファイルからモデルクラスとテーブル定義を自動生成するための機能を提供しています。
 
-この章では、ldbcのテーブル定義をSQLファイルから自動生成する方法について説明します。
+## SBTプラグインの設定
 
-プロジェクトに以下の依存関係を設定する必要があります。
+### プラグインの追加
 
-```scala 3
+プロジェクトに以下の依存関係を設定する必要があります。`project/plugins.sbt`に追加してください。
+
+```scala
 addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
 ```
 
-## 生成
+### プラグインの有効化
 
-プロジェクトに対してプラグインを有効にします。
+`build.sbt`ファイルでプロジェクトに対してプラグインを有効にします。
 
 ```sbt
 lazy val root = (project in file("."))
   .enablePlugins(Ldbc)
 ```
 
-解析対象のSQLファイルを配列で指定します。
+## 基本的な使い方
+
+### SQLファイルの指定
+
+解析対象のSQLファイルを設定します。単一または複数のSQLファイルを指定できます。
 
 ```sbt
-Compile / parseFiles := List(baseDirectory.value / "test.sql")
+// 単一のSQLファイルを指定
+Compile / parseFiles := List(
+  baseDirectory.value / "sql" / "schema.sql"
+)
+
+// 複数のSQLファイルを指定
+Compile / parseFiles := List(
+  baseDirectory.value / "sql" / "users.sql",
+  baseDirectory.value / "sql" / "products.sql"
+)
 ```
 
-**プラグインを有効にすることで設定できるキーの一覧**
+### ディレクトリの指定
 
-| キー                   | 詳細                                        |
-|----------------------|-------------------------------------------|
-| `parseFiles`         | `解析対象のSQLファイルのリスト`                        |
-| `parseDirectories`   | `解析対象のSQLファイルをディレクトリ単位で指定する`              |
-| `excludeFiles`       | `解析から除外するファイル名のリスト`                       |
-| `customYamlFiles`    | `Scala型やカラムのデータ型をカスタマイズするためのyamlファイルのリスト` |
-| `classNameFormat`    | `クラス名の書式を指定する値`                           |
-| `propertyNameFormat` | `Scalaモデルのプロパティ名の形式を指定する値`                |
-| `ldbcPackage`        | `生成されるファイルのパッケージ名を指定する値`                  |
+特定のディレクトリ内のすべてのSQLファイルを対象にする場合は、`parseDirectories`を使用します。
 
-解析対象のSQLファイルの先頭には必ずデータベースのCreate文もしくはUse文を定義する必要があります。ldbcはファイルの解析を1ファイルずつ行い、テーブル定義を生成しデータベースモデルにテーブルのリストを格納させます。
-そのためテーブルがどのデータベースに所属しているかを教えてあげる必要があるからです。
-
-```sql
-CREATE DATABASE `location`;
-
-USE `location`;
-
-DROP TABLE IF EXISTS `country`;
-CREATE TABLE country (
-  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `code` INT NOT NULL
-);
+```sbt
+// ディレクトリ単位で指定
+Compile / parseDirectories := List(
+  baseDirectory.value / "sql"
+)
 ```
 
-解析対象のSQLファイルにはデータベースのCreate/Use文もしくはテーブル定義のCreate/Drop文のみ記載するようにしなければいけません。
+### 生成コード
 
-## 生成コード
-
-sbtプロジェクトを起動してコンパイルを実行すると、解析対象のSQLファイルを元に生成されたモデルクラスと、テーブル定義がsbtプロジェクトのtarget配下に生成されます。
+設定後、sbtでコンパイルを実行すると自動的にコードが生成されます。
 
 ```shell
 sbt compile
 ```
 
-上記SQLファイルから生成されるコードは以下のようなものになります。
+生成されたファイルは`target/scala-X.X/src_managed/main`ディレクトリに保存されます。
 
-```scala 3
-package ldbc.generated.location
+### 手動での生成
 
-import ldbc.schema.*
-
-case class Country(
-  id: Long,
-  name: String,
-  code: Int
-)
-
-object Country:
-  val table = TableQuery[CountryTable]
-  
-  class CountryTable extends Table[Country]("country"):
-    def id: Column[Long] = column[Long]("id")
-    def name: Column[String] = column[String]("name")
-    def code: Column[Int] = column[Int]("code")
-    
-    override def * : Column[Country] = (id *: name *: code).to[Country]
-```
-
-Compileでコードを生成した場合、その生成されたファイルはキャッシュされるので、SQLファイルを変更していない場合再度生成されることはありません。SQLファイルを変更した場合もしくは、cleanコマンドを実行してキャッシュを削除した場合はCompileを実行すると再度コードが生成されます。
-キャッシュを利用せず再度コード生成を行いたい場合は、`generateBySchema`コマンドを実行してください。このコマンドはキャッシュを使用せず常にコード生成を行います。
+キャッシュを使用せず強制的にコード生成を実行したい場合は、以下のコマンドを使用します。
 
 ```shell
 sbt generateBySchema
 ```
 
-## カスタマイズ
+## SQLファイル形式の要件
 
-SQLファイルから生成されるコードの型を別のものに変換したい時があるかもしれません。その場合は`customYamlFiles`にカスタマイズを行うymlファイルを渡してあげることで行うことができます。
+SQLファイルには必ず以下の要素を含める必要があります。
+
+### データベース定義
+
+ファイルの先頭には、必ずデータベースのCreate文またはUse文を記述してください。これにより、生成されるコードのパッケージ名とテーブルの所属先を決定します。
+
+```sql
+-- 方法1: データベース作成
+CREATE DATABASE `my_app`;
+
+-- または方法2: 既存のデータベースを使用
+USE `my_app`;
+```
+
+### テーブル定義
+
+データベース定義の後に、テーブル定義を記述します。
+
+```sql
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+完全なSQLファイルの例:
+
+```sql
+CREATE DATABASE `my_app`;
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS `products`;
+CREATE TABLE `products` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `price` DECIMAL(10, 2) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## 詳細な設定オプション
+
+ldbcプラグインでは、以下の設定キーを使用してコード生成をカスタマイズできます。
+
+### 設定キー一覧
+
+| キー                   | デフォルト値         | 詳細                                                  |
+|----------------------|----------------|-----------------------------------------------------|
+| `parseFiles`         | `List.empty`   | 解析対象のSQLファイルのリスト                                   |
+| `parseDirectories`   | `List.empty`   | 解析対象のSQLファイルをディレクトリ単位で指定                         |
+| `excludeFiles`       | `List.empty`   | 解析から除外するファイル名のリスト                                |
+| `customYamlFiles`    | `List.empty`   | 型をカスタマイズするためのYAMLファイルのリスト                        |
+| `classNameFormat`    | `Format.PASCAL`| 生成されるクラス名の形式（PASCAL、CAMEL、SNAKEから選択）             |
+| `propertyNameFormat` | `Format.CAMEL` | 生成されるプロパティ名の形式（PASCAL、CAMEL、SNAKEから選択）           |
+| `ldbcPackage`        | `ldbc.generated`| 生成されるファイルのパッケージ名                                |
+
+### 例: 詳細な設定
+
+```sbt
+Compile / parseFiles := List(
+  baseDirectory.value / "sql" / "schema.sql"
+)
+
+Compile / parseDirectories := List(
+  baseDirectory.value / "sql" / "tables"
+)
+
+Compile / excludeFiles := List(
+  "temp_tables.sql", "test_data.sql"
+)
+
+Compile / classNameFormat := PASCAL // PascalCase (MyClass)
+Compile / propertyNameFormat := CAMEL // camelCase (myProperty)
+
+Compile / ldbcPackage := "com.example.db"
+```
+
+## 生成されるコードの例
+
+例として、以下のようなSQLファイルがある場合：
+
+```sql
+CREATE DATABASE `shop`;
+
+CREATE TABLE `products` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `price` DECIMAL(10, 2) NOT NULL,
+  `description` TEXT,
+  `category_id` INT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+以下のようなScalaコードが生成されます：
+
+```scala
+package com.example.db
+
+import ldbc.schema.*
+
+import java.time.LocalDateTime
+
+// モデルクラス
+case class Product(
+  id: Long,
+  name: String,
+  price: BigDecimal,
+  description: Option[String],
+  categoryId: Int,
+  createdAt: LocalDateTime
+)
+
+// テーブル定義とクエリビルダー
+object Product {
+  val table = TableQuery[ProductTable]
+  
+  class ProductTable extends Table[Product]("products"):
+    def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+    def name: Column[String] = column[String]("name", VARCHAR(255), NOT_NULL)
+    def price: Column[BigDecimal] = column[BigDecimal]("price", DECIMAL(10, 2), NOT_NULL)
+    def description: Column[Option[String]] = column[Option[String]]("description", TEXT)
+    def categoryId: Column[Int] = column[Int]("category_id", INT, NOT_NULL)
+    def createdAt: Column[LocalDateTime] = column[LocalDateTime]("created_at", TIMESTAMP, NOT_NULL, DEFAULT_CURRENT_TIMESTAMP)
+    
+    override def * : Column[Product] = (id *: name *: price *: description *: categoryId *: createdAt).to[Product]
+}
+```
+
+## 型のカスタマイズ
+
+自動生成されるコードの型を独自の型に変更したい場合は、YAMLファイルを使用してカスタマイズできます。
+
+### YAMLファイルの設定
+
+まず、カスタマイズ用のYAMLファイルを作成します。
+
+```yaml
+# custom_types.yml
+database:
+  name: 'shop'
+  tables:
+    - name: 'products'
+      columns:
+        - name: 'category_id'
+          type: 'ProductCategory'
+      object:
+        extends:
+          - 'com.example.ProductTypeMapping'
+```
+
+そして、このYAMLファイルをプロジェクト設定に追加します。
 
 ```sbt
 Compile / customYamlFiles := List(
-  baseDirectory.value / "custom.yml"
+  baseDirectory.value / "config" / "custom_types.yml"
 )
 ```
 
-ymlファイルの形式は以下のようなものである必要があります。
+### カスタム型の実装
+
+次に、YAMLファイルで参照している独自の型変換を実装します。
+
+```scala
+// com/example/ProductTypeMapping.scala
+package com.example
+
+import ldbc.dsl.Codec
+
+sealed trait ProductCategory {
+  def id: Int
+}
+
+object ProductCategory {
+  case object Electronics extends ProductCategory { val id = 1 }
+  case object Books extends ProductCategory { val id = 2 }
+  case object Clothing extends ProductCategory { val id = 3 }
+  
+  def fromId(id: Int): ProductCategory = id match {
+    case 1 => Electronics
+    case 2 => Books
+    case 3 => Clothing
+    case _ => throw new IllegalArgumentException(s"Unknown category ID: $id")
+  }
+}
+
+trait ProductTypeMapping {
+  given Codec[ProductCategory] = Codec[Int].imap(ProductCategory.fromId)(_.id)
+}
+```
+
+### カスタマイズ後の生成コード
+
+上記の設定により、以下のようなコードが生成されます：
+
+```scala
+package ldbc.generated.shop
+
+import ldbc.schema.*
+import java.time.LocalDateTime
+import com.example.ProductCategory
+
+case class Product(
+  id: Long,
+  name: String,
+  price: BigDecimal,
+  description: Option[String],
+  categoryId: ProductCategory, // カスタム型に変更
+  createdAt: LocalDateTime
+)
+
+object Product extends com.example.ProductTypeMapping {
+  val table = TableQuery[ProductTable]
+  
+  class ProductTable extends Table[Product]("products"):
+    def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+    def name: Column[String] = column[String]("name", VARCHAR(255), NOT_NULL)
+    def price: Column[BigDecimal] = column[BigDecimal]("price", DECIMAL(10, 2), NOT_NULL)
+    def description: Column[Option[String]] = column[Option[String]]("description", TEXT)
+    def categoryId: Column[Int] = column[Int]("category_id", INT, NOT_NULL) // 実際のカラムの型は変わらない
+    def createdAt: Column[LocalDateTime] = column[LocalDateTime]("created_at", TIMESTAMP, NOT_NULL, DEFAULT_CURRENT_TIMESTAMP)
+    
+    override def * : Column[Product] = (id *: name *: price *: description *: categoryId *: createdAt).to[Product]
+}
+```
+
+## YAMLカスタマイズの詳細な構文
+
+カスタマイズYAMLファイルでは、以下の設定が可能です。
 
 ```yaml
 database:
   name: '{データベース名}'
   tables:
     - name: '{テーブル名}'
-      columns: # Optional
+      columns: # オプション
         - name: '{カラム名}'
-          type: '{変更したいScalaの型}'
-      class: # Optional
+          type: '{変更したいScala型}'
+      class: # オプション
         extends:
-          - '{モデルクラスに継承させたいtraitなどのpackageパス}' // package.trait.name
-      object: # Optional
+          - '{モデルクラスに継承させたいtraitなどのパッケージパス}'
+      object: # オプション
         extends:
-          - '{オブジェクトに継承させたいtraitなどのpackageパス}'
-    - name: '{テーブル名}'
-      ...
+          - '{オブジェクトに継承させたいtraitなどのパッケージパス}'
 ```
 
-`database`は解析対象のSQLファイルに記載されているデータベース名である必要があります。またテーブル名は解析対象のSQLファイルに記載されているデータベースに所属しているテーブル名である必要があります。
-
-`columns`には型を変更したいカラム名と変更したいScalaの型を文字列で記載を行います。`columns`には複数の値を設定できますが、nameに記載されたカラム名が対象のテーブルに含まれいてなければなりません。
-また、変換を行うScalaの型はカラムのData型がサポートしている型である必要があります。もしサポート対象外の型を指定したい場合は、`object`に対して暗黙の型変換を行う設定を持ったtraitやabstract classなどを渡してあげる必要があります。
-
-Data型がサポートしている型に関しては[こちら](/ja/tutorial/Custom-Data-Type.md)を、サポート対象外の型を設定する方法は[こちら](/ja/tutorial/Custom-Data-Type.md)を参照してください。
-
-Int型をユーザー独自の型であるCountryCodeに変換する場合は、以下のような`CustomMapping`traitを実装します。
-
-```scala 3
-trait CountryCode:
-  val code: Int
-object Japan extends CountryCode:
-  override val code: Int = 1
-
-trait CustomMapping: // 任意の名前
-  given Codec[CountryCode] = Codec[Int].imap {
-    case 1 => Japan
-    case _ => throw new Exception("Not found")
-  }(_.code)
-```
-
-カスタマイズを行うためのymlファイルに実装を行なった`CustomMapping`traitを設定し、対象のカラムの型をCountryCodeに変換してあげます。
+### 例: モデルクラスへのtraitの追加
 
 ```yaml
 database:
-  name: 'location'
+  name: 'shop'
   tables:
-    - name: 'country'
+    - name: 'products'
+      class:
+        extends:
+          - 'com.example.JsonSerializable'
+          - 'com.example.Validatable'
+```
+
+### 例: 複数のテーブル・カラムのカスタマイズ
+
+```yaml
+database:
+  name: 'shop'
+  tables:
+    - name: 'products'
       columns:
-        - name: 'code'
-          type: 'Country.CountryCode' // CustomMappingをCountryオブジェクトにミックスインさせるのでそこから取得できるように記載
+        - name: 'price'
+          type: 'Money'
       object:
         extends:
-          - '{package.name.}CustomMapping'
+          - 'com.example.MoneyTypeMapping'
+    - name: 'orders'
+      columns:
+        - name: 'status'
+          type: 'OrderStatus'
+      object:
+        extends:
+          - 'com.example.OrderStatusMapping'
 ```
 
-上記設定で生成されるコードは以下のようになり、ユーザー独自の型でモデルとテーブル定義を生成できるようになります。
+## 生成されたコードの使用方法
 
-```scala 3
-case class Country(
-  id: Long,
-  name: String,
-  code: Country.CountryCode
-)
+生成されたコードは、他のldbcコードと同様に使用できます。
 
-object Country extends /*{package.name.}*/CustomMapping:
-  
-  val table = TableQuery[CountryTable]
+```scala
+import ldbc.dsl.*
+import ldbc.generated.shop.Product
 
-  class CountryTable extends Table[Country]("country"):
-    def id: Column[Long] = column[Long]("id")
-    def name: Column[String] = column[String]("name")
-    def code: Column[Int] = column[Int]("code")
+val provider = MySQLConnectionProvider(...)
 
-    override def * : Column[Country] = (id *: name *: code).to[Country]
+// テーブルクエリの参照
+val products = Product.table
+
+// クエリの実行
+val allProducts = provider.use { conn =>
+  products.filter(_.price > 100).all.run(conn)
+}
 ```
+
+## コード生成のベストプラクティス
+
+### 1. 明確なSQLファイル構成
+
+- 関連するテーブルを同じファイルにまとめる
+- 各ファイルの先頭にデータベース定義を必ず含める
+- 適切なコメントでSQLを説明する
+
+### 2. 命名規則の一貫性
+
+- SQL内のテーブル・カラム名に一貫した命名規則を使用する
+- 生成されるScalaコードの命名規則を明示的に設定する
+
+### 3. カスタム型の賢い使用
+
+- ドメイン特有の概念には独自の型を使用する
+- 複雑なビジネスロジックをカプセル化するためにカスタム型を活用する
+
+### 4. 再生成の自動化
+
+定期的なスキーマ更新のためにCI/CDパイプラインに組み込むことを検討する。
+
+## トラブルシューティング
+
+### コードが生成されない場合
+
+- SQLファイルのパスが正しいか確認する
+- SQLファイルの先頭にデータベース定義があるか確認する
+- SQLの構文エラーがないか確認する
+
+### 型変換エラーが発生する場合
+
+- カスタムYAMLの設定が正しいか確認する
+- 参照しているパッケージやクラスがクラスパスに存在するか確認する
+- 暗黙の型変換（given/using）が正しく定義されているか確認する
+
+### 生成されたコードに問題がある場合
+
+- 手動で修正せず、SQLまたはYAMLファイルを修正してから再生成する
+- サポートされていないSQLの機能や特殊な型がないか確認する
 
 ## チュートリアルの完了
 
