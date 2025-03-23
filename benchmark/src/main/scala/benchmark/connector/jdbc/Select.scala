@@ -61,7 +61,7 @@ class Select:
     ds.setPassword("password")
     ds.setUseSSL(true)
 
-    provider = MySQLProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
   @Param(Array("100", "1000", "2000", "4000"))
   var len: Int = uninitialized

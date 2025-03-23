@@ -45,7 +45,7 @@ class Select:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    provider = MySQLProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     query = TableQuery[City]
 

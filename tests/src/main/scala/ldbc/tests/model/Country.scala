@@ -46,12 +46,7 @@ object Country:
 
   given Codec[Continent] = Codec[String].imap(str => Continent.valueOf(str.replace(" ", "_")))(_.value)
 
-  given Codec[Country] = (
-    Codec[String] *: Codec[String] *: Codec[Continent] *: Codec[String] *: Codec[BigDecimal] *:
-      Codec[Option[Short]] *: Codec[Int] *: Codec[Option[BigDecimal]] *: Codec[Option[BigDecimal]] *:
-      Codec[Option[BigDecimal]] *: Codec[String] *: Codec[String] *: Codec[Option[String]] *:
-      Codec[Option[Int]] *: Codec[String]
-  ).to[Country]
+  given Codec[Country] = Codec.derived[Country]
   given Table[Country] = Table.derived[Country]("country")
 
 class CountryTable extends SchemaTable[Country]("country"):

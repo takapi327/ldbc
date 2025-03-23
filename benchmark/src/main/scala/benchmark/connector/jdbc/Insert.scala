@@ -64,7 +64,7 @@ class Insert:
     ds.setPassword("password")
     ds.setUseSSL(true)
 
-    provider = MySQLProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     values = (1 to len).map(_ => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").mkString(",")
 

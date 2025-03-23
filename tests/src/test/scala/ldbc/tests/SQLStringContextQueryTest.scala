@@ -17,11 +17,12 @@ import munit.CatsEffectSuite
 import ldbc.sql.*
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.exception.DecodeFailureException
 
-import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
 
-import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   override def connection: Provider[IO] =

@@ -18,9 +18,9 @@ import ldbc.dsl.*
 
 import ldbc.schema.*
 
-import ldbc.connector.{ MySQLProvider as LdbcProvider, * }
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
 
-import jdbc.connector.{ MySQLProvider as JdbcProvider, * }
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 import ldbc.tests.model.*
 

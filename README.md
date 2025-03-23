@@ -99,7 +99,7 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val provider = MySQLProvider.fromDataSource(ex, ExecutionContexts.synchronous)
+val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
 ```
 
 **ldbc connector**
@@ -108,7 +108,7 @@ val provider = MySQLProvider.fromDataSource(ex, ExecutionContexts.synchronous)
 import ldbc.connector.*
 
 val provider =
-  MySQLProvider
+  ConnectionProvider
     .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
     .setSSL(SSL.Trusted)
 ```
@@ -144,6 +144,7 @@ libraryDependencies += "io.github.takapi327" %%% "ldbc-query-builder" % "latest"
 ldbc uses classes to construct queries.
 
 ```scala 3
+import ldbc.dsl.codec.*
 import ldbc.query.builder.Table
 
 case class User(
@@ -151,6 +152,9 @@ case class User(
   name: String,
   age: Option[Int],
 ) derives Table
+
+object User:
+  given Codec[User] = Codec.derived[User]
 ```
 
 The next step is to create a Table using the classes you have created.

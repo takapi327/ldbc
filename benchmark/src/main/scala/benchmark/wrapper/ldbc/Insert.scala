@@ -21,6 +21,7 @@ import cats.effect.unsafe.implicits.global
 
 import ldbc.sql.*
 
+import ldbc.dsl.codec.Codec
 import ldbc.dsl.SQL
 
 import ldbc.query.builder.*
@@ -53,7 +54,7 @@ class Insert:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    provider = MySQLProvider.fromDataSource(ds, ExecutionContexts.synchronous)
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     records = NonEmptyList.fromListUnsafe((1 to len).map(num => (num, s"record$num")).toList)
 
@@ -85,4 +86,5 @@ class Insert:
 
 case class Test(c0: Option[Int], c1: Int, c2: String)
 object Test:
+  given Codec[Test] = Codec.derived[Test]
   given Table[Test] = Table.derived[Test]("ldbc_wrapper_query_test")
