@@ -52,15 +52,10 @@ object Main extends ResourceApp.Forever:
 
   private val cityTable = TableQuery[CityTable]
 
-  private def connection: Resource[IO, Connection[IO]] =
-    Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("world"),
-      ssl      = SSL.Trusted
-    )
+  private def provider =
+    ConnectionProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
 
   private def routes(conn: Connection[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
     case GET -> Root / "cities" =>
@@ -72,7 +67,7 @@ object Main extends ResourceApp.Forever:
 
   override def run(args: List[String]): Resource[IO, Unit] =
     for
-      conn <- connection
+      conn <- provider.createConnection()
       _ <- EmberServerBuilder
              .default[IO]
              .withHttpApp(routes(conn).orNotFound)

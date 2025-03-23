@@ -9,6 +9,7 @@ import com.zaxxer.hikari.HikariDataSource
 import cats.effect.*
 
 import ldbc.dsl.*
+import ldbc.dsl.codec.Codec
 
 import jdbc.connector.*
 
@@ -19,6 +20,8 @@ case class City(
   district:    String,
   population:  Int
 )
+object City:
+  given Codec[City] = Codec.derived[City]
 
 object Main extends ResourceApp.Simple:
 
@@ -31,7 +34,7 @@ object Main extends ResourceApp.Simple:
     (for
       hikari     <- Resource.fromAutoCloseable(IO(ds))
       execution  <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
-      connection <- MySQLProvider.fromDataSource[IO](hikari, execution).createConnection()
+      connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnection()
     yield connection).evalMap { conn =>
       sql"SELECT * FROM `city` WHERE ID = ${ 1 }"
         .query[City]
