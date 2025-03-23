@@ -24,14 +24,17 @@ scalacOptions += "-Ximplicit-search-limit:100000"
 しかし、オプションでの制限拡張はコンパイル時間の増幅につながる可能性があります。その場合は、以下のように手動で任意の型を構築することで解決することもできます。
 
 ```scala 3
-given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
-given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
+given Decoder[City] = Decoder.derived[City]
+// Or given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
+given Encoder[City] = Encoder.derived[City]
+// Or given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
 ```
 
 もしくは、`Codec`を使用して`Encoder`と`Decoder`を組み合わせることで解決することもできます。
 
 ```scala 3
-given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
+given Codec[City] = Codec.derived[City]
+// Or given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
 ```
 
 ## 参考資料

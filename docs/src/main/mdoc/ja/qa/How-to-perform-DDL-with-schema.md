@@ -26,8 +26,8 @@ createDDL.foreach(println)    // CREATE TABLE文が出力される
 dropDDL.foreach(println)      // DROP TABLE文が出力される
 truncateDDL.foreach(println)  // TRUNCATE TABLE文が出力される
 
-// DDL操作の実行例 (Resource[IO, Connection[IO]]として接続を管理)
-connection
+// DDL操作の実行例
+provider
   .use { conn =>
     DBIO.sequence(
         userSchema.createIfNotExists,

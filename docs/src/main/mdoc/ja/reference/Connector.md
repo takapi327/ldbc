@@ -51,46 +51,43 @@ libraryDependencies += "@ORGANIZATION@" %%% "ldbc-connector" % "@VERSION@"
 
 ## 接続
 
-ldbcコネクタを使用してMySQLへの接続を行うためには、`Connection`を使用します。
-
-また、`Connection`はオブザーバビリティを意識した開発を行えるように`Otel4s`を使用してテレメトリデータを収集できるようにしています。
-そのため、`Connection`を使用する際には`Otel4s`の`Tracer`を設定する必要があります。
-
-開発時やトレースを使用したテレメトリデータが不要な場合は`Tracer.noop`を使用することを推奨します。
+ldbcコネクタを使用してMySQLへの接続を行うためには、`ConnectionProvider`を使用します。
 
 ```scala 3
 import cats.effect.IO
-import org.typelevel.otel4s.trace.Tracer
-import ldbc.connector.Connection
+import ldbc.connector.ConnectionProvider
 
-given Tracer[IO] = Tracer.noop[IO]
-
-val connection = Connection[IO](
-  host = "127.0.0.1",
-  port = 3306,
-  user = "root",
-)
+val provider = ConnectionProvider
+  .default[IO](
+    host = "127.0.0.1",
+    port = 3306,
+    user = "root",
+  )
 ```
 
 以下は`Connection`構築時に設定できるプロパティの一覧です。
 
-| プロパティ                     | 型                    | 用途                                                       |
-|---------------------------|----------------------|----------------------------------------------------------|
-| `host`                    | `String`             | `MySQLサーバーのホストを指定します`                                    |
-| `port`                    | `Int`                | `MySQLサーバーのポート番号を指定します`                                  |
-| `user`                    | `String`             | `MySQLサーバーへログインを行うユーザー名を指定します`                           |
-| `password`                | `Option[String]`     | `MySQLサーバーへログインを行うユーザーのパスワードを指定します`                      |
-| `database`                | `Option[String]`     | `MySQLサーバーへ接続後に使用するデータベース名を指定します`                        |
-| `debug`                   | `Boolean`            | `処理のログを出力します。デフォルトはfalseです`                              |
-| `ssl`                     | `SSL`                | `MySQLサーバーとの通知んでSSL/TLSを使用するかを指定します。デフォルトはSSL.Noneです`    |
-| `socketOptions`           | `List[SocketOption]` | `TCP/UDP ソケットのソケットオプションを指定します。`                          |
-| `readTimeout`             | `Duration`           | `MySQLサーバーへの接続を試みるまでのタイムアウトを指定します。デフォルトはDuration.Infです。` |
-| `allowPublicKeyRetrieval` | `Boolean`            | `MySQLサーバーとの認証時にRSA公開鍵を使用するかを指定します。デフォルトはfalseです。`       |
+| プロパティ                     | 詳細                                                            | 必須 |
+|---------------------------|---------------------------------------------------------------|----|
+| `host`                    | `データベースホスト情報`                                                 | ✅  |
+| `port`                    | `データベースポート情報`                                                 | ✅  |
+| `user`                    | `データベースユーザー情報`                                                | ✅  |
+| `password`                | `データベースパスワード情報 (default: None)`                               | ❌  |
+| `database`                | `データベース名情報 (default: None)`                                   | ❌  |
+| `debug`                   | `デバッグ情報を表示するかどうか  (default: false)`                           | ❌  |
+| `ssl`                     | `SSLの設定 (default: SSL.None)`                                  | ❌  |
+| `socketOptions`           | `TCP/UDP ソケットのソケットオプションを指定する (default: defaultSocketOptions)` | ❌  |
+| `readTimeout`             | `タイムアウト時間を指定する (default: Duration.Inf)`                       | ❌  |
+| `allowPublicKeyRetrieval` | `公開鍵を取得するかどうか (default: false)`                               | ❌  |
+| `logHandler`              | `ログ出力設定`                                                      | ❌  |
+| `before`                  | `コネクション確立後に実行する処理`                                            | ❌  |
+| `after`                   | `コネクションを切断する前に実行する処理`                                         | ❌  |
+| `tracer`                  | `メトリクス出力用のトレーサー設定 (default: Tracer.noop)`                     | ❌  |
 
-`Connection`は`Resource`を使用してリソース管理を行います。そのためコネクション情報を使用する場合は`use`メソッドを使用してリソースの管理を行います。
+`ConnectionProvider`は`Resource`を使用してリソース管理を行います。そのためコネクション情報を使用する場合は`use`メソッドを使用してリソースの管理を行います。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   // コードを記述
 }
 ```
@@ -139,7 +136,7 @@ CREATE TABLE users (
 クエリを実行した結果MySQLサーバーから返される値は`ResultSet`に格納されて戻り値として返却されます。
 
 ```scala 3 3
-connection.use { conn =>
+provider.use { conn =>
   for
     statement <- conn.createStatement()
     result <- statement.executeQuery("SELECT * FROM users")
@@ -155,7 +152,7 @@ connection.use { conn =>
 クエリを実行した結果MySQLサーバーから返される値は影響を受けた行数が戻り値として返却されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for
     statement <- conn.createStatement()
     result <- statement.executeUpdate("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -170,7 +167,7 @@ connection.use { conn =>
 クエリを実行した結果MySQLサーバーから返される値はAUTO_INCREMENTに生成された値が戻り値として返却されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.executeUpdate("INSERT INTO users (name, age) VALUES ('Alice', 20)", Statement.RETURN_GENERATED_KEYS)
@@ -205,7 +202,7 @@ ldbcでは`PreparedStatement`を`Client PreparedStatement`と`Server PreparedSta
 `Connection`の`clientPreparedStatement`メソッドを使用して`Client PreparedStatement`を構築します。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?")
     ...
@@ -218,7 +215,7 @@ connection.use { conn =>
 `Connection`の`serverPreparedStatement`メソッドを使用して`Server PreparedStatement`を構築します。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for 
     statement <- conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     ...
@@ -233,7 +230,7 @@ connection.use { conn =>
 クエリを実行した結果MySQLサーバーから返される値は`ResultSet`に格納されて戻り値として返却されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("SELECT * FROM users WHERE id = ?") // or conn.serverPreparedStatement("SELECT * FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
@@ -280,7 +277,7 @@ statement.setLong(1, 1)
 クエリを実行した結果MySQLサーバーから返される値は影響を受けた行数が戻り値として返却されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)") // or conn.serverPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
     _ <- statement.setString(1, "Alice")
@@ -298,7 +295,7 @@ connection.use { conn =>
 クエリを実行した結果MySQLサーバーから返される値はAUTO_INCREMENTに生成された値が戻り値として返却されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS) // or conn.serverPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS)
     _ <- statement.setString(1, "Alice")
@@ -324,7 +321,7 @@ SQLを実行して取得したレコードを`ResultSet`から取得するには
 `getXXX`メソッドは取得するカラムのインデックスを指定する方法とカラム名を指定する方法があります。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for 
     statement <- conn.clientPreparedStatement("SELECT `id`, `name`, `age` FROM users WHERE id = ?")
     _ <- statement.setLong(1, 1)
@@ -489,7 +486,7 @@ ldbcでは`Connection`の`close`メソッドを使用して接続を閉じるこ
 ※ `Connection`は`Resource`を使用してリソース管理を行います。そのため`close`メソッドを使用してリソースの解放を行う必要はありません。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   conn.close()
 }
 ```
@@ -501,7 +498,7 @@ connection.use { conn =>
 ldbcでは`Connection`の`setSchema`メソッドを使用してデフォルト・スキーマを変更することができます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   conn.setSchema("test")
 }
 ```
@@ -513,7 +510,7 @@ connection.use { conn =>
 ldbcでは`Connection`の`getStatistics`メソッドを使用して内部ステータスの文字列を取得することができます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   conn.getStatistics
 }
 ```
@@ -537,7 +534,7 @@ ldbcでは`Connection`の`isValid`メソッドを使用してサーバーが生�
 サーバーが生きている場合は`true`を返却し、生きていない場合は`false`を返却します。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   conn.isValid
 }
 ```
@@ -555,7 +552,7 @@ connection.use { conn =>
 ldbcでは`Connection`の`changeUser`メソッドを使用してユーザーを変更することができます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   conn.changeUser("root", "password")
 }
 ```
@@ -572,7 +569,7 @@ connection.use { conn =>
 ldbcでは`Connection`の`resetServerState`メソッドを使用してセッションの状態をリセットすることができます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   conn.resetServerState
 }
 ```
@@ -589,7 +586,7 @@ ldbcでは`Connection`の`enableMultiQueries`メソッドと`disableMultiQueries
 ※ これは、Insert、Update、および Delete ステートメントによるバッチ処理にのみ使用できます。Selectステートメントで使用を行なったとしても、最初のクエリの結果のみが返されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   conn.enableMultiQueries *> conn.disableMultiQueries
 }
 ```
@@ -602,7 +599,7 @@ ldbcではバッチコマンドを使用して複数のクエリを一度に実�
 バッチコマンドを使用するには`Statement`または`PreparedStatement`の`addBatch`メソッドを使用してクエリを追加し、`executeBatch`メソッドを使用してクエリを実行します。
 
 ```scala 3 3
-connection.use { conn =>
+provider.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -628,7 +625,7 @@ INSERT INTO users (name, age) VALUES ('Alice', 20);INSERT INTO users (name, age)
 手動でクリアする場合は`clearBatch`メソッドを使用してクリアを行います。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -651,7 +648,7 @@ connection.use { conn =>
 例えば、以下のクエリをバッチコマンドで実行した場合、`Statement`を使用しているため、複数のクエリが一度に実行されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for
     statement <- conn.createStatement()
     _ <- statement.addBatch("INSERT INTO users (name, age) VALUES ('Alice', 20)")
@@ -667,7 +664,7 @@ connection.use { conn =>
 しかし、以下のクエリをバッチコマンドで実行した場合、`PreparedStatement`を使用しているため、1つのクエリが実行されます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for
     statement <- conn.clientPreparedStatement("INSERT INTO users (name, age) VALUES (?, ?)")
     _ <- statement.setString(1, "Alice")
@@ -710,7 +707,7 @@ END
 上記のストアドプロシージャを実行する場合は以下のようになります。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for
     callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
     _ <- callableStatement.setString(1, "abcdefg")
@@ -733,7 +730,7 @@ connection.use { conn =>
 ただし、ldbcでも`registerOutputParameter()`メソッドを使用してパラメータを指定することもできます。
 
 ```scala 3
-connection.use { conn =>
+provider.use { conn =>
   for
     callableStatement <- conn.prepareCall("CALL demoSp(?, ?)")
     _ <- callableStatement.setString(1, "abcdefg")

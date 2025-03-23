@@ -29,9 +29,12 @@ println(query.statement)
 以下の例では、`alias`関数またはカスタムのマッピング関数を使って、取得時のカラム名を変更する例を示します。
 
 ```scala 3
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.*
 
 case class User(id: Int, name: String, email: String) derives Table
+object User:
+  given Codec[User] = Codec.derived[User]
 
 val userTable = TableQuery[User]
 

@@ -81,9 +81,12 @@ libraryDependencies ++= Seq(
 クエリビルダーは、型安全なAPIでクエリを構築できる方法です。次の例では、`User`モデルを定義し、`TableQuery`を使ってSELECT文を構築しています。
 
 ```scala 3
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.*
 
 case class User(id: Int, name: String, email: String) derives Table
+object User:
+  given Codec[User] = Codec.derived[User]
 
 val userQuery = TableQuery[User]
   .select(user => user.id *: user.name *: user.email)

@@ -14,27 +14,23 @@ Javaのコネクトは、従来のJDBC APIを利用してデータベースに�
 
 ```scala
 import com.mysql.cj.jdbc.MysqlDataSource
-import cats.effect.{ IO, Resource }
-import ldbc.sql.PreparedStatement
+import cats.effect.IO
 import ldbc.dsl.DBIO
 
 // データソースの設定とJDBCコネクタの利用例
-val ds = new MysqlDataSource()
+val ds = new com.mysql.cj.jdbc.MysqlDataSource()
 ds.setServerName("127.0.0.1")
 ds.setPortNumber(13306)
 ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val jdbcDatasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-val javaConnection: Resource[IO, ldbc.Connection[IO]] =
-  Resource.make(jdbcDatasource.getConnection)(_.close())
+val provider = ConnectionProvider.fromDataSource[IO](ex, ExecutionContexts.synchronous)
 
 // JavaのJDBC APIに基づく接続の利用例
-javaConnection.use { conn =>
+provider.use { conn =>
   // PreparedStatementなどを利用してSQLを実行
-  DBIO.pure[IO, Unit](()).commit(conn)
+  DBIO.pure(()).commit(conn)
 }
 ```
 
@@ -46,27 +42,20 @@ Scalaのコネクタは、型安全性と関数型プログラミングを活か
   これにより、クロスプラットフォームな開発環境でのデータベース接続が容易に実現できます。
 
 ```scala
-import cats.effect.{ IO, Resource }
-import ldbc.connector.Connection
-import ldbc.dsl.Tracer
-
-// Scalaのコネクタでは、Tracerを提供してテレメトリを扱う
-given Tracer[IO] = Tracer.noop[IO]
+import cats.effect.IO
+import ldbc.connector.*
+import ldbc.dsl.DBIO
 
 // ldbc-connectorを利用してコネクションを作成する例（JVM, Scala.js, Scala Native対応）
-val scalaConnection: Resource[IO, ldbc.Connection[IO]] =
-  Connection[IO](
-    host     = "127.0.0.1",
-    port     = 3306,
-    user     = "ldbc",
-    password = Some("password"),
-    database = Some("ldbc")
-  )
+val provider =
+  ConnectionProvider
+    .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
+    .setSSL(SSL.Trusted)
 
-// Scalaコネクタの利用例：Resourceを使って接続後に自動でクローズを保証
-scalaConnection.use { conn =>
+// Scalaコネクタの利用例：内部でResourceを使って接続後に自動でクローズを保証
+provider.use { conn =>
   // ldbc DSLやDBIOを使ってSQLを実行できる
-  ldbc.dsl.DBIO.pure[IO, Unit](()).commit(conn)
+  DBIO.pure(()).commit(conn)
 }
 ```
 

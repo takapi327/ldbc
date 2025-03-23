@@ -206,6 +206,7 @@ val result: IO[List[User]] = connection.use { conn =>
 今回の変更によって、モデルを構築し
 
 ```scala 3
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.Table
 
 case class User(
@@ -213,6 +214,8 @@ case class User(
   name: String,
   age: Option[Int],
 ) derives Table
+object User:
+  given Codec[User] = Codec.derived[User]
 ```
 
 次に`Table`を初期化を行います。
@@ -226,7 +229,7 @@ val userTable = TableQuery[User]
 最後にクエリ構築を行うことで利用可能となります。
 
 ```scala
-val result: IO[List[User]] = connection.use { conn =>
+val result: IO[List[User]] = provider.use { conn =>
   userTable.selectAll.query.to[List].readOnly(conn)
   // "SELECT `id`, `name`, `age` FROM user"
 }
@@ -478,14 +481,17 @@ scalacOptions += "-Ximplicit-search-limit:100000"
 しかし、オプションでの制限拡張はコンパイル時間の増幅につながる可能性があります。その場合は、以下のように手動で任意の型を構築することで解決することもできます。
 
 ```scala 3
-given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
-given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
+given Decoder[City] = Decoder.derived[City]
+// Or given Decoder[City] = (Decoder[Int] *: Decoder[String] *: Decoder[Int] *: ....).to[City]
+given Encoder[City] = Encoder.derived[City]
+// Or given Encoder[City] = (Encoder[Int] *: Encoder[String] *: Encoder[Int] *: ....).to[City]
 ```
 
 もしくは、`Codec`を使用して`Encoder`と`Decoder`を組み合わせることで解決することもできます。
 
 ```scala 3
-given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
+given Codec[City] = Codec.derived[City]
+// Or given Codec[City] = (Codec[Int] *: Codec[String] *: Codec[Int] *: ....).to[City]
 ```
 
 ### 列の絞り込み方法の変更
