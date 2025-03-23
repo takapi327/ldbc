@@ -8,6 +8,8 @@ package ldbc.tests.model
 
 import java.time.LocalDate
 
+import ldbc.dsl.codec.Codec
+
 import ldbc.query.builder.{ Column, Table }
 
 import ldbc.schema.Table as SchemaTable
@@ -21,6 +23,7 @@ case class GovernmentOffice(
 
 object GovernmentOffice:
 
+  given Codec[GovernmentOffice] = Codec.derived[GovernmentOffice]
   given Table[GovernmentOffice] = Table.derived[GovernmentOffice]("government_office")
 
 class GovernmentOfficeTable extends SchemaTable[GovernmentOffice]("government_office"):
