@@ -138,7 +138,7 @@ object FirstSteps extends IOApp.Simple:
   
   // データベース接続設定
   val provider =
-    MySQLProvider
+    ConnectionProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "sandbox_db")
       .setSSL(SSL.Trusted)
   

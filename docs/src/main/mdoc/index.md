@@ -104,7 +104,7 @@ ds.setDatabaseName("world")
 ds.setUser("ldbc")
 ds.setPassword("password")
 
-val provider = MySQLProvider.fromDataSource(ex, ExecutionContexts.synchronous)
+val provider = ConnectionProvider.fromDataSource(ex, ExecutionContexts.synchronous)
 ```
 
 **ldbc connector**
@@ -113,7 +113,7 @@ val provider = MySQLProvider.fromDataSource(ex, ExecutionContexts.synchronous)
 import ldbc.connector.*
 
 val provider =
-  MySQLProvider
+  ConnectionProvider
     .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
     .setSSL(SSL.Trusted)
 ```

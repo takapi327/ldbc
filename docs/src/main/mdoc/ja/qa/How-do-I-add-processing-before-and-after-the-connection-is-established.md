@@ -18,7 +18,7 @@ def before: Connection[IO] => IO[Unit] = _ => IO.println("Connecting to...")
 def after: (Unit, Connection[IO]) => IO[Unit] = (_, _) => IO.println("Connection Closed")
 
 val provider =
-  MySQLProvider
+  ConnectionProvider
     ...
     .withBeforeAfter(before, after)
 ```

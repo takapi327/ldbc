@@ -58,7 +58,7 @@ ds.setUser("ldbc")
 ds.setPassword("password")
 
 // コネクションプロバイダーを作成
-val provider = MySQLProvider
+val provider = ConnectionProvider
   .fromDataSource[IO](ds, ExecutionContexts.synchronous)
 
 // コネクションを使用する
@@ -77,7 +77,7 @@ import cats.effect.IO
 import jdbc.connector.*
 
 // DriverManagerからプロバイダーを作成
-val provider = MySQLProvider
+val provider = ConnectionProvider
   .fromDriverManager[IO]
   .apply(
     "com.mysql.cj.jdbc.Driver",
@@ -102,7 +102,7 @@ val program = provider.use { connection =>
 val jdbcConnection: java.sql.Connection = ???
 
 // ldbcのコネクションに変換
-val provider = MySQLProvider.fromConnection[IO](jdbcConnection)
+val provider = ConnectionProvider.fromConnection[IO](jdbcConnection)
 
 // コネクションを使用する
 val program = provider.use { connection =>
@@ -131,7 +131,7 @@ import cats.effect.IO
 import ldbc.connector.*
 
 // 基本的な設定でプロバイダーを作成
-val provider = MySQLProvider
+val provider = ConnectionProvider
   .default[IO]("localhost", 3306, "ldbc")
   .setPassword("password")
   .setDatabase("world")
@@ -150,7 +150,7 @@ val program = provider.use { connection =>
 import cats.effect.IO
 import ldbc.connector.*
 
-val provider = MySQLProvider
+val provider = ConnectionProvider
   .default[IO]("localhost", 3306, "ldbc", "password", "world")
   .setSSL(SSL.Trusted) // SSL接続を有効化
 
@@ -170,7 +170,7 @@ import cats.effect.IO
 import fs2.io.net.SocketOption
 import ldbc.connector.*
 
-val provider = MySQLProvider
+val provider = ConnectionProvider
   .default[IO]("localhost", 3306, "ldbc")
   .setPassword("password")
   .setDatabase("world")
@@ -195,7 +195,7 @@ val program = provider.use { connection =>
 import cats.effect.IO
 import ldbc.connector.*
 
-val provider = MySQLProvider
+val provider = ConnectionProvider
   .default[IO]("localhost", 3306, "ldbc", "password", "world")
   .withBefore { connection =>
     // コネクション確立後に実行される処理

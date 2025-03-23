@@ -56,7 +56,7 @@ def console[F[_]: Console: Sync]: LogHandler[F] =
 ```scala 3
 import ldbc.connector.*
 val provider =
-  MySQLProvider
+  ConnectionProvider
     .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
     .setSSL(SSL.Trusted)
     .setLogHandler(console[IO])

@@ -27,7 +27,7 @@ import ldbc.dsl.*
 
 // データベース接続の設定
 val provider =
-  MySQLProvider
+  ConnectionProvider
     .default[IO]("127.0.0.1", 3306, "ldbc", "password", "ldbc")
     .setSSL(SSL.Trusted)
 
