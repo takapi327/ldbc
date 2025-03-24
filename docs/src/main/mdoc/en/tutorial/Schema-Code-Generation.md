@@ -1,205 +1,446 @@
 {%
-  laika.title = Schema code generation
+  laika.title = Schema Code Generation
   laika.metadata.language = en
 %}
 
-# Schema code generation
+# Schema Code Generation
 
-This chapter describes how to automatically generate ldbc table definitions from SQL files.
+In [Schema](/en/tutorial/Schema.md), we learned how to define schemas using Scala code. However, when working with existing databases, manually defining schemas can be time-consuming and prone to errors. This page explains how to automatically generate Scala code from existing SQL files.
 
-The following dependencies must be set up in your project
+Code generation is a powerful tool for automating repetitive tasks and reducing human errors. ldbc provides functionality to automatically generate model classes and table definitions from SQL files.
 
-```scala 3
+## SBT Plugin Setup
+
+### Adding the Plugin
+
+You need to set up the following dependency in your project. Add it to `project/plugins.sbt`.
+
+```scala
 addSbtPlugin("@ORGANIZATION@" % "ldbc-plugin" % "@VERSION@")
 ```
 
-## Generate
+### Enabling the Plugin
 
-Enable the plugin for the project.
+Enable the plugin for your project in the `build.sbt` file.
 
 ```sbt
 lazy val root = (project in file("."))
   .enablePlugins(Ldbc)
 ```
 
-Specify the SQL file to be analyzed as an array.
+## Basic Usage
+
+### Specifying SQL Files
+
+Configure the SQL files to be parsed. You can specify a single file or multiple files.
 
 ```sbt
-Compile / parseFiles := List(baseDirectory.value / "test.sql")
+// Specifying a single SQL file
+Compile / parseFiles := List(
+  baseDirectory.value / "sql" / "schema.sql"
+)
+
+// Specifying multiple SQL files
+Compile / parseFiles := List(
+  baseDirectory.value / "sql" / "users.sql",
+  baseDirectory.value / "sql" / "products.sql"
+)
 ```
 
-**List of keys that can be set by enabling the plugin**
+### Specifying Directories
 
-| Key                  | Detail                                                                 |
-|----------------------|------------------------------------------------------------------------|
-| `parseFiles`         | `List of SQL files to be analyzed`                                     |
-| `parseDirectories`   | `Specify SQL files to be parsed by directory`                          |
-| `excludeFiles`       | `List of file names to exclude from analysis`                          |
-| `customYamlFiles`    | `List of yaml files for customizing Scala types and column data types` |
-| `classNameFormat`    | `Value specifying the format of the class name`                        |
-| `propertyNameFormat` | `Value specifying the format of the property name in the Scala model`  |
-| `ldbcPackage`        | `Value specifying the package name of the generated file`              |
+To target all SQL files in a specific directory, use `parseDirectories`.
 
-The SQL file to be parsed must always begin with a Create or Use statement for the database. ldbc parses the file one file at a time, generates table definitions, and stores the list of tables in the database model.
-This is because it is necessary to tell which database the table belongs to.
-
-```sql
-CREATE DATABASE `location`;
-
-USE `location`;
-
-DROP TABLE IF EXISTS `country`;
-CREATE TABLE country (
-  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `code` INT NOT NULL
-);
+```sbt
+// Specify by directory
+Compile / parseDirectories := List(
+  baseDirectory.value / "sql"
+)
 ```
 
-The SQL file to be analyzed should contain only Create/Use statements for the database or Create/Drop statements for table definitions.
+### Generated Code
 
-## Generated Code
-
-When the sbt project is started and compiled, model classes generated based on the SQL file to be analyzed and table definitions are generated under the target of the sbt project.
+After configuration, code will be automatically generated when you compile with sbt.
 
 ```shell
 sbt compile
 ```
 
-The code generated from the above SQL file will look like this
+The generated files are stored in the `target/scala-X.X/src_managed/main` directory.
 
-```scala 3
-package ldbc.generated.location
+### Manual Generation
 
-import ldbc.schema.*
-
-case class Country(
-  id: Long,
-  name: String,
-  code: Int
-)
-
-object Country:
-  val table = Table[Country]("country")(
-    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("name", VARCHAR(255)),
-    column("code", INT)
-  )
-```
-
-If the SQL file has been modified or the cache has been removed by running the clean command, Compile will generate the code again. If the SQL file has been modified or the cache has been deleted by executing the clean command, the code will be generated again when Compile is executed.
-If you want to generate the code again without using the cache, execute the command `generateBySchema`. This command does not use the cache and always generates code.
+If you want to force code generation without using cache, use the following command:
 
 ```shell
 sbt generateBySchema
 ```
 
-## Customization
+## SQL File Format Requirements
 
-There may be times when you want to convert the type of code generated from an SQL file to something else. This can be done by passing `customYamlFiles` with the yml files to be customized.
+SQL files must include the following elements:
+
+### Database Definition
+
+At the beginning of the file, always include a Create or Use statement for the database. This determines the package name and table ownership in the generated code.
+
+```sql
+-- Method 1: Creating a database
+CREATE DATABASE `my_app`;
+
+-- Or Method 2: Using an existing database
+USE `my_app`;
+```
+
+### Table Definitions
+
+After the database definition, include table definitions.
+
+```sql
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+Complete SQL file example:
+
+```sql
+CREATE DATABASE `my_app`;
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS `products`;
+CREATE TABLE `products` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `price` DECIMAL(10, 2) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Detailed Configuration Options
+
+The ldbc plugin offers the following configuration keys to customize code generation.
+
+### Configuration Key List
+
+| Key                   | Default Value    | Details                                                |
+|----------------------|-----------------|--------------------------------------------------------|
+| `parseFiles`         | `List.empty`    | List of SQL files to parse                             |
+| `parseDirectories`   | `List.empty`    | Directory-based specification of SQL files to parse    |
+| `excludeFiles`       | `List.empty`    | List of filenames to exclude from parsing              |
+| `customYamlFiles`    | `List.empty`    | List of YAML files for type customization              |
+| `classNameFormat`    | `Format.PASCAL` | Format for generated class names (PASCAL, CAMEL, SNAKE)|
+| `propertyNameFormat` | `Format.CAMEL`  | Format for generated property names (PASCAL, CAMEL, SNAKE)|
+| `ldbcPackage`        | `ldbc.generated`| Package name for generated files                        |
+
+### Example: Detailed Configuration
 
 ```sbt
-Compile / customYamlFiles := List(
-  baseDirectory.value / "custom.yml"
-)
-```
-
-The format of the yml file should be as follows
-
-```yaml
-database:
-  name: '{Database Name}'
-  tables:
-    - name: '{Table Name}'
-      columns: # Optional
-        - name: '{Column Name}'
-          type: '{Scala type you want to change}'
-      class: # Optional
-        extends:
-          - '{Package paths such as trait that you want model classes to inherit}' // package.trait.name
-      object: # Optional
-        extends:
-          - '{The package path, such as trait, that you want the object to inherit.}'
-    - name: '{Table Name}'
-      ...
-```
-
-The `database` must be the name of the database listed in the SQL file to be analyzed. The table name must be the name of a table belonging to the database listed in the SQL file to be parsed.
-
-The `columns` field should be a string containing the name of the column whose type you want to change and the Scala type you want to change. Columns` can have multiple values, but the column name in `name` must belong to the target table.
-Also, the Scala type to be converted must be one that is supported by the column's Data type. If you want to specify an unsupported type, you must pass a trait, abstract class, etc. that is configured to do implicit type conversion for `object`.
-
-See [here](/en/tutorial/Schema.md#data-type) for types supported by Data type and [here](/en/tutorial/Schema.md#custom-data-types) for how to set unsupported types.
-
-To convert an Int type to the user's own type, CountryCode, implement the following `CustomMapping`trait
-
-```scala 3
-trait CountryCode:
-  val code: Int
-object Japan extends CountryCode:
-  override val code: Int = 1
-
-trait CustomMapping: // 任意の名前
-  given Conversion[INT[Int], CountryCode] = DataType.mappingp[INT[Int], CountryCode]
-```
-
-Set the `CustomMapping`trait that you have implemented in the yml file for customization, and convert the target column type to CountryCode.
-
-```yaml
-database:
-  name: 'location'
-  tables:
-    - name: 'country'
-      columns:
-        - name: 'code'
-          type: 'Country.CountryCode' // CustomMapping is mixed in with the Country object so that it can be retrieved from there.
-      object:
-        extends:
-          - '{package.name.}CustomMapping'
-```
-
-The code generated by the above configuration will be as follows, allowing users to generate model and table definitions with their own types.
-
-```scala 3
-case class Country(
-  id: Long,
-  name: String,
-  code: Country.CountryCode
+Compile / parseFiles := List(
+  baseDirectory.value / "sql" / "schema.sql"
 )
 
-object Country extends /*{package.name.}*/CustomMapping:
-  val table = Table[Country]("country")(
-    column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY),
-    column("name", VARCHAR(255)),
-    column("code", INT)
-  )
+Compile / parseDirectories := List(
+  baseDirectory.value / "sql" / "tables"
+)
+
+Compile / excludeFiles := List(
+  "temp_tables.sql", "test_data.sql"
+)
+
+Compile / classNameFormat := PASCAL // PascalCase (MyClass)
+Compile / propertyNameFormat := CAMEL // camelCase (myProperty)
+
+Compile / ldbcPackage := "com.example.db"
 ```
 
-The database model is also automatically generated from SQL files.
+## Example of Generated Code
 
-```scala 3
-package ldbc.generated.location
+For example, with an SQL file like:
+
+```sql
+CREATE DATABASE `shop`;
+
+CREATE TABLE `products` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `price` DECIMAL(10, 2) NOT NULL,
+  `description` TEXT,
+  `category_id` INT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+The following Scala code would be generated:
+
+```scala
+package com.example.db
 
 import ldbc.schema.*
 
-case class LocationDatabase(
-  schemaMeta: Option[String] = None,
-  catalog: Option[String] = Some("def"),
-  host: String = "127.0.0.1",
-  port: Int = 3306
-) extends Database:
+import java.time.LocalDateTime
 
-  override val databaseType: Database.Type = Database.Type.MySQL
+// Model class
+case class Product(
+  id: Long,
+  name: String,
+  price: BigDecimal,
+  description: Option[String],
+  categoryId: Int,
+  createdAt: LocalDateTime
+)
 
-  override val name: String = "location"
-
-  override val schema: String = "location"
-
-  override val character: Option[Character] = None
-
-  override val collate: Option[Collate] = None
-
-  override val tables = Set(
-    Country.table
-  )
+// Table definition and query builder
+object Product {
+  val table = TableQuery[ProductTable]
+  
+  class ProductTable extends Table[Product]("products"):
+    def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+    def name: Column[String] = column[String]("name", VARCHAR(255), NOT_NULL)
+    def price: Column[BigDecimal] = column[BigDecimal]("price", DECIMAL(10, 2), NOT_NULL)
+    def description: Column[Option[String]] = column[Option[String]]("description", TEXT)
+    def categoryId: Column[Int] = column[Int]("category_id", INT, NOT_NULL)
+    def createdAt: Column[LocalDateTime] = column[LocalDateTime]("created_at", TIMESTAMP, NOT_NULL, DEFAULT_CURRENT_TIMESTAMP)
+    
+    override def * : Column[Product] = (id *: name *: price *: description *: categoryId *: createdAt).to[Product]
+}
 ```
+
+## Customizing Types
+
+If you want to change the types in the automatically generated code to your own types, you can customize them using YAML files.
+
+### YAML File Configuration
+
+First, create a YAML file for customization.
+
+```yaml
+# custom_types.yml
+database:
+  name: 'shop'
+  tables:
+    - name: 'products'
+      columns:
+        - name: 'category_id'
+          type: 'ProductCategory'
+      object:
+        extends:
+          - 'com.example.ProductTypeMapping'
+```
+
+Then, add this YAML file to your project configuration.
+
+```sbt
+Compile / customYamlFiles := List(
+  baseDirectory.value / "config" / "custom_types.yml"
+)
+```
+
+### Custom Type Implementation
+
+Next, implement the custom type conversion referenced in the YAML file.
+
+```scala
+// com/example/ProductTypeMapping.scala
+package com.example
+
+import ldbc.dsl.Codec
+
+sealed trait ProductCategory {
+  def id: Int
+}
+
+object ProductCategory {
+  case object Electronics extends ProductCategory { val id = 1 }
+  case object Books extends ProductCategory { val id = 2 }
+  case object Clothing extends ProductCategory { val id = 3 }
+  
+  def fromId(id: Int): ProductCategory = id match {
+    case 1 => Electronics
+    case 2 => Books
+    case 3 => Clothing
+    case _ => throw new IllegalArgumentException(s"Unknown category ID: $id")
+  }
+}
+
+trait ProductTypeMapping {
+  given Codec[ProductCategory] = Codec[Int].imap(ProductCategory.fromId)(_.id)
+}
+```
+
+### Generated Code After Customization
+
+With the above configuration, code like the following would be generated:
+
+```scala
+package ldbc.generated.shop
+
+import ldbc.schema.*
+import java.time.LocalDateTime
+import com.example.ProductCategory
+
+case class Product(
+  id: Long,
+  name: String,
+  price: BigDecimal,
+  description: Option[String],
+  categoryId: ProductCategory, // Changed to custom type
+  createdAt: LocalDateTime
+)
+
+object Product extends com.example.ProductTypeMapping {
+  val table = TableQuery[ProductTable]
+  
+  class ProductTable extends Table[Product]("products"):
+    def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+    def name: Column[String] = column[String]("name", VARCHAR(255), NOT_NULL)
+    def price: Column[BigDecimal] = column[BigDecimal]("price", DECIMAL(10, 2), NOT_NULL)
+    def description: Column[Option[String]] = column[Option[String]]("description", TEXT)
+    def categoryId: Column[Int] = column[Int]("category_id", INT, NOT_NULL) // Actual column type doesn't change
+    def createdAt: Column[LocalDateTime] = column[LocalDateTime]("created_at", TIMESTAMP, NOT_NULL, DEFAULT_CURRENT_TIMESTAMP)
+    
+    override def * : Column[Product] = (id *: name *: price *: description *: categoryId *: createdAt).to[Product]
+}
+```
+
+## Detailed YAML Customization Syntax
+
+In the customization YAML file, the following configurations are possible:
+
+```yaml
+database:
+  name: '{database_name}'
+  tables:
+    - name: '{table_name}'
+      columns: # Optional
+        - name: '{column_name}'
+          type: '{desired_Scala_type}'
+      class: # Optional
+        extends:
+          - '{package_path_of_trait_to_extend_the_model_class}'
+      object: # Optional
+        extends:
+          - '{package_path_of_trait_to_extend_the_object}'
+```
+
+### Example: Adding Traits to a Model Class
+
+```yaml
+database:
+  name: 'shop'
+  tables:
+    - name: 'products'
+      class:
+        extends:
+          - 'com.example.JsonSerializable'
+          - 'com.example.Validatable'
+```
+
+### Example: Customizing Multiple Tables and Columns
+
+```yaml
+database:
+  name: 'shop'
+  tables:
+    - name: 'products'
+      columns:
+        - name: 'price'
+          type: 'Money'
+      object:
+        extends:
+          - 'com.example.MoneyTypeMapping'
+    - name: 'orders'
+      columns:
+        - name: 'status'
+          type: 'OrderStatus'
+      object:
+        extends:
+          - 'com.example.OrderStatusMapping'
+```
+
+## Using Generated Code
+
+Generated code can be used like any other ldbc code.
+
+```scala
+import ldbc.dsl.*
+import ldbc.generated.shop.Product
+
+val provider = MySQLConnectionProvider(...)
+
+// Referencing table queries
+val products = Product.table
+
+// Executing queries
+val allProducts = provider.use { conn =>
+  products.filter(_.price > 100).all.run(conn)
+}
+```
+
+## Best Practices for Code Generation
+
+### 1. Clear SQL File Structure
+
+- Group related tables in the same file
+- Always include database definition at the beginning of each file
+- Add appropriate comments to explain SQL
+
+### 2. Consistent Naming Conventions
+
+- Use consistent naming conventions for tables and columns in SQL
+- Explicitly configure naming rules for the generated Scala code
+
+### 3. Smart Use of Custom Types
+
+- Use custom types for domain-specific concepts
+- Leverage custom types to encapsulate complex business logic
+
+### 4. Automate Regeneration
+
+Consider integrating into CI/CD pipelines for regular schema updates.
+
+## Troubleshooting
+
+### When Code Is Not Generated
+
+- Verify SQL file paths are correct
+- Ensure database definition is at the beginning of the SQL files
+- Check for SQL syntax errors
+
+### When Type Conversion Errors Occur
+
+- Verify custom YAML configurations are correct
+- Ensure referenced packages and classes exist in the classpath
+- Check that implicit type conversions (given/using) are properly defined
+
+### When Generated Code Has Issues
+
+- Don't manually modify; instead, fix the SQL or YAML files and regenerate
+- Check for unsupported SQL features or special types
+
+## Tutorial Completion
+
+Congratulations! You've completed all sections of the ldbc tutorial. Now you have the basic skills and knowledge to develop database applications using ldbc.
+
+Throughout this journey, you've learned:
+- Basic usage and setup of ldbc
+- Database connections and query execution
+- Reading and writing data with type-safe mapping
+- Transaction management and error handling
+- Advanced features (logging, custom data types, query builders)
+- Schema definition and code generation
+
+Use this knowledge to build type-safe and efficient database applications. For more information and updates, refer to the official documentation and GitHub repository.
+
+Happy coding with ldbc!

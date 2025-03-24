@@ -5,481 +5,468 @@
 
 # Schema
 
-This chapter describes how to work with database schemas in Scala code, especially how to manually write a schema, which is useful when starting to write an application without an existing database. If you already have a schema in your database, you can skip this step using Code Generator.
+You've learned how to build type-safe queries with the [Query Builder](/en/tutorial/Query-Builder.md). This page explains how to define database schemas in Scala code and map tables to models.
 
-The following dependencies must be set up for your project
+Schema definitions are a critical element that clearly defines the boundary between your application and the database. ldbc provides functionality to define schemas in Scala code, leveraging the powerful type system to represent database structures.
+
+This chapter explains how to handle database schemas in Scala code, particularly how to manually write schemas, which is useful when starting to write an application without an existing database. If you already have schemas in your database, you can skip this work by using the Code Generator.
+
+## Preparation
+
+You need to set up the following dependency in your project:
 
 ```scala
 //> using dep "@ORGANIZATION@::ldbc-schema:@VERSION@"
 ```
 
-The following code example assumes the following import
+The following code examples assume these imports:
 
 ```scala 3
 import ldbc.schema.*
-import ldbc.schema.attribute.*
 ```
 
-ldbc maintains a one-to-one mapping between Scala models and database table definitions. The mapping between the properties held by the model and the columns held by the table is done in the order of definition. Table definitions are very similar to the structure of a Create statement. This makes the construction of table definitions intuitive for the user.
+## Basic Table Definition
 
-ldbc uses these table definitions for a variety of purposes. Generating type-safe queries, generating documents, etc.
+In ldbc, you create table definitions by extending the `Table` class. This allows you to associate Scala models (such as case classes) with database tables.
+
+### Basic Table Definition
 
 ```scala 3
+// Model definition
 case class User(
-  id:    Int,
+  id:   Long,
   name:  String,
-  email: String,
+  age:   Option[Int] // Use Option for columns that allow NULL
 )
 
-val table = Table[User]("user")(                  // CREATE TABLE `user` (
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY), //   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  column("name", VARCHAR(50)),                    //   `name` VARCHAR(50) NOT NULL,
-  column("email", VARCHAR(100)),                  //   `email` VARCHAR(100) NOT NULL,
-)                                                 // );
+// Table definition
+class UserTable extends Table[User]("user"): // "user" is the table name
+  // Column definitions
+  def id: Column[Long] = column[Long]("id")
+  def name: Column[String] = column[String]("name")
+  def age: Column[Option[Int]] = column[Option[Int]]("age")
+
+  // Mapping with the model
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
-All columns are defined by the column method. Each column has a column name, data type, and attributes. The following primitive types are supported by default and are ready to use
+In the example above:
+- `Table[User]` indicates that this table is associated with the User model
+- `"user"` is the table name in the database
+- Each column is defined with the `column` method
+- The `*` method defines how to map all columns to the model
 
-- Numeric types: `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`, `BigDecimal`, `BigInt`
-- LOB types: `java.sql.Blob`, `java.sql.Clob`, `Array[Byte]`
-- Date types: `java.sql.Date`, `java.sql.Time`, `java.sql.Timestamp`
-- String
-- Boolean
-- java.time.*
+### Table Definition with Data Types
 
-Nullable columns are represented by `Option[T]`, where T is one of the supported primitive types; note that any column that is not of type Option is Not Null.
-
-## Data Type
-
-The mapping of the Scala type of property that a model has to the data type that a column has requires that the defined data type supports the Scala type. Attempting to assign an unsupported type will result in a compile error.
-
-The Scala types supported by the data type are listed in the table below.
-
-| Data Type    | Scala Type                                                                                      |
-|--------------|-------------------------------------------------------------------------------------------------|
-| `BIT`        | `Byte, Short, Int, Long`                                                                        |
-| `TINYINT`    | `Byte, Short`                                                                                   |
-| `SMALLINT`   | `Short, Int`                                                                                    |
-| `MEDIUMINT`  | `Int`                                                                                           |
-| `INT`        | `Int, Long`                                                                                     |
-| `BIGINT`     | `Long, BigInt`                                                                                  |
-| `DECIMAL`    | `BigDecimal`                                                                                    |
-| `FLOAT`      | `Float`                                                                                         |
-| `DOUBLE`     | `Double`                                                                                        |
-| `CHAR`       | `String`                                                                                        |
-| `VARCHAR`    | `String`                                                                                        |
-| `BINARY`     | `Array[Byte]`                                                                                   |
-| `VARBINARY`  | `Array[Byte]`                                                                                   |
-| `TINYBLOB`   | `Array[Byte]`                                                                                   |
-| `BLOB`       | `Array[Byte]`                                                                                   |
-| `MEDIUMBLOB` | `Array[Byte]`                                                                                   |
-| `LONGBLOB`   | `Array[Byte]`                                                                                   |
-| `TINYTEXT`   | `String`                                                                                        |
-| `TEXT`       | `String`                                                                                        |
-| `MEDIUMTEXT` | `String`                                                                                        |
-| `DATE`       | `java.time.LocalDate`                                                                           |
-| `DATETIME`   | `java.time.Instant, java.time.LocalDateTime, java.time.OffsetTime`                              |
-| `TIMESTAMP`  | `java.time.Instant, java.time.LocalDateTime, java.time.OffsetDateTime, java.time.ZonedDateTime` |
-| `TIME`       | `java.time.LocalTime`                                                                           |
-| `YEAR`       | `java.time.Instant, java.time.LocalDate, java.time.Year`                                        |
-| `BOOLEA`     | `Boolean`                                                                                       |
-
-**Note on working with integer types**
-
-It should be noted that the range of data that can be handled, depending on whether it is signed or unsigned, does not fit within the Scala types.
-
-| Data Type   | Signed Range                                 | Unsigned Range             | Scala Type       | Range                                                                |
-|-------------|----------------------------------------------|----------------------------|------------------|----------------------------------------------------------------------|
-| `TINYINT`   | `-128 ~ 127`                                 | `0 ~ 255`                  | `Byte<br>Short`  | `-128 ~ 127<br>-32768～32767`                                         |
-| `SMALLINT`  | `-32768 ~ 32767`                             | `0 ~ 65535`                | `Short<br>Int`   | `-32768～32767<br>-2147483648～2147483647`                             |
-| `MEDIUMINT` | `-8388608 ~ 8388607`                         | `0 ~ 16777215`             | `Int`            | `-2147483648～2147483647`                                             |
-| `INT`       | `-2147483648	~ 2147483647`                   | `0 ~ 4294967295`           | `Int<br>Long`    | `-2147483648～2147483647<br>-9223372036854775808～9223372036854775807` |
-| `BIGINT`    | `-9223372036854775808 ~ 9223372036854775807` | `0 ~ 18446744073709551615` | `Long<br>BigInt` | `-9223372036854775808～9223372036854775807<br>...`                    |
-
-To work with user-defined proprietary or unsupported types, see Custom Data Types.
-
-## Attributes
-
-Columns can be assigned various attributes.
-
-- `AUTO_INCREMENT`.
-  Create a DDL statement to mark a column as an auto-increment key when documenting SchemaSPY.
-  MySQL cannot return columns that are not AutoInc when inserting data. Therefore, if necessary, ldbc will check to see if the return column is properly marked as AutoInc.
-- `PRIMARY_KEY`.
-  Mark the column as a primary key when creating DDL statements or SchemaSPY documents.
-- `UNIQUE_KEY`.
-  Marks a column as a unique key when creating a DDL statement or SchemaSPY document.
-- `COMMENT`.
-  Marks a column as a comment when creating a DDL statement or SchemaSPY document.
-
-## Setting Keys
-
-MySQL allows you to set various keys for your tables, such as Unique keys, Index keys, foreign keys, etc. Let's look at how to set these keys in a table definition built with ldbc.
-
-### PRIMARY KEY
-
-A primary key is an item that uniquely identifies data in MySQL. When a column has a primary key constraint, it can only contain values that do not duplicate the values of other data. It also cannot contain NULLs. As a result, only one piece of data in the table can be identified by looking up the value of a column with a primary key constraint set.
-
-In ldbc, this primary key constraint can be set in two ways.
-
-1. set as an attribute of column method
-2. set by keySet method of table
-
-**Setting as an attribute of the column method**.
-
-It is very easy to set a column method attribute by simply passing `PRIMARY_KEY` as the third or later argument of the column method. This allows you to set the `id` column as the primary key in the following cases.
+You can specify MySQL data types and attributes for columns:
 
 ```scala 3
-column("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+class UserTable extends Table[User]("user"):
+  // Column definitions with data types and attributes
+  def id: Column[Long] = column[Long]("id", BIGINT, AUTO_INCREMENT, PRIMARY_KEY)
+  def name: Column[String] = column[String]("name", VARCHAR(255))
+  def age: Column[Option[Int]] = column[Option[Int]]("age", INT)
+
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
-Set by keySet method of **table**.
+## Using Dedicated Column Definition Methods
 
-ldbc table definitions have a method called `keySet`, where you can set the column you want to set as the primary key by passing `PRIMARY_KEY` as the column name.
+ldbc also provides specialized column definition methods for each data type. Because the variable name is used as the column name, you can write code more simply.
 
 ```scala 3
-val table = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-  .keySet(table => PRIMARY_KEY(table.id))
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint().autoIncrement.primaryKey
+  def name: Column[String] = varchar(255)
+  def age: Column[Option[Int]] = int().defaultNull
 
-// CREATE TABLE `user` (
-//   ...,
-//   PRIMARY KEY (`id`)
-// )
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
-The `PRIMARY_KEY` method can be set to the following parameters in addition to the columns.
+Using dedicated column definition methods allows you to set attributes appropriate for that data type, enabling you to write more type-safe code.
 
-- `Index Type` ldbc.schema.Index.Type.BTREE or ldbc.schema.Index.Type.HASH
-- `Index Option` ldbc.schema.Index.IndexOption
+### Explicitly Specifying Column Names
 
-#### composite key (primary key)
-
-Not only one column, but also multiple columns can be combined as a primary key. You can set up a composite primary key by simply passing `PRIMARY_KEY` with the columns you want as primary keys.
+If you want to explicitly specify column names:
 
 ```scala 3
-val table = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-  .keySet(table => PRIMARY_KEY(table.id, table.name))
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint("user_id").autoIncrement.primaryKey
+  def name: Column[String] = varchar("user_name", 255)
+  def age: Column[Option[Int]] = int("user_age").defaultNull
 
-// CREATE TABLE `user` (
-//   ...,
-//   PRIMARY KEY (`id`, `name`)
-// )
+  override def * : Column[User] = (id *: name *: age).to[User]
 ```
 
-Compound keys can only be set with `PRIMARY_KEY` in the `keySet` method. If you set multiple attributes in the column method as shown below, each attribute will be set as a primary key, not as a compound key.
+### Setting Column Naming Conventions
 
-In ldbc, setting multiple `PRIMARY_KEY`s in a table definition does not cause a compile error. However, if the table definition is used in query generation, document generation, etc., an error will occur. This is due to the restriction that only one PRIMARY KEY can be set per table.
-
-```scala 3
-val table = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(50), PRIMARY_KEY),
-  column("email", VARCHAR(100))
-)
-
-// CREATE TABLE `user` (
-//   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-// )
-```
-
-### UNIQUE KEY
-
-A unique key is an item that uniquely identifies data in MySQL. When a uniqueness constraint is set on a column, the column can only contain values that do not duplicate the values of other data.
-
-In ldbc, this uniqueness constraint can be set in two ways. 1.
-
-1. as an attribute of the column method
-2. in the keySet method of table
-
-**Setting as an attribute of the column method**.
-
-It is very easy to set a column method as an attribute by simply passing `UNIQUE_KEY` as the third or later argument of the column method. This allows you to set the `id` column as a unique key in the following cases.
+You can change the naming convention for columns using `Naming`:
 
 ```scala 3
-column("id", BIGINT, AUTO_INCREMENT, UNIQUE_KEY)
-```
-
-**Set by keySet method of table**
-
-The ldbc table definition has a method called `keySet` where you can set a column as a unique key by passing `UNIQUE_KEY` as the column name you want to set as a unique key.
-
-```scala 3
-val table = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-  .keySet(table => UNIQUE_KEY(table.id))
-
-// CREATE TABLE `user` (
-//   ...,
-//   UNIQUE KEY (`id`)
-// )
-```
-
-The `UNIQUE_KEY` method accepts the following parameters in addition to the columns.
-
-- `Index Name` String
-- `Index Type` ldbc.schema.Index.Type.BTREE or ldbc.schema.Index.Type.HASH
-- `Index Option` ldbc.schema.Index.IndexOption
-
-#### composite key (unique key)
-
-You can set not only one column as a unique key, but also multiple columns as a combined unique key. You can set up a composite unique key by simply passing `UNIQUE_KEY` with multiple columns that you want to set as unique keys.
-
-```scala 3
-val table = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-  .keySet(table => UNIQUE_KEY(table.id, table.name))
-
-// CREATE TABLE `user` (
-//   ...,
-//   UNIQUE KEY (`id`, `name`)
-// )
-```
-
-Compound keys can only be set with `UNIQUE_KEY` in the `keySet` method. If you set multiple keys as attributes in the column method, each will be set as a unique key, not as a compound key.
-
-### INDEX KEY
-
-An index key is an “index” in MySQL to efficiently retrieve the desired record.
-
-In ldbc, this index can be set in two ways.
-
-1. as an attribute of the column method
-2. by using the keySet method of table.
-
-**Set as an attribute of the column method**
-
-It is very easy to set a column method as an attribute, just pass `INDEX_KEY` as the third argument or later of the column method. This allows you to set the `id` column as an index in the following cases
-
-```scala 3
-column("id", BIGINT, AUTO_INCREMENT, INDEX_KEY)
-```
-
-**Set by keySet method of table**
-
-The ldbc table definition has a method called `keySet`, where you can set a column as an index key by passing the column you want to set as an index to `INDEX_KEY`.
-
-```scala 3
-val table = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-  .keySet(table => INDEX_KEY(table.id))
-
-// CREATE TABLE `user` (
-//   ...,
-//   INDEX KEY (`id`)
-// )
-```
-
-The `INDEX_KEY` method accepts the following parameters in addition to the columns.
-
-- `Index Name` String
-- Index Type` ldbc.schema.Index.Type.BTREE or ldbc.schema.Index.Type.HASH
-- `Index Option` ldbc.schema.Index.IndexOption
-
-#### composite key (index key)
-
-You can set not only one column but also multiple columns as index keys as a combined index key. You can set up a composite index by simply passing `INDEX_KEY` with multiple columns that you want to set as index keys.
-
-```scala 3
-val table = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-  .keySet(table => INDEX_KEY(table.id, table.name))
-
-// CREATE TABLE `user` (
-//   ...,
-//   INDEX KEY (`id`, `name`)
-// )
-```
-
-Compound keys can only be set with `INDEX_KEY` in the `keySet` method. If you set multiple columns as attributes of the `column` method, they will each be set as an index key, not as a composite index.
-
-### FOREIGN KEY
-
-A foreign key is a data integrity constraint (referential integrity constraint) in MySQL.  A column set to a foreign key can only have values that exist in the columns of the referenced table.
-
-In ldbc, this foreign key constraint can be set by using the keySet method of table.
-
-```scala 3
-val user = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-
-val order = Table[Order]("order")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("user_id", VARCHAR(50))
-  ...
-)
-  .keySet(table => FOREIGN_KEY(table.userId, REFERENCE(user, user.id)))
-
-// CREATE TABLE `order` (
-//   ...,
-//   FOREIGN KEY (user_id) REFERENCES `user` (id),
-// )
-```
-
-The `FOREIGN_KEY` method accepts the following parameters in addition to column and reference values.
-
-- `Index Name` String
-
-Foreign key constraints can be used to set the behavior of the parent table on delete and update. The `REFERENCE` method provides `onDelete` and `onUpdate` methods that can be used to set these parameters.
-
-Values that can be set can be obtained from `ldbc.schema.Reference.ReferenceOption`.
-
-```scala 3
-val order = Table[Order]("order")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("user_id", VARCHAR(50))
-  ...
-)
-  .keySet(table => FOREIGN_KEY(table.userId, REFERENCE(user, user.id).onDelete(Reference.ReferenceOption.RESTRICT)))
-
-// CREATE TABLE `order` (
-//   ...,
-//   FOREIGN KEY (`user_id`)  REFERENCES `user` (`id`) ON DELETE RESTRICT
-// )
-```
-
-Possible values are
-
-- `RESTRICT`: deny delete or update operations on the parent table.
-- `CASCADE`: delete or update a row from the parent table and automatically delete or update the matching row in the child table.
-- `SET_NULL`: deletes or updates a row from the parent table and sets a foreign key column in the child table to NULL.
-- `NO_ACTION`: Standard SQL keyword. In MySQL, equivalent to RESTRICT.
-- `SET_DEFAULT`: This action is recognized by the MySQL parser, but both InnoDB and NDB will reject table definitions containing an ON DELETE SET DEFAULT or ON UPDATE SET DEFAULT clause.
-
-#### composite key (foreign key)
-
-Not only one column, but also multiple columns can be combined as a foreign key. Simply pass multiple columns to `FOREIGN_KEY` to be set as foreign keys as a compound foreign key.
-
-```scala 3
-val user = Table[User]("user")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("name", VARCHAR(50)),
-  column("email", VARCHAR(100))
-)
-
-val order = Table[Order]("order")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("user_id", VARCHAR(50))
-  column("user_email", VARCHAR(100))
-  ...
-)
-  .keySet(table => FOREIGN_KEY((table.userId, table.userEmail), REFERENCE(user, (user.id, user.email))))
-
-// CREATE TABLE `user` (
-//   ...,
-//   FOREIGN KEY (`user_id`, `user_email`)  REFERENCES `user` (`id`, `email`)
-// )
-```
-
-### constraint name
-
-MySQL allows you to give arbitrary names to constraints by using CONSTRAINT. The constraint name must be unique per database.
-
-Since ldbc provides the CONSTRAINT method, you can set constraints such as key constraints by simply passing them to the CONSTRAINT method.
-
-```scala 3
-val order = Table[Order]("order")(
-  column("id", INT, AUTO_INCREMENT, PRIMARY_KEY),
-  column("user_id", VARCHAR(50))
-  ...
-)
-  .keySet(table => CONSTRAINT("fk_user_id", FOREIGN_KEY(table.userId, REFERENCE(user, user.id))))
-
-// CREATE TABLE `order` (
-//   ...,
-//   CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`)  REFERENCES `user` (`id`)
-// )
-```
-
-## Custom data types
-
-The way to use user-specific or unsupported types is to tell them what type to treat the column data type as; DataType provides a `mapping` method that can be used to set this up as an implicit type conversion.
-
-```scala 3
-case class User(
-  id:    Int,
-  name:  User.Name,
-  email: String,
-)
-
-object User:
-
-  case class Name(firstName: String, lastName: String)
-
-  given Conversion[VARCHAR[String], DataType[Name]] = DataType.mapping[VARCHAR[String], Name]
-
-  val table = Table[User]("user")(
-    column("id", INT, AUTO_INCREMENT),
-    column("name", VARCHAR(50)),
-    column("email", VARCHAR(100))
-  )
-```
-
-ldbc does not allow multiple columns to be merged into a single property of the model, since the purpose of ldbc is to provide a one-to-one mapping between model and table, and to type-safe the table definitions in the database.
-
-Therefore, it is not allowed to have different number of properties in a table definition and in a model. The following implementation will result in a compile error
-
-```scala 3
-case class User(
-  id:    Int,
-  name:  User.Name,
-  email: String,
-)
-
-object User:
-
-  case class Name(firstName: String, lastName: String)
-
-  val table = Table[User]("user")(
-    column("id", INT, AUTO_INCREMENT),
-    column("first_name", VARCHAR(50)),
-    column("last_name", VARCHAR(50)),
-    column("email", VARCHAR(100))
-  )
-```
-
-If you wish to implement the above, please consider the following implementation.
-
-```scala 3
-case class User(
-  id:        Int,
-  firstName: String, 
-  lastName:  String,
-  email:     String,
-):
+class UserTable extends Table[User]("user"):
+  // Convert column names to Pascal case (e.g., userId → UserId)
+  given Naming = Naming.PASCAL
   
-  val name: User.Name = User.Name(firstName, lastName)
+  def userId: Column[Long] = bigint().autoIncrement.primaryKey
+  def userName: Column[String] = varchar(255)
+  def userAge: Column[Option[Int]] = int().defaultNull
 
-object User:
+  override def * : Column[User] = (userId *: userName *: userAge).to[User]
+```
 
-  case class Name(firstName: String, lastName: String)
+Available naming conventions:
+- `Naming.SNAKE` (default): Snake case (e.g., user_id)
+- `Naming.CAMEL`: Camel case (e.g., userId)
+- `Naming.PASCAL`: Pascal case (e.g., UserId)
 
-  val table = Table[User]("user")(
-    column("id", INT, AUTO_INCREMENT),
-    column("first_name", VARCHAR(50)),
-    column("last_name", VARCHAR(50)),
-    column("email", VARCHAR(100))
+## Numeric Column Definitions
+
+For numeric columns, the following operations are possible:
+
+### Integer Types
+
+```scala 3
+def id: Column[Long] = bigint().autoIncrement.primaryKey
+def count: Column[Int] = int().unsigned.default(0) // Set as unsigned, default value 0
+def smallValue: Column[Short] = smallint().unsigned
+```
+
+### Decimal Types
+
+```scala 3
+def price: Column[BigDecimal] = decimal(10, 2) // 10 digits in total, 2 decimal places
+def rating: Column[Double] = double(5) // Double-precision floating point
+def score: Column[Float] = float(4) // Single-precision floating point
+```
+
+## String Column Definitions
+
+For string columns, the following operations are possible:
+
+```scala 3
+def name: Column[String] = varchar(255) // Variable-length string (max 255 characters)
+def code: Column[String] = char(5) // Fixed-length string (5 characters)
+def description: Column[String] = text() // Text type
+def content: Column[String] = longtext() // Long text type
+
+// Specifying character set
+def japaneseText: Column[String] = text().charset(Character.utf8mb4)
+
+// Specifying collation
+def sortableText: Column[String] = varchar(255)
+  .charset(Character.utf8mb4)
+  .collate(Collate.utf8mb4_unicode_ci)
+```
+
+## Binary Column Definitions
+
+Defining columns for binary data:
+
+```scala 3
+def data: Column[Array[Byte]] = binary(255) // Fixed-length binary
+def flexData: Column[Array[Byte]] = varbinary(1000) // Variable-length binary
+def largeData: Column[Array[Byte]] = blob() // Binary Large Object
+```
+
+## Date and Time Column Definitions
+
+Defining columns for dates and times:
+
+```scala 3
+def birthDate: Column[LocalDate] = date() // Date only
+def createdAt: Column[LocalDateTime] = datetime() // Date and time
+def updatedAt: Column[LocalDateTime] = timestamp()
+  .defaultCurrentTimestamp(onUpdate = true) // Auto-update on creation and modification
+def startTime: Column[LocalTime] = time() // Time only
+def fiscalYear: Column[Int] = year() // Year only
+```
+
+## ENUM Type and Special Data Types
+
+Example of using ENUM type:
+
+```scala 3
+// ENUM definition
+enum UserStatus extends Enum:
+  case Active, Inactive, Suspended
+object UserStatus extends EnumDataType[UserStatus]
+
+// Using ENUM in table definition
+class UserTable extends Table[User]("user"):
+  // ...
+  def status: Column[UserStatus] = `enum`[UserStatus]("status")
+```
+
+Other special data types:
+
+```scala 3
+def isActive: Column[Boolean] = boolean() // BOOLEAN type
+def uniqueId: Column[BigInt] = serial() // SERIAL type (auto-increment BIGINT UNSIGNED)
+```
+
+## Setting Default Values
+
+How to set default values for columns:
+
+```scala 3
+def score: Column[Int] = int().default(100) // Fixed value
+def updatedAt: Column[LocalDateTime] = timestamp()
+  .defaultCurrentTimestamp() // Current timestamp
+def createdDate: Column[LocalDate] = date()
+  .defaultCurrentDate // Current date
+def nullableField: Column[Option[String]] = varchar(255)
+  .defaultNull // NULL value
+```
+
+## Primary Keys, Foreign Keys, and Indexes
+
+### Single-Column Primary Key
+
+```scala 3
+def id: Column[Long] = bigint().autoIncrement.primaryKey
+```
+
+### Composite Primary Key Definition
+
+```scala 3
+class OrderItemTable extends Table[OrderItem]("order_item"):
+  def orderId: Column[Int] = int()
+  def itemId: Column[Int] = int()
+  def quantity: Column[Int] = int().default(1)
+  
+  // Composite primary key definition
+  override def keys = List(
+    PRIMARY_KEY(orderId *: itemId)
+  )
+
+  override def * : Column[OrderItem] = (orderId *: itemId *: quantity).to[OrderItem]
+```
+
+### Index Definition
+
+```scala 3
+class UserTable extends Table[User]("user"):
+  // ...column definitions...
+  
+  // Index definitions
+  override def keys = List(
+    INDEX_KEY("idx_user_name", name), // Named index
+    UNIQUE_KEY("idx_user_email", email) // Unique index
   )
 ```
+
+You can also specify index types:
+
+```scala 3
+override def keys = List(
+  INDEX_KEY(
+    Some("idx_name"), 
+    Some(Index.Type.BTREE), // Can specify BTREE or HASH index type
+    None, 
+    name
+  )
+)
+```
+
+### Foreign Key Definition
+
+To define foreign keys, first create a TableQuery for the referenced table:
+
+```scala 3
+// Referenced table
+val userTable = TableQuery[UserTable]
+
+// Referencing table
+class ProfileTable extends Table[Profile]("profile"):
+  def id: Column[Long] = bigint().autoIncrement.primaryKey
+  def userId: Column[Long] = bigint()
+  // ...other columns...
+  
+  // Foreign key definition
+  def fkUser = FOREIGN_KEY(
+    "fk_profile_user", // Foreign key name
+    userId, // Referencing column
+    REFERENCE(userTable)(_.id) // Referenced table and column
+      .onDelete(Reference.ReferenceOption.CASCADE) // Action on delete
+      .onUpdate(Reference.ReferenceOption.RESTRICT) // Action on update
+  )
+  
+  override def keys = List(
+    PRIMARY_KEY(id),
+    fkUser // Add foreign key
+  )
+```
+
+Reference constraint options (`ReferenceOption`):
+- `RESTRICT`: Prevents changes to parent record as long as child records exist
+- `CASCADE`: Changes child records along with parent record changes
+- `SET_NULL`: Sets relevant columns in child records to NULL when parent record changes
+- `NO_ACTION`: Delays constraint checking (basically the same as RESTRICT)
+- `SET_DEFAULT`: Sets relevant columns in child records to default values when parent record changes
+
+## Setting Constraints
+
+If you want to define constraints with specific naming conventions, you can use `CONSTRAINT`:
+
+```scala 3
+override def keys = List(
+  CONSTRAINT(
+    "pk_user", // Constraint name
+    PRIMARY_KEY(id) // Constraint type
+  ),
+  CONSTRAINT(
+    "fk_user_department",
+    FOREIGN_KEY(departmentId, REFERENCE(departmentTable)(_.id))
+  )
+)
+```
+
+## Complex Mapping with Models
+
+### Mapping Nested Models
+
+```scala 3
+case class User(
+  id: Long, 
+  name: UserName, // Nested type
+  contact: Contact // Nested type
+)
+
+case class UserName(first: String, last: String)
+case class Contact(email: String, phone: Option[String])
+
+class UserTable extends Table[User]("user"):
+  def id: Column[Long] = bigint().autoIncrement.primaryKey
+  def firstName: Column[String] = varchar(50)
+  def lastName: Column[String] = varchar(50)
+  def email: Column[String] = varchar(100)
+  def phone: Column[Option[String]] = varchar(20).defaultNull
+  
+  // Nested value mapping
+  def userName: Column[UserName] = (firstName *: lastName).to[UserName]
+  def contact: Column[Contact] = (email *: phone).to[Contact]
+  
+  override def * : Column[User] = (id *: userName *: contact).to[User]
+```
+
+This configuration will generate the following SQL:
+
+```sql
+CREATE TABLE `user` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `firstName` VARCHAR(50) NOT NULL,
+  `lastName` VARCHAR(50) NOT NULL,
+  `email` VARCHAR(100) NOT NULL,
+  `phone` VARCHAR(20) NULL,
+  PRIMARY KEY (`id`)
+)
+```
+
+## Schema Generation and DDL Execution
+
+Generate DDL (Data Definition Language) from table definitions and create schemas in the database.
+
+### Generating TableQuery
+
+```scala 3
+val users = TableQuery[UserTable]
+val profiles = TableQuery[ProfileTable]
+val orders = TableQuery[OrderTable]
+```
+
+### Generating and Executing Schema
+
+```scala 3
+import ldbc.dsl.*
+
+// Combining schemas
+val schema = users.schema ++ profiles.schema ++ orders.schema
+
+// Apply schema using database connection
+provider.use { conn =>
+  DBIO.sequence(
+    // Create tables (only if they don't exist)
+    schema.createIfNotExists,
+    // Other operations such as data insertion...
+  ).commit(conn)
+}
+```
+
+### DDL Operations
+
+```scala 3
+val userSchema = users.schema
+
+// Various DDL operations
+userSchema.create            // Create table
+userSchema.createIfNotExists // Create table only if it doesn't exist
+userSchema.drop              // Drop table
+userSchema.dropIfExists      // Drop table only if it exists
+userSchema.truncate          // Delete all data in the table
+```
+
+### Checking DDL Statements
+
+How to check the actual SQL that will be executed:
+
+```scala 3
+// Check creation query
+userSchema.create.statements.foreach(println)
+
+// Check conditional creation query
+userSchema.createIfNotExists.statements.foreach(println)
+
+// Check drop query
+userSchema.drop.statements.foreach(println)
+
+// Check conditional drop query
+userSchema.dropIfExists.statements.foreach(println)
+
+// Check truncate query
+userSchema.truncate.statements.foreach(println)
+```
+
+## Setting Column Attributes
+
+Various attributes can be set for columns:
+
+```scala 3
+def id: Column[Long] = bigint()
+  .autoIncrement    // Auto increment
+  .primaryKey       // Primary key
+  .comment("User ID") // Comment
+
+def email: Column[String] = varchar(255)
+  .unique           // Unique constraint
+  .comment("Email address")
+
+def status: Column[String] = varchar(20)
+  .charset(Character.utf8mb4)  // Character set
+  .collate(Collate.utf8mb4_unicode_ci)  // Collation
+
+def hiddenField: Column[String] = varchar(100)
+  .invisible        // Invisible attribute (not retrieved with SELECT *)
+
+def formatField: Column[String] = varchar(100)
+  .setAttributes(COLUMN_FORMAT.DYNAMIC[String]) // Column storage format
+
+def storageField: Column[Array[Byte]] = blob()
+  .setAttributes(STORAGE.DISK[Array[Byte]]) // Storage type
+```
+
+## Summary
+
+Using the schema module of ldbc allows you to define safe and expressive database schemas by leveraging Scala's type system.
+
+Key features:
+- Strong type safety: Detect schema issues at compile time
+- Rich data type support: Supports all MySQL data types
+- Flexible model mapping: Handles everything from simple case classes to complex nested models
+- DDL generation: Generate SQL directly from table definitions
+- Extensibility: Supports custom data types and mapping functions
+
+## Next Steps
+
+Now you understand how to define schemas in Scala code. Manually defining schemas allows you to closely integrate your application and database structures.
+
+Next, proceed to [Schema Code Generation](/en/tutorial/Schema-Code-Generation.md) to learn how to automatically generate schema code from existing SQL files.

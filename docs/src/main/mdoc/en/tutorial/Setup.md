@@ -5,11 +5,18 @@
 
 # Setup
 
-Welcome to the wonderful world of ldbc! In this section we will help you get everything set up.
+Welcome to the first step in getting started with ldbc! This page explains how to prepare your development environment and database.
+
+## Requirements
+
+- JDK 21 or higher
+- Scala 3
+- Docker (for database environment)
+- [Scala CLI](https://scala-cli.virtuslab.org/) (recommended)
 
 ## Database Setup
 
-First, start the database using Docker. Use the following code to start the database
+First, start a MySQL database using Docker. Create the following docker-compose.yml file:
 
 ```yaml
 services:
@@ -30,17 +37,14 @@ services:
       retries: 10
 ```
 
-Next, initialize the database.
-
-Create the database as shown in the code below.
+Next, create the following SQL file in the `database` directory to set up initial data:
 
 ```sql
+-- 01-create-database.sql
 CREATE DATABASE IF NOT EXISTS sandbox_db;
-```
+USE sandbox_db;
 
-Next, tables are created.
-
-```sql
+-- Create tables
 CREATE TABLE IF NOT EXISTS `user` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(50) NOT NULL,
@@ -55,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `product` (
   `price` DECIMAL(10, 2) NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)
+);
 
 CREATE TABLE IF NOT EXISTS `order` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -67,12 +71,9 @@ CREATE TABLE IF NOT EXISTS `order` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES `user` (id),
   FOREIGN KEY (product_id) REFERENCES `product` (id)
-)
-```
+);
 
-Insert data into each table.
-
-```sql
+-- Insert initial data
 INSERT INTO user (name, email) VALUES
   ('Alice', 'alice@example.com'),
   ('Bob', 'bob@example.com'),
@@ -91,92 +92,81 @@ INSERT INTO `order` (user_id, product_id, quantity) VALUES
   (3, 4, 1); -- Charlie ordered 1 Monitor
 ```
 
-## Scala Setup
-
-The tutorial will use [Scala CLI](https://scala-cli.virtuslab.org/). Therefore, you will need to install the Scala CLI.
+Start the database using Docker Compose:
 
 ```bash
+docker compose up -d
+```
+
+## Setting up a Scala Project
+
+This tutorial uses [Scala CLI](https://scala-cli.virtuslab.org/) to get started easily. If you haven't installed it yet, you can do so with the following command:
+
+```bash
+# For macOS
 brew install Virtuslab/scala-cli/scala-cli
+
+# For other OS, please refer to Scala CLI's official website
 ```
 
-**Execute with Scala CLI**
+### Your First ldbc Project
 
-The database setup described earlier can be performed using the Scala CLI. The following commands can be used to perform this setup.
+Create a new directory and set up your first ldbc project:
 
-```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
+```bash
+mkdir ldbc-tutorial
+cd ldbc-tutorial
+touch FirstSteps.scala
 ```
 
-### First Program
-
-To begin, create a new project with ldbc as a dependency.
+Add the following code to `FirstSteps.scala`:
 
 ```scala
 //> using scala "@SCALA_VERSION@"
 //> using dep "@ORGANIZATION@::ldbc-dsl:@VERSION@"
-```
+//> using dep "@ORGANIZATION@::ldbc-connector:@VERSION@"
 
-Before using ldbc, some symbols need to be imported. For convenience, we will use package import here. This will give us the symbols most commonly used when working with high-level APIs.
-
-```scala
-import ldbc.dsl.*
-```
-
-Let's bring Cats too.
-
-```scala
-import cats.syntax.all.*
 import cats.effect.*
+import cats.syntax.all.*
+import ldbc.connector.*
+import ldbc.dsl.*
+
+object FirstSteps extends IOApp.Simple:
+
+  // A program that returns a simple constant
+  val simpleProgram: DBIO[Int] = DBIO.pure(0)
+  
+  // Database connection configuration
+  val provider =
+    ConnectionProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "sandbox_db")
+      .setSSL(SSL.Trusted)
+  
+  def run: IO[Unit] =
+    // Execute the program
+    provider.use { conn =>
+      simpleProgram.readOnly(conn).flatMap { result =>
+        IO.println(s"Value retrieved from database: $result")
+      }
+    }
 ```
 
-Next, tracers are provided. These are used to log applications. Tracers are used to log application traces.
+Run the program using Scala CLI:
 
-The following code provides tracers but does nothing of substance.
-
-```scala 3
-given Tracer[IO] = Tracer.noop[IO]
+```bash
+scala-cli FirstSteps.scala
 ```
 
-The most common type handled by the ldbc high-level API is of the form `Executor[F, A]`, which specifies a calculation to be performed in a context where `{java | ldbc}.sql.Connection` is available, ultimately producing a value of type A.
+If you see "Value retrieved from database: 42", you've succeeded! This doesn't actually query the database yet, but it confirms that you have the basic ldbc structure and connection setup working.
 
-Let's start with an Executor program that only returns constants.
+## Automatic Setup Script (Optional)
 
-```scala
-val program: Executor[IO, Int] = Executor.pure[IO, Int](1)
+We also provide a Scala CLI script that automatically handles all the setup:
+
+```bash
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
 ```
 
-Next, create a connector to connect to the database. A connector is a resource for managing connections to a database. A connector provides resources to initiate a connection to the database, execute a query, and close the connection.
+## Next Steps
 
-Here, ldbc uses a connector created by ldbc on its own. How to select and create a connector will be explained later.
-
-```scala
-def connection = Connection[IO](
-  host     = "127.0.0.1",
-  port     = 13306,
-  user     = "ldbc",
-  password = Some("password"),
-  ssl      = SSL.Trusted
-)
-```
-
-Executor is a data type that knows how to connect to a database, how to pass connections, and how to clean up connections, and this knowledge allows Executor to be converted to IO to obtain an executable program. Specifically, execution yields an IO that connects to the database and executes a single transaction.
-
-```scala
-connection
-  .use { conn =>
-    program.readOnly(conn).map(println(_))
-  }
-  .unsafeRunSync()
-```
-
-Hooray! I was able to calculate the constants. This is not very interesting, since we will not be asking the database to do the work, but the first step is complete.
-
-> Remember that all the code in this book is pure except for the call to IO.unsafeRunSync. IO.unsafeRunSync is an “end of the world” operation that usually appears only at the entry point of an application. The REPL forces the calculation to to use this to make it “happen.”
-
-**Execute with Scala CLI**
-
-This program can also be run using the Scala CLI. The following command will execute this program.
-
-```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/01-Program.scala --dependency io.github.takapi327::ldbc-dsl:@VERSION@ --dependency io.github.takapi327::ldbc-connector:@VERSION@
-```
+You're now ready to use ldbc! Proceed to [Connection](/en/tutorial/Connection.md) to learn more about database connections.

@@ -1,11 +1,11 @@
 {%
-  laika.title = Intro
+  laika.title = Introduction
   laika.metadata.language = en
 %}
 
 # Reference
 
-This section contains detailed discussions of ldbc's core abstractions and machinery.
+This section describes the core abstractions and mechanical details of ldbc.
 
 ## Table of Contents
 

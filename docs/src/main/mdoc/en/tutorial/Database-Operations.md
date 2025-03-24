@@ -1,19 +1,23 @@
 {%
-  laika.title = Database Operation
+  laika.title = Database Operations
   laika.metadata.language = en
 %}
 
-# Database Operation
+# Database Operations
 
-This section describes database operations.
+In [Updating Data](/en/tutorial/Updating-Data.md), you learned how to insert, update, and delete data. This page explains more advanced database operations such as transaction management and commit timing.
 
-Before making a database connection, you need to configure settings such as commit timing and read/write-only.
+Transaction management is important for safely performing database operations. ldbc provides abstractions for transaction management that adhere to the principles of functional programming.
 
-## Read Only
+This section explains database operations.
 
-Use the `readOnly` method to initiate a read-only transaction.
+Before connecting to a database, you need to configure settings such as commit timing and read/write modes.
 
-The `readOnly` method can be used to make the processing of a query to be executed read-only. The `readOnly` method can also be used with `insert/update/delete` statements, but it will result in an error at runtime because of the write operation.
+## Read-Only
+
+To start a read-only transaction, use the `readOnly` method.
+
+Using the `readOnly` method allows you to set query processing to read-only mode. You can use the `readOnly` method with `insert/update/delete` statements as well, but they will result in errors at execution time since they perform write operations.
 
 ```scala
 val read = sql"SELECT 1".query[Int].to[Option].readOnly(connection)
@@ -21,24 +25,24 @@ val read = sql"SELECT 1".query[Int].to[Option].readOnly(connection)
 
 ## Writing
 
-To write, use the `commit` method.
+To write to the database, use the `commit` method.
 
-The `commit` method can be used to set up the processing of a query to be committed at each query execution.
+Using the `commit` method configures your query processing to commit after each query execution.
 
 ```scala
 val write = sql"INSERT INTO `table`(`c1`, `c2`) VALUES ('column 1', 'column 2')".update.commit(connection)
 ```
 
-## Transaction
+## Transactions
 
-Use the `transaction` method to initiate a transaction.
+To start a transaction, use the `transaction` method.
 
-The `transaction` method can be used to combine multiple database connection operations into a single transaction.
+Using the `transaction` method allows you to group multiple database connection operations into a single transaction.
 
-ldbc will build a process to connect to the database in the form of `Executor[F, A]`. Since Executor is a monad, two small programs can be combined into one large program using for comprehensions.
+With ldbc, you'll organize database connection processes in the form of `DBIO[A]`. DBIO is a monad, so you can use for-comprehension to combine smaller programs into a larger program.
 
 ```scala 3
-val program: Executor[IO, (List[Int], Option[Int], Int)] =
+val program: DBIO[(List[Int], Option[Int], Int)] =
   for
     result1 <- sql"SELECT 1".query[Int].to[List]
     result2 <- sql"SELECT 2".query[Int].to[Option]
@@ -46,8 +50,14 @@ val program: Executor[IO, (List[Int], Option[Int], Int)] =
   yield (result1, result2, result3)
 ```
 
-The `transaction` method can be used to combine `Executor` programs into a single transaction.
+Once you have combined operations into a single `DBIO` program, you can process them in a single transaction using the `transaction` method.
 
 ```scala
 val transaction = program.transaction(connection)
 ```
+
+## Next Steps
+
+You've now learned all the basic uses of ldbc. You've acquired the knowledge necessary for everyday database operations, including database connections, query execution, reading and writing data, and transaction management.
+
+From here, we'll move on to more advanced topics. Let's start with [Error Handling](/en/tutorial/Error-Handling.md) and learn how to properly handle exceptions that may occur in database operations.

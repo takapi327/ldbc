@@ -1,21 +1,30 @@
 {%
-  laika.title = Parameter
+  laika.title = Parameterized Queries
   laika.metadata.language = en
 %}
 
 # Parameterized Queries
 
-In this chapter, you will learn how to construct parameterized queries.
+In the [Simple Program](/en/tutorial/Simple-Program.md) tutorial, we learned how to execute basic queries. In real applications, you'll often execute queries based on user input or variable values. On this page, you'll learn how to safely handle parameters.
 
-## Adding parameters
+In ldbc, we strongly recommend using parameterized queries to prevent SQL injection attacks. Parameterized queries allow you to separate SQL code from data, enabling safer database access.
 
-First, create a query with no parameters.
+## Parameter Basics
+
+In ldbc, there are two main ways to embed parameters in SQL statements:
+
+1. **Dynamic parameters** - Used as regular parameters, processed by `PreparedStatement` to prevent SQL injection attacks
+2. **Static parameters** - Directly embedded as part of the SQL statement (e.g., table names, column names, etc.)
+
+## Adding Dynamic Parameters
+
+First, let's create a query without parameters.
 
 ```scala
 sql"SELECT name, email FROM user".query[(String, String)].to[List]
 ```
 
-Next, let's incorporate the query into a method and add a parameter to select only the data that matches the `id` specified by the user. Insert the `id` argument as `$id` into the SQL statement, just as you would interpolate a string.
+Next, let's incorporate the query into a method and add a parameter to select only data matching the user-specified `id`. We insert the `id` argument into the SQL statement as `$id`, just like string interpolation.
 
 ```scala
 val id = 1
@@ -23,10 +32,10 @@ val id = 1
 sql"SELECT name, email FROM user WHERE id = $id".query[(String, String)].to[List]
 ```
 
-Querying with connections works fine.
+When we execute the query using a connection, it works without issues.
 
 ```scala
-connection.use { conn =>
+provider.use { conn =>
   sql"SELECT name, email FROM user WHERE id = $id"
     .query[(String, String)]
     .to[List]
@@ -34,17 +43,30 @@ connection.use { conn =>
 }
 ```
 
-What is happening here? It looks like we are just dropping a string literal into an SQL string, but we are actually building a `PreparedStatement` and the `id` value is eventually set by a call to `setInt`.
+What's happening here? It looks like we're just dropping string literals into an SQL string, but we're actually building a `PreparedStatement`, and the `id` value is ultimately set by a call to `setInt`. This protects our application from SQL injection attacks.
 
-## Multiple parameters
+You can use parameters of various types:
 
-Multiple parameters work the same way. No surprises.
+```scala
+val id: Int = 1
+val name: String = "Alice"
+val active: Boolean = true
+val createdAt: LocalDateTime = LocalDateTime.now()
+
+sql"INSERT INTO user (id, name, active, created_at) VALUES ($id, $name, $active, $createdAt)"
+```
+
+In ldbc, appropriate encoders are provided for each type, safely converting Scala/Java values to SQL values.
+
+## Multiple Parameters
+
+Multiple parameters can be used in the same way.
 
 ```scala
 val id = 1
 val email = "alice@example.com"
 
-connection.use { conn =>
+provider.use { conn =>
   sql"SELECT name, email FROM user WHERE id = $id AND email > $email"
     .query[(String, String)]
     .to[List]
@@ -52,61 +74,155 @@ connection.use { conn =>
 }
 ```
 
-## Handling IN Clauses
+## Combining Queries
 
-A common irritation when dealing with SQL literals is the desire to inline a series of arguments into an IN clause, but SQL does not support this concept (nor does JDBC support anything).
+When building large queries, you can combine multiple SQL fragments.
+
+```scala
+val baseQuery = sql"SELECT name, email FROM user"
+val whereClause = sql"WHERE id > $id"
+val orderClause = sql"ORDER BY name ASC"
+
+val query = baseQuery ++ whereClause ++ orderClause
+```
+
+## SQL Helper Functions
+
+ldbc provides many helper functions for easily constructing complex SQL clauses.
+
+### Handling IN Clauses
+
+A common challenge in SQL is using a series of values in an IN clause. In ldbc, this can be easily implemented using the `in` function.
 
 ```scala
 val ids = NonEmptyList.of(1, 2, 3)
 
-connection.use { conn =>
-  (sql"SELECT name, email FROM user WHERE" ++ in("id", ids))
+provider.use { conn =>
+  (sql"SELECT name, email FROM user WHERE " ++ in("id", ids))
     .query[(String, String)]
     .to[List]
     .readOnly(conn)
 }
 ```
 
-Note that the `ids` is `NonEmptyList` since the IN clause must not be empty.
+This is equivalent to the following SQL:
 
-Executing this query yields the desired result
+```sql
+SELECT name, email FROM user WHERE (id IN (?, ?, ?))
+```
 
-ldbc provides several other useful functions.
+Note that `ids` must be a `NonEmptyList` because an IN clause cannot be empty.
 
-- `values` - Creates a VALUES clause.
-- `in` - Creates an IN clause.
-- `notIn` - Creates a NOT IN clause.
-- `and` - Generates an AND clause.
-- `or` - Generates an OR clause.
-- `whereAnd` - Generates a WHERE clause with multiple conditions enclosed in AND clauses.
-- `whereOr` - Generates WHERE clauses for multiple conditions enclosed in OR clauses.
-- `set` - Generates a SET clause.
-- `orderBy` - Generates an ORDER BY clause.
+### Other Helper Functions
 
-## Static parameters
+ldbc provides many other convenient functions:
 
-Although parameters are dynamic, sometimes you may want to use them as parameters but treat them as static values.
+#### Generating VALUES Clauses
 
-For example, to change the column to be retrieved based on the value received, you can write the following
+```scala
+val users = NonEmptyList.of(
+  (1, "Alice", "alice@example.com"),
+  (2, "Bob", "bob@example.com")
+)
+
+(sql"INSERT INTO user (id, name, email) " ++ values(users))
+```
+
+#### WHERE Clause Conditions
+
+You can easily construct AND and OR conditions:
+
+```scala
+val activeFilter = sql"active = true"
+val nameFilter = sql"name LIKE ${"A%"}"
+val emailFilter = sql"email IS NOT NULL"
+
+// WHERE (active = true) AND (name LIKE 'A%') AND (email IS NOT NULL)
+val query1 = sql"SELECT * FROM user " ++ whereAnd(activeFilter, nameFilter, emailFilter)
+
+// WHERE (active = true) OR (name LIKE 'A%')
+val query2 = sql"SELECT * FROM user " ++ whereOr(activeFilter, nameFilter)
+```
+
+#### Generating SET Clauses
+
+You can easily generate SET clauses for UPDATE statements:
+
+```scala
+val name = "New Name"
+val email = "new@example.com"
+
+val updateValues = set(
+  sql"name = $name",
+  sql"email = $email",
+  sql"updated_at = NOW()"
+)
+
+sql"UPDATE user " ++ updateValues ++ sql" WHERE id = 1"
+```
+
+#### Generating ORDER BY Clauses
+
+```scala
+val query = sql"SELECT * FROM user " ++ orderBy(sql"name ASC", sql"created_at DESC")
+```
+
+### Optional Conditions
+
+When conditions are optional (may not exist), you can use functions with the `Opt` suffix:
+
+```scala
+val nameOpt: Option[String] = Some("Alice")
+val emailOpt: Option[String] = None
+
+val nameFilter = nameOpt.map(name => sql"name = $name")
+val emailFilter = emailOpt.map(email => sql"email = $email")
+
+// Since nameFilter is Some(...) and emailFilter is None, the WHERE clause will only contain "name = ?"
+val query = sql"SELECT * FROM user " ++ whereAndOpt(nameFilter, emailFilter)
+```
+
+## Static Parameters
+
+Sometimes you may want to parameterize structural parts of the SQL statement, such as column names or table names. In such cases, you can use "static parameters" which directly embed values into the SQL statement.
+
+While dynamic parameters (regular `$value`) are processed by `PreparedStatement` and replaced with `?` in the query string, static parameters are directly embedded as strings.
+
+To use static parameters, use the `sc` function:
 
 ```scala
 val column = "name"
+val table = "user"
 
-sql"SELECT $column FROM user".query[String].to[List]
+// Treating as a dynamic parameter would result in "SELECT ? FROM user"
+// sql"SELECT $column FROM user".query[String].to[List]
+
+// Treating as a static parameter results in "SELECT name FROM user"
+sql"SELECT ${sc(column)} FROM ${sc(table)}".query[String].to[List]
 ```
 
-Dynamic parameters are handled by `PreparedStatement`, so the query string itself is replaced by `? `.
+In this example, the generated SQL is `SELECT name FROM user`.
 
-Thus, the query will be executed as `SELECT ? FROM user`.
+> **Warning**: `sc(...)` does not escape the passed string, so passing unvalidated data such as user input directly poses a risk of SQL injection attacks. Use static parameters only from safe parts of your application (constants, configurations, etc.).
 
-This makes it difficult to understand the query output in the log, so if you want to treat `$column` as a static value, set `$column` to `${sc(column)}` so that it is directly embedded in the query string.
+Common use cases for static parameters:
 
 ```scala
-val column = "name"
+// Dynamic sort order
+val sortColumn = "created_at" 
+val sortDirection = "DESC"
 
-sql"SELECT ${sc(column)} FROM user".query[String].to[List]
+sql"SELECT * FROM user ORDER BY ${sc(sortColumn)} ${sc(sortDirection)}"
+
+// Dynamic table selection
+val schema = "public"
+val table = "user"
+
+sql"SELECT * FROM ${sc(schema)}.${sc(table)}"
 ```
 
-This query is executed as `SELECT name FROM user`.
+## Next Steps
 
-> `sc(...)` Note that does not escape the passed string. Passing user-supplied data is an injection risk.
+Now you understand how to use parameterized queries. With the ability to handle parameters, you can build more complex and practical database queries.
+
+Next, proceed to [Selecting Data](/en/tutorial/Selecting-Data.md) to learn how to retrieve data in various formats.

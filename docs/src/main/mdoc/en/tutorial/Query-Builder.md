@@ -5,174 +5,226 @@
 
 # Query Builder
 
-This chapter describes how to build a type-safe query.
+We've learned how to add custom types to ldbc in the [Custom Data Type](/en/tutorial/Custom-Data-Type.md) section. In this page, we'll explain how to build queries in a type-safe way without writing SQL directly.
 
-The following dependencies must be set up in your project
+The Query Builder is a feature that allows you to construct database queries in a more type-safe manner than SQL string interpolation. This helps detect more errors at compile time and prevents mistakes related to query structure.
+
+In this chapter, we'll explain methods for building type-safe queries.
+
+## Prerequisites
+
+You need to set up the following dependency in your project:
 
 ```scala
 //> using dep "@ORGANIZATION@::ldbc-query-builder:@VERSION@"
 ```
 
-In ldbc, classes are used to construct queries.
+## Basic Usage
+
+In ldbc, we use case classes to represent tables and build queries. Let's start with a simple table definition:
 
 ```scala 3
+import ldbc.dsl.codec.Codec
 import ldbc.query.builder.*
 
+// Table definition
 case class User(id: Int, name: String, email: String) derives Table
+object User:
+  gicen Codec[User] = Codec.derived[User]
 ```
 
-The `User` class inherits from the `Table` trace. Because the `Table` trace inherits from the `Table` class, methods of the `Table` class can be used to construct queries.
+The `Table` trait is automatically derived using the `derives` keyword. This allows the class properties to be treated as database columns.
+
+To execute queries against the defined table, use `TableQuery`:
 
 ```scala
-val query = Table[User]
-  .select(user => (user.id, user.name, user.email))
+// Build query against the table
+val query = TableQuery[User]
+  .select(user => user.id *: user.name *: user.email)
   .where(_.email === "alice@example.com")
 ```
 
-## SELECT
+In the code above:
+- `TableQuery[User]` - Creates a query for the `User` table
+- `select(...)` - Specifies which columns to retrieve
+- `*:` - An operator for combining multiple columns
+- `where(...)` - Specifies the query condition
 
-A type-safe way to construct a SELECT statement is to use the `select` method provided by Table. ldbc is implemented to resemble a plain query, making query construction intuitive. It is also easy to see at a glance what kind of query is being constructed.
+## Customizing Table Definitions
 
-To construct a SELECT statement that retrieves only specific columns, simply specify the columns you want to retrieve in the `select` method.
+### Changing Column Names
 
-```scala
-val select = Table[User].select(_.id)
+If a property name differs from the database column name, you can specify it using the `@Column` annotation:
 
-select.statement === "SELECT id FROM user"
+```scala 3
+case class User(
+  id: Int,
+  @Column("full_name") name: String, // name property maps to full_name column
+  email: String
+) derives Table
 ```
 
-To specify multiple columns, simply specify the columns you wish to retrieve using the `select` method and return a tuple of the specified columns.
+### Changing Table Names
 
-```scala
-val select = Table[User].select(user => (user.id, user.name))
+By default, the class name is used as the table name, but you can explicitly specify a table name using `Table.derived`:
 
-select.statement === "SELECT id, name FROM user"
+```scala 3
+case class User(id: Int, name: String, email: String)
+object User:
+  given Table[User] = Table.derived("users") // Specify "users" as the table name
 ```
 
-全てのカラムを指定したい場合はTableが提供する`selectAll`メソッドを使用することで構築できます。
+## Basic Query Operations
+
+### SELECT
+
+#### Basic SELECT
+
+To retrieve specific columns only:
 
 ```scala
-val select = Table[User].selectAll
-
-select.statement === "SELECT id, name, email FROM user"
+val select = TableQuery[User].select(_.id)
+// SELECT id FROM user
 ```
 
-If you want to get the number of a specific column, you can construct it by using `count` on the specified column.　
+To retrieve multiple columns, use the `*:` operator:
 
 ```scala
-val select = Table[User].select(_.id.count)
-
-select.statement === "SELECT COUNT(id) FROM user"
+val select = TableQuery[User].select(user => user.id *: user.name)
+// SELECT id, name FROM user
 ```
 
-### WHERE
+To retrieve all columns:
 
-A type-safe way to set a Where condition in a query is to use the `where` method.
-    
 ```scala
-val where = Table[User].selectAll.where(_.email === "alice@example.com")
-
-where.statement === "SELECT id, name, email FROM user WHERE email = ?"
+val select = TableQuery[User].selectAll
+// SELECT id, name, email FROM user
 ```
 
-The following is a list of conditions that can be used in the `where` method.
+#### Aggregate Functions
 
-| Conditions                             | Statement                             |
-|----------------------------------------|---------------------------------------|
-| `===`                                  | `column = ?`                          |
-| `>=`                                   | `column >= ?`                         |
-| `>`                                    | `column > ?`                          |
-| `<=`                                   | `column <= ?`                         |
-| `<`                                    | `column < ?`                          |
-| `<>`                                   | `column <> ?`                         |
-| `!==`                                  | `column != ?`                         |
-| `IS ("TRUE"/"FALSE"/"UNKNOWN"/"NULL")` | `column IS {TRUE/FALSE/UNKNOWN/NULL}` |
-| `<=>`                                  | `column <=> ?`                        |
-| `IN (value, value, ...)`               | `column IN (?, ?, ...)`               |
-| `BETWEEN (start, end)`                 | `column BETWEEN ? AND ?`              |
-| `LIKE (value)`                         | `column LIKE ?`                       |
-| `LIKE_ESCAPE (like, escape)`           | `column LIKE ? ESCAPE ?`              |
-| `REGEXP (value)`                       | `column REGEXP ?`                     |
-| `<<` (value)                           | `column << ?`                         |
-| `>>` (value)                           | `column >> ?`                         |
-| `DIV (cond, result)`                   | `column DIV ? = ?`                    |
-| `MOD (cond, result)`                   | `column MOD ? = ?`                    |
-| `^ (value)`                            | `column ^ ?`                          |
-| `~ (value)`                            | `~column = ?`                         |
-
-### GROUP BY/Having
-
-A type-safe way to set the GROUP BY clause in a query is to use the `groupBy` method.
-
-Using `groupBy` allows you to group data by the value of a column name you specify when you retrieve the data with `select`.
+How to use aggregate functions (e.g., count):
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
-  .groupBy(_._2)
-
-select.statement === "SELECT id, name FROM user GROUP BY name"
+val select = TableQuery[User].select(_.id.count)
+// SELECT COUNT(id) FROM user
 ```
 
-When grouping, the number of data that can be retrieved with `select` is the number of groups. So, when grouping is done, you can retrieve the values of the columns specified for grouping, or the results of aggregating the column values by group using the provided functions.
+### WHERE Conditions
 
-The `having` function allows you to set the conditions under which the data retrieved from the grouping by `groupBy` will be retrieved.
+To add conditions to a query, use the `where` method:
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
-  .groupBy(_._2)
+val where = TableQuery[User].selectAll.where(_.email === "alice@example.com")
+// SELECT id, name, email FROM user WHERE email = ?
+```
+
+List of comparison operators available in the `where` method:
+
+| Operator                                 | SQL Statement                           | Description                                      |
+|----------------------------------------|---------------------------------------|--------------------------------------------------|
+| `===`                                  | `column = ?`                          | Equal to                                        |
+| `>=`                                   | `column >= ?`                         | Greater than or equal to                        |
+| `>`                                    | `column > ?`                          | Greater than                                    |
+| `<=`                                   | `column <= ?`                         | Less than or equal to                           |
+| `<`                                    | `column < ?`                          | Less than                                       |
+| `<>`                                   | `column <> ?`                         | Not equal to                                    |
+| `!==`                                  | `column != ?`                         | Not equal to (alternative syntax)               |
+| `IS ("TRUE"/"FALSE"/"UNKNOWN"/"NULL")` | `column IS {TRUE/FALSE/UNKNOWN/NULL}` | Check if equals specified value                 |
+| `<=>`                                  | `column <=> ?`                        | NULL-safe equal operator (can compare with NULL) |
+| `IN (value, value, ...)`               | `column IN (?, ?, ...)`               | Check if matches any of the specified values    |
+| `BETWEEN (start, end)`                 | `column BETWEEN ? AND ?`              | Check if within specified range                 |
+| `LIKE (value)`                         | `column LIKE ?`                       | Pattern matching                                |
+| `LIKE_ESCAPE (like, escape)`           | `column LIKE ? ESCAPE ?`              | Pattern matching with escape character          |
+| `REGEXP (value)`                       | `column REGEXP ?`                     | Regular expression                              |
+| `<<` (value)                           | `column << ?`                         | Bit left shift                                  |
+| `>>` (value)                           | `column >> ?`                         | Bit right shift                                 |
+| `DIV (cond, result)`                   | `column DIV ? = ?`                    | Integer division                                |
+| `MOD (cond, result)`                   | `column MOD ? = ?`                    | Modulo                                          |
+| `^ (value)`                            | `column ^ ?`                          | Bit XOR                                         |
+| `~ (value)`                            | `~column = ?`                         | Bit NOT                                         |
+
+Example of combining conditions:
+
+```scala
+val complexWhere = TableQuery[User]
+  .selectAll
+  .where(user => user.email === "alice@example.com" && user.id > 5)
+// SELECT id, name, email FROM user WHERE email = ? AND id > ?
+```
+
+### GROUP BY and HAVING
+
+To group data, use the `groupBy` method:
+
+```scala
+val select = TableQuery[User]
+  .select(user => user.id.count *: user.name)
+  .groupBy(_.name)
+// SELECT COUNT(id), name FROM user GROUP BY name
+```
+
+You can use `having` to set conditions on grouped data:
+
+```scala
+val select = TableQuery[User]
+  .select(user => user.id.count *: user.name)
+  .groupBy(_.name)
   .having(_._1 > 1)
-
-select.statement === "SELECT id, name FROM user GROUP BY name HAVING id > ?"
+// SELECT COUNT(id), name FROM user GROUP BY name HAVING COUNT(id) > ?
 ```
 
 ### ORDER BY
 
-A type-safe way to set the ORDER BY clause in a query is to use the `orderBy` method.
-
-Using `orderBy` allows you to sort data in ascending or descending order by the value of a column name you specify when retrieving data with `select`.
+To specify result order, use the `orderBy` method:
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
+val select = TableQuery[User]
+  .select(user => user.id *: user.name)
   .orderBy(_.id)
-
-select.statement === "SELECT id, name FROM user ORDER BY id"
+// SELECT id, name FROM user ORDER BY id
 ```
 
-If you want to specify ascending/descending order, simply call `asc`/`desc` for the columns, respectively.
+To specify ascending or descending order:
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
+// Ascending order
+val selectAsc = TableQuery[User]
+  .select(user => user.id *: user.name)
   .orderBy(_.id.asc)
+// SELECT id, name FROM user ORDER BY id ASC
 
-select.statement === "SELECT id, name FROM user ORDER BY id ASC"
+// Descending order
+val selectDesc = TableQuery[User]
+  .select(user => user.id *: user.name)
+  .orderBy(_.id.desc)
+// SELECT id, name FROM user ORDER BY id DESC
+
+// Sorting by multiple columns
+val selectMultiple = TableQuery[User]
+  .select(user => user.id *: user.name)
+  .orderBy(user => user.name.asc *: user.id.desc)
+// SELECT id, name FROM user ORDER BY name ASC, id DESC
 ```
 
-### LIMIT/OFFSET
+### LIMIT and OFFSET
 
-A type-safe way to set the LIMIT and OFFSET clauses in a query is to use the `limit`/`offset` methods.
-
-Setting `limit` allows you to set an upper limit on the number of rows of data to retrieve when `select` is executed, while setting `offset` allows you to specify the number of rows of data to retrieve.
+Use the `limit` method to limit the number of rows and the `offset` method to specify the number of rows to skip:
 
 ```scala
-val select = Table[User]
-  .select(user => (user.id, user.name))
-  .limit(1)
-  .offset(1)
-    
-select.statement === "SELECT id, name FROM user LIMIT ? OFFSET ?"
+val select = TableQuery[User]
+  .select(user => user.id *: user.name)
+  .limit(10)    // Get a maximum of 10 rows
+  .offset(5)    // Skip the first 5 rows
+// SELECT id, name FROM user LIMIT ? OFFSET ?
 ```
 
-## JOIN/LEFT JOIN/RIGHT JOIN
+## Table Joins
 
-A type-safe way to set a Join in a query is to use the `join`/`leftJoin`/`rightJoin` methods.
-
-The following definition is used as a sample for Join.
+There are several ways to join multiple tables. First, let's show example table definitions:
 
 ```scala 3
+// Table definitions
 case class User(id: Int, name: String, email: String) derives Table
 case class Product(id: Int, name: String, price: BigDecimal) derives Table
 case class Order(
@@ -183,210 +235,346 @@ case class Order(
   quantity:  Int
 ) derives Table
 
-val userTable    = Table[User]
-val productTable = Table[Product]
-val orderTable   = Table[Order]
+// Generate TableQuery
+val userTable    = TableQuery[User]
+val productTable = TableQuery[Product]
+val orderTable   = TableQuery[Order]
 ```
 
-First, if you want to perform a simple join, use `join`.
-The first argument of `join` is the table to be joined, and the second argument is a function that compares the source table with the columns of the table to be joined. This corresponds to the ON clause in the join.
+### Inner Join
 
-After the join, the `select` will specify columns from the two tables.
+Retrieves only the matching rows from both tables:
 
 ```scala
-val join = userTable.join(orderTable)((user, order) => user.id === order.userId)
-  .select((user, order) => (user.name, order.quantity))
-
-join.statement = "SELECT user.`name`, order.`quantity` FROM user JOIN order ON user.id = order.user_id"
+val join = userTable
+  .join(orderTable)
+  .on((user, order) => user.id === order.userId)
+  .select((user, order) => user.name *: order.quantity)
+// SELECT user.`name`, order.`quantity` FROM user JOIN order ON user.id = order.user_id
 ```
 
-Next, if you want to perform a Left Join, which is a left outer join, use `leftJoin`.
-The implementation itself is the same as for a simple Join, only `join` is changed to `leftJoin`.
+### Left Join
 
-```scala 3
-val leftJoin = userTable.leftJoin(orderTable)((user, order) => user.id === order.userId)
-  .select((user, order) => (user.name, order.quantity))
+Retrieves all rows from the left table and matching rows from the right table. If no match, the right columns will be NULL:
 
-join.statement = "SELECT user.`name`, order.`quantity` FROM user LEFT JOIN order ON user.id = order.user_id"
+```scala
+val leftJoin = userTable
+  .leftJoin(orderTable)
+  .on((user, order) => user.id === order.userId)
+  .select((user, order) => user.name *: order.quantity)
+// SELECT user.`name`, order.`quantity` FROM user LEFT JOIN order ON user.id = order.user_id
+
+// The return type is (String, Option[Int])
+// since data from the order table might be NULL
 ```
 
-The difference from a simple Join is that when using `leftJoin`, the records retrieved from the table to be joined may be NULL.
+### Right Join
 
-Therefore, in ldbc, all records in the column retrieved from the table passed to `leftJoin` will be of type Option.
+Retrieves all rows from the right table and matching rows from the left table. If no match, the left columns will be NULL:
 
-```scala 3
-val leftJoin = userTable.leftJoin(orderTable)((user, order) => user.id === order.userId)
-  .select((user, order) => (user.name, order.quantity)) // (String, Option[Int])
+```scala
+val rightJoin = orderTable
+  .rightJoin(userTable)
+  .on((order, user) => order.userId === user.id)
+  .select((order, user) => order.quantity *: user.name)
+// SELECT order.`quantity`, user.`name` FROM order RIGHT JOIN user ON order.user_id = user.id
+
+// The return type is (Option[Int], String)
+// since data from the order table might be NULL
 ```
 
-Next, if you want to perform a right join, which is a right outer join, use `rightJoin`.
-The implementation itself is the same as for a simple join, only the `join` is changed to `rightJoin`.
+### Joining Multiple Tables
 
-```scala 3
-val rightJoin = orderTable.rightJoin(userTable)((order, user) => order.userId === user.id)
-  .select((order, user) => (order.quantity, user.name))
+It's possible to join three or more tables:
 
-join.statement = "SELECT order.`quantity`, user.`name` FROM order RIGHT JOIN user ON order.user_id = user.id"
+```scala
+val multiJoin = productTable
+  .join(orderTable).on((product, order) => product.id === order.productId)
+  .rightJoin(userTable).on((_, order, user) => order.userId === user.id)
+  .select((product, order, user) => product.name *: order.quantity *: user.name)
+// SELECT 
+//   product.`name`, 
+//   order.`quantity`,
+//   user.`name`
+// FROM product
+// JOIN order ON product.id = order.product_id
+// RIGHT JOIN user ON order.user_id = user.id
+
+// The return type is (Option[String], Option[Int], String)
+// because rightJoin is used, data from product and order tables might be NULL
 ```
 
-The difference from a simple Join is that when using `rightJoin`, the records retrieved from the join source table may be NULL.
+## INSERT Statement
 
-Therefore, in ldbc, all records in the columns retrieved from the join source table using `rightJoin` will be of type Option.
+There are several methods to insert new records:
 
-```scala 3
-val rightJoin = orderTable.rightJoin(userTable)((order, user) => order.userId === user.id)
-  .select((order, user) => (order.quantity, user.name)) // (Option[Int], String)
+### Using the `insert` Method
+
+Directly specify a tuple of values:
+
+```scala
+val insert = TableQuery[User].insert((1, "Alice", "alice@example.com"))
+// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?)
+
+// Insert multiple records at once
+val multiInsert = TableQuery[User].insert(
+  (1, "Alice", "alice@example.com"),
+  (2, "Bob", "bob@example.com")
+)
+// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)
 ```
 
-If multiple joins are desired, this can be accomplished by calling any Join method in the method chain.
+### Using the `insertInto` Method
 
-```scala 3
-val join = 
-  (productTable join orderTable)((product, order) => product.id === order.productId)
-    .rightJoin(userTable)((_, order, user) => order.userId === user.id)
-    .select((product, order, user) => (product.name, order.quantity, user.name)) // (Option[String], Option[Int], String)]
+Useful when you want to insert values only into specific columns (e.g., when using AUTO INCREMENT):
 
-join.statement =
-  """
-    |SELECT
-    |  product.`name`, 
-    |  order.`quantity`,
-    |  user.`name`
-    |FROM product
-    |JOIN order ON product.id = order.product_id
-    |RIGHT JOIN user ON order.user_id = user.id
-    |""".stripMargin
+```scala
+val insert = TableQuery[User]
+  .insertInto(user => user.name *: user.email)
+  .values(("Alice", "alice@example.com"))
+// INSERT INTO user (`name`, `email`) VALUES(?, ?)
+
+// Insert multiple records at once
+val multiInsert = TableQuery[User]
+  .insertInto(user => user.name *: user.email)
+  .values(List(
+    ("Alice", "alice@example.com"),
+    ("Bob", "bob@example.com")
+  ))
+// INSERT INTO user (`name`, `email`) VALUES(?, ?), (?, ?)
 ```
 
-Note that a `rightJoin` join with multiple joins will result in NULL-acceptable access to all records retrieved from the previously joined table, regardless of what the previous join was.
+### Using Model Objects (with `+=` and `++=` Operators)
 
-## INSERT
+```scala
+// Insert one record
+val insert = TableQuery[User] += User(1, "Alice", "alice@example.com")
+// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?)
 
-A type-safe way to construct an INSERT statement is to use the following methods provided by Table.
-
-- insert
-- insertInto
-- +=
-- ++=
-
-**insert**
-
-The `insert` method is passed a tuple of data to insert. The tuples must have the same number and type of properties as the model. Also, the order of the inserted data must be in the same order as the model properties and table columns.
-
-```scala 3
-val insert = user.insert((1, "name", "email@example.com"))
-
-insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?)"
+// Insert multiple records
+val multiInsert = TableQuery[User] ++= List(
+  User(1, "Alice", "alice@example.com"),
+  User(2, "Bob", "bob@example.com")
+)
+// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)
 ```
 
-If you want to insert multiple data, you can construct it by passing multiple tuples to the `insert` method.
+### INSERT Using SELECT Results
 
-```scala 3
-val insert = user.insert((1, "name 1", "email+1@example.com"), (2, "name 2", "email+2@example.com"))
+You can also insert results from a SELECT query into another table:
 
-insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)"
-```
-
-**insertInto**
-
-The `insert` method will insert data into all columns the table has, but if you want to insert data only into specific columns, use the `insertInto` method.
-
-This can be used to exclude data insertion into columns with AutoIncrement or Default values.
-
-```scala 3
-val insert = user.insertInto(user => (user.name, user.email)).values(("name 3", "email+3@example.com"))
-
-insert.statement === "INSERT INTO user (`name`, `email`) VALUES(?, ?)"
-```
-
-If you want to insert multiple data, you can construct it by passing an array of tuples to `values`.
-
-```scala 3
-val insert = user.insertInto(user => (user.name, user.email)).values(List(("name 4", "email+4@example.com"), ("name 5", "email+5@example.com")))
-
-insert.statement === "INSERT INTO user (`name`, `email`) VALUES(?, ?), (?, ?)"
-```
-
-**+=**
-
-The `+=` method can be used to construct an INSERT statement using a model. Note that when using a model, data is inserted into all columns.
-
-```scala 3
-val insert = user += User(6, "name 6", "email+6@example.com")
-
-insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?)"
-```
-
-**++=**
-
-Use the `++=` method if you want to insert multiple data using the model.
-
-```scala 3
-val insert = user ++= List(User(7, "name 7", "email+7@example.com"), User(8, "name 8", "email+8@example.com"))
-
-insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?), (?, ?, ?)"
+```scala
+val insertSelect = TableQuery[User]
+  .insertInto(user => user.id *: user.name *: user.email)
+  .select(
+    TableQuery[User]
+      .select(user => user.id *: user.name *: user.email)
+      .where(_.id > 10)
+  )
+// INSERT INTO user (`id`, `name`, `email`) 
+// SELECT id, name, email FROM user WHERE id > ?
 ```
 
 ### ON DUPLICATE KEY UPDATE
 
-Inserting a row with an ON DUPLICATE KEY UPDATE clause will cause an UPDATE of the old row if it has a duplicate value in a UNIQUE index or PRIMARY KEY.
-
-The ldbc way to accomplish this is to use `onDuplicateKeyUpdate` for `Insert`.
+Using the ON DUPLICATE KEY UPDATE clause to update existing rows when a unique or primary key is duplicated:
 
 ```scala
-val insert = user.insert((9, "name", "email+9@example.com")).onDuplicateKeyUpdate(v => (v.name, v.email))
+val insert = TableQuery[User]
+  .insert((9, "Alice", "alice@example.com"))
+  .onDuplicateKeyUpdate(v => v.name *: v.email)
+// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?) 
+// AS new_user ON DUPLICATE KEY UPDATE `name` = new_user.`name`, `email` = new_user.`email`
 
-insert.statement === "INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?) AS new_user ON DUPLICATE KEY UPDATE `name` = new_user.`name`, `email` = new_user.`email`"
+// When updating only specific columns
+val insertWithSpecificUpdate = TableQuery[User]
+  .insert((9, "Alice", "alice@example.com"))
+  .onDuplicateKeyUpdate(_.name, "UpdatedName")
+// INSERT INTO user (`id`, `name`, `email`) VALUES(?, ?, ?) 
+// AS new_user ON DUPLICATE KEY UPDATE `name` = ?
 ```
 
-## UPDATE
+## UPDATE Statement
 
-A type-safe way to construct an UPDATE statement is to use the `update` method provided by Table.
+To update existing records:
 
-The first argument of the `update` method is the name of the model property, not the column name of the table, and the second argument is the value to be updated. The type of the value passed as the second argument must be the same as the type of the property specified in the first argument.
+### Updating a Single Column
 
 ```scala
-val update = user.update("name", "update name")
-
-update.statement === "UPDATE user SET name = ?"
+val update = TableQuery[User].update(_.name)("UpdatedName")
+// UPDATE user SET name = ?
 ```
 
-If a property name that does not exist is specified as the first argument, a compile error occurs.
-
-```scala 3
-val update = user.update("hoge", "update name") // Compile error
-```
-
-If you want to update multiple columns, use the `set` method.
-
-```scala 3
-val update = user.update("name", "update name").set("email", "update-email@example.com")
-
-update.statement === "UPDATE user SET name = ?, email = ?"
-```
-
-You can also prevent the `set` method from generating queries based on conditions.
-
-```scala 3
-val update = user.update("name", "update name").set("email", "update-email@example.com", false)
-
-update.statement === "UPDATE user SET name = ?"
-```
-
-You can also use a model to construct the UPDATE statement. Note that if you use a model, all columns will be updated.
-
-```scala 3
-val update = user.update(User(1, "update name", "update-email@example.com"))
-
-update.statement === "UPDATE user SET id = ?, name = ?, email = ?"
-```
-
-## DELETE
-
-A type-safe way to construct a DELETE statement is to use the `delete` method provided by Table.
+### Updating Multiple Columns
 
 ```scala
-val delete = user.delete
-
-delete.statement === "DELETE FROM user"
+val update = TableQuery[User]
+  .update(u => u.name *: u.email)(("UpdatedName", "updated-email@example.com"))
+// UPDATE user SET name = ?, email = ?
 ```
+
+### Conditional Updates (Skip Updating Specific Columns Based on Conditions)
+
+```scala
+val shouldUpdate = true // or false
+val update = TableQuery[User]
+  .update(_.name)("UpdatedName")
+  .set(_.email, "updated-email@example.com", shouldUpdate)
+// If shouldUpdate is true: UPDATE user SET name = ?, email = ?
+// If shouldUpdate is false: UPDATE user SET name = ?
+```
+
+### Update Using Model Objects
+
+```scala
+val update = TableQuery[User].update(User(1, "UpdatedName", "updated-email@example.com"))
+// UPDATE user SET id = ?, name = ?, email = ?
+```
+
+### UPDATE with WHERE Conditions
+
+```scala
+val update = TableQuery[User]
+  .update(_.name, "UpdatedName")
+  .where(_.id === 1)
+// UPDATE user SET name = ? WHERE id = ?
+
+// Adding AND condition
+val updateWithMultipleConditions = TableQuery[User]
+  .update(_.name, "UpdatedName")
+  .where(_.id === 1)
+  .and(_.email === "alice@example.com")
+// UPDATE user SET name = ? WHERE id = ? AND email = ?
+
+// Adding OR condition
+val updateWithOrCondition = TableQuery[User]
+  .update(_.name, "UpdatedName")
+  .where(_.id === 1)
+  .or(_.id === 2)
+// UPDATE user SET name = ? WHERE id = ? OR id = ?
+```
+
+## DELETE Statement
+
+To delete records:
+
+### Basic DELETE
+
+```scala
+val delete = TableQuery[User].delete
+// DELETE FROM user
+```
+
+### DELETE with WHERE Conditions
+
+```scala
+val delete = TableQuery[User]
+  .delete
+  .where(_.id === 1)
+// DELETE FROM user WHERE id = ?
+
+// Adding AND/OR conditions
+val deleteWithMultipleConditions = TableQuery[User]
+  .delete
+  .where(_.id === 1)
+  .and(_.email === "alice@example.com")
+// DELETE FROM user WHERE id = ? AND email = ?
+```
+
+### DELETE with LIMIT
+
+To delete only a specific number of records:
+
+```scala
+val delete = TableQuery[User]
+  .delete
+  .where(_.id > 10)
+  .limit(5)
+// DELETE FROM user WHERE id > ? LIMIT ?
+```
+
+## Advanced Query Examples
+
+### Subqueries
+
+Example using a subquery:
+
+```scala
+val subQuery = TableQuery[Order]
+  .select(order => order.userId)
+  .where(_.quantity > 10)
+
+val mainQuery = TableQuery[User]
+  .select(user => user.name)
+  .where(_.id IN subQuery)
+// SELECT name FROM user WHERE id IN (SELECT user_id FROM order WHERE quantity > ?)
+```
+
+### Complex Joins and Conditions
+
+```scala
+val complexQuery = userTable
+  .join(orderTable).on((user, order) => user.id === order.userId)
+  .join(productTable).on((_, order, product) => order.productId === product.id)
+  .select((user, order, product) => user.name *: product.name *: order.quantity)
+  .where { case ((user, order, product)) => 
+    (user.name LIKE "A%") && (product.price > 100) 
+  }
+  .orderBy { case ((_, _, product)) => product.price.desc }
+  .limit(10)
+// SELECT 
+//   user.`name`, 
+//   product.`name`, 
+//   order.`quantity` 
+// FROM user 
+// JOIN order ON user.id = order.user_id 
+// JOIN product ON order.product_id = product.id 
+// WHERE user.name LIKE ? AND product.price > ? 
+// ORDER BY product.price DESC 
+// LIMIT ?
+```
+
+### Queries with Conditional Branching
+
+When you want to change the query based on runtime conditions:
+
+```scala
+val nameOption: Option[String] = Some("Alice") // or None
+val minIdOption: Option[Int] = Some(5) // or None
+
+val query = TableQuery[User]
+  .selectAll
+  .whereOpt(user => nameOption.map(name => user.name === name))
+  .andOpt(user => minIdOption.map(minId => user.id >= minId))
+// If both nameOption and minIdOption are Some:
+// SELECT id, name, email FROM user WHERE name = ? AND id >= ?
+// If nameOption is None and minIdOption is Some:
+// SELECT id, name, email FROM user WHERE id >= ?
+// If both are None:
+// SELECT id, name, email FROM user
+```
+
+## Executing Queries
+
+Execute the constructed queries as follows:
+
+```scala 3
+import ldbc.dsl.*
+
+provider.use { conn =>
+  (for
+    // Execute a SELECT query
+    users <- TableQuery[User].selectAll.where(_.id > 5).query.to[List]  // Get results as a List
+    // Get a single result
+    user <- TableQuery[User].selectAll.where(_.id === 1).query.to[Option]
+    // Execute an update query
+    _ <- TableQuery[User].update(_.name)("NewName").where(_.id === 1).update
+  yield ???).transaction(conn)
+}
+```
+
+## Next Steps
+
+Now you know how to build type-safe queries using the Query Builder. This approach allows you to detect more errors at compile time than writing SQL directly, enabling you to write safer code.
+
+Next, proceed to [Schema](/en/tutorial/Schema.md) to learn how to define database schemas using Scala code.

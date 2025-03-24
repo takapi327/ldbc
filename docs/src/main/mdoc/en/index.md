@@ -1,6 +1,6 @@
 {%
-  laika.title = ldbc
-  laika.metadata.language = en
+laika.title = ldbc
+laika.metadata.language = en
 %}
 
 # ldbc (Lepus Database Connectivity)
@@ -20,48 +20,42 @@ One way to access databases in Scala is to use JDBC, and there are several libra
 - Functional DSLs (Slick, quill, zio-sql)
 - SQL string interpolators (Anorm, doobie)
 
-ldbc is another library that also wraps JDBC, and ldbc combines aspects of each to provide a type-safe and refactorable SQL interface in the Scala 3 library, allowing SQL expressions to be expressed on MySQL databases.
+ldbc is also a library that wraps JDBC, combining aspects of both approaches. It's a Scala 3 library that provides a type-safe and refactorable SQL interface, capable of expressing SQL expressions on MySQL databases.
 
-Unlike other libraries, ldbc also provides its own connector built in Scala.
+Unlike other libraries, ldbc also offers its own connector built in Scala.
 
 Scala currently supports multiple platforms: JVM, JS, and Native.
 
-However, if the library uses JDBC, it will only work in a JVM environment.
+However, libraries using JDBC can only run in JVM environments.
 
-Therefore, ldbc is being developed to provide a connector written in Scala that is compatible with the MySQL protocol so that it can work on different platforms.
-With ldbc, database access can be done regardless of platform while taking advantage of Scala's type safety and functional programming.
-
-Also, the use of ldbc allows development to centralize Scala models, sql schemas, and documentation by managing a single resource.
-
-This concept was inspired by [tapir](https://github.com/softwaremill/tapir), a declarative, type-safe web endpoint library. tapir can be used to build type-safe endpoints, which can then be used to generate OpenAPI documents, OpenAPI documents can also be generated from the constructed endpoints.
-
-ldbc uses Scala at the database layer to allow for the same type-safe construction and document generation using the construction.
+Therefore, ldbc is being developed to provide a connector written in Scala that supports the MySQL protocol, allowing it to work across different platforms.
+By using ldbc, you can access databases across platforms while leveraging Scala's type safety and the benefits of functional programming.
 
 ### Target Audience
 
-This document is intended for developers who use ldbc, a library for database access using the Scala programming language.
+This documentation is intended for developers who use ldbc, a library for database access using the Scala programming language.
 
-ldbc is designed for those interested in typed, pure functional programming. If you are not a Cats user or are not familiar with functional I/O or the monadic Cats Effect, you may need to proceed slowly.
+ldbc is designed for those interested in typed pure functional programming. If you're not a Cats user or are unfamiliar with functional I/O and monadic Cats Effect, you may need to proceed at a slower pace.
 
-Nevertheless, if you are confused or frustrated by this documentation or the ldbc API, please submit an issue and ask for help. Because both the library and the documentation are new and rapidly changing, it is inevitable that there will be some unclear points. Therefore, this document will be continually updated to address problems and omissions.
+That said, if you find yourself confused or frustrated by this documentation or the ldbc API, please open an issue and ask for help. Both the library and documentation are young and rapidly evolving, so some lack of clarity is inevitable. This document will therefore be continuously updated to address issues and omissions.
 
 ## Quick Start
 
-The current version is **@VERSION@** corresponding to **Scala @SCALA_VERSION@**.
+The current version is **@VERSION@**, compatible with **Scala @SCALA_VERSION@**.
 
 ```scala
 libraryDependencies ++= Seq(
 
-  // Start with this one.
+  // Start with this one
   "@ORGANIZATION@" %% "ldbc-dsl" % "@VERSION@",
   
-  // Select the connector to be used
-  "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@", // Java Connector (Supported platforms: JVM)
+  // Choose the connector you want to use
+  "@ORGANIZATION@" %% "jdbc-connector" % "@VERSION@", // Java connector (supported platform: JVM)
   "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@", // Scala connector (supported platforms: JVM, JS, Native)
 
-  // Then add these as needed
-  "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@", // Type-safe query construction
-  "@ORGANIZATION@" %% "ldbc-schema"        % "@VERSION@", // Building a database schema
+  // And add these as needed
+  "@ORGANIZATION@" %% "ldbc-query-builder" % "@VERSION@", // Type-safe query building
+  "@ORGANIZATION@" %% "ldbc-schema"        % "@VERSION@", // Database schema construction
 )
 ```
 
@@ -69,10 +63,10 @@ libraryDependencies ++= Seq(
 
 - JSON data type support
 - SET data type support
-- Support for Geometry data type
-- Support for CHECK constraints
-- Non-MySQL database support
-- Streaming Support
+- Geometry data type support
+- CHECK constraint support
+- Support for databases other than MySQL
+- Streaming support
 - ZIO module support
-- Test Kit
+- Test kit
 - etc...
