@@ -268,16 +268,18 @@ lazy val otelExample = crossProject(JVMPlatform)
   .example("otel", "OpenTelemetry example project")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "otel4s-oteljava" % "0.11.2",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp" % "1.48.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.48.0" % Runtime,
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.11.2",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.48.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.48.0" % Runtime
     )
   )
-  .settings(javaOptions ++= Seq(
-    "-Dotel.java.global-autoconfigure.enabled=true",
-    "-Dotel.service.name=ldbc-otel-example",
-    "-Dotel.metrics.exporter=none"
-  ))
+  .settings(
+    javaOptions ++= Seq(
+      "-Dotel.java.global-autoconfigure.enabled=true",
+      "-Dotel.service.name=ldbc-otel-example",
+      "-Dotel.metrics.exporter=none"
+    )
+  )
   .dependsOn(connector, dsl)
 
 lazy val examples = Seq(
