@@ -34,4 +34,4 @@ libraryDependencies += "@ORGANIZATION@" %% "ldbc-connector" % "@VERSION@"
 @:@
 
 ## References
-- [Using ldbc connector](/en/tutorial/Connection.md#using-ldbc-connector)
+- [Using ldbc connector](/en/tutorial/Connection.md#using-the-ldbc-connector)

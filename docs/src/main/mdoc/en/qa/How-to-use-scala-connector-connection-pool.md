@@ -11,4 +11,4 @@ The Scala connector does not yet support connection pooling. If you want to use 
 
 ## References
 - [HikariCP](/en/examples/HikariCP.md)
-- [Using JDBC connector](/en/tutorial/Connection.md#using-jdbc-connector)
+- [Using JDBC connector](/en/tutorial/Connection.md#using-the-jdbc-connector)
