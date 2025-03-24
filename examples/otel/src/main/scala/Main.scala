@@ -6,12 +6,13 @@
 
 import cats.effect.*
 
-import io.opentelemetry.api.GlobalOpenTelemetry
-
 import org.typelevel.otel4s.oteljava.OtelJava
 
-import ldbc.connector.*
 import ldbc.dsl.*
+
+import ldbc.connector.*
+
+import io.opentelemetry.api.GlobalOpenTelemetry
 
 object Main extends IOApp.Simple:
 
@@ -20,14 +21,14 @@ object Main extends IOApp.Simple:
   private def resource: Resource[IO, Connection[IO]] =
     for
       otel <- Resource
-        .eval(IO.delay(GlobalOpenTelemetry.get))
-        .evalMap(OtelJava.forAsync[IO])
+                .eval(IO.delay(GlobalOpenTelemetry.get))
+                .evalMap(OtelJava.forAsync[IO])
       tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
       connection <- ConnectionProvider
-        .default[IO]("127.0.0.1", 13307, "ldbc", "password", "world")
-        .setSSL(SSL.Trusted)
-        .setTracer(tracer)
-        .createConnection()
+                      .default[IO]("127.0.0.1", 13307, "ldbc", "password", "world")
+                      .setSSL(SSL.Trusted)
+                      .setTracer(tracer)
+                      .createConnection()
     yield connection
 
   override def run: IO[Unit] =
