@@ -33,7 +33,7 @@ object Main extends ResourceApp.Simple:
   config.setMinimumIdle(5)
   config.setIdleTimeout(300000) // 5分
   config.setMaxLifetime(600000) // 10分
-  
+
   private val ds = new HikariDataSource(config)
 
   override def run: Resource[IO, Unit] =
@@ -43,9 +43,9 @@ object Main extends ResourceApp.Simple:
       connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnection()
     yield connection).evalMap { conn =>
       for
-        city <- sql"SELECT * FROM `city` WHERE ID = ${1}".query[City].to[Option].readOnly(conn)
+        city <- sql"SELECT * FROM `city` WHERE ID = ${ 1 }".query[City].to[Option].readOnly(conn)
         _    <- IO.println(s"Found city: $city")
         // トランザクションの例
-        _ <- sql"UPDATE `city` SET population = ${city.map(_.population + 1000)}".update.transact(conn)
+        _ <- sql"UPDATE `city` SET population = ${ city.map(_.population + 1000) }".update.transact(conn)
       yield ()
     }
