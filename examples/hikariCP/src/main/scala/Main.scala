@@ -4,7 +4,7 @@
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
-import com.zaxxer.hikari.HikariDataSource
+import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
 
 import cats.effect.*
 
@@ -25,10 +25,16 @@ object City:
 
 object Main extends ResourceApp.Simple:
 
-  private val ds = new HikariDataSource()
-  ds.setJdbcUrl("jdbc:mysql://127.0.0.1:13306/world")
-  ds.setUsername("ldbc")
-  ds.setPassword("password")
+  private val config = new HikariConfig()
+  config.setJdbcUrl("jdbc:mysql://127.0.0.1:13306/world")
+  config.setUsername("ldbc")
+  config.setPassword("password")
+  config.setMaximumPoolSize(10)
+  config.setMinimumIdle(5)
+  config.setIdleTimeout(300000) // 5分
+  config.setMaxLifetime(600000) // 10分
+  
+  private val ds = new HikariDataSource(config)
 
   override def run: Resource[IO, Unit] =
     (for
@@ -36,9 +42,10 @@ object Main extends ResourceApp.Simple:
       execution  <- ExecutionContexts.fixedThreadPool[IO](hikari.getMaximumPoolSize)
       connection <- ConnectionProvider.fromDataSource[IO](hikari, execution).createConnection()
     yield connection).evalMap { conn =>
-      sql"SELECT * FROM `city` WHERE ID = ${ 1 }"
-        .query[City]
-        .to[Option]
-        .readOnly(conn)
-        .map(_.foreach(println))
+      for
+        city <- sql"SELECT * FROM `city` WHERE ID = ${1}".query[City].to[Option].readOnly(conn)
+        _    <- IO.println(s"Found city: $city")
+        // トランザクションの例
+        _ <- sql"UPDATE `city` SET population = ${city.map(_.population + 1000)}".update.transact(conn)
+      yield ()
     }

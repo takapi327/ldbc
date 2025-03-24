@@ -276,8 +276,7 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(javaOptions ++= Seq(
     "-Dotel.java.global-autoconfigure.enabled=true",
     "-Dotel.service.name=ldbc-otel-example",
-    "-Dotel.metrics.exporter=none",
-    //"-Dotel.exporter.otlp.endpoint=http://localhost:4317"
+    "-Dotel.metrics.exporter=none"
   ))
   .dependsOn(connector, dsl)
 
