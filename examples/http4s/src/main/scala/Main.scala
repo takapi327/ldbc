@@ -9,8 +9,6 @@ import cats.effect.*
 import io.circe.*
 import io.circe.syntax.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import ldbc.statement.formatter.Naming
 
 import ldbc.schema.*
@@ -47,8 +45,6 @@ class CityTable extends Table[City]("city"):
   override def * : Column[City] = (id *: name *: countryCode *: district *: population).to[City]
 
 object Main extends ResourceApp.Forever:
-
-  given Tracer[IO] = Tracer.noop[IO]
 
   private val cityTable = TableQuery[CityTable]
 

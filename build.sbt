@@ -262,9 +262,29 @@ lazy val hikariCPExample = crossProject(JVMPlatform)
   )
   .dependsOn(jdbcConnector, dsl)
 
+lazy val otelExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("otel", "OpenTelemetry example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "otel4s-oteljava" % "0.11.2",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp" % "1.48.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.48.0" % Runtime,
+    )
+  )
+  .settings(javaOptions ++= Seq(
+    "-Dotel.java.global-autoconfigure.enabled=true",
+    "-Dotel.service.name=ldbc-otel-example",
+    "-Dotel.metrics.exporter=none",
+    //"-Dotel.exporter.otlp.endpoint=http://localhost:4317"
+  ))
+  .dependsOn(connector, dsl)
+
 lazy val examples = Seq(
   http4sExample,
-  hikariCPExample
+  hikariCPExample,
+  otelExample
 )
 
 lazy val docs = (project in file("docs"))
