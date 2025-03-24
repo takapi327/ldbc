@@ -46,6 +46,6 @@ object Main extends ResourceApp.Simple:
         city <- sql"SELECT * FROM `city` WHERE ID = ${ 1 }".query[City].to[Option].readOnly(conn)
         _    <- IO.println(s"Found city: $city")
         // トランザクションの例
-        _ <- sql"UPDATE `city` SET population = ${ city.map(_.population + 1000) }".update.transact(conn)
+        _ <- sql"UPDATE `city` SET population = ${ city.map(_.population + 1000) }".update.transaction(conn)
       yield ()
     }
