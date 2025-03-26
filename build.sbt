@@ -29,7 +29,6 @@ ThisBuild / githubWorkflowBuildPostamble += dockerStop
 ThisBuild / githubWorkflowTargetBranches        := Seq("**")
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v")))
 ThisBuild / tlSitePublishBranch                 := None
-ThisBuild / tlSiteKeepFiles                     := false // TODO: Deleted when publishing documentation for 0.3
 
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
@@ -236,6 +235,59 @@ lazy val benchmark = (project in file("benchmark"))
   .dependsOn(jdbcConnector.jvm, connector.jvm, queryBuilder.jvm)
   .enablePlugins(JmhPlugin, AutomateHeaderPlugin, NoPublishPlugin)
 
+lazy val http4sExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("http4s", "Http4s example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.http4s"    %% "http4s-dsl"          % "0.23.30",
+      "org.http4s"    %% "http4s-ember-server" % "0.23.30",
+      "org.http4s"    %% "http4s-circe"        % "0.23.30",
+      "ch.qos.logback" % "logback-classic"     % "1.5.16",
+      "io.circe"      %% "circe-generic"       % "0.14.10"
+    )
+  )
+  .dependsOn(connector, schema)
+
+lazy val hikariCPExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("hikariCP", "HikariCP example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      hikariCP,
+      mysql
+    )
+  )
+  .dependsOn(jdbcConnector, dsl)
+
+lazy val otelExample = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JVMPlatform)
+  .example("otel", "OpenTelemetry example project")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel"   %% "otel4s-oteljava"                           % "0.11.2",
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.48.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.48.0" % Runtime
+    )
+  )
+  .settings(
+    javaOptions ++= Seq(
+      "-Dotel.java.global-autoconfigure.enabled=true",
+      "-Dotel.service.name=ldbc-otel-example",
+      "-Dotel.metrics.exporter=none"
+    )
+  )
+  .dependsOn(connector, dsl)
+
+lazy val examples = Seq(
+  http4sExample,
+  hikariCPExample,
+  otelExample
+)
+
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -275,4 +327,5 @@ lazy val ldbc = tlCrossRootProject
     schemaSpy,
     hikari
   )
+  .aggregate(examples *)
   .enablePlugins(NoPublishPlugin)

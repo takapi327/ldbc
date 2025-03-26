@@ -263,7 +263,7 @@ trait HikariConfigBuilder:
 object HikariConfigBuilder:
 
   /**
-   * Methods for retrieving data from the LDBC default specified path.
+   * Methods for retrieving data from the ldbc default specified path.
    *
    * {{{
    *   ldbc.hikari {

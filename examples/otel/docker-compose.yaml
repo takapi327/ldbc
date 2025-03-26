@@ -1,0 +1,63 @@
+services:
+  database:
+    image: mysql:8.0.41
+    container_name: ldbc-otel-example
+    ports:
+      - 13307:3306
+    networks:
+      - static-network
+    volumes:
+      - ../../database:/docker-entrypoint-initdb.d
+      - ../../database/my.cnf:/etc/database/conf.d/my.cn
+    environment:
+      MYSQL_USER: 'ldbc'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+      TZ: 'Asia/Tokyo'
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - "./dependencies/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    networks:
+      - static-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    volumes:
+      - "./dependencies/jaeger/jaeger-ui.json:/etc/jaeger/jaeger-ui.json"
+    command: --query.ui-config /etc/jaeger/jaeger-ui.json
+    environment:
+      - METRICS_STORAGE_TYPE=prometheus
+      - PROMETHEUS_SERVER_URL=http://prometheus:9090
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16685:16685" # GRPC
+      - "16686:16686" # UI
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP http receiver
+    networks:
+      - static-network
+
+  grafana:
+    image: grafana/grafana-oss
+    restart: unless-stopped
+    volumes:
+      - "./dependencies/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml"
+    ports:
+      - "3000:3000"
+    networks:
+      - static-network
+    depends_on:
+      jaeger:
+        condition: service_started
+
+networks:
+  static-network:
+    name: static-network
