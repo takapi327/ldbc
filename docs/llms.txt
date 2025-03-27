@@ -1,0 +1,57 @@
+# ldbc
+
+> ldbc - ldbc (Lepus Database Connectivity) is Pure functional JDBC layer with Cats Effect 3 and Scala 3.
+
+## Docs
+
+- [Full Docs](https://takapi327.github.io/ldbc/llms-full.txt) Full documentation of ldbc. (without examples)
+- [Tiny Docs](https://takapi327.github.io/ldbc/llms-small.txt): Tiny documentation of ldbc. (includes only desciption of core)
+
+### Core
+- [Index](https://takapi327.github.io/ldbc/latest/index)
+- [Migration Notes](https://takapi327.github.io/ldbc/latest/migration-notes)
+
+### Tutorial
+- [Connection](https://takapi327.github.io/ldbc/latest/Connection)
+- [Custom Data Type](https://takapi327.github.io/ldbc/latest/Custom-Data-Type)
+- [Database Operations](https://takapi327.github.io/ldbc/latest/Database-Operations)
+- [Error Handling](https://takapi327.github.io/ldbc/latest/Error-Handling)
+- [Logging](https://takapi327.github.io/ldbc/latest/Logging)
+- [Parameterized Queries](https://takapi327.github.io/ldbc/latest/Parameterized-Queries)
+- [Query Builder](https://takapi327.github.io/ldbc/latest/Query-Builder)
+- [Schema Code Generation](https://takapi327.github.io/ldbc/latest/Schema-Code-Generation)
+- [Schema](https://takapi327.github.io/ldbc/latest/Schema)
+- [Selecting Data](https://takapi327.github.io/ldbc/latest/Selecting-Data)
+- [Setup](https://takapi327.github.io/ldbc/latest/Setup)
+- [Simple Program](https://takapi327.github.io/ldbc/latest/Simple-Program)
+- [Updating Data](https://takapi327.github.io/ldbc/latest/Updating-Data)
+- [Index](https://takapi327.github.io/ldbc/latest/index)
+
+### QA
+- [How Do I Add Processing Before And After The Connection Is Established](https://takapi327.github.io/ldbc/latest/How-do-I-add-processing-before-and-after-the-connection-is-established)
+- [How Do I Use My Own Type](https://takapi327.github.io/ldbc/latest/How-do-I-use-my-own-type)
+- [How Do I Use Nested Models](https://takapi327.github.io/ldbc/latest/How-do-I-use-nested-models)
+- [How To Change Column Names In Query Builder](https://takapi327.github.io/ldbc/latest/How-to-change-column-names-in-Query-Builder)
+- [How To Change The Format Of Column Names Using The Schema](https://takapi327.github.io/ldbc/latest/How-to-change-the-format-of-column-names-using-the-schema)
+- [How To Define Complex Queries With Plain Queries](https://takapi327.github.io/ldbc/latest/How-to-define-complex-queries-with-plain-queries)
+- [How To Handle Multiple Databases](https://takapi327.github.io/ldbc/latest/How-to-handle-multiple-databases)
+- [How To Perform DDL With Schema](https://takapi327.github.io/ldbc/latest/How-to-perform-DDL-with-schema)
+- [How To Use Scala Connector Connection Pool](https://takapi327.github.io/ldbc/latest/How-to-use-scala-connector-connection-pool)
+- [Implicit Search Problem Too Large](https://takapi327.github.io/ldbc/latest/Implicit-search-problem-too-large)
+- [Is There A Function To Limit The Number Of Concurrent Queries](https://takapi327.github.io/ldbc/latest/Is-there-a-function-to-limit-the-number-of-concurrent-queries)
+- [Is There A Way To Stream Query Results Asynchronously](https://takapi327.github.io/ldbc/latest/Is-there-a-way-to-stream-query-results-asynchronously)
+- [What Is Ldbc](https://takapi327.github.io/ldbc/latest/What-is-ldbc)
+- [What Is The Difference Between A Java Connect And A Scala Connector](https://takapi327.github.io/ldbc/latest/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector)
+- [Which Dependencies Should I Set](https://takapi327.github.io/ldbc/latest/Which-dependencies-should-I-set)
+- [Index](https://takapi327.github.io/ldbc/latest/index)
+
+## Examples
+- [HikariCP](https://takapi327.github.io/ldbc/latest/HikariCP)
+- [Http4s](https://takapi327.github.io/ldbc/latest/Http4s)
+- [Otel](https://takapi327.github.io/ldbc/latest/Otel)
+- [Index](https://takapi327.github.io/ldbc/latest/index)
+
+### Reference
+- [Connector](https://takapi327.github.io/ldbc/latest/Connector)
+- [Performance](https://takapi327.github.io/ldbc/latest/Performance)
+- [Index](https://takapi327.github.io/ldbc/latest/index)
