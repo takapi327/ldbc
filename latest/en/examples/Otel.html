@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>OpenTelemetry</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/examples/Otel.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="../tutorial/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="../tutorial/Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="HikariCP.html">HikariCP</a></li>
+    <li class="level2 active nav-leaf"><a href="#">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">OpenTelemetry</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#what-is-opentelemetry">What is OpenTelemetry?</a></li>
+    <li class="level1 nav-leaf"><a href="#required-dependencies">Required Dependencies</a></li>
+    <li class="level1 nav-leaf"><a href="#opentelemetry-configuration-in-ldbc">OpenTelemetry Configuration in ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="#configuration-via-environment-variables">Configuration via Environment Variables</a></li>
+    <li class="level1 nav-node"><a href="#practical-example-ldbc-application-with-opentelemetry">Practical Example: ldbc Application with OpenTelemetry</a></li>
+    <li class="level2 nav-leaf"><a href="#project-structure">Project Structure</a></li>
+    <li class="level2 nav-leaf"><a href="#main-scala">Main.scala</a></li>
+    <li class="level2 nav-leaf"><a href="#docker-compose-yaml">docker-compose.yaml</a></li>
+    <li class="level2 nav-leaf"><a href="#execution-steps">Execution Steps</a></li>
+    <li class="level1 nav-leaf"><a href="#trace-details">Trace Details</a></li>
+    <li class="level1 nav-leaf"><a href="#adding-custom-spans">Adding Custom Spans</a></li>
+    <li class="level1 nav-leaf"><a href="#trace-customization-options">Trace Customization Options</a></li>
+    <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="observability-with-opentelemetry" class="title">Observability with OpenTelemetry</h1>
+    <p>This page explains how to achieve observability through database query tracing, metrics collection, and logging by integrating ldbc with OpenTelemetry.</p>
+    
+    <h2 id="what-is-opentelemetry" class="section"><a class="anchor-link left" href="#what-is-opentelemetry"><i class="icofont-laika link">&#xef71;</i></a>What is OpenTelemetry?</h2>
+    <p><a href="https://opentelemetry.io/">OpenTelemetry</a> is an open-source framework for implementing application observability. It provides features such as distributed tracing, metrics collection, and logging, enabling an integrated approach to monitoring and analyzing application performance and behavior.</p>
+    <p>By integrating with OpenTelemetry, ldbc can benefit from:</p>
+    <ul>
+      <li>Tracking database query execution time and processing</li>
+      <li>Measuring query performance</li>
+      <li>Error detection and diagnosis</li>
+      <li>System-wide visualization and monitoring</li>
+    </ul>
+    
+    <h2 id="required-dependencies" class="section"><a class="anchor-link left" href="#required-dependencies"><i class="icofont-laika link">&#xef71;</i></a>Required Dependencies</h2>
+    <p>To use OpenTelemetry with ldbc, you need to add the following dependencies to your project:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="comment">// otel4s library (Scala wrapper for OpenTelemetry)
+</span><span>  </span><span class="string-literal">&quot;org.typelevel&quot;</span><span> %% </span><span class="string-literal">&quot;otel4s-oteljava&quot;</span><span> % </span><span class="string-literal">&quot;0.11.2&quot;</span><span>,
+  
+  </span><span class="comment">// OpenTelemetry exporter (for data transmission)
+</span><span>  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span> % </span><span class="string-literal">&quot;opentelemetry-exporter-otlp&quot;</span><span> % </span><span class="string-literal">&quot;1.48.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
+  
+  </span><span class="comment">// Auto-configuration functionality (configuration via environment variables and system properties)
+</span><span>  </span><span class="string-literal">&quot;io.opentelemetry&quot;</span><span> % </span><span class="string-literal">&quot;opentelemetry-sdk-extension-autoconfigure&quot;</span><span> % </span><span class="string-literal">&quot;1.48.0&quot;</span><span> % </span><span class="type-name">Runtime</span><span>,
+)</span></code></pre>
+    
+    <h2 id="opentelemetry-configuration-in-ldbc" class="section"><a class="anchor-link left" href="#opentelemetry-configuration-in-ldbc"><i class="icofont-laika link">&#xef71;</i></a>OpenTelemetry Configuration in ldbc</h2>
+    <p>ldbc provides a <code>setTracer</code> method in ConnectionProvider where you can configure the OpenTelemetry Tracer.</p>
+    <p>Basic configuration steps are as follows:</p>
+    <ol class="arabic">
+      <li>Initialize OpenTelemetry</li>
+      <li>Obtain a TracerProvider</li>
+      <li>Configure it in the ConnectionProvider</li>
+    </ol>
+    <p>Here&#39;s a basic configuration example:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">opentelemetry</span><span>.</span><span class="identifier">api</span><span>.</span><span class="type-name">GlobalOpenTelemetry</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">oteljava</span><span>.</span><span class="type-name">OtelJava</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// Service name (trace identifier)
+</span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;my-ldbc-app&quot;</span><span>
+
+</span><span class="comment">// Resource configuration
+</span><span class="keyword">val</span><span> </span><span class="identifier">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]] =
+  </span><span class="keyword">for</span><span>
+    </span><span class="comment">// Create otel4s instance from GlobalOpenTelemetry
+</span><span>    </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
+      .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
+      .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
+    
+    </span><span class="comment">// Get TracerProvider with service name
+</span><span>    </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
+    
+    </span><span class="comment">// Configure database connection and set TracerProvider
+</span><span>    </span><span class="identifier">connection</span><span> &lt;- </span><span class="type-name">ConnectionProvider</span><span>
+      .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;localhost&quot;</span><span>, </span><span class="number-literal">3306</span><span>, </span><span class="string-literal">&quot;user&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;database&quot;</span><span>)
+      .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+      .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)  </span><span class="comment">// Set OpenTelemetry Tracer
+</span><span>      .</span><span class="identifier">createConnection</span><span>()
+  </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+
+</span><span class="comment">// Execute query using the resource
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+}</span></code></pre>
+    
+    <h2 id="configuration-via-environment-variables" class="section"><a class="anchor-link left" href="#configuration-via-environment-variables"><i class="icofont-laika link">&#xef71;</i></a>Configuration via Environment Variables</h2>
+    <p>OpenTelemetry can be configured using system properties or environment variables. You can customize OpenTelemetry behavior by setting the following system properties when starting your application:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>java -Dotel.java.global-autoconfigure.enabled=</span><span class="boolean-literal">true</span><span> \
+     -Dotel.service.name=ldbc-app \
+     -Dotel.traces.exporter=otlp \
+     -Dotel.metrics.exporter=none \
+     -Dotel.exporter.otlp.endpoint=http://localhost:</span><span class="number-literal">4317</span><span> \
+     -jar your-application.jar</span></code></pre>
+    <p>For SBT execution, you can configure it as follows:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">javaOptions</span><span> ++= </span><span class="type-name">Seq</span><span>(
+  </span><span class="string-literal">&quot;-Dotel.java.global-autoconfigure.enabled=true&quot;</span><span>,
+  </span><span class="string-literal">&quot;-Dotel.service.name=ldbc-app&quot;</span><span>,
+  </span><span class="string-literal">&quot;-Dotel.traces.exporter=otlp&quot;</span><span>,
+  </span><span class="string-literal">&quot;-Dotel.metrics.exporter=none&quot;</span><span>
+)</span></code></pre>
+    
+    <h2 id="practical-example-ldbc-application-with-opentelemetry" class="section"><a class="anchor-link left" href="#practical-example-ldbc-application-with-opentelemetry"><i class="icofont-laika link">&#xef71;</i></a>Practical Example: ldbc Application with OpenTelemetry</h2>
+    <p>Here&#39;s a complete example of setting up an observability environment using Docker Compose with Jaeger and Prometheus, and sending trace data from an ldbc application.</p>
+    
+    <h3 id="project-structure" class="section"><a class="anchor-link left" href="#project-structure"><i class="icofont-laika link">&#xef71;</i></a>Project Structure</h3>
+    <p>Assume the following project structure:</p>
+    <pre><code>otel-example/
+├── src/
+│   └── main/
+│       └── scala/
+│           └── Main.scala
+├── database/
+│   └── xxx.sql
+├── dependencies/
+│   ├── jaeger/
+│   │   └── jaeger-ui.json
+│   ├── prometheus/
+│   │   └── prometheus.yml
+│   └── grafana/
+│       └── datasources.yaml
+└── docker-compose.yaml</code></pre>
+    
+    <h3 id="main-scala" class="section"><a class="anchor-link left" href="#main-scala"><i class="icofont-laika link">&#xef71;</i></a>Main.scala</h3>
+    <p>Here&#39;s the main application code:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">io</span><span>.</span><span class="identifier">opentelemetry</span><span>.</span><span class="identifier">api</span><span>.</span><span class="type-name">GlobalOpenTelemetry</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">typelevel</span><span>.</span><span class="identifier">otel4s</span><span>.</span><span class="identifier">oteljava</span><span>.</span><span class="type-name">OtelJava</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">connector</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">IOApp</span><span>.</span><span class="type-name">Simple</span><span>:
+
+  </span><span class="keyword">private</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">serviceName</span><span> = </span><span class="string-literal">&quot;ldbc-otel-example&quot;</span><span>
+
+  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">resource</span><span>: </span><span class="type-name">Resource</span><span>[</span><span class="type-name">IO</span><span>, </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>]] =
+    </span><span class="keyword">for</span><span>
+      </span><span class="identifier">otel</span><span> &lt;- </span><span class="type-name">Resource</span><span>
+        .</span><span class="identifier">eval</span><span>(</span><span class="type-name">IO</span><span>.</span><span class="identifier">delay</span><span>(</span><span class="type-name">GlobalOpenTelemetry</span><span>.</span><span class="identifier">get</span><span>))
+        .</span><span class="identifier">evalMap</span><span>(</span><span class="type-name">OtelJava</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">IO</span><span>])
+      </span><span class="identifier">tracer</span><span> &lt;- </span><span class="type-name">Resource</span><span>.</span><span class="identifier">eval</span><span>(</span><span class="identifier">otel</span><span>.</span><span class="identifier">tracerProvider</span><span>.</span><span class="identifier">get</span><span>(</span><span class="identifier">serviceName</span><span>))
+      </span><span class="identifier">connection</span><span> &lt;- </span><span class="type-name">ConnectionProvider</span><span>
+        .</span><span class="identifier">default</span><span>[</span><span class="type-name">IO</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13307</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;world&quot;</span><span>)
+        .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+        .</span><span class="identifier">setTracer</span><span>(</span><span class="identifier">tracer</span><span>)
+        .</span><span class="identifier">createConnection</span><span>()
+    </span><span class="keyword">yield</span><span> </span><span class="identifier">connection</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span>: </span><span class="type-name">IO</span><span>[</span><span class="type-name">Unit</span><span>] =
+    </span><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+      </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
+        </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">cities</span><span>)
+      }
+    }</span></code></pre>
+    
+    <h3 id="docker-compose-yaml" class="section"><a class="anchor-link left" href="#docker-compose-yaml"><i class="icofont-laika link">&#xef71;</i></a>docker-compose.yaml</h3>
+    <p>Use the following Docker Compose configuration for the observability environment:</p>
+    <pre><code class="nohighlight"><span class="attribute-name">services</span><span>:
+  </span><span class="attribute-name">database</span><span>:
+    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">mysql:8.0.41</span><span>
+    </span><span class="attribute-name">container_name</span><span>: </span><span class="string-literal">ldbc-otel-example</span><span>
+    </span><span class="attribute-name">ports</span><span>:
+      - </span><span class="number-literal">13307</span><span>:3306
+    </span><span class="attribute-name">networks</span><span>:
+      - </span><span class="string-literal">static-network</span><span>
+    </span><span class="attribute-name">volumes</span><span>:
+      - </span><span class="string-literal">./database:/docker-entrypoint-initdb.d</span><span>
+      - </span><span class="string-literal">./database/my.cnf:/etc/database/conf.d/my.cn</span><span>
+    </span><span class="attribute-name">environment</span><span>:
+      </span><span class="attribute-name">MYSQL_USER</span><span>: </span><span class="string-literal">&#39;ldbc&#39;</span><span>
+      </span><span class="attribute-name">MYSQL_PASSWORD</span><span>: </span><span class="string-literal">&#39;password&#39;</span><span>
+      </span><span class="attribute-name">MYSQL_ROOT_PASSWORD</span><span>: </span><span class="string-literal">&#39;root&#39;</span><span>
+      </span><span class="attribute-name">TZ</span><span>: </span><span class="string-literal">&#39;Asia/Tokyo&#39;</span><span>
+    </span><span class="attribute-name">healthcheck</span><span>:
+      </span><span class="attribute-name">test</span><span>: </span><span class="string-literal">[ &quot;CMD&quot;, &quot;mysqladmin&quot;, &quot;ping&quot;, &quot;-h&quot;, &quot;localhost&quot; ]</span><span>
+      </span><span class="attribute-name">timeout</span><span>: </span><span class="string-literal">20s</span><span>
+      </span><span class="attribute-name">retries</span><span>: </span><span class="number-literal">10</span><span>
+
+  </span><span class="attribute-name">prometheus</span><span>:
+    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">prom/prometheus:latest</span><span>
+    </span><span class="attribute-name">volumes</span><span>:
+      - </span><span class="string-literal">&quot;./dependencies/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml&quot;</span><span>
+    </span><span class="attribute-name">ports</span><span>:
+      - </span><span class="string-literal">&quot;9090:9090&quot;</span><span>
+    </span><span class="attribute-name">networks</span><span>:
+      - </span><span class="string-literal">static-network</span><span>
+
+  </span><span class="attribute-name">jaeger</span><span>:
+    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">jaegertracing/all-in-one:latest</span><span>
+    </span><span class="attribute-name">volumes</span><span>:
+      - </span><span class="string-literal">&quot;./dependencies/jaeger/jaeger-ui.json:/etc/jaeger/jaeger-ui.json&quot;</span><span>
+    </span><span class="attribute-name">command</span><span>: </span><span class="string-literal">--query.ui-config /etc/jaeger/jaeger-ui.json</span><span>
+    </span><span class="attribute-name">environment</span><span>:
+      - </span><span class="string-literal">METRICS_STORAGE_TYPE=prometheus</span><span>
+      - </span><span class="string-literal">PROMETHEUS_SERVER_URL=http://prometheus:9090</span><span>
+      - </span><span class="string-literal">COLLECTOR_OTLP_ENABLED=true</span><span>
+    </span><span class="attribute-name">ports</span><span>:
+      - </span><span class="string-literal">&quot;16685:16685&quot;</span><span> </span><span class="comment"># GRPC
+</span><span>      - </span><span class="string-literal">&quot;16686:16686&quot;</span><span> </span><span class="comment"># UI
+</span><span>      - </span><span class="string-literal">&quot;4317:4317&quot;</span><span> </span><span class="comment"># OTLP gRPC receiver
+</span><span>      - </span><span class="string-literal">&quot;4318:4318&quot;</span><span> </span><span class="comment"># OTLP http receiver
+</span><span>    </span><span class="attribute-name">networks</span><span>:
+      - </span><span class="string-literal">static-network</span><span>
+
+  </span><span class="attribute-name">grafana</span><span>:
+    </span><span class="attribute-name">image</span><span>: </span><span class="string-literal">grafana/grafana-oss</span><span>
+    </span><span class="attribute-name">restart</span><span>: </span><span class="string-literal">unless-stopped</span><span>
+    </span><span class="attribute-name">volumes</span><span>:
+      - </span><span class="string-literal">&quot;./dependencies/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml&quot;</span><span>
+    </span><span class="attribute-name">ports</span><span>:
+      - </span><span class="string-literal">&quot;3000:3000&quot;</span><span>
+    </span><span class="attribute-name">networks</span><span>:
+      - </span><span class="string-literal">static-network</span><span>
+    </span><span class="attribute-name">depends_on</span><span>:
+      </span><span class="attribute-name">jaeger</span><span>:
+        </span><span class="attribute-name">condition</span><span>: </span><span class="string-literal">service_started</span><span>
+
+</span><span class="attribute-name">networks</span><span>:
+  </span><span class="attribute-name">static-network</span><span>:
+    </span><span class="attribute-name">name</span><span>: </span><span class="string-literal">static-network</span></code></pre>
+    
+    <h3 id="execution-steps" class="section"><a class="anchor-link left" href="#execution-steps"><i class="icofont-laika link">&#xef71;</i></a>Execution Steps</h3>
+    <ol class="arabic">
+      <li>First, start the observability environment with Docker Compose:</li>
+    </ol>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cd</span><span> otel-example
+docker-compose up -d</span></code></pre>
+    <ol class="arabic">
+      <li>Then, run the application with the following Java options:</li>
+    </ol>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>sbt -Dotel.java.global-autoconfigure.enabled=</span><span class="boolean-literal">true</span><span> \
+    -Dotel.service.name=ldbc-otel-example \
+    -Dotel.metrics.exporter=none \
+    run</span></code></pre>
+    <ol class="arabic">
+      <li>After running the application, access the Jaeger UI (<a href="http://localhost:16686"><a href="http://localhost:16686">http://localhost:16686</a></a>) to view traces:</li>
+    </ol>
+    <p><img src="../../img/jaeger_ui.png" alt="Jaeger UI"></p>
+    <p>You can also check traces in the Grafana UI (<a href="http://localhost:3000"><a href="http://localhost:3000">http://localhost:3000</a></a>):</p>
+    <p><img src="../../img/grafana_ui.png" alt="Grafana UI"></p>
+    
+    <h2 id="trace-details" class="section"><a class="anchor-link left" href="#trace-details"><i class="icofont-laika link">&#xef71;</i></a>Trace Details</h2>
+    <p>ldbc&#39;s OpenTelemetry integration records the following information in traces:</p>
+    <ul>
+      <li><strong>Query execution time</strong>: Time taken for database queries</li>
+      <li><strong>SQL statements</strong>: Content of executed SQL queries</li>
+      <li><strong>Query parameters</strong>: Parameter values passed to queries (safely recorded)</li>
+      <li><strong>Connection information</strong>: Server and database name connection details</li>
+      <li><strong>Error information</strong>: Detailed information when errors occur</li>
+    </ul>
+    
+    <h2 id="adding-custom-spans" class="section"><a class="anchor-link left" href="#adding-custom-spans"><i class="icofont-laika link">&#xef71;</i></a>Adding Custom Spans</h2>
+    <p>For more detailed tracking, you can add custom spans. Here&#39;s an example of wrapping query execution with a custom span:</p>
+    <pre><code class="nohighlight"><span class="identifier">resource</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">tracer</span><span>.</span><span class="identifier">span</span><span>(</span><span class="string-literal">&quot;custom-database-operation&quot;</span><span>).</span><span class="identifier">use</span><span> { </span><span class="identifier">span</span><span> =&gt;
+    </span><span class="comment">// Add attributes to span
+</span><span>    </span><span class="identifier">span</span><span>.</span><span class="identifier">setAttribute</span><span>(</span><span class="string-literal">&quot;db.operation&quot;</span><span>, </span><span class="string-literal">&quot;select-cities&quot;</span><span>)
+    
+    </span><span class="comment">// Execute query
+</span><span>    </span><span class="string-literal">sql&quot;SELECT name FROM city&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>).</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
+      </span><span class="comment">// Add attributes about result data
+</span><span>      </span><span class="identifier">span</span><span>.</span><span class="identifier">setAttribute</span><span>(</span><span class="string-literal">&quot;result.count&quot;</span><span>, </span><span class="identifier">cities</span><span>.</span><span class="identifier">size</span><span>)
+      </span><span class="type-name">IO</span><span>.</span><span class="identifier">println</span><span>(</span><span class="identifier">cities</span><span>)
+    }
+  }
+}</span></code></pre>
+    
+    <h2 id="trace-customization-options" class="section"><a class="anchor-link left" href="#trace-customization-options"><i class="icofont-laika link">&#xef71;</i></a>Trace Customization Options</h2>
+    <p>ldbc&#39;s OpenTelemetry integration allows for additional customization such as:</p>
+    <ul>
+      <li><strong>Sampling rate configuration</strong>: Trace only a portion of queries instead of all</li>
+      <li><strong>Attribute filtering</strong>: Exclude sensitive information from traces</li>
+      <li><strong>Custom trace exporters</strong>: Send to tracing systems other than Jaeger</li>
+    </ul>
+    <p>These settings can be configured through OpenTelemetry configuration files or system properties.</p>
+    
+    <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
+    <p>Combining ldbc with OpenTelemetry enables detailed visualization and monitoring of database operations. Using the methods introduced in this guide makes it easier to identify application performance issues, discover bottlenecks, and perform troubleshooting.</p>
+    <p>In production environments, you may need to adjust settings according to security requirements and environment specifics. We recommend referring to the official OpenTelemetry documentation to find the optimal configuration.</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Error Handling</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/tutorial/Error-Handling.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">Updating Data</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Error Handling</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#basics-of-error-handling">Basics of Error Handling</a></li>
+    <li class="level1 nav-leaf"><a href="#types-of-exceptions-in-database-operations">Types of Exceptions in Database Operations</a></li>
+    <li class="level1 nav-node"><a href="#basic-usage-of-error-handling">Basic Usage of Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="#raising-exceptions-raiseerror">Raising Exceptions (raiseError)</a></li>
+    <li class="level2 nav-leaf"><a href="#handling-errors-handleerrorwith">Handling Errors (handleErrorWith)</a></li>
+    <li class="level2 nav-leaf"><a href="#capturing-exceptions-attempt">Capturing Exceptions (attempt)</a></li>
+    <li class="level1 nav-node"><a href="#practical-error-handling-patterns">Practical Error Handling Patterns</a></li>
+    <li class="level2 nav-leaf"><a href="#implementing-retry-functionality">Implementing Retry Functionality</a></li>
+    <li class="level2 nav-leaf"><a href="#error-handling-with-custom-error-types-and-eithert">Error Handling with Custom Error Types and EitherT</a></li>
+    <li class="level2 nav-leaf"><a href="#combining-transactions-with-error-handling">Combining Transactions with Error Handling</a></li>
+    <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
+    <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="error-handling" class="title">Error Handling</h1>
+    <p>In <a href="Database-Operations.html">Database Operations</a>, we learned about basic transaction management. However, in real applications, errors can occur for various reasons, such as database connection issues, SQL syntax errors, unique constraint violations, and more. This page explains how to properly handle errors in ldbc.</p>
+    
+    <h2 id="basics-of-error-handling" class="section"><a class="anchor-link left" href="#basics-of-error-handling"><i class="icofont-laika link">&#xef71;</i></a>Basics of Error Handling</h2>
+    <p>ldbc follows functional programming principles and integrates with Cats Effect&#39;s error handling capabilities. The <code>DBIO</code> monad has a <code>MonadThrow</code> instance, providing a standard functional interface for raising and handling exceptions.</p>
+    <p>There are three main error handling methods you&#39;ll primarily use:</p>
+    <ul>
+      <li><code>raiseError</code>: Raise an exception - converts a <code>Throwable</code> to a <code>DBIO[A]</code></li>
+      <li><code>handleErrorWith</code>: Handle an exception - transforms a <code>DBIO[A]</code> to another <code>DBIO[A]</code> with an error handling function</li>
+      <li><code>attempt</code>: Capture an exception - transforms a <code>DBIO[A]</code> to a <code>DBIO[Either[Throwable, A]]</code></li>
+    </ul>
+    
+    <h2 id="types-of-exceptions-in-database-operations" class="section"><a class="anchor-link left" href="#types-of-exceptions-in-database-operations"><i class="icofont-laika link">&#xef71;</i></a>Types of Exceptions in Database Operations</h2>
+    <p>Here are the main types of exceptions you might encounter when using ldbc:</p>
+    <ol class="arabic">
+      <li><strong>Connection Errors</strong>: Occur when unable to connect to the database server (e.g., <code>ConnectException</code>)</li>
+      <li>
+        <strong>SQL Exceptions</strong>: Errors during SQL execution (e.g., <code>SQLException</code>)
+        <ul>
+          <li>Syntax errors</li>
+          <li>Unique key constraint violations</li>
+          <li>Foreign key constraint violations</li>
+          <li>Timeouts</li>
+        </ul>
+      </li>
+      <li><strong>Type Conversion Errors</strong>: When database results can&#39;t be converted to the expected type (e.g., <code>ldbc.dsl.exception.DecodeFailureException</code>)</li>
+    </ol>
+    
+    <h2 id="basic-usage-of-error-handling" class="section"><a class="anchor-link left" href="#basic-usage-of-error-handling"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage of Error Handling</h2>
+    
+    <h3 id="raising-exceptions-raiseerror" class="section"><a class="anchor-link left" href="#raising-exceptions-raiseerror"><i class="icofont-laika link">&#xef71;</i></a>Raising Exceptions (raiseError)</h3>
+    <p>To explicitly raise an exception under specific conditions, use <code>raiseError</code>:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// Example of raising an error under specific conditions
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">validateUserId</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>): </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Int</span><span>] = 
+  </span><span class="keyword">if</span><span> </span><span class="identifier">id</span><span> &lt;= </span><span class="number-literal">0</span><span> </span><span class="keyword">then</span><span> 
+    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">raiseError</span><span>[</span><span class="type-name">Int</span><span>](</span><span class="keyword">new</span><span> </span><span class="type-name">IllegalArgumentException</span><span>(</span><span class="string-literal">&quot;ID must be a positive value&quot;</span><span>))
+  </span><span class="keyword">else</span><span> 
+    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="identifier">id</span><span>)
+
+</span><span class="comment">// Usage example
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">id</span><span> &lt;- </span><span class="identifier">validateUserId</span><span>(</span><span class="number-literal">0</span><span>)
+  </span><span class="identifier">result</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT name FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">unsafe</span><span>
+</span><span class="keyword">yield</span><span> </span><span class="identifier">result</span><span>
+
+</span><span class="comment">// In this example, an error occurs because id is 0, and subsequent SQL isn&#39;t executed</span></code></pre>
+    
+    <h3 id="handling-errors-handleerrorwith" class="section"><a class="anchor-link left" href="#handling-errors-handleerrorwith"><i class="icofont-laika link">&#xef71;</i></a>Handling Errors (handleErrorWith)</h3>
+    <p>To handle errors that occur, use the <code>handleErrorWith</code> method:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">SQLException</span><span>
+
+</span><span class="comment">// Error handling example
+</span><span class="keyword">val</span><span> </span><span class="identifier">findUserById</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">userId</span><span> &lt;- </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="number-literal">123</span><span>)
+  </span><span class="identifier">result</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT name FROM users WHERE id = </span><span class="substitution">$userId</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">handleErrorWith</span><span> {
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>.</span><span class="identifier">contains</span><span>(</span><span class="string-literal">&quot;table &#39;users&#39; doesn&#39;t exist&quot;</span><span>) =&gt;
+      </span><span class="comment">// Fallback when table doesn&#39;t exist
+</span><span>      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">&quot;User table has not been created yet&quot;</span><span>)
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> =&gt;
+      </span><span class="comment">// Handling other SQL errors
+</span><span>      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;Database error: </span><span class="substitution">${e.getMessage}</span><span class="string-literal">&quot;</span><span>)
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">Throwable</span><span> =&gt;
+      </span><span class="comment">// Handling other errors
+</span><span>      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;Unexpected error: </span><span class="substitution">${e.getMessage}</span><span class="string-literal">&quot;</span><span>)
+  }
+</span><span class="keyword">yield</span><span> </span><span class="identifier">result</span></code></pre>
+    
+    <h3 id="capturing-exceptions-attempt" class="section"><a class="anchor-link left" href="#capturing-exceptions-attempt"><i class="icofont-laika link">&#xef71;</i></a>Capturing Exceptions (attempt)</h3>
+    <p>To capture errors as an <code>Either</code> type, use the <code>attempt</code> method:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// Example of capturing exceptions using attempt
+</span><span class="keyword">val</span><span> </span><span class="identifier">safeOperation</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = {
+  </span><span class="keyword">val</span><span> </span><span class="identifier">riskyOperation</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM potentially_missing_table&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">unsafe</span><span>
+  
+  </span><span class="identifier">riskyOperation</span><span>.</span><span class="identifier">attempt</span><span>.</span><span class="identifier">flatMap</span><span> {
+    </span><span class="keyword">case</span><span> </span><span class="type-name">Right</span><span>(</span><span class="identifier">result</span><span>) =&gt; 
+      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;Operation successful: </span><span class="substitution">$result</span><span class="string-literal">&quot;</span><span>)
+    </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">error</span><span>) =&gt; 
+      </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;An error occurred: </span><span class="substitution">${error.getMessage}</span><span class="string-literal">&quot;</span><span>)
+  }
+}</span></code></pre>
+    
+    <h2 id="practical-error-handling-patterns" class="section"><a class="anchor-link left" href="#practical-error-handling-patterns"><i class="icofont-laika link">&#xef71;</i></a>Practical Error Handling Patterns</h2>
+    <p>Here are some error handling patterns that are useful in real applications.</p>
+    
+    <h3 id="implementing-retry-functionality" class="section"><a class="anchor-link left" href="#implementing-retry-functionality"><i class="icofont-laika link">&#xef71;</i></a>Implementing Retry Functionality</h3>
+    <p>An example of automatically retrying on temporary database connection errors:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">scala</span><span>.</span><span class="identifier">concurrent</span><span>.</span><span class="identifier">duration</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.{</span><span class="type-name">IO</span><span>, </span><span class="type-name">Sync</span><span>}
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// Retry implementation example - combining IO and DBIO
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">retryWithBackoff</span><span>[</span><span class="type-name">F</span><span>[</span><span class="identifier">_</span><span>]: </span><span class="type-name">Sync</span><span>, </span><span class="type-name">A</span><span>](
+  </span><span class="identifier">dbioOperation</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">A</span><span>], 
+  </span><span class="identifier">connection</span><span>: </span><span class="type-name">Connection</span><span>[</span><span class="type-name">F</span><span>],
+  </span><span class="identifier">maxRetries</span><span>: </span><span class="type-name">Int</span><span> = </span><span class="number-literal">3</span><span>, 
+  </span><span class="identifier">initialDelay</span><span>: </span><span class="type-name">FiniteDuration</span><span> = </span><span class="number-literal">100</span><span>.</span><span class="identifier">millis</span><span>,
+  </span><span class="identifier">maxDelay</span><span>: </span><span class="type-name">FiniteDuration</span><span> = </span><span class="number-literal">2</span><span>.</span><span class="identifier">seconds</span><span>
+): </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>] =
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">retryLoop</span><span>(</span><span class="identifier">remainingRetries</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">delay</span><span>: </span><span class="type-name">FiniteDuration</span><span>): </span><span class="type-name">F</span><span>[</span><span class="type-name">A</span><span>] =
+    </span><span class="comment">// Convert DBIO to F type (e.g., IO) and execute
+</span><span>    </span><span class="identifier">dbioOperation</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">connection</span><span>).</span><span class="identifier">handleErrorWith</span><span> { </span><span class="identifier">error</span><span> =&gt;
+      </span><span class="keyword">if</span><span> </span><span class="identifier">remainingRetries</span><span> &gt; </span><span class="number-literal">0</span><span> &amp;&amp; </span><span class="identifier">isTransientError</span><span>(</span><span class="identifier">error</span><span>) </span><span class="keyword">then</span><span>
+        </span><span class="comment">// For temporary errors, delay and retry
+</span><span>        </span><span class="keyword">val</span><span> </span><span class="identifier">nextDelay</span><span> = (</span><span class="identifier">delay</span><span> * </span><span class="number-literal">2</span><span>).</span><span class="identifier">min</span><span>(</span><span class="identifier">maxDelay</span><span>)
+        </span><span class="type-name">Sync</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">sleep</span><span>(</span><span class="identifier">delay</span><span>) &gt;&gt; </span><span class="identifier">retryLoop</span><span>(</span><span class="identifier">remainingRetries</span><span> - </span><span class="number-literal">1</span><span>, </span><span class="identifier">nextDelay</span><span>)
+      </span><span class="keyword">else</span><span>
+        </span><span class="comment">// If max retries exceeded or permanent error, rethrow
+</span><span>        </span><span class="type-name">Sync</span><span>[</span><span class="type-name">F</span><span>].</span><span class="identifier">raiseError</span><span>[</span><span class="type-name">A</span><span>](</span><span class="identifier">error</span><span>)
+    }
+  
+  </span><span class="identifier">retryLoop</span><span>(</span><span class="identifier">maxRetries</span><span>, </span><span class="identifier">initialDelay</span><span>)
+
+</span><span class="comment">// Example with concrete IO type
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">retryDatabaseOperation</span><span>[</span><span class="type-name">A</span><span>](
+  </span><span class="identifier">operation</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">A</span><span>],
+  </span><span class="identifier">connection</span><span>: </span><span class="type-name">Connection</span><span>[</span><span class="type-name">IO</span><span>],
+  </span><span class="identifier">maxRetries</span><span>: </span><span class="type-name">Int</span><span> = </span><span class="number-literal">3</span><span>
+): </span><span class="type-name">IO</span><span>[</span><span class="type-name">A</span><span>] =
+  </span><span class="identifier">retryWithBackoff</span><span>(</span><span class="identifier">operation</span><span>, </span><span class="identifier">connection</span><span>, </span><span class="identifier">maxRetries</span><span>)
+
+</span><span class="comment">// Helper method to determine if an error is transient
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">isTransientError</span><span>(</span><span class="identifier">error</span><span>: </span><span class="type-name">Throwable</span><span>): </span><span class="type-name">Boolean</span><span> =
+  </span><span class="identifier">error</span><span> </span><span class="keyword">match</span><span>
+    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getSQLState</span><span> == </span><span class="string-literal">&quot;40001&quot;</span><span> =&gt; </span><span class="boolean-literal">true</span><span> </span><span class="comment">// For deadlocks
+</span><span>    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getSQLState</span><span> == </span><span class="string-literal">&quot;08006&quot;</span><span> =&gt; </span><span class="boolean-literal">true</span><span> </span><span class="comment">// For connection loss
+</span><span>    </span><span class="keyword">case</span><span> </span><span class="identifier">e</span><span>: </span><span class="type-name">Exception</span><span> </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>.</span><span class="identifier">contains</span><span>(</span><span class="string-literal">&quot;connection reset&quot;</span><span>) =&gt; </span><span class="boolean-literal">true</span><span>
+    </span><span class="keyword">case</span><span> </span><span class="identifier">_</span><span> =&gt; </span><span class="boolean-literal">false</span><span>
+
+</span><span class="comment">// Usage example
+</span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT * FROM users&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">unsafe</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span> = </span><span class="identifier">retryDatabaseOperation</span><span>(</span><span class="identifier">query</span><span>, </span><span class="identifier">myConnection</span><span>)</span></code></pre>
+    
+    <h3 id="error-handling-with-custom-error-types-and-eithert" class="section"><a class="anchor-link left" href="#error-handling-with-custom-error-types-and-eithert"><i class="icofont-laika link">&#xef71;</i></a>Error Handling with Custom Error Types and EitherT</h3>
+    <p>An example of defining application-specific error types for more detailed error handling:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">data</span><span>.</span><span class="type-name">EitherT</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// Application-specific error types
+</span><span class="keyword">sealed</span><span> </span><span class="keyword">trait</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">UserNotFoundError</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">DuplicateUserError</span><span>(</span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">DatabaseConnectionError</span><span>(</span><span class="identifier">cause</span><span>: </span><span class="type-name">Throwable</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">UnexpectedDatabaseError</span><span>(</span><span class="identifier">message</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">cause</span><span>: </span><span class="type-name">Throwable</span><span>) </span><span class="keyword">extends</span><span> </span><span class="type-name">AppDatabaseError</span><span>
+
+</span><span class="comment">// User model
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="comment">// Example of error handling with EitherT
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">findUserById</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>): </span><span class="type-name">EitherT</span><span>[</span><span class="type-name">DBIO</span><span>, </span><span class="type-name">AppDatabaseError</span><span>, </span><span class="type-name">User</span><span>] =
+  </span><span class="keyword">val</span><span> </span><span class="identifier">query</span><span> = </span><span class="string-literal">sql&quot;SELECT id, name, email FROM users WHERE id = </span><span class="substitution">$id</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">to</span><span>[</span><span class="type-name">Option</span><span>]
+
+  </span><span class="type-name">EitherT</span><span>(
+    </span><span class="identifier">query</span><span>.</span><span class="identifier">attempt</span><span>.</span><span class="identifier">map</span><span> {
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Right</span><span>(</span><span class="identifier">user</span><span>) =&gt; </span><span class="identifier">user</span><span>.</span><span class="identifier">toRight</span><span>(</span><span class="type-name">UserNotFoundError</span><span>(</span><span class="identifier">id</span><span>))
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">e</span><span>: </span><span class="type-name">SQLException</span><span>) </span><span class="keyword">if</span><span> </span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>.</span><span class="identifier">contains</span><span>(</span><span class="string-literal">&quot;Connection refused&quot;</span><span>) =&gt;
+        </span><span class="type-name">Left</span><span>(</span><span class="type-name">DatabaseConnectionError</span><span>(</span><span class="identifier">e</span><span>))
+      </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">e</span><span>) =&gt;
+        </span><span class="type-name">Left</span><span>(</span><span class="type-name">UnexpectedDatabaseError</span><span>(</span><span class="identifier">e</span><span>.</span><span class="identifier">getMessage</span><span>, </span><span class="identifier">e</span><span>))
+    }
+  )
+
+</span><span class="comment">// Usage example
+</span><span class="keyword">val</span><span> </span><span class="identifier">program</span><span> = </span><span class="keyword">for</span><span>
+  </span><span class="identifier">user</span><span> &lt;- </span><span class="identifier">findUserById</span><span>(</span><span class="number-literal">123</span><span>)
+  </span><span class="comment">// Other operations...
+</span><span class="keyword">yield</span><span> </span><span class="identifier">user</span><span>
+
+</span><span class="comment">// Processing the result
+</span><span class="keyword">val</span><span> </span><span class="identifier">result</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Either</span><span>[</span><span class="type-name">AppDatabaseError</span><span>, </span><span class="type-name">User</span><span>]] = </span><span class="identifier">program</span><span>.</span><span class="identifier">value</span><span>
+
+</span><span class="comment">// Final processing
+</span><span class="keyword">val</span><span> </span><span class="identifier">finalResult</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">result</span><span>.</span><span class="identifier">flatMap</span><span> {
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Right</span><span>(</span><span class="identifier">user</span><span>) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;User found: </span><span class="substitution">${user.name}</span><span class="string-literal">&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="type-name">UserNotFoundError</span><span>(</span><span class="identifier">id</span><span>)) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;User with ID </span><span class="substitution">${id}</span><span class="string-literal"> does not exist&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="type-name">DatabaseConnectionError</span><span>(</span><span class="identifier">_</span><span>)) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">&quot;A database connection error occurred&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Left</span><span>(</span><span class="identifier">error</span><span>) =&gt; </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;Error: </span><span class="substitution">$error</span><span class="string-literal">&quot;</span><span>)
+}</span></code></pre>
+    
+    <h3 id="combining-transactions-with-error-handling" class="section"><a class="anchor-link left" href="#combining-transactions-with-error-handling"><i class="icofont-laika link">&#xef71;</i></a>Combining Transactions with Error Handling</h3>
+    <p>Example of error handling within a transaction:</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="type-name">IO</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">Connection</span><span>
+
+</span><span class="comment">// Error handling within transactions
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">toAccount</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">amount</span><span>: </span><span class="type-name">BigDecimal</span><span>): </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">String</span><span>] =
+  </span><span class="keyword">val</span><span> </span><span class="identifier">operation</span><span> = </span><span class="keyword">for</span><span>
+    </span><span class="comment">// Check balance of source account
+</span><span>    </span><span class="identifier">balance</span><span> &lt;- </span><span class="string-literal">sql&quot;SELECT balance FROM accounts WHERE id = </span><span class="substitution">$fromAccount</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">BigDecimal</span><span>].</span><span class="identifier">unsafe</span><span>
+    
+    </span><span class="identifier">_</span><span> &lt;- </span><span class="keyword">if</span><span> </span><span class="identifier">balance</span><span> &lt; </span><span class="identifier">amount</span><span> </span><span class="keyword">then</span><span>
+           </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">raiseError</span><span>[</span><span class="type-name">Unit</span><span>](</span><span class="keyword">new</span><span> </span><span class="type-name">IllegalStateException</span><span>(</span><span class="string-literal">s&quot;Insufficient account balance: </span><span class="substitution">$balance</span><span class="string-literal"> &lt; </span><span class="substitution">$amount</span><span class="string-literal">&quot;</span><span>))
+         </span><span class="keyword">else</span><span>
+           </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(())
+           
+    </span><span class="comment">// Withdraw from source account
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="string-literal">sql&quot;UPDATE accounts SET balance = balance - </span><span class="substitution">$amount</span><span class="string-literal"> WHERE id = </span><span class="substitution">$fromAccount</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">unsafe</span><span>
+    
+    </span><span class="comment">// Deposit to target account
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="string-literal">sql&quot;UPDATE accounts SET balance = balance + </span><span class="substitution">$amount</span><span class="string-literal"> WHERE id = </span><span class="substitution">$toAccount</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">unsafe</span><span>
+    
+    </span><span class="comment">// Create transaction record
+</span><span>    </span><span class="identifier">_</span><span> &lt;- </span><span class="string-literal">sql&quot;&quot;&quot;INSERT INTO transactions (from_account, to_account, amount, timestamp) 
+         VALUES (</span><span class="substitution">$fromAccount</span><span class="string-literal">, </span><span class="substitution">$toAccount</span><span class="string-literal">, </span><span class="substitution">$amount</span><span class="string-literal">, NOW())&quot;&quot;&quot;</span><span>.</span><span class="identifier">update</span><span>.</span><span class="identifier">unsafe</span><span>
+  </span><span class="keyword">yield</span><span> </span><span class="string-literal">&quot;Money transfer completed&quot;</span><span>
+  
+  </span><span class="comment">// Wrap as transaction (automatically rolled back on error)
+</span><span>  </span><span class="identifier">operation</span><span>.</span><span class="identifier">handleErrorWith</span><span> { </span><span class="identifier">error</span><span> =&gt;
+    </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">pure</span><span>(</span><span class="string-literal">s&quot;Transfer error: </span><span class="substitution">${error.getMessage}</span><span class="string-literal">&quot;</span><span>)
+  }
+
+</span><span class="comment">// Usage example
+</span><span class="keyword">val</span><span> </span><span class="identifier">fromAccount</span><span>: </span><span class="type-name">Int</span><span> = ???
+</span><span class="keyword">val</span><span> </span><span class="identifier">toAccount</span><span>: </span><span class="type-name">Int</span><span> = ???
+</span><span class="keyword">val</span><span> </span><span class="identifier">amount</span><span>: </span><span class="type-name">BigDecimal</span><span> = ???
+
+</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="identifier">transferMoney</span><span>(</span><span class="identifier">fromAccount</span><span>, </span><span class="identifier">toAccount</span><span>, </span><span class="identifier">amount</span><span>).</span><span class="identifier">transaction</span><span>(</span><span class="identifier">conn</span><span>)
+}</span></code></pre>
+    
+    <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
+    <p>Error handling is an important aspect of robust database applications. In ldbc, you can handle errors explicitly based on functional programming principles. The main points are:</p>
+    <ul>
+      <li>Use <code>raiseError</code> to raise exceptions</li>
+      <li>Use <code>handleErrorWith</code> to handle exceptions</li>
+      <li>Use <code>attempt</code> to capture exceptions as <code>Either</code></li>
+      <li>Define appropriate error types for application-specific error handling</li>
+      <li>Combine transactions with error handling to maintain data integrity</li>
+    </ul>
+    <p>By utilizing these techniques, you can implement database operations that are resilient to unexpected errors and easy to maintain.</p>
+    
+    <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
+    <p>Now that you understand error handling, move on to <a href="Logging.html">Logging</a> to learn how to log query executions and errors. Logging is important for debugging and monitoring.</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

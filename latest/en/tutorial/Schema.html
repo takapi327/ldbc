@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Schema</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/tutorial/Schema.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">logging</a></li>
+    <li class="level2 nav-leaf"><a href="Custom-Data-Type.html">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="Query-Builder.html">Query Builder</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Schema</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#preparation">Preparation</a></li>
+    <li class="level1 nav-node"><a href="#basic-table-definition-1">Basic Table Definition</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-table-definition-2">Basic Table Definition</a></li>
+    <li class="level2 nav-leaf"><a href="#table-definition-with-data-types">Table Definition with Data Types</a></li>
+    <li class="level1 nav-node"><a href="#using-dedicated-column-definition-methods">Using Dedicated Column Definition Methods</a></li>
+    <li class="level2 nav-leaf"><a href="#explicitly-specifying-column-names">Explicitly Specifying Column Names</a></li>
+    <li class="level2 nav-leaf"><a href="#setting-column-naming-conventions">Setting Column Naming Conventions</a></li>
+    <li class="level1 nav-node"><a href="#numeric-column-definitions">Numeric Column Definitions</a></li>
+    <li class="level2 nav-leaf"><a href="#integer-types">Integer Types</a></li>
+    <li class="level2 nav-leaf"><a href="#decimal-types">Decimal Types</a></li>
+    <li class="level1 nav-leaf"><a href="#string-column-definitions">String Column Definitions</a></li>
+    <li class="level1 nav-leaf"><a href="#binary-column-definitions">Binary Column Definitions</a></li>
+    <li class="level1 nav-leaf"><a href="#date-and-time-column-definitions">Date and Time Column Definitions</a></li>
+    <li class="level1 nav-leaf"><a href="#enum-type-and-special-data-types">ENUM Type and Special Data Types</a></li>
+    <li class="level1 nav-leaf"><a href="#setting-default-values">Setting Default Values</a></li>
+    <li class="level1 nav-node"><a href="#primary-keys-foreign-keys-and-indexes">Primary Keys, Foreign Keys, and Indexes</a></li>
+    <li class="level2 nav-leaf"><a href="#single-column-primary-key">Single-Column Primary Key</a></li>
+    <li class="level2 nav-leaf"><a href="#composite-primary-key-definition">Composite Primary Key Definition</a></li>
+    <li class="level2 nav-leaf"><a href="#index-definition">Index Definition</a></li>
+    <li class="level2 nav-leaf"><a href="#foreign-key-definition">Foreign Key Definition</a></li>
+    <li class="level1 nav-leaf"><a href="#setting-constraints">Setting Constraints</a></li>
+    <li class="level1 nav-node"><a href="#complex-mapping-with-models">Complex Mapping with Models</a></li>
+    <li class="level2 nav-leaf"><a href="#mapping-nested-models">Mapping Nested Models</a></li>
+    <li class="level1 nav-node"><a href="#schema-generation-and-ddl-execution">Schema Generation and DDL Execution</a></li>
+    <li class="level2 nav-leaf"><a href="#generating-tablequery">Generating TableQuery</a></li>
+    <li class="level2 nav-leaf"><a href="#generating-and-executing-schema">Generating and Executing Schema</a></li>
+    <li class="level2 nav-leaf"><a href="#ddl-operations">DDL Operations</a></li>
+    <li class="level2 nav-leaf"><a href="#checking-ddl-statements">Checking DDL Statements</a></li>
+    <li class="level1 nav-leaf"><a href="#setting-column-attributes">Setting Column Attributes</a></li>
+    <li class="level1 nav-leaf"><a href="#summary">Summary</a></li>
+    <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="schema" class="title">Schema</h1>
+    <p>You&#39;ve learned how to build type-safe queries with the <a href="Query-Builder.html">Query Builder</a>. This page explains how to define database schemas in Scala code and map tables to models.</p>
+    <p>Schema definitions are a critical element that clearly defines the boundary between your application and the database. ldbc provides functionality to define schemas in Scala code, leveraging the powerful type system to represent database structures.</p>
+    <p>This chapter explains how to handle database schemas in Scala code, particularly how to manually write schemas, which is useful when starting to write an application without an existing database. If you already have schemas in your database, you can skip this work by using the Code Generator.</p>
+    
+    <h2 id="preparation" class="section"><a class="anchor-link left" href="#preparation"><i class="icofont-laika link">&#xef71;</i></a>Preparation</h2>
+    <p>You need to set up the following dependency in your project:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">//&gt; using dep &quot;io.github.takapi327::ldbc-schema:0.3.0-beta11&quot;</span></code></pre>
+    <p>The following code examples assume these imports:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">schema</span><span>.*</span></code></pre>
+    
+    <h2 id="basic-table-definition-1" class="section"><a class="anchor-link left" href="#basic-table-definition-1"><i class="icofont-laika link">&#xef71;</i></a>Basic Table Definition</h2>
+    <p>In ldbc, you create table definitions by extending the <code>Table</code> class. This allows you to associate Scala models (such as case classes) with database tables.</p>
+    
+    <h3 id="basic-table-definition-2" class="section"><a class="anchor-link left" href="#basic-table-definition-2"><i class="icofont-laika link">&#xef71;</i></a>Basic Table Definition</h3>
+    <pre><code class="nohighlight"><span class="comment">// Model definition
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>:   </span><span class="type-name">Long</span><span>,
+  </span><span class="identifier">name</span><span>:  </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">age</span><span>:   </span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>] </span><span class="comment">// Use Option for columns that allow NULL
+</span><span>)
+
+</span><span class="comment">// Table definition
+</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>): </span><span class="comment">// &quot;user&quot; is the table name
+</span><span>  </span><span class="comment">// Column definitions
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>)
+
+  </span><span class="comment">// Mapping with the model
+</span><span>  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>In the example above:</p>
+    <ul>
+      <li><code>Table[User]</code> indicates that this table is associated with the User model</li>
+      <li><code>&quot;user&quot;</code> is the table name in the database</li>
+      <li>Each column is defined with the <code>column</code> method</li>
+      <li>The <code>*</code> method defines how to map all columns to the model</li>
+    </ul>
+    
+    <h3 id="table-definition-with-data-types" class="section"><a class="anchor-link left" href="#table-definition-with-data-types"><i class="icofont-laika link">&#xef71;</i></a>Table Definition with Data Types</h3>
+    <p>You can specify MySQL data types and attributes for columns:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// Column definitions with data types and attributes
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Long</span><span>](</span><span class="string-literal">&quot;id&quot;</span><span>, </span><span class="type-name">BIGINT</span><span>, </span><span class="type-name">AUTO_INCREMENT</span><span>, </span><span class="type-name">PRIMARY_KEY</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">column</span><span>[</span><span class="type-name">String</span><span>](</span><span class="string-literal">&quot;name&quot;</span><span>, </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">255</span><span>))
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]](</span><span class="string-literal">&quot;age&quot;</span><span>, </span><span class="type-name">INT</span><span>)
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    
+    <h2 id="using-dedicated-column-definition-methods" class="section"><a class="anchor-link left" href="#using-dedicated-column-definition-methods"><i class="icofont-laika link">&#xef71;</i></a>Using Dedicated Column Definition Methods</h2>
+    <p>ldbc also provides specialized column definition methods for each data type. Because the variable name is used as the column name, you can write code more simply.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>().</span><span class="identifier">defaultNull</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>Using dedicated column definition methods allows you to set attributes appropriate for that data type, enabling you to write more type-safe code.</p>
+    
+    <h3 id="explicitly-specifying-column-names" class="section"><a class="anchor-link left" href="#explicitly-specifying-column-names"><i class="icofont-laika link">&#xef71;</i></a>Explicitly Specifying Column Names</h3>
+    <p>If you want to explicitly specify column names:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>(</span><span class="string-literal">&quot;user_id&quot;</span><span>).</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="string-literal">&quot;user_name&quot;</span><span>, </span><span class="number-literal">255</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">age</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>(</span><span class="string-literal">&quot;user_age&quot;</span><span>).</span><span class="identifier">defaultNull</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">name</span><span> *: </span><span class="identifier">age</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    
+    <h3 id="setting-column-naming-conventions" class="section"><a class="anchor-link left" href="#setting-column-naming-conventions"><i class="icofont-laika link">&#xef71;</i></a>Setting Column Naming Conventions</h3>
+    <p>You can change the naming convention for columns using <code>Naming</code>:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// Convert column names to Pascal case (e.g., userId → UserId)
+</span><span>  </span><span class="keyword">given</span><span> </span><span class="type-name">Naming</span><span> = </span><span class="type-name">Naming</span><span>.</span><span class="type-name">PASCAL</span><span>
+  
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userAge</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">Int</span><span>]] = </span><span class="identifier">int</span><span>().</span><span class="identifier">defaultNull</span><span>
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">userId</span><span> *: </span><span class="identifier">userName</span><span> *: </span><span class="identifier">userAge</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>Available naming conventions:</p>
+    <ul>
+      <li><code>Naming.SNAKE</code> (default): Snake case (e.g., user_id)</li>
+      <li><code>Naming.CAMEL</code>: Camel case (e.g., userId)</li>
+      <li><code>Naming.PASCAL</code>: Pascal case (e.g., UserId)</li>
+    </ul>
+    
+    <h2 id="numeric-column-definitions" class="section"><a class="anchor-link left" href="#numeric-column-definitions"><i class="icofont-laika link">&#xef71;</i></a>Numeric Column Definitions</h2>
+    <p>For numeric columns, the following operations are possible:</p>
+    
+    <h3 id="integer-types" class="section"><a class="anchor-link left" href="#integer-types"><i class="icofont-laika link">&#xef71;</i></a>Integer Types</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">count</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>().</span><span class="identifier">unsigned</span><span>.</span><span class="identifier">default</span><span>(</span><span class="number-literal">0</span><span>) </span><span class="comment">// Set as unsigned, default value 0
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">smallValue</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Short</span><span>] = </span><span class="identifier">smallint</span><span>().</span><span class="identifier">unsigned</span></code></pre>
+    
+    <h3 id="decimal-types" class="section"><a class="anchor-link left" href="#decimal-types"><i class="icofont-laika link">&#xef71;</i></a>Decimal Types</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">price</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">BigDecimal</span><span>] = </span><span class="identifier">decimal</span><span>(</span><span class="number-literal">10</span><span>, </span><span class="number-literal">2</span><span>) </span><span class="comment">// 10 digits in total, 2 decimal places
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">rating</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Double</span><span>] = </span><span class="identifier">double</span><span>(</span><span class="number-literal">5</span><span>) </span><span class="comment">// Double-precision floating point
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">score</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Float</span><span>] = </span><span class="identifier">float</span><span>(</span><span class="number-literal">4</span><span>) </span><span class="comment">// Single-precision floating point</span></code></pre>
+    
+    <h2 id="string-column-definitions" class="section"><a class="anchor-link left" href="#string-column-definitions"><i class="icofont-laika link">&#xef71;</i></a>String Column Definitions</h2>
+    <p>For string columns, the following operations are possible:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">name</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>) </span><span class="comment">// Variable-length string (max 255 characters)
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">code</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">char</span><span>(</span><span class="number-literal">5</span><span>) </span><span class="comment">// Fixed-length string (5 characters)
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">description</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">text</span><span>() </span><span class="comment">// Text type
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">content</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">longtext</span><span>() </span><span class="comment">// Long text type
+</span><span>
+</span><span class="comment">// Specifying character set
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">japaneseText</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">text</span><span>().</span><span class="identifier">charset</span><span>(</span><span class="type-name">Character</span><span>.</span><span class="identifier">utf8mb4</span><span>)
+
+</span><span class="comment">// Specifying collation
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">sortableText</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  .</span><span class="identifier">charset</span><span>(</span><span class="type-name">Character</span><span>.</span><span class="identifier">utf8mb4</span><span>)
+  .</span><span class="identifier">collate</span><span>(</span><span class="type-name">Collate</span><span>.</span><span class="identifier">utf8mb4_unicode_ci</span><span>)</span></code></pre>
+    
+    <h2 id="binary-column-definitions" class="section"><a class="anchor-link left" href="#binary-column-definitions"><i class="icofont-laika link">&#xef71;</i></a>Binary Column Definitions</h2>
+    <p>Defining columns for binary data:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">data</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">binary</span><span>(</span><span class="number-literal">255</span><span>) </span><span class="comment">// Fixed-length binary
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">flexData</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">varbinary</span><span>(</span><span class="number-literal">1000</span><span>) </span><span class="comment">// Variable-length binary
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">largeData</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">blob</span><span>() </span><span class="comment">// Binary Large Object</span></code></pre>
+    
+    <h2 id="date-and-time-column-definitions" class="section"><a class="anchor-link left" href="#date-and-time-column-definitions"><i class="icofont-laika link">&#xef71;</i></a>Date and Time Column Definitions</h2>
+    <p>Defining columns for dates and times:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">birthDate</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDate</span><span>] = </span><span class="identifier">date</span><span>() </span><span class="comment">// Date only
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">createdAt</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDateTime</span><span>] = </span><span class="identifier">datetime</span><span>() </span><span class="comment">// Date and time
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">updatedAt</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDateTime</span><span>] = </span><span class="identifier">timestamp</span><span>()
+  .</span><span class="identifier">defaultCurrentTimestamp</span><span>(</span><span class="identifier">onUpdate</span><span> = </span><span class="boolean-literal">true</span><span>) </span><span class="comment">// Auto-update on creation and modification
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">startTime</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalTime</span><span>] = </span><span class="identifier">time</span><span>() </span><span class="comment">// Time only
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">fiscalYear</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">year</span><span>() </span><span class="comment">// Year only</span></code></pre>
+    
+    <h2 id="enum-type-and-special-data-types" class="section"><a class="anchor-link left" href="#enum-type-and-special-data-types"><i class="icofont-laika link">&#xef71;</i></a>ENUM Type and Special Data Types</h2>
+    <p>Example of using ENUM type:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// ENUM definition
+</span><span class="keyword">enum</span><span> </span><span class="type-name">UserStatus</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Enum</span><span>:
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Active</span><span>, </span><span class="type-name">Inactive</span><span>, </span><span class="type-name">Suspended</span><span>
+</span><span class="keyword">object</span><span> </span><span class="type-name">UserStatus</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">EnumDataType</span><span>[</span><span class="type-name">UserStatus</span><span>]
+
+</span><span class="comment">// Using ENUM in table definition
+</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// ...
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">status</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">UserStatus</span><span>] = </span><span class="identifier">`enum`</span><span>[</span><span class="type-name">UserStatus</span><span>](</span><span class="string-literal">&quot;status&quot;</span><span>)</span></code></pre>
+    <p>Other special data types:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">isActive</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Boolean</span><span>] = </span><span class="identifier">boolean</span><span>() </span><span class="comment">// BOOLEAN type
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">uniqueId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">BigInt</span><span>] = </span><span class="identifier">serial</span><span>() </span><span class="comment">// SERIAL type (auto-increment BIGINT UNSIGNED)</span></code></pre>
+    
+    <h2 id="setting-default-values" class="section"><a class="anchor-link left" href="#setting-default-values"><i class="icofont-laika link">&#xef71;</i></a>Setting Default Values</h2>
+    <p>How to set default values for columns:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">score</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>().</span><span class="identifier">default</span><span>(</span><span class="number-literal">100</span><span>) </span><span class="comment">// Fixed value
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">updatedAt</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDateTime</span><span>] = </span><span class="identifier">timestamp</span><span>()
+  .</span><span class="identifier">defaultCurrentTimestamp</span><span>() </span><span class="comment">// Current timestamp
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">createdDate</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">LocalDate</span><span>] = </span><span class="identifier">date</span><span>()
+  .</span><span class="identifier">defaultCurrentDate</span><span> </span><span class="comment">// Current date
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">nullableField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  .</span><span class="identifier">defaultNull</span><span> </span><span class="comment">// NULL value</span></code></pre>
+    
+    <h2 id="primary-keys-foreign-keys-and-indexes" class="section"><a class="anchor-link left" href="#primary-keys-foreign-keys-and-indexes"><i class="icofont-laika link">&#xef71;</i></a>Primary Keys, Foreign Keys, and Indexes</h2>
+    
+    <h3 id="single-column-primary-key" class="section"><a class="anchor-link left" href="#single-column-primary-key"><i class="icofont-laika link">&#xef71;</i></a>Single-Column Primary Key</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span></code></pre>
+    
+    <h3 id="composite-primary-key-definition" class="section"><a class="anchor-link left" href="#composite-primary-key-definition"><i class="icofont-laika link">&#xef71;</i></a>Composite Primary Key Definition</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">OrderItemTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">OrderItem</span><span>](</span><span class="string-literal">&quot;order_item&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">orderId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>()
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">itemId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>()
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">quantity</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">int</span><span>().</span><span class="identifier">default</span><span>(</span><span class="number-literal">1</span><span>)
+  
+  </span><span class="comment">// Composite primary key definition
+</span><span>  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+    </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">orderId</span><span> *: </span><span class="identifier">itemId</span><span>)
+  )
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">OrderItem</span><span>] = (</span><span class="identifier">orderId</span><span> *: </span><span class="identifier">itemId</span><span> *: </span><span class="identifier">quantity</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">OrderItem</span><span>]</span></code></pre>
+    
+    <h3 id="index-definition" class="section"><a class="anchor-link left" href="#index-definition"><i class="icofont-laika link">&#xef71;</i></a>Index Definition</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="comment">// ...column definitions...
+</span><span>  
+  </span><span class="comment">// Index definitions
+</span><span>  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+    </span><span class="type-name">INDEX_KEY</span><span>(</span><span class="string-literal">&quot;idx_user_name&quot;</span><span>, </span><span class="identifier">name</span><span>), </span><span class="comment">// Named index
+</span><span>    </span><span class="type-name">UNIQUE_KEY</span><span>(</span><span class="string-literal">&quot;idx_user_email&quot;</span><span>, </span><span class="identifier">email</span><span>) </span><span class="comment">// Unique index
+</span><span>  )</span></code></pre>
+    <p>You can also specify index types:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+  </span><span class="type-name">INDEX_KEY</span><span>(
+    </span><span class="type-name">Some</span><span>(</span><span class="string-literal">&quot;idx_name&quot;</span><span>), 
+    </span><span class="type-name">Some</span><span>(</span><span class="type-name">Index</span><span>.</span><span class="type-name">Type</span><span>.</span><span class="type-name">BTREE</span><span>), </span><span class="comment">// Can specify BTREE or HASH index type
+</span><span>    </span><span class="type-name">None</span><span>, 
+    </span><span class="identifier">name</span><span>
+  )
+)</span></code></pre>
+    
+    <h3 id="foreign-key-definition" class="section"><a class="anchor-link left" href="#foreign-key-definition"><i class="icofont-laika link">&#xef71;</i></a>Foreign Key Definition</h3>
+    <p>To define foreign keys, first create a TableQuery for the referenced table:</p>
+    <pre><code class="nohighlight"><span class="comment">// Referenced table
+</span><span class="keyword">val</span><span> </span><span class="identifier">userTable</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>]
+
+</span><span class="comment">// Referencing table
+</span><span class="keyword">class</span><span> </span><span class="type-name">ProfileTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">Profile</span><span>](</span><span class="string-literal">&quot;profile&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userId</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>()
+  </span><span class="comment">// ...other columns...
+</span><span>  
+  </span><span class="comment">// Foreign key definition
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">fkUser</span><span> = </span><span class="type-name">FOREIGN_KEY</span><span>(
+    </span><span class="string-literal">&quot;fk_profile_user&quot;</span><span>, </span><span class="comment">// Foreign key name
+</span><span>    </span><span class="identifier">userId</span><span>, </span><span class="comment">// Referencing column
+</span><span>    </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">userTable</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>) </span><span class="comment">// Referenced table and column
+</span><span>      .</span><span class="identifier">onDelete</span><span>(</span><span class="type-name">Reference</span><span>.</span><span class="type-name">ReferenceOption</span><span>.</span><span class="type-name">CASCADE</span><span>) </span><span class="comment">// Action on delete
+</span><span>      .</span><span class="identifier">onUpdate</span><span>(</span><span class="type-name">Reference</span><span>.</span><span class="type-name">ReferenceOption</span><span>.</span><span class="type-name">RESTRICT</span><span>) </span><span class="comment">// Action on update
+</span><span>  )
+  
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+    </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">id</span><span>),
+    </span><span class="identifier">fkUser</span><span> </span><span class="comment">// Add foreign key
+</span><span>  )</span></code></pre>
+    <p>Reference constraint options (<code>ReferenceOption</code>):</p>
+    <ul>
+      <li><code>RESTRICT</code>: Prevents changes to parent record as long as child records exist</li>
+      <li><code>CASCADE</code>: Changes child records along with parent record changes</li>
+      <li><code>SET_NULL</code>: Sets relevant columns in child records to NULL when parent record changes</li>
+      <li><code>NO_ACTION</code>: Delays constraint checking (basically the same as RESTRICT)</li>
+      <li><code>SET_DEFAULT</code>: Sets relevant columns in child records to default values when parent record changes</li>
+    </ul>
+    
+    <h2 id="setting-constraints" class="section"><a class="anchor-link left" href="#setting-constraints"><i class="icofont-laika link">&#xef71;</i></a>Setting Constraints</h2>
+    <p>If you want to define constraints with specific naming conventions, you can use <code>CONSTRAINT</code>:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">keys</span><span> = </span><span class="type-name">List</span><span>(
+  </span><span class="type-name">CONSTRAINT</span><span>(
+    </span><span class="string-literal">&quot;pk_user&quot;</span><span>, </span><span class="comment">// Constraint name
+</span><span>    </span><span class="type-name">PRIMARY_KEY</span><span>(</span><span class="identifier">id</span><span>) </span><span class="comment">// Constraint type
+</span><span>  ),
+  </span><span class="type-name">CONSTRAINT</span><span>(
+    </span><span class="string-literal">&quot;fk_user_department&quot;</span><span>,
+    </span><span class="type-name">FOREIGN_KEY</span><span>(</span><span class="identifier">departmentId</span><span>, </span><span class="type-name">REFERENCE</span><span>(</span><span class="identifier">departmentTable</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">id</span><span>))
+  )
+)</span></code></pre>
+    
+    <h2 id="complex-mapping-with-models" class="section"><a class="anchor-link left" href="#complex-mapping-with-models"><i class="icofont-laika link">&#xef71;</i></a>Complex Mapping with Models</h2>
+    
+    <h3 id="mapping-nested-models" class="section"><a class="anchor-link left" href="#mapping-nested-models"><i class="icofont-laika link">&#xef71;</i></a>Mapping Nested Models</h3>
+    <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(
+  </span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, 
+  </span><span class="identifier">name</span><span>: </span><span class="type-name">UserName</span><span>, </span><span class="comment">// Nested type
+</span><span>  </span><span class="identifier">contact</span><span>: </span><span class="type-name">Contact</span><span> </span><span class="comment">// Nested type
+</span><span>)
+
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">UserName</span><span>(</span><span class="identifier">first</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">last</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Contact</span><span>(</span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">phone</span><span>: </span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>])
+
+</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">firstName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">50</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">lastName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">50</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">email</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">100</span><span>)
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">phone</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">String</span><span>]] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">20</span><span>).</span><span class="identifier">defaultNull</span><span>
+  
+  </span><span class="comment">// Nested value mapping
+</span><span>  </span><span class="keyword">def</span><span> </span><span class="declaration-name">userName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">UserName</span><span>] = (</span><span class="identifier">firstName</span><span> *: </span><span class="identifier">lastName</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">UserName</span><span>]
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">contact</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Contact</span><span>] = (</span><span class="identifier">email</span><span> *: </span><span class="identifier">phone</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">Contact</span><span>]
+  
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] = (</span><span class="identifier">id</span><span> *: </span><span class="identifier">userName</span><span> *: </span><span class="identifier">contact</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]</span></code></pre>
+    <p>This configuration will generate the following SQL:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">CREATE</span><span> </span><span class="keyword">TABLE</span><span> </span><span class="identifier">`user`</span><span> (
+  </span><span class="identifier">`id`</span><span> </span><span class="type-name">BIGINT</span><span> </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span> </span><span class="identifier">AUTO_INCREMENT</span><span>,
+  </span><span class="identifier">`firstName`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>) </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span>,
+  </span><span class="identifier">`lastName`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">50</span><span>) </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span>,
+  </span><span class="identifier">`email`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">100</span><span>) </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span>,
+  </span><span class="identifier">`phone`</span><span> </span><span class="type-name">VARCHAR</span><span>(</span><span class="number-literal">20</span><span>) </span><span class="literal-value">NULL</span><span>,
+  </span><span class="keyword">PRIMARY</span><span> </span><span class="keyword">KEY</span><span> (</span><span class="identifier">`id`</span><span>)
+)</span></code></pre>
+    
+    <h2 id="schema-generation-and-ddl-execution" class="section"><a class="anchor-link left" href="#schema-generation-and-ddl-execution"><i class="icofont-laika link">&#xef71;</i></a>Schema Generation and DDL Execution</h2>
+    <p>Generate DDL (Data Definition Language) from table definitions and create schemas in the database.</p>
+    
+    <h3 id="generating-tablequery" class="section"><a class="anchor-link left" href="#generating-tablequery"><i class="icofont-laika link">&#xef71;</i></a>Generating TableQuery</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">users</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>]
+</span><span class="keyword">val</span><span> </span><span class="identifier">profiles</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">ProfileTable</span><span>]
+</span><span class="keyword">val</span><span> </span><span class="identifier">orders</span><span> = </span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">OrderTable</span><span>]</span></code></pre>
+    
+    <h3 id="generating-and-executing-schema" class="section"><a class="anchor-link left" href="#generating-and-executing-schema"><i class="icofont-laika link">&#xef71;</i></a>Generating and Executing Schema</h3>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">ldbc</span><span>.</span><span class="identifier">dsl</span><span>.*
+
+</span><span class="comment">// Combining schemas
+</span><span class="keyword">val</span><span> </span><span class="identifier">schema</span><span> = </span><span class="identifier">users</span><span>.</span><span class="identifier">schema</span><span> ++ </span><span class="identifier">profiles</span><span>.</span><span class="identifier">schema</span><span> ++ </span><span class="identifier">orders</span><span>.</span><span class="identifier">schema</span><span>
+
+</span><span class="comment">// Apply schema using database connection
+</span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+  </span><span class="type-name">DBIO</span><span>.</span><span class="identifier">sequence</span><span>(
+    </span><span class="comment">// Create tables (only if they don&#39;t exist)
+</span><span>    </span><span class="identifier">schema</span><span>.</span><span class="identifier">createIfNotExists</span><span>,
+    </span><span class="comment">// Other operations such as data insertion...
+</span><span>  ).</span><span class="identifier">commit</span><span>(</span><span class="identifier">conn</span><span>)
+}</span></code></pre>
+    
+    <h3 id="ddl-operations" class="section"><a class="anchor-link left" href="#ddl-operations"><i class="icofont-laika link">&#xef71;</i></a>DDL Operations</h3>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">userSchema</span><span> = </span><span class="identifier">users</span><span>.</span><span class="identifier">schema</span><span>
+
+</span><span class="comment">// Various DDL operations
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">create</span><span>            </span><span class="comment">// Create table
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span> </span><span class="comment">// Create table only if it doesn&#39;t exist
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">drop</span><span>              </span><span class="comment">// Drop table
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>      </span><span class="comment">// Drop table only if it exists
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>          </span><span class="comment">// Delete all data in the table</span></code></pre>
+    
+    <h3 id="checking-ddl-statements" class="section"><a class="anchor-link left" href="#checking-ddl-statements"><i class="icofont-laika link">&#xef71;</i></a>Checking DDL Statements</h3>
+    <p>How to check the actual SQL that will be executed:</p>
+    <pre><code class="nohighlight"><span class="comment">// Check creation query
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">create</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// Check conditional creation query
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">createIfNotExists</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// Check drop query
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">drop</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// Check conditional drop query
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">dropIfExists</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
+
+</span><span class="comment">// Check truncate query
+</span><span class="identifier">userSchema</span><span>.</span><span class="identifier">truncate</span><span>.</span><span class="identifier">statements</span><span>.</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)</span></code></pre>
+    
+    <h2 id="setting-column-attributes" class="section"><a class="anchor-link left" href="#setting-column-attributes"><i class="icofont-laika link">&#xef71;</i></a>Setting Column Attributes</h2>
+    <p>Various attributes can be set for columns:</p>
+    <pre><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>()
+  .</span><span class="identifier">autoIncrement</span><span>    </span><span class="comment">// Auto increment
+</span><span>  .</span><span class="identifier">primaryKey</span><span>       </span><span class="comment">// Primary key
+</span><span>  .</span><span class="identifier">comment</span><span>(</span><span class="string-literal">&quot;User ID&quot;</span><span>) </span><span class="comment">// Comment
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">email</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
+  .</span><span class="identifier">unique</span><span>           </span><span class="comment">// Unique constraint
+</span><span>  .</span><span class="identifier">comment</span><span>(</span><span class="string-literal">&quot;Email address&quot;</span><span>)
+
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">status</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">20</span><span>)
+  .</span><span class="identifier">charset</span><span>(</span><span class="type-name">Character</span><span>.</span><span class="identifier">utf8mb4</span><span>)  </span><span class="comment">// Character set
+</span><span>  .</span><span class="identifier">collate</span><span>(</span><span class="type-name">Collate</span><span>.</span><span class="identifier">utf8mb4_unicode_ci</span><span>)  </span><span class="comment">// Collation
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">hiddenField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">100</span><span>)
+  .</span><span class="identifier">invisible</span><span>        </span><span class="comment">// Invisible attribute (not retrieved with SELECT *)
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">formatField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">100</span><span>)
+  .</span><span class="identifier">setAttributes</span><span>(</span><span class="type-name">COLUMN_FORMAT</span><span>.</span><span class="type-name">DYNAMIC</span><span>[</span><span class="type-name">String</span><span>]) </span><span class="comment">// Column storage format
+</span><span>
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">storageField</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]] = </span><span class="identifier">blob</span><span>()
+  .</span><span class="identifier">setAttributes</span><span>(</span><span class="type-name">STORAGE</span><span>.</span><span class="type-name">DISK</span><span>[</span><span class="type-name">Array</span><span>[</span><span class="type-name">Byte</span><span>]]) </span><span class="comment">// Storage type</span></code></pre>
+    
+    <h2 id="summary" class="section"><a class="anchor-link left" href="#summary"><i class="icofont-laika link">&#xef71;</i></a>Summary</h2>
+    <p>Using the schema module of ldbc allows you to define safe and expressive database schemas by leveraging Scala&#39;s type system.</p>
+    <p>Key features:</p>
+    <ul>
+      <li>Strong type safety: Detect schema issues at compile time</li>
+      <li>Rich data type support: Supports all MySQL data types</li>
+      <li>Flexible model mapping: Handles everything from simple case classes to complex nested models</li>
+      <li>DDL generation: Generate SQL directly from table definitions</li>
+      <li>Extensibility: Supports custom data types and mapping functions</li>
+    </ul>
+    
+    <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
+    <p>Now you understand how to define schemas in Scala code. Manually defining schemas allows you to closely integrate your application and database structures.</p>
+    <p>Next, proceed to <a href="Schema-Code-Generation.html">Schema Code Generation</a> to learn how to automatically generate schema code from existing SQL files.</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>

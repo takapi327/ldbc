@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Custom Data Types</title>
+  
+  <meta name="author" content="ldbc contributors"/>
+  
+  <meta name="author" content="Takahiko Tominaga"/>
+  
+  
+  <meta name="description" content="Documentation for ldbc"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="../../helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../helium/site/laika-helium.css" />
+    <link rel="stylesheet" type="text/css" href="../../css/site.css" />
+  <script src="../../helium/site/laika-helium.js"></script>
+    <script src="../../helium/site/laika-versions.js"></script>
+  <script>initVersions("../../../", "/en/tutorial/Custom-Data-Type.html", "latest", null);</script>
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
+
+<body>
+
+<header id="top-bar" class="light-default dark-default">
+
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    <div class="menu-container version-menu">
+      <a class="text-link menu-toggle" href="#">Version 0.3</a>
+      <nav class="menu-content">
+        <ul class="nav-list">
+          <li class="level1 nav-leaf"><a href="../../older-versions.html">Older Versions</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>  
+
+</header>
+
+<nav id="sidebar">
+
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/takapi327/ldbc"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <g class="svg-shape">
+    <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
+  </g>
+</svg></span></a>
+    
+    <a class="icon-link svg-link" href="https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3/latest/index.html"><span class="api" title="API"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M75,47.5c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm-50,-0c13.246,-0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,-0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm2.705,16.735l7.239,0l0.622,-4.904l-21.833,0l-0,4.904l7.589,0l0,22.067l6.383,0l-0,-22.067Zm58.076,7.265c-0,-8.757 -3.698,-14.166 -10.781,-14.166c-7.083,-0 -10.781,5.604 -10.781,14.166c0,8.757 3.698,14.166 10.781,14.166c7.083,0 10.781,-5.604 10.781,-14.166Zm-6.539,0c0,6.538 -1.128,9.496 -4.242,9.496c-2.997,0 -4.242,-2.88 -4.242,-9.496c-0,-6.616 1.206,-9.496 4.242,-9.496c3.036,-0 4.242,2.88 4.242,9.496Zm-29.242,-67c13.246,0 24,10.754 24,24c0,13.246 -10.754,24 -24,24c-13.246,0 -24,-10.754 -24,-24c0,-13.246 10.754,-24 24,-24Zm0.512,9.834c-7.122,-0 -12.609,5.098 -12.609,14.127c-0,9.263 5.215,14.205 12.532,14.205c4.164,0 7.083,-1.634 9.068,-3.658l-2.88,-3.697c-1.518,1.206 -3.153,2.413 -5.838,2.413c-3.697,-0 -6.266,-2.763 -6.266,-9.263c-0,-6.616 2.724,-9.379 6.149,-9.379c2.102,-0 3.892,0.778 5.371,1.984l3.113,-3.775c-2.257,-1.868 -4.748,-2.957 -8.64,-2.957Z"/>
+  </g>
+</svg></span></a>
+    
+  </div>
+
+  
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="../">ldbc</a></li>
+    <li class="level1 nav-leaf"><a href="../migration-notes.html">Migration Note</a></li>
+    <li class="level1 nav-header">Tutorial</li>
+    <li class="level2 nav-leaf"><a href="index.html">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="Setup.html">Setup</a></li>
+    <li class="level2 nav-leaf"><a href="Connection.html">Connection</a></li>
+    <li class="level2 nav-leaf"><a href="Simple-Program.html">Simple Programs</a></li>
+    <li class="level2 nav-leaf"><a href="Database-Operations.html">Database Operations</a></li>
+    <li class="level2 nav-leaf"><a href="Parameterized-Queries.html">Parameterized Queries</a></li>
+    <li class="level2 nav-leaf"><a href="Selecting-Data.html">Selecting Data</a></li>
+    <li class="level2 nav-leaf"><a href="Updating-Data.html">Updating Data</a></li>
+    <li class="level2 nav-leaf"><a href="Error-Handling.html">Error Handling</a></li>
+    <li class="level2 nav-leaf"><a href="Logging.html">logging</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Custom Data Types</a></li>
+    <li class="level2 nav-leaf"><a href="Query-Builder.html">Query Builder</a></li>
+    <li class="level2 nav-leaf"><a href="Schema.html">Schema</a></li>
+    <li class="level2 nav-leaf"><a href="Schema-Code-Generation.html">Schema Code Generation</a></li>
+    <li class="level1 nav-header">Examples</li>
+    <li class="level2 nav-leaf"><a href="../examples/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Http4s.html">Http4s</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/HikariCP.html">HikariCP</a></li>
+    <li class="level2 nav-leaf"><a href="../examples/Otel.html">OpenTelemetry</a></li>
+    <li class="level1 nav-header">QA</li>
+    <li class="level2 nav-leaf"><a href="../qa/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-ldbc.html">Q: What is ldbc?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Which-dependencies-should-I-set.html">Q: Which dependencies should I set?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: What is the difference between a Java connector and a Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-define-complex-queries-with-plain-queries.html">Q: How to define complex queries with plain queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-my-own-type.html">Q: How do I use my own type?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-use-nested-models.html">Q: How do I use nested models?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-perform-DDL-with-schema.html">Q: How to perform DDL with schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-column-names-in-Query-Builder.html">Q: How to change column names in Query Builder?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-change-the-format-of-column-names-using-the-schema.html">Q: How to change the format of column names using the schema?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-do-I-add-processing-before-and-after-the-connection-is-established.html">Q: How do I add processing before and after the connection is established?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Implicit-search-problem-too-large.html">Q: How to handle the `Implicit search problem too large.` error?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-scala-connector-connection-pool.html">Q: How to use connection pool with Scala connector?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level1 nav-header">Reference</li>
+    <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
+    <li class="level2 nav-leaf"><a href="../reference/Performance.html">Performance</a></li>
+  </ul>
+  
+
+</nav>
+
+<div id="container">
+
+  
+<nav id="page-nav">
+  <p class="header"><a href="#">Custom Data Types</a></p>
+
+  <ul class="nav-list">
+    <li class="level1 nav-node"><a href="#encoder">Encoder</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-usage-1">Basic Usage</a></li>
+    <li class="level2 nav-leaf"><a href="#composite-type-encoder">Composite Type Encoder</a></li>
+    <li class="level1 nav-node"><a href="#decoder">Decoder</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-usage-2">Basic Usage</a></li>
+    <li class="level2 nav-leaf"><a href="#composite-type-decoder">Composite Type Decoder</a></li>
+    <li class="level1 nav-node"><a href="#codec">Codec</a></li>
+    <li class="level2 nav-leaf"><a href="#basic-usage-3">Basic Usage</a></li>
+    <li class="level2 nav-leaf"><a href="#composite-type-codec">Composite Type Codec</a></li>
+    <li class="level2 nav-leaf"><a href="#retrieving-encoder-and-decoder-individually">Retrieving Encoder and Decoder Individually</a></li>
+    <li class="level1 nav-leaf"><a href="#converting-complex-object-structures">Converting Complex Object Structures</a></li>
+    <li class="level1 nav-leaf"><a href="#handling-large-objects">Handling Large Objects</a></li>
+    <li class="level1 nav-leaf"><a href="#practical-application-examples">Practical Application Examples</a></li>
+    <li class="level1 nav-leaf"><a href="#next-steps">Next Steps</a></li>
+  </ul>
+
+  <p class="footer"></p>
+</nav>
+
+
+  <main class="content">
+
+    <h1 id="custom-data-types" class="title">Custom Data Types</h1>
+    <p>Now that we&#39;ve learned how to configure <a href="Logging.html">Logging</a>, let&#39;s look at how to support your own data types in ldbc to write more expressive code. This page explains how to perform database operations using not only basic types but also domain-specific types.</p>
+    <p>In real applications, you often want to use domain-specific types rather than just simple basic types. For example, you might want to define custom types like <code>Status</code> or <code>Currency</code> and map them to database basic types (strings or integers). ldbc provides mechanisms to do this easily.</p>
+    <p>This chapter explains how to use custom types or unsupported types in table definitions built with ldbc.</p>
+    <p>Let&#39;s add a new column to the table definition created during setup.</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">ALTER</span><span> </span><span class="keyword">TABLE</span><span> </span><span class="keyword">user</span><span> </span><span class="keyword">ADD</span><span> </span><span class="keyword">COLUMN</span><span> </span><span class="identifier">status</span><span> </span><span class="type-name">BOOLEAN</span><span> </span><span class="keyword">NOT</span><span> </span><span class="literal-value">NULL</span><span> </span><span class="keyword">DEFAULT</span><span> </span><span class="boolean-literal">TRUE</span><span>;</span></code></pre>
+    
+    <h2 id="encoder" class="section"><a class="anchor-link left" href="#encoder"><i class="icofont-laika link">&#xef71;</i></a>Encoder</h2>
+    <p>In ldbc, values passed to statements are represented by <code>Encoder</code>. <code>Encoder</code> is a trait for representing values to be bound to statements.</p>
+    <p>By implementing <code>Encoder</code>, you can represent values passed to statements with custom types.</p>
+    
+    <h3 id="basic-usage-1" class="section"><a class="anchor-link left" href="#basic-usage-1"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage</h3>
+    <p>Let&#39;s add a <code>Status</code> to represent the user&#39;s status in the user information. Here&#39;s an example using an <code>enum</code>:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">enum</span><span> </span><span class="type-name">Status</span><span>(</span><span class="keyword">val</span><span> </span><span class="identifier">done</span><span>: </span><span class="type-name">Boolean</span><span>, </span><span class="keyword">val</span><span> </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>):
+  </span><span class="keyword">case</span><span> </span><span class="type-name">Active</span><span>   </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="boolean-literal">false</span><span>, </span><span class="string-literal">&quot;Active&quot;</span><span>)
+  </span><span class="keyword">case</span><span> </span><span class="type-name">InActive</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Status</span><span>(</span><span class="boolean-literal">true</span><span>, </span><span class="string-literal">&quot;InActive&quot;</span><span>)</span></code></pre>
+    <p>In the code example below, we define an <code>Encoder</code> for a custom type. The <code>contramap</code> method is used to specify how to convert from the custom type to a basic type (in this case, <code>Boolean</code>):</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Boolean</span><span>].</span><span class="identifier">contramap</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">done</span><span>)</span></code></pre>
+    <p>This allows you to bind custom types to statements. Here&#39;s a specific example:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">program1</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Int</span><span>] =
+  </span><span class="string-literal">sql&quot;INSERT INTO user (name, email, status) VALUES (</span><span class="substitution">${ &quot;user 1&quot; }</span><span class="string-literal">, </span><span class="substitution">${ &quot;user@example.com&quot; }</span><span class="string-literal">, </span><span class="substitution">${ Status.Active }</span><span class="string-literal">)&quot;</span><span>.</span><span class="identifier">update</span></code></pre>
+    
+    <h3 id="composite-type-encoder" class="section"><a class="anchor-link left" href="#composite-type-encoder"><i class="icofont-laika link">&#xef71;</i></a>Composite Type Encoder</h3>
+    <p>Encoders can also create new types by composing multiple types. You can compose types using the <code>*:</code> operator:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">encoder</span><span>: </span><span class="type-name">Encoder</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
+    <p>Composed types can also be converted to arbitrary classes. In the example below, the <code>to</code> method is used to convert from a tuple to a case class:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">given</span><span> </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
+    <p>In this case, the fields of the <code>Status</code> class must correspond in order. That is, <code>code</code> corresponds to the <code>Int</code> encoder, and <code>name</code> corresponds to the <code>String</code> encoder.</p>
+    
+    <h2 id="decoder" class="section"><a class="anchor-link left" href="#decoder"><i class="icofont-laika link">&#xef71;</i></a>Decoder</h2>
+    <p>In addition to parameters, ldbc also provides <code>Decoder</code> for retrieving custom types from execution results.</p>
+    <p>By implementing <code>Decoder</code>, you can retrieve custom types from statement execution results.</p>
+    
+    <h3 id="basic-usage-2" class="section"><a class="anchor-link left" href="#basic-usage-2"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage</h3>
+    <p>The code example below shows how to use <code>Decoder</code> to convert a <code>Boolean</code> value to a <code>Status</code> type:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Boolean</span><span>].</span><span class="identifier">map</span><span> {
+  </span><span class="keyword">case</span><span> </span><span class="boolean-literal">true</span><span>  =&gt; </span><span class="type-name">Status</span><span>.</span><span class="type-name">InActive</span><span>
+  </span><span class="keyword">case</span><span> </span><span class="boolean-literal">false</span><span> =&gt; </span><span class="type-name">Status</span><span>.</span><span class="type-name">Active</span><span>
+}</span></code></pre>
+    <p>This allows you to directly retrieve <code>Status</code> type values from query results:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">program2</span><span>: </span><span class="type-name">DBIO</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Status</span><span>)] =
+  </span><span class="string-literal">sql&quot;SELECT name, email, status FROM user WHERE id = 1&quot;</span><span>.</span><span class="identifier">query</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Status</span><span>)].</span><span class="identifier">unsafe</span></code></pre>
+    
+    <h3 id="composite-type-decoder" class="section"><a class="anchor-link left" href="#composite-type-decoder"><i class="icofont-laika link">&#xef71;</i></a>Composite Type Decoder</h3>
+    <p>Decoders can also create new types by composing multiple types. Use the <code>*:</code> operator to compose types:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">decoder</span><span>: </span><span class="type-name">Decoder</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
+    <p>Composed types can also be converted to arbitrary classes:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">given</span><span> </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
+    <p>This definition allows two columns (integer and string) retrieved from the database to be automatically converted to instances of the <code>Status</code> class.</p>
+    
+    <h2 id="codec" class="section"><a class="anchor-link left" href="#codec"><i class="icofont-laika link">&#xef71;</i></a>Codec</h2>
+    <p>By using <code>Codec</code>, which combines <code>Encoder</code> and <code>Decoder</code>, you can use custom types for both values passed to statements and statement execution results. This reduces code duplication and achieves consistent type conversions.</p>
+    
+    <h3 id="basic-usage-3" class="section"><a class="anchor-link left" href="#basic-usage-3"><i class="icofont-laika link">&#xef71;</i></a>Basic Usage</h3>
+    <p>The code example below shows how to use <code>Codec</code> to integrate the <code>Encoder</code> and <code>Decoder</code> from earlier:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Boolean</span><span>].</span><span class="identifier">imap</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">done</span><span>)(</span><span class="type-name">Status</span><span>(</span><span class="identifier">_</span><span>))</span></code></pre>
+    
+    <h3 id="composite-type-codec" class="section"><a class="anchor-link left" href="#composite-type-codec"><i class="icofont-laika link">&#xef71;</i></a>Composite Type Codec</h3>
+    <p>Codecs can also create new types by composing multiple types:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">codec</span><span>: </span><span class="type-name">Codec</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>]</span></code></pre>
+    <p>Composed types can also be converted to arbitrary classes:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Status</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>] = (</span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>] *: </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>]).</span><span class="identifier">to</span><span>[</span><span class="type-name">Status</span><span>]</span></code></pre>
+    
+    <h3 id="retrieving-encoder-and-decoder-individually" class="section"><a class="anchor-link left" href="#retrieving-encoder-and-decoder-individually"><i class="icofont-laika link">&#xef71;</i></a>Retrieving Encoder and Decoder Individually</h3>
+    <p>Since Codec is a combination of <code>Encoder</code> and <code>Decoder</code>, you can also get the conversion process for each type individually:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">encoder</span><span>: </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>].</span><span class="identifier">asEncoder</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">decoder</span><span>: </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Status</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Status</span><span>].</span><span class="identifier">asDecoder</span></code></pre>
+    
+    <h2 id="converting-complex-object-structures" class="section"><a class="anchor-link left" href="#converting-complex-object-structures"><i class="icofont-laika link">&#xef71;</i></a>Converting Complex Object Structures</h2>
+    <p>Since <code>Codec</code>, <code>Encoder</code>, and <code>Decoder</code> can each be composed, complex object structures can be created by combining multiple types.</p>
+    <p>This allows users to convert retrieved records into nested hierarchical data:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">City</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">countryCode</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Country</span><span>(</span><span class="identifier">code</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>)
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CityWithCountry</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">City</span><span>, </span><span class="identifier">country</span><span>: </span><span class="type-name">Country</span><span>)
+
+</span><span class="comment">// Example of retrieving joined city and country information
+</span><span class="keyword">val</span><span> </span><span class="identifier">program3</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">List</span><span>[</span><span class="type-name">CityWithCountry</span><span>]] =
+  </span><span class="string-literal">sql&quot;&quot;&quot;
+    SELECT c.id, c.name, c.country_code, co.code, co.name 
+    FROM city c 
+    JOIN country co ON c.country_code = co.code
+  &quot;&quot;&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">CityWithCountry</span><span>].</span><span class="identifier">list</span></code></pre>
+    <p>In the example above, <code>CityWithCountry</code> objects are automatically constructed from the query results. ldbc resolves types at compile time and generates appropriate encoders and decoders.</p>
+    
+    <h2 id="handling-large-objects" class="section"><a class="anchor-link left" href="#handling-large-objects"><i class="icofont-laika link">&#xef71;</i></a>Handling Large Objects</h2>
+    <p>Since Codec, along with <code>Encoder</code> and <code>Decoder</code>, is implicitly resolved, users do not usually need to explicitly specify these types.</p>
+    <p>However, if there are many properties in a model, the implicit resolution process might become too complex and fail:</p>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>[error]    |Implicit search problem too large.
+[error]    |an implicit search was terminated with failure after trying </span><span class="number-literal">100000</span><span> expressions.
+[error]    |The root candidate </span><span class="keyword">for</span><span> the search was:
+[error]    |
+[error]    |  given instance given_Decoder_P </span><span class="keyword">in</span><span> object Decoder  </span><span class="keyword">for</span><span>  ldbc.dsl.codec.Decoder[City]}</span></code></pre>
+    <p>In such cases, one of the following solutions is effective:</p>
+    <ol class="arabic">
+      <li>Increase the search limit in compile options:</li>
+    </ol>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">scalacOptions</span><span> += </span><span class="string-literal">&quot;-Ximplicit-search-limit:100000&quot;</span></code></pre>
+    <p>However, this method may increase compilation time.</p>
+    <ol class="arabic">
+      <li>Manually construct explicit type conversions:</li>
+    </ol>
+    <pre><code class="nohighlight"><span class="comment">// Explicitly build Decoder
+</span><span class="keyword">given</span><span> </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">City</span><span>] = (
+  </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">Int</span><span>] *: 
+  </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>] *: 
+  </span><span class="type-name">Decoder</span><span>[</span><span class="type-name">String</span><span>]
+).</span><span class="identifier">to</span><span>[</span><span class="type-name">City</span><span>]
+
+</span><span class="comment">// Explicitly build Encoder
+</span><span class="keyword">given</span><span> </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">City</span><span>] = (
+  </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">Int</span><span>] *: 
+  </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>] *: 
+  </span><span class="type-name">Encoder</span><span>[</span><span class="type-name">String</span><span>]
+).</span><span class="identifier">to</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
+    <ol class="arabic">
+      <li>Use <code>Codec</code> to define both at once:</li>
+    </ol>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">City</span><span>] = (
+  </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Int</span><span>] *: 
+  </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>] *: 
+  </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>]
+).</span><span class="identifier">to</span><span>[</span><span class="type-name">City</span><span>]</span></code></pre>
+    
+    <h2 id="practical-application-examples" class="section"><a class="anchor-link left" href="#practical-application-examples"><i class="icofont-laika link">&#xef71;</i></a>Practical Application Examples</h2>
+    <p>Below is an example of code using domain-specific types as a more practical example:</p>
+    <pre><code class="nohighlight"><span class="comment">// Value representing an email address
+</span><span class="keyword">opaque</span><span> </span><span class="keyword">type</span><span> </span><span class="type-name">Email</span><span> = </span><span class="type-name">String</span><span>
+</span><span class="keyword">object</span><span> </span><span class="type-name">Email</span><span>:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">apply</span><span>(</span><span class="identifier">value</span><span>: </span><span class="type-name">String</span><span>): </span><span class="type-name">Email</span><span> = </span><span class="identifier">value</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">unapply</span><span>(</span><span class="identifier">email</span><span>: </span><span class="type-name">Email</span><span>): </span><span class="type-name">String</span><span> = </span><span class="identifier">email</span><span>
+
+</span><span class="comment">// User ID
+</span><span class="keyword">opaque</span><span> </span><span class="keyword">type</span><span> </span><span class="type-name">UserId</span><span> = </span><span class="type-name">Long</span><span>
+</span><span class="keyword">object</span><span> </span><span class="type-name">UserId</span><span>:
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">apply</span><span>(</span><span class="identifier">value</span><span>: </span><span class="type-name">Long</span><span>): </span><span class="type-name">UserId</span><span> = </span><span class="identifier">value</span><span>
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">unapply</span><span>(</span><span class="identifier">userId</span><span>: </span><span class="type-name">UserId</span><span>): </span><span class="type-name">Long</span><span> = </span><span class="identifier">userId</span><span>
+
+</span><span class="comment">// User class
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">UserId</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">Email</span><span>, </span><span class="identifier">status</span><span>: </span><span class="type-name">Status</span><span>)
+</span><span class="keyword">object</span><span> </span><span class="type-name">User</span><span>:
+  </span><span class="comment">// Codec for User ID
+</span><span>  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">UserId</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Long</span><span>].</span><span class="identifier">imap</span><span>(</span><span class="type-name">UserId</span><span>.</span><span class="identifier">apply</span><span>)(</span><span class="identifier">_</span><span>.</span><span class="identifier">value</span><span>)
+  
+  </span><span class="comment">// Codec for Email
+</span><span>  </span><span class="keyword">given</span><span> </span><span class="type-name">Codec</span><span>[</span><span class="type-name">Email</span><span>] = </span><span class="type-name">Codec</span><span>[</span><span class="type-name">String</span><span>].</span><span class="identifier">imap</span><span>(</span><span class="type-name">Email</span><span>.</span><span class="identifier">apply</span><span>)(</span><span class="type-name">Email</span><span>.</span><span class="identifier">unapply</span><span>)
+
+</span><span class="comment">// Now you can retrieve and update users in a type-safe manner
+</span><span class="keyword">val</span><span> </span><span class="identifier">getUser</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Option</span><span>[</span><span class="type-name">User</span><span>]] = 
+  </span><span class="string-literal">sql&quot;SELECT id, name, email, status FROM user WHERE id = </span><span class="substitution">${UserId(1)}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">query</span><span>[</span><span class="type-name">User</span><span>].</span><span class="identifier">option</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">updateEmail</span><span>: </span><span class="type-name">DBIO</span><span>[</span><span class="type-name">Int</span><span>] =
+  </span><span class="string-literal">sql&quot;UPDATE user SET email = </span><span class="substitution">${Email(&quot;new@example.com&quot;)}</span><span class="string-literal"> WHERE id = </span><span class="substitution">${UserId(1)}</span><span class="string-literal">&quot;</span><span>.</span><span class="identifier">update</span></code></pre>
+    
+    <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
+    <p>Now you know how to use custom data types with ldbc. By defining your own types, you can write more expressive and type-safe code. You can also accurately represent domain concepts in code, reducing the occurrence of bugs.</p>
+    <p>Next, let&#39;s move on to <a href="Query-Builder.html">Query Builder</a> to learn how to build type-safe queries without writing SQL directly.</p>
+
+    
+<hr class="footer-rule"/>
+<footer>
+  ldbc is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="https://img.shields.io/badge/license-MIT-green">MIT</a> license.
+</footer>
+
+
+  </main>
+
+</div>
+
+</body>
+
+</html>
