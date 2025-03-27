@@ -298,7 +298,25 @@ lazy val docs = (project in file("docs"))
       "SCALA_VERSION" -> scalaVersion.value,
       "MYSQL_VERSION" -> mysqlVersion
     ),
-    laikaTheme := LaikaSettings.helium.value
+    laikaTheme := LaikaSettings.helium.value,
+    // Modify tlSite task to run the LLM docs script after the site is generated
+    tlSite := {
+      tlSite.value
+      val log        = streams.value.log
+      val scriptPath = baseDirectory.value.getParentFile / "script" / "build-llm-docs.sh"
+
+      if (!scriptPath.exists) {
+        log.warn(s"LLM docs script not found at: $scriptPath")
+      } else {
+        log.info(s"Running LLM docs script: $scriptPath")
+        val exitCode = scala.sys.process.Process(scriptPath.toString).!
+        if (exitCode != 0) {
+          log.warn(s"LLM docs script exited with code: $exitCode")
+        } else {
+          log.success("LLM docs successfully generated")
+        }
+      }
+    }
   )
   .settings(commonSettings)
   .dependsOn(
