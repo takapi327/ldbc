@@ -69,7 +69,7 @@ EOL
     label=$(extract_label "$relative_path")
     capitalized=$(capitalize_delimiter "$label")
     formatted=${capitalized//-/ }
-    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/$(slice_ext "$relative_path"))" >> "$OUTPUT_FILE"
+    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/en/$(slice_ext "$relative_path").html)" >> "$OUTPUT_FILE"
   done
 
   # Add Tutorial docs links
@@ -79,17 +79,7 @@ EOL
     label=$(extract_label "$relative_path")
     capitalized=$(capitalize_delimiter "$label")
     formatted=${capitalized//-/ }
-    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/$(slice_ext "$relative_path"))" >> "$OUTPUT_FILE"
-  done
-
-  # Add QA docs links
-  echo -e "\n### QA" >> "$OUTPUT_FILE"
-  find "$QA_DOCS_DIR" -name "*.md" | sort | while read -r file; do
-    relative_path=${file#"$QA_DOCS_DIR/"}
-    label=$(extract_label "$relative_path")
-    capitalized=$(capitalize_delimiter "$label")
-    formatted=${capitalized//-/ }
-    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/$(slice_ext "$relative_path"))" >> "$OUTPUT_FILE"
+    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/en/tutorial/$(slice_ext "$relative_path").html)" >> "$OUTPUT_FILE"
   done
 
   # Add Examples docs links
@@ -99,7 +89,17 @@ EOL
     label=$(extract_label "$relative_path")
     capitalized=$(capitalize_delimiter "$label")
     formatted=${capitalized//-/ }
-    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/$(slice_ext "$relative_path"))" >> "$OUTPUT_FILE"
+    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/en/examples/$(slice_ext "$relative_path").html)" >> "$OUTPUT_FILE"
+  done
+
+  # Add QA docs links
+  echo -e "\n### QA" >> "$OUTPUT_FILE"
+  find "$QA_DOCS_DIR" -name "*.md" | sort | while read -r file; do
+    relative_path=${file#"$QA_DOCS_DIR/"}
+    label=$(extract_label "$relative_path")
+    capitalized=$(capitalize_delimiter "$label")
+    formatted=${capitalized//-/ }
+    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/en/qa/$(slice_ext "$relative_path").html)" >> "$OUTPUT_FILE"
   done
 
   # Add Reference docs links
@@ -109,7 +109,7 @@ EOL
     label=$(extract_label "$relative_path")
     capitalized=$(capitalize_delimiter "$label")
     formatted=${capitalized//-/ }
-    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/$(slice_ext "$relative_path"))" >> "$OUTPUT_FILE"
+    echo "- [$formatted](https://takapi327.github.io/ldbc/latest/en/reference/$(slice_ext "$relative_path").html)" >> "$OUTPUT_FILE"
   done
 
   echo "< Output '$OUTPUT_FILE'"
