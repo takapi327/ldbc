@@ -6,7 +6,7 @@ TUTORIAL_DOCS_DIR="docs/target/mdoc/en/tutorial"
 QA_DOCS_DIR="docs/target/mdoc/en/qa"
 EXAMPLES_DOCS_DIR="docs/target/mdoc/en/examples"
 REFERENCE_DOCS_DIR="docs/target/mdoc/en/reference"
-PUBLIC_DIR="docs"
+PUBLIC_DIR="docs/target/docs/site"
 
 # Function to remove file extension
 slice_ext() {
