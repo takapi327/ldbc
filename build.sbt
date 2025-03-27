@@ -302,9 +302,9 @@ lazy val docs = (project in file("docs"))
     // Modify tlSite task to run the LLM docs script after the site is generated
     tlSite := {
       tlSite.value
-      val log = streams.value.log
+      val log        = streams.value.log
       val scriptPath = baseDirectory.value.getParentFile / "script" / "build-llm-docs.sh"
-      
+
       if (!scriptPath.exists) {
         log.warn(s"LLM docs script not found at: $scriptPath")
       } else {
