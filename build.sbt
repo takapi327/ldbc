@@ -77,7 +77,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "cats-free"         % "2.10.0",
-      "org.typelevel" %%% "cats-effect"       % "3.5.7",
+      "org.typelevel" %%% "cats-effect"       % "3.6.0",
       "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
     )
   )
@@ -155,7 +155,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.5.7",
+      "org.typelevel" %%% "cats-effect"       % "3.6.0",
       "co.fs2"        %%% "fs2-core"          % "3.11.0",
       "co.fs2"        %%% "fs2-io"            % "3.11.0",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
