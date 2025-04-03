@@ -78,7 +78,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "cats-free"         % "2.10.0",
       "org.typelevel" %%% "cats-effect"       % "3.6.0",
-      "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
   .dependsOn(sql)
@@ -123,7 +123,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %%% "scala-parser-combinators" % "2.3.0",
-      "org.typelevel"          %%% "munit-cats-effect"        % "2.0.0" % Test
+      "org.typelevel"          %%% "munit-cats-effect"        % "2.1.0" % Test
     )
   )
   .jvmSettings(
@@ -163,7 +163,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
       "org.scodec"    %%% "scodec-cats"       % "1.2.0",
       "org.typelevel" %%% "otel4s-core-trace" % "0.11.2",
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
-      "org.typelevel" %%% "munit-cats-effect" % "2.0.0" % Test
+      "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
   .jsSettings(
@@ -211,7 +211,7 @@ lazy val tests = crossProject(JVMPlatform)
   .defaultSettings
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test,
+      "org.typelevel" %% "munit-cats-effect" % "2.1.0" % Test,
       mysql            % Test
     )
   )
