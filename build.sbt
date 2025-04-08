@@ -109,14 +109,6 @@ lazy val schema = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(Test / scalacOptions -= "-Werror")
   .dependsOn(statement)
 
-lazy val schemaSpy = LepusSbtProject("ldbc-schemaSpy", "module/ldbc-schemaspy")
-  .settings(
-    description := "Project to generate SchemaSPY documentation",
-    onLoadMessage := s"${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions.${ scala.Console.RESET }",
-    libraryDependencies += schemaspy
-  )
-  .dependsOn(core.jvm)
-
 lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .module("codegen", "Project to generate code from Sql")
@@ -339,7 +331,6 @@ lazy val ldbc = tlCrossRootProject
     tests,
     docs,
     benchmark,
-    schemaSpy,
     hikari
   )
   .aggregate(examples *)

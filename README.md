@@ -39,7 +39,6 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 | `ldbc-statement`     |  ✅  |      ✅       |    ✅     |
 | `ldbc-query-builder` |  ✅  |      ✅       |    ✅     |
 | `ldbc-schema`        |  ✅  |      ✅       |    ✅     |
-| `ldbc-schemaSpy`     |  ✅  |      ❌       |    ❌     | 
 | `ldbc-codegen`       |  ✅  |      ✅       |    ✅     |
 | `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
 | `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
