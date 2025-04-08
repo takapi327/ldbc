@@ -22,7 +22,7 @@ object Main extends IOApp.Simple:
     for
       otel <- Resource
                 .eval(IO.delay(GlobalOpenTelemetry.get))
-                .evalMap(OtelJava.forAsync[IO])
+                .evalMap(OtelJava.fromJOpenTelemetry[IO])
       tracer <- Resource.eval(otel.tracerProvider.get(serviceName))
       connection <- ConnectionProvider
                       .default[IO]("127.0.0.1", 13307, "ldbc", "password", "world")
