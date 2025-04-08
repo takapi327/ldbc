@@ -30,9 +30,10 @@ object LaikaSettings {
     }
 
     val v02:     Version      = version(LdbcVersions.v02, "Stable")
-    val v03:     Version      = version(LdbcVersions.latest, "Dev")
-    val current: Version      = v03
-    val all:     Seq[Version] = Seq(v03, v02)
+    val v03:     Version      = version(LdbcVersions.v03, "Dev")
+    val v04:     Version      = version(LdbcVersions.latest, "Dev")
+    val current: Version      = v04
+    val all:     Seq[Version] = Seq(v04, v03, v02)
 
     val config: Versions = Versions
       .forCurrentVersion(current)
