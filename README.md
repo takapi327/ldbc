@@ -44,6 +44,14 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 | `ldbc-hikari`        |  ✅  |      ❌       |    ❌     | 
 | `ldbc-plugin`        |  ✅  |      ❌       |    ❌     |
 
+## Performance
+
+ldbc is designed to be fast and efficient. It uses the latest features of Scala 3 and Cats Effect 3 to provide a high-performance database connectivity layer.
+
+| Reading                                                                | Writing                                                                |
+|------------------------------------------------------------------------|------------------------------------------------------------------------|
+| <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select21.svg"> | <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Insert21.svg"> |
+
 ## Quick Start
 
 For people that want to skip the explanations and see it action, this is the place to start!
