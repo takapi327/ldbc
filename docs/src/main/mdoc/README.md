@@ -38,7 +38,6 @@ ldbc is available on the JVM, Scala.js, and ScalaNative
 
 | Module / Platform    | JVM | Scala Native | Scala.js |  
 |----------------------|:---:|:------------:|:--------:|
-| `ldbc-core`          |  ✅  |      ✅       |    ✅     |
 | `ldbc-sql`           |  ✅  |      ✅       |    ✅     |
 | `ldbc-connector`     |  ✅  |      ✅       |    ✅     | 
 | `jdbc-connector`     |  ✅  |      ❌       |    ❌     | 

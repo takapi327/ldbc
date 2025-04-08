@@ -11,7 +11,6 @@ import sbt._
 trait Dependencies {
   private def component(id: String): ModuleID = "io.github.takapi327" %% id % ldbc.build.Version.current
 
-  val ldbcCore         = component("ldbc-core")
   val ldbcSql          = component("ldbc-sql")
   val ldbcDsl          = component("ldbc-dsl")
   val ldbcStatement    = component("ldbc-statement")

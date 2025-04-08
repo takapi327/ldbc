@@ -33,34 +33,6 @@ ThisBuild / tlSitePublishBranch                 := None
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
 
-lazy val core = crossProject(JVMPlatform, JSPlatform, NativePlatform)
-  .crossType(CrossType.Full)
-  .default("core", "ldbc core project")
-  .settings(
-    onLoadMessage :=
-      s"""
-         |${ scala.Console.RED }WARNING: This project is deprecated and will be removed in future versions. Please use ldbc-schema instead.
-         |
-         |${ scala.Console.RED }${ organization.value } %% ${ name.value } % ${ version.value }
-         |
-         |         ${ scala.Console.RED }↓↓↓↓↓
-         |
-         |${ scala.Console.RED }${ organization.value } %% ldbc-schema % ${ version.value }
-         |
-         |""".stripMargin,
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core"   % "2.10.0",
-      "org.scalatest" %%% "scalatest"   % "3.2.18" % Test,
-      "org.specs2"    %%% "specs2-core" % "4.20.5" % Test
-    ),
-    Test / scalacOptions -= "-Werror"
-  )
-  .platformsSettings(JSPlatform, NativePlatform)(
-    libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
-    )
-  )
-
 lazy val sql = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .module("sql", "JDBC API wrapped project with Effect System")
@@ -318,7 +290,6 @@ lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(commonSettings)
   .aggregate(
-    core,
     sql,
     jdbcConnector,
     connector,
