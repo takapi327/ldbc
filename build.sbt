@@ -142,7 +142,7 @@ lazy val zioDsl = crossProject(JVMPlatform, JSPlatform)
   .module("zio-dsl", "Projects that provide a way to connect to the database for ZIO")
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %%% "zio" % "2.1.6",
+      "dev.zio" %%% "zio"              % "2.1.6",
       "dev.zio" %%% "zio-interop-cats" % "23.1.0.5"
     )
   )
