@@ -137,6 +137,17 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .nativeSettings(Test / nativeBrewFormulas += "s2n")
   .dependsOn(sql)
 
+lazy val zioDsl = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .module("zio-dsl", "Projects that provide a way to connect to the database for ZIO")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %%% "zio" % "2.1.6",
+      "dev.zio" %%% "zio-interop-cats" % "23.1.0.5"
+    )
+  )
+  .dependsOn(dsl)
+
 lazy val hikari = LepusSbtProject("ldbc-hikari", "module/ldbc-hikari")
   .settings(description := "Project to build HikariCP")
   .settings(
@@ -294,6 +305,7 @@ lazy val ldbc = tlCrossRootProject
     jdbcConnector,
     connector,
     dsl,
+    zioDsl,
     statement,
     queryBuilder,
     schema,
