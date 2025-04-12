@@ -35,7 +35,7 @@ run() {
     [ -r "$FILE" ] || return 0
 
     mkdir -p "script/${OUT_DIR}/${KIND}/${TARGET}"
-    OUTPUT="script/${OUT_DIR}/${KIND}/${TARGET}/${FEATURE}.json"
+    OUTPUT="script/${OUT_DIR}/${KIND}/${TARGET}/${PREFIX}${FEATURE}${SUFFIX}.json"
 
     $sbt "${PROJECT} / clean"
     $sbt "${PROJECT} / Jmh / run $OPTIONS ${KIND}[.]${TARGET}[.]${FEATURE}[.] -rf json -rff ../${OUTPUT}"
@@ -122,6 +122,8 @@ done
         'ldbc'
         'doobie'
         'slick'
+        'cats_effect'
+        'zio'
     )
 }
 
