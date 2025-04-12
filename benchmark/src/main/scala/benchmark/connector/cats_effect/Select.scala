@@ -6,16 +6,21 @@
 
 package benchmark.connector.cats_effect
 
-import cats.*
-import cats.effect.*
-import cats.effect.unsafe.implicits.global
-import ldbc.connector.*
-import ldbc.sql.ResultSet
-import org.openjdk.jmh.annotations.*
-
 import java.time.*
 import java.util.concurrent.TimeUnit
+
 import scala.compiletime.uninitialized
+
+import org.openjdk.jmh.annotations.*
+
+import cats.*
+
+import cats.effect.*
+import cats.effect.unsafe.implicits.global
+
+import ldbc.sql.ResultSet
+
+import ldbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)

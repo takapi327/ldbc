@@ -6,18 +6,21 @@
 
 package benchmark.connector.zio
 
-import zio.{Task, Runtime, Unsafe}
-import zio.interop.catz.*
+import java.time.*
+import java.util.concurrent.TimeUnit
 
-import ldbc.connector.*
-import ldbc.sql.ResultSet
-import ldbc.zio.dsl.*
+import scala.compiletime.uninitialized
 
 import org.openjdk.jmh.annotations.*
 
-import java.time.*
-import java.util.concurrent.TimeUnit
-import scala.compiletime.uninitialized
+import zio.{ Runtime, Task, Unsafe }
+import zio.interop.catz.*
+
+import ldbc.sql.ResultSet
+
+import ldbc.connector.*
+
+import ldbc.zio.dsl.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -58,30 +61,34 @@ class Select:
   @Benchmark
   def statement: List[BenchmarkType] =
     Unsafe.unsafe { implicit unsafe =>
-      Runtime.default.unsafe.run(
-        provider
-          .use { conn =>
-            for
-              statement <- conn.createStatement()
-              resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
-            yield consume(resultSet)
-          }
-      ).getOrThrowFiberFailure()
+      Runtime.default.unsafe
+        .run(
+          provider
+            .use { conn =>
+              for
+                statement <- conn.createStatement()
+                resultSet <- statement.executeQuery(s"SELECT * FROM jdbc_statement_test LIMIT $len")
+              yield consume(resultSet)
+            }
+        )
+        .getOrThrowFiberFailure()
     }
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
     Unsafe.unsafe { implicit unsafe =>
-      Runtime.default.unsafe.run(
-        provider
-          .use { conn =>
-            for
-              statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
-              _ <- statement.setInt(1, len)
-              resultSet <- statement.executeQuery()
-            yield consume(resultSet)
-          }
-      ).getOrThrowFiberFailure()
+      Runtime.default.unsafe
+        .run(
+          provider
+            .use { conn =>
+              for
+                statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
+                _         <- statement.setInt(1, len)
+                resultSet <- statement.executeQuery()
+              yield consume(resultSet)
+            }
+        )
+        .getOrThrowFiberFailure()
     }
 
   private def consume(resultSet: ResultSet): List[BenchmarkType] =
