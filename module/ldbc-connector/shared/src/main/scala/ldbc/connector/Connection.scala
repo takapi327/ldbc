@@ -231,7 +231,7 @@ object Connection:
     release:                 (A, Connection[F]) => F[Unit]
   )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
-    def fail[A](msg: String): Resource[F, A] =
+    def fail[B](msg: String): Resource[F, B] =
       Resource.eval(ev.raiseError(new SQLClientInfoException(msg)))
 
     def sockets: Resource[F, Socket[F]] =
