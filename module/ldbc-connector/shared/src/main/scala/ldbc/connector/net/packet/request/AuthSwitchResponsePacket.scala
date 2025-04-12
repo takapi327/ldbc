@@ -27,16 +27,16 @@ trait AuthSwitchResponsePacket extends RequestPacket:
   def hashedPassword: ByteVector
 
 object AuthSwitchResponsePacket:
-  
+
   def apply(hashedPassword: ByteVector): AuthSwitchResponsePacket = Impl(hashedPassword)
-  
+
   private[ldbc] def unsafeFromBytes(bytes: Array[Byte]): AuthSwitchResponsePacket = Impl(
     ByteVector(bytes)
   )
 
   private case class Impl(
-                           hashedPassword: ByteVector
-                         ) extends AuthSwitchResponsePacket:
+    hashedPassword: ByteVector
+  ) extends AuthSwitchResponsePacket:
 
     override protected def encodeBody: Attempt[BitVector] = encoder.encode(this)
 
