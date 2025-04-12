@@ -8,7 +8,7 @@ import ScalaVersions.*
 
 object Dependencies {
 
-  val catsEffect = "org.typelevel" %% "cats-effect" % "3.6.0"
+  val catsEffect = "org.typelevel" %% "cats-effect" % "3.6.1"
 
   val schemaspy = "org.schemaspy" % "schemaspy" % "6.2.4"
 
@@ -27,7 +27,7 @@ object Dependencies {
 
   val slick = "com.typesafe.slick" %% "slick" % "3.6.0"
 
-  val specs2Version = "5.5.8"
+  val specs2Version = "5.6.0"
   val specs2: Seq[ModuleID] = Seq(
     "specs2-core",
     "specs2-junit"

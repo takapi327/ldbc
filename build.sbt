@@ -49,7 +49,7 @@ lazy val dsl = crossProject(JVMPlatform, JSPlatform, NativePlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "twiddles-core"     % "0.8.0",
       "org.typelevel" %%% "cats-free"         % "2.10.0",
-      "org.typelevel" %%% "cats-effect"       % "3.6.0",
+      "org.typelevel" %%% "cats-effect"       % "3.6.1",
       "org.typelevel" %%% "munit-cats-effect" % "2.1.0" % Test
     )
   )
@@ -119,7 +119,7 @@ lazy val connector = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   .settings(
     scalacOptions += "-Ykind-projector:underscores",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect"       % "3.6.0",
+      "org.typelevel" %%% "cats-effect"       % "3.6.1",
       "co.fs2"        %%% "fs2-core"          % "3.12.0",
       "co.fs2"        %%% "fs2-io"            % "3.12.0",
       "org.scodec"    %%% "scodec-bits"       % "1.1.38",
@@ -230,8 +230,8 @@ lazy val otelExample = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel"   %% "otel4s-oteljava"                           % "0.12.0",
-      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.48.0" % Runtime,
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.48.0" % Runtime
+      "io.opentelemetry" % "opentelemetry-exporter-otlp"               % "1.49.0" % Runtime,
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % "1.49.0" % Runtime
     )
   )
   .settings(
