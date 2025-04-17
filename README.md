@@ -230,6 +230,56 @@ val result: IO[List[User]] = provider.use { conn =>
 }
 ```
 
+## How to use with ZIO
+
+Although ldbc was created to run on the Cats Effect, can also be used in conjunction with ZIO by using [ZIO Interop Cats](https://github.com/zio/interop-cats).
+
+> [!CAUTION]
+> Although ldbc supports three platforms, Note that ZIO Interop Cats does not currently support Scala Native.
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-interop-cats" % "<latest-version>"
+```
+
+The following is sample code for using ldbc with ZIO.
+
+```scala 3
+import zio.*
+import zio.interop.catz.*
+
+object Main extends ZIOAppDefault:
+
+  given cats.effect.std.Console[Task] = cats.effect.std.Console.make[Task]
+  given cats.effect.std.UUIDGen[Task] with
+    override def randomUUID: Task[UUID] = ZIO.attempt(UUID.randomUUID())
+  given fs2.hashing.Hashing[Task] = fs2.hashing.Hashing.forSync[Task]
+  given fs2.io.net.Network[Task] = fs2.io.net.Network.forAsync[Task]
+
+  private def provider =
+    ConnectionProvider
+      .default[Task]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
+
+  override def run =
+    provider.use { conn =>
+      sql"SELECT Name FROM city"
+        .query[String]
+        .to[List]
+        .readOnly(conn)
+        .flatMap { cities =>
+          Console.printLine(cities)
+        }
+    }
+```
+
+### パフォーマンス
+
+Performance results from the Cats Effect to ZIO conversion are shown below.
+
+<div align="center">
+  <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select_effect.svg">
+</div>
+
 ## Documentation
 
 Full documentation can be found at Currently available in English and Japanese.
