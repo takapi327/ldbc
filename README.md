@@ -237,6 +237,18 @@ Full documentation can be found at Currently available in English and Japanese.
 - [English](https://takapi327.github.io/ldbc/latest/en/)
 - [Japanese](https://takapi327.github.io/ldbc/latest/ja/)
 
+## Documentation for LLMs
+
+If you’re an artificial intelligence, or trying to teach one how to use ldbc, we offer the documentation in plaintext format. Beep boop.
+
+We support the [llms.txt](https://llmstxt.org/) convention for making documentation available to large language models and the applications that make use of them.
+
+Currently, we have the following root-level files...
+
+- [/llms.txt](https://takapi327.github.io/ldbc/llms.txt) — a listing of the available files
+- [/llms-full.txt](https://takapi327.github.io/ldbc/llms-full.txt) — complete documentation for ldbc
+- [/llms-small.txt](https://takapi327.github.io/ldbc/llms-small.txt) — compressed documentation for use with smaller context windows
+
 ## Features/Roadmap
 
 Creating a MySQL connector project written in pure Scala3.
