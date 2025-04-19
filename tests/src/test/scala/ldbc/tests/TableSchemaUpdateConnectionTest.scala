@@ -34,7 +34,7 @@ class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
   override def connection: Provider[IO] =
     LdbcProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world3")
-      .setSSL(SSL.Trusted)
+      .setSSL(SSL.System)
 
 class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest:
 
