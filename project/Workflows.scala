@@ -32,31 +32,6 @@ object Workflows {
     )
   )
 
-  val installSpecificOpenSSLVersion: WorkflowStep.Run = WorkflowStep.Run(
-    commands = List(
-      "sudo apt-get update",
-      "sudo apt-get install -y build-essential checkinstall zlib1g-dev",
-      "wget https://www.openssl.org/source/openssl-3.4.0.tar.gz",
-      "tar -xf openssl-3.4.0.tar.gz",
-      "cd openssl-3.4.0",
-      "./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib",
-      "make -j$(nproc)",
-      "sudo make install",
-      "sudo ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl",
-      "echo 'export PATH=/usr/local/ssl/bin:$PATH' >> $GITHUB_ENV",
-      "echo 'export LD_LIBRARY_PATH=/usr/local/ssl/lib:$LD_LIBRARY_PATH' >> $GITHUB_ENV",
-      "echo \"/usr/local/ssl/lib\" | sudo tee /etc/ld.so.conf.d/openssl.conf",
-      "sudo ldconfig",
-      "openssl version"
-    ),
-    name = Some("Install specific OpenSSL version")
-  )
-
-  val generateSSLCerts: WorkflowStep.Run = WorkflowStep.Run(
-    commands = List("./script/generate-ssl-certs.sh"),
-    name     = Some("Generate SSL certificates")
-  )
-
   val dockerRun: WorkflowStep.Run = WorkflowStep.Run(
     commands = List("docker compose up -d"),
     name     = Some("Start up MySQL on Docker")

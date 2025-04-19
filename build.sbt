@@ -22,11 +22,7 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21)
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(
-  installSpecificOpenSSLVersion,
-  generateSSLCerts,
-  dockerRun
-) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop

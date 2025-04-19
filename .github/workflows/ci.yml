@@ -94,26 +94,6 @@ jobs:
         if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
         run: sbt +update
 
-      - name: Install specific OpenSSL version
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential checkinstall zlib1g-dev
-          wget https://www.openssl.org/source/openssl-3.4.0.tar.gz
-          tar -xf openssl-3.4.0.tar.gz
-          cd openssl-3.4.0
-          ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib
-          make -j$(nproc)
-          sudo make install
-          sudo ln -sf /usr/local/ssl/bin/openssl /usr/bin/openssl
-          echo 'export PATH=/usr/local/ssl/bin:$PATH' >> $GITHUB_ENV
-          echo 'export LD_LIBRARY_PATH=/usr/local/ssl/lib:$LD_LIBRARY_PATH' >> $GITHUB_ENV
-          echo "/usr/local/ssl/lib" | sudo tee /etc/ld.so.conf.d/openssl.conf
-          sudo ldconfig
-          openssl version
-
-      - name: Generate SSL certificates
-        run: ./script/generate-ssl-certs.sh
-
       - name: Start up MySQL on Docker
         run: docker compose up -d
 
