@@ -18,5 +18,5 @@ metals.sbt
 **/.scala-build/
 
 # for database
-database/ssl
+database/ssl/*.pem
 **/*.jks
