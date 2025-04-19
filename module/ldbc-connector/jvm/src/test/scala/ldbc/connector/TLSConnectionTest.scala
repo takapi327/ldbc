@@ -30,7 +30,7 @@ class TLSConnectionTest extends FTestPlatform:
       ConnectionProvider
         .default[IO](
           "127.0.0.1",
-          13307,
+          13306,
           "ldbc_ssl_user",
           "securepassword",
           "world"
