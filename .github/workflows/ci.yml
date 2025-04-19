@@ -94,6 +94,9 @@ jobs:
         if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Generate SSL certificates
+        run: ./script/generate-ssl-certs.sh
+
       - name: Start up MySQL on Docker
         run: docker compose up -d
 
