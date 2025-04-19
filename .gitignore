@@ -16,7 +16,3 @@ metals.sbt
 
 # for Scala CLI
 **/.scala-build/
-
-# for database
-#database/ssl/*.pem
-#**/*.jks
