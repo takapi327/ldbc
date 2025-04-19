@@ -32,6 +32,11 @@ object Workflows {
     )
   )
 
+  val generateSSLCerts: WorkflowStep.Run = WorkflowStep.Run(
+    commands = List("./script/generate-ssl-certs.sh"),
+    name     = Some("Generate SSL certificates"),
+  )
+
   val dockerRun: WorkflowStep.Run = WorkflowStep.Run(
     commands = List("docker compose up -d"),
     name     = Some("Start up MySQL on Docker")
