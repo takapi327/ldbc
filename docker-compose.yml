@@ -11,26 +11,7 @@ services:
       - 13306:3306
     volumes:
       - ./database:/docker-entrypoint-initdb.d
-      - ./database/ssl/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./database/ssl:/etc/mysql/ssl
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      timeout: 20s
-      retries: 10
-
-  mysql-ssl:
-    image: mysql:8.4.0
-    container_name: ldbc_ssl
-    platform: linux/amd64
-    environment:
-      MYSQL_USER: 'ldbc'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'root'
-    ports:
-      - 13307:3306
-    volumes:
-      - ./database:/docker-entrypoint-initdb.d
-      - ./database/ssl/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./database/my.cnf:/etc/mysql/conf.d/my.cnf
       - ./database/ssl:/etc/mysql/ssl
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]

@@ -17,12 +17,13 @@ ThisBuild / tlFatalWarnings    := true
 ThisBuild / projectName        := "ldbc"
 ThisBuild / scalaVersion       := scala3
 ThisBuild / crossScalaVersions := Seq(scala3, scala36)
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-20.04")
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java11),
   JavaSpec.corretto(java17),
   JavaSpec.corretto(java21)
 )
-ThisBuild / githubWorkflowBuildPreamble ++= List(dockerRun) ++ nativeBrewInstallWorkflowSteps.value
+ThisBuild / githubWorkflowBuildPreamble ++= List(generateSSLCerts, dockerRun) ++ nativeBrewInstallWorkflowSteps.value
 ThisBuild / nativeBrewInstallCond := Some("matrix.project == 'ldbcNative'")
 ThisBuild / githubWorkflowAddedJobs ++= Seq(sbtScripted.value)
 ThisBuild / githubWorkflowBuildPostamble += dockerStop
