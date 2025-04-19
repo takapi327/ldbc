@@ -23,10 +23,7 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.corretto(java21)
 )
 ThisBuild / githubWorkflowBuildPreamble ++= List(
-  WorkflowStep.Run(
-    name     = Some("OpenSSL Version check"),
-    commands = List("openssl version")
-  ),
+  installSpecificOpenSSLVersion,
   generateSSLCerts,
   dockerRun
 ) ++ nativeBrewInstallWorkflowSteps.value
