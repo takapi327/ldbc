@@ -27,9 +27,6 @@ chmod 600 *.pem
 # Import CA certificates into keystore
 keytool -import -file ca.pem -alias mysqlCA -keystore "$RESOURCES_DIR/keystore.jks" -storepass password -noprompt
 
-# Make the generated files available to the MySQL container
-cp ca.pem server-cert.pem server-key.pem .
-
 echo "SSL certificate generation is complete!"
 echo "keystore.jks was generated at the following location："
 echo "$RESOURCES_DIR"
