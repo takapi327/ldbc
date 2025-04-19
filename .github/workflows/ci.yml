@@ -97,12 +97,6 @@ jobs:
       - name: Generate SSL certificates
         run: ./script/generate-ssl-certs.sh
 
-      - name: List SSL certificates
-        run: ls -la database/ssl
-
-      - name: List SSL certificates
-        run: ls -la module/ldbc-connector/shared/src/test/resources/
-
       - name: Start up MySQL on Docker
         run: docker compose up -d
 
