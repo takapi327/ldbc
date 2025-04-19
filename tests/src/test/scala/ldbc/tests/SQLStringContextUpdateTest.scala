@@ -26,7 +26,7 @@ class LdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
   override def connection: Provider[IO] =
     LdbcProvider
       .default[IO]("127.0.0.1", 13306, "ldbc", "password", "connector_test")
-      .setSSL(SSL.Trusted)
+      .setSSL(SSL.Trusted.withFallback(true))
 
 class JdbcSQLStringContextUpdateTest extends SQLStringContextUpdateTest:
 
