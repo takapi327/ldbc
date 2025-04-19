@@ -34,7 +34,7 @@ object Workflows {
 
   val generateSSLCerts: WorkflowStep.Run = WorkflowStep.Run(
     commands = List("./script/generate-ssl-certs.sh"),
-    name     = Some("Generate SSL certificates"),
+    name     = Some("Generate SSL certificates")
   )
 
   val dockerRun: WorkflowStep.Run = WorkflowStep.Run(
