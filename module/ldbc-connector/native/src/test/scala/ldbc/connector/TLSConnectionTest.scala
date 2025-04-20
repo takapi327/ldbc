@@ -8,9 +8,9 @@ package ldbc.connector
 
 import cats.effect.*
 
-import fs2.text
 import fs2.io.file.*
 import fs2.io.net.tls.*
+import fs2.text
 
 class TLSConnectionTest extends FTestPlatform:
 
@@ -23,9 +23,15 @@ class TLSConnectionTest extends FTestPlatform:
                  .build[IO]
         connection <- ConnectionProvider
                         .default[IO]("127.0.0.1", 13306, "ldbc_ssl_user", "securepassword", "world")
-                        .setSSL(SSL.fromS2nConfig(cfg).withTLSParameters(TLSParameters(
-                          serverName = Some("MySQL_Server"),
-                        )))
+                        .setSSL(
+                          SSL
+                            .fromS2nConfig(cfg)
+                            .withTLSParameters(
+                              TLSParameters(
+                                serverName = Some("MySQL_Server")
+                              )
+                            )
+                        )
                         .createConnection()
       yield connection).use { conn =>
         for
