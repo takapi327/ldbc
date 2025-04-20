@@ -6,4 +6,20 @@
 
 package ldbc.connector
 
-private[ldbc] trait SSLPlatform
+import cats.ApplicativeError
+import cats.effect.*
+
+import fs2.io.net.Network
+import fs2.io.net.tls.{SecureContext, TLSContext}
+
+private[ldbc] trait SSLPlatform:
+
+  def fromSecureContext(
+                       secureContext: SecureContext
+              ): SSL = new SSL:
+      override def tlsContext[F[_] : Network](using ae: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
+        Resource.pure(
+          Network[F].tlsContext.fromSecureContext(
+            secureContext
+          )
+        )
