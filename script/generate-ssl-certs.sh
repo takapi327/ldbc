@@ -14,7 +14,7 @@ openssl req -new -x509 -nodes -days 3650 -key ca-key.pem -out ca.pem -subj "/CN=
 # Server Certificate and Key Generation
 openssl req -newkey rsa:2048 -days 3650 -nodes -keyout server-key.pem -out server-req.pem -subj "/CN=MySQL_Server"
 openssl rsa -in server-key.pem -out server-key.pem
-openssl x509 -req -in server-req.pem -days 3650 -CA ca.pem -CAkey ca-key.pem -set_serial 01 -out server-cert.pem
+openssl x509 -req -in server-req.pem -days 3650 -CA ca.pem -CAkey ca-key.pem -set_serial 01 -out server-cert.pem -extfile ../../script/san.cnf -extensions v3_req
 
 # Client Certificate and Key Generation
 openssl req -newkey rsa:2048 -days 3650 -nodes -keyout client-key.pem -out client-req.pem -subj "/CN=MySQL_Client"
