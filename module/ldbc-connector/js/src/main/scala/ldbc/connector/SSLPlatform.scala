@@ -15,6 +15,7 @@ import fs2.io.net.Network
 
 private[ldbc] trait SSLPlatform:
 
+  /** Creates an `TLSContext` from the secure context. */
   def fromSecureContext(
     secureContext: SecureContext
   ): SSL = new SSL:
