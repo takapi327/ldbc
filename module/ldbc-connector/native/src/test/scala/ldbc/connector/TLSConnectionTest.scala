@@ -11,17 +11,16 @@ import scodec.bits.ByteVector
 import cats.effect.*
 
 import fs2.io.file.*
-import fs2.io.net.tls.{ CertChainAndKey, S2nConfig }
+import fs2.io.net.tls.S2nConfig
 
 class TLSConnectionTest extends FTestPlatform:
 
   test("Verify that you can connect to MySQL with a TLS connection") {
     assertIO(
       (for
-        cert <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca.pem")).compile.to(ByteVector))
+        ca <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca.pem")).compile.to(ByteVector))
         cfg <- S2nConfig.builder
-                 .withCertChainAndKeysToStore(List(CertChainAndKey(cert, ByteVector.empty)))
-                 .withPemsToTrustStore(List(cert.decodeAscii.toOption.get))
+                 .withPemsToTrustStore(List(ca.decodeAscii.toOption.get))
                  .build[IO]
         connection <- ConnectionProvider
                         .default[IO]("127.0.0.1", 13306, "ldbc_ssl_user", "securepassword", "world")
