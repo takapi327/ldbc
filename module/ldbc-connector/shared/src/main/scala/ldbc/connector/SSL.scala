@@ -39,7 +39,7 @@ trait SSL:
       case SSL.None => Resource.pure(None)
       case _        => tlsContext.map(SSLNegotiation.Options(_, tlsParameters, fallbackOk, logger).some)
 
-object SSL:
+object SSL extends SSLPlatform:
 
   /** `SSL` which indicates that SSL is not to be used. */
   object None extends SSL:
