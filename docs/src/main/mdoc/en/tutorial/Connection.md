@@ -146,6 +146,8 @@ val program = provider.use { connection =>
 
 You can add SSL configuration to establish a secure connection:
 
+※ Note that Trusted accepts all certificates. This is a setting for development environments.
+
 ```scala
 import cats.effect.IO
 import ldbc.connector.*
@@ -159,6 +161,20 @@ val program = provider.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
+
+ldbc supports all TLS modes provided by fs2. Below is a list of available SSL modes:
+
+| Mode                           | Platform        | Details                                                                                                                                    |
+|--------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `SSL.None`                     | `JVM/JS/Native` | `ldbc will not request SSL. This is the default.`                                                                                          |
+| `SSL.Trusted`                  | `JVM/JS/Native` | `Connect via SSL and trust all certificates.` `Use this if you're running with a self-signed certificate, for instance.`                   |
+| `SSL.System`                   | `JVM/JS/Native` | `Connect via SSL and use the system default SSLContext to verify certificates.` `Use this if you're running with a CA-signed certificate.` |
+| `SSL.fromSSLContext(…)`	       | `JVM`           | `Connect via SSL using an existing SSLContext.`                                                                                            |
+| `SSL.fromKeyStoreFile(…)`	     | `JVM`           | `Connect via SSL using a specified keystore file.`                                                                                         |
+| `SSL.fromKeyStoreResource(…)`	 | `JVM`           | `Connect via SSL using a specified keystore classpath resource.`                                                                           |
+| `SSL.fromKeyStore(…)`	         | `JVM`           | `Connect via SSL using an existing Keystore.`                                                                                              |
+| `SSL.fromSecureContext(...)`   | `JS`            | `Connect via SSL using an existing SecureContext.`                                                                                         |
+| `SSL.fromS2nConfig(...)`       | `Native`        | `Connect via SSL using an existing S2nConfig.`                                                                                             |
 
 ### Connection with Advanced Configuration
 
