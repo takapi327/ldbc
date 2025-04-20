@@ -19,13 +19,11 @@ class TLSConnectionTest extends FTestPlatform:
   test("Verify that you can connect to MySQL with a TLS connection") {
     assertIO(
       for
-        ca   <- Files[IO].readAll(Path("database/ssl/ca.pem")).through(text.utf8.decode).compile.string
-        cert <- Files[IO].readAll(Path("database/ssl/client-cert.pem")).through(text.utf8.decode).compile.string
-        key  <- Files[IO].readAll(Path("database/ssl/client-key.pem")).through(text.utf8.decode).compile.string
+        ca <- Files[IO].readAll(Path("database/ssl/ca.pem")).through(text.utf8.decode).compile.string
         secureContext = SecureContext(
                           ca   = List(ca.asRight).some,
-                          cert = List(cert.asRight).some,
-                          key  = List(SecureContext.Key(key.asRight, None)).some
+                          cert = None,
+                          key  = None
                         )
         result <- ConnectionProvider
                     .default[IO](
