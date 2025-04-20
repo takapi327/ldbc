@@ -26,10 +26,16 @@ trait SSL:
 
   def tlsContext[F[_]: Network](using ae: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]]
 
+  def withTLSParameters(_tlsParameters: TLSParameters): SSL =
+    new SSL:
+      override def tlsParameters: TLSParameters = _tlsParameters
+      override def tlsContext[F[_]: Network](using ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
+        outer.tlsContext
+
   def withFallback(_fallbackOk: Boolean): SSL =
     new SSL:
       override def fallbackOk: Boolean = _fallbackOk
-      def tlsContext[F[_]: Network](implicit ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
+      override def tlsContext[F[_]: Network](implicit ev: ApplicativeError[F, Throwable]): Resource[F, TLSContext[F]] =
         outer.tlsContext
 
   def toSSLNegotiationOptions[F[_]: Network](logger: Option[String => F[Unit]])(using

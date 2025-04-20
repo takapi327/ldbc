@@ -10,8 +10,7 @@ import cats.ApplicativeError
 
 import cats.effect.*
 
-import fs2.io.net.tls.S2nConfig
-import fs2.io.net.tls.TLSContext
+import fs2.io.net.tls.*
 import fs2.io.net.Network
 
 private[ldbc] trait SSLPlatform:

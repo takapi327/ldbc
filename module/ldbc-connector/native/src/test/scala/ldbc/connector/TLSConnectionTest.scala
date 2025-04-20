@@ -6,25 +6,26 @@
 
 package ldbc.connector
 
-import scodec.bits.ByteVector
-
 import cats.effect.*
 
+import fs2.text
 import fs2.io.file.*
-import fs2.io.net.tls.S2nConfig
+import fs2.io.net.tls.*
 
 class TLSConnectionTest extends FTestPlatform:
 
   test("Verify that you can connect to MySQL with a TLS connection") {
     assertIO(
       (for
-        ca <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca.pem")).compile.to(ByteVector))
+        ca <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca.pem")).through(text.utf8.decode).compile.string)
         cfg <- S2nConfig.builder
-                 .withPemsToTrustStore(List(ca.decodeAscii.toOption.get))
+                 .withPemsToTrustStore(List(ca))
                  .build[IO]
         connection <- ConnectionProvider
                         .default[IO]("127.0.0.1", 13306, "ldbc_ssl_user", "securepassword", "world")
-                        .setSSL(SSL.fromS2nConfig(cfg))
+                        .setSSL(SSL.fromS2nConfig(cfg).withTLSParameters(TLSParameters(
+                          serverName = Some("MySQL_Server"),
+                        )))
                         .createConnection()
       yield connection).use { conn =>
         for
