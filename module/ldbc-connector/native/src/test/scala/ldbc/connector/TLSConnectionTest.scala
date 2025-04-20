@@ -19,9 +19,8 @@ class TLSConnectionTest extends FTestPlatform:
     assertIO(
       (for
         cert <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca.pem")).compile.to(ByteVector))
-        key  <- Resource.eval(Files[IO].readAll(Path("database/ssl/ca-key.pem")).compile.to(ByteVector))
         cfg <- S2nConfig.builder
-                 .withCertChainAndKeysToStore(List(CertChainAndKey(cert, key)))
+                 .withCertChainAndKeysToStore(List(CertChainAndKey(cert, ByteVector.empty)))
                  .withPemsToTrustStore(List(cert.decodeAscii.toOption.get))
                  .build[IO]
         connection <- ConnectionProvider
