@@ -324,7 +324,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
   .settings(
     name        := "mcp-ldbc-document-server",
     description := "Project for MCP document server for ldbc",
-    run / fork       := false,
+    run / fork  := false
   )
   .settings((Compile / sourceGenerators) += Def.task {
     Generator.version(
@@ -337,31 +337,31 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "io.github.takapi327" %%% "mcp-scala-schema" % "0.1-a99c3f6-20250425T122115Z-SNAPSHOT",
-      "io.github.takapi327" %%% "mcp-scala-server" % "0.1-a99c3f6-20250425T122115Z-SNAPSHOT",
+      "io.github.takapi327" %%% "mcp-scala-server" % "0.1-a99c3f6-20250425T122115Z-SNAPSHOT"
     )
   )
   .jsSettings(
-    npmPackageName := "@ldbc/mcp-document-server",
-    npmPackageBinaryEnable := true,
-    npmPackageVersion := "0.3.0",
+    npmPackageName                  := "@ldbc/mcp-document-server",
+    npmPackageBinaryEnable          := true,
+    npmPackageVersion               := "0.3.0",
     scalaJSUseMainModuleInitializer := true,
     scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
     Compile / mainClass := Some("ldbc.mcp.StdioServer"),
-    
+
     // Custom task to copy mdoc docs to npm package directory
     npmPackage := {
       (Compile / npmPackage).value
       val log = streams.value.log
-      
+
       val docsSourceDir = file("docs/target/mdoc")
       val docsTargetDir = (Compile / npmPackageOutputDirectory).value / "docs"
-      
+
       if (docsSourceDir.exists()) {
-        log.info(s"Copying mdoc documentation from ${docsSourceDir} to ${docsTargetDir}")
+        log.info(s"Copying mdoc documentation from ${ docsSourceDir } to ${ docsTargetDir }")
         IO.copyDirectory(docsSourceDir, docsTargetDir)
         log.success("Documentation copied successfully")
       } else {
-        log.warn(s"Source docs directory not found: ${docsSourceDir}")
+        log.warn(s"Source docs directory not found: ${ docsSourceDir }")
       }
     }
   )
