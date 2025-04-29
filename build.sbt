@@ -341,13 +341,13 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     )
   )
   .jsSettings(
-    npmPackageName                  := "@ldbc/mcp-document-server",
-    npmPackageDescription := (Compile / description).value,
-    npmPackageKeywords := Seq("mcp", "scala", "ldbc"),
-    npmPackageAuthor := "takapi327",
-    npmPackageLicense := Some("MIT"),
-    npmPackageBinaryEnable          := true,
-    npmPackageVersion               := "0.3.0-RC2",
+    npmPackageName         := "@ldbc/mcp-document-server",
+    npmPackageDescription  := (Compile / description).value,
+    npmPackageKeywords     := Seq("mcp", "scala", "ldbc"),
+    npmPackageAuthor       := "takapi327",
+    npmPackageLicense      := Some("MIT"),
+    npmPackageBinaryEnable := true,
+    npmPackageVersion      := "0.3.0-RC2",
     npmPackageAdditionalNpmConfig := Map(
       "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/")
     ),
