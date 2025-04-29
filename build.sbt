@@ -279,12 +279,6 @@ lazy val otelExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, dsl)
 
-lazy val examples = Seq(
-  http4sExample,
-  hikariCPExample,
-  otelExample
-)
-
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -322,6 +316,46 @@ lazy val docs = (project in file("docs"))
   )
   .enablePlugins(AutomateHeaderPlugin, TypelevelSitePlugin, NoPublishPlugin)
 
+lazy val mcpDocumentServer = crossProject(JSPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JSPlatform)
+  .in(file("mcp/document-server"))
+  .settings(
+    name        := "mcp-ldbc-document-server",
+    description := "Project for MCP document server for ldbc",
+    run / fork       := false,
+  )
+  .settings((Compile / sourceGenerators) += Def.task {
+    Generator.version(
+      version      = version.value,
+      scalaVersion = scalaVersion.value,
+      sbtVersion   = sbtVersion.value,
+      dir          = (Compile / sourceManaged).value
+    )
+  }.taskValue)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.github.takapi327" %%% "mcp-scala-schema" % "0.1-a99c3f6-20250425T122115Z-SNAPSHOT",
+      "io.github.takapi327" %%% "mcp-scala-server" % "0.1-a99c3f6-20250425T122115Z-SNAPSHOT",
+    )
+  )
+  .jsSettings(
+    npmPackageName := "@ldbc/mcp-document-server",
+    npmPackageBinaryEnable := true,
+    npmPackageVersion := "0.3.0",
+    scalaJSUseMainModuleInitializer := true,
+    scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
+    Compile / mainClass := Some("ldbc.mcp.StdioServer")
+  )
+  .defaultSettings
+  .enablePlugins(NpmPackagePlugin, NoPublishPlugin)
+
+lazy val examples = Seq(
+  http4sExample,
+  hikariCPExample,
+  otelExample
+)
+
 lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(commonSettings)
@@ -340,7 +374,8 @@ lazy val ldbc = tlCrossRootProject
     docs,
     benchmark,
     schemaSpy,
-    hikari
+    hikari,
+    mcpDocumentServer
   )
   .aggregate(examples *)
   .enablePlugins(NoPublishPlugin)
