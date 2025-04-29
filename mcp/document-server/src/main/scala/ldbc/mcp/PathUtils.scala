@@ -26,8 +26,7 @@ object PathUtils:
   // Different module types have different implementations
   private def getCurrentDir: String =
     // For the CommonJS module
-    try
-      js.Dynamic.global.__dirname.asInstanceOf[String]
+    try js.Dynamic.global.__dirname.asInstanceOf[String]
     catch
       // Fallback to ES module or cwd if __dirname is not available
       case _: Throwable => Process.cwd()

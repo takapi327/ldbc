@@ -8,11 +8,12 @@ package ldbc.mcp
 
 import cats.syntax.all.*
 
-import io.circe.*
-
 import cats.effect.*
+
+import fs2.io.file.{ Files, Path }
 import fs2.Stream
-import fs2.io.file.{Files, Path}
+
+import io.circe.*
 
 import mcp.schema.*
 
@@ -36,41 +37,39 @@ object Tools:
       .evalMap { path =>
         val fileName = path.fileName.toString
         Files[IO].isDirectory(path).map { isDir =>
-          if isDir then
-            Some(Left(fileName + "/"))
-          else if fileName.endsWith(".md") then
-            Some(Right(fileName))
-          else
-            None
+          if isDir then Some(Left(fileName + "/"))
+          else if fileName.endsWith(".md") then Some(Right(fileName))
+          else None
         }
       }
       .collect { case Some(entry) => entry }
       .compile
       .fold((List.empty[String], List.empty[String])) {
-        case ((dirs, files), Left(dir)) => (dir :: dirs, files)
+        case ((dirs, files), Left(dir))   => (dir :: dirs, files)
         case ((dirs, files), Right(file)) => (dirs, file :: files)
       }
-      .map { case (dirs, files) =>
-        DirContents(dirs.sorted, files.sorted)
+      .map {
+        case (dirs, files) =>
+          DirContents(dirs.sorted, files.sorted)
       }
-      .handleErrorWith { error =>         
+      .handleErrorWith { error =>
         IO.raiseError(error)
       }
 
   private def handleDirectory(fullPath: Path, docPath: String): IO[String] =
 
     listDirContents(fullPath.toString).flatMap { contents =>
-      val dirs = contents.dirs
+      val dirs  = contents.dirs
       val files = contents.files
 
       // Create a header section that displays the contents of the directory
       val dirListing = List(
         s"Directory contents of $docPath:",
         "",
-        if (dirs.nonEmpty) "Subdirectories:" else "No subdirectories.",
+        if dirs.nonEmpty then "Subdirectories:" else "No subdirectories.",
         dirs.map(d => s"- $d").mkString("\n"),
         "",
-        if (files.nonEmpty) "Files in this directory:" else "No files in this directory.",
+        if files.nonEmpty then "Files in this directory:" else "No files in this directory.",
         files.map(f => s"- $f").mkString("\n"),
         "",
         "---",
@@ -80,14 +79,16 @@ object Tools:
       ).mkString("\n")
 
       // Read and concatenate the contents of all files
-      files.traverse { file =>
-        val filePath = fullPath.resolve(file)
-        Files[IO].readUtf8(filePath).compile.string.map { content =>
-          s"\n\n# $file\n\n$content"
+      files
+        .traverse { file =>
+          val filePath = fullPath.resolve(file)
+          Files[IO].readUtf8(filePath).compile.string.map { content =>
+            s"\n\n# $file\n\n$content"
+          }
         }
-      }.map { fileContents =>
-        dirListing + fileContents.mkString
-      }
+        .map { fileContents =>
+          dirListing + fileContents.mkString
+        }
     }
 
   /**
@@ -100,20 +101,21 @@ object Tools:
    */
   def readMdContent(docPath: String): IO[String] =
     val fullPath = Path(PathUtils.fromPackageRoot(s"$resourcesDir/$docPath"))
-    Files[IO].exists(fullPath).flatMap { exists =>
-      if !exists then
+    Files[IO]
+      .exists(fullPath)
+      .flatMap { exists =>
+        if !exists then IO.raiseError(new Exception(s"Path not found: $docPath"))
+        else
+          Files[IO].isDirectory(fullPath).flatMap { isDirectory =>
+            if isDirectory then handleDirectory(fullPath, docPath)
+            else
+              // For files, read the contents
+              Files[IO].readUtf8(fullPath).compile.string
+          }
+      }
+      .handleErrorWith { error =>
         IO.raiseError(new Exception(s"Path not found: $docPath"))
-      else
-        Files[IO].isDirectory(fullPath).flatMap { isDirectory =>
-          if isDirectory then
-            handleDirectory(fullPath, docPath)
-          else
-            // For files, read the contents
-            Files[IO].readUtf8(fullPath).compile.string
-        }
-    }.handleErrorWith { error =>
-      IO.raiseError(new Exception(s"Path not found: $docPath"))
-    }
+      }
 
   /**
    * Helper function to read file from resources directory
@@ -128,7 +130,8 @@ object Tools:
 
     Option(getClass.getClassLoader.getResourceAsStream(resourcePath)) match
       case Some(is) =>
-        Stream.bracket(IO(is))(is => IO(is.close()))
+        Stream
+          .bracket(IO(is))(is => IO(is.close()))
           .flatMap(is => fs2.io.readInputStream(IO(is), 8192, closeAfterUse = false))
           .through(fs2.text.utf8.decode)
           .compile
@@ -164,39 +167,41 @@ object Tools:
         val testPath = remainingParts.mkString("/")
         val fullPath = Path(resourcesDir).resolve(testPath)
 
-        Files[IO].exists(fullPath).flatMap { exists =>
-          if !exists then
-            tryParentDirs(remainingParts.init)
-          else
-            Files[IO].isDirectory(fullPath).flatMap { isDir =>
-              if isDir then
-                // If a directory is found, return its contents
-                listDirContents(fullPath.toString).map { contents =>
-                  val dirs = contents.dirs
-                  val files = contents.files
+        Files[IO]
+          .exists(fullPath)
+          .flatMap { exists =>
+            if !exists then tryParentDirs(remainingParts.init)
+            else
+              Files[IO].isDirectory(fullPath).flatMap { isDir =>
+                if isDir then
+                  // If a directory is found, return its contents
+                  listDirContents(fullPath.toString).map { contents =>
+                    val dirs  = contents.dirs
+                    val files = contents.files
 
-                  List(
-                    s"""Path "$docPath" not found.""",
-                    s"""Here are the available paths in "$testPath":""",
-                    "",
-                    if (dirs.nonEmpty) "Directories:" else "No subdirectories.",
-                    dirs.map(d => s"- $testPath/$d").mkString("\n"),
-                    "",
-                    if (files.nonEmpty) "Files:" else "No files.",
-                    files.map(f => s"- $testPath/$f").mkString("\n")
-                  ).mkString("\n")
-                }
-              else
-                // If the path found is not a directory, try the parent
-                tryParentDirs(remainingParts.init)
-            }
-        }.handleErrorWith { _ =>
-          // If an error occurs, try the parent directory
-          tryParentDirs(remainingParts.init)
-        }
+                    List(
+                      s"""Path "$docPath" not found.""",
+                      s"""Here are the available paths in "$testPath":""",
+                      "",
+                      if dirs.nonEmpty then "Directories:" else "No subdirectories.",
+                      dirs.map(d => s"- $testPath/$d").mkString("\n"),
+                      "",
+                      if files.nonEmpty then "Files:" else "No files.",
+                      files.map(f => s"- $testPath/$f").mkString("\n")
+                    ).mkString("\n")
+                  }
+                else
+                  // If the path found is not a directory, try the parent
+                  tryParentDirs(remainingParts.init)
+              }
+          }
+          .handleErrorWith { _ =>
+            // If an error occurs, try the parent directory
+            tryParentDirs(remainingParts.init)
+          }
 
     tryParentDirs(parts)
-    
+
   private val documentTree =
     """
       |├── README.md
@@ -316,13 +321,16 @@ object Tools:
     request =>
       for
         results <- IO.traverse(request.paths) { path =>
-          readMdContent(path).map { content =>
-            (path, content)
-          }
-        }
-        output = results.map { case (path, content) =>
-          s"## $path\n\n$content\n\n---\n"
-        }.mkString("\n")
+                     readMdContent(path).map { content =>
+                       (path, content)
+                     }
+                   }
+        output = results
+                   .map {
+                     case (path, content) =>
+                       s"## $path\n\n$content\n\n---\n"
+                   }
+                   .mkString("\n")
       yield McpSchema.CallToolResult.success(
         McpSchema.Content.text(output) :: Nil
       )

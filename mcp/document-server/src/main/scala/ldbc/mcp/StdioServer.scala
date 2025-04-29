@@ -8,9 +8,9 @@ package ldbc.mcp
 
 import cats.effect.*
 
-import mcp.server.McpServer
-
 import ldbc.build.Version
+
+import mcp.server.McpServer
 
 object StdioServer extends IOApp.Simple:
 
