@@ -63,7 +63,7 @@ object Tools:
       val dirs = contents.dirs
       val files = contents.files
 
-      // ディレクトリの内容を表示するヘッダー部分を作成
+      // Create a header section that displays the contents of the directory
       val dirListing = List(
         s"Directory contents of $docPath:",
         "",
@@ -79,7 +79,7 @@ object Tools:
         ""
       ).mkString("\n")
 
-      // すべてのファイルの内容を読み込んで連結
+      // Read and concatenate the contents of all files
       files.traverse { file =>
         val filePath = fullPath.resolve(file)
         Files[IO].readUtf8(filePath).compile.string.map { content =>
@@ -100,7 +100,6 @@ object Tools:
    */
   def readMdContent(docPath: String): IO[String] =
     val fullPath = Path(PathUtils.fromPackageRoot(s"$resourcesDir/$docPath"))
-    println(s"fullPath: $fullPath")
     Files[IO].exists(fullPath).flatMap { exists =>
       if !exists then
         IO.raiseError(new Exception(s"Path not found: $docPath"))
@@ -109,7 +108,7 @@ object Tools:
           if isDirectory then
             handleDirectory(fullPath, docPath)
           else
-            // ファイルの場合は内容を読み込む
+            // For files, read the contents
             Files[IO].readUtf8(fullPath).compile.string
         }
     }.handleErrorWith { error =>
@@ -148,13 +147,13 @@ object Tools:
    *   The content of the nearest existing directory as a string
    */
   def findNearestDirectory(docPath: String, availablePaths: String): IO[String] =
-    // パスをパーツに分割
+    // Split a path into parts
     val parts = docPath.split("/").filterNot(_.isEmpty).toList
 
-    // 再帰的に親ディレクトリを試す
+    // Recursively try the parent directory
     def tryParentDirs(remainingParts: List[String]): IO[String] =
       if remainingParts.isEmpty then
-        // 親ディレクトリが見つからない場合はルートのリストを返す
+        // Returns a list of roots if the parent directory is not found
         IO.pure(
           s"""Path "$docPath" not found.
              |Here are all available paths:
@@ -171,7 +170,7 @@ object Tools:
           else
             Files[IO].isDirectory(fullPath).flatMap { isDir =>
               if isDir then
-                // ディレクトリが見つかった場合はその内容を返す
+                // If a directory is found, return its contents
                 listDirContents(fullPath.toString).map { contents =>
                   val dirs = contents.dirs
                   val files = contents.files
@@ -188,11 +187,11 @@ object Tools:
                   ).mkString("\n")
                 }
               else
-                // 見つかったパスがディレクトリでない場合は親を試す
+                // If the path found is not a directory, try the parent
                 tryParentDirs(remainingParts.init)
             }
         }.handleErrorWith { _ =>
-          // エラーが発生した場合は親ディレクトリを試す
+          // If an error occurs, try the parent directory
           tryParentDirs(remainingParts.init)
         }
 
