@@ -128,7 +128,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "io.circe" %%% "circe-generic" % "0.14.12",
+      "io.circe" %%% "circe-generic" % "0.14.13",
       "io.circe" %%% "circe-yaml"    % "0.16.0"
     )
   )
@@ -287,7 +287,8 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> mysqlVersion
+      "MYSQL_VERSION" -> mysqlVersion,
+      "VERSION" -> "0.3.0-RC2" // TODO: Manually set sbt typelevel as RC is not allowed as a VERSION in sbt typelevel setting
     ),
     laikaTheme := LaikaSettings.helium.value,
     // Modify tlSite task to run the LLM docs script after the site is generated
