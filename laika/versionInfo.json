@@ -1,7 +1,7 @@
 {
   "versions": [
-    { "displayValue": "0.3", "pathSegment": "latest", "fallbackLink": "/index.html", "label": "Dev", "canonical": true },
-    { "displayValue": "0.2", "pathSegment": "0.2", "fallbackLink": "/index.html", "label": "Stable", "canonical": false }
+    { "displayValue": "0.3", "pathSegment": "latest", "fallbackLink": "/index.html", "label": "Stable", "canonical": true },
+    { "displayValue": "0.2", "pathSegment": "0.2", "fallbackLink": "/index.html", "label": "EOL", "canonical": false }
   ],
   "linkTargets": [
     { "path": "/en/examples/HikariCP.html", "versions": ["latest"] },
@@ -19,6 +19,7 @@
     { "path": "/en/qa/How-to-handle-multiple-databases.html", "versions": ["latest"] },
     { "path": "/en/qa/How-to-perform-DDL-with-schema.html", "versions": ["latest"] },
     { "path": "/en/qa/How-to-use-scala-connector-connection-pool.html", "versions": ["latest"] },
+    { "path": "/en/qa/How-to-use-with-ZIO.html", "versions": ["latest"] },
     { "path": "/en/qa/Implicit-search-problem-too-large.html", "versions": ["latest"] },
     { "path": "/en/qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html", "versions": ["latest"] },
     { "path": "/en/qa/Is-there-a-way-to-stream-query-results-asynchronously.html", "versions": ["latest"] },
@@ -59,6 +60,7 @@
     { "path": "/ja/qa/How-to-handle-multiple-databases.html", "versions": ["latest"] },
     { "path": "/ja/qa/How-to-perform-DDL-with-schema.html", "versions": ["latest"] },
     { "path": "/ja/qa/How-to-use-scala-connector-connection-pool.html", "versions": ["latest"] },
+    { "path": "/ja/qa/How-to-use-with-ZIO.html", "versions": ["latest"] },
     { "path": "/ja/qa/Implicit-search-problem-too-large.html", "versions": ["latest"] },
     { "path": "/ja/qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html", "versions": ["latest"] },
     { "path": "/ja/qa/Is-there-a-way-to-stream-query-results-asynchronously.html", "versions": ["latest"] },

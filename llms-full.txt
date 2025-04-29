@@ -638,21 +638,21 @@ That said, if you find yourself confused or frustrated by this documentation or 
 
 ## Quick Start
 
-The current version is **0.3.0-beta11**, compatible with **Scala 3.3.5**.
+The current version is **0.3.0-RC2**, compatible with **Scala 3.3.5**.
 
 ```scala
 libraryDependencies ++= Seq(
 
   // Start with this one
-  "io.github.takapi327" %% "ldbc-dsl" % "0.3.0-beta11",
+  "io.github.takapi327" %% "ldbc-dsl" % "0.3.0-RC2",
   
   // Choose the connector you want to use
-  "io.github.takapi327" %% "jdbc-connector" % "0.3.0-beta11", // Java connector (supported platform: JVM)
-  "io.github.takapi327" %% "ldbc-connector" % "0.3.0-beta11", // Scala connector (supported platforms: JVM, JS, Native)
+  "io.github.takapi327" %% "jdbc-connector" % "0.3.0-RC2", // Java connector (supported platform: JVM)
+  "io.github.takapi327" %% "ldbc-connector" % "0.3.0-RC2", // Scala connector (supported platforms: JVM, JS, Native)
 
   // And add these as needed
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.0-beta11", // Type-safe query building
-  "io.github.takapi327" %% "ldbc-schema"        % "0.3.0-beta11", // Database schema construction
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.0-RC2", // Type-safe query building
+  "io.github.takapi327" %% "ldbc-schema"        % "0.3.0-RC2", // Database schema construction
 )
 ```
 
@@ -719,13 +719,13 @@ This change gives developers the flexibility to choose database connections usin
 First, common dependencies are set up.
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %% "ldbc-dsl" % "0.3.0-RC2"
 ```
 
 In cross-platform projects (JVM, JS, native)
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-dsl" % "0.3.0-RC2"
 ```
 
 The dependency package used depends on whether the database connection is made through a connector using the Java API or through a connector provided by ldbc.
@@ -733,19 +733,19 @@ The dependency package used depends on whether the database connection is made t
 **Use of JDBC connectors**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %% "jdbc-connector" % "0.3.0-RC2"
 ```
 
 **Using the ldbc connector**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.0-RC2"
 ```
 
 In cross-platform projects (JVM, JS, native)
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.0-RC2"
 ```
 
 #### Usage rules
@@ -1295,7 +1295,7 @@ val provider =
 This feature is only available when using `ldbc-connector`.
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.0-RC2"
 ```
 
 @:@
@@ -1607,6 +1607,62 @@ The Scala connector does not yet support connection pooling. If you want to use 
 
 
 
+# Q: How to use with ZIO?
+
+## A: For use with ZIO, use `zio-interop-cats`.
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-interop-cats" % "<latest-version>"
+```
+
+The following is sample code for using ldbc with ZIO.
+
+```scala 3 mdoc
+import java.util.UUID
+
+import cats.effect.std.UUIDGen
+
+import fs2.hashing.Hashing
+import fs2.io.net.Network
+
+import zio.*
+import zio.interop.catz.*
+
+object Main extends ZIOAppDefault:
+
+  given cats.effect.std.Console[Task] = cats.effect.std.Console.make[Task]
+  given UUIDGen[Task] with
+    override def randomUUID: Task[UUID] = ZIO.attempt(UUID.randomUUID())
+  given Hashing[Task] = Hashing.forSync[Task]
+  given Network[Task] = Network.forAsync[Task]
+
+  private def provider =
+    ConnectionProvider
+      .default[Task]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
+
+  override def run =
+    provider.use { conn =>
+      sql"SELECT Name FROM city"
+        .query[String]
+        .to[List]
+        .readOnly(conn)
+        .flatMap { cities =>
+          Console.printLine(cities)
+        }
+    }
+```
+
+### パフォーマンス
+
+Performance results from the Cats Effect to ZIO conversion are shown below.
+
+@:image(/img/connector/Select_effect.svg) {
+alt = "Select Benchmark for Effect System"
+}
+
+
+
 # Q: How to handle the `Implicit search problem too large.` error?
 
 ```shell
@@ -1836,7 +1892,7 @@ If you want to use the traditional connector written in Java, set the following 
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "jdbc-connector" % "0.3.0-beta11",
+  "io.github.takapi327" %% "jdbc-connector" % "0.3.0-RC2",
   "com.mysql" % "mysql-connector-j" % "8.4.0"
 )
 ```
@@ -1847,7 +1903,7 @@ If you want to use the new connector written in Scala, set the following depende
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-connector" % "0.3.0-beta11"
+  "io.github.takapi327" %% "ldbc-connector" % "0.3.0-RC2"
 )
 ```
 
@@ -1857,7 +1913,7 @@ To use ldbc with Scala.js or Scala Native, set the dependencies as follows:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "com.example" %%% "ldbc-connector" % "0.3.0-beta11"
+  "com.example" %%% "ldbc-connector" % "0.3.0-RC2"
 )
 ```
 
@@ -1867,7 +1923,7 @@ To use the plain DSL, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-dsl" % "0.3.0-beta11"
+  "io.github.takapi327" %% "ldbc-dsl" % "0.3.0-RC2"
 )
 ```
 
@@ -1889,7 +1945,7 @@ To use the query builder, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.0-beta11"
+  "io.github.takapi327" %% "ldbc-query-builder" % "0.3.0-RC2"
 )
 ```
 
@@ -1916,7 +1972,7 @@ To use schema definition and model mapping, set the following dependencies:
 
 ```scala 3
 libraryDependencies ++= Seq(
-  "io.github.takapi327" %% "ldbc-schema" % "0.3.0-beta11"
+  "io.github.takapi327" %% "ldbc-schema" % "0.3.0-RC2"
 )
 ```
 
@@ -1989,13 +2045,13 @@ To use it, you need to set up the following dependency in your project:
 **JVM**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %% "ldbc-connector" % "0.3.0-RC2"
 ```
 
 **JS/Native**
 
 ```scala 3
-libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.0-beta11"
+libraryDependencies += "io.github.takapi327" %%% "ldbc-connector" % "0.3.0-RC2"
 ```
 
 **Supported Versions**
@@ -2865,7 +2921,7 @@ The JDBC connector establishes connections using standard JDBC drivers. It's rec
 First, add the necessary dependencies. When using the jdbc connector, you need to add the MySQL connector as well.
 
 ```scala
-//> dep "io.github.takapi327::jdbc-connector:0.3.0-beta11"
+//> dep "io.github.takapi327::jdbc-connector:0.3.0-RC2"
 //> dep "com.mysql":"mysql-connector-j":"8.4.0"
 ```
 
@@ -2948,7 +3004,7 @@ The ldbc connector is an optimized connector developed by ldbc, offering more co
 First, add the necessary dependency.
 
 ```scala
-//> dep "io.github.takapi327::ldbc-connector:0.3.0-beta11"
+//> dep "io.github.takapi327::ldbc-connector:0.3.0-RC2"
 ```
 
 ### Connection with Basic Configuration
@@ -2975,6 +3031,8 @@ val program = provider.use { connection =>
 
 You can add SSL configuration to establish a secure connection:
 
+※ Note that Trusted accepts all certificates. This is a setting for development environments.
+
 ```scala
 import cats.effect.IO
 import ldbc.connector.*
@@ -2988,6 +3046,20 @@ val program = provider.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
+
+ldbc supports all TLS modes provided by fs2. Below is a list of available SSL modes:
+
+| Mode                           | Platform        | Details                                                                                                                                    |
+|--------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `SSL.None`                     | `JVM/JS/Native` | `ldbc will not request SSL. This is the default.`                                                                                          |
+| `SSL.Trusted`                  | `JVM/JS/Native` | `Connect via SSL and trust all certificates.` `Use this if you're running with a self-signed certificate, for instance.`                   |
+| `SSL.System`                   | `JVM/JS/Native` | `Connect via SSL and use the system default SSLContext to verify certificates.` `Use this if you're running with a CA-signed certificate.` |
+| `SSL.fromSSLContext(…)`	       | `JVM`           | `Connect via SSL using an existing SSLContext.`                                                                                            |
+| `SSL.fromKeyStoreFile(…)`	     | `JVM`           | `Connect via SSL using a specified keystore file.`                                                                                         |
+| `SSL.fromKeyStoreResource(…)`	 | `JVM`           | `Connect via SSL using a specified keystore classpath resource.`                                                                           |
+| `SSL.fromKeyStore(…)`	         | `JVM`           | `Connect via SSL using an existing Keystore.`                                                                                              |
+| `SSL.fromSecureContext(...)`   | `JS`            | `Connect via SSL using an existing SecureContext.`                                                                                         |
+| `SSL.fromS2nConfig(...)`       | `Native`        | `Connect via SSL using an existing S2nConfig.`                                                                                             |
 
 ### Connection with Advanced Configuration
 
@@ -3981,7 +4053,7 @@ In this chapter, we'll explain methods for building type-safe queries.
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-query-builder:0.3.0-beta11"
+//> using dep "io.github.takapi327::ldbc-query-builder:0.3.0-RC2"
 ```
 
 ## Basic Usage
@@ -4559,7 +4631,7 @@ Code generation is a powerful tool for automating repetitive tasks and reducing 
 You need to set up the following dependency in your project. Add it to `project/plugins.sbt`.
 
 ```scala
-addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.3.0-beta11")
+addSbtPlugin("io.github.takapi327" % "ldbc-plugin" % "0.3.0-RC2")
 ```
 
 ### Enabling the Plugin
@@ -5003,7 +5075,7 @@ This chapter explains how to handle database schemas in Scala code, particularly
 You need to set up the following dependency in your project:
 
 ```scala
-//> using dep "io.github.takapi327::ldbc-schema:0.3.0-beta11"
+//> using dep "io.github.takapi327::ldbc-schema:0.3.0-RC2"
 ```
 
 The following code examples assume these imports:
@@ -5844,8 +5916,8 @@ Add the following code to `FirstSteps.scala`:
 
 ```scala
 //> using scala "3.3.5"
-//> using dep "io.github.takapi327::ldbc-dsl:0.3.0-beta11"
-//> using dep "io.github.takapi327::ldbc-connector:0.3.0-beta11"
+//> using dep "io.github.takapi327::ldbc-dsl:0.3.0-RC2"
+//> using dep "io.github.takapi327::ldbc-connector:0.3.0-RC2"
 
 import cats.effect.*
 import cats.syntax.all.*
@@ -5885,7 +5957,7 @@ If you see "Value retrieved from database: 42", you've succeeded! This doesn't a
 We also provide a Scala CLI script that automatically handles all the setup:
 
 ```bash
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-beta11 --dependency io.github.takapi327::ldbc-connector:0.3.0-beta11
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/00-Setup.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-RC2 --dependency io.github.takapi327::ldbc-connector:0.3.0-RC2
 ```
 
 ## Next Steps
@@ -5954,7 +6026,7 @@ When you run this program, it will return the result `Some(2)` from the database
 This program can be easily executed using Scala CLI:
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-beta11 --dependency io.github.takapi327::ldbc-connector:0.3.0-beta11
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/02-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-RC2 --dependency io.github.takapi327::ldbc-connector:0.3.0-RC2
 ```
 
 ## Second Program: Combining Multiple Queries
@@ -5989,7 +6061,7 @@ The execution result will look like `(List(1), Some(2), 3)`. This is a tuple con
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-beta11 --dependency io.github.takapi327::ldbc-connector:0.3.0-beta11
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/03-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-RC2 --dependency io.github.takapi327::ldbc-connector:0.3.0-RC2
 ```
 
 ## Third Program: Data Update Operations
@@ -6020,7 +6092,7 @@ The `commit` method automatically enables `AutoCommit` and commits the transacti
 **Execute with Scala CLI**
 
 ```shell
-scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-beta11 --dependency io.github.takapi327::ldbc-connector:0.3.0-beta11
+scala-cli https://github.com/takapi327/ldbc/tree/master/docs/src/main/scala/04-Program.scala --dependency io.github.takapi327::ldbc-dsl:0.3.0-RC2 --dependency io.github.takapi327::ldbc-connector:0.3.0-RC2
 ```
 
 ## Transaction Control

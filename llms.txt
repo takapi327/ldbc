@@ -43,6 +43,7 @@
 - [How To Handle Multiple Databases](https://takapi327.github.io/ldbc/latest/en/qa/How-to-handle-multiple-databases.html)
 - [How To Perform DDL With Schema](https://takapi327.github.io/ldbc/latest/en/qa/How-to-perform-DDL-with-schema.html)
 - [How To Use Scala Connector Connection Pool](https://takapi327.github.io/ldbc/latest/en/qa/How-to-use-scala-connector-connection-pool.html)
+- [How To Use With ZIO](https://takapi327.github.io/ldbc/latest/en/qa/How-to-use-with-ZIO.html)
 - [Implicit Search Problem Too Large](https://takapi327.github.io/ldbc/latest/en/qa/Implicit-search-problem-too-large.html)
 - [Is There A Function To Limit The Number Of Concurrent Queries](https://takapi327.github.io/ldbc/latest/en/qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html)
 - [Is There A Way To Stream Query Results Asynchronously](https://takapi327.github.io/ldbc/latest/en/qa/Is-there-a-way-to-stream-query-results-asynchronously.html)

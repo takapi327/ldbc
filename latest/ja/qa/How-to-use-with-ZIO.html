@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Typelevel Laika + Helium Theme" />
-  <title>Q: ネストしたモデルを使うにはどうすればいいですか？</title>
+  <title>Q: ZIOで使用する方法は？</title>
   
   <meta name="author" content="ldbc contributors"/>
   
@@ -29,7 +29,7 @@
     <link rel="stylesheet" type="text/css" href="../../css/site.css" />
   <script src="../../helium/site/laika-helium.js"></script>
     <script src="../../helium/site/laika-versions.js"></script>
-  <script>initVersions("../../../", "/ja/qa/How-do-I-use-nested-models.html", "latest", null);</script>
+  <script>initVersions("../../../", "/ja/qa/How-to-use-with-ZIO.html", "latest", null);</script>
   
   <script> /* for avoiding page load transitions */ </script>
 </head>
@@ -138,7 +138,7 @@
     <li class="level2 nav-leaf"><a href="What-is-the-difference-between-a-Java-connect-and-a-Scala-connector.html">Q: JavaのコネクトとScalaのコネクタの違いは何ですか？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-define-complex-queries-with-plain-queries.html">Q: プレーンクエリで複雑なクエリを定義する方法は？</a></li>
     <li class="level2 nav-leaf"><a href="How-do-I-use-my-own-type.html">Q: 独自の型を使うにはどうすればいいですか？</a></li>
-    <li class="level2 active nav-leaf"><a href="#">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
+    <li class="level2 nav-leaf"><a href="How-do-I-use-nested-models.html">Q: ネストしたモデルを使うにはどうすればいいですか？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-perform-DDL-with-schema.html">Q: スキーマを使用したDDLを実行する方法は？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-change-column-names-in-Query-Builder.html">Q: クエリビルダーでカラム名を変更する方法は？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-change-the-format-of-column-names-using-the-schema.html">Q: スキーマを使用したカラム名のフォーマットを変更する方法は？</a></li>
@@ -148,7 +148,7 @@
     <li class="level2 nav-leaf"><a href="Is-there-a-way-to-stream-query-results-asynchronously.html">Q: クエリの結果を非同期でストリーミングする方法はありますか？</a></li>
     <li class="level2 nav-leaf"><a href="Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: 同時実行のクエリ数を制限する機能はありますか？</a></li>
     <li class="level2 nav-leaf"><a href="How-to-handle-multiple-databases.html">Q: 複数のデータベース（マルチテナント環境）を扱う方法は？</a></li>
-    <li class="level2 nav-leaf"><a href="How-to-use-with-ZIO.html">Q: ZIOで使用する方法は？</a></li>
+    <li class="level2 active nav-leaf"><a href="#">Q: ZIOで使用する方法は？</a></li>
     <li class="level1 nav-header">Reference</li>
     <li class="level2 nav-leaf"><a href="../reference/">はじめに</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">コネクタ</a></li>
@@ -162,11 +162,11 @@
 
   
 <nav id="page-nav">
-  <p class="header"><a href="#">Q: ネストしたモデルを使うにはどうすればいいですか？</a></p>
+  <p class="header"><a href="#">Q: ZIOで使用する方法は？</a></p>
 
   <ul class="nav-list">
-    <li class="level1 nav-leaf"><a href="#a-ldbcでは-複数のカラムを組み合わせてネストしたモデルにマッピングすることができます">A: ldbcでは、複数のカラムを組み合わせてネストしたモデルにマッピングすることができます。</a></li>
-    <li class="level1 nav-leaf"><a href="#参考資料">参考資料</a></li>
+    <li class="level1 nav-node"><a href="#a-zioで使用する場合-zio-interop-catsを使用します">A: ZIOで使用する場合、<code>zio-interop-cats</code>を使用します。</a></li>
+    <li class="level2 nav-leaf"><a href="#パフォーマンス">パフォーマンス</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -175,36 +175,50 @@
 
   <main class="content">
 
-    <h1 id="q-ネストしたモデルを使うにはどうすればいいですか" class="title">Q: ネストしたモデルを使うにはどうすればいいですか？</h1>
+    <h1 id="q-zioで使用する方法は" class="title">Q: ZIOで使用する方法は？</h1>
     
-    <h2 id="a-ldbcでは-複数のカラムを組み合わせてネストしたモデルにマッピングすることができます" class="section"><a class="anchor-link left" href="#a-ldbcでは-複数のカラムを組み合わせてネストしたモデルにマッピングすることができます"><i class="icofont-laika link">&#xef71;</i></a>A: ldbcでは、複数のカラムを組み合わせてネストしたモデルにマッピングすることができます。</h2>
-    <p>例えば、UserモデルにNameというネストしたモデルを持たせ、データベース上では分割されたカラム（例: first<em>name、last</em>name）にマッピングする方法は以下の通りです。</p>
-    <pre><code class="nohighlight"><span class="comment">// ネストしたモデルの定義
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">User</span><span>(</span><span class="identifier">id</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">name</span><span>: </span><span class="type-name">User</span><span>.</span><span class="type-name">Name</span><span>, </span><span class="identifier">email</span><span>: </span><span class="type-name">String</span><span>)
-</span><span class="keyword">object</span><span> </span><span class="type-name">User</span><span>:
-  </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Name</span><span>(</span><span class="identifier">firstName</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">lastName</span><span>: </span><span class="type-name">String</span><span>)
+    <h2 id="a-zioで使用する場合-zio-interop-catsを使用します" class="section"><a class="anchor-link left" href="#a-zioで使用する場合-zio-interop-catsを使用します"><i class="icofont-laika link">&#xef71;</i></a>A: ZIOで使用する場合、<code>zio-interop-cats</code>を使用します。</h2>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;dev.zio&quot;</span><span> %% </span><span class="string-literal">&quot;zio-interop-cats&quot;</span><span> % </span><span class="string-literal">&quot;&lt;latest-version&gt;&quot;</span></code></pre>
+    <p>以下は、ZIOを使用してldbcを利用するためのサンプルコードです。</p>
+    <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">UUID</span><span>
 
-</span><span class="comment">// テーブル定義の例
-</span><span class="keyword">class</span><span> </span><span class="type-name">UserTable</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Table</span><span>[</span><span class="type-name">User</span><span>](</span><span class="string-literal">&quot;user&quot;</span><span>):
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">id</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">Long</span><span>] = </span><span class="identifier">bigint</span><span>().</span><span class="identifier">autoIncrement</span><span>.</span><span class="identifier">primaryKey</span><span>
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">firstName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">lastName</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">email</span><span>: </span><span class="type-name">Column</span><span>[</span><span class="type-name">String</span><span>] = </span><span class="identifier">varchar</span><span>(</span><span class="number-literal">255</span><span>)
-  
-  </span><span class="comment">// (firstName *: lastName)をUser.Nameに変換し、id、名前、emailをUserにマッピングする
-</span><span>  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> * : </span><span class="type-name">Column</span><span>[</span><span class="type-name">User</span><span>] =
-    (</span><span class="identifier">id</span><span> *: (</span><span class="identifier">firstName</span><span> *: </span><span class="identifier">lastName</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>.</span><span class="type-name">Name</span><span>] *: </span><span class="identifier">email</span><span>).</span><span class="identifier">to</span><span>[</span><span class="type-name">User</span><span>]
-  
-</span><span class="comment">// 使用例:
-</span><span class="type-name">TableQuery</span><span>[</span><span class="type-name">UserTable</span><span>].</span><span class="identifier">selectAll</span><span>.</span><span class="identifier">query</span><span>.</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>].</span><span class="identifier">foreach</span><span>(</span><span class="identifier">println</span><span>)
-</span><span class="comment">// UserTableのselectで取得されたレコードは、自動的にUser.Name(firstName, lastName)に変換される</span></code></pre>
-    <p>この定義により、データベースの<code>first_name</code>と<code>last_name</code>カラムがそれぞれUser.Nameの<code>firstName</code>および<code>lastName</code>に対応し、ネストしたモデルとして利用できます。</p>
+</span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">UUIDGen</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">hashing</span><span>.</span><span class="type-name">Hashing</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">fs2</span><span>.</span><span class="identifier">io</span><span>.</span><span class="identifier">net</span><span>.</span><span class="type-name">Network</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.*
+</span><span class="keyword">import</span><span> </span><span class="identifier">zio</span><span>.</span><span class="identifier">interop</span><span>.</span><span class="identifier">catz</span><span>.*
+
+</span><span class="keyword">object</span><span> </span><span class="type-name">Main</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">ZIOAppDefault</span><span>:
+
+  </span><span class="keyword">given</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">std</span><span>.</span><span class="type-name">Console</span><span>.</span><span class="identifier">make</span><span>[</span><span class="type-name">Task</span><span>]
+  </span><span class="keyword">given</span><span> </span><span class="type-name">UUIDGen</span><span>[</span><span class="type-name">Task</span><span>] </span><span class="keyword">with</span><span>
+    </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">randomUUID</span><span>: </span><span class="type-name">Task</span><span>[</span><span class="type-name">UUID</span><span>] = </span><span class="type-name">ZIO</span><span>.</span><span class="identifier">attempt</span><span>(</span><span class="type-name">UUID</span><span>.</span><span class="identifier">randomUUID</span><span>())
+  </span><span class="keyword">given</span><span> </span><span class="type-name">Hashing</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Hashing</span><span>.</span><span class="identifier">forSync</span><span>[</span><span class="type-name">Task</span><span>]
+  </span><span class="keyword">given</span><span> </span><span class="type-name">Network</span><span>[</span><span class="type-name">Task</span><span>] = </span><span class="type-name">Network</span><span>.</span><span class="identifier">forAsync</span><span>[</span><span class="type-name">Task</span><span>]
+
+  </span><span class="keyword">private</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">provider</span><span> =
+    </span><span class="type-name">ConnectionProvider</span><span>
+      .</span><span class="identifier">default</span><span>[</span><span class="type-name">Task</span><span>](</span><span class="string-literal">&quot;127.0.0.1&quot;</span><span>, </span><span class="number-literal">13306</span><span>, </span><span class="string-literal">&quot;ldbc&quot;</span><span>, </span><span class="string-literal">&quot;password&quot;</span><span>, </span><span class="string-literal">&quot;world&quot;</span><span>)
+      .</span><span class="identifier">setSSL</span><span>(</span><span class="type-name">SSL</span><span>.</span><span class="type-name">Trusted</span><span>)
+
+  </span><span class="keyword">override</span><span> </span><span class="keyword">def</span><span> </span><span class="declaration-name">run</span><span> =
+    </span><span class="identifier">provider</span><span>.</span><span class="identifier">use</span><span> { </span><span class="identifier">conn</span><span> =&gt;
+      </span><span class="string-literal">sql&quot;SELECT Name FROM city&quot;</span><span>
+        .</span><span class="identifier">query</span><span>[</span><span class="type-name">String</span><span>]
+        .</span><span class="identifier">to</span><span>[</span><span class="type-name">List</span><span>]
+        .</span><span class="identifier">readOnly</span><span>(</span><span class="identifier">conn</span><span>)
+        .</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">cities</span><span> =&gt;
+          </span><span class="type-name">Console</span><span>.</span><span class="identifier">printLine</span><span>(</span><span class="identifier">cities</span><span>)
+        }
+    }</span></code></pre>
     
-    <h2 id="参考資料" class="section"><a class="anchor-link left" href="#参考資料"><i class="icofont-laika link">&#xef71;</i></a>参考資料</h2>
-    <ul>
-      <li><a href="../tutorial/Schema.html">スキーマ定義の詳細</a><br></li>
-      <li><a href="../tutorial/Custom-Data-Type.html">カスタム データ型</a></li>
-    </ul>
+    <h3 id="パフォーマンス" class="section"><a class="anchor-link left" href="#パフォーマンス"><i class="icofont-laika link">&#xef71;</i></a>パフォーマンス</h3>
+    <p>Cats EffectからZIO変換によるパフォーマンス結果は以下のようになります。</p>
+    <div class="default-image-block">
+      <img src="../../img/connector/Select_effect.svg" alt="Select Benchmark for Effect System">
+    </div>
 
     
 <hr class="footer-rule"/>

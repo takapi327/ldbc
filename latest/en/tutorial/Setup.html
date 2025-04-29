@@ -148,6 +148,7 @@
     <li class="level2 nav-leaf"><a href="../qa/Is-there-a-way-to-stream-query-results-asynchronously.html">Q: Is there a way to stream query results asynchronously?</a></li>
     <li class="level2 nav-leaf"><a href="../qa/Is-there-a-function-to-limit-the-number-of-concurrent-queries.html">Q: Is there a function to limit the number of concurrent queries?</a></li>
     <li class="level2 nav-leaf"><a href="../qa/How-to-handle-multiple-databases.html">Q: How to handle multiple databases (multi-tenant environment)?</a></li>
+    <li class="level2 nav-leaf"><a href="../qa/How-to-use-with-ZIO.html">Q: How to use with ZIO?</a></li>
     <li class="level1 nav-header">Reference</li>
     <li class="level2 nav-leaf"><a href="../reference/">Introduction</a></li>
     <li class="level2 nav-leaf"><a href="../reference/Connector.html">Connector</a></li>
@@ -275,8 +276,8 @@
 touch FirstSteps.scala</span></code></pre>
     <p>Add the following code to <code>FirstSteps.scala</code>:</p>
     <pre><code class="nohighlight"><span class="comment">//&gt; using scala &quot;3.3.5&quot;
-//&gt; using dep &quot;io.github.takapi327::ldbc-dsl:0.3.0-beta11&quot;
-//&gt; using dep &quot;io.github.takapi327::ldbc-connector:0.3.0-beta11&quot;
+//&gt; using dep &quot;io.github.takapi327::ldbc-dsl:0.3.0-RC2&quot;
+//&gt; using dep &quot;io.github.takapi327::ldbc-connector:0.3.0-RC2&quot;
 </span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.*
 </span><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.*
@@ -307,7 +308,7 @@ touch FirstSteps.scala</span></code></pre>
     
     <h2 id="automatic-setup-script-optional" class="section"><a class="anchor-link left" href="#automatic-setup-script-optional"><i class="icofont-laika link">&#xef71;</i></a>Automatic Setup Script (Optional)</h2>
     <p>We also provide a Scala CLI script that automatically handles all the setup:</p>
-    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">00</span><span>-Setup.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span>-beta</span><span class="number-literal">11</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span><span>-beta</span><span class="number-literal">11</span></code></pre>
+    <pre class="keep-together pdf epub"><code class="nohighlight"><span>scala-cli https://github.com/takapi</span><span class="number-literal">327</span><span>/ldbc/tree/master/docs/src/main/scala/</span><span class="number-literal">00</span><span>-Setup.scala --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-dsl:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span><span> --dependency io.github.takapi</span><span class="number-literal">327</span><span>::ldbc-connector:</span><span class="number-literal">0.3.0</span><span>-RC</span><span class="number-literal">2</span></code></pre>
     
     <h2 id="next-steps" class="section"><a class="anchor-link left" href="#next-steps"><i class="icofont-laika link">&#xef71;</i></a>Next Steps</h2>
     <p>You&#39;re now ready to use ldbc! Proceed to <a href="Connection.html">Connection</a> to learn more about database connections.</p>
