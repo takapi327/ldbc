@@ -328,39 +328,3 @@ object Tools:
         McpSchema.Content.text(output) :: Nil
       )
   )
-
-import scala.scalajs.js
-import scala.scalajs.js.annotation._
-
-// Node.jsのpathモジュールをインポート
-@js.native
-@JSImport("path", JSImport.Namespace)
-object NodePath extends js.Object {
-  def resolve(paths: String*): String = js.native
-}
-
-// Node.jsのprocessオブジェクトへのアクセス
-@js.native
-@JSGlobal("process")
-object Process extends js.Object {
-  val cwd: js.Function0[String] = js.native
-}
-
-object PathUtils {
-  // __dirnameを取得する方法 (ESモジュールの場合は別の方法が必要)
-  // モジュールタイプによって実装が異なる
-  private def getCurrentDir: String = {
-    // CommonJSモジュールの場合
-    try {
-      js.Dynamic.global.__dirname.asInstanceOf[String]
-    } catch {
-      // ESモジュールまたは__dirnameが利用できない場合はcwdにフォールバック
-      case _: Throwable => Process.cwd()
-    }
-  }
-
-  def fromPackageRoot(relative: String): String =
-    val currentDir = getCurrentDir
-    // カレントディレクトリから一つ上の階層に移動し、relativeを結合
-    NodePath.resolve(currentDir, "..", relative)
-}
