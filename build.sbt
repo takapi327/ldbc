@@ -346,7 +346,24 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     npmPackageVersion := "0.3.0",
     scalaJSUseMainModuleInitializer := true,
     scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
-    Compile / mainClass := Some("ldbc.mcp.StdioServer")
+    Compile / mainClass := Some("ldbc.mcp.StdioServer"),
+    
+    // Custom task to copy mdoc docs to npm package directory
+    npmPackage := {
+      (Compile / npmPackage).value
+      val log = streams.value.log
+      
+      val docsSourceDir = file("docs/target/mdoc")
+      val docsTargetDir = (Compile / npmPackageOutputDirectory).value / "docs"
+      
+      if (docsSourceDir.exists()) {
+        log.info(s"Copying mdoc documentation from ${docsSourceDir} to ${docsTargetDir}")
+        IO.copyDirectory(docsSourceDir, docsTargetDir)
+        log.success("Documentation copied successfully")
+      } else {
+        log.warn(s"Source docs directory not found: ${docsSourceDir}")
+      }
+    }
   )
   .defaultSettings
   .enablePlugins(NpmPackagePlugin, NoPublishPlugin)
