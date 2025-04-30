@@ -335,10 +335,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     )
   }.taskValue)
   .settings(
-    libraryDependencies ++= Seq(
-      "io.github.takapi327" %%% "mcp-scala-schema" % "0.1-a99c3f6-20250425T122115Z-SNAPSHOT",
-      "io.github.takapi327" %%% "mcp-scala-server" % "0.1-a99c3f6-20250425T122115Z-SNAPSHOT"
-    )
+    libraryDependencies += "io.github.takapi327" %%% "mcp-scala-server" % "0.1.0-alpha1"
   )
   .jsSettings(
     npmPackageName         := "@ldbc/mcp-document-server",
@@ -347,7 +344,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     npmPackageAuthor       := "takapi327",
     npmPackageLicense      := Some("MIT"),
     npmPackageBinaryEnable := true,
-    npmPackageVersion      := "0.3.0-RC2",
+    npmPackageVersion      := "0.1.0-alpha1",
     npmPackageAdditionalNpmConfig := Map(
       "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/")
     ),
