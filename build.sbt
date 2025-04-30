@@ -347,9 +347,9 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     npmPackageVersion      := "0.1.0-alpha1",
     npmPackageAdditionalNpmConfig := Map(
       "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
-      "private" -> _root_.io.circe.Json.fromBoolean(false),
-      "publishConfig" ->  _root_.io.circe.Json.obj(
-        "access" -> _root_.io.circe.Json.fromString("public"),
+      "private"  -> _root_.io.circe.Json.fromBoolean(false),
+      "publishConfig" -> _root_.io.circe.Json.obj(
+        "access" -> _root_.io.circe.Json.fromString("public")
       )
     ),
     scalaJSUseMainModuleInitializer := true,
