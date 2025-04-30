@@ -2,6 +2,8 @@
 
 A Model Context Protocol server that provides access to ldbc documents. This server allows the LLM to inspect ldbc documents, answer questions, and perform tutorials.
 
+https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5
+
 ## Installation
 
 There are several ways to install and configure the MCP server:
