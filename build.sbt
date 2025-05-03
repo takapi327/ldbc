@@ -335,7 +335,7 @@ lazy val mcpDocumentServer = crossProject(JSPlatform)
     )
   }.taskValue)
   .settings(
-    libraryDependencies += "io.github.takapi327" %%% "mcp-scala-server" % "0.1.0-alpha1"
+    libraryDependencies += "io.github.takapi327" %%% "mcp-scala-server" % "0.1.0-alpha2"
   )
   .jsSettings(
     npmPackageName         := "@ldbc/mcp-document-server",

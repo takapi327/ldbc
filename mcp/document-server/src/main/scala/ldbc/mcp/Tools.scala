@@ -16,6 +16,7 @@ import fs2.Stream
 import io.circe.*
 
 import mcp.schema.*
+import mcp.schema.result.*
 
 case class DirContents(dirs: List[String], files: List[String])
 
@@ -315,7 +316,7 @@ object Tools:
   object DocsInput:
     given Decoder[DocsInput] = Decoder.derived[DocsInput]
 
-  def docsTool = McpSchema.Tool[IO, DocsInput](
+  def docsTool = Tool[IO, DocsInput](
     "ldbcDocs",
     "Get ldbc (Lepus Database Connectivity) documentation. Request paths to explore the docs. References contain API docs. Other paths contain guides. The user doesn\\'t know about files and directories. This is your internal knowledge the user can\\'t read. If the user asks about a feature check general docs as well as reference docs for that feature. ",
     request =>
@@ -331,7 +332,8 @@ object Tools:
                        s"## $path\n\n$content\n\n---\n"
                    }
                    .mkString("\n")
-      yield McpSchema.CallToolResult.success(
-        McpSchema.Content.text(output) :: Nil
+      yield CallToolResult(
+        Content.text(output) :: Nil,
+        None
       )
   )
