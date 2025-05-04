@@ -309,7 +309,7 @@ You can use the documentation server to ask questions about ldbc, run tutorials,
 It can be used with Visual Studio Code, Claude Desktop, etc.
 
 > [!NOTE]
-> This server is an experimental feature, but should help you.
+> This server is an experimental feature, but should help you. This server is developed using tools made in Scala. It is still under development and therefore contains many missing features. Please report feature requests or problems [here](https://github.com/takapi327/mcp-scala/issues).
 
 ```json
 {
@@ -325,6 +325,10 @@ It can be used with Visual Studio Code, Claude Desktop, etc.
   }
 }
 ```
+
+> [!NOTE]
+> The video is processed in Japanese, but it works fine in English.
+> 「ldbcのチュートリアルを始めたい」is I'd like to start a tutorial on ldbc.”
 
 https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5
 
