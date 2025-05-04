@@ -326,6 +326,8 @@ It can be used with Visual Studio Code, Claude Desktop, etc.
 }
 ```
 
+https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5
+
 Please refer to the [README](https://github.com/takapi327/ldbc/blob/master/mcp/document-server/.js/README.md) for usage instructions.
 
 ## Features/Roadmap
