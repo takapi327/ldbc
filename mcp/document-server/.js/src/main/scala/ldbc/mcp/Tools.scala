@@ -58,7 +58,6 @@ object Tools:
       }
 
   private def handleDirectory(fullPath: Path, docPath: String): IO[String] =
-
     listDirContents(fullPath.toString).flatMap { contents =>
       val dirs  = contents.dirs
       val files = contents.files
@@ -132,8 +131,8 @@ object Tools:
     Option(getClass.getClassLoader.getResourceAsStream(resourcePath)) match
       case Some(is) =>
         Stream
-          .bracket(IO(is))(is => IO(is.close()))
-          .flatMap(is => fs2.io.readInputStream(IO(is), 8192, closeAfterUse = false))
+          .bracket(IO.blocking(is))(is => IO.blocking(is.close()))
+          .flatMap(is => fs2.io.readInputStream(IO.blocking(is), 8192, closeAfterUse = false))
           .through(fs2.text.utf8.decode)
           .compile
           .string
