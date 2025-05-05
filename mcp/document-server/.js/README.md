@@ -39,6 +39,24 @@ To manually configure the MCP server for Visual Studio Code, add the following t
 }
 ```
 
+### Claude Desktop
+
+To manually configure the MCP server for Claude Desktop App, add the following to your claude_desktop_config.json file (typically located in your user directory):
+
+```json
+{
+  "mcpServers": {
+    "mcp-ldbc-document-server": {
+      "command": "npx",
+      "args": [
+        "@ldbc/mcp-document-server"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
 ### Using NPM/PNPM
 
 For manual installation:
