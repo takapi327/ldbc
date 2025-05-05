@@ -23,10 +23,6 @@ services:
   mysql:
     image: mysql:@MYSQL_VERSION@
     container_name: ldbc
-    environment:
-      MYSQL_USER: 'ldbc'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'root'
     ports:
       - 13306:3306
     volumes:
@@ -37,10 +33,16 @@ services:
       retries: 10
 ```
 
-Next, create the following SQL file in the `database` directory to set up initial data:
+Next, create the following SQL file in the `database` directory and set up the user and initial data:
 
 ```sql
--- 01-create-database.sql
+-- user.sql
+CREATE USER 'ldbc'@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON *.* TO ldbc;
+```
+
+```sql
+-- schema.sql
 CREATE DATABASE IF NOT EXISTS sandbox_db;
 USE sandbox_db;
 

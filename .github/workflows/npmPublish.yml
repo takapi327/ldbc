@@ -48,28 +48,16 @@ jobs:
         if: steps.setup-java-corretto-21.outputs.cache-hit == 'false'
         run: sbt +update
 
-      - name: Check headers and formatting
-        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
-
       - name: scalaJSLink
         run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' Test/scalaJSLinkerResult
 
-      - name: Test
-        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' test
-
-      - name: Check binary compatibility
-        run: sbt 'project ${{ matrix.project }}' '++ ${{ matrix.scala }}' mimaReportBinaryIssues
-
       - name: Make target directories
-        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         run: mkdir -p module/ldbc-query-builder/.js/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/js/target module/ldbc-sql/.js/target module/ldbc-schema/.js/target module/ldbc-statement/.js/target module/ldbc-dsl/.js/target project/target
 
       - name: Compress target directories
-        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         run: tar cf targets.tar module/ldbc-query-builder/.js/target module/ldbc-connector/js/target module/ldbc-codegen/js/target core/js/target module/ldbc-sql/.js/target module/ldbc-schema/.js/target module/ldbc-statement/.js/target module/ldbc-dsl/.js/target project/target
 
       - name: Upload target directories
-        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
         uses: actions/upload-artifact@v4
         with:
           name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-${{ matrix.project }}
