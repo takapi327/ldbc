@@ -299,6 +299,41 @@ Currently, we have the following root-level files...
 - [/llms-full.txt](https://takapi327.github.io/ldbc/llms-full.txt) — complete documentation for ldbc
 - [/llms-small.txt](https://takapi327.github.io/ldbc/llms-small.txt) — compressed documentation for use with smaller context windows
 
+## Documentation for MCP
+
+[![npm version](https://badge.fury.io/js/@ldbc%2Fmcp-document-server.svg)](https://badge.fury.io/js/@ldbc%2Fmcp-document-server)
+
+Document MCP server for ldbc for use with Agent is now available.
+
+You can use the documentation server to ask questions about ldbc, run tutorials, etc.
+It can be used with Visual Studio Code, Claude Desktop, etc.
+
+> [!NOTE]
+> This server is an experimental feature, but should help you. This server is developed using tools made in Scala. It is still under development and therefore contains many missing features. Please report feature requests or problems [here](https://github.com/takapi327/mcp-scala/issues).
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "mcp-ldbc-document-server": {
+        "command": "npx",
+        "args": [
+          "@ldbc/mcp-document-server"
+        ]
+      }
+    }
+  }
+}
+```
+
+> [!NOTE]
+> The video is processed in Japanese, but it works fine in English.
+> 「ldbcのチュートリアルを始めたい」is I'd like to start a tutorial on ldbc.”
+
+https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5
+
+Please refer to the [README](https://github.com/takapi327/ldbc/blob/master/mcp/document-server/.js/README.md) for usage instructions.
+
 ## Features/Roadmap
 
 Creating a MySQL connector project written in pure Scala3.
