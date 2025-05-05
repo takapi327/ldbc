@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -1703,5 +1703,54 @@ class ConnectionTest extends FTestPlatform:
         "Function Cat: def, Function Schem: sys, Function Name: version_minor, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_minor",
         "Function Cat: def, Function Schem: sys, Function Name: version_patch, Column Name: , Column Type: 4, Data Type: -6, Type Name: TINYINT UNSIGNED, Precision: 3, Length: 3, Scale: 0, Radix: 10, Nullable: 1, Remarks: null, Char Octet Length: 0, Ordinal Position: 0, Is Nullable: YES, Specific Name: version_patch"
       )
+    )
+  }
+
+  test("Arbitrary processing can be performed before and after the connection.") {
+    def before(connection: ldbc.sql.Connection[IO]): IO[Int] =
+      for
+        statement <- connection.createStatement()
+        _         <- statement.execute("CREATE DATABASE IF NOT EXISTS connector_before_after_test")
+        _         <- connection.setSchema("connector_before_after_test")
+        _ <- statement.execute(
+               """
+            |CREATE TABLE IF NOT EXISTS test (
+            |  id INT PRIMARY KEY AUTO_INCREMENT,
+            |  name VARCHAR(255) NOT NULL
+            |)
+            |""".stripMargin
+             )
+      yield 1
+
+    def after(length: Int, connection: ldbc.sql.Connection[IO]): IO[Unit] =
+      for
+        statement <- connection.createStatement()
+        _         <- statement.execute("DROP DATABASE IF EXISTS connector_before_after_test")
+      yield ()
+
+    val connection = Connection.withBeforeAfter[IO, Int](
+      host     = "127.0.0.1",
+      port     = 13306,
+      user     = "ldbc",
+      password = Some("password"),
+      before   = before,
+      after    = after
+    )
+
+    assertIO(
+      connection.use { conn =>
+        for
+          statement <- conn.createStatement()
+          _         <- statement.execute("INSERT INTO test (name) VALUES ('test')")
+          resultSet <- statement.executeQuery("SELECT * FROM test")
+        yield
+          val builder = Vector.newBuilder[String]
+          while resultSet.next() do
+            val id   = resultSet.getInt("id")
+            val name = resultSet.getString("name")
+            builder += s"ID: $id, Name: $name"
+          builder.result()
+      },
+      Vector("ID: 1, Name: test")
     )
   }

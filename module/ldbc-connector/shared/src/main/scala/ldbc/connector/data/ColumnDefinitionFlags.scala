@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -47,13 +47,18 @@ enum ColumnDefinitionFlags(val code: Long):
 
 object ColumnDefinitionFlags:
 
+  private val codeToFlagMap: Map[Long, ColumnDefinitionFlags] =
+    ColumnDefinitionFlags.values.map(flag => flag.code -> flag).toMap
+
   /** Get bitset objects from numeric bitset. */
   def apply(bitset: Long): Seq[ColumnDefinitionFlags] =
-    toEnumSeq(bitset)
+    codeToFlagMap.collect {
+      case (code, flag) if (bitset & code) == code => flag
+    }.toSeq
 
   /** Get bitset objects from numeric bitsets. */
   def apply(bitset: Seq[Short]): Seq[ColumnDefinitionFlags] =
-    bitset.flatMap(b => toEnumSeq(toCode(b)))
+    bitset.flatMap(b => codeToFlagMap.get(toCode(b)))
 
   /** Convert bitNum to BitFlag numbers */
   def toCode(bitNum: Short): Long =

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -72,6 +72,9 @@ object Decoder extends TwiddleSyntax[Decoder]:
 
   def apply[A](using decoder: Decoder[A]): Decoder[A] = decoder
 
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], decoder: Decoder[mirror.MirroredElemTypes]): Decoder[P] =
+    decoder.to[P]
+
   /**
    * An error indicating that decoding a value starting at column `offset` and spanning `length`
    * columns failed with reason `error`.
@@ -98,6 +101,3 @@ object Decoder extends TwiddleSyntax[Decoder]:
 
   given [H, T <: Tuple](using dh: Decoder[H], dt: Decoder[T]): Decoder[H *: T] =
     dh.product(dt).map { case (h, t) => h *: t }
-
-  given [P <: Product](using mirror: Mirror.ProductOf[P], decoder: Decoder[mirror.MirroredElemTypes]): Decoder[P] =
-    decoder.to[P]

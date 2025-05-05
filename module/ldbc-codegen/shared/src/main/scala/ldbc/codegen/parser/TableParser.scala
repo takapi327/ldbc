@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -151,7 +151,8 @@ trait TableParser extends KeyParser:
   private def connection: Parser[TableOption] =
     customError(
       keyValue(caseSensitivity("connection"), stringLiteral) ^^ TableOption.Connection.apply,
-      input => s"""
+      input =>
+        s"""
         |======================================================
         |There is an error in the connection format.
         |Please correct the format according to the following.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -17,7 +17,9 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.Connection
+import ldbc.sql.*
+
+import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -25,7 +27,7 @@ import ldbc.sql.Connection
 class Batch:
 
   @volatile
-  var connection: Resource[IO, Connection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -43,9 +45,7 @@ class Batch:
     ds.setPassword("password")
     ds.setRewriteBatchedStatements(true)
 
-    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-    connection = Resource.make(datasource.getConnection)(_.close())
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     values = (1 to len).map(_ => "(?, ?)").mkString(",")
 
@@ -56,7 +56,7 @@ class Batch:
 
   @Benchmark
   def statement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -74,7 +74,7 @@ class Batch:
 
   @Benchmark
   def prepareStatement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.prepareStatement(s"INSERT INTO jdbc_prepare_statement_test (c1, c2) VALUES (?, ?)")

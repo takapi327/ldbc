@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -7,6 +7,8 @@
 package ldbc.tests.model
 
 import java.time.LocalDate
+
+import ldbc.dsl.codec.Codec
 
 import ldbc.query.builder.{ Column, Table }
 
@@ -21,6 +23,7 @@ case class GovernmentOffice(
 
 object GovernmentOffice:
 
+  given Codec[GovernmentOffice] = Codec.derived[GovernmentOffice]
   given Table[GovernmentOffice] = Table.derived[GovernmentOffice]("government_office")
 
 class GovernmentOfficeTable extends SchemaTable[GovernmentOffice]("government_office"):

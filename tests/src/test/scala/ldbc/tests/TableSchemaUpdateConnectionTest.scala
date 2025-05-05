@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -13,16 +13,17 @@ import cats.syntax.all.*
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.*
 
 import ldbc.sql.*
 
-import ldbc.schema.syntax.io.*
-import ldbc.schema.TableQuery
+import ldbc.dsl.*
 
-import ldbc.connector.SSL
+import ldbc.schema.*
+
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 import ldbc.tests.model.*
 
@@ -30,15 +31,10 @@ class LdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
 
   override def prefix: "jdbc" | "ldbc" = "ldbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("world3"),
-      ssl      = SSL.Trusted
-    )
+  override def connection: Provider[IO] =
+    LdbcProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world3")
+      .setSSL(SSL.Trusted)
 
 class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTest:
 
@@ -51,15 +47,13 @@ class JdbcTableSchemaUpdateConnectionTest extends TableSchemaUpdateConnectionTes
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection: Resource[IO, Connection[IO]] =
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+  override def connection: Provider[IO] =
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
   def prefix:     "jdbc" | "ldbc"
-  def connection: Resource[IO, Connection[IO]]
+  def connection: Provider[IO]
 
   private final val country         = TableQuery[CountryTable]
   private final val city            = TableQuery[CityTable]
@@ -282,7 +276,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
           cityOpt <-
             city.selectAll.where(_.countryCode _equals "JPN").and(_.name _equals "Tokyo").query.to[Option]
           result <- cityOpt match
-                      case None => DBIO.pure[IO, Int](0)
+                      case None => DBIO.pure(0)
                       case Some(cityModel) =>
                         city
                           .update(cityModel.copy(district = "Tokyo-to"))
@@ -431,7 +425,7 @@ trait TableSchemaUpdateConnectionTest extends CatsEffectSuite:
                        .query
                        .to[Option]
           result <- codeOpt match
-                      case None => DBIO.pure[IO, Int](0)
+                      case None => DBIO.pure(0)
                       case Some(code) =>
                         city
                           .update(c => c.name *: c.district *: c.population)(("update New York", "TT", 2))

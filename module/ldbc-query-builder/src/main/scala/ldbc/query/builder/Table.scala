@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -13,8 +13,8 @@ import scala.quoted.*
 import ldbc.dsl.codec.*
 
 import ldbc.statement.{ AbstractTable, Column }
+import ldbc.statement.formatter.Naming
 
-import ldbc.query.builder.formatter.Naming
 import ldbc.query.builder.interpreter.*
 import ldbc.query.builder.Column as ColumnAnnotation
 

@@ -28,7 +28,7 @@ object Workflows {
         )
       ),
       scalas = List(scala3),
-      javas  = List(JavaSpec.temurin(java11), JavaSpec.temurin(java17))
+      javas  = List(JavaSpec.temurin(java11), JavaSpec.temurin(java17), JavaSpec.temurin(java21))
     )
   )
 

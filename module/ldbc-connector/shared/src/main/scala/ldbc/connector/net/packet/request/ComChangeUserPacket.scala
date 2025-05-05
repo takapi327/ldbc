@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -9,6 +9,7 @@ package request
 
 import scodec.*
 import scodec.bits.BitVector
+import scodec.bits.ByteVector
 import scodec.interop.cats.*
 
 import cats.syntax.all.*
@@ -37,7 +38,7 @@ case class ComChangeUserPacket(
   database:          Option[String],
   characterSet:      Int,
   pluginName:        String,
-  hashedPassword:    Array[Byte]
+  hashedPassword:    ByteVector
 ) extends RequestPacket:
 
   override protected def encodeBody: Attempt[BitVector] =

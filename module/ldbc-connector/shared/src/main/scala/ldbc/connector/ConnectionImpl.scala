@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -13,10 +13,12 @@ import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.Console
+import cats.effect.std.UUIDGen
 
 import org.typelevel.otel4s.trace.Tracer
 
 import ldbc.sql.{ CallableStatement, Connection, DatabaseMetaData, PreparedStatement, ResultSet, Savepoint, Statement }
+import ldbc.sql.logging.LogHandler
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
@@ -26,15 +28,16 @@ import ldbc.connector.net.packet.response.*
 import ldbc.connector.net.protocol.*
 import ldbc.connector.util.StringHelper
 
-private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchange](
+private[ldbc] case class ConnectionImpl[F[_]: Tracer: Console: Exchange: UUIDGen](
   protocol:         Protocol[F],
   serverVariables:  Map[String, String],
   database:         Option[String],
   readOnly:         Ref[F, Boolean],
   isAutoCommit:     Ref[F, Boolean],
   connectionClosed: Ref[F, Boolean],
-  databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG
-)(using ev: MonadError[F, Throwable])
+  databaseTerm:     DatabaseMetaData.DatabaseTerm = DatabaseMetaData.DatabaseTerm.CATALOG,
+  logHandler:       LogHandler[F]
+)(using ev: Concurrent[F])
   extends LdbcConnection[F]:
 
   override def createStatement(): F[Statement[F]] =
@@ -473,7 +476,7 @@ private[ldbc] case class ConnectionImpl[F[_]: Temporal: Tracer: Console: Exchang
       ResultSet.CONCUR_READ_ONLY
     )
 
-  override def setSavepoint(): F[Savepoint] = setSavepoint(StringHelper.getUniqueSavepointId)
+  override def setSavepoint(): F[Savepoint] = StringHelper.getUniqueSavepointId >>= setSavepoint
 
   override def setSavepoint(name: String): F[Savepoint] =
     for

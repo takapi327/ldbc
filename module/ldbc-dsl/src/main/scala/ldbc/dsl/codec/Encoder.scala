@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -46,6 +46,12 @@ trait Encoder[A]:
   /** `Encoder` is semigroupal: a pair of encoders make a encoder for a pair. */
   def product[B](that: Encoder[B]): Encoder[(A, B)] = (value: (A, B)) => encode(value._1) product that.encode(value._2)
 
+  /** Lift this `Decoder` into `Option`. */
+  def opt: Encoder[Option[A]] = {
+    case Some(value) => this.encode(value)
+    case None        => Encoder.Encoded.success(List.empty)
+  }
+
 object Encoder extends TwiddleSyntax[Encoder]:
 
   /** Types that can be handled by PreparedStatement. */
@@ -53,6 +59,9 @@ object Encoder extends TwiddleSyntax[Encoder]:
     LocalTime | LocalDate | LocalDateTime | None.type
 
   def apply[A](using encoder: Encoder[A]): Encoder[A] = encoder
+
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
+    encoder.to[P]
 
   given ContravariantSemigroupal[Encoder] with
     override def contramap[A, B](fa: Encoder[A])(f:  B => A):     Encoder[B]      = fa.contramap(f)
@@ -65,9 +74,6 @@ object Encoder extends TwiddleSyntax[Encoder]:
 
   given [H, T <: Tuple](using eh: Encoder[H], et: Encoder[T]): Encoder[H *: T] =
     eh.product(et).contramap { case h *: t => (h, t) }
-
-  given [P <: Product](using mirror: Mirror.ProductOf[P], encoder: Encoder[mirror.MirroredElemTypes]): Encoder[P] =
-    encoder.to[P]
 
   sealed trait Encoded:
     def product(that: Encoded): Encoded

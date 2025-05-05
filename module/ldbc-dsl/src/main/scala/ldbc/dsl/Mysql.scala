@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -9,10 +9,6 @@ package ldbc.dsl
 import scala.annotation.targetName
 
 import cats.syntax.all.*
-
-import cats.effect.Temporal
-
-import ldbc.sql.*
 
 import ldbc.dsl.codec.Decoder
 
@@ -24,14 +20,12 @@ import ldbc.dsl.codec.Decoder
  *   an SQL statement that may contain one or more '?' IN parameter placeholders
  * @param params
  *   statement has '?' that the statement has.
- * @tparam F
- *   The effect type
  */
-case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynamic]) extends SQL, ParamBinder[F]:
+case class Mysql(statement: String, params: List[Parameter.Dynamic]) extends SQL, ParamBinder:
 
   @targetName("combine")
-  override def ++(sql: SQL): Mysql[F] =
-    Mysql[F](statement ++ sql.statement, params ++ sql.params)
+  override def ++(sql: SQL): Mysql =
+    Mysql(statement ++ sql.statement, params ++ sql.params)
 
   /**
    * A method to convert a query to a [[ldbc.dsl.Query]].
@@ -43,8 +37,8 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * A [[ldbc.dsl.Query]] instance
    */
-  def query[T](using decoder: Decoder[T]): Query[F, T] =
-    Query.Impl[F, T](statement, params, decoder)
+  def query[T](using decoder: Decoder[T]): Query[T] =
+    Query.Impl[T](statement, params, decoder)
 
   /**
    * A method to execute an update operation against the MySQL server.
@@ -56,16 +50,7 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    * The number of rows updated
    */
-  def update: DBIO[F, Int] =
-    DBIO.Impl[F, Int](
-      statement,
-      params,
-      connection =>
-        for
-          prepareStatement <- connection.prepareStatement(statement)
-          result <- paramBind(prepareStatement, params) >> prepareStatement.executeUpdate() <* prepareStatement.close()
-        yield result
-    )
+  def update: DBIO[Int] = DBIO.update(statement, params)
 
   /**
    * A method to execute an insert operation against the MySQL server.
@@ -79,15 +64,5 @@ case class Mysql[F[_]: Temporal](statement: String, params: List[Parameter.Dynam
    * @return
    *   The primary key value
    */
-  def returning[T <: String | Int | Long](using Decoder[T]): DBIO[F, T] =
-    DBIO.Impl[F, T](
-      statement,
-      params,
-      connection =>
-        for
-          prepareStatement <- connection.prepareStatement(statement, Statement.RETURN_GENERATED_KEYS)
-          resultSet <- paramBind(prepareStatement, params) >> prepareStatement.executeUpdate() >> prepareStatement
-                         .getGeneratedKeys()
-          result <- summon[ResultSetConsumer[F, T]].consume(resultSet, statement) <* prepareStatement.close()
-        yield result
-    )
+  def returning[T <: String | Int | Long](using decoder: Decoder[T]): DBIO[T] =
+    DBIO.returning(statement, params, decoder)

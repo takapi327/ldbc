@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -7,8 +7,10 @@
 package benchmark
 
 import ldbc.dsl.codec.*
+import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 
-import ldbc.query.builder.formatter.Naming
+import ldbc.statement.formatter.Naming
+
 import ldbc.query.builder.Table
 
 given Naming = Naming.PASCAL

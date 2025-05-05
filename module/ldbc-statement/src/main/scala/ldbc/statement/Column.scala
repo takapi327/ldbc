@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -780,7 +780,7 @@ object Column extends TwiddleSyntax[Column]:
     Impl[A](name)
 
   def apply[A](name: String, alias: String)(using Decoder[A], Encoder[A]): Column[A] =
-    Impl[A](name, s"$alias.$name")
+    Impl[A](name, s"$alias.`$name`")
 
   private[ldbc] case class Impl[A](
     name:    String,
@@ -798,10 +798,10 @@ object Column extends TwiddleSyntax[Column]:
 
   object Impl:
     def apply[A](name: String)(using decoder: Decoder[A], encoder: Encoder[A]): Column[A] =
-      Impl[A](name, None, decoder, encoder)
+      Impl[A](s"`$name`", None, decoder, encoder)
 
     def apply[A](name: String, alias: String)(using decoder: Decoder[A], encoder: Encoder[A]): Column[A] =
-      Impl[A](name, Some(alias), decoder, encoder)
+      Impl[A](s"`$name`", Some(alias), decoder, encoder)
 
   private[ldbc] case class Opt[A](
     name:     String,

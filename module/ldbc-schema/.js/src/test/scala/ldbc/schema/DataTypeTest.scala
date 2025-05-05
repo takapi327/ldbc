@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -417,7 +417,7 @@ class DataTypeTest extends AnyFlatSpec:
   }
 
   it should "The query string generated from the Serial DataType model matches the specified one." in {
-    assert(SERIAL[BigInt].queryString === "BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY")
+    assert(SERIAL[BigInt].queryString === "SERIAL")
   }
 
   it should "The query string generated from the Boolean DataType model matches the specified one." in {

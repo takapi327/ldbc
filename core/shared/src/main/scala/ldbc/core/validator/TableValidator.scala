@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -74,8 +74,7 @@ private[ldbc] trait TableValidator:
         case key: ForeignKey[?] =>
           key.columns.toList.map(_.asInstanceOf[Column[?]].dataType) == key.reference.keyPart.toList
             .map(_.asInstanceOf[Column[?]].dataType)
-        case _ => false
-      ),
+        case _ => false),
       s"""
          |The type of the column set in FOREIGN KEY does not match.
          |
@@ -97,8 +96,7 @@ private[ldbc] trait TableValidator:
             case v: PrimaryKey with Index => v.keyPart.exists(c => key.reference.keyPart.toList.exists(_ == c))
             case _                        => false
           }
-        case _ => false
-      ),
+        case _ => false),
       "The column referenced by FOREIGN KEY must be a PRIMARY KEY."
     )
 
@@ -110,10 +108,10 @@ private[ldbc] trait TableValidator:
             (column, index)             <- key.columns.toList.asInstanceOf[List[Column[?]]].zipWithIndex
             (refColumn, refColumnIndex) <- key.reference.keyPart.toList.asInstanceOf[List[Column[?]]].zipWithIndex
           yield
-            if index == refColumnIndex then s"""
+            if index == refColumnIndex then
+              s"""
              |(${ column.dataType == refColumn.dataType }) `${ column.label }` ${ column.dataType.typeName } =:= `${ refColumn.label }` ${ refColumn.dataType.typeName }
              |""".stripMargin
             else ""
-        case _ => ""
-      )
+        case _ => "")
       .mkString("\n")

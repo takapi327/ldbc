@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,7 +10,8 @@ import cats.data.NonEmptyList
 
 import munit.CatsEffectSuite
 
-import ldbc.dsl.io.*
+import ldbc.dsl.*
+import ldbc.dsl.codec.Codec
 
 class HelperFunctionTest extends munit.CatsEffectSuite:
 
@@ -30,6 +31,7 @@ class HelperFunctionTest extends munit.CatsEffectSuite:
 
   test("A statement that constructs VALUES in multiple sql is the same as the specified string.") {
     case class Value(c1: Int, c2: String)
+    given Codec[Value] = Codec.derived[Value]
     val sql = sql"INSERT INTO `table` (`column1`, `column2`) " ++ values(
       NonEmptyList.of(Value(1, "value1"), Value(2, "value2"))
     )

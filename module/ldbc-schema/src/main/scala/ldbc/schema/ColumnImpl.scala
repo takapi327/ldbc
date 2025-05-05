@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -25,7 +25,7 @@ private[ldbc] case class ColumnImpl[T](
     this.copy(alias = Some(name))
 
   override def statement: String =
-    dataType.fold(s"`$name`")(dataType => s"`$name` ${ dataType.queryString }") + attributes
+    dataType.fold(name)(dataType => s"$name ${ dataType.queryString }") + attributes
       .map(v => s" ${ v.queryString }")
       .mkString("")
   override def updateStatement:             String = s"$name = ?"

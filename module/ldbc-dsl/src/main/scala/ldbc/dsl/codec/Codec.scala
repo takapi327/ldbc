@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -67,6 +67,9 @@ trait Codec[A] extends Encoder[A], Decoder[A]:
 object Codec extends TwiddleSyntax[Codec]:
 
   def apply[A](using codec: Codec[A]): Codec[A] = codec
+
+  def derived[P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
+    codec.to[P]
 
   private def readCatchError[A](offset: Int, func: => A): Either[Decoder.Error, A] =
     try Right(func)
@@ -174,6 +177,3 @@ object Codec extends TwiddleSyntax[Codec]:
 
   given [H, T <: Tuple](using dh: Codec[H], dt: Codec[T]): Codec[H *: T] =
     dh.product(dt).imap { case (h, t) => h *: t }(tuple => (tuple.head, tuple.tail))
-
-  given [P <: Product](using mirror: Mirror.ProductOf[P], codec: Codec[mirror.MirroredElemTypes]): Codec[P] =
-    codec.to[P]

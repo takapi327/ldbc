@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -18,7 +18,9 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.Connection
+import ldbc.sql.*
+
+import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -26,7 +28,7 @@ import ldbc.sql.Connection
 class Insert:
 
   @volatile
-  var connection: Resource[IO, Connection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @volatile
   var values: String = uninitialized
@@ -60,10 +62,9 @@ class Insert:
     ds.setDatabaseName("benchmark")
     ds.setUser("ldbc")
     ds.setPassword("password")
+    ds.setUseSSL(true)
 
-    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-    connection = Resource.make(datasource.getConnection)(_.close())
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     values = (1 to len).map(_ => "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").mkString(",")
 
@@ -94,10 +95,11 @@ class Insert:
 
   @Benchmark
   def statement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.createStatement()
+          _         <- conn.setAutoCommit(false)
           _ <-
             statement.executeUpdate(
               s"INSERT INTO jdbc_statement_test (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15) VALUES ${ records
@@ -108,19 +110,21 @@ class Insert:
                   }
                   .mkString(",") }"
             )
+          _ <- conn.rollback()
         yield ()
       }
       .unsafeRunSync()
 
   @Benchmark
   def prepareStatement(): Unit =
-    connection
+    provider
       .use { conn =>
         for
           statement <-
             conn.prepareStatement(
               s"INSERT INTO jdbc_prepare_statement_test (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15) VALUES $values"
             )
+          _ <- conn.setAutoCommit(false)
           _ <- records.zipWithIndex.foldLeft(IO.unit) {
                  case (acc, ((v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15), index)) =>
                    acc *>
@@ -141,6 +145,7 @@ class Insert:
                      statement.setTimestamp(index * 15 + 15, v15)
                }
           _ <- statement.executeUpdate()
+          _ <- conn.rollback()
         yield ()
       }
       .unsafeRunSync()

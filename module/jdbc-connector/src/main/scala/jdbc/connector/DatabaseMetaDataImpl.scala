@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -11,9 +11,12 @@ import cats.syntax.all.*
 import cats.effect.Sync
 
 import ldbc.sql.{ Connection, DatabaseMetaData, ResultSet, RowIdLifetime }
+import ldbc.sql.logging.LogHandler
 
-private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.DatabaseMetaData)
-  extends DatabaseMetaData[F]:
+private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](
+  metaData:   java.sql.DatabaseMetaData,
+  logHandler: LogHandler[F]
+) extends DatabaseMetaData[F]:
 
   override def allProceduresAreCallable(): Boolean = metaData.allProceduresAreCallable
 
@@ -459,7 +462,7 @@ private[jdbc] case class DatabaseMetaDataImpl[F[_]: Sync](metaData: java.sql.Dat
       )
     )
 
-  override def getConnection(): Connection[F] = ConnectionImpl(metaData.getConnection)
+  override def getConnection(): Connection[F] = ConnectionImpl(metaData.getConnection, logHandler)
 
   override def supportsSavepoints(): Boolean = metaData.supportsSavepoints
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -17,9 +17,11 @@ import com.mysql.cj.jdbc.MysqlDataSource
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.Connection
+import ldbc.sql.*
 
-import ldbc.query.builder.syntax.io.*
+import ldbc.query.builder.*
+
+import jdbc.connector.*
 
 import benchmark.City
 
@@ -29,7 +31,7 @@ import benchmark.City
 class Select:
 
   @volatile
-  var connection: Resource[IO, Connection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @volatile
   var query: TableQuery[City] = uninitialized
@@ -43,9 +45,7 @@ class Select:
     ds.setUser("ldbc")
     ds.setPassword("password")
 
-    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
-
-    connection = Resource.make(datasource.getConnection)(_.close())
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
     query = TableQuery[City]
 
@@ -54,7 +54,7 @@ class Select:
 
   @Benchmark
   def querySelectN: List[(Int, String, String)] =
-    connection
+    provider
       .use { conn =>
         query
           .select(city => city.id *: city.name *: city.countryCode)
@@ -67,7 +67,7 @@ class Select:
 
   @Benchmark
   def dslSelectN: List[(Int, String, String)] =
-    connection
+    provider
       .use { conn =>
         sql"SELECT ID, Name, CountryCode FROM city LIMIT $len"
           .query[(Int, String, String)]

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -7,6 +7,8 @@
 package ldbc.schema
 
 import java.sql.DatabaseMetaData.*
+
+import ldbc.statement.Column
 
 /**
  * A model for setting reference options used for foreign key constraints, etc.
@@ -30,7 +32,7 @@ case class Reference[T](
   private val label: String = "REFERENCES"
 
   def queryString: String =
-    s"$label ${ table.$name } (${ columns.name })"
+    s"$label `${ table.$name }` (${ columns.name })"
       + onDelete.fold("")(v => s" ON DELETE ${ v.label }")
       + onUpdate.fold("")(v => s" ON UPDATE ${ v.label }")
 

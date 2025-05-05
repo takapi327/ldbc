@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,6 +10,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import ldbc.dsl.codec.{ Decoder, Encoder }
 
+import ldbc.statement.Column
+
 import ldbc.schema.attribute.*
 import ldbc.schema.DataType.*
 
@@ -19,7 +21,7 @@ class ColumnImplTest extends AnyFlatSpec:
     decoder: Decoder[A],
     encoder: Encoder[A]
   ): Column[A] =
-    ColumnImpl[A](name, None, decoder, encoder, Some(dataType), attributes.toList)
+    ColumnImpl[A](s"`$name`", None, decoder, encoder, Some(dataType), attributes.toList)
 
   it should "The query string of the Column model generated with only label and DataType matches the specified string." in {
     assert(column[Long]("id", BIGINT).statement === "`id` BIGINT NOT NULL")
@@ -53,7 +55,7 @@ class ColumnImplTest extends AnyFlatSpec:
         COMMENT("name")
       ).statement === "`name` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'name'"
     )
-    assert(column[BigInt]("id", SERIAL).statement === "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE KEY")
+    assert(column[BigInt]("id", SERIAL).statement === "`id` SERIAL")
   }
 
   it should "The query string of the Column model generated with only label and DataType and attributes matches the specified string." in {

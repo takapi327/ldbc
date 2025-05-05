@@ -1,12 +1,15 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.connector.util
 
-import java.util.UUID
+import cats.syntax.functor.toFunctorOps
+import cats.Functor
+
+import cats.effect.std.UUIDGen
 
 object StringHelper:
 
@@ -68,9 +71,8 @@ object StringHelper:
 
   end indexOfIgnoreCase
 
-  def getUniqueSavepointId: String =
-    val uuid = UUID.randomUUID().toString
-    uuid.replaceAll("-", "_")
+  def getUniqueSavepointId[F[_]: Functor](using F: UUIDGen[F]): F[String] =
+    F.randomUUID.map(_.toString().replaceAll("-", "_"))
 
   /**
    * Does the string contain wildcard symbols ('%' or '_'). Used in DatabaseMetaData.

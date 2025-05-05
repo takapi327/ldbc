@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -43,7 +43,7 @@ trait ResultSet:
 
   /**
    * Releases this <code>ResultSet</code> object's database and
-   * LDBC resources immediately instead of waiting for
+   * ldbc resources immediately instead of waiting for
    * this to happen when it is automatically closed.
    *
    * <P>The closing of a <code>ResultSet</code> object does <strong>not</strong> close the <code>Blob</code>,
@@ -438,7 +438,7 @@ trait ResultSet:
    * Retrieves whether the cursor is on the last row of
    * this <code>ResultSet</code> object.
    * <strong>Note:</strong> Calling the method <code>isLast</code> may be expensive
-   * because the LDBC
+   * because the ldbc
    * might need to fetch ahead one row in order to determine
    * whether the current row is the last row in the result set.
    * <p>

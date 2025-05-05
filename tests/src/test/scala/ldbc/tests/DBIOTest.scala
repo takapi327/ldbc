@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,28 +10,24 @@ import cats.syntax.all.*
 
 import cats.effect.IO
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.CatsEffectSuite
 
-import ldbc.dsl.io.*
+import ldbc.sql.*
+
+import ldbc.dsl.*
 
 import ldbc.connector.*
 
 class DBIOTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
-  private val connection = Connection[IO](
-    host     = "127.0.0.1",
-    port     = 13306,
-    user     = "ldbc",
-    password = Some("password"),
-    ssl      = SSL.Trusted
-  )
+  def connection: Provider[IO] =
+    ConnectionProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc")
+      .setPassword("password")
+      .setSSL(SSL.Trusted)
 
   test("DBIO#pure") {
-    val program = DBIO.pure[IO, Int](1)
+    val program = DBIO.pure(1)
     assertIO(
       connection.use { conn =>
         program.run(conn)
@@ -41,8 +37,8 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#ap") {
-    val program1 = DBIO.pure[IO, Int](1)
-    val program2 = DBIO.pure[IO, Int => Int](_ + 1)
+    val program1 = DBIO.pure(1)
+    val program2 = DBIO.pure[Int => Int](_ + 1)
     val program3 = program2.ap(program1)
     assertIO(
       connection.use { conn =>
@@ -53,7 +49,7 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#map") {
-    val program1 = DBIO.pure[IO, Int](1)
+    val program1 = DBIO.pure(1)
     val program2 = program1.map(_ + 1)
     assertIO(
       connection.use { conn =>
@@ -64,8 +60,8 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#flatMap") {
-    val program1 = DBIO.pure[IO, Int](1)
-    val program2 = program1.flatMap(n => DBIO.pure[IO, Int](n + 1))
+    val program1 = DBIO.pure(1)
+    val program2 = program1.flatMap(n => DBIO.pure(n + 1))
     assertIO(
       connection.use { conn =>
         program2.run(conn)
@@ -75,7 +71,7 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#tailRecM") {
-    val program1 = DBIO.pure[IO, Int](1)
+    val program1 = DBIO.pure(1)
     val program2 = program1.tailRecM[DBIO, String](_.map(n => Right(n.toString)))
     assertIO(
       connection.use { conn =>
@@ -86,7 +82,7 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#raiseError") {
-    val program = DBIO.raiseError[IO, Int](new Exception("error"))
+    val program = DBIO.raiseError[Int](new Exception("error"))
     interceptMessageIO[Exception]("error")(
       connection.use { conn =>
         program.run(conn)
@@ -95,8 +91,8 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#handleErrorWith") {
-    val program1 = DBIO.raiseError[IO, Int](new Exception("error"))
-    val program2 = program1.handleErrorWith(e => DBIO.pure[IO, Int](0))
+    val program1 = DBIO.raiseError[Int](new Exception("error"))
+    val program2 = program1.handleErrorWith(e => DBIO.pure(0))
     assertIO(
       connection.use { conn =>
         program2.run(conn)
@@ -106,7 +102,7 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#attempt#Right") {
-    val program = DBIO.pure[IO, Int](1)
+    val program = DBIO.pure(1)
     assertIO(
       connection.use { conn =>
         program.attempt.run(conn)
@@ -116,7 +112,7 @@ class DBIOTest extends CatsEffectSuite:
   }
 
   test("DBIO#attempt#Left") {
-    val program: DBIO[Int] = DBIO.raiseError[IO, Int](new Exception("error"))
+    val program = DBIO.raiseError[Int](new Exception("error"))
     assertIOBoolean(
       connection.use { conn =>
         program.attempt.run(conn).map(_.isLeft)

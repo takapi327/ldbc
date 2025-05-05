@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,31 +10,25 @@ import java.time.*
 
 import com.mysql.cj.jdbc.MysqlDataSource
 
-import cats.syntax.all.*
-
 import cats.effect.*
-
-import org.typelevel.otel4s.trace.Tracer
 
 import munit.CatsEffectSuite
 
-import ldbc.sql.Connection
+import ldbc.sql.*
 
+import ldbc.dsl.*
+import ldbc.dsl.codec.auto.generic.toSlowCompile.given
 import ldbc.dsl.exception.DecodeFailureException
-import ldbc.dsl.io.*
 
-import ldbc.connector.SSL
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 class LdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
-  override def connection: Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = "127.0.0.1",
-      port     = 13306,
-      user     = "ldbc",
-      password = Some("password"),
-      database = Some("world"),
-      ssl      = SSL.Trusted
-    )
+  override def connection: Provider[IO] =
+    LdbcProvider
+      .default[IO]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
 
 class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
 
@@ -45,14 +39,12 @@ class JdbcSQLStringContextQueryTest extends SQLStringContextQueryTest:
   ds.setUser("ldbc")
   ds.setPassword("password")
 
-  override def connection: Resource[IO, Connection[IO]] =
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+  override def connection: Provider[IO] =
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait SQLStringContextQueryTest extends CatsEffectSuite:
 
-  given Tracer[IO] = Tracer.noop[IO]
-
-  def connection: Resource[IO, Connection[IO]]
+  def connection: Provider[IO]
 
   test("Statement should be able to execute a query") {
     assertIO(

@@ -1,10 +1,12 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
 
 package ldbc.sql
+
+import ldbc.sql.logging.LogHandler
 
 /**
  * A connection (session) with a specific database. SQL statements are executed and results are returned within the
@@ -34,6 +36,11 @@ package ldbc.sql
  *   The effect type
  */
 trait Connection[F[_]]:
+
+  /**
+   * Settings for logging queries executed using connections.
+   */
+  def logHandler: LogHandler[F]
 
   /**
    * Creates a <code>Statement</code> object for sending

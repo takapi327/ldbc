@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -114,7 +114,9 @@ trait TableQuery[A, O]:
    * @param tail
    *   Value to be inserted into the table
    */
-  inline def insert(using mirror: Mirror.Of[Entity])(
+  inline def insert(using
+    mirror: Mirror.Of[Entity]
+  )(
     head: mirror.MirroredElemTypes,
     tail: mirror.MirroredElemTypes*
   ): Insert[A] =
@@ -255,24 +257,13 @@ trait TableQuery[A, O]:
   def delete: Delete[A] = Delete[A](table, s"DELETE FROM $name", params)
 
   /**
-   * Method to construct a query to drop a table.
-   *
+   * Function to return a Schema object for executing DDL.
+   * 
    * {{{
-   *   TableQuery[City]
-   *     .dropTable
+   *   TableQuery[City].schema
    * }}}
    */
-  def dropTable: Command = Command.Pure(s"DROP TABLE $name", List.empty)
-
-  /**
-   * Method to construct a query to truncate a table.
-   *
-   * {{{
-   *   TableQuery[City]
-   *     .truncateTable
-   * }}}
-   */
-  def truncateTable: Command = Command.Pure(s"TRUNCATE TABLE $name", List.empty)
+  def schema: Schema = Schema.empty
 
   /**
    * Method to construct a query to join a table.

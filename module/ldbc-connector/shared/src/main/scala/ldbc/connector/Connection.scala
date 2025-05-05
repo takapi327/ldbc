@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -15,18 +15,22 @@ import cats.syntax.all.*
 
 import cats.effect.*
 import cats.effect.std.Console
+import cats.effect.std.UUIDGen
 
+import fs2.hashing.Hashing
 import fs2.io.net.*
 
 import org.typelevel.otel4s.trace.Tracer
 
-import ldbc.sql.DatabaseMetaData
+import ldbc.sql.{ Connection, DatabaseMetaData }
+import ldbc.sql.logging.{ LogEvent, LogHandler }
 
 import ldbc.connector.data.*
 import ldbc.connector.exception.*
 import ldbc.connector.net.*
 import ldbc.connector.net.protocol.*
 
+type Connection[F[_]] = ldbc.sql.Connection[F]
 object Connection:
 
   private val defaultSocketOptions: List[SocketOption] =
@@ -49,7 +53,18 @@ object Connection:
     CapabilitiesFlags.MULTI_FACTOR_AUTHENTICATION
   )
 
-  def apply[F[_]: Temporal: Network: Console](
+  private def unitBefore[F[_]: Async]: Connection[F] => F[Unit]         = _ => Async[F].unit
+  private def unitAfter[F[_]: Async]:  (Unit, Connection[F]) => F[Unit] = (_, _) => Async[F].unit
+  private def noopLogger[F[_]: Applicative]: LogHandler[F] = (logEvent: LogEvent) => Applicative[F].unit
+
+  def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
+    host: String,
+    port: Int,
+    user: String
+  ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
+    this.default[F, Unit](host, port, user, before = unitBefore, after = unitAfter)
+
+  def apply[F[_]: Async: Network: Console: Hashing: UUIDGen](
     host:                    String,
     port:                    Int,
     user:                    String,
@@ -60,7 +75,72 @@ object Connection:
     socketOptions:           List[SocketOption] = defaultSocketOptions,
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG)
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    logHandler:              Option[LogHandler[F]] = None
+  ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default[F, Unit](
+    host,
+    port,
+    user,
+    password,
+    database,
+    debug,
+    ssl,
+    socketOptions,
+    readTimeout,
+    allowPublicKeyRetrieval,
+    databaseTerm,
+    logHandler,
+    unitBefore,
+    unitAfter
+  )
+
+  def withBeforeAfter[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+    host:                    String,
+    port:                    Int,
+    user:                    String,
+    before:                  Connection[F] => F[A],
+    after:                   (A, Connection[F]) => F[Unit],
+    password:                Option[String] = None,
+    database:                Option[String] = None,
+    debug:                   Boolean = false,
+    ssl:                     SSL = SSL.None,
+    socketOptions:           List[SocketOption] = defaultSocketOptions,
+    readTimeout:             Duration = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    logHandler:              Option[LogHandler[F]] = None
+  ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] = this.default(
+    host,
+    port,
+    user,
+    password,
+    database,
+    debug,
+    ssl,
+    socketOptions,
+    readTimeout,
+    allowPublicKeyRetrieval,
+    databaseTerm,
+    logHandler,
+    before,
+    after
+  )
+
+  def default[F[_]: Async: Network: Console: Hashing: UUIDGen, A](
+    host:                    String,
+    port:                    Int,
+    user:                    String,
+    password:                Option[String] = None,
+    database:                Option[String] = None,
+    debug:                   Boolean = false,
+    ssl:                     SSL = SSL.None,
+    socketOptions:           List[SocketOption] = defaultSocketOptions,
+    readTimeout:             Duration = Duration.Inf,
+    allowPublicKeyRetrieval: Boolean = false,
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = Some(DatabaseMetaData.DatabaseTerm.CATALOG),
+    logHandler:              Option[LogHandler[F]] = None,
+    before:                  Connection[F] => F[A],
+    after:                   (A, Connection[F]) => F[Unit]
   ): Tracer[F] ?=> Resource[F, LdbcConnection[F]] =
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
@@ -79,11 +159,14 @@ object Connection:
                       sslOp,
                       readTimeout,
                       allowPublicKeyRetrieval,
-                      databaseTerm
+                      databaseTerm,
+                      logHandler.getOrElse(noopLogger),
+                      before,
+                      after
                     )
     yield connection
 
-  def fromSockets[F[_]: Temporal: Tracer: Console](
+  def fromSockets[F[_]: Async: Tracer: Console: Hashing: UUIDGen, A](
     sockets:                 Resource[F, Socket[F]],
     host:                    String,
     port:                    Int,
@@ -94,7 +177,10 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
+    logHandler:              LogHandler[F],
+    acquire:                 Connection[F] => F[A],
+    release:                 (A, Connection[F]) => F[Unit]
   ): Resource[F, LdbcConnection[F]] =
     val capabilityFlags = defaultCapabilityFlags ++
       (if database.isDefined then Set(CapabilitiesFlags.CLIENT_CONNECT_WITH_DB) else Set.empty) ++
@@ -119,13 +205,15 @@ object Connection:
               readOnly,
               autoCommit,
               connectionClosed,
-              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG)
+              databaseTerm.getOrElse(DatabaseMetaData.DatabaseTerm.CATALOG),
+              logHandler
             )
           )
         )(_.close())
+      _ <- Resource.make(acquire(connection))(v => release(v, connection))
     yield connection
 
-  def fromSocketGroup[F[_]: Tracer: Console](
+  def fromSocketGroup[F[_]: Tracer: Console: Hashing: UUIDGen, A](
     socketGroup:             SocketGroup[F],
     host:                    String,
     port:                    Int,
@@ -137,10 +225,13 @@ object Connection:
     sslOptions:              Option[SSLNegotiation.Options[F]],
     readTimeout:             Duration = Duration.Inf,
     allowPublicKeyRetrieval: Boolean = false,
-    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None
-  )(using ev: Temporal[F]): Resource[F, LdbcConnection[F]] =
+    databaseTerm:            Option[DatabaseMetaData.DatabaseTerm] = None,
+    logHandler:              LogHandler[F],
+    acquire:                 Connection[F] => F[A],
+    release:                 (A, Connection[F]) => F[Unit]
+  )(using ev: Async[F]): Resource[F, LdbcConnection[F]] =
 
-    def fail[A](msg: String): Resource[F, A] =
+    def fail[B](msg: String): Resource[F, B] =
       Resource.eval(ev.raiseError(new SQLClientInfoException(msg)))
 
     def sockets: Resource[F, Socket[F]] =
@@ -161,5 +252,8 @@ object Connection:
       sslOptions,
       readTimeout,
       allowPublicKeyRetrieval,
-      databaseTerm
+      databaseTerm,
+      logHandler,
+      acquire,
+      release
     )

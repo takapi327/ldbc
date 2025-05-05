@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -91,8 +91,7 @@ object Key:
       )
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
-        case None       => s"CONSTRAINT($key)"
-      )
+        case None       => s"CONSTRAINT($key)")
 
   case class Unique(
     constraint:  Option[Constraint],
@@ -109,8 +108,7 @@ object Key:
             .fold("None")(v => s"Some(${ v.toCode })") }, ${ columns.mkString(" *: ") })"
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
-        case None       => s"CONSTRAINT($key)"
-      )
+        case None       => s"CONSTRAINT($key)")
 
   case class Foreign(
     constraint: Option[Constraint],
@@ -125,8 +123,7 @@ object Key:
             .mkString(" *: ") }, ${ reference.toCode(classNameFormatter, propertyFormatter) })"
       constraint.fold(key)(_.name match
         case Some(name) => s"CONSTRAINT(\"$name\", $key)"
-        case None       => s"CONSTRAINT($key)"
-      )
+        case None       => s"CONSTRAINT($key)")
 
   case class Reference(tableName: String, keyParts: List[String], on: Option[List[On]]):
     def toCode(classNameFormatter: Naming, propertyFormatter: Naming): String =

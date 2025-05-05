@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -10,30 +10,26 @@ import com.mysql.cj.jdbc.MysqlDataSource
 
 import cats.effect.*
 
-import org.typelevel.otel4s.trace.Tracer
-
 import munit.*
 
 import ldbc.sql.*
 
-import ldbc.connector.SSL
+import ldbc.connector.{ ConnectionProvider as LdbcProvider, * }
+
+import jdbc.connector.{ ConnectionProvider as JdbcProvider, * }
 
 class LdbcConnectionTest extends ConnectionTest:
   override def prefix: "ldbc" = "ldbc"
 
-  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Resource[IO, Connection[IO]] =
-    ldbc.connector.Connection[IO](
-      host     = host,
-      port     = port,
-      user     = user,
-      password = Some(password),
-      database = Some(database),
-      ssl      = SSL.Trusted,
-      databaseTerm = Some(databaseTerm match
-        case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
-        case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
+  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
+    LdbcProvider
+      .default[IO](host, port, user, password, database)
+      .setSSL(SSL.Trusted)
+      .setDatabaseTerm(
+        databaseTerm match
+          case "SCHEMA"  => DatabaseMetaData.DatabaseTerm.SCHEMA
+          case "CATALOG" => DatabaseMetaData.DatabaseTerm.CATALOG
       )
-    )
 
 class JdbcConnectionTest extends ConnectionTest:
 
@@ -46,13 +42,11 @@ class JdbcConnectionTest extends ConnectionTest:
 
   override def prefix: "jdbc" | "ldbc" = "jdbc"
 
-  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Resource[IO, Connection[IO]] =
+  override def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO] =
     ds.setDatabaseTerm(databaseTerm)
-    Resource.make(jdbc.connector.MysqlDataSource[IO](ds).getConnection)(_.close())
+    JdbcProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
 trait ConnectionTest extends CatsEffectSuite:
-
-  given Tracer[IO] = Tracer.noop[IO]
 
   protected val host:     String = "127.0.0.1"
   protected val port:     Int    = 13306
@@ -61,7 +55,7 @@ trait ConnectionTest extends CatsEffectSuite:
   protected val database: String = "connector_test"
 
   def prefix:                                                     "jdbc" | "ldbc"
-  def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Resource[IO, Connection[IO]]
+  def connection(databaseTerm: "SCHEMA" | "CATALOG" = "CATALOG"): Provider[IO]
 
   test("Catalog change will change the currently connected Catalog.") {
     assertIO(

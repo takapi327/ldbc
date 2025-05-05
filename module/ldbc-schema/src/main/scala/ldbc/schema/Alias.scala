@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -9,14 +9,13 @@ package ldbc.schema
 import java.time.*
 import java.time.Year as JYear
 
-import ldbc.statement.{ AbstractTable, TableQuery as AbstractTableQuery }
+import ldbc.statement.{ Column, TableQuery as AbstractTableQuery }
 
 import ldbc.schema.attribute.*
 
 private[ldbc] trait Alias:
 
-  type Column[A]                         = ldbc.statement.Column[A]
-  type TableQuery[T <: AbstractTable[?]] = AbstractTableQuery[T, Table.Opt[AbstractTableQuery.Extract[T]]]
+  type TableQuery[T <: Table[?]] = AbstractTableQuery[T, Table.Opt[TableQuery.Extract[T]]]
 
   def COMMENT[T](message: String): Comment[T] = Comment[T](message)
 
@@ -101,6 +100,9 @@ private[ldbc] trait Alias:
   def INDEX_KEY[T](columns: Column[T]): IndexKey[T] =
     IndexKey(None, None, columns, None)
 
+  def INDEX_KEY[T](name: String, columns: Column[T]): IndexKey[T] =
+    IndexKey(Some(name), None, columns, None)
+
   def INDEX_KEY[T](
     indexName:   Option[String],
     indexType:   Option[Index.Type],
@@ -135,10 +137,8 @@ private[ldbc] trait Alias:
   ): ForeignKey[T] =
     FOREIGN_KEY(Some(name), columns, reference)
 
-  def REFERENCE[T](
-    table:   Table[?],
-    columns: Column[T]
-  ): Reference[T] = Reference(table, columns, None, None)
+  def REFERENCE[T <: Table[?], U](query: TableQuery[T])(columns: T => Column[U]): Reference[U] =
+    Reference(query.table, columns(query.table), None, None)
 
   type BIT[T <: Byte | Short | Int | Long | Option[Byte | Short | Int | Long]] = DataType.Bit[T]
 

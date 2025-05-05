@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023-2024 by Takahiko Tominaga
+ * Copyright (c) 2023-2025 by Takahiko Tominaga
  * This software is licensed under the MIT License (MIT).
  * For more information see LICENSE or https://opensource.org/licenses/MIT
  */
@@ -20,7 +20,9 @@ import cats.*
 import cats.effect.*
 import cats.effect.unsafe.implicits.global
 
-import ldbc.sql.{ Connection, ResultSet }
+import ldbc.sql.*
+
+import jdbc.connector.*
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -47,7 +49,7 @@ class Select:
   )
 
   @volatile
-  var connection: Resource[IO, Connection[IO]] = uninitialized
+  var provider: Provider[IO] = uninitialized
 
   @Setup
   def setupDataSource(): Unit =
@@ -57,17 +59,16 @@ class Select:
     ds.setDatabaseName("benchmark")
     ds.setUser("ldbc")
     ds.setPassword("password")
+    ds.setUseSSL(true)
 
-    val datasource = jdbc.connector.MysqlDataSource[IO](ds)
+    provider = ConnectionProvider.fromDataSource(ds, ExecutionContexts.synchronous)
 
-    connection = Resource.make(datasource.getConnection)(_.close())
-
-  @Param(Array("10", "100", "1000", "2000", "4000"))
+  @Param(Array("100", "1000", "2000", "4000"))
   var len: Int = uninitialized
 
   @Benchmark
   def statement: List[BenchmarkType] =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.createStatement()
@@ -78,7 +79,7 @@ class Select:
 
   @Benchmark
   def prepareStatement: List[BenchmarkType] =
-    connection
+    provider
       .use { conn =>
         for
           statement <- conn.prepareStatement("SELECT * FROM jdbc_prepare_statement_test LIMIT ?")
