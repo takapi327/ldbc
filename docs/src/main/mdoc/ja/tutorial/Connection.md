@@ -146,6 +146,8 @@ val program = provider.use { connection =>
 
 セキュアな接続を確立するためにSSL設定を追加できます：
 
+※ Trustedは全ての証明書を受け入れることに注意してください。これは開発環境向けの設定です。
+
 ```scala
 import cats.effect.IO
 import ldbc.connector.*
@@ -159,6 +161,20 @@ val program = provider.use { connection =>
   connection.execute("SELECT 1")
 }
 ```
+
+ldbcはfs2が提供するすべてのTLSモードをサポートしています。以下は、利用可能なSSLモードのリストです：
+
+| モード                            | プラットフォーム        | 詳細                                                                                 |
+|--------------------------------|-----------------|------------------------------------------------------------------------------------|
+| `SSL.None`                     | `JVM/JS/Native` | `ldbcはSSLを要求しません。これがデフォルトです。`                                                      |
+| `SSL.Trusted`                  | `JVM/JS/Native` | `SSL経由で接続し、すべての証明書を信頼する。``自己署名証明書を使用している場合などに使用する。`                                |
+| `SSL.System`                   | `JVM/JS/Native` | `SSL経由で接続し、システムデフォルトのSSLContextを使用して証明書を検証する。``CAで署名された証明書を使用している場合は、これを使用してください。` |
+| `SSL.fromSSLContext(…)`	       | `JVM`           | `既存のSSLContextを使ってSSLで接続する。`                                                       |
+| `SSL.fromKeyStoreFile(…)`	     | `JVM`           | `指定したキーストア・ファイルを使ってSSLで接続する。`                                                      |
+| `SSL.fromKeyStoreResource(…)`	 | `JVM`           | `指定されたキーストア・クラスパス・リソースを使用して SSL 接続します。`                                            |
+| `SSL.fromKeyStore(…)`	         | `JVM`           | `既存のキーストアを使用してSSL経由で接続する。`                                                         |
+| `SSL.fromSecureContext(...)`   | `JS`            | `既存の SecureContext を使用して SSL 経由で接続します。`                                            |
+| `SSL.fromS2nConfig(...)`       | `Native`        | `既存のS2nConfigを使用して、SSL経由で接続します。`                                                   |
 
 ### 高度な設定を使用したコネクション
 

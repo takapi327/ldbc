@@ -92,7 +92,7 @@ lazy val codegen = crossProject(JVMPlatform, JSPlatform, NativePlatform)
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "io.circe" %%% "circe-generic" % "0.14.12",
+      "io.circe" %%% "circe-generic" % "0.14.13",
       "io.circe" %%% "circe-yaml"    % "0.16.0"
     )
   )
@@ -243,12 +243,6 @@ lazy val otelExample = crossProject(JVMPlatform)
   )
   .dependsOn(connector, dsl)
 
-lazy val examples = Seq(
-  http4sExample,
-  hikariCPExample,
-  otelExample
-)
-
 lazy val docs = (project in file("docs"))
   .settings(
     description              := "Documentation for ldbc",
@@ -257,7 +251,8 @@ lazy val docs = (project in file("docs"))
     mdocVariables ++= Map(
       "ORGANIZATION"  -> organization.value,
       "SCALA_VERSION" -> scalaVersion.value,
-      "MYSQL_VERSION" -> mysqlVersion
+      "MYSQL_VERSION" -> mysqlVersion,
+      "VERSION" -> "0.3.0-RC2" // TODO: Manually set sbt typelevel as RC is not allowed as a VERSION in sbt typelevel setting
     ),
     laikaTheme := LaikaSettings.helium.value,
     // Modify tlSite task to run the LLM docs script after the site is generated
@@ -286,6 +281,72 @@ lazy val docs = (project in file("docs"))
   )
   .enablePlugins(AutomateHeaderPlugin, TypelevelSitePlugin, NoPublishPlugin)
 
+lazy val mcpDocumentServer = crossProject(JSPlatform)
+  .crossType(CrossType.Pure)
+  .withoutSuffixFor(JSPlatform)
+  .in(file("mcp/document-server"))
+  .settings(
+    name        := "mcp-ldbc-document-server",
+    description := "Project for MCP document server for ldbc",
+    run / fork  := false
+  )
+  .settings((Compile / sourceGenerators) += Def.task {
+    Generator.version(
+      version      = version.value,
+      scalaVersion = scalaVersion.value,
+      sbtVersion   = sbtVersion.value,
+      dir          = (Compile / sourceManaged).value
+    )
+  }.taskValue)
+  .settings(
+    libraryDependencies += "io.github.takapi327" %%% "mcp-scala-server" % "0.1.0-alpha2"
+  )
+  .jsSettings(
+    npmPackageName         := "@ldbc/mcp-document-server",
+    npmPackageDescription  := (Compile / description).value,
+    npmPackageKeywords     := Seq("mcp", "scala", "ldbc"),
+    npmPackageAuthor       := "takapi327",
+    npmPackageLicense      := Some("MIT"),
+    npmPackageBinaryEnable := true,
+    npmPackageVersion      := "0.1.0-alpha3",
+    npmPackageREADME       := Some(baseDirectory.value / "README.md"),
+    npmPackageAdditionalNpmConfig := Map(
+      "homepage" -> _root_.io.circe.Json.fromString("https://takapi327.github.io/ldbc/"),
+      "private"  -> _root_.io.circe.Json.fromBoolean(false),
+      "publishConfig" -> _root_.io.circe.Json.obj(
+        "access" -> _root_.io.circe.Json.fromString("public")
+      )
+    ),
+    scalaJSUseMainModuleInitializer := true,
+    scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.CommonJSModule)),
+    Compile / mainClass := Some("ldbc.mcp.StdioServer"),
+
+    // Custom task to copy mdoc docs to npm package directory
+    npmPackage := {
+      (Compile / npmPackage).value
+      val log = streams.value.log
+
+      val docsSourceDir = file("docs/target/mdoc")
+      val docsTargetDir = (Compile / npmPackageOutputDirectory).value / "docs"
+
+      if (docsSourceDir.exists()) {
+        log.info(s"Copying mdoc documentation from ${ docsSourceDir } to ${ docsTargetDir }")
+        IO.copyDirectory(docsSourceDir, docsTargetDir)
+        log.success("Documentation copied successfully")
+      } else {
+        log.warn(s"Source docs directory not found: ${ docsSourceDir }")
+      }
+    }
+  )
+  .defaultSettings
+  .enablePlugins(NpmPackagePlugin, NoPublishPlugin)
+
+lazy val examples = Seq(
+  http4sExample,
+  hikariCPExample,
+  otelExample
+)
+
 lazy val ldbc = tlCrossRootProject
   .settings(description := "Pure functional JDBC layer with Cats Effect 3 and Scala 3")
   .settings(commonSettings)
@@ -302,7 +363,8 @@ lazy val ldbc = tlCrossRootProject
     tests,
     docs,
     benchmark,
-    hikari
+    hikari,
+    mcpDocumentServer
   )
   .aggregate(examples *)
   .enablePlugins(NoPublishPlugin)

@@ -1,0 +1,9 @@
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = localhost
+DNS.2 = MySQL_Server
+IP.1 = 127.0.0.1

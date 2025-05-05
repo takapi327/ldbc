@@ -12,7 +12,14 @@ services:
     volumes:
       - ./database:/docker-entrypoint-initdb.d
       - ./database/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./database/ssl:/etc/mysql/ssl
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       timeout: 20s
       retries: 10
+
+  verdaccio:
+    image: verdaccio/verdaccio:nightly-master
+    container_name: verdaccio
+    ports:
+      - 4873:4873

@@ -9,7 +9,7 @@
 [![Scala Version](https://img.shields.io/badge/scala-v3.3.x-red)](https://github.com/lampepfl/dotty)
 [![Typelevel Affiliate Project](https://img.shields.io/badge/typelevel-affiliate%20project-FF6169.svg)](https://typelevel.org/projects/affiliate/)
 [![javadoc](https://javadoc.io/badge2/io.github.takapi327/ldbc-dsl_3/javadoc.svg)](https://javadoc.io/doc/io.github.takapi327/ldbc-dsl_3)
-[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-RC1/jar)
+[![Maven Central Version](https://maven-badges.herokuapp.com/maven-central/io.github.takapi327/ldbc-dsl_3/badge.svg?color=blue)](https://search.maven.org/artifact/io.github.takapi327/ldbc-dsl_3/0.3.0-RC2/jar)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=js)](https://index.scala-lang.org/takapi327/ldbc)
 [![scaladex](https://index.scala-lang.org/takapi327/ldbc/ldbc-dsl/latest-by-scala-version.svg?color=blue&targetType=native)](https://index.scala-lang.org/takapi327/ldbc)
@@ -228,12 +228,109 @@ val result: IO[List[User]] = provider.use { conn =>
 }
 ```
 
+## How to use with ZIO
+
+Although ldbc was created to run on the Cats Effect, can also be used in conjunction with ZIO by using [ZIO Interop Cats](https://github.com/zio/interop-cats).
+
+> [!CAUTION]
+> Although ldbc supports three platforms, Note that ZIO Interop Cats does not currently support Scala Native.
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-interop-cats" % "<latest-version>"
+```
+
+The following is sample code for using ldbc with ZIO.
+
+```scala 3
+import zio.*
+import zio.interop.catz.*
+
+object Main extends ZIOAppDefault:
+
+  given cats.effect.std.Console[Task] = cats.effect.std.Console.make[Task]
+  given cats.effect.std.UUIDGen[Task] with
+    override def randomUUID: Task[UUID] = ZIO.attempt(UUID.randomUUID())
+  given fs2.hashing.Hashing[Task] = fs2.hashing.Hashing.forSync[Task]
+  given fs2.io.net.Network[Task] = fs2.io.net.Network.forAsync[Task]
+
+  private def provider =
+    ConnectionProvider
+      .default[Task]("127.0.0.1", 13306, "ldbc", "password", "world")
+      .setSSL(SSL.Trusted)
+
+  override def run =
+    provider.use { conn =>
+      sql"SELECT Name FROM city"
+        .query[String]
+        .to[List]
+        .readOnly(conn)
+        .flatMap { cities =>
+          Console.printLine(cities)
+        }
+    }
+```
+
+### パフォーマンス
+
+Performance results from the Cats Effect to ZIO conversion are shown below.
+
+<div align="center">
+  <img alt="ldbc" src="./docs/src/main/mdoc/img/connector/Select_effect.svg">
+</div>
+
 ## Documentation
 
 Full documentation can be found at Currently available in English and Japanese.
 
 - [English](https://takapi327.github.io/ldbc/latest/en/)
 - [Japanese](https://takapi327.github.io/ldbc/latest/ja/)
+
+## Documentation for LLMs
+
+If you’re an artificial intelligence, or trying to teach one how to use ldbc, we offer the documentation in plaintext format. Beep boop.
+
+We support the [llms.txt](https://llmstxt.org/) convention for making documentation available to large language models and the applications that make use of them.
+
+Currently, we have the following root-level files...
+
+- [/llms.txt](https://takapi327.github.io/ldbc/llms.txt) — a listing of the available files
+- [/llms-full.txt](https://takapi327.github.io/ldbc/llms-full.txt) — complete documentation for ldbc
+- [/llms-small.txt](https://takapi327.github.io/ldbc/llms-small.txt) — compressed documentation for use with smaller context windows
+
+## Documentation for MCP
+
+[![npm version](https://badge.fury.io/js/@ldbc%2Fmcp-document-server.svg)](https://badge.fury.io/js/@ldbc%2Fmcp-document-server)
+
+Document MCP server for ldbc for use with Agent is now available.
+
+You can use the documentation server to ask questions about ldbc, run tutorials, etc.
+It can be used with Visual Studio Code, Claude Desktop, etc.
+
+> [!NOTE]
+> This server is an experimental feature, but should help you. This server is developed using tools made in Scala. It is still under development and therefore contains many missing features. Please report feature requests or problems [here](https://github.com/takapi327/mcp-scala/issues).
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "mcp-ldbc-document-server": {
+        "command": "npx",
+        "args": [
+          "@ldbc/mcp-document-server"
+        ]
+      }
+    }
+  }
+}
+```
+
+> [!NOTE]
+> The video is processed in Japanese, but it works fine in English.
+> 「ldbcのチュートリアルを始めたい」is I'd like to start a tutorial on ldbc.”
+
+https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5
+
+Please refer to the [README](https://github.com/takapi327/ldbc/blob/master/mcp/document-server/.js/README.md) for usage instructions.
 
 ## Features/Roadmap
 
