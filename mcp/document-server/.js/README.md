@@ -1,7 +1,7 @@
 # MCP Server for ldbc (Lepus Database Connectivity) Document
 
 <div align="center">
-  <img alt="ldbc" src="../../../lepus_logo.png">
+  <img alt="ldbc" src="https://github.com/takapi327/ldbc/blob/master/lepus_logo.png">
 </div>
 
 [![Continuous Integration](https://github.com/takapi327/ldbc/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/takapi327/ldbc/actions/workflows/ci.yml)
@@ -11,7 +11,7 @@
 
 A Model Context Protocol server that provides access to ldbc documents. This server allows the LLM to inspect ldbc documents, answer questions, and perform tutorials.
 
-https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5
+<video src="https://github.com/user-attachments/assets/a0c2a7a4-d5e7-4f91-bf69-833716d3efe5" muted="muted" controls="controls"></video>
 
 ## Installation
 
