@@ -63,8 +63,12 @@ class DateTimeTest extends AnyFlatSpec, DateTime:
   }
 
   it should "Statement generated using the CONVERT_TZ function matches the specified string." in {
-    assert(CONVERT_TZ(c5, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(`local_date_time`, '+0:0', '+9:0')")
-    assert(CONVERT_TZ(c6, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(`local_date_time`, '+0:0', '+9:0')")
+    assert(
+      CONVERT_TZ(c5, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(`local_date_time`, '+0:0', '+9:0')"
+    )
+    assert(
+      CONVERT_TZ(c6, LocalTime.of(0, 0), LocalTime.of(9, 0)).name == "CONVERT_TZ(`local_date_time`, '+0:0', '+9:0')"
+    )
     assert(
       CONVERT_TZ(
         LocalDateTime.of(2021, 1, 1, 0, 0),

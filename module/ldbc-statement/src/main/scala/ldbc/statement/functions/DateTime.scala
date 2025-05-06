@@ -1078,7 +1078,8 @@ trait DateTime:
    *   // SELECT SYSDATE() FROM date_time
    * }}}
    */
-  def SYSDATE()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] = Column.function("SYSDATE()")
+  def SYSDATE()(using Decoder[LocalDateTime], Encoder[LocalDateTime]): Column[LocalDateTime] =
+    Column.function("SYSDATE()")
 
   /**
    * Function to extract only the time portion from a time or date-time expression value.
